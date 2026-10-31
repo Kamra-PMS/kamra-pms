@@ -99,6 +99,7 @@
   "faqs",
   "meta_title",
   "meta_description",
+  "booking_language",
   "og_image",
   "page_slug",
   "overbooking_pct",
@@ -672,6 +673,13 @@
    "fieldname": "meta_description",
    "fieldtype": "Small Text",
    "label": "Meta Description"
+  },
+  {
+   "fieldname": "booking_language",
+   "fieldtype": "Select",
+   "label": "Booking Engine Language",
+   "options": "\nen\nes\npt\nar",
+   "description": "Language guests see first on the booking engine and self check-in. Empty: the guest's browser language. Guests can still switch."
   },
   {
    "fieldname": "og_image",

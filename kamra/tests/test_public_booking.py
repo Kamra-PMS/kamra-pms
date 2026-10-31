@@ -56,3 +56,42 @@ class PublicBookingTestCase(IntegrationTestCase):
 
 	def test_showcase_says_whether_tiers_apply(self):
 		self.assertIs(showcase(self.property)["property"]["has_cancellation_tiers"], False)
+
+	def test_link_previews_get_the_hotels_meta_and_staff_pages_stay_private(self):
+		from kamra.www.kamra import _with_meta
+
+		frappe.db.set_value("Property", self.property, {"meta_title": "Sea View Inn",
+			"meta_description": "Rooms <b>by</b> the sea.", "og_image": "/files/sea.jpg",
+			"booking_language": "es"})
+		shell = '<html lang="en"><head><meta\n  name="description"\n  content="Kamra" />\n<title>Kamra PMS</title></head></html>'
+		from kamra.booking_slugs import slugify
+		frappe.form_dict.property = slugify(frappe.db.get_value("Property", self.property, "property_name"))
+		try:
+			page = _with_meta(shell, "/kamra/book")
+		finally:
+			frappe.form_dict.pop("property", None)
+		self.assertIn("<title>Sea View Inn</title>", page)
+		self.assertIn('property="og:image" content="http', page)
+		self.assertIn("&lt;b&gt;by&lt;/b&gt;", page)  # escaped, never raw HTML
+		self.assertNotIn('content="Kamra"', page)
+		self.assertNotIn("noindex", page)
+		self.assertIn('<html lang="es">', page)
+		from kamra.public_api import _public_locale
+		self.assertEqual(_public_locale(self.property)["default_language"], "es")
+		self.assertIn("noindex", _with_meta(shell, "/kamra/folio/F-1"))
+		self.assertIn("noindex", _with_meta(shell, "/kamra/checkin/abc"))
+
+	def test_co_branding_uses_the_hotels_own_name_and_never_frappes_default(self):
+		from kamra.public_api import site_info
+
+		def brand(name):
+			frappe.db.set_single_value("Website Settings", "app_name", name)
+			frappe.clear_document_cache("Website Settings", "Website Settings")
+			if hasattr(frappe.local, "website_settings"):
+				del frappe.local.website_settings
+			return site_info()["brand_name"]
+
+		self.assertIsNone(brand("Frappe"))
+		self.assertIsNone(brand(""))
+		self.assertEqual(brand("Example Hotels"), "Example Hotels")
+		self.assertEqual(site_info()["app"], "kamra")

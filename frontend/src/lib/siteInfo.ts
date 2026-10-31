@@ -7,6 +7,9 @@ export type SiteInfo = {
   site?: string
   channel?: string | null
   build?: string | null
+  /** The hotel's or partner's own name and logo (Website / Navbar Settings). */
+  brand_name?: string | null
+  brand_logo?: string | null
   frappe_version?: string
 }
 

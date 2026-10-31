@@ -258,7 +258,19 @@ def site_info():
 		# kamra_build (a short commit id) is optional.
 		"channel": (frappe.conf.get("kamra_channel") or "")[:20] or None,
 		"build": (frappe.conf.get("kamra_build") or "")[:12] or None,
+		**_brand(),
 	}
+
+
+def _brand() -> dict:
+	"""A hotel's or partner's own name and logo, shown next to Kamra's
+	(co-branding, as ERPNext does). Read from Frappe's own Website and Navbar
+	Settings; Frappe's stock app name "Frappe" counts as not set."""
+	name = (frappe.get_website_settings("app_name") or "").strip()
+	logo = (frappe.get_website_settings("app_logo")
+	        or frappe.db.get_single_value("Navbar Settings", "app_logo"))
+	return {"brand_name": None if name in ("", "Frappe") else name,
+	        "brand_logo": logo or None}
 
 
 @frappe.whitelist(allow_guest=True)
@@ -295,6 +307,7 @@ def _public_locale(property: str) -> dict:
 	return {"currency_symbol": loc.get("currency_symbol") or "",
 	        "locale": loc.get("locale") or "en",
 	        "currency": loc.get("currency") or "",
+	        "default_language": prop.get("booking_language") or None,
 	        **privacy_terms(pack)}
 
 
@@ -529,7 +542,70 @@ def precheckin_info(token: str):
 			"has_id_document": bool(res.get("id_document")),
 			"id_document_on": str(res.get("id_document_on") or ""),
 		},
+		# the others staying, as named at booking: name and age only - their
+		# ID details are never sent back to the link. A row the desk has
+		# confirmed (an age or an ID) is locked: the guest cannot change it.
+		"occupants": [{"row": o.name, "full_name": o.full_name,
+		               "age": o.age or o.get("guest_stated_age") or None,
+		               "has_id": bool(o.id_number or o.get("id_file")),
+		               "locked": bool(o.age or o.id_number or o.get("id_file"))}
+		              for o in res.get("occupants") or []],
 	}
+
+
+def _merge_precheckin_occupants(res, rows) -> None:
+	"""The people staying with the guest, from the pre-check-in page. The
+	list is the guest's own: a row left out is removed, and a row sent back
+	is edited in place. Only rows the desk has not confirmed can change.
+
+	An age from this page is only what the guest says: it goes in
+	guest_stated_age, never in `age`, because `age` decides who stays free
+	and the price must not move on an unverified word. The desk confirms it
+	at check-in. A child's ID is not kept unless the register needs it."""
+	from kamra.localization import is_minor, minor_id_kept, pack_for, validate_id_type
+	if isinstance(rows, str):
+		rows = frappe.parse_json(rows) if rows.strip() else []
+
+	def locked(row) -> bool:
+		return bool(row.age or row.id_number or row.get("id_file"))
+
+	doc = frappe.get_doc("Reservation", res.name)
+	pack = pack_for(doc.property)
+	default_nat = getattr(pack, "DEFAULT_NATIONALITY", "")
+	by_row = {o.name: o for o in doc.get("occupants") or []}
+	by_name = {(o.full_name or "").strip().lower(): o for o in doc.get("occupants") or []}
+	kept = set()
+	for o in (rows or [])[:20]:
+		name = str(o.get("full_name") or "").strip()[:140]
+		if not name or name.lower() == (doc.guest_name or "").strip().lower():
+			continue
+		# a blank or 0 age is not given (a baby's age is entered as 1)
+		age = cint(o.get("age")) or None
+		if age is not None and not 0 < age <= 120:
+			age = None
+		id_type = str(o.get("id_type") or "").strip()[:60]
+		id_number = str(o.get("id_number") or "").strip()[:40]
+		if is_minor(pack, age) and not minor_id_kept(pack, default_nat):
+			id_type = id_number = ""
+		if id_type and id_number:
+			validate_id_type(doc.property, id_type)
+		else:
+			id_type = id_number = ""
+		row = by_row.get(o.get("row")) or by_name.get(name.lower())
+		if row is None:
+			row = doc.append("occupants", {"full_name": name, "nationality": default_nat})
+			by_name[name.lower()] = row
+		elif not locked(row):
+			row.full_name = name
+		kept.add(id(row))
+		if not row.age and age is not None:
+			row.guest_stated_age = age
+		if id_number and not row.id_number:
+			row.id_type, row.id_number = id_type, id_number
+	for row in list(doc.get("occupants") or []):
+		if id(row) not in kept and not locked(row):
+			doc.remove(row)
+	doc.save(ignore_permissions=True)
 
 
 def _save_id_image(guest: str, data_url: str,
@@ -572,7 +648,8 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
                       address_line: str = "", city: str = "",
                       eta: str = "", special_requests: str = "",
                       signature: str = "", consent: int = 0,
-                      id_image: str = "", address_image: str = ""):
+                      id_image: str = "", address_image: str = "",
+                      occupants: str = ""):
 	"""Guest completes pre-arrival check-in and signs the registration card
 	(PRD FR-20 - details + declaration + e-signature; the signed card becomes
 	the paperless GRC the desk views at arrival). The guest can attach a
@@ -613,6 +690,8 @@ def precheckin_submit(token: str, id_type: str, id_number: str,
 		"precheckin_signature": signature if signed else None,
 		"precheckin_consent": 1 if int(consent or 0) else 0,
 	})
+	if occupants:
+		_merge_precheckin_occupants(res, occupants)
 
 	from kamra.savings import log_action
 	log_action(

@@ -20,6 +20,8 @@
   "status",
   "notes",
   "cutoff_date",
+  "attrition_pct",
+  "deposit_due",
   "released_on",
   "event",
   "sb_blocks",
@@ -106,6 +108,18 @@
    "label": "Block Cutoff Date"
   },
   {
+   "description": "Room-nights the group may give back without a fee (attrition allowance), as a % of the block",
+   "fieldname": "attrition_pct",
+   "fieldtype": "Percent",
+   "label": "Allowed Shortfall %"
+  },
+  {
+   "description": "Advance the group is asked to pay (shown on the quotation)",
+   "fieldname": "deposit_due",
+   "fieldtype": "Currency",
+   "label": "Deposit Due"
+  },
+  {
    "description": "When the unpicked rooms went back on sale (set automatically once the cutoff passes)",
    "fieldname": "released_on",
    "fieldtype": "Datetime",
@@ -133,7 +147,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 12:00:00.000000",
+ "modified": "2026-10-30 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Group Booking",

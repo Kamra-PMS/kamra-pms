@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react"
+import { lazy, Suspense, useEffect } from "react"
 import {
   Navigate,
   Outlet,
@@ -13,6 +13,7 @@ const Login = lazy(() => import("./screens/Login"))
 import { useAuth } from "./lib/auth"
 import { t, useT, t as translate, useUILanguage } from "./lib/i18n"
 import { toFullPath } from "./lib/routing"
+import { syncLang } from "./lib/dir"
 const Billing = lazy(() => import("./screens/Billing"))
 const EndOfDay = lazy(() => import("./screens/EndOfDay"))
 const EndOfDayWizard = lazy(() => import("./screens/EndOfDayWizard"))
@@ -25,6 +26,7 @@ const GuestJourney = lazy(() => import("./screens/GuestJourney"))
 const HkApp = lazy(() => import("./screens/HkApp"))
 const Guests = lazy(() => import("./screens/Guests"))
 const RegistrationCard = lazy(() => import("./screens/RegistrationCard"))
+const GroupQuotation = lazy(() => import("./screens/GroupQuotation"))
 const CancellationLetter = lazy(() => import("./screens/CancellationLetter"))
 const AllowanceVoucher = lazy(() => import("./screens/AllowanceVoucher"))
 const TripConfirmation = lazy(() => import("./screens/TripConfirmation"))
@@ -152,6 +154,9 @@ function CalendarScreen() {
 
 export default function App() {
   useUILanguage()
+  // guest pages and the desk keep separate languages; re-apply on crossing
+  const { pathname } = useLocation()
+  useEffect(() => syncLang(), [pathname])
   return (
     <ErrorBoundary>
       <ConnectionBanner />
@@ -195,6 +200,7 @@ export default function App() {
             element={<ConfiguredScreen config="reservationsConfig" />}
           />
           <Route path="grc/:name" element={<RegistrationCard />} />
+          <Route path="group-quote/:name" element={<GroupQuotation />} />
           <Route path="cancelled/:name" element={<CancellationLetter />} />
           <Route path="trip/:name" element={<TripConfirmation />} />
           <Route path="guests" element={<Guests />} />

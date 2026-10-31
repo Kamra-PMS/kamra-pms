@@ -687,7 +687,8 @@ def registration_card(reservation: str):
 				guest.get("address_line"), guest.get("city")])),
 		},
 		"occupants": [
-			{"row": o.name, "full_name": o.full_name, "age": o.age,
+			{"row": o.name, "full_name": o.full_name, "age": o.age or None,
+			 "guest_stated_age": o.get("guest_stated_age") or None,
 			 "gender": o.gender, "nationality": o.nationality,
 			 "id_type": o.id_type, "id_number": o.id_number,
 			 "phone": o.phone, "id_file": o.get("id_file"),
@@ -1983,6 +1984,39 @@ def company_billing_default(company: str, property: str | None = None):
 	}
 
 
+def split_names(names) -> list[str]:
+	"""Names from a list, or one string separated by ; , or new lines."""
+	if isinstance(names, str):
+		import re
+		names = re.split(r"[;,\n]", names)
+	out = []
+	for n in names or []:
+		n = (n or "").strip()[:140]
+		if n and n.lower() not in {x.lower() for x in out}:
+			out.append(n)
+	return out
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def add_occupant_names(reservation: str, names):
+	"""Add the other people staying to the stay's occupant register by name
+	(at booking, before anyone's ID is seen). Names already on the register
+	are left as they are; age and ID are filled at check-in."""
+	doc = frappe.get_doc("Reservation", reservation)
+	have = {(o.full_name or "").strip().lower() for o in doc.get("occupants") or []}
+	have.add((doc.guest_name or "").strip().lower())
+	added = 0
+	for n in split_names(names)[:20]:
+		if n.lower() not in have:
+			doc.append("occupants", {"full_name": n})
+			have.add(n.lower())
+			added += 1
+	if added:
+		doc.save()
+	return {"reservation": reservation, "added": added}
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Kamra Agent")
 def update_occupants(reservation: str, occupants):
@@ -2005,6 +2039,8 @@ def update_occupants(reservation: str, occupants):
 	                  for o in (doc.get("occupants") or [])}
 	existing_types = {o.name: o.get("id_type")
 	                  for o in (doc.get("occupants") or [])}
+	stated_ages = {o.name: o.get("guest_stated_age")
+	               for o in (doc.get("occupants") or [])}
 	existing_photos = {o.name: o.get("photo")
 	                   for o in (doc.get("occupants") or [])}
 	carried = ("full_name", "age", "gender", "nationality", "id_type", "id_number", "phone")
@@ -2049,6 +2085,7 @@ def update_occupants(reservation: str, occupants):
 			# an uploaded ID survives a register edit
 			"id_file": o.get("id_file")
 			           or existing_scans.get(o.get("row")) or None,
+			"guest_stated_age": stated_ages.get(o.get("row")) or None,
 			"photo": existing_photos.get(o.get("row")) or None,
 		}
 		row.update(_occupant_times(
@@ -2078,7 +2115,7 @@ def update_occupants(reservation: str, occupants):
 	return {"reservation": reservation, "occupants": len(doc.occupants),
 	        "minors_trimmed": minors_trimmed,
 	        "rows": [
-	            {"row": o.name, "full_name": o.full_name, "age": o.age,
+	            {"row": o.name, "full_name": o.full_name, "age": o.age or None,
 	             "gender": o.gender, "nationality": o.nationality,
 	             "id_type": o.id_type, "id_number": o.id_number,
 	             "phone": o.phone, "id_file": o.get("id_file"),
@@ -3802,8 +3839,22 @@ def reservation_detail(reservation: str):
 			"cancelled_on": res.get("cancelled_on"),
 		}
 
+	# a stay in a group: the desk can check the whole group in from here
+	group = None
+	if res.get("group_booking"):
+		group = {
+			"name": res.group_booking,
+			"group_name": frappe.db.get_value("Group Booking", res.group_booking, "group_name"),
+			"rooms": frappe.db.count("Reservation", {
+				"group_booking": res.group_booking,
+				"status": ("in", ["Confirmed", "Checked In", "Checked Out"])}),
+			"to_check_in": frappe.db.count("Reservation", {
+				"group_booking": res.group_booking, "status": "Confirmed"}),
+		}
+
 	return {
 		"name": res.name,
+		"group": group,
 		"status": res.status,
 		"source": res.source,
 		"channel": res.channel,
@@ -4249,7 +4300,7 @@ def upload_occupant_id(reservation: str, row: str, image: str, kind: str = "id")
 	occ = match[0]
 	from kamra.localization import adult_age, is_minor, minor_id_kept, pack_for
 	pack = pack_for(res.property)
-	if is_minor(pack, occ.age) and not minor_id_kept(pack, occ.nationality):
+	if is_minor(pack, occ.age or None) and not minor_id_kept(pack, occ.nationality):
 		frappe.throw(f"Registration law needs only the name and age of a guest under "
 		             f"{adult_age(pack)}; their ID and photo are not kept.")
 	if kind == "photo":
@@ -6006,6 +6057,28 @@ def _find_or_create_guest(guest_name: str, phone: str | None,
 	return guest.name
 
 
+def _guest_for_row(guest_name: str, phone: str | None, property: str | None = None) -> str:
+	"""The guest for one name typed on a rooming list. A shared phone (one
+	number for a family or an office) never replaces the typed name: the
+	existing guest is used only when the name matches too."""
+	if phone:
+		same = frappe.db.get_value(
+			"Guest", {"phone": phone, "full_name": guest_name.strip()}, "name")
+		if same:
+			return same
+		if frappe.db.exists("Guest", {"phone": phone}):
+			parts = guest_name.strip().split(" ", 1)
+			from kamra.localization import pack_for
+			nationality = getattr(pack_for(property), "DEFAULT_NATIONALITY", None) \
+				if property else None
+			return frappe.get_doc({
+				"doctype": "Guest", "first_name": parts[0],
+				"last_name": parts[1] if len(parts) > 1 else "",
+				"phone": phone, "nationality": nationality or None,
+			}).insert(ignore_permissions=True).name
+	return _find_or_create_guest(guest_name, phone, property)
+
+
 def _blacklist_gate(guest: str, property: str, override_reason: str | None):
 	"""A blacklisted guest is refused unless a Hotel Admin confirms with a
 	reason. The override is scoped to this guest for this request only and
@@ -6402,6 +6475,11 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			doc.auto_price = 0
 			doc.amount_after_tax = float(ota_total)
 			lock_channel_rates(doc, float(ota_total))
+	elif doc.get("group_booking"):
+		# a room picked up from a block bills the group's negotiated rate,
+		# priced by the engine like any agreed rate
+		from kamra.group_blocks import group_rate
+		doc.agreed_rate = group_rate(doc.group_booking, doc.room_type)
 
 	# Booking a party above the room's capacity is a decision someone makes
 	# by arrangement; the reason is what records who agreed it, and the
@@ -6688,10 +6766,259 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 		except Exception as e:
 			skipped.append({"room_type": spec["room_type"], "reason": str(e)})
 
+	if not created:
+		# no room could be booked: leave no empty group behind
+		frappe.delete_doc("Group Booking", group.name, ignore_permissions=True, force=True)
+		frappe.clear_messages()
+		frappe.throw(_("No room could be booked, so the group was not created. {0}").format(
+			"; ".join(dict.fromkeys(s["reason"] for s in skipped))))
 	if with_master and created:
 		group.db_set({"master_reservation": main or created[0],
 		              "master_pays": master_pays or "Room only"})
 	return {"group_booking": group.name, "created": created, "skipped": skipped,
+	        "master_reservation": group.get("master_reservation")}
+
+
+@frappe.whitelist(methods=["GET"])
+@require_roles("Front Desk", "Revenue Manager", "Hotel Admin")
+def rooming_list_template(property: str):
+	"""An Excel rooming list for the group booking screen to paste or
+	upload: Name, Phone, Room type (a dropdown of this property's room
+	types) and Other guests, with a sheet explaining how to fill it."""
+	from io import BytesIO
+
+	from openpyxl import Workbook
+	from openpyxl.styles import Font, PatternFill
+	from openpyxl.worksheet.datavalidation import DataValidation
+
+	from kamra.crs import assert_property_access
+	assert_property_access(property)
+	types = frappe.get_all("Room Type", filters={"property": property},
+	                       pluck="room_type_name", order_by="room_type_name asc")
+	wb = Workbook()
+	ws = wb.active
+	ws.title = "Rooming List"
+	headers = ["Name", "Phone", "Room type", "Other guests"]
+	for c, h in enumerate(headers, 1):
+		cell = ws.cell(row=1, column=c, value=h)
+		cell.font = Font(name="Arial", bold=True, color="FFFFFF")
+		cell.fill = PatternFill("solid", fgColor="0F766E")
+	for r in range(2, 202):
+		ws.cell(row=r, column=2).number_format = "@"  # keep +91... as typed
+	for col, width in zip("ABCD", (30, 18, 18, 40), strict=True):
+		ws.column_dimensions[col].width = width
+	ws.freeze_panes = "A2"
+	if types:
+		# a range, not an inline list: no length limit, and commas are safe
+		lists = wb.create_sheet("Lists")
+		for i, room_type in enumerate(types, 1):
+			lists.cell(row=i, column=1, value=room_type)
+		lists.sheet_state = "hidden"
+		dv = DataValidation(type="list", formula1=f"Lists!$A$1:$A${len(types)}",
+		                    allow_blank=True)
+		dv.add("C2:C201")
+		ws.add_data_validation(dv)
+	help_ws = wb.create_sheet("How to use")
+	for i, line in enumerate([
+		"One guest per row: the guest the room is booked for.",
+		"Name is required. Phone, Room type and Other guests are optional.",
+		"Room type: pick from the list. Empty = any room of the group.",
+		"Other guests: everyone else staying in that room, separated by ; (e.g. Ravi Rao; Meera Rao).",
+		"Do not add the main guest - they are already room 1.",
+		"In Kamra: copy the rows (with the header) and use Paste from Excel,",
+		"or File > Save As > CSV and use Upload CSV.",
+	], 1):
+		help_ws.cell(row=i, column=1, value=line).font = Font(name="Arial")
+	help_ws.column_dimensions["A"].width = 95
+	buf = BytesIO()
+	wb.save(buf)
+	frappe.response["filename"] = "rooming-list-template.xlsx"
+	frappe.response["filecontent"] = buf.getvalue()
+	frappe.response["type"] = "binary"
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def create_group_with_rooming_list(property: str, group_name: str,
+                                   check_in_date: str, check_out_date: str,
+                                   blocks, guests=None,
+                                   phone: str | None = None,
+                                   company: str | None = None,
+                                   group_type: str | None = None,
+                                   cutoff_date: str | None = None,
+                                   master_index: int | None = None,
+                                   master_pays: str | None = None,
+                                   attrition_pct: float = 0,
+                                   deposit_due: float = 0,
+                                   quotation_only: int = 0):
+	"""The desk's group flow: group -> room blocks -> rooming list ->
+	reservations. A Confirmed group holds `blocks` ([{room_type,
+	rooms_blocked, block_rate, nightly_counts}]) off sale - nightly_counts
+	({"YYYY-MM-DD": rooms}) when the number differs night to night, and
+	block_rate the negotiated rate its rooms are billed. Each `guests` row
+	({room_type, guest_name, phone, others, check_in_date, check_out_date})
+	is booked now against that hold, on the group's dates or its own nights
+	inside them. Blocked rooms with no guest stay held until the cutoff.
+
+	`master_index` is the guests row whose room pays `master_pays` for the
+	group (omit both, or pass `company`, for a company-paid group).
+	`quotation_only` saves an Open group (a proposal): nothing is held or
+	booked until the block is confirmed. Everything is checked before the
+	group is made, so a refusal leaves nothing behind."""
+	import json as _json
+
+	from kamra.booking_refs import resolve_room_type
+	from kamra.folio import COMPANY_BILLING_DEFAULTS
+	from kamra.group_blocks import group_nights, parse_nightly
+
+	blocks = frappe.parse_json(blocks) if isinstance(blocks, str) else (blocks or [])
+	guests = frappe.parse_json(guests) if isinstance(guests, str) else (guests or [])
+	quote_only = bool(cint(quotation_only))
+	if quote_only:
+		guests = []
+	if getdate(check_in_date) < getdate(nowdate()):
+		frappe.throw(_("Check-in {0} has already passed. Pick today or a later date.")
+		             .format(check_in_date))
+	if getdate(check_out_date) <= getdate(check_in_date):
+		frappe.throw(_("Departure must be after arrival."))
+	if master_pays and master_pays not in COMPANY_BILLING_DEFAULTS:
+		frappe.throw(_("master_pays must be one of: {0}").format(
+			", ".join(COMPANY_BILLING_DEFAULTS)))
+	if not 0 <= flt(attrition_pct) <= 100:
+		frappe.throw(_("Allowed shortfall must be between 0 and 100%."))
+
+	nights = group_nights(check_in_date, check_out_date)
+	counts: dict[str, dict[str, int]] = {}  # room type -> night -> rooms
+	rates: dict[str, float] = {}
+	for b in blocks:
+		rt = resolve_room_type(property, b.get("room_type"))
+		flat = cint(b.get("rooms_blocked"))
+		nightly = parse_nightly(b.get("nightly_counts") or b.get("nightly"))
+		row = counts.setdefault(rt, {d: 0 for d in nights})
+		for d in nights:
+			row[d] += nightly.get(d, flat) if nightly else flat
+		if flt(b.get("block_rate")) > 0:
+			rates[rt] = flt(b.get("block_rate"))
+	counts = {rt: c for rt, c in counts.items() if any(c.values())}
+	if not counts:
+		frappe.throw(_("Block at least one room."))
+	if rates and not _can_set_rate():
+		frappe.throw(_("Only a Revenue Manager or Hotel Admin can set a group rate."),
+		             frappe.PermissionError)
+
+	short = []
+	for rt, by_night in (counts.items() if not quote_only else []):
+		if len(set(by_night.values())) == 1:
+			n = by_night[nights[0]]
+			free = len(available_rooms(property, rt, check_in_date, check_out_date))
+			if free < n:
+				short.append(_("{0}: {1} blocked, {2} free").format(rt, n, free))
+			continue
+		for d, n in by_night.items():
+			free = len(available_rooms(property, rt, d, str(add_days(d, 1)))) if n else 0
+			if free < n:
+				short.append(_("{0} on {1}: {2} blocked, {3} free").format(rt, d, n, free))
+	if short:
+		frappe.throw(_("Not enough rooms for these dates. {0}").format("; ".join(short)))
+
+	used: dict[str, dict[str, int]] = {rt: {d: 0 for d in nights} for rt in counts}
+	for gst in guests:
+		gst["room_type"] = resolve_room_type(property, gst.get("room_type"))
+		if not (gst.get("guest_name") or "").strip():
+			frappe.throw(_("Every rooming list row needs a guest name."))
+		gci = str(getdate(gst.get("check_in_date") or check_in_date))
+		gco = str(getdate(gst.get("check_out_date") or check_out_date))
+		if not (getdate(check_in_date) <= getdate(gci) < getdate(gco) <= getdate(check_out_date)):
+			frappe.throw(_("{0}: the stay must be inside the group's dates.").format(gst["guest_name"]))
+		gst["check_in_date"], gst["check_out_date"] = gci, gco
+		if gst["room_type"] not in counts:
+			frappe.throw(_("No rooms blocked for {0}.").format(gst["room_type"]))
+		for d in group_nights(gci, gco):
+			used[gst["room_type"]][d] += 1
+			if used[gst["room_type"]][d] > counts[gst["room_type"]][d]:
+				frappe.throw(_("More guests than blocked rooms for {0} on {1}.")
+				             .format(gst["room_type"], d))
+	with_master = not company and (master_index is not None or bool(master_pays))
+	if with_master and not guests and not quote_only:
+		frappe.throw(_("Name the main room's guest in the rooming list."))
+
+	blocked = {rt: max(c.values()) for rt, c in counts.items()}
+	group = frappe.get_doc({
+		"doctype": "Group Booking",
+		"property": property,
+		"group_name": group_name,
+		"company": company or None,
+		"group_type": group_type or None,
+		"check_in_date": check_in_date,
+		"check_out_date": check_out_date,
+		"cutoff_date": cutoff_date or None,
+		"attrition_pct": flt(attrition_pct),
+		"deposit_due": flt(deposit_due),
+		"status": "Open" if quote_only else "Confirmed",
+		"blocks": [{
+			"room_type": rt, "rooms_blocked": blocked[rt],
+			"block_rate": rates.get(rt, 0),
+			"nightly_counts": _json.dumps(c) if len(set(c.values())) > 1 else None,
+		} for rt, c in counts.items()],
+	}).insert(ignore_permissions=False)
+
+	created, skipped, warnings = [], [], []
+	main = None
+	for i, gst in enumerate(guests):
+		others = split_names(gst.get("others"))
+		capacity = cint(frappe.get_cached_value("Room Type", gst["room_type"], "adults_capacity")) or 2
+		name = gst["guest_name"].strip()
+		row_phone = gst.get("phone") or (phone if i == cint(master_index) else None)
+		sp = f"kamra_group_guest_{i}"
+		frappe.db.savepoint(sp)
+		try:
+			res = create_booking(
+				property=property, room_type=gst["room_type"],
+				check_in_date=gst["check_in_date"], check_out_date=gst["check_out_date"],
+				guest_name=name, phone=row_phone,
+				guest=_guest_for_row(name, row_phone, property),
+				# the guest and the others named with them, as far as the room sleeps
+				adults=cint(gst.get("adults")) or min(1 + len(others), capacity),
+				children=cint(gst.get("children")),
+				booking_type="Corporate" if company else "Group",
+				company=company, group_booking=group.name, source="Manual")
+		except Exception as e:
+			frappe.db.rollback(save_point=sp)
+			frappe.clear_messages()
+			skipped.append({"room_type": gst["room_type"], "guest_name": name, "reason": str(e)})
+			continue
+		created.append(res["reservation"])
+		if main is None and i >= cint(master_index):
+			main = res["reservation"]
+		if others:
+			# the room is booked: a failure here is a note, not a skipped room
+			sp_names = f"kamra_group_names_{i}"
+			frappe.db.savepoint(sp_names)
+			try:
+				add_occupant_names(res["reservation"], others)
+			except Exception as e:
+				frappe.db.rollback(save_point=sp_names)
+				frappe.clear_messages()
+				warnings.append({"reservation": res["reservation"], "guest_name": name,
+				                 "reason": str(e)})
+
+	if with_master and created:
+		group.db_set({"master_reservation": main or created[0],
+		              "master_pays": master_pays or "Room only"})
+	elif with_master and quote_only:
+		group.db_set("master_pays", master_pays or "Room only")
+	from kamra.savings import log_action
+	log_action("group_created", "Group Booking", group.name, property,
+	           rationale=(f"{group_name}: quotation for {sum(blocked.values())} rooms"
+	                      if quote_only else
+	                      f"{group_name}: {sum(blocked.values())} rooms blocked, "
+	                      f"{len(created)} named on the rooming list"),
+	           channel=agent_channel() or "Desk")
+	return {"group_booking": group.name, "status": group.status,
+	        "created": created, "skipped": skipped, "warnings": warnings,
+	        "blocked": sum(blocked.values()),
+	        "held": 0 if quote_only else max(0, sum(blocked.values()) - len(created)),
+	        "cutoff_date": str(group.cutoff_date or ""),
 	        "master_reservation": group.get("master_reservation")}
 
 
@@ -6960,12 +7287,184 @@ def verify_cashier_pin(property: str, pin: str):
 # MICE: group room blocks + pickup (Group Rooms Control)
 # ---------------------------------------------------------------------------
 
+def _block_prices(property: str, check_in_date: str, check_out_date: str,
+                  blocks) -> dict:
+	"""What a room block costs: per room type, its rooms per night × the
+	night's rate (the group rate when set, else the rate-card price for 2
+	adults, room only) plus room tax. The same numbers drive the booking
+	screen, the group's totals and the quotation."""
+	from decimal import Decimal
+
+	from kamra.booking_refs import resolve_room_type
+	from kamra.group_blocks import group_nights, parse_nightly
+	from kamra.pricing import quote, room_gst_rate
+	nights = group_nights(check_in_date, check_out_date)
+	rows, before, tax, levy = [], 0.0, 0.0, 0.0
+	for b in blocks or []:
+		rt = resolve_room_type(property, b.get("room_type"))
+		nightly = parse_nightly(b.get("nightly_counts") or b.get("nightly"))
+		flat = cint(b.get("rooms_blocked"))
+		counts = {d: nightly.get(d, flat) if nightly else flat for d in nights}
+		if not any(counts.values()):
+			continue
+		rate = flt(b.get("block_rate"))
+		rt_doc = frappe.get_cached_doc("Room Type", rt)
+		try:
+			q = quote(property, rt, check_in_date, check_out_date,
+			          min(2, cint(rt_doc.adults_capacity) or 2), 0, agreed_rate=rate)
+			per = {str(getdate(n["date"])): float(n["rate"]) for n in q["nightly"]}
+			room_total = sum(per.values())
+			# levy and tax per unit of room rate, as the engine worked them out
+			levy_share = flt(q.get("room_levy")) / room_total if room_total else 0
+			tax_share = (flt(q["amount_after_tax"]) - room_total - flt(q.get("room_levy"))) \
+				/ room_total if room_total else 0
+		except frappe.ValidationError:
+			# a closed or restricted date: show the card price, tax at its slab
+			base = rate or flt(rt_doc.base_price)
+			per = {d: base for d in nights}
+			levy_share = 0
+			tax_share = float(room_gst_rate(property, rt_doc, Decimal(str(base)))) / 100
+		row_before = sum(n * per.get(d, 0) for d, n in counts.items())
+		row_tax = row_before * tax_share
+		row_levy = row_before * levy_share
+		room_nights = sum(counts.values())
+		rows.append({
+			"room_type": rt, "room_type_name": rt_doc.room_type_name,
+			"rooms": max(counts.values()), "nightly": counts if nightly else {},
+			"room_nights": room_nights, "group_rate": rate > 0,
+			"rate": round(row_before / room_nights, 2) if room_nights else 0,
+			"before_tax": round(row_before, 2), "tax": round(row_tax, 2),
+			"levy": round(row_levy, 2),
+			"total": round(row_before + row_tax + row_levy, 2),
+		})
+		before += row_before
+		tax += row_tax
+		levy += row_levy
+	return {"rows": rows, "nights": len(nights), "before_tax": round(before, 2),
+	        "tax": round(tax, 2), "levy": round(levy, 2),
+	        "total": round(before + tax + levy, 2)}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
+def group_price_preview(property: str, check_in_date: str, check_out_date: str,
+                        blocks):
+	"""The price of a block before it is booked (New group booking)."""
+	from kamra.crs import assert_property_access
+	assert_property_access(property)
+	blocks = frappe.parse_json(blocks) if isinstance(blocks, str) else blocks
+	return {**_block_prices(property, check_in_date, check_out_date, blocks),
+	        "can_set_rate": _can_set_rate()}
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Revenue Manager", "Hotel Admin", "Kamra Agent")
+def group_quotation(group_booking: str):
+	"""The group's quotation / proforma: the hotel, the group, its rooms per
+	type and night with the rate and tax, the total, the deposit asked and
+	the terms (cutoff, allowed shortfall, who pays). Nothing is posted."""
+	from kamra.crs import assert_property_access
+	from kamra.group_blocks import effective_cutoff
+	gb = frappe.get_doc("Group Booking", group_booking)
+	assert_property_access(gb.property)
+	prop = frappe.get_doc("Property", gb.property)
+	from kamra.localization import pack_for
+	ctx = pack_for(gb.property).invoice_context(prop) or {}
+	prices = _block_prices(gb.property, str(gb.check_in_date), str(gb.check_out_date), [
+		{"room_type": b.room_type, "rooms_blocked": b.rooms_blocked,
+		 "block_rate": b.block_rate, "nightly_counts": b.get("nightly_counts")}
+		for b in gb.blocks])
+	contact = None
+	if gb.get("master_reservation"):
+		contact = frappe.db.get_value("Reservation", gb.master_reservation, "guest_name")
+	return {
+		"property": {
+			"property_name": prop.property_name, "logo_url": prop.get("logo_url"),
+			"address": ", ".join(x for x in (prop.get("address_line"), prop.get("city"),
+			                                 prop.get("state"), prop.get("pincode")) if x),
+			"phone": prop.get("phone"), "email": prop.get("email"),
+			"website": prop.get("website"), "tax_id": prop.get("gstin"),
+			"tax_id_label": ctx.get("tax_id_label") or "Tax ID",
+			"tax_label": ctx.get("tax_label") or "Tax",
+			"currency": prop.get("currency"),
+		},
+		"group": {
+			"name": gb.name, "group_name": gb.group_name, "group_type": gb.get("group_type"),
+			"status": gb.status, "company": gb.company and frappe.db.get_value(
+				"Corporate Account", gb.company, "company_name") or gb.company,
+			"contact": contact, "master_pays": gb.get("master_pays"),
+			"check_in_date": str(gb.check_in_date), "check_out_date": str(gb.check_out_date),
+			"cutoff_date": str(effective_cutoff(gb.cutoff_date, gb.check_in_date)),
+			"attrition_pct": flt(gb.get("attrition_pct")),
+			"deposit_due": flt(gb.get("deposit_due")),
+		},
+		"prices": prices,
+		"issued_on": nowdate(),
+	}
+
+
+def _group_money(gb, prices: dict, rooming: list) -> dict:
+	"""The group's room money: what the block is worth, what the named
+	rooms are booked at, the advance on the group bill, everything paid so
+	far on the group's bills, and what is still to pay - the open balances
+	on those bills, plus the booked room nights not charged yet."""
+	live = [r for r in rooming if r.status in ("Confirmed", "Checked In", "Checked Out")]
+	booked = sum(flt(r.amount_after_tax) for r in live)
+	group_folios = frappe.get_all(
+		"Folio", filters={"group_booking": gb.name, "folio_type": "Group"},
+		fields=["name", "payments_total", "balance"])
+	member_folios = frappe.get_all(
+		"Folio", filters={"reservation": ("in", [r.name for r in live] or [""]),
+		                  "folio_type": ("!=", "Group")},
+		fields=["name", "payments_total", "balance"])
+	folios = [f.name for f in group_folios + member_folios]
+	posted = flt(frappe.db.sql(
+		"""SELECT COALESCE(SUM(total), 0) FROM `tabFolio Charge`
+		   WHERE parent IN %(f)s AND charge_type IN ('Room', 'Meal Plan', 'Room Levy', 'Extra Guests')""",
+		{"f": folios or [""]})[0][0])
+	open_balances = sum(flt(f.balance) for f in group_folios + member_folios)
+	# the advance alone: a settlement on the same bill is not a deposit
+	deposits = flt(frappe.db.sql(
+		"""SELECT COALESCE(SUM(amount), 0) FROM `tabFolio Payment`
+		   WHERE parent IN %(f)s AND payment_kind = 'Advance'""",
+		{"f": [f.name for f in group_folios] or [""]})[0][0])
+	paid = sum(flt(f.payments_total) for f in group_folios + member_folios)
+	return {"block_value": prices["total"], "booked": round(booked, 2),
+	        "deposits": round(deposits, 2), "paid": round(paid, 2),
+	        "deposit_due": flt(gb.get("deposit_due")),
+	        "due": round(max(0.0, open_balances + max(0.0, booked - posted)), 2)}
+
+
+def _group_attrition(gb, prices: dict) -> dict:
+	"""How much of the block the group has picked up, in room-nights, and
+	the fee its allowed shortfall (attrition %) permits for the rest."""
+	from kamra.group_blocks import effective_cutoff, unpicked_by_night
+	blocked = sum(r["room_nights"] for r in prices["rows"])
+	held = sum(sum(unpicked_by_night(gb.name, r["room_type"]).values())
+	           for r in prices["rows"])
+	picked = max(0, blocked - held)
+	allowed = flt(gb.get("attrition_pct"))
+	short = max(0.0, blocked * (1 - allowed / 100) - picked)
+	per_rn = prices["total"] / blocked if blocked else 0
+	days = (effective_cutoff(gb.cutoff_date, gb.check_in_date) - getdate(nowdate())).days
+	pct = round(picked / blocked * 100, 1) if blocked else 100.0
+	return {"blocked_room_nights": blocked, "picked_room_nights": picked,
+	        "pickup_pct": pct, "allowed_pct": allowed,
+	        "shortfall_room_nights": round(short, 1),
+	        "fee_estimate": round(short * per_rn, 2),
+	        "days_to_cutoff": days,
+	        # a warning matters until the group arrives, not after it has stayed
+	        "warn": bool(blocked) and gb.status == "Confirmed"
+	        and getdate(nowdate()) <= getdate(gb.check_in_date)
+	        and pct < 100 - allowed and days <= 7}
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
 def group_detail(group_booking: str):
 	"""Everything Group Rooms Control needs: the block, per-type pickup,
 	the rooming list, the tied event and the master folio."""
-	from kamra.group_blocks import effective_cutoff
+	from kamra.group_blocks import _unpicked, effective_cutoff, parse_nightly
 	gb = frappe.get_doc("Group Booking", group_booking)
 	released_on = frappe.db.get_value("Group Booking", gb.name, "released_on") \
 		if frappe.db.has_column("Group Booking", "released_on") else None
@@ -6973,29 +7472,51 @@ def group_detail(group_booking: str):
 	for b in gb.blocks:
 		picked = frappe.db.count("Reservation", {
 			"group_booking": gb.name, "room_type": b.room_type,
-			"status": ("in", ["Confirmed", "Checked In"])})
+			"status": ("in", ["Confirmed", "Checked In", "Checked Out"])})
 		pickup.append({
 			"room_type": b.room_type,
 			"rooms_blocked": b.rooms_blocked,
 			"block_rate": b.block_rate,
+			"nightly_counts": parse_nightly(b.get("nightly_counts")),
 			"picked_up": picked,
-			"remaining": max(0, int(b.rooms_blocked) - picked),
-			"rooms_released": int(frappe.db.get_value(
-				"Group Room Block", b.name, "rooms_released") or 0)
-			if released_on else 0,
+			"remaining": _unpicked(gb.name, b.room_type),
+			"rooms_released": int(b.get("rooms_released") or 0) if released_on else 0,
 		})
+	prices = _block_prices(gb.property, str(gb.check_in_date), str(gb.check_out_date), [
+		{"room_type": b.room_type, "rooms_blocked": b.rooms_blocked,
+		 "block_rate": b.block_rate, "nightly_counts": b.get("nightly_counts")}
+		for b in gb.blocks])
 	rooming = frappe.get_all(
 		"Reservation",
 		filters={"group_booking": gb.name},
-		fields=["name", "guest_name", "room_type", "room", "status",
-		        "check_in_date", "check_out_date", "pays_own_charges"],
+		fields=["name", "guest", "guest_name", "room_type", "room", "status",
+		        "check_in_date", "check_out_date", "pays_own_charges", "amount_after_tax"],
 		order_by="creation asc")
 	numbers = dict(frappe.get_all(
 		"Room", filters={"name": ("in", [r.room for r in rooming if r.room])},
 		fields=["name", "room_number"], as_list=True)) if rooming else {}
+	phones = dict(frappe.get_all(
+		"Guest", filters={"name": ("in", [r.guest for r in rooming] or [""])},
+		fields=["name", "phone"], as_list=True))
+	# each room's own bill (extras, and the room when it pays its own):
+	# what that guest still owes at check-out
+	own = {}
+	for f in frappe.get_all("Folio", filters={
+			"reservation": ("in", [r.name for r in rooming] or [""]),
+			"folio_type": ("!=", "Group")}, fields=["reservation", "balance"]):
+		own[f.reservation] = own.get(f.reservation, 0) + flt(f.balance)
+	type_names = dict(frappe.get_all(
+		"Room Type", filters={"property": gb.property},
+		fields=["name", "room_type_name"], as_list=True))
+	for p in pickup:
+		p["room_type_name"] = type_names.get(p["room_type"], p["room_type"])
 	for r in rooming:
 		r["room_number"] = numbers.get(r.room)
 		r["is_master"] = r.name == gb.get("master_reservation")
+		r["phone"] = phones.get(r.guest)
+		r["room_type_name"] = type_names.get(r.room_type, r.room_type)
+		r["own_balance"] = round(own.get(r.name, 0), 2)
+		r["amount"] = flt(r.amount_after_tax)
 	event = None
 	if gb.get("event"):
 		event = frappe.db.get_value(
@@ -7025,14 +7546,217 @@ def group_detail(group_booking: str):
 			and effective_cutoff(gb.cutoff_date, gb.check_in_date)
 			>= getdate(nowdate()),
 			"notes": gb.notes,
+			"attrition_pct": flt(gb.get("attrition_pct")),
+			"deposit_due": flt(gb.get("deposit_due")),
 		},
 		"pickup": pickup,
+		"money": _group_money(gb, prices, rooming),
+		"attrition": _group_attrition(gb, prices),
+		"room_types": [{"name": k, "room_type_name": v} for k, v in type_names.items()],
+		"can_set_rate": _can_set_rate(),
 		"rooming_list": rooming,
 		"event": event,
 		"master_folio": master,
 		"master_folio_status": bill.status if bill else None,
 		"master_folio_balance": round(flt(bill.balance), 2) if bill else 0,
 	}
+
+
+def _group_rooms(group_booking: str, reservations, statuses: tuple) -> list:
+	"""The group's reservations in `statuses`: the ones picked on the
+	rooming list, or every room when nothing is picked."""
+	from kamra.crs import assert_property_access
+	assert_property_access(
+		frappe.db.get_value("Group Booking", group_booking, "property"))
+	if isinstance(reservations, str):
+		reservations = json.loads(reservations) if reservations.strip() else []
+	filters = {"group_booking": group_booking, "status": ("in", statuses)}
+	if reservations:
+		filters["name"] = ("in", list(reservations))
+	return frappe.get_all(
+		"Reservation", filters=filters,
+		fields=["name", "room", "status", "check_in_date", "check_out_date"],
+		order_by="creation asc")
+
+
+def _each_room(rows: list, fn) -> dict:
+	"""Run `fn` on every room in its own savepoint, so one bad room is
+	rolled back and reported without stopping the rest."""
+	results = []
+	for i, r in enumerate(rows):
+		sp = f"kamra_group_room_{i}"
+		frappe.db.savepoint(sp)
+		try:
+			results.append({"reservation": r.name, **(fn(r) or {})})
+		except Exception as e:
+			frappe.db.rollback(save_point=sp)
+			frappe.clear_messages()
+			results.append({"reservation": r.name, "error": str(e)})
+	return {"results": results}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def set_rooming_names(group_booking: str, names):
+	"""Name the rooms of a group from the rooming list.
+	`names` = [{"reservation": ..., "guest_name": ..., "phone": ...}, ...].
+	Each named room gets its own guest profile (an existing one when the
+	phone matches) and its open guest folio follows. Rows left blank or
+	unchanged are skipped."""
+	if isinstance(names, str):
+		names = json.loads(names)
+	wanted = {n.get("reservation"): n for n in names if n.get("reservation")}
+	rows = _group_rooms(group_booking, list(wanted) or ["-"],
+	                    ("Confirmed", "Checked In"))
+
+	def rename(r):
+		row = wanted[r.name]
+		guest_name = (row.get("guest_name") or "").strip()
+		phone = (row.get("phone") or "").strip() or None
+		res = frappe.get_doc("Reservation", r.name)
+		current_phone = frappe.db.get_value("Guest", res.guest, "phone")
+		if not guest_name or (guest_name == res.guest_name
+		                      and (not phone or phone == current_phone)):
+			return {"unchanged": 1}
+		guest = _guest_for_row(guest_name, phone, res.property)
+		res.guest = guest
+		res.guest_name = frappe.db.get_value("Guest", guest, "full_name")
+		res.save()
+		for folio in frappe.get_all(
+				"Folio", filters={"reservation": res.name, "folio_type": "Guest",
+				                  "status": "Open"}, pluck="name"):
+			frappe.db.set_value("Folio", folio,
+			                    {"guest": guest, "guest_name": res.guest_name})
+		return {"guest": guest, "guest_name": res.guest_name}
+
+	return _each_room(rows, rename)
+
+
+def _assign_free_room(reservation: str) -> str | None:
+	"""Put a confirmed stay with no room number into a free room of its
+	type (the group's own held rooms count as free for it). An arrival due
+	today only gets a room nobody is still checked in to."""
+	res = frappe.get_doc("Reservation", reservation)
+	if res.room:
+		return res.room
+	free = available_rooms(
+		res.property, res.room_type, str(res.check_in_date),
+		str(res.check_out_date), group_booking=res.get("group_booking"),
+		ready_now=1)
+	if not free:
+		return None
+	res.room = free[0]["name"]
+	res.save()
+	return res.room
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def group_assign_rooms(group_booking: str, reservations=None):
+	"""Give every confirmed room of the group that has no room number a
+	free room of its type (the picked ones, or all)."""
+	def one(r):
+		if r.room:
+			return {"unchanged": 1}
+		room = _assign_free_room(r.name)
+		if not room:
+			return {"skipped": "No free room of this type"}
+		return {"assigned": 1,
+		        "room_number": frappe.db.get_value("Room", room, "room_number")}
+
+	return _each_room(
+		_group_rooms(group_booking, reservations, ("Confirmed",)), one)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def group_cancel(group_booking: str, reservations=None,
+                 reason: str = "Guest request", waive_fee: int = 0):
+	"""Cancel the group's confirmed rooms (the picked ones, or all), each
+	under the cancellation policy. When no active room is left the group
+	itself is marked Cancelled - unless nothing was cancelled here, or a
+	room has already stayed."""
+	out = _each_room(
+		_group_rooms(group_booking, reservations, ("Confirmed",)),
+		lambda r: {"cancelled": 1, **(cancel_reservation(
+			r.name, reason=reason, waive_fee=cint(waive_fee)) or {})})
+	if any(x.get("cancelled") for x in out["results"]) and not frappe.db.exists(
+			"Reservation", {"group_booking": group_booking,
+			                "status": ("in", ["Confirmed", "Checked In", "Checked Out"])}):
+		frappe.db.set_value("Group Booking", group_booking, "status", "Cancelled")
+	return out
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Kamra Agent")
+def group_amend_dates(group_booking: str, check_in_date: str,
+                      check_out_date: str, reservations=None,
+                      confirm_price: int = 0):
+	"""Move the group's rooms (the picked ones, or all) to new dates. Each
+	stay is re-quoted as amend_stay does, so pass confirm_price=1 once the
+	desk has accepted that prices may change. A guest on their own nights
+	keeps them relative to the group's arrival, inside the new dates.
+
+	When every room moved, the group moves too: its rooms per night shift
+	with it, and the rooms it still holds must be free on the new dates, or
+	the whole change is refused."""
+	import json as _json
+
+	from kamra.group_blocks import _unpicked, effective_cutoff, group_nights, parse_nightly
+	gb = frappe.get_doc("Group Booking", group_booking)
+	old_ci, old_co = getdate(gb.check_in_date), getdate(gb.check_out_date)
+	new_ci, new_co = getdate(check_in_date), getdate(check_out_date)
+	if new_co <= new_ci:
+		frappe.throw(_("Departure must be after arrival."))
+	shift = (new_ci - old_ci).days
+	statuses = ("Confirmed", "Checked In")
+
+	def one(r):
+		ci, co = getdate(r.check_in_date), getdate(r.check_out_date)
+		if (ci, co) == (old_ci, old_co):
+			ci, co = new_ci, new_co
+		else:
+			ci = max(getdate(add_days(ci, shift)), new_ci)
+			co = min(getdate(add_days(co, shift)), new_co)
+			if ci >= co:
+				frappe.throw(_("This guest's own nights fall outside the new dates."))
+		return {"amended": 1, **(amend_stay(
+			r.name, str(ci), str(co), confirm_price=cint(confirm_price)) or {})}
+
+	sp = "kamra_group_amend"
+	frappe.db.savepoint(sp)
+	every_room = {r.name for r in _group_rooms(group_booking, None, statuses)}
+	out = _each_room(_group_rooms(group_booking, reservations, statuses), one)
+	if not every_room <= {x["reservation"] for x in out["results"] if x.get("amended")}:
+		return out
+
+	old_nights = group_nights(old_ci, old_co)
+	new_nights = group_nights(new_ci, new_co)
+	for b in gb.blocks:
+		nightly = parse_nightly(b.get("nightly_counts"))
+		if nightly:
+			by_position = [nightly.get(d, b.rooms_blocked) for d in old_nights]
+			moved = {d: by_position[i] if i < len(by_position) else b.rooms_blocked
+			         for i, d in enumerate(new_nights)}
+			b.nightly_counts = _json.dumps(moved)
+			b.rooms_blocked = max(moved.values())
+	gb.check_in_date, gb.check_out_date = str(new_ci), str(new_co)
+	gb.save()
+	if gb.status == "Confirmed" and not gb.get("released_on") \
+			and effective_cutoff(gb.cutoff_date, new_ci) >= getdate(nowdate()):
+		short = []
+		for b in gb.blocks:
+			held = _unpicked(gb.name, b.room_type)
+			free = len(available_rooms(gb.property, b.room_type, str(new_ci), str(new_co),
+			                           group_booking=gb.name)) if held else 0
+			if held > free:
+				short.append(_("{0}: {1} kept, {2} free").format(b.room_type, held, free))
+		if short:
+			frappe.db.rollback(save_point=sp)
+			frappe.clear_messages()
+			frappe.throw(_("The rooms kept for this group are not free on those dates. {0}")
+			             .format("; ".join(short)))
+	return out
 
 
 @frappe.whitelist(methods=["POST"])
@@ -7083,28 +7807,54 @@ def group_check_in(group_booking: str, reservations=None):
 		checked_in.append({"reservation": a.name, "guest_name": a.guest_name,
 		                   "room": out.get("room"), "keys": out.get("keys"),
 		                   "pending": [p["title"] for p in pending]})
+	# the same rows in the per-room shape the other group actions return
+	results = [{"reservation": x["reservation"], "checked_in": 1} for x in checked_in] \
+		+ [{"reservation": x["reservation"], "skipped": x["reason"]} for x in skipped]
 	return {"checked_in": checked_in, "skipped": skipped, "to_finish": to_finish,
-	        "business_date": today}
+	        "business_date": today, "results": results}
 
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Revenue Manager", "Kamra Agent")
 def save_group_blocks(group_booking: str, blocks, cutoff_date: str | None = None,
-                      status: str | None = None):
-	"""Set the room block (list of {room_type, rooms_blocked, block_rate})
-	and optionally the cutoff/status. Confirmed blocks hold inventory."""
+                      status: str | None = None, attrition_pct: float | None = None,
+                      deposit_due: float | None = None):
+	"""Set the room block (list of {room_type, rooms_blocked, block_rate,
+	nightly_counts}) and optionally the cutoff/status, allowed shortfall %
+	and deposit due. Confirmed blocks hold inventory. A row sent without
+	nightly_counts keeps its rooms per night while its Rooms Blocked is
+	unchanged; a new Rooms Blocked makes every night that number."""
+	import json as _json
+
+	from kamra.group_blocks import parse_nightly
 	if isinstance(blocks, str):
 		blocks = frappe.parse_json(blocks)
 	gb = frappe.get_doc("Group Booking", group_booking)
+	before = {b.room_type: b for b in gb.blocks}
 	gb.blocks = []
 	for b in blocks or []:
 		if not b.get("room_type") or not int(b.get("rooms_blocked") or 0):
 			continue
+		was = before.get(b["room_type"])
+		if flt(b.get("block_rate")) != flt(was.block_rate if was else 0) and not _can_set_rate():
+			# the block rate is billed, so changing it is a rate decision
+			frappe.throw(_("Only a Revenue Manager or Hotel Admin can change a group rate."),
+			             frappe.PermissionError)
+		nightly = parse_nightly(b.get("nightly_counts"))
+		old = before.get(b["room_type"])
+		if not nightly and old and old.get("nightly_counts") \
+				and int(old.rooms_blocked) == int(b["rooms_blocked"]):
+			nightly = parse_nightly(old.nightly_counts)
 		gb.append("blocks", {
 			"room_type": b["room_type"],
-			"rooms_blocked": int(b["rooms_blocked"]),
+			"rooms_blocked": max(nightly.values()) if nightly else int(b["rooms_blocked"]),
 			"block_rate": float(b.get("block_rate") or 0),
+			"nightly_counts": _json.dumps(nightly) if nightly else None,
 		})
+	if attrition_pct is not None:
+		gb.attrition_pct = flt(attrition_pct)
+	if deposit_due is not None:
+		gb.deposit_due = flt(deposit_due)
 	if cutoff_date is not None:
 		gb.cutoff_date = cutoff_date or None
 		# a cutoff pushed back into the future re-opens a released block:
@@ -7167,6 +7917,9 @@ def create_group_block(property: str, group_name: str, check_in_date: str,
 	agent turns "30 rooms + a 200-pax wedding on Dec 12" into a proposal."""
 	if isinstance(blocks, str):
 		blocks = frappe.parse_json(blocks)
+	if any(flt(b.get("block_rate")) > 0 for b in blocks or []) and not _can_set_rate():
+		frappe.throw(_("Only a Revenue Manager or Hotel Admin can set a group rate."),
+		             frappe.PermissionError)
 	gb = frappe.get_doc({
 		"doctype": "Group Booking",
 		"property": property,
