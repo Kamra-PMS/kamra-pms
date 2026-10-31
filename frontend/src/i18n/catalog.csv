@@ -2756,6 +2756,7 @@ House Rules:,House Rules:,قواعد الفندق:,Reglas del alojamiento:,scree
 House use,House use,استخدام داخلي,Uso interno,,,translated
 House Use,House Use,استخدام الفندق,Uso interno,,,translated
 Housekeeping,Housekeeping,التدبير المنزلي,Limpieza,screens/Dashboard.tsx; screens/HkApp.tsx; screens/Today.tsx,,translated
+Housekeeping Board,Housekeeping Board,,,screens/HousekeepingBoard.tsx,,needs_translation
 Housekeeping has your laundry pickup - they'll be by shortly.,Housekeeping has your laundry pickup - they'll be by shortly.,استلم التدبير المنزلي طلب الغسيل، وسيصلون قريبا.,Limpieza recibió su solicitud de lavandería y pasará a recogerla en breve.,screens/laundry/GuestLaundryCard.tsx,,translated
 Housekeeping pack,Housekeeping pack,حزمة التدبير المنزلي,Paquete de Limpieza,,,translated
 Housekeeping status,Housekeeping status,حالة التدبير المنزلي,Estado de limpieza,components/RoomDrawer.tsx,,translated
@@ -4854,7 +4855,7 @@ Room block,Room block,كتلة الغرف,Bloqueo de habitaciones,,,translated
 Room Block,Room Block,كتلة غرف,Bloqueo de habitación,,,translated
 Room Blocks,Room Blocks,حجب الغرف,Bloqueos de habitaciones,components/RoomDrawer.tsx,,translated
 Room board,Room board,لوحة الغرف,Panel de habitaciones,screens/Today.tsx,,translated
-Room Board,Room Board,لوحة الغرف,Panel de habitaciones,screens/HousekeepingBoard.tsx,,translated
+Room Board,Room Board,لوحة الغرف,Panel de habitaciones,screens/Rooms.tsx,,translated
 "Room board shows Occupied, no guest in house","Room board shows Occupied, no guest in house",اللوحة تظهر الغرفة مشغولة ولا نزيل مقيم,"Habitación marcada como ocupada en el panel, sin huésped alojado",,,translated
 room change,room change,تغيير الغرفة,cambio de habitación,,,translated
 Room charges (with tax),Room charges (with tax),,,components/GroupControl.tsx,,needs_translation
@@ -4918,7 +4919,7 @@ Room types and rates,Room types and rates,أنواع الغرف والأسعار
 Room-nights,Room-nights,,,components/GroupBookingDialog.tsx; screens/GroupQuotation.tsx,,needs_translation
 Room…,Room…,غرفة…,Habitación…,screens/HkLaundry.tsx; screens/Laundry.tsx; screens/POS.tsx,,translated
 Rooming list (,Rooming list (,قائمة نزلاء المجموعة (,Lista de huéspedes del grupo (,,,translated
-Rooms,Rooms,الغرف,Habitaciones,../../kamra/onboarding.py; components/BookingDialog.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; screens/GroupQuotation.tsx; screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/Owner.tsx; screens/Rooms.tsx,,translated
+Rooms,Rooms,الغرف,Habitaciones,../../kamra/onboarding.py; components/BookingDialog.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; screens/GroupQuotation.tsx; screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/Owner.tsx,,translated
 Rooms · takeaway · delivery,Rooms · takeaway · delivery,الغرف · سفري · توصيل,Habitaciones · para llevar · entrega a domicilio,screens/POS.tsx,,translated
 Rooms (net of discounts),Rooms (net of discounts),الغرف (صافي الخصومات),Habitaciones (neto de descuentos),,,translated
 Rooms × dates with live rates,Rooms × dates with live rates,الغرف × التواريخ بأسعار مباشرة,Habitaciones por fecha con tarifas actuales,,,translated
