@@ -61,8 +61,9 @@ class PublicBookingTestCase(IntegrationTestCase):
 		from kamra.www.kamra import _with_meta
 
 		frappe.db.set_value("Property", self.property, {"meta_title": "Sea View Inn",
-			"meta_description": "Rooms <b>by</b> the sea.", "og_image": "/files/sea.jpg"})
-		shell = '<html><head><meta\n  name="description"\n  content="Kamra" />\n<title>Kamra PMS</title></head></html>'
+			"meta_description": "Rooms <b>by</b> the sea.", "og_image": "/files/sea.jpg",
+			"booking_language": "es"})
+		shell = '<html lang="en"><head><meta\n  name="description"\n  content="Kamra" />\n<title>Kamra PMS</title></head></html>'
 		from kamra.booking_slugs import slugify
 		frappe.form_dict.property = slugify(frappe.db.get_value("Property", self.property, "property_name"))
 		try:
@@ -74,5 +75,8 @@ class PublicBookingTestCase(IntegrationTestCase):
 		self.assertIn("&lt;b&gt;by&lt;/b&gt;", page)  # escaped, never raw HTML
 		self.assertNotIn('content="Kamra"', page)
 		self.assertNotIn("noindex", page)
+		self.assertIn('<html lang="es">', page)
+		from kamra.public_api import _public_locale
+		self.assertEqual(_public_locale(self.property)["default_language"], "es")
 		self.assertIn("noindex", _with_meta(shell, "/kamra/folio/F-1"))
 		self.assertIn("noindex", _with_meta(shell, "/kamra/checkin/abc"))

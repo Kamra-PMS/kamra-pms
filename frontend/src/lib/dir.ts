@@ -32,8 +32,18 @@ export function langDef(code: string): LangDef {
   return LANGS.find((l) => l.code === code) ?? LANGS[0]
 }
 
+// A guest page's language before the guest picks one: the hotel's booking
+// engine default, else the browser's. Not stored, so a later default applies.
+let guestDefault: Lang | null = null
+
 export const getLang = (): Lang => {
-  const raw = localStorage.getItem(key()) || "en"
+  let raw: string | null = null
+  try {
+    raw = localStorage.getItem(key())
+  } catch {
+    /* private mode */
+  }
+  raw = raw || (key() === "kamra-guest-lang" ? guestDefault : null) || "en"
   return codes.has(raw) ? raw : "en"
 }
 
@@ -52,16 +62,20 @@ export function setLang(l: Lang) {
   window.dispatchEvent(new Event("kamra:lang"))
 }
 
-/** Public guest pages follow the browser language until the guest chooses. */
-export function adoptBrowserLanguage() {
-  try {
-    if (localStorage.getItem(key())) return
-    const browserLang = navigator.language?.toLowerCase().split("-")[0]
-    if (browserLang && browserLang !== "en" && codes.has(browserLang))
-      setLang(browserLang)
-  } catch {
-    /* private mode - keep the current language */
-  }
+/** Guest pages: the guest's own pick wins; until then the hotel's booking
+ * engine language (`preferred`), else the browser language. */
+export function adoptGuestLanguage(preferred?: string | null) {
+  const browser = navigator.language?.toLowerCase().split("-")[0]
+  const next = [preferred, browser].find((c) => c && codes.has(c)) ?? null
+  if (next === guestDefault) return
+  guestDefault = next
+  syncLang()
+}
+
+/** Re-apply after moving between a guest page and the desk in one tab. */
+export function syncLang() {
+  applyLang(getLang())
+  window.dispatchEvent(new Event("kamra:lang"))
 }
 
 /** Call once at boot. */

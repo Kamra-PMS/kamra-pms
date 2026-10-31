@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react"
 import { call, getCurrentProperty } from "./api"
+import { adoptGuestLanguage } from "./dir"
 
 interface Locale {
   currency_symbol: string
@@ -100,8 +101,10 @@ export function loadLocale(): Promise<Locale> {
 }
 
 /** Public pages carry `ui_locale` in their payload - adopt it directly. */
-export function adoptUiLocale(ui?: { currency_symbol?: string; locale?: string; currency?: string } | null) {
+export function adoptUiLocale(ui?: { currency_symbol?: string; locale?: string; currency?: string; default_language?: string | null } | null) {
   if (!ui) return
+  // guest pages only: the hotel's booking engine language, unless the guest picked one
+  adoptGuestLanguage(ui.default_language)
   cache = {
     ...cache,
     // "" is a valid symbol (generic pack shows bare numbers)

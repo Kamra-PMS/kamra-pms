@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react"
+import { lazy, Suspense, useEffect } from "react"
 import {
   Navigate,
   Outlet,
@@ -13,6 +13,7 @@ const Login = lazy(() => import("./screens/Login"))
 import { useAuth } from "./lib/auth"
 import { t, useT, t as translate, useUILanguage } from "./lib/i18n"
 import { toFullPath } from "./lib/routing"
+import { syncLang } from "./lib/dir"
 const Billing = lazy(() => import("./screens/Billing"))
 const EndOfDay = lazy(() => import("./screens/EndOfDay"))
 const EndOfDayWizard = lazy(() => import("./screens/EndOfDayWizard"))
@@ -152,6 +153,9 @@ function CalendarScreen() {
 
 export default function App() {
   useUILanguage()
+  // guest pages and the desk keep separate languages; re-apply on crossing
+  const { pathname } = useLocation()
+  useEffect(() => syncLang(), [pathname])
   return (
     <ErrorBoundary>
       <ConnectionBanner />

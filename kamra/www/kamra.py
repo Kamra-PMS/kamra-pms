@@ -59,6 +59,8 @@ def _with_meta(html: str, path: str) -> str:
 	meta = _guest_meta(match.group(1))
 	if not meta:  # several hotels and none picked: the page lists them
 		return html
+	if meta.get("lang"):
+		html = re.sub(r'<html lang="[^"]*"', f'<html lang="{escape(meta["lang"])}"', html, count=1)
 	html = re.sub(r"<title>.*?</title>", f"<title>{escape(meta['title'])}</title>", html, count=1, flags=re.S)
 	html = re.sub(r'<meta\s+name="description"[^>]*>', "", html, count=1, flags=re.S)
 	tags = [
@@ -106,4 +108,5 @@ def _guest_meta(slug: str | None) -> dict | None:
 	               or strip_html(prop.get("showcase_description") or "").strip()
 	               or f"Book {prop.property_name}{' in ' + place if place else ''} directly with the hotel.")
 	return {"title": title, "description": " ".join(description.split())[:160],
+	        "lang": prop.get("booking_language"),
 	        "image": prop.get("og_image") or prop.get("hero_image") or prop.get("logo_url")}
