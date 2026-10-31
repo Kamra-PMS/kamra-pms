@@ -34,7 +34,7 @@ import { cur, locale, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
 import { useT, t as translate } from "../lib/i18n"
-import { adoptBrowserLanguage } from "../lib/dir"
+import { adoptGuestLanguage } from "../lib/dir"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
 import { addDays, nightsBetween, parseDate, stayFromParams, todayPlus } from "../lib/stay"
 import ChildAges, {
@@ -459,7 +459,7 @@ function PhotoStrip({ photos, name, onOpen }: {
 
 export default function PublicBooking() {
   const { t, tn, lang } = useT()
-  useEffect(() => adoptBrowserLanguage(), [])
+  useEffect(() => adoptGuestLanguage(), [])
   const params = useParams()
   const navigate = useNavigate()
   const location = useLocation()

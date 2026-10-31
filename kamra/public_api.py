@@ -295,6 +295,7 @@ def _public_locale(property: str) -> dict:
 	return {"currency_symbol": loc.get("currency_symbol") or "",
 	        "locale": loc.get("locale") or "en",
 	        "currency": loc.get("currency") or "",
+	        "default_language": prop.get("booking_language") or None,
 	        **privacy_terms(pack)}
 
 
