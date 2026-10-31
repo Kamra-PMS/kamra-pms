@@ -140,6 +140,15 @@ El paso 11 muestra los informes finales a la izquierda. Elija uno para leerlo y 
 **Imprimir** o **Descargar PDF** (elija *Guardar como PDF* en el cuadro de impresión);
 **Imprimir todo** imprime el paquete completo en A4:
 
+- Informe de auditoría nocturna: el día, el mes en curso y el año en curso uno al
+  lado del otro (noches de habitación, ocupación, habitaciones, ADR, RevPAR,
+  comida, bebida, banquetes, plan de comidas y minibar, otros, total); la comida y
+  la bebida de cada punto de venta; los banquetes; y las cuentas de huéspedes, los
+  anticipos y las cuentas por cobrar a empresas con su saldo anterior, el
+  movimiento del día y el saldo final. La comida y la bebida salen de las cuentas
+  del restaurante, pagadas en el punto de venta o cargadas a una habitación, con
+  las bebidas alcohólicas como bebida. En India el año empieza el 1 de abril. Las
+  auditorías cerradas antes de este informe no tienen copia de él.
 - Resumen gerencial
 - Diario por cajero y código de transacción
 - Resumen por cajero
