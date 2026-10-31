@@ -145,3 +145,14 @@ class AssistantCurrencyTestCase(unittest.TestCase):
 
 	def test_streaming_chat_sends_the_property_currency_to_both_provider_calls(self):
 		self.check_chat_path(streamed=True)
+
+	def test_quote_occupancy_instructions_and_tool_rules(self):
+		"""Ensure the assistant rules explicitly tell the LLM to use `quote`
+		with exact occupancy and prohibit quoting from booking_options base_price."""
+		text = self.prompt("BRL", "R$")
+		self.assertIn("Always call `quote` with the requested dates and exact adult/child occupancy", text)
+		self.assertIn("Never quote prices using the base_price from `booking_options` or `availability`", text)
+
+		tool_desc = assistant.TOOLS["booking_options"][1]
+		self.assertIn("Do not use its base_price to quote stays", tool_desc)
+		self.assertIn("call `quote` for actual pricing", tool_desc)

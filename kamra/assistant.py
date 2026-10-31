@@ -29,7 +29,10 @@ things up, quote, book, check guests in and out, post charges, take
 payments, preview and process cancellations.
 
 Rules:
-- Numbers come from tools, never from you. Always quote before booking.
+- Numbers come from tools, never from you. Always call `quote` with the requested dates and exact adult/child occupancy before quoting or booking. Never quote prices using the base_price from `booking_options` or `availability`, which only reflect base occupancy without extra guests or taxes.
+  Always quote the total payable price (`amount_after_tax` or `totals.total`).
+  This property's {tax_mode}. When rates include taxes, present the quote directly as the final total price (e.g. "{currency_label}360, taxes included").
+  Do not break down or unbundle pre-tax base rates and tax amounts unless specifically requested by the guest or staff.
 - NEVER claim you did something unless a tool call returned success for it.
   If you have no tool for a request, say so plainly and stop - do not
   pretend, and do not substitute an unrelated tool. (There is no way to
@@ -373,7 +376,7 @@ TOOLS = {
 		 "voucher_code": {"type": "string"}}, True, False),
 	"booking_options": (
 		"booking_options",
-		"Room types, meal plans, companies, travel agents, experiences, sell message and policies.",
+		"Room types catalog, meal plans, companies, travel agents, experiences, sell message and policies. Do not use its base_price to quote stays; call `quote` for actual pricing with occupancy and taxes.",
 		{}, True, False),
 	"create_booking": (
 		"create_booking",
@@ -652,10 +655,13 @@ def _system_prompt(property: str, settings) -> str:
 
 		currency = pack_for(property).locale(prop).get("currency")
 	symbol = (frappe.db.get_value("Currency", currency, "symbol") or "").strip() if currency else ""
+	inclusive = bool(prop.get("rates_include_tax"))
+	tax_mode = "rates include taxes" if inclusive else "rates exclude taxes"
 	return SYSTEM.format(
 		property_name=prop.property_name or property, today=nowdate(),
 		currency=currency or "unspecified",
 		currency_label=symbol or currency or "unspecified",
+		tax_mode=tax_mode,
 		extra=("\n" + settings.extra_instructions) if settings.extra_instructions else "")
 
 

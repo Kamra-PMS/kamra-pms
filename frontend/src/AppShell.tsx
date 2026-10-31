@@ -60,6 +60,8 @@ export interface BookingInitial {
   guest_name?: string
   phone?: string
   stays?: number
+  adults?: number
+  children?: number
   walkIn?: boolean
 }
 
