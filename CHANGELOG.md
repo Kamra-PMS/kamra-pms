@@ -32,6 +32,21 @@ upgrade-breaking changes (removed doctypes / API contracts).
 ### Bug Fixes
 
 * SI call list leftovers, room screen names, room pricing, es/ar help ([#447](https://github.com/Kamra-PMS/kamra-pms/issues/447)) ([e9aa8aa](https://github.com/Kamra-PMS/kamra-pms/commit/e9aa8aa27539ca9e730b62811f6c197e657644ab))
+  * **front-desk:** the morning briefing and the Hotel Manager report pack no longer show occupancy or revenue to the front desk ([#445](https://github.com/Kamra-PMS/kamra-pms/pull/445))
+  * **assistant:** says plainly when the AI key is out of credit, with a link to its settings ([#445](https://github.com/Kamra-PMS/kamra-pms/pull/445))
+  * **billing:** company and group bills on a stay are named with their company; the Share button has its own wording ([#445](https://github.com/Kamra-PMS/kamra-pms/pull/445))
+  * **ui:** Room Board, Housekeeping Board and Admin Rooms, named by what they do ([#443](https://github.com/Kamra-PMS/kamra-pms/pull/443))
+  * **room-types:** pricing fields grouped, children on quote cards, Tax % instead of GST % ([#444](https://github.com/Kamra-PMS/kamra-pms/pull/444), @SandroG1977)
+  * **i18n:** Portuguese fixes (Mapa de quartos, crianças); Spanish and Arabic help pages match the current screens ([#446](https://github.com/Kamra-PMS/kamra-pms/pull/446))
+  * **quality:** the CodeQL code quality findings cleared ([#442](https://github.com/Kamra-PMS/kamra-pms/pull/442))
+
+### Upgrade notes
+
+* No `bench migrate` needed.
+
+### Thanks
+
+@SandroG1977 for this release.
 
 ## [2.7.1](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.0...v2.7.1) (2026-10-31)
 
