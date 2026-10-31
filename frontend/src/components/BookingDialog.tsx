@@ -28,6 +28,10 @@ import DepositPanel, { type DepositState } from "./DepositPanel"
 import CheckInDialog from "./CheckInDialog"
 import TillCard, { useTill } from "./TillCard"
 
+/** Reservation.market_segment options (same list as the doctype). */
+const MARKET_SEGMENTS = ["Corporate", "Leisure", "Group", "MICE", "Government", "Wedding",
+  "Long Stay", "Airline Crew", "Complimentary", "House Use"]
+
 
 interface CompanyCredit {
   applies: boolean
@@ -44,6 +48,10 @@ interface ExtraRoom {
   adults: number
   children: number
   meal_plan: string
+  /** blank → the main guest; named later from the rooming list */
+  guest_name: string
+  /** rooms of this kind ("Deluxe × 5") */
+  count: number
 }
 
 const inputCls =
@@ -101,6 +109,8 @@ export function BookingDialog(props: {
     guest_name?: string
     phone?: string
     stays?: number
+    adults?: number
+    children?: number
     walkIn?: boolean
   }
   onClose: () => void
@@ -126,14 +136,24 @@ export function BookingDialog(props: {
   const [guidedCheckIn, setGuidedCheckIn] = useState<string | null>(null)
   const [walkInCheckedIn, setWalkInCheckedIn] = useState(false)
 
+  // the other people staying, by name; their IDs come at check-in
+  const [others, setOthers] = useState("")
+  async function addOthers(reservation: string | undefined) {
+    if (!reservation || !others.trim()) return
+    try {
+      await call("kamra.api.add_occupant_names", { reservation, names: others })
+    } catch (e) {
+      setError(t("Booked, but the other guests' names were not saved: {v0}", { v0: shortErr(e) }))
+    }
+  }
   const [form, setForm] = useState({
     guest_name: props.initial.guest_name ?? "",
     phone: props.initial.phone ?? "",
     room_type: props.initial.room_type ?? "",
     check_in_date: props.initial.date ?? new Date().toISOString().slice(0, 10),
-    nights: 1,
-    adults: 2,
-    children: 0,
+    nights: props.initial.stays ?? 1,
+    adults: props.initial.adults ?? 2,
+    children: props.initial.children ?? 0,
     meal_plan: "",
     // "" = no plan picked: the company's negotiated plan applies, if any
     rate_plan: "",
@@ -144,6 +164,7 @@ export function BookingDialog(props: {
     pets: 0,
     company: "",
     travel_agent: "",
+    market_segment: "",
     booked_by_name: "",
     booked_by_phone: "",
     booker_relation: "",
@@ -177,6 +198,7 @@ export function BookingDialog(props: {
     : {}
   const [moreOpen, setMoreOpen] = useState(false)
   const [moreRooms, setMoreRooms] = useState<ExtraRoom[]>([])
+  const [groupName, setGroupName] = useState("")
   const [moreQuotes, setMoreQuotes] = useState<(Quote | null)[]>([])
   const [addonQty, setAddonQty] = useState<Record<string, number>>({})
   const [extra, setExtra] = useState({
@@ -281,6 +303,7 @@ export function BookingDialog(props: {
     if (on) {
       setForm((f) => ({ ...f, check_in_date: todayLocal() }))
       setMoreRooms([])
+      setGroupName("")
       setAddonQty({})
       setMoreOpen(false)
     }
@@ -555,19 +578,22 @@ export function BookingDialog(props: {
           },
           ...moreRooms.map((r) => ({
             room_type: r.room_type,
-            count: 1,
+            count: r.count,
             adults: r.adults,
             children: r.children,
             meal_plan: r.meal_plan || undefined,
+            guest_name: (r.count === 1 && r.guest_name.trim()) || undefined,
           })),
         ]
+        const roomCount = rooms.reduce((s, r) => s + r.count, 0)
         const out = await call<{
           group_booking: string
           created: string[]
           skipped: { room_type: string; reason: string }[]
         }>("kamra.api.create_group_booking", {
           property: getCurrentProperty(),
-          group_name: `${form.guest_name} · ${rooms.length} rooms`,
+          group_name:
+            groupName.trim() || `${form.guest_name} · ${roomCount} rooms`,
           check_in_date: form.check_in_date,
           check_out_date: checkOut,
           rooms,
@@ -579,7 +605,7 @@ export function BookingDialog(props: {
         })
         if (out.skipped.length > 0) {
           setError(
-            translate("Booked {v0} of {v1} rooms - ", { v0: String(out.created.length), v1: String(rooms.length) }) +
+            translate("Booked {v0} of {v1} rooms - ", { v0: String(out.created.length), v1: String(roomCount) }) +
               out.skipped.map((s) => s.reason).join("; "),
           )
           if (out.created.length === 0) return
@@ -608,6 +634,7 @@ export function BookingDialog(props: {
         company: form.company || undefined,
         travel_agent: form.travel_agent || undefined,
         booking_type: form.company ? "Corporate" : undefined,
+        market_segment: form.market_segment || undefined,
         booked_by_name: onBehalf ? form.booked_by_name || undefined : undefined,
         booked_by_phone: onBehalf
           ? form.booked_by_phone || undefined
@@ -646,6 +673,7 @@ export function BookingDialog(props: {
         ...viaArgs,
         marketing_consent: offers ? 1 : undefined,
       })
+      await addOthers(res.reservation)
       setDone({ ref: res.reservation, room: res.room })
       props.onBooked()
       call<{ deposit: DepositState }>("kamra.api.reservation_detail", {
@@ -703,6 +731,7 @@ export function BookingDialog(props: {
         // (property's required steps) finishes it right after
         defer_check_in: 1,
       })
+      await addOthers(res.reservation)
       setDone({ ref: res.reservation, room: res.room, walkIn: res })
       setGuidedCheckIn(res.checked_in === 0 ? res.reservation : null)
       props.onBooked()
@@ -732,6 +761,25 @@ export function BookingDialog(props: {
   const extraNeedsReason =
     form.over_capacity_guests > 0 && !form.over_capacity_reason.trim()
 
+  // the advance each room's dates ask for, priced by the server
+  const advanceNow = quote
+    ? (quote.advance?.amount ?? 0) +
+      moreQuotes.reduce((s, q) => s + (q?.advance?.amount ?? 0), 0)
+    : 0
+  // each room's own advance (server amounts): one % for all reads as one
+  // figure, mixed ones are listed per room
+  const advanceRooms = quote
+    ? [
+        { room_type: form.room_type, advance: quote.advance },
+        ...moreRooms.map((r, i) => ({ room_type: r.room_type, advance: moreQuotes[i]?.advance })),
+      ].map((r) => ({
+        name: options?.room_types.find((x) => x.name === r.room_type)?.room_type_name ?? r.room_type,
+        percent: r.advance?.percent ?? 0,
+        amount: r.advance?.amount ?? 0,
+      }))
+    : []
+  const advancePercents = new Set(advanceRooms.map((r) => r.percent))
+
   const grandTotal = (() => {
     if (!quote) return 0
     const addonsGross = Object.entries(addonQty).reduce((s, [n, q]) => {
@@ -743,7 +791,11 @@ export function BookingDialog(props: {
       (otaTotal > 0
         ? otaTotal
         : quote.amount_after_tax +
-          moreQuotes.reduce((s, q) => s + (q?.amount_after_tax ?? 0), 0)) +
+          moreQuotes.reduce(
+            (s, q, i) =>
+              s + (q?.amount_after_tax ?? 0) * (moreRooms[i]?.count ?? 1),
+            0,
+          )) +
       addonsGross
     )
   })()
@@ -956,7 +1008,7 @@ export function BookingDialog(props: {
                   >
                     {roomTypeName || form.room_type}
                     {moreRooms.length > 0
-                      ? ` · ${1 + moreRooms.length} ${t("Rooms")}`
+                      ? ` · ${1 + moreRooms.reduce((s, r) => s + r.count, 0)} ${t("Rooms")}`
                       : ""}
                   </dd>
                 </div>
@@ -1122,6 +1174,14 @@ export function BookingDialog(props: {
                     />
                   </Field>
                 </div>
+                <Field label={t("Others staying (optional)")}>
+                  <input
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+                    value={others}
+                    placeholder={t("e.g. Ravi Sharma; Meera Sharma - their IDs are taken at check-in")}
+                    onChange={(e) => setOthers(e.target.value)}
+                  />
+                </Field>
 
                 {blacklisted && (
                   <div
@@ -1679,6 +1739,16 @@ export function BookingDialog(props: {
                 )}
 
                 {!walkIn && (<>
+                {moreRooms.length > 0 && (
+                  <Field label={t("Group name")}>
+                    <input
+                      className={inputCls}
+                      value={groupName}
+                      onChange={(e) => setGroupName(e.target.value)}
+                      placeholder={t("e.g. Infosys offsite (optional)")}
+                    />
+                  </Field>
+                )}
                 {moreRooms.map((r, i) => {
                   const rt = options?.room_types.find(
                     (o) => o.name === r.room_type,
@@ -1708,6 +1778,47 @@ export function BookingDialog(props: {
                         </option>
                       ))}
                     </select>
+                    <label className="flex items-center gap-1 text-xs text-zinc-500">
+                      {t("Qty")}
+                      <input
+                        type="number"
+                        min={1}
+                        max={50}
+                        aria-label={translate("Room {v0} quantity", { v0: String(i + 2) })}
+                        className={`${inputCls} !w-16`}
+                        value={r.count}
+                        onChange={(e) =>
+                          setMoreRooms((rs) =>
+                            rs.map((x, j) =>
+                              j === i
+                                ? {
+                                    ...x,
+                                    count: Math.min(
+                                      50,
+                                      Math.max(1, Math.floor(Number(e.target.value) || 1)),
+                                    ),
+                                  }
+                                : x,
+                            ),
+                          )
+                        }
+                      />
+                    </label>
+                    {r.count === 1 && (
+                      <input
+                        className={`${inputCls} !w-auto min-w-36 flex-1`}
+                        aria-label={translate("Room {v0} guest name", { v0: String(i + 2) })}
+                        placeholder={t("Guest name (optional)")}
+                        value={r.guest_name}
+                        onChange={(e) =>
+                          setMoreRooms((rs) =>
+                            rs.map((x, j) =>
+                              j === i ? { ...x, guest_name: e.target.value } : x,
+                            ),
+                          )
+                        }
+                      />
+                    )}
                     <input
                       type="number"
                       min={1}
@@ -1774,6 +1885,8 @@ export function BookingDialog(props: {
                         adults: 2,
                         children: 0,
                         meal_plan: form.meal_plan,
+                        guest_name: "",
+                        count: 1,
                       },
                     ])
                   }
@@ -1906,6 +2019,18 @@ export function BookingDialog(props: {
                               <option key={t.name} value={t.name}>
                                 {t.agent_name} ({t.commission_pct}%)
                               </option>
+                            ))}
+                          </select>
+                        </Field>
+                        <Field label={translate("Market segment")}>
+                          <select
+                            className={inputCls}
+                            value={form.market_segment}
+                            onChange={(e) => set("market_segment", e.target.value)}
+                          >
+                            <option value="">{form.company ? translate("Corporate") : "-"}</option>
+                            {MARKET_SEGMENTS.map((m) => (
+                              <option key={m} value={m}>{translate(m)}</option>
                             ))}
                           </select>
                         </Field>
@@ -2209,6 +2334,15 @@ export function BookingDialog(props: {
                         </span>
                       </div>
                     )}
+                    {quote.long_stay && (
+                      <div className="flex justify-between font-medium text-emerald-700">
+                        <span>{t("Long stay {pct}% off (in the room price)", { pct: String(quote.long_stay.percent) })}</span>
+                        <span className="tabular-nums">
+                          −{cur()}
+                          {inr(quote.long_stay.amount)}
+                        </span>
+                      </div>
+                    )}
                     {quote.discount > 0 && (
                       <div className="flex justify-between font-medium text-emerald-700">
                         <span>{t("Voucher")}</span>
@@ -2237,10 +2371,13 @@ export function BookingDialog(props: {
                             {options?.room_types.find(
                               (rt) => rt.name === moreRooms[i]?.room_type,
                             )?.room_type_name ?? ""}
+                            {(moreRooms[i]?.count ?? 1) > 1
+                              ? ` × ${moreRooms[i].count}`
+                              : ""}
                           </span>
                           <span className="shrink-0 tabular-nums">
                             {cur()}
-                            {inr(mq.amount_after_tax)}
+                            {inr(mq.amount_after_tax * (moreRooms[i]?.count ?? 1))}
                           </span>
                         </div>
                       ) : null,
@@ -2282,9 +2419,18 @@ export function BookingDialog(props: {
                         {cancelText}
                         {(options.property.no_show_charge || "None") !== "None" &&
                           translate(" No-show: {v0} charged.", { v0: String(String(options.property.no_show_charge).toLowerCase()) })}
-                        {(options.property.deposit_pct ?? 0) > 0 &&
-                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr((grandTotal * options.property.deposit_pct) / 100)), v2: String(options.property.deposit_pct) })}
+                        {advanceNow > 0 && advancePercents.size <= 1 &&
+                          translate(" Deposit expected now: {v0}{v1} ({v2}%).", { v0: String(cur()), v1: String(inr(advanceNow)), v2: String(advanceRooms[0]?.percent ?? 0) })}
+                        {advanceNow > 0 && advancePercents.size > 1 &&
+                          translate(" Advance {v0}{v1}:", { v0: String(cur()), v1: String(inr(advanceNow)) })}
                       </p>
+                    )}
+                    {options?.property && advanceNow > 0 && advancePercents.size > 1 && (
+                      <ul className="text-xs text-zinc-500">
+                        {advanceRooms.map((r, i) => (
+                          <li key={i}>{`${r.name} · ${r.percent}% · ${cur()}${inr(r.amount)}`}</li>
+                        ))}
+                      </ul>
                     )}
                   </div>
                 ) : (

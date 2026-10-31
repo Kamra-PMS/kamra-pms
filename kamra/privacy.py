@@ -98,6 +98,9 @@ def erase_guest(guest: str, reason: str = "request") -> dict:
 			if o.get("id_file"):
 				counts["files"] += _delete_files("Reservation", r, url=o.id_file)
 				oc["id_file"] = None
+			if o.get("photo"):
+				counts["files"] += _delete_files("Reservation", r, url=o.photo)
+				oc["photo"] = None
 			if o.full_name in secrets:
 				oc["full_name"] = alias
 			frappe.db.set_value("Stay Occupant", o.name, oc, update_modified=False)

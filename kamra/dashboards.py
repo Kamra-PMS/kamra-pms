@@ -10,9 +10,9 @@ a per-property table - the chain's central view.
 from decimal import ROUND_HALF_UP, Decimal
 
 import frappe
-from frappe.utils import nowdate
+from frappe.utils import add_days, add_years, getdate, nowdate
 
-from kamra.authz import require_perm
+from kamra.authz import ADMIN, require_perm
 
 
 def _housekeeping_slice(property: str):
@@ -48,34 +48,173 @@ def _finance_slice(property: str, date: str):
 	"""Collections today (by mode), and money still owed on open folios."""
 	from kamra.api import cash_summary
 	collections = cash_summary(property, date)
-	outstanding = frappe.db.sql(
-		"""SELECT COALESCE(SUM(balance), 0) FROM `tabFolio`
-		   WHERE property = %(p)s AND status = 'Open'""",
-		{"p": property})[0][0]
-	open_folios = frappe.db.count(
-		"Folio", {"property": property, "status": "Open"})
+	outstanding, open_folios = _open_folio_totals(property)
 	return {
 		"collections_today": collections.get("grand_total", 0),
 		"collections_by_mode": collections.get("modes", []),
-		"outstanding": float(outstanding or 0),
+		"outstanding": outstanding,
 		"open_folios": open_folios,
 	}
 
 
+# who sees the money on the dashboard; the front desk sees arrivals,
+# departures, in house, rooms and occupancy (now and on the books), never
+# revenue, ADR, RevPAR, collections or outstanding
+FIGURE_ROLES = ("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent", *ADMIN)
+FIGURE_KEYS = ("occupancy_pct", "revenue_today", "revpar", "adr", "room_revenue_today",
+               "collections_today", "statistics", "finance", "outlook", "comparison")
+FORECAST_DAYS = 90
+
+
+def _sellable(property: str) -> int:
+	# out of order rooms are not for sale, as channel_manager._sellable counts
+	return frappe.db.count("Room", {
+		"property": property, "housekeeping_status": ("!=", "Out of Order")})
+
+
+def occupancy_now(property: str, hk: dict) -> dict:
+	"""Rooms occupied right now over sellable rooms."""
+	sellable = _sellable(property)
+	occupied = hk["occupied"]
+	return {"occupied": occupied, "sellable": sellable,
+	        "occupancy_pct": round(100 * occupied / sellable, 1) if sellable else 0}
+
+
+def occupancy_forecast(property: str, date: str, days: int = FORECAST_DAYS) -> list[dict]:
+	"""On the books for each night from date: live reservations covering the
+	night (every live status, as group_blocks counts a pick up) over sellable rooms,
+	plus group block rooms held but not yet picked up. Rooms only, no money."""
+	sellable = _sellable(property)
+	start = getdate(date)
+	end = getdate(add_days(start, days))
+	from kamra.reservation_state import LIVE_STATUSES
+	stays = frappe.db.sql(
+		"""SELECT check_in_date AS ci,
+		          GREATEST(check_out_date, DATE_ADD(check_in_date, INTERVAL 1 DAY)) AS co
+		   FROM `tabReservation`
+		   WHERE property = %(p)s AND status IN %(live)s
+		     AND check_in_date < %(e)s
+		     AND GREATEST(check_out_date, DATE_ADD(check_in_date, INTERVAL 1 DAY)) > %(s)s""",
+		{"p": property, "s": str(start), "e": str(end), "live": tuple(LIVE_STATUSES)},
+		as_dict=True)
+	held_by_night = _held_by_night(property, start, end)
+	pct = lambda n: round(100 * n / sellable, 1) if sellable else 0  # noqa: E731
+	out = []
+	for i in range(days):
+		d = getdate(add_days(start, i))
+		# ponytail: days x stays scan; group by date in SQL if a house books thousands ahead
+		booked = sum(1 for r in stays if getdate(r.ci) <= d < getdate(r.co))
+		held = min(held_by_night.get(str(d), 0), max(0, sellable - booked))
+		out.append({"date": str(d), "booked": booked, "held": held,
+		            "available": max(0, sellable - booked - held),
+		            "occupancy_pct": pct(booked), "occupancy_with_holds_pct": pct(booked + held)})
+	return out
+
+
+def _held_by_night(property: str, start, end) -> dict[str, int]:
+	"""Group block rooms not yet picked up, per night, every room type: the
+	same holds group_blocks keeps off sale (released and past-cutoff blocks
+	no longer count)."""
+	from kamra.group_blocks import _holding_groups, _unpicked
+	out: dict[str, int] = {}
+	for gb in _holding_groups(property, start, end):
+		types = set(frappe.get_all("Group Room Block", filters={"parent": gb.name},
+		                           pluck="room_type"))
+		held = sum(_unpicked(gb.name, rt) for rt in types)
+		if not held:
+			continue
+		d, co = max(getdate(gb.check_in_date), start), min(getdate(gb.check_out_date), end)
+		while d < co:
+			out[str(d)] = out.get(str(d), 0) + held
+			d = getdate(add_days(d, 1))
+	return out
+
+
+COMPARE_METRICS = ("occupancy_pct", "rooms_sold", "room_revenue", "total_revenue", "adr", "revpar")
+
+
+def _change(this, last):
+	return round(100 * (this - last) / last, 1) if last else None
+
+
+def comparison(property: str, date: str, total_rooms: int, forecast: list[dict]) -> dict:
+	"""Today, month to date, year to date and the next 90 days on the books,
+	each against the same dates one year back. Year to date starts at the
+	country pack's financial year (April in India). The 90 days are the
+	forecast's nights from tonight, over sellable rooms like the forecast."""
+	from kamra.localization import financial_year_start, pack_for
+	from kamra.reports import range_stats
+	d = getdate(date)
+	ly = lambda x: getdate(add_years(x, -1))  # noqa: E731 - 29 Feb -> 28 Feb
+	fy = financial_year_start(pack_for(property), d)
+	periods = []
+	for pid, start, end in (("today", d, d), ("mtd", d.replace(day=1), d), ("ytd", fy, d)):
+		this = range_stats(property, start, end, total_rooms)
+		last = range_stats(property, ly(start), ly(end), total_rooms)
+		periods.append({"id": pid, "from_date": str(start), "to_date": str(end),
+		                "ly_from_date": str(ly(start)), "ly_to_date": str(ly(end)),
+		                "this_year": this, "last_year": last,
+		                "change_pct": {k: _change(this[k], last[k]) for k in COMPARE_METRICS}})
+	# the future: rooms on the books against what last year actually sold
+	if forecast:
+		start, end = getdate(forecast[0]["date"]), getdate(forecast[-1]["date"])
+		sellable = _sellable(property)
+		sold = sum(x["booked"] for x in forecast)
+		n = sellable * len(forecast)
+		this = {"rooms_sold": sold, "occupancy_pct": round(100 * sold / n, 1) if n else 0}
+		last = range_stats(property, ly(start), ly(end), sellable)
+		periods.append({"id": "on_the_books", "rooms_basis": "sellable",
+		                "from_date": str(start), "to_date": str(end),
+		                "ly_from_date": str(ly(start)), "ly_to_date": str(ly(end)),
+		                "this_year": this, "last_year": last,
+		                "change_pct": {k: _change(this[k], last[k]) for k in this}})
+	return {"financial_year_start": str(fy), "periods": periods}
+
+
+def sees_figures() -> bool:
+	"""Property "view_flash" (defaults FIGURE_ROLES), as the flash itself."""
+	return frappe.has_permission("Property", "view_flash", ignore_share_permissions=True)
+
+
+def _open_folio_totals(property: str) -> tuple[float, int]:
+	"""What guests owe on open folios right now, and how many are open."""
+	total, count = frappe.db.sql(
+		"""SELECT COALESCE(SUM(balance), 0), COUNT(*) FROM `tabFolio`
+		   WHERE property = %(p)s AND status = 'Open'""",
+		{"p": property})[0]
+	return float(total or 0), int(count or 0)
+
+
 @frappe.whitelist()
 @require_perm("Property", "view_dashboard")
-def property_dashboard(property: str, date: str | None = None):
-	"""Everything one hotel's dashboard needs, by department."""
+def property_dashboard(property: str, date: str | None = None, with_comparison: int = 0):
+	"""Everything one hotel's dashboard needs, by department. The year on
+	year comparison is heavy, so only the Dashboard screen asks for it."""
 	from kamra.crs import assert_property_access
 	assert_property_access(property)
 	date = date or nowdate()
+	hk = _housekeeping_slice(property)
+	forecast = occupancy_forecast(property, date)
+	if not sees_figures():
+		from kamra.reports import movement_counts
+		move = movement_counts(property, date, date)
+		return {
+			"property": property,
+			"property_name": frappe.db.get_value("Property", property, "property_name"),
+			"date": date,
+			"figures_hidden": True,
+			**move,
+			"front_desk": move,
+			"housekeeping": hk,
+			"occupancy_now": occupancy_now(property, hk),
+			"forecast": forecast,
+		}
 	from kamra.reports import manager_flash
 	flash = manager_flash(property, date)
 	today = flash.get("today") or {}
 	mtd = flash.get("mtd") or {}
 	move = flash.get("movement") or {}
 	finance = _finance_slice(property, date)
-	hk = _housekeeping_slice(property)
 
 	return {
 		"property": property,
@@ -117,6 +256,10 @@ def property_dashboard(property: str, date: str | None = None):
 		"housekeeping": hk,
 		"finance": finance,
 		"outlook": flash.get("outlook", []),
+		"occupancy_now": occupancy_now(property, hk),
+		"forecast": forecast,
+		**({"comparison": comparison(property, date, flash.get("total_rooms", 0), forecast)}
+		   if int(with_comparison or 0) else {}),
 	}
 
 
@@ -182,3 +325,44 @@ def portfolio_dashboard(date: str | None = None):
 	}
 	rows.sort(key=lambda r: r["revenue_today"], reverse=True)
 	return {"date": date, "totals": totals, "properties": rows}
+
+
+@frappe.whitelist()
+@require_perm("Property", "view_flash")
+def owner_snapshot(property: str, date: str | None = None, from_date: str | None = None,
+                   period: str | None = None):
+	"""The owner's phone view of one hotel: the flash for a day (or
+	from_date..date), what guests and companies still owe (as of now), and
+	the last few night audits. Read only; the same figures as the flash and
+	the ledgers. `period` (today, yesterday, month) counts from the
+	property's business date, never the phone's clock."""
+	from inspect import unwrap
+
+	from kamra.business_date import get_business_date
+	from kamra.ledger import DUE_BUCKETS, city_ledger_aging
+	from kamra.night_audit import night_audit_history
+	from kamra.reports import manager_flash
+
+	if not date:
+		date = get_business_date(property)
+		if period == "yesterday":
+			date = add_days(date, -1)
+		elif period == "month":
+			from_date = str(date)[:8] + "01"
+	# this endpoint's gate stands in for the inner endpoints' own gates,
+	# which predate the owner view and leave out some of its roles
+	flash = unwrap(manager_flash)(property, str(date), from_date)
+	outstanding, open_folios = _open_folio_totals(property)
+	ar = unwrap(city_ledger_aging)(property)["totals"]
+	sees_audits = frappe.has_permission(*night_audit_history._kamra_perm,
+	                                    ignore_share_permissions=True)
+	return {
+		**flash,
+		"property": property,
+		"property_name": frappe.db.get_value("Property", property, "property_name"),
+		"guest_balances": outstanding,
+		"open_folios": open_folios,
+		"city_ledger": round(sum(ar[k] for k in DUE_BUCKETS), 2),
+		"city_ledger_overdue": ar["overdue"],
+		"audits": unwrap(night_audit_history)(property, 5) if sees_audits else None,
+	}

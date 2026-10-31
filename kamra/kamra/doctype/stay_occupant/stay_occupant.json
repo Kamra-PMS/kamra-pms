@@ -9,14 +9,25 @@
  "field_order": [
   "full_name",
   "age",
+  "guest_stated_age",
   "gender",
   "nationality",
   "id_type",
   "id_number",
   "phone",
-  "id_file"
+  "id_file",
+  "photo",
+  "arrived_at",
+  "left_at"
  ],
  "fields": [
+  {
+   "description": "The age the guest gave online. Not confirmed, so it does not affect the price; the desk enters Age at check-in.",
+   "fieldname": "guest_stated_age",
+   "fieldtype": "Int",
+   "label": "Age Stated by Guest",
+   "read_only": 1
+  },
   {
    "fieldname": "full_name",
    "fieldtype": "Data",
@@ -68,13 +79,32 @@
    "fieldtype": "Data",
    "label": "ID Document",
    "read_only": 1
+  },
+  {
+   "fieldname": "photo",
+   "fieldtype": "Data",
+   "label": "Photo",
+   "read_only": 1
+   },
+   {
+   "fieldname": "arrived_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Arrived At",
+   "description": "When this guest arrived. Set when they join a stay already checked in; the desk can change it."
+  },
+  {
+   "fieldname": "left_at",
+   "fieldtype": "Datetime",
+   "label": "Left At",
+   "description": "When this guest left, if before the stay checked out"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-28 08:14:45.883418",
+ "modified": "2026-10-30 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Stay Occupant",

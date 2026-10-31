@@ -29,7 +29,10 @@ things up, quote, book, check guests in and out, post charges, take
 payments, preview and process cancellations.
 
 Rules:
-- Numbers come from tools, never from you. Always quote before booking.
+- Numbers come from tools, never from you. Always call `quote` with the requested dates and exact adult/child occupancy before quoting or booking. Never quote prices using the base_price from `booking_options` or `availability`, which only reflect base occupancy without extra guests or taxes.
+  Always quote the total payable price (`amount_after_tax` or `totals.total`).
+  This property's {tax_mode}. When rates include taxes, present the quote directly as the final total price (e.g. "{currency_label}360, taxes included").
+  Do not break down or unbundle pre-tax base rates and tax amounts unless specifically requested by the guest or staff.
 - NEVER claim you did something unless a tool call returned success for it.
   If you have no tool for a request, say so plainly and stop - do not
   pretend, and do not substitute an unrelated tool. (There is no way to
@@ -373,7 +376,7 @@ TOOLS = {
 		 "voucher_code": {"type": "string"}}, True, False),
 	"booking_options": (
 		"booking_options",
-		"Room types, meal plans, companies, travel agents, experiences, sell message and policies.",
+		"Room types catalog, meal plans, companies, travel agents, experiences, sell message and policies. Do not use its base_price to quote stays; call `quote` for actual pricing with occupancy and taxes.",
 		{}, True, False),
 	"create_booking": (
 		"create_booking",
@@ -503,7 +506,8 @@ TOOLS = {
 	"record_payment": (
 		"add_folio_payment",
 		"Record a payment staff say was received, against a folio (mode: "
-		"Cash, UPI, Card, Bank, Link). folio is "
+		"Cash, Card, Bank Transfer, Payment Link or the country's own modes "
+		"from the property locale). folio is "
 		"the folio id from checkout_context folios[].folio or get_folio. If you "
 		"only have the booking, pass reservation instead and leave folio out: "
 		"the stay's open guest folio is used.",
@@ -651,10 +655,13 @@ def _system_prompt(property: str, settings) -> str:
 
 		currency = pack_for(property).locale(prop).get("currency")
 	symbol = (frappe.db.get_value("Currency", currency, "symbol") or "").strip() if currency else ""
+	inclusive = bool(prop.get("rates_include_tax"))
+	tax_mode = "rates include taxes" if inclusive else "rates exclude taxes"
 	return SYSTEM.format(
 		property_name=prop.property_name or property, today=nowdate(),
 		currency=currency or "unspecified",
 		currency_label=symbol or currency or "unspecified",
+		tax_mode=tax_mode,
 		extra=("\n" + settings.extra_instructions) if settings.extra_instructions else "")
 
 
@@ -1232,7 +1239,8 @@ What Kamra does and where to find it:
   cancel, registration card.
 - Guests: profiles with stay history, VIP/blacklist, merge and anonymize.
 - Billing: folios, post charges, take payments, payment links. Closing a folio
-  assigns a GST tax invoice (logo, GSTIN, place of supply, SAC 996311).
+  assigns a tax invoice number (logo, tax ID and the tax details the
+  property's country requires).
 - Reports: one Reports hub - manager flash, shift report, F&B dashboard,
   banquet registers, SLA, voids, department packs (Front Office,
   Housekeeping, F&B, Hotel Manager) and custom reports (build, save, group

@@ -451,7 +451,7 @@
         "kamra.api.record_advance"
        ]
       },
-      "description": "Take a deposit / advance on a booking before arrival (#114). Opens\nthe guest folio early so the money sits on the stay from day one and\nthe balance at check-in is right; recorded through add_folio_payment,\nso the till, cashier PIN and ledger see it like any other payment.\nA Held / Pending Payment booking is confirmed by it.",
+      "description": "Take a deposit / advance on a booking before arrival (#114). Opens\nthe guest folio early so the money sits on the stay from day one and\nthe balance at check-in is right; recorded through add_folio_payment,\nso the till, cashier PIN and ledger see it like any other payment.\nA Held / Pending Payment booking is confirmed by it.\n\nPass idempotency_key (one per \"Take advance\" press): a retry with the\nsame key returns the first result instead of posting again.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"amount\": 1000,\n  \"mode\": \"Cash\"\n}",
@@ -1524,7 +1524,7 @@
         "kamra.api.add_folio_payment"
        ]
       },
-      "description": "Record money received on the stay ledger. kind labels WHY it came\nin - Payment (against the bill), Advance (collected before/at\ncheck-in) or Security Deposit (held, refundable). Refunds go through\nrefund_folio_payment so they can never be entered by accident.",
+      "description": "Record money received on the stay ledger. kind labels WHY it came\nin - Payment (against the bill), Advance (collected before/at\ncheck-in) or Security Deposit (held, refundable). Refunds go through\nrefund_folio_payment so they can never be entered by accident.\n\ncurrency: leave out (or pass the home currency) for a normal payment.\nA foreign code means `amount` is the foreign money received (cash or a\nbank transfer); the server converts it at today's buy rate, posts the\nhome amount and keeps the foreign amount and rate on the row.\nA retry with the same idempotency_key returns the folio without\nposting again.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"mode\": \"<mode>\",\n  \"amount\": 1000,\n  \"kind\": \"Payment\"\n}",
@@ -1796,6 +1796,43 @@
      }
     },
     {
+     "name": "add_occupant_names",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.add_occupant_names",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.add_occupant_names"
+       ]
+      },
+      "description": "Add the other people staying to the stay's occupant register by name\n(at booking, before anyone's ID is seen). Names already on the register\nare left as they are; age and ID are filled at check-in.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"names\": \"<names>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "update_occupants",
      "request": {
       "method": "POST",
@@ -1820,7 +1857,7 @@
         "kamra.api.update_occupants"
        ]
       },
-      "description": "Replace the stay's occupant register.\noccupants = [{full_name, age, gender, nationality, id_type, id_number, phone}]\nA child keeps name and age only: no phone, and ID details only where the\ncountry's register needs them (see localization.minor_id_kept).",
+      "description": "Replace the stay's occupant register.\noccupants = [{full_name, age, gender, nationality, id_type, id_number, phone,\n              arrived_at, left_at}]\nGuests sharing a room can arrive and leave at different times: see\n_occupant_times for how arrived_at / left_at are kept.\nA child keeps name and age only: no phone, and ID details only where the\ncountry's register needs them (see localization.minor_id_kept).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"occupants\": \"<occupants>\"\n}",
@@ -2009,6 +2046,117 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"from_folio\": \"<from_folio>\",\n  \"charge_row\": \"<charge_row>\",\n  \"to_folio\": \"<to_folio>\",\n  \"amount\": 1000\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "open_guest_bills",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.open_guest_bills",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.open_guest_bills"
+       ]
+      },
+      "description": "A separate bill for each guest sharing the room: one Extra folio per\nother occupant (or per name given), invoiced in that guest's name. The\nmain guest keeps the Guest folio.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "share_folio_charges",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.share_folio_charges",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.share_folio_charges"
+       ]
+      },
+      "description": "Share charge lines (room nights) between the guests' bills: evenly,\nor by a percent per other bill (`shares`); the source keeps the rest.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"from_folio\": \"<from_folio>\",\n  \"charge_rows\": \"<charge_rows>\",\n  \"to_folios\": \"<to_folios>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "change_stay_company",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.change_stay_company",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.change_stay_company"
+       ]
+      },
+      "description": "Change (or remove) the company a stay bills to, mid-stay or at\ncheck-out. Charges posted from now on route by the new company's\nbilling rules. Charges already posted move too: `move=\"rules\"` puts\neach line where the new company's rules send it (company bill or the\nguest's), `move=\"guest\"` sends everything on the company bill back to\nthe guest. Refused once a bill was issued to the old company. Credit\ncontrol runs for the new company. The rate stays as booked; who and\nwhy go on the record.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"reason\": \"<reason>\",\n  \"move\": \"rules\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -2301,10 +2449,158 @@
         "kamra.api.post_allowance"
        ]
       },
-      "description": "Write off part of a bill against a specific folio, with a reason.",
+      "description": "Write off part of a bill against a specific folio, with a reason.\n\nWhen the property wants a manager's approval (Settings, Finance:\nallowance_approval / allowance_approval_above) or the reason code needs\na supervisor, the allowance does not touch the folio yet: it becomes a\nPending Allowance Request ({\"pending\": True, \"request\": ...}) that a\nmanager approves on the spot with their PIN, or later from the list\n(decide_allowance). A manager's own allowance posts at once, signed\nwith their own PIN (`pin`) whatever the property's cashier PIN setting.\nAI agents can ask, never approve. Every allowance that posts gets a\nvoucher serial (allowance_voucher).",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"<reason>\",\n  \"gst_rate\": 0\n}",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"\",\n  \"gst_rate\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "decide_allowance",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.decide_allowance",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.decide_allowance"
+       ]
+      },
+      "description": "Approve or reject a pending allowance. The approver is the signed-in\nmanager, or, on the spot at the desk, a manager who picks their name\nand types their own PIN (supervisor + supervisor_pin). Approving posts\nit on the folio; a rejection needs a note and is kept with who and why.\nAI agents never decide.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"allowance_request\": \"<allowance_request>\",\n  \"approve\": 1,\n  \"note\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "allowance_requests",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.allowance_requests",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.allowance_requests"
+       ]
+      },
+      "description": "Allowances waiting for a manager (or decided ones, by status), with\nthe stay they are for. can_decide says if the caller may approve.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"status\": \"Pending\",\n  \"folio\": \"FOLIO-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "allowance_voucher",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.allowance_voucher",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.allowance_voucher"
+       ]
+      },
+      "description": "The printable allowance voucher for a posted allowance, by request\nname or serial: who asked, the manager who approved it with their PIN,\nand what it took off the bill. Rejected or waiting requests have none.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"allowance_request\": \"<allowance_request>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "allowance_approvers",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.allowance_approvers",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.allowance_approvers"
+       ]
+      },
+      "description": "Managers who can approve an allowance on the spot here (role from\nthe property setting, cashier PIN set). Names only.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3282,10 +3578,10 @@
         "kamra.api.upload_occupant_id"
        ]
       },
-      "description": "ID document for one occupant on the stay register. Same security\npipeline as every ID image: decoded, re-encoded through PIL (the\nsanitisation boundary), stored private, attached to the reservation\nso checkout retention rules find it.",
+      "description": "ID document (kind \"id\") or face photo (kind \"photo\") for one\noccupant on the stay register. Same security pipeline as every ID\nimage: decoded, re-encoded through PIL (the sanitisation boundary),\nstored private, attached to the reservation so checkout retention\nrules find it. Checkout discards the ID, never the photo.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"row\": \"<row>\",\n  \"image\": \"<image>\"\n}",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"row\": \"<row>\",\n  \"image\": \"<image>\",\n  \"kind\": \"id\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -3480,6 +3776,43 @@
      }
     },
     {
+     "name": "reinstate_checkout",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.reinstate_checkout",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.reinstate_checkout"
+       ]
+      },
+      "description": "Undo a checkout made by mistake, the same business day: before the\nnight audit runs. Each bill closed at checkout has its invoice\ncancelled the auditable way (the number goes to the Cancelled Invoice\nregister; where the country needs it, a credit note is issued), a\ncompany bill comes back off the company's account, and the guest is\nin house again in the same room. Refused once the night audit has run,\nwhen someone else is in the room, or when the company has paid.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "check_out",
      "request": {
       "method": "POST",
@@ -3504,10 +3837,47 @@
         "kamra.api.check_out"
        ]
       },
-      "description": "Check a guest out. What the company pays moves to the city ledger,\nafter the property's credit control: a warning comes back in\n`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a\nHotel Admin passes `credit_override_reason` (logged). Agents can't\noverride.",
+      "description": "Check a guest out. What the company pays moves to the city ledger,\nafter the property's credit control: a warning comes back in\n`credit_warnings`; a block refuses (CREDIT_BLOCKED) unless Finance or a\nHotel Admin passes `credit_override_reason` (logged). Agents can't\noverride.\n\nLeaving before the booked date: pass `early_reason` and the stay is\nfirst shortened to today with the property's early-departure charge\n(early_departure, below). Without it, a property whose charge is not\n\"All Nights\" refuses, so unused nights are never billed by accident;\nunder \"All Nights\" every booked night is billed as before.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "early_departure",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.early_departure",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.early_departure"
+       ]
+      },
+      "description": "A guest in house is leaving before the booked date: shorten the stay\nto today through the amend path (availability, channel manager and\nprice follow), post the property's early-departure charge for the\nunused nights (None / One Night / All Nights) and log the reason. Then\nsettle and check out as usual. `fee` other than the property's policy\nneeds Finance or a Hotel Admin. checkout_context shows the plan\n(`early_departure`) before anything changes.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"reason\": \"<reason>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4133,7 +4503,7 @@
         "kamra.api.amend_stay_preview"
        ]
       },
-      "description": "What new dates would do to the bill, before anything changes: the\ncurrent and new totals and the new nightly rates, priced by the engine\nfrom today's rules. amend_stay needs confirm_price=1 when the total\nchanges.",
+      "description": "What new dates would do to the bill, before anything changes: the\ncurrent and new totals and the new nightly rates, priced by the engine\nfrom today's rules. amend_stay needs confirm_price=1 when the total\nchanges. For a stay in house, `charged_nights` says what the property's\nrate-change policy does to nights already on the folio: kept at their\ncharged rate (kept_difference is what the desk may give back as an\nallowance) or credited (credit_total, posted by Kamra).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\"\n}",
@@ -4170,10 +4540,47 @@
         "kamra.api.amend_stay"
        ]
       },
-      "description": "Extend / shorten a stay; the overlap guard validates the new window.\n\nAn auto-priced stay is re-quoted for its new dates and its nightly\nrates re-locked. That changes what the guest pays, so call\namend_stay_preview first, show the new price, and pass confirm_price=1;\nwithout it a change in the total is refused. A manually-priced stay\nkeeps its amount.",
+      "description": "Extend / shorten a stay; the overlap guard validates the new window.\n\nAn auto-priced stay is re-quoted for its new dates and its nightly\nrates re-locked. That changes what the guest pays, so call\namend_stay_preview first, show the new price, and pass confirm_price=1;\nwithout it a change in the total is refused. A manually-priced stay\nkeeps its amount. Nights already charged are never re-priced in place:\nthe property's rate-change policy keeps them or credits them\n(Reservation.hold_charged_nights).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"confirm_price\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "correct_charged_nights",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.correct_charged_nights",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.correct_charged_nights"
+       ]
+      },
+      "description": "Correct the rate of nights already charged, for a hotel that fixed a\nwrong tariff: each charged night whose rate differs from today's quote\nis reversed and posted again at that rate (both lines dated the business\ndate, the night named in the description, each taxed at its own rate);\nnights still to come take the rate directly. Posted lines are never\nedited. Only when the property's rate-change policy is Correct\nback-dated rates; needs a reason and the PIN of the Finance / Hotel\nAdmin user approving it (supervisor, default the caller). dry_run=1\nlists the nights without changing anything. Not an agent tool.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"dry_run\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4470,6 +4877,80 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"rooms\": \"<rooms>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"ota_total\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "rooming_list_template",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.rooming_list_template",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.rooming_list_template"
+       ]
+      },
+      "description": "An Excel rooming list for the group booking screen to paste or\nupload: Name, Phone, Room type (a dropdown of this property's room\ntypes) and Other guests, with a sheet explaining how to fill it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_group_with_rooming_list",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.create_group_with_rooming_list",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.create_group_with_rooming_list"
+       ]
+      },
+      "description": "The desk's group flow: group -> room blocks -> rooming list ->\nreservations. A Confirmed group holds `blocks` ([{room_type,\nrooms_blocked, block_rate, nightly_counts}]) off sale - nightly_counts\n({\"YYYY-MM-DD\": rooms}) when the number differs night to night, and\nblock_rate the negotiated rate its rooms are billed. Each `guests` row\n({room_type, guest_name, phone, others, check_in_date, check_out_date})\nis booked now against that hold, on the group's dates or its own nights\ninside them. Blocked rooms with no guest stay held until the cutoff.\n\n`master_index` is the guests row whose room pays `master_pays` for the\ngroup (omit both, or pass `company`, for a company-paid group).\n`quotation_only` saves an Open group (a proposal): nothing is held or\nbooked until the block is confirmed. Everything is checked before the\ngroup is made, so a refusal leaves nothing behind.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"blocks\": \"<blocks>\",\n  \"phone\": \"+91 90000 00000\",\n  \"attrition_pct\": 0,\n  \"deposit_due\": 0,\n  \"quotation_only\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4812,6 +5293,80 @@
      }
     },
     {
+     "name": "group_price_preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_price_preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_price_preview"
+       ]
+      },
+      "description": "The price of a block before it is booked (New group booking).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"blocks\": \"<blocks>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_quotation",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_quotation",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_quotation"
+       ]
+      },
+      "description": "The group's quotation / proforma: the hotel, the group, its rooms per\ntype and night with the rate and tax, the total, the deposit asked and\nthe terms (cutoff, allowed shortfall, who pays). Nothing is posted.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "group_detail",
      "request": {
       "method": "POST",
@@ -4849,6 +5404,191 @@
      }
     },
     {
+     "name": "set_rooming_names",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.set_rooming_names",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.set_rooming_names"
+       ]
+      },
+      "description": "Name the rooms of a group from the rooming list.\n`names` = [{\"reservation\": ..., \"guest_name\": ..., \"phone\": ...}, ...].\nEach named room gets its own guest profile (an existing one when the\nphone matches) and its open guest folio follows. Rows left blank or\nunchanged are skipped.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"names\": \"<names>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_assign_rooms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_assign_rooms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_assign_rooms"
+       ]
+      },
+      "description": "Give every confirmed room of the group that has no room number a\nfree room of its type (the picked ones, or all).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_cancel",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_cancel",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_cancel"
+       ]
+      },
+      "description": "Cancel the group's confirmed rooms (the picked ones, or all), each\nunder the cancellation policy. When no active room is left the group\nitself is marked Cancelled - unless nothing was cancelled here, or a\nroom has already stayed.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"reason\": \"Guest request\",\n  \"waive_fee\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_amend_dates",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_amend_dates",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_amend_dates"
+       ]
+      },
+      "description": "Move the group's rooms (the picked ones, or all) to new dates. Each\nstay is re-quoted as amend_stay does, so pass confirm_price=1 once the\ndesk has accepted that prices may change. A guest on their own nights\nkeeps them relative to the group's arrival, inside the new dates.\n\nWhen every room moved, the group moves too: its rooms per night shift\nwith it, and the rooms it still holds must be free on the new dates, or\nthe whole change is refused.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"confirm_price\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "group_check_in",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.group_check_in",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.group_check_in"
+       ]
+      },
+      "description": "Check in a group's arrivals in one go. Rooms still unassigned get\nthe same suggestion the tape chart makes; then each stay goes through\ncheck_in, the same call as a single check-in. One stay that cannot go\nin (no free room) does not stop the rest. IDs, deposits and the\nregistration card stay open per room to finish later, as with any\ncheck-in. `reservations` limits it to some of the group.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "save_group_blocks",
      "request": {
       "method": "POST",
@@ -4873,7 +5613,7 @@
         "kamra.api.save_group_blocks"
        ]
       },
-      "description": "Set the room block (list of {room_type, rooms_blocked, block_rate})\nand optionally the cutoff/status. Confirmed blocks hold inventory.",
+      "description": "Set the room block (list of {room_type, rooms_blocked, block_rate,\nnightly_counts}) and optionally the cutoff/status, allowed shortfall %\nand deposit due. Confirmed blocks hold inventory. A row sent without\nnightly_counts keeps its rooms per night while its Rooms Blocked is\nunchanged; a new Rooms Blocked makes every night that number.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group_booking\": \"<group_booking>\",\n  \"blocks\": \"<blocks>\"\n}",
@@ -5544,6 +6284,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "move_room_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.move_room_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.move_room_bill"
+       ]
+      },
+      "description": "A bill charged to the wrong room: move it to the right one, the same\nbusiness day it was posted. The charge leaves the first guest's folio\n(ledger reversed) and lands on the right guest's, by the same billing\nrules as room service, so liquor never reaches a company bill. Later\nthan that day it is a correction for Finance (allowance, then repost).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"room\": \"Your Property-101\",\n  \"reason\": \"<reason>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -6256,6 +7033,191 @@
      }
     },
     {
+     "name": "mark_picked_up",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.mark_picked_up",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.mark_picked_up"
+       ]
+      },
+      "description": "A waiter takes food from the pass: one prepared line, or every\nprepared line still waiting there. Stamps picked_up_at; kot_status stays\nPrepared so nothing that reads it changes.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_waiter",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.set_waiter",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.set_waiter"
+       ]
+      },
+      "description": "Name who serves this bill (a steward may have no login). Blank\nclears it, and the bill shows the captain instead.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"waiter\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "waiters",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.waiters",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.waiters"
+       ]
+      },
+      "description": "Till suggestions: the outlet's active staff list first, then other\nnames typed as waiter here in the last 60 days, most used first.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "outlet_waiters",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.outlet_waiters",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.outlet_waiters"
+       ]
+      },
+      "description": "The outlet's waiter list (active and not), and whether this user\nmay change it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_outlet_waiter",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos.save_outlet_waiter",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos.save_outlet_waiter"
+       ]
+      },
+      "description": "Add a name to the outlet's waiter list, or set it active / inactive.\nA name already on the list (any case) is updated, never doubled.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"waiter_name\": \"<waiter_name>\",\n  \"active\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "acknowledge_void",
      "request": {
       "method": "POST",
@@ -6576,7 +7538,7 @@
         "kamra.pos.void_approvers"
        ]
       },
-      "description": "Who can approve a void at this outlet's till: enabled Hotel Admin and\nFinance users with access to the property and a cashier PIN set. Names\nonly.",
+      "description": "Who can approve a void at this outlet's till: enabled Hotel Admin,\nFinance and F&B Manager users with access to the property and a cashier PIN set. Names\nonly.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\"\n}",
@@ -6613,7 +7575,7 @@
         "kamra.pos.orders_list"
        ]
       },
-      "description": "The outlet's bills for a day, or a range of up to a year, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state,\n`order_type` one kind of order and `mode` one way of paying (Cash, Card,\nUPI, Room). Pages come back `limit` at a time from `offset`; `total`,\n`has_more`, `counts` and `totals` always cover every bill the filters\nmatch, not only the page, so nothing is hidden by paging.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
+      "description": "The outlet's bills for a day, or a range of up to a year, newest\nfirst: open (not sent to the kitchen), sent, paid, posted to a room, NC,\nclosed or cancelled, with the table, who it was for, the amount and the\ntime. `q` searches the bill and KOT number, table, room, customer name\nand phone, and the in-house guest's name. `state` keeps one state,\n`order_type` one kind of order and `mode` one way of paying (Cash, Card,\nthe country's instant modes, Room). Pages come back `limit` at a time from `offset`; `total`,\n`has_more`, `counts` and `totals` always cover every bill the filters\nmatch, not only the page, so nothing is hidden by paging.\nLooking at today also brings in bills still open from earlier days\n(`carried`), so a forgotten order cannot hide. Only this outlet's bills.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"limit\": 200,\n  \"offset\": 0\n}",
@@ -6650,7 +7612,7 @@
         "kamra.pos.orders_export"
        ]
       },
-      "description": "The outlet's bill history as CSV for a day or up to a year: every\nbill with its state, payment mode, amount, discount, who it was for and\nwho cancelled it. Same search and state filters as the orders list;\n`mode` keeps one payment mode (Cash, Card, UPI). A phone number is masked\nexcept to a supervisor, as on the till. Returns {filename, csv, rows}.",
+      "description": "The outlet's bill history as CSV for a day or up to a year: every\nbill with its state, payment mode, amount, discount, who it was for and\nwho cancelled it. Same search and state filters as the orders list;\n`mode` keeps one payment mode (Cash, Card, ...) or Room. A phone number is masked\nexcept to a supervisor, as on the till. Returns {filename, csv, rows}.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
@@ -7335,6 +8297,48 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"ticket\": \"<ticket>\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "ID scanner (passport strip, Aadhaar QR)",
+   "item": [
+    {
+     "name": "read_id_scan",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.id_scan.read_id_scan",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.id_scan.read_id_scan"
+       ]
+      },
+      "description": "Turn what an ID scanner (or a camera reading a QR) sent into guest\nfields: name, ID type and number, date of birth, age, gender,\nnationality, expiry, and an address where the ID carries one. Read\nonly: nothing is saved until the desk saves the guest.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"text\": \"<text>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -11230,6 +12234,339 @@
        }
       }
      }
+    },
+    {
+     "name": "quote_itinerary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.quote_itinerary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.quote_itinerary"
+       ]
+      },
+      "description": "Price a multi-property trip before booking it: each leg priced by\nget_quote (the same engine create_booking uses), rooms free per leg,\nand the combined total. legs: [{property, room_type, check_in_date,\ncheck_out_date, adults?, children?, meal_plan?, rate_plan?}].",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"legs\": \"<legs>\",\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_itinerary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.create_itinerary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.create_itinerary"
+       ]
+      },
+      "description": "Book a trip across properties in one go: one reservation per leg\n(each a normal booking at its own property, with its own folio) under\none itinerary reference. All legs book or none do. Quote first with\nquote_itinerary. Take one advance for the trip with record_trip_advance,\nor per leg with record_advance.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"legs\": \"<legs>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"guest\": \"G-00001\",\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "add_itinerary_leg",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.add_itinerary_leg",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.add_itinerary_leg"
+       ]
+      },
+      "description": "Add one more stay to an existing trip. It can't overlap a live leg.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "get_itinerary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.get_itinerary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.get_itinerary"
+       ]
+      },
+      "description": "A trip with its legs in date order: each leg's property, dates,\nstatus, price, advance paid and deposit still due, plus the combined\ntotal (live legs) - what the combined confirmation prints.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "list_itineraries",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.list_itineraries",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.list_itineraries"
+       ]
+      },
+      "description": "Recent trips the user can work with (every leg at a property they\nmay access), newest first, with their legs and status.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"limit\": 50\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "cancel_itinerary_preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.cancel_itinerary_preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.cancel_itinerary_preview"
+       ]
+      },
+      "description": "What cancelling the whole trip would cost now: each leg's own\ncancellation_preview (its property's policy) and the total fee. Legs\nalready checked in or finished can't be cancelled and are listed apart.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "cancel_itinerary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.cancel_itinerary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.cancel_itinerary"
+       ]
+      },
+      "description": "Cancel every confirmed leg of a trip, each through cancel_reservation\nso its own property's policy and fee apply (waive_fee=1 waives them all,\nlogged per leg). All legs cancel or none do. To cancel one leg, call\ncancel_reservation on it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"reason\": \"Guest request\",\n  \"waive_fee\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "trip_advance_preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.trip_advance_preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.trip_advance_preview"
+       ]
+      },
+      "description": "How one advance for the whole trip would be split across its legs,\nbefore taking it: each leg's advance % and amount still due, and its\nshare. Without an amount, the trip's advance still due. Show this to\nthe guest or staff, then call record_trip_advance with the same amount.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"amount\": 1000\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "record_trip_advance",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.crs.record_trip_advance",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.crs.record_trip_advance"
+       ]
+      },
+      "description": "Take one advance for the whole trip. The payment is split as\ntrip_advance_preview shows and each share is recorded through\nrecord_advance on its leg, so every hotel's folio, till and books get\ntheir own part (refunds and cancellation then follow that leg's own\npolicy). All shares post or none do. A retry with the same\nidempotency_key returns the trip without posting again.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"itinerary\": \"<itinerary>\",\n  \"amount\": 1000,\n  \"mode\": \"Cash\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
     }
    ]
   },
@@ -11261,10 +12598,10 @@
         "kamra.dashboards.property_dashboard"
        ]
       },
-      "description": "Everything one hotel's dashboard needs, by department.",
+      "description": "Everything one hotel's dashboard needs, by department. The year on\nyear comparison is heavy, so only the Dashboard screen asks for it.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\",\n  \"with_comparison\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -11309,6 +12646,43 @@
        }
       }
      }
+    },
+    {
+     "name": "owner_snapshot",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.dashboards.owner_snapshot",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.dashboards.owner_snapshot"
+       ]
+      },
+      "description": "The owner's phone view of one hotel: the flash for a day (or\nfrom_date..date), what guests and companies still owe (as of now), and\nthe last few night audits. Read only; the same figures as the flash and\nthe ledgers. `period` (today, yesterday, month) counts from the\nproperty's business date, never the phone's clock.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\",\n  \"from_date\": \"2026-08-01\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
     }
    ]
   },
@@ -11340,7 +12714,7 @@
         "kamra.reports.void_allowance_report"
        ]
       },
-      "description": "Audit trail of every void, allowance and invoice cancellation on a\nproperty: who reversed what, when, and why. The compliance answer to\n\"show me every write-off\" - read straight from the action log, so it\ncannot drift from what actually happened.",
+      "description": "Audit trail of every void, allowance (with the manager who approved\nit, when one had to) and invoice cancellation on a property, plus\nallowances a manager rejected: who reversed what, when, and why. The compliance answer to\n\"show me every write-off\" - read straight from the action log, so it\ncannot drift from what actually happened.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
@@ -11529,6 +12903,48 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Night audit report (day, MTD, YTD)",
+   "item": [
+    {
+     "name": "night_audit_report",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.audit_report.night_audit_report",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.audit_report.night_audit_report"
+       ]
+      },
+      "description": "The night audit report for a business date (default: the last one\nclosed): rooms, food and beverage separately, each outlet, banquets,\nmeal plans and minibar, other income, for the day, month to date and\nyear to date, plus each ledger's balance brought and carried forward.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"date\": \"2026-08-01\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -12460,7 +13876,7 @@
         "kamra.ledger.group_checkout"
        ]
       },
-      "description": "Quick-checkout every Checked In reservation on a group.",
+      "description": "Quick-checkout every Checked In reservation on a group, or only the\n`reservations` picked on the rooming list.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group\": \"<group>\"\n}",
@@ -12534,10 +13950,47 @@
         "kamra.ledger.upsert_exchange_rate"
        ]
       },
-      "description": "",
+      "description": "Set today's (business date) rate for one foreign currency. Rates are\nhome-currency units per 1 foreign unit. A rate typed in here is Manual\nand wins over a fetched (Online) one for the same day: a later fetch\nleaves it alone.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"currency\": \"<currency>\",\n  \"buy_rate\": \"<buy_rate>\",\n  \"sell_rate\": \"<sell_rate>\",\n  \"service_tax_pct\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "fetch_exchange_rates",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.fetch_exchange_rates",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.fetch_exchange_rates"
+       ]
+      },
+      "description": "Fetch today's market rates for the property's listed currencies\n(Settings, Finance, Exchange rates) and store them for the business\ndate: buy = mid less the margin, sell = mid plus it. A Manual rate\nalready set for today is kept.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -12612,6 +14065,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"currency\": \"<currency>\",\n  \"fx_amount\": \"<fx_amount>\",\n  \"direction\": \"Buy\",\n  \"folio\": \"FOLIO-2026-00001\",\n  \"guest\": \"G-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "folio_in_currency",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.folio_in_currency",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.folio_in_currency"
+       ]
+      },
+      "description": "A folio's total and balance shown in another currency, at today's\nrate. Display only: the bill and tax invoice stay in home currency.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"currency\": \"<currency>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -12909,6 +14399,724 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"account\": \"<account>\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "company_monthly_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.statements.company_monthly_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.statements.company_monthly_bill"
+       ]
+      },
+      "description": "A company's month-end bill: every bill of the month with its invoice\nnumber, taxable value and tax, the company's payments, and the balance\nbrought and carried forward. format=html returns the printable page.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"month\": \"<month>\",\n  \"format\": \"json\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "email_monthly_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.statements.email_monthly_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.statements.email_monthly_bill"
+       ]
+      },
+      "description": "Email a company its month-end bill (HTML attachment). Without\nrecipients it goes to the company's billing contact email.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"month\": \"<month>\",\n  \"lang\": \"en\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Accounts receivable (account setup, invoices on an account, transfers)",
+   "item": [
+    {
+     "name": "ar_accounts",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.ar_accounts",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.ar_accounts"
+       ]
+      },
+      "description": "Every AR account at the property with its contact and position - the\nreceivables list. Aging and balance come from city_ledger_aging so the\ntwo screens always agree.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_ar_account",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.save_ar_account",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.save_ar_account"
+       ]
+      },
+      "description": "Open a company's AR account at a property, or edit it (`account`).\nOne open account per company per property - checkout bills into it.\nThe account number is the company's reference on statements and must\nbe unique at the property. Opening an account puts the company on\ncredit (Corporate Account.credit_allowed), since that is what it is for.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"company\": \"<company>\",\n  \"credit_limit\": 0,\n  \"use_default_credit_days\": 1,\n  \"credit_days\": 0,\n  \"restricted\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_ar_invoice",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.create_ar_invoice",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.create_ar_invoice"
+       ]
+      },
+      "description": "Bill a company directly, without a stay. `lines` is\n[{charge_type, description, amount, qty, gst_rate}]: amount is the unit\nprice before tax, the tax rate must be one of the property's, and F&B or\nalcohol lines take the hotel's own rate whatever is sent. Credit control\nruns as at checkout. Returns the invoice number and the account's new\nbalance.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"lines\": \"<lines>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "ar_invoice",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.ar_invoice",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.ar_invoice"
+       ]
+      },
+      "description": "One AR bill's lines and totals, whether it came from a stay or was\nraised on the account - what the invoice drawer shows and prints.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "transfer_ar_invoice",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.transfer_ar_invoice",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.transfer_ar_invoice"
+       ]
+      },
+      "description": "Move what is still owed on one bill to another company's account at\nthe same property. What was already paid stays with the first account;\nthe bill keeps its invoice number and invoice date, so it ages from when\nit was really raised. Credit control on the receiving company is not\nre-run - finance is choosing who pays.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"folio\": \"FOLIO-2026-00001\",\n  \"to_account\": \"<to_account>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Accounts payable (vendors, supplier bills, approval, payments)",
+   "item": [
+    {
+     "name": "vendors",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.vendors",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.vendors"
+       ]
+      },
+      "description": "Every vendor at the property with what the hotel still owes them,\naged by due date - the payables list.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"include_disabled\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "save_vendor",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.save_vendor",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.save_vendor"
+       ]
+      },
+      "description": "Add a supplier at the property, or edit one (`vendor`). Names are\nunique per property, so a bill can name its vendor by name.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"vendor_name\": \"<vendor_name>\",\n  \"payment_terms_days\": 30,\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"disabled\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "create_vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.create_vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.create_vendor_bill"
+       ]
+      },
+      "description": "Enter a supplier's bill. `amount` is before tax; the tax is\namount x `tax_rate` %. The due date is the bill date plus the vendor's\npayment terms unless `due_date` is given. The bill then waits for a\nHotel Admin to approve it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"vendor\": \"<vendor>\",\n  \"bill_date\": \"<bill_date>\",\n  \"amount\": 1000,\n  \"tax_rate\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "approve_vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.approve_vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.approve_vendor_bill"
+       ]
+      },
+      "description": "Approve a bill so it can be paid.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bill\": \"<bill>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "pay_vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.pay_vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.pay_vendor_bill"
+       ]
+      },
+      "description": "Record a payment against an approved bill: all of it or part. It\ncan't be more than the bill still owes. This records the payment; it\ndoes not move money in a till (cash from the till is petty cash).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bill\": \"<bill>\",\n  \"amount\": 1000,\n  \"mode\": \"Bank Transfer\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "cancel_vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.cancel_vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.cancel_vendor_bill"
+       ]
+      },
+      "description": "Cancel a bill entered by mistake. A bill with payments on it can't\nbe cancelled.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bill\": \"<bill>\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "vendor_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.vendor_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.vendor_bill"
+       ]
+      },
+      "description": "One bill with its payments.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bill\": \"<bill>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "vendor_bills",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.vendor_bills",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.vendor_bills"
+       ]
+      },
+      "description": "Bills at the property, most urgent first. `status` is \"open\"\n(not paid or cancelled, the default), \"all\", or one status.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"status\": \"open\",\n  \"limit\": 500\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "payables_aging",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.payables.payables_aging",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.payables.payables_aging"
+       ]
+      },
+      "description": "What the hotel owes each vendor, aged by due date: not_due, d1_30,\nd31_60, d61_90, d90p and their sum `overdue`, plus totals.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Management books (next days of cash, P&L, balance sheet)",
+   "item": [
+    {
+     "name": "cash_forecast",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.books.cash_forecast",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.books.cash_forecast"
+       ]
+      },
+      "description": "Money expected in and out over the next `days` days (5, 15 or 30;\ndefault 5), day by day from today, with a running position and\nsubtotals by week.\n\nIn: company (city ledger) bills falling due, what departing guests\nstill owe, advance deposits due from arrivals. Out: supplier bills\nfalling due, drafts awaiting approval included and flagged `draft`.\nAnything already overdue is counted today. `opening` is\nthe cash and bank to start from; without it, the cash in open tills.\nRead-only.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 5\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "profit_and_loss",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.books.profit_and_loss",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.books.profit_and_loss"
+       ]
+      },
+      "description": "A management P&L for the period, before tax: revenue by department\n(rooms, food and beverage, banquets, other, less allowances) and\nexpenses (approved supplier bills by category on their bill date, petty\ncash by category, cash paid out from the tills). Credit notes on\nclosed bills count under allowances. Not statutory accounts: payroll, depreciation and anything\npaid outside Kamra are not in it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "balance_sheet",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.books.balance_sheet",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.books.balance_sheet"
+       ]
+      },
+      "description": "What is owed to the hotel and what it owes, as of a date (default\ntoday): guest ledger and city ledger against advance deposits and\nsupplier bills, plus cash in open tills when the date is today. Tax\ncollected this month is shown for reference, not in the totals: Kamra\ndoes not record tax paid to the government. Not a full balance sheet:\nthe bank, fixed assets, loans and equity are not in Kamra.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -14300,7 +16508,7 @@
         "kamra.checkin.save_guest_details"
        ]
       },
-      "description": "Correct the primary guest's contact and ID details at the desk. Only\nwhat is passed changes; an ID type must be one the country recognises.",
+      "description": "Correct the primary guest's contact and ID details at the desk, or\nkeep what an ID scan read. Only what is passed changes; an ID type must\nbe one the country recognises.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\"\n}",
@@ -14485,7 +16693,7 @@
         "kamra.checkin.log_checkin_requests"
        ]
       },
-      "description": "Quick requests at check-in become service tickets (one each); a free\nnote is kept on the step and, if given alone, raised as one ticket.",
+      "description": "Quick requests at check-in become service tickets (one each); a free\nnote is kept on the step and, if given alone, raised as one ticket.\n`prices` ({request: amount}) bills a paid request (an extra bed, an\nairport drop) to the stay, by the hotel's tax rules and billing rules.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
@@ -14629,7 +16837,7 @@
         "kamra.staff.save_staff"
        ]
       },
-      "description": "Add a person, or change an existing person's roles, property access\nand whether they can sign in.",
+      "description": "Add a person, or change an existing person's roles, property access,\njob title and whether they can sign in. Your own record: name only.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"email\": \"guest@example.com\",\n  \"full_name\": \"A. Guest\",\n  \"roles\": \"<roles>\",\n  \"enabled\": 1,\n  \"send_welcome\": 0\n}",
@@ -15310,7 +17518,7 @@
       "description": "Guest completes pre-arrival check-in and signs the registration card\n(PRD FR-20 - details + declaration + e-signature; the signed card becomes\nthe paperless GRC the desk views at arrival). The guest can attach a\nphoto of their ID - camera capture or upload - stored privately.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"token\": \"<token>\",\n  \"id_type\": \"<id_type>\",\n  \"id_number\": \"<id_number>\",\n  \"email\": \"guest@example.com\",\n  \"nationality\": \"\",\n  \"address_line\": \"\",\n  \"city\": \"\",\n  \"eta\": \"\",\n  \"special_requests\": \"\",\n  \"signature\": \"\",\n  \"consent\": 0,\n  \"id_image\": \"\",\n  \"address_image\": \"\"\n}",
+       "raw": "{\n  \"token\": \"<token>\",\n  \"id_type\": \"<id_type>\",\n  \"id_number\": \"<id_number>\",\n  \"email\": \"guest@example.com\",\n  \"nationality\": \"\",\n  \"address_line\": \"\",\n  \"city\": \"\",\n  \"eta\": \"\",\n  \"special_requests\": \"\",\n  \"signature\": \"\",\n  \"consent\": 0,\n  \"id_image\": \"\",\n  \"address_image\": \"\",\n  \"occupants\": \"\"\n}",
        "options": {
         "raw": {
          "language": "json"

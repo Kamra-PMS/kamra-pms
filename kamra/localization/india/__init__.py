@@ -15,8 +15,14 @@ FNB_GST = 5.0  # F&B / meal-plan GST rate
 SERVICES_GST = 18.0  # laundry and other guest services
 
 DEFAULT_CURRENCY = "INR"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "SGD", "AUD", "JPY"]
 DEFAULT_TIMEZONE = "Asia/Kolkata"
 DEFAULT_NATIONALITY = "Indian"
+# the financial year runs April to March: year-to-date reports start here
+FINANCIAL_YEAR_START = (4, 1)
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "IND"
 # named in the guest privacy notice
 PRIVACY_AUTHORITY = "the Data Protection Board of India"
 GUEST_REPORT = "for foreign nationals, Form C to the immigration authorities"
@@ -25,7 +31,11 @@ GUEST_REPORT = "for foreign nationals, Form C to the immigration authorities"
 NOTICE_LANGUAGES = ["hi", "kn", "ta", "te", "ml", "mr", "bn"]
 # Form C / the guest register accept any of these for Indian nationals
 ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "PAN", "Other"]
+ID_TYPE_HINTS = {"Aadhaar": "A masked Aadhaar (last 4 digits showing) is fine."}
+INVOICE_TAX_NOTE = "Amounts are inclusive of GST at the rates shown."
 PAYMENT_MODES = ["Cash", "Card", "UPI", "Bank Transfer"]
+# settled like a card but counted in its own till bucket
+INSTANT_PAYMENT_MODES = ["UPI"]
 # Indian hotels keep a signed registration card (the hotel register the
 # police may inspect), so the guided check-in makes the GRC a required step
 # by default. A property can still change it in its check-in steps.
@@ -82,13 +92,16 @@ SAC_CODES = {
 	"Room": "996311",              # room or unit accommodation
 	"Early Check-in": "996311",
 	"Late Checkout": "996311",
+	"Early Departure": "996311",   # charged for the booked room supply
 	"Pet Charge": "996311",        # part of the stay, billed with the room
 	"Meal Plan": "996311",         # bundled into the accommodation supply
 	"Extra Guests": "996311",      # extra beds in a let unit, same supply
+	"Rate Adjustment": "996311",   # a later change to a night's room rate
 	"Food & Beverage": "996331",   # restaurant / outdoor catering
 	"Minibar": "996331",
 	"Laundry": "999712",           # washing, cleaning and dyeing
 	"Spa": "999722",               # physical well-being incl. health club
+	"Taxi": "996412",              # taxi services
 	"Misc": "999799",              # other services n.e.c.
 	# banquet line types
 	"Venue Rental": "997212",      # renting of non-residential property
@@ -179,3 +192,17 @@ def verify_tax_id(property, tax_id, business_name=""):
 def verify_guest_id(property, guest, id_type, consent=0):
 	from kamra.localization.india import verify
 	return verify.scan_guest_id(property, guest, id_type, consent)
+
+
+def read_id_scan(text):
+	"""An ID scanner's text the core could not read: the Aadhaar QR."""
+	from kamra.localization.india.aadhaar_qr import read
+	return read(text)
+
+
+def store_id_number(id_type, value):
+	"""UIDAI rules: a hotel keeps an Aadhaar number masked to its last 4."""
+	if id_type == "Aadhaar":
+		from kamra.localization.india.aadhaar_qr import mask
+		return mask(value)
+	return None

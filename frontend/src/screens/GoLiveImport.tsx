@@ -114,7 +114,7 @@ const PLACEHOLDER: Record<FileKind, string> = {
     "Type,Reservation No,Guest Name,Company,Invoice No,Invoice Date,Amount,Mode\n" +
     "In-house,R-1042,,,,,12600,\n" +
     "City ledger,,,Acme Travels,INV-881,10/09/2026,18000,\n" +
-    "Deposit,R-1077,,,,,3000,UPI",
+    "Deposit,R-1077,,,,,3000,Card",
 }
 
 const inputCls =

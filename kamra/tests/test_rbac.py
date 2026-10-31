@@ -38,8 +38,8 @@ TICKETS = ("Service Ticket", "handle_requests")
 
 BASELINE = json.load(open(os.path.join(os.path.dirname(__file__), "rbac_baseline.json")))
 BUILTIN = ("Front Desk", "Finance", "Revenue Manager", "Night Auditor", "Housekeeping",
-           "Housekeeping Supervisor", "Kamra Agent", "POS Integrator", "Hotel Admin",
-           "System Manager")
+           "Housekeeping Supervisor", "F&B Manager", "Kamra Agent", "POS Integrator",
+           "Hotel Admin", "System Manager")
 _SKIP = ("kamra.tests", "kamra.patches", "kamra.scripts", "kamra.kamra", "kamra.www",
          "kamra.templates", "kamra.public", "kamra.translations")
 
@@ -273,10 +273,15 @@ class RbacTestCase(IntegrationTestCase):
 		self.assertIn("Finance", ROLE_PROFILES["General Manager"])
 		fnb = _user("rbac.fnb@test.local", *ROLE_PROFILES["F&B Manager"])
 		for doctype, ptype in (("POS Order", "take_orders"),  # charge to room
+		                       ("POS Order", "approve_voids"),
 		                       ("Ingredient", "manage_stock"),  # wastage, counts, goods-in
+		                       ("Menu Item", "edit_menu"),
 		                       ("Kitchen Printer", "configure_printers")):
 			self.assertTrue(frappe.has_permission(doctype, ptype, user=fnb), (doctype, ptype))
 		self.assertIn("take_orders", _endpoint("pos.charge_to_room")._kamra_perm)
+		# a POS void approver, never a folio one
+		self.assertTrue(authz.is_supervisor(fnb, authz.POS_APPROVE))
+		self.assertFalse(authz.is_supervisor(fnb))
 
 	def test_only_it_edits_what_a_role_allows(self):
 		"""Hotel Admin assigns people to roles; what a role may do is IT's
@@ -362,6 +367,19 @@ class RbacTestCase(IntegrationTestCase):
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
 		self.assertNotIn("Finance", frappe.get_roles(target))
 		self.assertIn("Front Desk", frappe.get_roles(target))
+
+	def test_only_a_hotel_admin_sets_job_titles(self):
+		from kamra.staff import save_staff
+		target = _user("rbac.target@test.local", "Front Desk")
+		_grant("Property", "configure")
+		self.as_user(CUSTOM_USER)
+		with self.assertRaises(frappe.PermissionError):
+			save_staff(property=_property(HOME), email=target, full_name="Rbac Person",
+			           roles=json.dumps(["Front Desk"]), job_title="Duty Manager")
+		self.as_user(_user("rbac.gm@test.local", "Hotel Admin"))
+		save_staff(property=HOME, email=target, full_name="Rbac Person",
+		           roles=json.dumps(["Front Desk"]), job_title="Duty Manager")
+		self.assertEqual(frappe.db.get_value("User", target, "kamra_job_title"), "Duty Manager")
 
 	def test_property_configure_does_not_mint_hotel_admins(self):
 		_grant("Property", "configure")

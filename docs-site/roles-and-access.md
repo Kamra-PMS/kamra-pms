@@ -39,7 +39,7 @@ everywhere at once. Menus and buttons in Kamra follow it too.
 
 Out of the box the permissions match Kamra's built-in roles: Front Desk,
 Finance, Revenue Manager, Night Auditor, Housekeeping, Housekeeping
-Supervisor, Hotel Admin and the Kamra Agent.
+Supervisor, F&B Manager, Hotel Admin and the Kamra Agent.
 
 ## Who can change access
 
@@ -103,7 +103,7 @@ Kamra never overwrites your changes.
 | Front Office Manager | Front Desk, Night Auditor, Revenue Manager |
 | Duty Manager | Front Desk, Night Auditor, Housekeeping Supervisor |
 | Night Auditor | Night Auditor, Front Desk |
-| F&B Manager | Front Desk, Finance |
+| F&B Manager | F&B Manager |
 | Finance Manager | Finance, Night Auditor |
 | General Manager | Hotel Admin, Finance |
 
@@ -123,18 +123,23 @@ action, report, Desk list and REST call.
 
 Approvals are permissions too:
 
-- **Folio: Approve** decides who may approve a kitchen void, a reason code
-  that needs a supervisor, and who appears in the approver list at the
-  till. Default: Hotel Admin and Finance.
+- **Folio: Approve** decides who may approve a reason code that needs a
+  supervisor and a folio correction. Default: Hotel Admin and Finance.
+- **Folio: Correct charges** decides who may correct the rate of nights
+  already charged, and who may approve it. Default: Hotel Admin and
+  Finance.
+- **POS Order: Approve voids** decides who may approve voiding food the
+  kitchen has started, and who appears in the approver list at the till.
+  Default: Hotel Admin, Finance and F&B Manager.
 - **Corporate Account: Override Credit** decides who may book or bill past
   a company's credit limit. Default: Hotel Admin and Finance.
 
 The approver still enters their own cashier PIN where the property asks
 for one.
 
-Approvals that move a document through states (for example an allowance
-request waiting for a manager) use Frappe **Workflow** when they ship, so
-you edit who approves in Desk at `/app/workflow`.
+Allowance requests waiting for a manager follow the property's allowance
+approval setting (**Settings > Finance**: Hotel Admin, or Hotel Admin and
+Finance).
 
 ## Rules that don't change
 
@@ -166,15 +171,17 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Cashier Session | Manage cash office (`manage_cash_office`) | Finance, Hotel Admin, System Manager | `cashier.save_terminal`, `cashier.bank_deposit`, `cashier.approve_variance` |
 | Cashier Session | Operate till (`operate_till`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `cashier.open_session`, `cashier.post_paid_out`, `cashier.cash_drop` and 2 more |
 | Cashier Session | Set float (`set_float`) | Finance, Hotel Admin, Kamra Agent, System Manager | `cashier.set_petty_cash_float` |
-| Cashier Session | Use pin (`use_pin`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `api.cashier_pin_status`, `api.set_cashier_pin`, `api.verify_cashier_pin` |
-| Cashier Session | View tills (`view_tills`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.cash_summary`, `cashier.current_session`, `cashier.my_till` and 8 more |
+| Cashier Session | Use pin (`use_pin`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `api.cashier_pin_status`, `api.set_cashier_pin`, `api.verify_cashier_pin` |
+| Cashier Session | View cash summary (`view_cash_summary`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `api.cash_summary`, `cashier.cash_summary_v2` |
+| Cashier Session | View tills (`view_tills`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `cashier.current_session`, `cashier.my_till`, `cashier.close_session` and 6 more |
 | Channel Manager Connection | Configure (`configure`) | Hotel Admin, System Manager | `marketplace.disconnect_channel` |
 | Channel Manager Connection | Sync channels (`sync_channels`) | Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `channel_manager.push_ari`, `channel_manager.import_room_mappings` |
 | Channel Manager Connection | View channels (`view_channels`) | Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `channel_manager.connection_status` |
-| City Ledger Account | Send statements (`send_statements`) | Finance, Hotel Admin, System Manager | `statements.company_statement`, `statements.email_company_statement` |
-| City Ledger Account | Settle account (`settle_account`) | Finance, Hotel Admin, Kamra Agent, System Manager | `ledger.city_ledger_settle` |
-| City Ledger Account | View account (`view_account`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `ledger.city_ledger_account` |
-| City Ledger Entry | View financials (`view_financials`) | Finance, Hotel Admin, Kamra Agent, System Manager | `ledger.financial_activity` |
+| City Ledger Account | Manage accounts (`manage_accounts`) | Finance, Hotel Admin, System Manager | `receivables.save_ar_account`, `receivables.transfer_ar_invoice` |
+| City Ledger Account | Send statements (`send_statements`) | Finance, Hotel Admin, System Manager | `statements.company_statement`, `statements.email_company_statement`, `statements.email_monthly_bill` |
+| City Ledger Account | Settle account (`settle_account`) | Finance, Hotel Admin, Kamra Agent, System Manager | `ledger.city_ledger_settle`, `receivables.create_ar_invoice` |
+| City Ledger Account | View account (`view_account`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `ledger.city_ledger_account`, `receivables.ar_accounts`, `receivables.ar_invoice` |
+| City Ledger Entry | View financials (`view_financials`) | Finance, Hotel Admin, Kamra Agent, System Manager | `books.cash_forecast`, `books.profit_and_loss`, `books.balance_sheet` and 2 more |
 | City Ledger Entry | View ledgers (`view_ledgers`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `ledger.ledger_balances`, `ledger.journal_by_transaction_code`, `ledger.city_ledger_aging` and 1 more |
 | Copilot Conversation | Ask agent (`ask_agent`) | Finance, Front Desk, Hotel Admin, Revenue Manager, System Manager | `assistant.ask`, `assistant.ask_stream` |
 | Copilot Conversation | Ask help (`ask_help`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `assistant.help_ask` |
@@ -185,75 +192,85 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Corporate Account | Set credit (`set_credit`) | Finance, Hotel Admin, System Manager | `credit.set_company_credit_terms` |
 | Corporate Account | View credit (`view_credit`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `credit.company_credit_status` |
 | Corporate Account | View terms (`view_terms`) | Finance, Front Desk, Hotel Admin, Revenue Manager, System Manager | `credit.company_credit_terms` |
-| Exchange Rate | Set rates (`set_rates`) | Finance, Hotel Admin, Kamra Agent, System Manager | `ledger.upsert_exchange_rate` |
+| Exchange Rate | Set rates (`set_rates`) | Finance, Hotel Admin, System Manager | `ledger.upsert_exchange_rate`, `ledger.fetch_exchange_rates` |
 | Exchange Rate | Use currency desk (`use_currency_desk`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `ledger.list_exchange_rates`, `ledger.currency_calculator`, `ledger.exchange_history` |
 | Folio | Approve (`approve`) | Finance, Hotel Admin, System Manager | checked inside Kamra |
 | Folio | Audit voids (`audit_voids`) | Finance, Hotel Admin, System Manager | `payments.gateway_info`, `reports.void_allowance_report` |
-| Folio | Bill (`bill`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.record_advance`, `api.deposit_payment_link`, `api.security_deposit` and 28 more |
+| Folio | Bill (`bill`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.record_advance`, `api.deposit_payment_link`, `api.security_deposit` and 35 more |
+| Folio | Correct charges (`correct_charges`) | Finance, Hotel Admin, System Manager | `api.correct_charged_nights` |
 | Folio | Find invoices (`find_invoices`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `api.find_invoices` |
+| Folio | Handle allowances (`handle_allowances`) | Finance, Front Desk, Hotel Admin, System Manager | `api.decide_allowance`, `api.allowance_voucher`, `api.allowance_approvers` |
 | Folio | Issue credit note (`issue_credit_note`) | Finance, Hotel Admin, Kamra Agent, System Manager | `ledger.issue_credit_note` |
 | Folio | Post from pos (`post_from_pos`) | Hotel Admin, Kamra Agent, POS Integrator, System Manager | `pos_interface.pos_room_lookup`, `pos_interface.pos_post_room_charge` |
-| Folio | View folio (`view_folio`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.get_folio`, `api.checkout_context`, `checkin.check_in_readiness` and 1 more |
+| Folio | View folio (`view_folio`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.get_folio`, `api.checkout_context`, `checkin.check_in_readiness` and 2 more |
 | Folio Ledger Entry | Export books (`export_books`) | Finance, Hotel Admin, Kamra Agent, System Manager | `accounting.export_invoices` |
 | Group Booking | Bill group (`bill_group`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.group_master_folio`, `api.group_folios`, `api.settle_group_bill` |
-| Group Booking | Book group (`book_group`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.create_group_booking`, `api.pickup_group_room`, `ledger.group_checkout` |
-| Group Booking | Manage group (`manage_group`) | Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `api.set_group_master`, `api.group_detail`, `api.save_group_blocks` |
+| Group Booking | Book group (`book_group`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.create_group_booking`, `api.create_group_with_rooming_list`, `api.set_rooming_names` and 6 more |
+| Group Booking | Manage group (`manage_group`) | Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `api.set_group_master`, `api.group_price_preview`, `api.group_quotation` and 2 more |
+| Group Booking | Rooming template (`rooming_template`) | Front Desk, Hotel Admin, Revenue Manager, System Manager | `api.rooming_list_template` |
 | Guest | Configure (`configure`) | Hotel Admin, System Manager | `api.set_guest_blacklist`, `api.merge_guests`, `api.anonymize_guest` and 1 more |
-| Guest | Handle guests (`handle_guests`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.guests_with_stats`, `api.guest_search`, `api.guest_alert` and 7 more |
+| Guest | Handle guests (`handle_guests`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.guests_with_stats`, `api.guest_search`, `api.guest_alert` and 8 more |
 | Guest | Verify id (`verify_id`) | Front Desk, Hotel Admin, System Manager | `api.verify_guest_id` |
 | Housekeeping Task | Do housekeeping (`do_housekeeping`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `api.hk_queue`, `api.hk_update_task`, `api.hk_upload_media` and 6 more |
 | Housekeeping Task | Supervise (`supervise`) | Front Desk, Hotel Admin, Housekeeping Supervisor, Kamra Agent, System Manager | `api.hk_staff` |
 | Hurdle Rate | Manage hurdles (`manage_hurdles`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `api.hurdle_rates`, `api.save_hurdle_rate`, `api.delete_hurdle_rate` |
-| Ingredient | Manage stock (`manage_stock`) | Finance, Hotel Admin, System Manager | `inventory.save_ingredient`, `inventory.delete_ingredient`, `inventory.receive_stock` and 3 more |
-| Ingredient | View stock (`view_stock`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.ingredients`, `inventory.recipe_overview`, `inventory.stock_list` and 3 more |
-| Kamra Custom Report | Run reports (`run_reports`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `custom_reports.list_report_datasets`, `custom_reports.list_report_packs`, `custom_reports.run_report_pack` and 6 more |
-| Kitchen Printer | Configure printers (`configure_printers`) | Finance, Hotel Admin, System Manager | `printing.save_printer`, `printing.delete_printer`, `printing.test_print` |
-| Kitchen Printer | Print tickets (`print_tickets`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `printing.print_bill`, `printing.claim_jobs`, `printing.ack_jobs` and 3 more |
+| Ingredient | Manage stock (`manage_stock`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_ingredient`, `inventory.delete_ingredient`, `inventory.receive_stock` and 3 more |
+| Ingredient | View stock (`view_stock`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.ingredients`, `inventory.recipe_overview`, `inventory.stock_list` and 3 more |
+| Itinerary | View trips (`view_trips`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `crs.get_itinerary`, `crs.list_itineraries` |
+| Kamra Custom Report | Run reports (`run_reports`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `custom_reports.list_report_datasets`, `custom_reports.list_report_packs`, `custom_reports.run_report_pack` and 6 more |
+| Kitchen Printer | Configure printers (`configure_printers`) | F&B Manager, Finance, Hotel Admin, System Manager | `printing.save_printer`, `printing.delete_printer`, `printing.test_print` |
+| Kitchen Printer | Print tickets (`print_tickets`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `printing.print_bill`, `printing.claim_jobs`, `printing.ack_jobs` and 3 more |
 | Laundry Order | Handle laundry (`handle_laundry`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `laundry.request_pickup`, `laundry.collect_laundry`, `laundry.laundry_status` and 3 more |
 | Laundry Order | Price laundry (`price_laundry`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `laundry.save_laundry_rate`, `laundry.delete_laundry_rate`, `laundry.import_laundry_rates` and 1 more |
 | Laundry Order | View laundry (`view_laundry`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `laundry.laundry_rates`, `laundry.laundry_board` |
-| Menu Item | Edit menu (`edit_menu`) | Finance, Hotel Admin, System Manager | `inventory.save_recipe`, `inventory.set_menu_availability`, `menu_import.preview_menu_import` and 2 more |
-| Menu Item | View recipes (`view_recipes`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.menu_recipe` |
+| Menu Item | Edit menu (`edit_menu`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_recipe`, `inventory.set_menu_availability`, `menu_import.preview_menu_import` and 2 more |
+| Menu Item | View menu lists (`view_menu_lists`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `settings.menu_masters` |
+| Menu Item | View recipes (`view_recipes`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.menu_recipe` |
 | Night Audit Run | Configure (`configure`) | Hotel Admin, System Manager | `api.gstr1_rows` |
 | Night Audit Run | E invoicing (`e_invoicing`) | Finance, Hotel Admin, System Manager | `api.zatca_settings`, `api.zatca_invoice_xml` |
 | Night Audit Run | Recover date (`recover_date`) | Finance, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `night_audit.recover_stuck_business_date` |
 | Night Audit Run | Run audit (`run_audit`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.run_night_audit`, `night_audit.night_audit_precheck`, `night_audit.night_audit_pack` and 6 more |
 | Night Audit Run | Schedule audit (`schedule_audit`) | Finance, Hotel Admin, Night Auditor, System Manager | `night_audit.night_audit_schedule` |
 | Outbound Webhook | Configure (`configure`) | Hotel Admin, System Manager | `webhooks.webhook_events`, `webhooks.list_webhooks`, `webhooks.save_webhook` and 6 more |
+| POS Order | Approve voids (`approve_voids`) | F&B Manager, Finance, Hotel Admin, System Manager | checked inside Kamra |
 | POS Order | Manage outlet (`manage_outlet`) | Finance, Hotel Admin, System Manager | `pos.speed_check` |
-| POS Order | Take orders (`take_orders`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `pos.outlets`, `pos.pos_menu`, `pos.in_house_rooms` and 36 more |
+| POS Order | Take orders (`take_orders`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `pos.outlets`, `pos.pos_menu`, `pos.in_house_rooms` and 41 more |
+| POS Outlet | Manage waiters (`manage_waiters`) | F&B Manager, Finance, Hotel Admin, System Manager | `pos.save_outlet_waiter` |
 | Property | App admin (`app_admin`) | Hotel Admin, System Manager | checked inside Kamra |
 | Property | App booking engine (`app_booking_engine`) | Hotel Admin, Revenue Manager, System Manager | checked inside Kamra |
 | Property | App events (`app_events`) | Front Desk, Hotel Admin, Revenue Manager, System Manager | checked inside Kamra |
 | Property | App finance (`app_finance`) | Finance, Front Desk, Hotel Admin, Night Auditor, System Manager | checked inside Kamra |
-| Property | App fnb (`app_fnb`) | Finance, Front Desk, Hotel Admin, System Manager | checked inside Kamra |
+| Property | App fnb (`app_fnb`) | F&B Manager, Finance, Front Desk, Hotel Admin, System Manager | checked inside Kamra |
 | Property | App front desk (`app_front_desk`) | Front Desk, Hotel Admin, Night Auditor, System Manager | checked inside Kamra |
 | Property | App housekeeping (`app_housekeeping`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, System Manager | checked inside Kamra |
 | Property | App operations (`app_operations`) | Front Desk, Hotel Admin, System Manager | checked inside Kamra |
 | Property | App revenue (`app_revenue`) | Hotel Admin, Revenue Manager, System Manager | checked inside Kamra |
 | Property | Configure (`configure`) | Hotel Admin, System Manager | `api.set_enabled_modules`, `connect.client.status`, `connect.client.link` and 19 more |
-| Property | Edit settings (`edit_settings`) | Finance, Hotel Admin, Housekeeping Supervisor, Revenue Manager, System Manager | `settings.save_settings` |
+| Property | Edit settings (`edit_settings`) | F&B Manager, Finance, Hotel Admin, Housekeeping Supervisor, Revenue Manager, System Manager | `settings.save_settings` |
 | Property | Go live (`go_live`) | Finance, Hotel Admin, System Manager | `golive.csv_template`, `golive.preview_companies`, `golive.run_companies` and 3 more |
 | Property | Upload images (`upload_images`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.upload_room_image` |
-| Property | Use console (`use_console`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `api.enabled_modules`, `today_layout.get_today_layout`, `today_layout.save_today_layout` and 1 more |
-| Property | Use settings (`use_settings`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `api.my_connector_credentials`, `api.linked_records`, `mcp_oauth.connect_info` and 2 more |
+| Property | Use console (`use_console`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `today_layout.get_today_layout`, `today_layout.save_today_layout`, `today_layout.reset_today_layout` |
+| Property | Use settings (`use_settings`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `api.my_connector_credentials`, `api.linked_records`, `mcp_oauth.connect_info` and 1 more |
 | Property | Verify tax id (`verify_tax_id`) | Finance, Front Desk, Hotel Admin, System Manager | `api.verify_tax_id` |
 | Property | View briefing (`view_briefing`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.position_briefing`, `onboarding.setup_checklist` |
-| Property | View dashboard (`view_dashboard`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `dashboards.property_dashboard` |
-| Property | View flash (`view_flash`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `reports.manager_flash`, `settings.menu_masters` |
-| Property | View locale (`view_locale`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Revenue Manager, System Manager | `api.property_locale` |
+| Property | View dashboard (`view_dashboard`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `dashboards.property_dashboard` |
+| Property | View flash (`view_flash`) | Finance, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `audit_report.night_audit_report`, `dashboards.owner_snapshot`, `reports.manager_flash` |
+| Property | View locale (`view_locale`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Revenue Manager, System Manager | `api.property_locale` |
+| Property | View modules (`view_modules`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `api.enabled_modules` |
 | Property | View performance (`view_performance`) | Finance, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `dashboards.portfolio_dashboard`, `reports.budget_vs_actual`, `reports.contribution` |
+| Property | View settings (`view_settings`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `settings.settings_schema` |
 | Property | View snapshot (`view_snapshot`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `api.front_desk_snapshot` |
 | Rate Plan | Configure (`configure`) | Hotel Admin, System Manager | `api.owner_briefing` |
 | Rate Plan | Quote (`quote`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.booking_options`, `api.get_quote` |
 | Rate Plan | Set rates (`set_rates`) | Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `api.set_room_rate` |
 | Rate Plan | View rates (`view_rates`) | Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `rates.rate_calendar`, `rates.rate_options` |
-| Reason Code | View codes (`view_codes`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `ledger.list_reason_codes` |
+| Reason Code | View codes (`view_codes`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `ledger.list_reason_codes` |
 | Reservation | Check in out (`check_in_out`) | Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.checkin_context`, `api.check_in`, `api.check_out` and 3 more |
 | Reservation | Follow instructions (`follow_instructions`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `api.stay_instructions`, `api.set_stay_instruction_status` |
 | Reservation | Guided check in (`guided_check_in`) | Front Desk, Hotel Admin, Night Auditor, System Manager | `checkin.complete_checkin_step`, `checkin.skip_checkin_step`, `checkin.save_guest_details` and 5 more |
-| Reservation | Handle stays (`handle_stays`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.registration_card`, `api.waive_security_deposit`, `api.release_access_instructions` and 28 more |
+| Reservation | Handle stays (`handle_stays`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.registration_card`, `api.waive_security_deposit`, `api.release_access_instructions` and 34 more |
 | Reservation | Plan stays (`plan_stays`) | Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `allocation.suggest_allocation`, `allocation.apply_allocation`, `api.set_pays_own_charges` and 2 more |
+| Reservation | Reinstate checkout (`reinstate_checkout`) | Finance, Front Desk, Hotel Admin, System Manager | `api.reinstate_checkout` |
 | Reservation | Set room charges (`set_room_charges`) | Finance, Front Desk, Hotel Admin, Night Auditor, System Manager | `checkin.set_room_charges` |
 | Reservation | View stays (`view_stays`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `api.find_reservations`, `api.reservation_detail` |
 | Revenue Budget | Set budget (`set_budget`) | Finance, Hotel Admin, Revenue Manager, System Manager | `reports.save_budget` |
@@ -269,6 +286,11 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Security Deposit | View refunds (`view_refunds`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.pending_deposit_refunds` |
 | Service Ticket | Handle requests (`handle_requests`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.create_ticket`, `api.tickets_list`, `api.advance_ticket` and 1 more |
 | Service Ticket | Work requests (`work_requests`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `tickets.tickets_search`, `tickets.ticket_detail`, `tickets.ticket_assignees` and 6 more |
+| Vendor | Manage vendors (`manage_vendors`) | Finance, Hotel Admin, System Manager | `payables.save_vendor` |
+| Vendor Bill | Approve bills (`approve_bills`) | Hotel Admin, System Manager | `payables.approve_vendor_bill` |
+| Vendor Bill | Enter bills (`enter_bills`) | Finance, Hotel Admin, Kamra Agent, System Manager | `payables.create_vendor_bill` |
+| Vendor Bill | Pay bills (`pay_bills`) | Finance, Hotel Admin, System Manager | `payables.pay_vendor_bill`, `payables.cancel_vendor_bill` |
+| Vendor Bill | View payables (`view_payables`) | Finance, Hotel Admin, Kamra Agent, System Manager | `payables.vendors`, `payables.vendor_bill`, `payables.vendor_bills` and 1 more |
 | Venue Booking | Bill functions (`bill_functions`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `banquet.set_payment_terms`, `banquet.default_payment_terms`, `banquet.record_receipt` and 8 more |
 | Venue Booking | Configure (`configure`) | Hotel Admin, System Manager | `banquet_ops.seed_banquet_checklist_templates` |
 | Venue Booking | Issue indent (`issue_indent`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Revenue Manager, System Manager | `banquet.issue_indent` |
@@ -289,6 +311,10 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Agent Action Log | Kamra Agent | read, report |
 | AI Assistant Settings | System Manager | read, write, create, delete, report |
 | AI Assistant Settings | Hotel Admin | read, write, create, delete, report |
+| Allowance Request | System Manager | read, write, create |
+| Allowance Request | Hotel Admin | read |
+| Allowance Request | Finance | read |
+| Allowance Request | Front Desk | read |
 | Banquet Checklist Template | System Manager | read, write, create, delete, report, export |
 | Banquet Checklist Template | Hotel Admin | read, write, create, delete |
 | Banquet Checklist Template | Front Desk | read |
@@ -366,10 +392,10 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Channel Room Mapping | Revenue Manager | read, write, create, delete, report, export |
 | Channel Room Mapping | Kamra Agent | read, write, create, delete, report, export |
 | City Ledger Account | System Manager | read, write, create, delete, report, export |
-| City Ledger Account | Hotel Admin | read, write, create, delete, report, export |
-| City Ledger Account | Finance | read, write, create, report, export |
-| City Ledger Account | Front Desk | read, write, create, report |
-| City Ledger Account | Kamra Agent | read, write, create, report |
+| City Ledger Account | Hotel Admin | read, report, export |
+| City Ledger Account | Finance | read, report, export |
+| City Ledger Account | Front Desk | read, report |
+| City Ledger Account | Kamra Agent | read, report |
 | City Ledger Account | Night Auditor | read, report |
 | City Ledger Entry | System Manager | read, write, create, delete, report, export |
 | City Ledger Entry | Hotel Admin | read, report, export |
@@ -459,6 +485,7 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Ingredient | Finance | read, write, create, delete, report |
 | Ingredient | Front Desk | read, report |
 | Ingredient | Kamra Agent | read, report |
+| Ingredient | F&B Manager | read, write, create, delete, report |
 | Ingredient Ledger Entry | System Manager | read, report, export |
 | Ingredient Ledger Entry | Hotel Admin | read, report |
 | Ingredient Ledger Entry | Finance | read, report |
@@ -469,6 +496,12 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Ingredient Stock | Finance | read, report |
 | Ingredient Stock | Front Desk | read, report |
 | Ingredient Stock | Kamra Agent | read, report |
+| Ingredient Stock | F&B Manager | read, report |
+| Itinerary | System Manager | read, write, create, delete, report, export |
+| Itinerary | Hotel Admin | read, report |
+| Itinerary | Front Desk | read, report |
+| Itinerary | Finance | read, report |
+| Itinerary | Kamra Agent | read |
 | Kamra Connect Settings | System Manager | read, write |
 | Kamra Connect Settings | Hotel Admin | read, write |
 | Kamra Custom Report | System Manager | read, write, create, delete, report |
@@ -482,6 +515,7 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Kitchen Printer | Front Desk | read, report |
 | Kitchen Printer | Kamra Agent | read, report |
 | Kitchen Printer | Night Auditor | read, report |
+| Kitchen Printer | F&B Manager | read, write, create, report |
 | Laundry Order | System Manager | read, write, create, delete, report, export |
 | Laundry Order | Hotel Admin | read, write, create, delete, report |
 | Laundry Order | Front Desk | read, write, create, report |
@@ -496,6 +530,11 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Laundry Rate | Kamra Agent | read, write, create, report |
 | Laundry Rate | Housekeeping | read, write, create, report |
 | Laundry Rate | Housekeeping Supervisor | read, write, create, report |
+| Long Stay Discount | System Manager | read, write, create, delete, report, export |
+| Long Stay Discount | Hotel Admin | read, write, create, delete, report |
+| Long Stay Discount | Front Desk | read, report |
+| Long Stay Discount | Revenue Manager | read, write, create, delete, report |
+| Long Stay Discount | Kamra Agent | read, report |
 | Lost And Found Item | System Manager | read, write, create, delete, report, export |
 | Lost And Found Item | Hotel Admin | read, write, create, delete, report |
 | Lost And Found Item | Front Desk | read, write, create, delete, report |
@@ -514,6 +553,7 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Menu Item | Front Desk | read, report |
 | Menu Item | Finance | read, write, create, report |
 | Menu Item | Kamra Agent | read, report |
+| Menu Item | F&B Manager | read, write, create, report |
 | Night Audit Log | System Manager | read, write, create, delete, report, export |
 | Night Audit Log | Hotel Admin | read, report, export |
 | Night Audit Log | Finance | read, report, export |
@@ -541,21 +581,25 @@ Record access over Desk and REST (standard rights, permission level 0):
 | POS Order | Finance | read, report |
 | POS Order | Kamra Agent | read, write, create, report |
 | POS Order | Night Auditor | read, report |
+| POS Order | F&B Manager | read, write, create, report |
 | POS Outlet | System Manager | read, write, create, delete, report, export |
 | POS Outlet | Hotel Admin | read, write, create, delete, report |
 | POS Outlet | Front Desk | read, report |
 | POS Outlet | Finance | read, write, create, report |
 | POS Outlet | Kamra Agent | read, report |
 | POS Outlet | Night Auditor | read, report |
+| POS Outlet | F&B Manager | read, write, create, report |
 | POS Table Reservation | System Manager | read, write, create, delete, report, export |
 | POS Table Reservation | Hotel Admin | read, write, create, delete, report |
 | POS Table Reservation | Front Desk | read, write, create, report |
 | POS Table Reservation | Finance | read, report |
 | POS Table Reservation | Kamra Agent | read, write, create, report |
+| POS Table Reservation | F&B Manager | read, write, create, report |
 | Print Job | System Manager | read, write, create, delete, report, export |
 | Print Job | Hotel Admin | read, delete, report |
 | Print Job | Finance | read, report |
 | Print Job | Front Desk | read, report |
+| Print Job | F&B Manager | read, report |
 | Proforma Folio | System Manager | read, write, create, delete, report, export |
 | Proforma Folio | Hotel Admin | read, report, export |
 | Proforma Folio | Finance | read, report, export |
@@ -570,6 +614,7 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Property | Kamra Agent | read, report |
 | Property | Housekeeping Supervisor | read, report |
 | Property | Night Auditor | read, report |
+| Property | F&B Manager | read, report |
 | Property Setting | System Manager | read, write, create, delete, report |
 | Property Setting | Hotel Admin | read, report |
 | Rate Guardrail | System Manager | read, write, create, delete, report, export |
@@ -672,6 +717,14 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Turnover Profile | Housekeeping | read, write |
 | Turnover Profile | Front Desk | read |
 | Turnover Profile | Housekeeping Supervisor | read, write |
+| Vendor | System Manager | read, write, create, delete, report, export |
+| Vendor | Hotel Admin | read, report, export |
+| Vendor | Finance | read, report, export |
+| Vendor | Kamra Agent | read, report |
+| Vendor Bill | System Manager | read, write, create, delete, report, export |
+| Vendor Bill | Hotel Admin | read, report, export |
+| Vendor Bill | Finance | read, report, export |
+| Vendor Bill | Kamra Agent | read, report |
 | Venue | System Manager | read, write, create, delete, report, export |
 | Venue | Hotel Admin | read, write, create, delete, report |
 | Venue | Front Desk | read, write, create, report |

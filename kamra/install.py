@@ -5,7 +5,7 @@ AGENT_ROLE = "Kamra Agent"
 
 
 # business roles a hotel assigns to staff that no doctype perm creates
-STAFF_ROLES = ("Housekeeping Supervisor", "Night Auditor",
+STAFF_ROLES = ("Housekeeping Supervisor", "Night Auditor", "F&B Manager",
                # service account of a third-party POS (kamra.pos_interface)
                "POS Integrator")
 
@@ -15,6 +15,7 @@ def after_install():
 	ensure_agent_identity()
 	ensure_staff_roles()
 	ensure_mcp_roles()
+	ensure_user_fields()
 	ensure_role_profiles()
 
 
@@ -23,8 +24,21 @@ def after_migrate():
 	ensure_agent_identity()
 	ensure_staff_roles()
 	ensure_mcp_roles()
+	ensure_user_fields()
 	sync_permission_types()
 	ensure_role_profiles()
+
+
+def ensure_user_fields():
+	"""A job title on the staff member's User (Frappe has none), set by a
+	Hotel Admin in Staff & access and printed on allowance vouchers. Level 1
+	(System Manager only in the desk) so nobody retitles themselves from
+	their own profile."""
+	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+	create_custom_fields({"User": [{
+		"fieldname": "kamra_job_title", "label": "Job Title", "fieldtype": "Data",
+		"insert_after": "last_name", "permlevel": 1,
+	}]}, update=True)
 
 
 def ensure_mcp_roles():
@@ -177,11 +191,11 @@ ROLE_PROFILES = {
 	"Front Office Manager": ("Front Desk", "Night Auditor", "Revenue Manager"),
 	"Duty Manager": ("Front Desk", "Night Auditor", "Housekeeping Supervisor"),
 	"Night Auditor": ("Night Auditor", "Front Desk"),
-	# takes orders and charges bills to rooms (POS Order: take_orders), runs
-	# kitchen stock (Ingredient: manage_stock) and kitchen printers and
-	# stations (Kitchen Printer: configure_printers). Swap to the F&B Manager
-	# role, holding the same Permission Types, once it ships (#417).
-	"F&B Manager": ("Front Desk", "Finance"),
+	# takes orders and charges bills to rooms (POS Order: take_orders),
+	# approves POS voids (POS Order: approve_voids), runs kitchen stock
+	# (Ingredient: manage_stock), the menu (Menu Item: edit_menu) and kitchen
+	# printers and stations (Kitchen Printer: configure_printers)
+	"F&B Manager": ("F&B Manager",),
 	"Finance Manager": ("Finance", "Night Auditor"),
 	"General Manager": ("Hotel Admin", "Finance"),
 }

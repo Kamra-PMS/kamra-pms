@@ -22,15 +22,28 @@ export const LANGS: LangDef[] = [
 
 export type Lang = string
 
-const KEY = "kamra-lang"
+// Guest pages keep their own choice: a guest (or staff previewing /book)
+// picking Spanish there must not switch the desk, and the reverse.
+const GUEST_PAGE = /^(\/kamra)?\/(book|stay|checkin)(\/|$)/
+const key = () => (GUEST_PAGE.test(window.location.pathname) ? "kamra-guest-lang" : "kamra-lang")
 const codes = new Set(LANGS.map((l) => l.code))
 
 export function langDef(code: string): LangDef {
   return LANGS.find((l) => l.code === code) ?? LANGS[0]
 }
 
+// A guest page's language before the guest picks one: the hotel's booking
+// engine default, else the browser's. Not stored, so a later default applies.
+let guestDefault: Lang | null = null
+
 export const getLang = (): Lang => {
-  const raw = localStorage.getItem(KEY) || "en"
+  let raw: string | null = null
+  try {
+    raw = localStorage.getItem(key())
+  } catch {
+    /* private mode */
+  }
+  raw = raw || (key() === "kamra-guest-lang" ? guestDefault : null) || "en"
   return codes.has(raw) ? raw : "en"
 }
 
@@ -43,22 +56,26 @@ export function applyLang(l: Lang) {
 
 export function setLang(l: Lang) {
   const code = codes.has(l) ? l : "en"
-  localStorage.setItem(KEY, code)
+  localStorage.setItem(key(), code)
   applyLang(code)
   // let listeners (React trees) re-render with the new direction/strings
   window.dispatchEvent(new Event("kamra:lang"))
 }
 
-/** Public guest pages follow the browser language until the guest chooses. */
-export function adoptBrowserLanguage() {
-  try {
-    if (localStorage.getItem(KEY)) return
-    const browserLang = navigator.language?.toLowerCase().split("-")[0]
-    if (browserLang && browserLang !== "en" && codes.has(browserLang))
-      setLang(browserLang)
-  } catch {
-    /* private mode - keep the current language */
-  }
+/** Guest pages: the guest's own pick wins; until then the hotel's booking
+ * engine language (`preferred`), else the browser language. */
+export function adoptGuestLanguage(preferred?: string | null) {
+  const browser = navigator.language?.toLowerCase().split("-")[0]
+  const next = [preferred, browser].find((c) => c && codes.has(c)) ?? null
+  if (next === guestDefault) return
+  guestDefault = next
+  syncLang()
+}
+
+/** Re-apply after moving between a guest page and the desk in one tab. */
+export function syncLang() {
+  applyLang(getLang())
+  window.dispatchEvent(new Event("kamra:lang"))
 }
 
 /** Call once at boot. */

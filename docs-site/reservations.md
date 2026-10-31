@@ -86,7 +86,7 @@ Kamra books every room under one group, so it can be billed together. If
 some rooms can't be booked, it tells you how many it booked and why the
 rest failed. Vouchers, add-ons and booker details are added to each stay
 afterwards. To hold a block of rooms for a group whose names come later,
-use [Groups & blocks](#hold-rooms-for-a-group) instead.
+use [Groups & blocks](#group-bookings-corporate-wedding) instead.
 
 ## Put a guest on the waitlist
 
@@ -211,9 +211,14 @@ filled in.
 ## Take a deposit before arrival
 
 The **Deposit** box is on the booking-confirmed screen and in the
-booking's detail panel. It shows what the property expects (**Deposit
-expected at booking** in Stay policies), what has come in, and what is
-still due.
+booking's detail panel. It shows what the booking should secure, what has
+come in, and what is still due. The percentage comes from the stay's
+dates: a [season](/revenue#add-a-season) with an **Advance % at booking**
+sets it (25%, 50%, 100%), otherwise the property's **Deposit expected at
+booking** in Stay policies applies. So two bookings by the same guest at
+the same hotel can owe different advances. A stay that crosses seasons
+owes the highest percentage. The percentage is kept with the booking when
+it is priced; changing the season later does not change it.
 
 - **Record payment**: the guest paid at the desk or by transfer. Pick the
   method, check the amount and click **Record ₹…**. It goes through your
@@ -287,7 +292,53 @@ searches all of them at once.
 
 ![Central reservations: availability for one night for two adults across three properties, with a Book button on each room type](/img/reservations/crs.png)
 
-## Hold rooms for a group
+## Book a trip across properties
+
+A guest, travel agent or company can book one trip that moves between
+your hotels, for example 2 nights at one, then 3 nights at another. The
+trip gets one reference (ITN-...) the guest can quote.
+
+1. In **Front Desk → Central Reservations**, search the first stop and
+   click **Add to trip** on the room type.
+2. Check-in moves to the day that stay ends. Set the nights, search again
+   and click **Add to trip** for the next stop. Repeat for each stop.
+3. **New trip** lists the stops in date order with each price, the
+   trip total and the advance due at booking (each stop at its own
+   percentage). Enter the guest's name and phone and click **Book trip**.
+
+Each stop becomes a normal booking at its own property, with its own room,
+bill and invoice. All stops book or none do. Two stops can't share a
+night; a stop can start the day the previous one ends.
+
+**Trips** lists recent trips. Click one to see each stop's status, price,
+advance percentage, advance paid and advance still due, and the trip's
+advance due against paid.
+
+- **Take trip advance** takes one payment for the whole trip. The amount
+  starts at the trip's advance still due; change it and click **Show
+  split** to see how it is shared, then **Take**. Each stop first gets the
+  advance its own dates ask for, earliest stop first. Anything more goes to
+  the earliest stop, up to that stop's bill, then the next one. (Putting
+  the extra on the first stay means the guest's money is used soonest, and
+  no hotel ends up holding more than its own bill, so nobody has to refund
+  an overpayment at check-out.) A payment larger than what the trip still
+  owes is refused, and so is a trip whose stops are billed in different
+  currencies. Each share posts as an advance on that stop's own folio, at
+  its own property, through its till, so each hotel's books and tax stay
+  its own. All shares post or none do.
+- **Take an advance on one stop**: click **Open RES-...** and take it
+  there, as for any booking. Money is never held on the trip itself.
+  Refunds and cancellation of a stop follow that stop's own policy.
+- **Change dates or cancel one stop** the same way, from its booking. A
+  new date that runs into another stop is refused.
+- **Cancel whole trip** shows each stop's fee under its own property's
+  policy, then cancels every confirmed stop. Stops already checked in or
+  finished are left as they are.
+- **Confirmation** opens a printable page with every stop and the
+  reference.
+
+You only see a trip if you can access every property in it.
+
 
 For a wedding, conference or tour, hold a block of rooms first and name
 the guests later. Groups live in **Banquets & Groups → Groups & Blocks**.
@@ -406,5 +457,8 @@ The detail panel reads `kamra.api.reservation_detail`; date changes use
 waitlist uses `kamra.api.promote_waitlist`. AI agents use the `quote`,
 `create_booking`, `add_to_waitlist`, `promote_waitlist`,
 `cancellation_preview`, `cancel_booking`, `amend_stay`, `move_room` and
-`create_group_block` tools. See [MCP tools](/mcp-tools) and the
+`create_group_block` tools. Trips across properties use
+`kamra.crs.quote_itinerary`, `create_itinerary`, `get_itinerary`,
+`add_itinerary_leg`, `cancel_itinerary_preview` and `cancel_itinerary`
+(MCP tools of the same names). See [MCP tools](/mcp-tools) and the
 [API reference](/api-reference).

@@ -1,0 +1,121 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:LOS-{####}",
+ "creation": "2026-10-29 23:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "room_type",
+  "column_break_a",
+  "min_nights",
+  "discount_percent",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "room_type",
+   "fieldtype": "Link",
+   "label": "Room Type",
+   "options": "Room Type",
+   "description": "Blank = every room type of the property"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "min_nights",
+   "fieldtype": "Int",
+   "label": "Minimum Nights",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "A stay of this many nights or more gets the discount. The highest tier a stay reaches applies."
+  },
+  {
+   "fieldname": "discount_percent",
+   "fieldtype": "Percent",
+   "label": "Discount %",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Off each room night's rate, never below the rate guardrail floor for that night."
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-29 23:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Long Stay Discount",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Revenue Manager",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Kamra Agent"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

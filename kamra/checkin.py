@@ -21,6 +21,7 @@ with a reason, or left open and finished after check-in.
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 
 import frappe
 from frappe import _
@@ -36,12 +37,14 @@ STAFF = ("Front Desk", "Night Auditor")
 PAYERS = ("OTA prepaid", "OTA, guest pays here", "Guest", "Company", "Group")
 
 # quick requests at check-in -> a service ticket each (subject, category, priority)
+# (label, team, priority, the charge type a price is billed as - None when
+# the request is never charged)
 REQUEST_PRESETS = {
-	"extra_bed": ("Extra bed", "Housekeeping", "Medium"),
-	"wake_up_call": ("Wake-up call", "Front Desk", "Medium"),
-	"airport_drop": ("Airport drop", "Concierge", "Medium"),
-	"dietary": ("Dietary needs", "Room Service", "Medium"),
-	"special_occasion": ("Special occasion", "Concierge", "Medium"),
+	"extra_bed": ("Extra bed", "Housekeeping", "Medium", "Extra Guests"),
+	"wake_up_call": ("Wake-up call", "Front Desk", "Medium", None),
+	"airport_drop": ("Airport drop", "Concierge", "Medium", "Taxi"),
+	"dietary": ("Dietary needs", "Room Service", "Medium", None),
+	"special_occasion": ("Special occasion", "Concierge", "Medium", "Misc"),
 }
 
 STAY_INFO_KEYS = ("guest_wifi_name", "guest_wifi_password", "breakfast_hours",
@@ -139,17 +142,28 @@ def _ids(res, guest) -> dict:
 	                  or res.get("id_document"))
 	if not primary_ok:
 		missing.append(res.guest_name or _("the guest"))
-	occupants = []
+	occupants, adults_named = [], 1
 	for o in res.get("occupants") or []:
-		exempt = is_minor(pack, o.age) and not minor_id_kept(pack, o.nationality)
+		# a blank age is stored as 0: it means not given, not a baby
+		age = o.age or None
+		minor = is_minor(pack, age)
+		adults_named += 0 if minor else 1
+		exempt = minor and not minor_id_kept(pack, o.nationality)
 		has = bool(o.id_number or o.get("id_file"))
 		if not exempt and not has:
 			missing.append(o.full_name)
 		occupants.append({
-			"row": o.name, "full_name": o.full_name, "age": o.age,
-			"nationality": o.nationality, "id_type": o.id_type,
+			"row": o.name, "full_name": o.full_name, "age": age,
+			"guest_stated_age": o.get("guest_stated_age") or None,
+			"gender": o.gender, "nationality": o.nationality, "id_type": o.id_type,
 			"id_number": _mask(o.id_number), "has_id": has, "exempt": exempt,
+			"has_photo": bool(o.get("photo")),
 		})
+	# every adult on the booking is in the register, by name and ID
+	unnamed = max(0, cint(res.adults) - adults_named)
+	if unnamed:
+		missing.append(_("1 more adult") if unnamed == 1
+		               else _("{0} more adults").format(unnamed))
 	status = res.get("precheckin_status") or "Not Started"
 	return {
 		"ok": not missing,
@@ -497,6 +511,9 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 				guest.get("id_number") or guest.get("id_file") or res.get("id_document")))
 			if guest else "none",
 			"id_used_count": used_stays_count(guest.name) if guest else 0,
+			"has_photo": bool(guest and guest.get("photo")),
+			"gender": guest.get("gender") if guest else None,
+			"date_of_birth": str(guest.get("date_of_birth") or "") or None if guest else None,
 			"address": ", ".join(x for x in [guest.get("address_line"), guest.get("city")]
 			                     if x) if guest else "",
 		},
@@ -507,7 +524,8 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 			{"step": s["step_key"], "title": s["title"], "tip": s.get("tip") or ""}
 			for s in soft_pending(steps)],
 		"rooms": _free_rooms(res) if not res.room else [],
-		"request_presets": [{"key": k, "label": v[0]} for k, v in REQUEST_PRESETS.items()],
+		"request_presets": [{"key": k, "label": v[0], "priced": bool(v[3])}
+		                    for k, v in REQUEST_PRESETS.items()],
 		# the deposit step takes money: is the operator's till open, or can
 		# they open it here (kamra.cashier.open_session)
 		"till": _till(res.property),
@@ -581,9 +599,15 @@ def skip_checkin_step(reservation: str, step: str, reason: str | None = None):
 def save_guest_details(reservation: str, phone: str | None = None,
                        email: str | None = None, id_type: str | None = None,
                        id_number: str | None = None,
-                       nationality: str | None = None):
-	"""Correct the primary guest's contact and ID details at the desk. Only
-	what is passed changes; an ID type must be one the country recognises."""
+                       nationality: str | None = None,
+                       date_of_birth: str | None = None,
+                       gender: str | None = None,
+                       id_expiry_date: str | None = None,
+                       address_line: str | None = None,
+                       city: str | None = None):
+	"""Correct the primary guest's contact and ID details at the desk, or
+	keep what an ID scan read. Only what is passed changes; an ID type must
+	be one the country recognises."""
 	res = _res(reservation)
 	_open(res)
 	if not res.guest:
@@ -596,12 +620,29 @@ def save_guest_details(reservation: str, phone: str | None = None,
 		changes["email"] = email.strip() or None
 	if nationality is not None:
 		changes["nationality"] = nationality.strip() or None
+	from frappe.utils import getdate
+	for field, value in (("date_of_birth", date_of_birth), ("id_expiry_date", id_expiry_date)):
+		if value:
+			changes[field] = str(getdate(value))
+	# Data fields hold 140 characters; an Aadhaar address can run longer
+	for field, value in (("address_line", address_line), ("city", city)):
+		if value and value.strip():
+			changes[field] = value.strip()[:140]
+	if gender in ("Male", "Female", "Other"):
+		changes["gender"] = gender
 	if id_type:
 		if id_type != frappe.db.get_value("Guest", res.guest, "id_type"):
 			validate_id_type(res.property, id_type)
 		changes["id_type"] = id_type
-	if id_number is not None and id_number.strip() and "•" not in id_number:
-		changes["id_number"] = id_number.strip()
+	if id_number is not None and id_number.strip():
+		from kamra import localization as loc
+		stored = loc.store_id_number(loc.pack_for(res.property),
+		                           id_type or frappe.db.get_value("Guest", res.guest, "id_type"),
+		                           id_number)
+		if stored is not None:
+			changes["id_number"] = stored
+		elif "•" not in id_number:
+			changes["id_number"] = id_number.strip()
 	current = frappe.db.get_value("Guest", res.guest, list(changes), as_dict=True) \
 		if changes else {}
 	changes = {k: v for k, v in changes.items() if (current or {}).get(k) != v}
@@ -721,33 +762,69 @@ def issue_keys(reservation: str, key_count: int = 1,
 	return out
 
 
+def _request_tax_rate(res, charge_type: str) -> float:
+	"""An extra bed is taxed as the room it is in (that night's rate);
+	a taxi or other service at the country pack's services rate."""
+	if charge_type == "Extra Guests":
+		from kamra.business_date import get_business_date
+		from kamra.folio import _nightly_gst
+		return _nightly_gst(res, get_business_date(res.property))
+	from kamra.localization import pack_for, services_tax_rate
+	return services_tax_rate(pack_for(res.property), res.property)
+
+
 @frappe.whitelist(methods=["POST"])
 @require_perm("Reservation", "guided_check_in")
-def log_checkin_requests(reservation: str, requests=None, note: str | None = None):
+def log_checkin_requests(reservation: str, requests=None, note: str | None = None,
+                         prices=None):
 	"""Quick requests at check-in become service tickets (one each); a free
-	note is kept on the step and, if given alone, raised as one ticket."""
+	note is kept on the step and, if given alone, raised as one ticket.
+	`prices` ({request: amount}) bills a paid request (an extra bed, an
+	airport drop) to the stay, by the hotel's tax rules and billing rules."""
 	res = _res(reservation)
 	_open(res)
 	if isinstance(requests, str):
 		requests = frappe.parse_json(requests) if requests.strip() else []
 	requests = [r for r in (requests or []) if r in REQUEST_PRESETS]
 	note = (note or "").strip()[:500]
-	from kamra.api import create_ticket
+	if isinstance(prices, str):
+		prices = frappe.parse_json(prices) if prices.strip() else {}
+	from kamra.api import create_ticket, post_stay_charge
 	tickets = []
-	for key in requests:
-		subject, category, priority = REQUEST_PRESETS[key]
-		tickets.append(create_ticket(
-			res.property, f"{subject} ({res.guest_name})", category,
-			priority=priority, room=res.room, reservation=res.name,
-			guest=res.guest, description=note or None)["ticket"])
-	if note and not requests:
-		tickets.append(create_ticket(
-			res.property, f"Request at check-in ({res.guest_name})", "Front Desk",
-			room=res.room, reservation=res.name, guest=res.guest,
-			description=note)["ticket"])
+	# the step can be saved again (back, or a retry): a request already on
+	# the bill is not charged twice. The row lock makes two saves at once
+	# queue here, so the second reads the first one's `billed`.
+	res.checkin_steps = frappe.db.get_value("Reservation", res.name, "checkin_steps",
+	                                        for_update=True)
+	billed = list((_records(res).get("guest_requests") or {}).get("billed") or [])
+	# STAFF is checked above, but the night auditor has no folio or ticket
+	# rights of its own: it posts as the governed agent, as housekeeping
+	# charges do, and the step record below keeps who did it
+	from kamra.authz import act_as
+	from kamra.install import AGENT_EMAIL
+	can_bill = frappe.has_permission("Folio", "write")
+	can_ticket = frappe.has_permission("Service Ticket", "create")
+	as_agent = not (can_bill and can_ticket)
+	with act_as(AGENT_EMAIL) if as_agent else nullcontext():
+		for key in requests:
+			subject, category, priority, charge_type = REQUEST_PRESETS[key]
+			amount = flt((prices or {}).get(key))
+			if charge_type and amount > 0 and key not in billed:
+				post_stay_charge(res.name, charge_type, subject, amount,
+				                 _request_tax_rate(res, charge_type))
+				billed.append(key)
+			tickets.append(create_ticket(
+				res.property, f"{subject} ({res.guest_name})", category,
+				priority=priority, room=res.room, reservation=res.name,
+				guest=res.guest, description=note or None)["ticket"])
+		if note and not requests:
+			tickets.append(create_ticket(
+				res.property, f"Request at check-in ({res.guest_name})", "Front Desk",
+				room=res.room, reservation=res.name, guest=res.guest,
+				description=note)["ticket"])
 	record_step(res, "guest_requests", "done",
 	            note=", ".join(REQUEST_PRESETS[k][0] for k in requests) or note or _("Nothing needed"),
-	            tickets=tickets)
+	            tickets=tickets, billed=billed)
 	out = checkin_flow(reservation)
 	out["tickets"] = tickets
 	return out

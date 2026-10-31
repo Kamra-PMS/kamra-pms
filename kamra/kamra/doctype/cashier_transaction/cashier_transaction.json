@@ -47,7 +47,7 @@
    "fieldname": "mode",
    "fieldtype": "Select",
    "label": "Mode",
-   "options": "Cash\nCard\nUPI\nBank Transfer\nOTA Prepaid\nCompany Credit\nPayment Link\nOther",
+   "options": "Cash\nForeign Cash\nCard\nUPI\nBank Transfer\nOTA Prepaid\nCompany Credit\nPayment Link\nOther",
    "default": "Cash",
    "in_list_view": 1
   },

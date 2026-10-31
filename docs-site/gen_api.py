@@ -43,6 +43,7 @@ MODULES = [
     ("onboarding", "Setup checklist (finish setting up a property)", ""),
     ("rates", "Rates (rate calendar, what moves a rate)", "These explain a price; they never set one. The quote is the only source of a charge."),
     ("tickets", "Service tickets (assign, resolve, timeline)", ""),
+    ("id_scan", "ID scanner (passport strip, Aadhaar QR)", "Read only: turns what a scanner or camera read into guest fields. Nothing is saved."),
     ("guest_documents", "Guest documents (photo, ID and address proof images)", "Stored privately and served as data URLs to the desk. A property on Verify & Discard keeps no ID images."),
     ("printing", "Kitchen printers (routing, print stations, print queue)", ""),
     ("laundry", "Laundry (housekeeping)", ""),
@@ -55,6 +56,7 @@ MODULES = [
     ("crs", "Central reservations (chain)", ""),
     ("dashboards", "Dashboards", ""),
     ("reports", "Reports", ""),
+    ("audit_report", "Night audit report (day, MTD, YTD)", "Read only. Food and beverage come from the restaurant bills; the year starts where the country pack says."),
     ("custom_reports", "Custom reports (builder, save, email)",
      "Whitelisted datasets only - no Desk Query Reports or free SQL. "
      "Saved definitions live on Kamra Custom Report; staff use Finance → Reports."),
@@ -62,6 +64,12 @@ MODULES = [
     ("credit", "Company credit (payment terms, credit limit, overdue check)",
      "Credit control is enforced inside check_out, create_booking and city_ledger_transfer; these endpoints explain and configure it."),
     ("statements", "Company statements (print, email; daily payment reminders)", ""),
+    ("receivables", "Accounts receivable (account setup, invoices on an account, transfers)",
+     "Bills land on the city ledger above; credit control runs on every new invoice."),
+    ("payables", "Accounts payable (vendors, supplier bills, approval, payments)",
+     "Finance and Hotel Admin enter vendors and bills; only Hotel Admin approves and pays."),
+    ("books", "Management books (next days of cash, P&L, balance sheet)",
+     "Read-only management views. Not statutory accounts."),
     ("night_audit", "Night audit (End of Day checklist, audit pack)", ""),
     ("agents_api", "Activity ledger", ""),
     ("settings", "Settings hub (module settings)", ""),
@@ -128,7 +136,7 @@ def perm_roles(doctype, ptype):
     path = os.path.join(os.path.dirname(__file__), "..", "kamra", "kamra", "doctype",
                         slug, slug + ".json")
     try:
-        perms = json.load(open(path)).get("permissions", [])
+        perms = json.load(open(path)).get("permissions", [])  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
     except OSError:
         return []
     return [p["role"] for p in perms if p.get(ptype) and not p.get("permlevel")]

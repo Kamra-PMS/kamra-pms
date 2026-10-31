@@ -70,12 +70,12 @@
    "fieldname": "allowed_modes",
    "fieldtype": "Small Text",
    "label": "Allowed Payment Modes",
-   "description": "Comma-separated: Cash, Card, UPI, Bank Transfer, OTA Prepaid, Company Credit, Payment Link. Blank = all."
+   "description": "Comma-separated payment modes, e.g. Cash, Card, Bank Transfer, OTA Prepaid, Company Credit, Payment Link. Blank = all."
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00",
+ "modified": "2026-10-30 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Cashier",

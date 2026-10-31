@@ -32,7 +32,7 @@ DEFAULT_TEMPLATES = {
 	],
 	"Finance": [
 		("Verify advance received against terms", 14),
-		("Confirm payment schedule and GSTIN", 10),
+		("Confirm payment schedule and tax ID", 10),
 	],
 	"Housekeeping": [
 		("Pre-function clean of hall and green room", 1),

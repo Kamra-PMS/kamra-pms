@@ -109,6 +109,7 @@ export default function Setup() {
     currency: "",
     timezone: "",
     property_name: "",
+    short_code: "",
     city: "",
     state: "",
     phone: "",
@@ -581,6 +582,7 @@ export default function Setup() {
               {(
                 [
                   ["property_name", t("Property name *"), "text", "Sunrise Residency"],
+                  ["short_code", t("Short code (on voucher numbers, e.g. SR)"), "text", "SR"],
                   ["city", t("City"), "text", ""],
                   ["state", t("State / region"), "text", ""],
                   ["phone", t("Phone"), "text", "+…"],

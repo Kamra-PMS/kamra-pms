@@ -67,6 +67,13 @@
 "Kamra Agent",
 "System Manager"
 ],
+"api.add_occupant_names": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "api.add_stay_instruction": [
 "Administrator",
 "Front Desk",
@@ -79,6 +86,28 @@
 "Front Desk",
 "Hotel Admin",
 "Kamra Agent",
+"System Manager"
+],
+"api.allowance_approvers": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"System Manager"
+],
+"api.allowance_requests": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.allowance_voucher": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
 "System Manager"
 ],
 "api.amend_stay": [
@@ -157,16 +186,26 @@
 "Hotel Admin",
 "Kamra Agent",
 "Night Auditor",
+"Revenue Manager",
 "System Manager"
 ],
 "api.cashier_pin_status": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
 "Housekeeping",
 "Housekeeping Supervisor",
 "Revenue Manager",
+"System Manager"
+],
+"api.change_stay_company": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
 "System Manager"
 ],
 "api.check_in": [
@@ -233,6 +272,12 @@
 "Kamra Agent",
 "System Manager"
 ],
+"api.correct_charged_nights": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
 "api.create_booking": [
 "Administrator",
 "Front Desk",
@@ -255,6 +300,13 @@
 "Kamra Agent",
 "System Manager"
 ],
+"api.create_group_with_rooming_list": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "api.create_room_block": [
 "Administrator",
 "Front Desk",
@@ -267,6 +319,13 @@
 "Front Desk",
 "Hotel Admin",
 "Kamra Agent",
+"System Manager"
+],
+"api.decide_allowance": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
 "System Manager"
 ],
 "api.delete_folio": [
@@ -294,8 +353,17 @@
 "Kamra Agent",
 "System Manager"
 ],
+"api.early_departure": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "api.enabled_modules": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -374,6 +442,34 @@
 "Kamra Agent",
 "System Manager"
 ],
+"api.group_amend_dates": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.group_assign_rooms": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.group_cancel": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.group_check_in": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "api.group_detail": [
 "Administrator",
 "Front Desk",
@@ -396,6 +492,22 @@
 "Front Desk",
 "Hotel Admin",
 "Kamra Agent",
+"System Manager"
+],
+"api.group_price_preview": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
+"System Manager"
+],
+"api.group_quotation": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Revenue Manager",
 "System Manager"
 ],
 "api.gstr1_rows": [
@@ -610,6 +722,14 @@
 "Revenue Manager",
 "System Manager"
 ],
+"api.open_guest_bills": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "api.owner_briefing": [
 "Administrator",
 "Hotel Admin",
@@ -670,6 +790,7 @@
 ],
 "api.property_locale": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -707,6 +828,13 @@
 "Front Desk",
 "Hotel Admin",
 "Kamra Agent",
+"System Manager"
+],
+"api.reinstate_checkout": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
 "System Manager"
 ],
 "api.release_access_instructions": [
@@ -767,6 +895,13 @@
 "Kamra Agent",
 "System Manager"
 ],
+"api.rooming_list_template": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Revenue Manager",
+"System Manager"
+],
 "api.run_night_audit": [
 "Administrator",
 "Finance",
@@ -825,6 +960,7 @@
 ],
 "api.set_cashier_pin": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -889,6 +1025,13 @@
 "Revenue Manager",
 "System Manager"
 ],
+"api.set_rooming_names": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "api.set_stay_instruction_status": [
 "Administrator",
 "Front Desk",
@@ -906,6 +1049,14 @@
 "System Manager"
 ],
 "api.settle_group_bill": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"api.share_folio_charges": [
 "Administrator",
 "Finance",
 "Front Desk",
@@ -1027,6 +1178,7 @@
 ],
 "api.verify_cashier_pin": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -1200,6 +1352,15 @@
 "assistant.test_connection": [
 "Administrator",
 "Hotel Admin",
+"System Manager"
+],
+"audit_report.night_audit_report": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
 "System Manager"
 ],
 "banquet.add_menu": [
@@ -1747,6 +1908,27 @@
 "Kamra Agent",
 "System Manager"
 ],
+"books.balance_sheet": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"books.cash_forecast": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"books.profit_and_loss": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "cashier.approve_variance": [
 "Administrator",
 "Finance",
@@ -1774,6 +1956,7 @@
 "Hotel Admin",
 "Kamra Agent",
 "Night Auditor",
+"Revenue Manager",
 "System Manager"
 ],
 "cashier.close_session": [
@@ -2053,6 +2236,34 @@
 "Hotel Admin",
 "System Manager"
 ],
+"crs.add_itinerary_leg": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"crs.cancel_itinerary": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"crs.cancel_itinerary_preview": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"crs.create_itinerary": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "crs.crs_search": [
 "Administrator",
 "Front Desk",
@@ -2061,8 +2272,48 @@
 "Revenue Manager",
 "System Manager"
 ],
+"crs.get_itinerary": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"crs.list_itineraries": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"crs.quote_itinerary": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"crs.record_trip_advance": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"crs.trip_advance_preview": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "custom_reports.delete_custom_report": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2075,6 +2326,7 @@
 ],
 "custom_reports.email_custom_report": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2087,6 +2339,7 @@
 ],
 "custom_reports.get_custom_report": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2099,6 +2352,7 @@
 ],
 "custom_reports.list_custom_reports": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2111,6 +2365,7 @@
 ],
 "custom_reports.list_report_datasets": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2123,6 +2378,7 @@
 ],
 "custom_reports.list_report_packs": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2135,6 +2391,7 @@
 ],
 "custom_reports.run_custom_report": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2147,6 +2404,7 @@
 ],
 "custom_reports.run_report_pack": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2159,11 +2417,21 @@
 ],
 "custom_reports.save_custom_report": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
 "Housekeeping",
 "Housekeeping Supervisor",
+"Kamra Agent",
+"Night Auditor",
+"Revenue Manager",
+"System Manager"
+],
+"dashboards.owner_snapshot": [
+"Administrator",
+"Finance",
+"Hotel Admin",
 "Kamra Agent",
 "Night Auditor",
 "Revenue Manager",
@@ -2183,6 +2451,7 @@
 "Front Desk",
 "Hotel Admin",
 "Kamra Agent",
+"Night Auditor",
 "Revenue Manager",
 "System Manager"
 ],
@@ -2258,20 +2527,30 @@
 "Hotel Admin",
 "System Manager"
 ],
+"id_scan.read_id_scan": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "inventory.adjust_stock": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "inventory.delete_ingredient": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "inventory.ingredient_ledger": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2280,6 +2559,7 @@
 ],
 "inventory.ingredients": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2288,6 +2568,7 @@
 ],
 "inventory.low_stock": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2296,6 +2577,7 @@
 ],
 "inventory.menu_recipe": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2304,12 +2586,14 @@
 ],
 "inventory.receive_stock": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "inventory.recipe_overview": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2318,36 +2602,42 @@
 ],
 "inventory.record_wastage": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "inventory.save_ingredient": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "inventory.save_recipe": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "inventory.set_menu_availability": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "inventory.set_par_level": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "inventory.stock_list": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2356,6 +2646,7 @@
 ],
 "inventory.wastage_report": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2532,6 +2823,12 @@
 "Kamra Agent",
 "System Manager"
 ],
+"ledger.fetch_exchange_rates": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
 "ledger.financial_activity": [
 "Administrator",
 "Finance",
@@ -2540,6 +2837,15 @@
 "System Manager"
 ],
 "ledger.folio_history": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"Night Auditor",
+"System Manager"
+],
+"ledger.folio_in_currency": [
 "Administrator",
 "Finance",
 "Front Desk",
@@ -2606,6 +2912,7 @@
 ],
 "ledger.list_reason_codes": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2640,7 +2947,6 @@
 "Administrator",
 "Finance",
 "Hotel Admin",
-"Kamra Agent",
 "System Manager"
 ],
 "marketplace.connect_heykoala": [
@@ -2705,18 +3011,21 @@
 ],
 "menu_import.menu_template": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "menu_import.preview_menu_import": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "menu_import.run_menu_import": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
@@ -2834,6 +3143,64 @@
 "Kamra Agent",
 "System Manager"
 ],
+"payables.approve_vendor_bill": [
+"Administrator",
+"Hotel Admin",
+"System Manager"
+],
+"payables.cancel_vendor_bill": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"payables.create_vendor_bill": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"payables.pay_vendor_bill": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"payables.payables_aging": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"payables.save_vendor": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"payables.vendor_bill": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"payables.vendor_bills": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"payables.vendors": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "payments.gateway_info": [
 "Administrator",
 "Finance",
@@ -2842,6 +3209,7 @@
 ],
 "pos.accept_ticket": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2850,6 +3218,7 @@
 ],
 "pos.acknowledge_void": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2858,6 +3227,7 @@
 ],
 "pos.add_items": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2866,6 +3236,7 @@
 ],
 "pos.apply_discount": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2874,6 +3245,7 @@
 ],
 "pos.attach_customer": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2882,6 +3254,7 @@
 ],
 "pos.bill_data": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2890,6 +3263,7 @@
 ],
 "pos.cancel_order": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2898,6 +3272,7 @@
 ],
 "pos.change_payment_mode": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2906,6 +3281,7 @@
 ],
 "pos.charge_to_room": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2914,6 +3290,7 @@
 ],
 "pos.confirm_order": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2922,6 +3299,7 @@
 ],
 "pos.create_order": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2930,6 +3308,7 @@
 ],
 "pos.deliver_order": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2938,6 +3317,7 @@
 ],
 "pos.find_customer": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2946,6 +3326,7 @@
 ],
 "pos.fire_kot": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2954,6 +3335,7 @@
 ],
 "pos.guest_panel": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2962,6 +3344,7 @@
 ],
 "pos.in_house_rooms": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2970,6 +3353,7 @@
 ],
 "pos.kitchen_queue": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2978,6 +3362,16 @@
 ],
 "pos.mark_nc": [
 "Administrator",
+"F&B Manager",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.mark_picked_up": [
+"Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2986,6 +3380,7 @@
 ],
 "pos.mark_prepared": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -2994,6 +3389,16 @@
 ],
 "pos.mark_table_clean": [
 "Administrator",
+"F&B Manager",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.move_room_bill": [
+"Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3002,6 +3407,7 @@
 ],
 "pos.open_orders": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3010,6 +3416,7 @@
 ],
 "pos.order_detail": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3018,6 +3425,7 @@
 ],
 "pos.orders_export": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3026,6 +3434,7 @@
 ],
 "pos.orders_list": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3034,6 +3443,16 @@
 ],
 "pos.outlet_dashboard": [
 "Administrator",
+"F&B Manager",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.outlet_waiters": [
+"Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3042,6 +3461,7 @@
 ],
 "pos.outlets": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3050,6 +3470,7 @@
 ],
 "pos.pay_order": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3058,6 +3479,7 @@
 ],
 "pos.pos_menu": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3066,6 +3488,7 @@
 ],
 "pos.recall_prepared": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3074,6 +3497,7 @@
 ],
 "pos.recent_orders": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3082,6 +3506,7 @@
 ],
 "pos.remove_item": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3090,14 +3515,23 @@
 ],
 "pos.reserve_table": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
 "Kamra Agent",
 "System Manager"
 ],
+"pos.save_outlet_waiter": [
+"Administrator",
+"F&B Manager",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
 "pos.send_order": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3106,6 +3540,7 @@
 ],
 "pos.send_round": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3114,6 +3549,16 @@
 ],
 "pos.set_reservation": [
 "Administrator",
+"F&B Manager",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.set_waiter": [
+"Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3128,6 +3573,7 @@
 ],
 "pos.split_order": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3136,6 +3582,7 @@
 ],
 "pos.table_map": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3144,6 +3591,7 @@
 ],
 "pos.void_approvers": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3152,6 +3600,16 @@
 ],
 "pos.void_item": [
 "Administrator",
+"F&B Manager",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"pos.waiters": [
+"Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3174,6 +3632,7 @@
 ],
 "printing.ack_jobs": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3182,6 +3641,7 @@
 ],
 "printing.claim_jobs": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3190,12 +3650,14 @@
 ],
 "printing.delete_printer": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "printing.order_print_status": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3204,6 +3666,7 @@
 ],
 "printing.print_bill": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3212,6 +3675,7 @@
 ],
 "printing.printers": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3220,6 +3684,7 @@
 ],
 "printing.reprint": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3228,12 +3693,14 @@
 ],
 "printing.save_printer": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
 ],
 "printing.test_print": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "System Manager"
@@ -3266,6 +3733,41 @@
 "Revenue Manager",
 "System Manager"
 ],
+"receivables.ar_accounts": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"receivables.ar_invoice": [
+"Administrator",
+"Finance",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"receivables.create_ar_invoice": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
+"receivables.save_ar_account": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"receivables.transfer_ar_invoice": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
 "reports.budget_vs_actual": [
 "Administrator",
 "Finance",
@@ -3285,10 +3787,10 @@
 "reports.manager_flash": [
 "Administrator",
 "Finance",
-"Front Desk",
 "Hotel Admin",
 "Kamra Agent",
 "Night Auditor",
+"Revenue Manager",
 "System Manager"
 ],
 "reports.save_budget": [
@@ -3368,6 +3870,7 @@
 ],
 "settings.menu_masters": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3377,6 +3880,7 @@
 ],
 "settings.save_settings": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Hotel Admin",
 "Housekeeping Supervisor",
@@ -3390,6 +3894,7 @@
 ],
 "settings.settings_schema": [
 "Administrator",
+"F&B Manager",
 "Finance",
 "Front Desk",
 "Hotel Admin",
@@ -3447,6 +3952,13 @@
 "Hotel Admin",
 "System Manager"
 ],
+"statements.company_monthly_bill": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "statements.company_statement": [
 "Administrator",
 "Finance",
@@ -3454,6 +3966,12 @@
 "System Manager"
 ],
 "statements.email_company_statement": [
+"Administrator",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
+"statements.email_monthly_bill": [
 "Administrator",
 "Finance",
 "Hotel Admin",

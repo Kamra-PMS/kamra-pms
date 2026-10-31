@@ -77,22 +77,67 @@ def _holding_groups(property: str, check_in_date, check_out_date,
 	return out
 
 
-def _unpicked(group: str, room_type: str) -> int:
-	blocked = frappe.db.get_value(
+def parse_nightly(value) -> dict[str, int]:
+	"""A block row's rooms per night ({"YYYY-MM-DD": rooms}), or {} when
+	every night holds the same number."""
+	if not value:
+		return {}
+	if isinstance(value, str):
+		try:
+			value = frappe.parse_json(value)
+		except Exception:
+			return {}
+	return {str(getdate(d)): max(0, int(n or 0)) for d, n in (value or {}).items()}
+
+
+def group_nights(check_in_date, check_out_date) -> list[str]:
+	ci, co = getdate(check_in_date), getdate(check_out_date)
+	return [str(add_days(ci, i)) for i in range(max((co - ci).days, 1))]
+
+
+def unpicked_by_night(group: str, room_type: str) -> dict[str, int]:
+	"""{night: rooms of the block still held} over the group's nights. A
+	night's block is its own count (rooms per night) or Rooms Blocked; a
+	night is picked up by every live stay of the group covering it."""
+	row = frappe.db.get_value(
 		"Group Room Block", {"parent": group, "room_type": room_type},
-		"rooms_blocked") or 0
-	if not blocked:
-		return 0
-	picked = frappe.db.count("Reservation", {
+		["rooms_blocked", "nightly_counts"], as_dict=True)
+	if not row or not (row.rooms_blocked or row.nightly_counts):
+		return {}
+	gb = frappe.db.get_value("Group Booking", group,
+	                         ["check_in_date", "check_out_date"], as_dict=True)
+	nightly = parse_nightly(row.nightly_counts)
+	# a stay that has checked out used its nights too
+	stays = frappe.get_all("Reservation", filters={
 		"group_booking": group, "room_type": room_type,
-		"status": ("in", list(LIVE_STATUSES))})
-	return max(0, int(blocked) - int(picked))
+		"status": ("in", [*LIVE_STATUSES, "Checked Out"])},
+		fields=["check_in_date", "check_out_date"])
+	out = {}
+	for d in group_nights(gb.check_in_date, gb.check_out_date):
+		night = getdate(d)
+		picked = sum(1 for s in stays
+		             if getdate(s.check_in_date) <= night
+		             and (night < getdate(s.check_out_date)
+		                  or getdate(s.check_in_date) == getdate(s.check_out_date) == night))
+		out[d] = max(0, nightly.get(d, int(row.rooms_blocked or 0)) - picked)
+	return out
+
+
+def _unpicked(group: str, room_type: str, nights: list | None = None) -> int:
+	"""Rooms still held on the busiest of `nights` (default: every night of
+	the group)."""
+	by_night = unpicked_by_night(group, room_type)
+	if nights is not None:
+		by_night = {d: n for d, n in by_night.items() if d in {str(getdate(x)) for x in nights}}
+	return max(by_night.values(), default=0)
 
 
 def block_hold(property: str, room_type: str, check_in_date, check_out_date,
                for_group: str | None = None) -> int:
-	"""Rooms of `room_type` held by group blocks overlapping the window."""
-	return sum(_unpicked(gb.name, room_type) for gb in _holding_groups(
+	"""Rooms of `room_type` held by group blocks on the busiest night of the
+	window."""
+	nights = group_nights(check_in_date, check_out_date)
+	return sum(_unpicked(gb.name, room_type, nights) for gb in _holding_groups(
 		property, check_in_date, check_out_date, for_group))
 
 
@@ -107,14 +152,19 @@ def block_hold_by_night(property: str, room_type: str, nights: list,
 	                         add_days(max(dates), 1), for_group)
 	out = {str(d): 0 for d in dates}
 	for gb in groups:
-		held = _unpicked(gb.name, room_type)
-		if not held:
-			continue
-		ci, co = getdate(gb.check_in_date), getdate(gb.check_out_date)
+		held = unpicked_by_night(gb.name, room_type)
 		for d in dates:
-			if ci <= d < co:
-				out[str(d)] += held
+			out[str(d)] += held.get(str(d), 0)
 	return out
+
+
+def group_rate(group: str | None, room_type: str | None) -> float:
+	"""The block's negotiated rate per night for a room type (0 = none)."""
+	if not group or not room_type:
+		return 0.0
+	return float(frappe.db.get_value(
+		"Group Room Block", {"parent": group, "room_type": room_type},
+		"block_rate") or 0)
 
 
 def release_expired_blocks() -> list[dict]:

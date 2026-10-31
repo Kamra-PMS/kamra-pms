@@ -24,10 +24,14 @@ import frappe
 DEFAULT_VAT = Decimal("5")
 
 DEFAULT_CURRENCY = "AED"
+# foreign money guests bring most; Settings, Finance, Exchange rates can change it
+FX_CURRENCIES = ["USD", "EUR", "GBP", "SAR", "INR", "PKR", "CNY", "RUB"]
 DEFAULT_TIMEZONE = "Asia/Dubai"
 # charged per night on the room rate; the rate is set per property
 ROOM_LEVY_LABEL = "Municipality fee"
 DEFAULT_NATIONALITY = "Emirati"
+# a passport or ID card MRZ names the country by this code
+HOME_COUNTRY_ISO3 = "ARE"
 # named in the guest privacy notice
 PRIVACY_AUTHORITY = "the UAE Data Office"
 ID_TYPES = ["Emirates ID", "Passport", "GCC ID", "Driving License", "Other"]

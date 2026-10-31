@@ -44,6 +44,7 @@ from frappe.utils import (
 )
 
 from kamra.authz import require_perm
+from kamra.localization import money_text
 from kamra.settings import get_setting
 
 # who sells and runs functions
@@ -796,6 +797,8 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 	if kind not in ("Advance", "Payment", "Security Deposit", "Refund"):
 		frappe.throw(_("Unknown receipt kind: {0}").format(kind))
 	doc = _fn(function)
+	from kamra.localization import assert_payment_mode
+	assert_payment_mode(doc.property, mode)
 	from kamra.business_date import assert_transaction_date
 	rd = assert_transaction_date(doc.property, receipt_date, label="Receipt date")
 	doc.append("receipts", {
@@ -813,8 +816,9 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 	doc.save()
 	from kamra.savings import log_action
 	log_action("banquet_receipt", "Venue Booking", doc.name, doc.property,
-	           rationale=f"{kind} ₹{float(amount):,.0f} ({mode}) for "
-	                     f"{doc.customer_name} - balance ₹{doc.balance_due:,.0f}")
+	           rationale=f"{kind} {money_text(doc.property, round(float(amount)))} ({mode}) for "
+	                     f"{doc.customer_name} - balance "
+	                     f"{money_text(doc.property, round(doc.balance_due or 0))}")
 	return {"ok": True, "received": doc.advance_received,
 	        "balance_due": doc.balance_due}
 
@@ -1471,7 +1475,8 @@ def generate_quote(function: str, valid_days: int = 15,
 	log_action("banquet_quote", "Venue Booking", doc.name, doc.property,
 	           minutes_saved=20,
 	           rationale=f"Quote v{doc.quote_version} for {doc.customer_name}: "
-	                     f"₹{doc.grand_total:,.0f} ({len(doc.items)} lines)")
+	                     f"{money_text(doc.property, round(doc.grand_total or 0))} "
+	                     f"({len(doc.items)} lines)")
 	return banquet_document(function, "quote")
 
 
@@ -1521,7 +1526,8 @@ def generate_invoice(function: str):
 		log_action("banquet_invoice", "Venue Booking", doc.name, doc.property,
 		           minutes_saved=10,
 		           rationale=f"Invoice {doc.invoice_number} for "
-		                     f"{doc.customer_name}: ₹{doc.grand_total:,.0f}")
+		                     f"{doc.customer_name}: "
+		                     f"{money_text(doc.property, round(doc.grand_total or 0))}")
 	return banquet_document(function, "invoice")
 
 
@@ -1682,7 +1688,8 @@ def close_out(function: str, damage_amount: float = 0,
 	           minutes_saved=10,
 	           rationale=f"{doc.customer_name} closed out - "
 	                     f"{doc.billable_pax} actual pax, "
-	                     f"₹{damage:,.0f} damages, ₹{refund:,.0f} returned")
+	                     f"{money_text(doc.property, round(damage))} damages, "
+	                     f"{money_text(doc.property, round(refund))} returned")
 	return {"ok": True, "status": doc.status, "damage": damage,
 	        "refunded": refund, "deposit_held": doc.deposit_held,
 	        "balance_due": doc.balance_due, "grand_total": doc.grand_total}

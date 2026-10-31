@@ -226,7 +226,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 14:00:00.000000",
+ "modified": "2026-10-31 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Cashier Session",
@@ -248,7 +248,8 @@
    "operate_till": 1,
    "set_float": 1,
    "use_pin": 1,
-   "view_tills": 1
+   "view_tills": 1,
+   "view_cash_summary": 1
   },
   {
    "role": "Hotel Admin",
@@ -263,7 +264,8 @@
    "operate_till": 1,
    "set_float": 1,
    "use_pin": 1,
-   "view_tills": 1
+   "view_tills": 1,
+   "view_cash_summary": 1
   },
   {
    "role": "Finance",
@@ -276,7 +278,8 @@
    "operate_till": 1,
    "set_float": 1,
    "use_pin": 1,
-   "view_tills": 1
+   "view_tills": 1,
+   "view_cash_summary": 1
   },
   {
    "role": "Front Desk",
@@ -286,7 +289,8 @@
    "email": 1,
    "operate_till": 1,
    "use_pin": 1,
-   "view_tills": 1
+   "view_tills": 1,
+   "view_cash_summary": 1
   },
   {
    "role": "Kamra Agent",
@@ -296,14 +300,16 @@
    "email": 1,
    "operate_till": 1,
    "set_float": 1,
-   "view_tills": 1
+   "view_tills": 1,
+   "view_cash_summary": 1
   },
   {
    "read": 1,
    "report": 1,
    "print": 1,
    "role": "Night Auditor",
-   "view_tills": 1
+   "view_tills": 1,
+   "view_cash_summary": 1
   },
   {
    "role": "Housekeeping",
@@ -318,7 +324,13 @@
   {
    "role": "Revenue Manager",
    "use_pin": 1,
-   "select": 1
+   "select": 1,
+   "view_cash_summary": 1
+  },
+  {
+   "role": "F&B Manager",
+   "select": 1,
+   "use_pin": 1
   }
  ],
  "sort_field": "modified",

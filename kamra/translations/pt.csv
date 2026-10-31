@@ -5,3 +5,17 @@ You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Voc
 You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,Você não receberá mais ofertas de {0}. As mensagens de reserva e estadia continuam. Responda START para voltar a receber.
 AI Provider,Provedor de IA
 "Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.","Seu provedor de IA atuará como {0}, com as permissões da sua função. Preços, impostos e disponibilidade continuam no Kamra. Cada ação é registrada com seu nome no registro de Atividade."
+{0} bill from {1},Fatura de {0} de {1}
+{0} to {1},{0} a {1}
+Billed this month,Faturado neste mês
+Bills this month,Faturas deste mês
+Brought forward,Saldo anterior
+"Each bill above is a tax invoice of its own; this is a summary of the month, not a tax invoice. Taxable value and tax show where the whole invoice is on this account.","Cada fatura acima é uma nota fiscal própria; este é um resumo do mês, não uma nota fiscal. Valor tributável e imposto aparecem quando a fatura inteira está nesta conta."
+Monthly bill,Fatura mensal
+No such account.,Essa conta não existe.
+Paid this month,Pago neste mês
+Payments this month,Pagamentos deste mês
+"Pick a month, like 2026-10.","Escolha um mês, por exemplo 2026-10."
+Taxable value,Valor tributável
+"Your bill for {0} is attached: {1} billed, {2} due.","Segue sua fatura de {0}: {1} faturado, {2} em aberto."
+Balance due,Saldo devedor

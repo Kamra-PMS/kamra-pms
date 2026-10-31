@@ -1,0 +1,241 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "vendor",
+  "vendor_name",
+  "bill_number",
+  "bill_date",
+  "due_date",
+  "expense_category",
+  "description",
+  "column_break_a",
+  "amount",
+  "tax_rate",
+  "tax_amount",
+  "total",
+  "paid",
+  "outstanding",
+  "status",
+  "section_approval",
+  "entered_by",
+  "approved_by",
+  "approved_on",
+  "cancel_reason",
+  "section_payments",
+  "payments"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "label": "Vendor",
+   "options": "Vendor",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "vendor_name",
+   "fieldtype": "Data",
+   "label": "Vendor name",
+   "fetch_from": "vendor.vendor_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bill_number",
+   "fieldtype": "Data",
+   "label": "Supplier's bill number",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "bill_date",
+   "fieldtype": "Date",
+   "label": "Bill date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "expense_category",
+   "fieldtype": "Select",
+   "label": "Expense category",
+   "options": "Food & Beverage Supplies\nLinen & Laundry\nHousekeeping Supplies\nUtilities\nRepairs & Maintenance\nStaff Costs\nRent & Leases\nCommissions & Marketing\nProfessional Fees\nOther",
+   "default": "Other",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount before tax",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tax_rate",
+   "fieldtype": "Percent",
+   "label": "Tax rate"
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "Tax",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "paid",
+   "fieldtype": "Currency",
+   "label": "Paid",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outstanding",
+   "fieldtype": "Currency",
+   "label": "Still owed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Awaiting Approval\nApproved\nPart Paid\nPaid\nCancelled",
+   "default": "Awaiting Approval",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "section_approval",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "fieldname": "entered_by",
+   "fieldtype": "Link",
+   "label": "Entered by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancel_reason",
+   "fieldtype": "Small Text",
+   "label": "Why it was cancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_payments",
+   "fieldtype": "Section Break",
+   "label": "Payments"
+  },
+  {
+   "fieldname": "payments",
+   "fieldtype": "Table",
+   "label": "Payments",
+   "options": "Vendor Bill Payment"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-31 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Vendor Bill",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "autoname": "format:VB-{YYYY}-{#####}",
+ "title_field": "vendor_name",
+ "track_changes": 1,
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "email": 1,
+   "view_payables": 1,
+   "enter_bills": 1,
+   "pay_bills": 1,
+   "approve_bills": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1,
+   "view_payables": 1,
+   "enter_bills": 1,
+   "pay_bills": 1,
+   "approve_bills": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "email": 1,
+   "view_payables": 1,
+   "enter_bills": 1,
+   "pay_bills": 1
+  },
+  {
+   "role": "Kamra Agent",
+   "read": 1,
+   "report": 1,
+   "view_payables": 1,
+   "enter_bills": 1
+  }
+ ]
+}

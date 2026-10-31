@@ -3,7 +3,6 @@ import {
   BedDouble,
   Check,
   CircleCheck,
-  ExternalLink,
   KeyRound,
   Loader2,
   MessageCircle,
@@ -21,6 +20,8 @@ import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Sheet } from "./ui/sheet"
 import { IdDocumentField } from "./IdDocumentField"
+import CheckInGuests, { type GuestOccupant } from "./CheckInGuests"
+import type { IdRead } from "./IdScan"
 import { SignaturePad } from "./SignaturePad"
 import DepositPanel, { type DepositState } from "./DepositPanel"
 import SecurityDepositPanel, { type SecurityDepositState } from "./SecurityDepositPanel"
@@ -91,6 +92,7 @@ interface Flow {
     id_expiry_date: string | null
     id_used_count: number
     address: string
+    has_photo: boolean
   }
   vocabulary: { id_types: string[] }
   steps: Step[]
@@ -99,20 +101,14 @@ interface Flow {
   /** Soft-required steps still open — warn, allow check-in, backfill later. */
   pending_backfill: { step: string; title: string; tip: string }[]
   rooms: Room[]
-  request_presets: { key: string; label: string }[]
+  request_presets: { key: string; label: string; priced?: boolean }[]
   ids: {
     ok: boolean
     missing: string[]
     online: boolean
     precheckin_status: string
     precheckin_on: string | null
-    occupants: {
-      row: string
-      full_name: string
-      age: number | null
-      has_id: boolean
-      exempt: boolean
-    }[]
+    occupants: GuestOccupant[]
   }
   billing: {
     payer: string
@@ -321,6 +317,8 @@ export default function CheckInDialog(props: {
   // per-step drafts
   const [details, setDetails] = useState({ phone: "", email: "", nationality: "", id_type: "", id_number: "" })
   const [detailsDirty, setDetailsDirty] = useState(false)
+  // what an ID scan read beyond the form's fields; saved with the details
+  const [scanned, setScanned] = useState<IdRead | null>(null)
   const [payer, setPayer] = useState("")
   const [room, setRoom] = useState("")
   const [changeRoom, setChangeRoom] = useState(false)
@@ -330,6 +328,8 @@ export default function CheckInDialog(props: {
   const [keyCount, setKeyCount] = useState(1)
   const [keyCards, setKeyCards] = useState("")
   const [requests, setRequests] = useState<string[]>([])
+  // price of a paid request (extra bed, airport drop), billed to the stay
+  const [prices, setPrices] = useState<Record<string, string>>({})
   const [note, setNote] = useState("")
   const [allowCharges, setAllowCharges] = useState<boolean | null>(null)
   const [chargesReason, setChargesReason] = useState("")
@@ -431,9 +431,15 @@ export default function CheckInDialog(props: {
       nationality: details.nationality,
       id_type: details.id_type || undefined,
       id_number: details.id_number || undefined,
+      date_of_birth: scanned?.date_of_birth ?? undefined,
+      gender: scanned?.gender ?? undefined,
+      id_expiry_date: scanned?.id_expiry_date ?? undefined,
+      address_line: scanned?.address || undefined,
+      city: scanned?.city || undefined,
     }, false)
     if (f) {
       setDetailsDirty(false)
+      setScanned(null)
       setDetails((d) => ({ ...d, id_number: "" }))
     }
     return !!f
@@ -485,7 +491,10 @@ export default function CheckInDialog(props: {
         await run("kamra.checkin.issue_keys", { key_count: keyCount, key_cards: keyCards || undefined })
         return
       case "guest_requests":
-        await run("kamra.checkin.log_checkin_requests", { requests, note })
+        await run("kamra.checkin.log_checkin_requests", {
+          requests, note,
+          prices: Object.fromEntries(Object.entries(prices).filter(([k, v]) => requests.includes(k) && Number(v) > 0)),
+        })
         return
       case "room_charges":
         await run("kamra.checkin.set_room_charges", {
@@ -793,46 +802,28 @@ export default function CheckInDialog(props: {
                 onUploaded={load}
                 label={t("Photograph the guest's ID")}
               />
-              <section className="rounded-xl border border-zinc-200 bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-sm font-semibold text-zinc-800">{t("Everyone staying")}</h4>
-                  <a
-                    href={toFullPath(`/grc/${r.name}`)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
-                  >
-                    {t("Add guests and their IDs")} <ExternalLink className="size-3.5" aria-hidden />
-                  </a>
-                </div>
-                {flow.ids.occupants.length === 0 ? (
-                  <p className="mt-1 text-sm text-zinc-500">
-                    {t("No other guests recorded. Add them on the registration card, then come back here.")}
-                  </p>
-                ) : (
-                  <ul className="mt-2 divide-y divide-zinc-100">
-                    {flow.ids.occupants.map((o) => (
-                      <li key={o.row} className="flex items-center justify-between py-1.5 text-sm">
-                        <span>
-                          {o.full_name}
-                          {o.age != null ? ` · ${o.age}` : ""}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-xs font-medium",
-                            o.has_id ? "text-emerald-700" : o.exempt ? "text-zinc-500" : "text-rose-700",
-                          )}
-                        >
-                          {o.has_id ? t("ID on file") : o.exempt ? t("No ID needed (child)") : t("ID missing")}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <Button variant="ghost" className="mt-2 h-8 px-2 text-xs" onClick={load}>
-                  {t("Refresh")}
-                </Button>
-              </section>
+              <CheckInGuests
+                key={flow.ids.occupants.map((o) => o.row).join(",")}
+                reservation={r.name}
+                guest={flow.guest.name}
+                guestName={flow.guest.full_name}
+                guestHasPhoto={flow.guest.has_photo}
+                adults={flow.reservation.adults}
+                children={flow.reservation.children}
+                occupants={flow.ids.occupants}
+                idTypes={flow.vocabulary.id_types}
+                onChanged={load}
+                onMainRead={(read) => {
+                  setDetails((d) => ({
+                    ...d,
+                    id_type: read.id_type || d.id_type,
+                    id_number: read.id_number || d.id_number,
+                    nationality: read.nationality ?? d.nationality,
+                  }))
+                  setScanned(read)
+                  setDetailsDirty(true)
+                }}
+              />
               {!flow.ids.ok && (
                 <p className="text-sm font-medium text-rose-700">
                   {t("ID still needed for: {names}.", { names: flow.ids.missing.join(", ") })}
@@ -1103,12 +1094,20 @@ export default function CheckInDialog(props: {
                   )
                 })}
               </div>
+              {flow.request_presets.filter((p) => p.priced && requests.includes(p.key)).map((p) => (
+                <label key={p.key} className="flex items-center gap-2 text-sm">
+                  <span className="w-40 text-zinc-600">{t("Price for {what}", { what: t(REQUEST_LABEL[p.key] ?? p.label) })}</span>
+                  <input className={cn(inputCls, "w-36")} inputMode="decimal" placeholder={t("Free")}
+                    value={prices[p.key] ?? ""}
+                    onChange={(e) => setPrices((x) => ({ ...x, [p.key]: e.target.value.replace(/[^0-9.]/g, "") }))} />
+                </label>
+              ))}
               <label className="block">
                 <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Anything else (optional)")}</span>
                 <textarea className={inputCls} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
               </label>
               <p className="text-xs text-zinc-400">
-                {t("Each request becomes a task for the right team.")}
+                {t("Each request becomes a task for the right team. A price goes on the guest's bill.")}
               </p>
             </div>
           )}

@@ -49,7 +49,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 12:32:21.000000",
+ "modified": "2026-10-31 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Reason Code",
@@ -110,6 +110,11 @@
    "print": 1,
    "report": 1,
    "email": 1,
+   "view_codes": 1
+  },
+  {
+   "role": "F&B Manager",
+   "select": 1,
    "view_codes": 1
   }
  ],

@@ -29,7 +29,8 @@ SETTINGS = "ZATCA Settings"
 RECORD = "ZATCA Invoice"
 
 # Folio / POS payment modes → UN/ECE 4461 payment means codes
-PAYMENT_MEANS = {"Cash": "10", "Card": "48", "Bank Transfer": "42", "UPI": "42"}
+PAYMENT_MEANS = {"Cash": "10", "Card": "48", "Bank Transfer": "42",
+                 "Payment Link": "48", "Company Credit": "30"}
 
 
 # ── settings ─────────────────────────────────────────────────────────────
@@ -173,6 +174,14 @@ def _folio_buyer(folio) -> tuple[str, dict]:
 	if folio.folio_type == "Group" and folio.get("group_booking"):
 		company = frappe.db.get_value(
 			"Group Booking", folio.group_booking, "company") or company
+	if folio.folio_type == "Account":
+		# an invoice raised on a company's AR account: the buyer is the
+		# account's company (billed before the folio closes)
+		account = frappe.db.get_value(
+			"City Ledger Entry", {"folio": folio.name, "kind": "Invoice"},
+			"account", order_by="creation asc")
+		company = account and frappe.db.get_value(
+			"City Ledger Account", account, "company")
 	if company:
 		c = frappe.db.get_value("Corporate Account", company,
 		                        ["company_name", "gstin"], as_dict=True) or {}

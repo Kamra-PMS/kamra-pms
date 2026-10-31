@@ -10,6 +10,7 @@
  "field_order": [
   "property_name",
   "legal_name",
+  "short_code",
   "property_kind",
   "column_break_a",
   "phone",
@@ -98,6 +99,7 @@
   "faqs",
   "meta_title",
   "meta_description",
+  "booking_language",
   "og_image",
   "page_slug",
   "overbooking_pct",
@@ -120,6 +122,14 @@
    "fieldname": "legal_name",
    "fieldtype": "Data",
    "label": "Legal Name"
+  },
+  {
+   "description": "2 to 6 letters or digits. Numbers allowance vouchers (ALW-<code>-YY-#####). Changing it starts a new voucher series.",
+   "fieldname": "short_code",
+   "fieldtype": "Data",
+   "label": "Short Code",
+   "length": 6,
+   "unique": 1
   },
   {
    "default": "Hotel",
@@ -355,7 +365,7 @@
    "default": "7500",
    "fieldname": "gst_slab_threshold",
    "fieldtype": "Currency",
-   "label": "Slab Threshold (\u20b9/night)"
+   "label": "Slab Threshold (₹/night)"
   },
   {
    "default": "5",
@@ -448,7 +458,7 @@
    "fieldname": "hero_image",
    "fieldtype": "Attach Image",
    "label": "Hero Image",
-   "description": "1920\u00d71080px (16:9 landscape), JPG or WebP under 2 MB. The big photo at the top of the booking page."
+   "description": "1920×1080px (16:9 landscape), JPG or WebP under 2 MB. The big photo at the top of the booking page."
   },
   {
    "fieldname": "star_category",
@@ -473,7 +483,7 @@
    "label": "Property Amenities (public)"
   },
   {
-   "description": "Square, 512\u00d7512px. PNG or SVG with a transparent background. Shown on the booking page and invoices.",
+   "description": "Square, 512×512px. PNG or SVG with a transparent background. Shown on the booking page and invoices.",
    "fieldname": "logo_url",
    "fieldtype": "Attach Image",
    "label": "Logo"
@@ -665,10 +675,17 @@
    "label": "Meta Description"
   },
   {
+   "fieldname": "booking_language",
+   "fieldtype": "Select",
+   "label": "Booking Engine Language",
+   "options": "\nen\nes\npt\nar",
+   "description": "Language guests see first on the booking engine and self check-in. Empty: the guest's browser language. Guests can still switch."
+  },
+  {
    "fieldname": "og_image",
    "fieldtype": "Attach Image",
    "label": "OG Image",
-   "description": "Exactly 1200\u00d7630px, JPG or PNG. What WhatsApp, Google and social previews show when the booking page is shared."
+   "description": "Exactly 1200×630px, JPG or PNG. What WhatsApp, Google and social previews show when the booking page is shared."
   },
   {
    "fieldname": "page_slug",
@@ -718,7 +735,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 15:30:00.000000",
+ "modified": "2026-10-31 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",
@@ -757,7 +774,9 @@
    "app_revenue": 1,
    "app_finance": 1,
    "app_booking_engine": 1,
-   "app_admin": 1
+   "app_admin": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "create": 1,
@@ -790,7 +809,9 @@
    "app_revenue": 1,
    "app_finance": 1,
    "app_booking_engine": 1,
-   "app_admin": 1
+   "app_admin": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "email": 1,
@@ -804,7 +825,6 @@
    "verify_tax_id": 1,
    "view_briefing": 1,
    "view_dashboard": 1,
-   "view_flash": 1,
    "view_locale": 1,
    "view_snapshot": 1,
    "app_front_desk": 1,
@@ -812,7 +832,9 @@
    "app_operations": 1,
    "app_fnb": 1,
    "app_events": 1,
-   "app_finance": 1
+   "app_finance": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "email": 1,
@@ -832,7 +854,9 @@
    "view_performance": 1,
    "view_snapshot": 1,
    "app_fnb": 1,
-   "app_finance": 1
+   "app_finance": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "email": 1,
@@ -849,7 +873,10 @@
    "view_snapshot": 1,
    "app_events": 1,
    "app_revenue": 1,
-   "app_booking_engine": 1
+   "app_booking_engine": 1,
+   "view_modules": 1,
+   "view_settings": 1,
+   "view_flash": 1
   },
   {
    "email": 1,
@@ -860,7 +887,9 @@
    "use_console": 1,
    "use_settings": 1,
    "view_locale": 1,
-   "app_housekeeping": 1
+   "app_housekeeping": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "email": 1,
@@ -875,7 +904,8 @@
    "view_flash": 1,
    "view_locale": 1,
    "view_performance": 1,
-   "view_snapshot": 1
+   "view_snapshot": 1,
+   "view_modules": 1
   },
   {
    "email": 1,
@@ -887,7 +917,9 @@
    "use_console": 1,
    "use_settings": 1,
    "view_locale": 1,
-   "app_housekeeping": 1
+   "app_housekeeping": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "read": 1,
@@ -898,7 +930,20 @@
    "view_flash": 1,
    "view_snapshot": 1,
    "app_front_desk": 1,
-   "app_finance": 1
+   "app_finance": 1,
+   "view_modules": 1,
+   "view_dashboard": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "role": "F&B Manager",
+   "view_modules": 1,
+   "view_settings": 1,
+   "edit_settings": 1,
+   "view_locale": 1,
+   "app_fnb": 1
   }
  ],
  "row_format": "Dynamic",

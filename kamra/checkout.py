@@ -25,12 +25,11 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, nowdate
 
 EPS = 0.009
 OPEN_POS_STATUSES = ("Placed", "Confirmed", "Preparing")
 OPEN_LAUNDRY_STATUSES = ("Requested", "Collected", "In Process", "Ready")
-POS_PAY_MODES = ("Cash", "Card", "UPI")  # what pos.pay_order accepts
 
 
 def settlement_position(reservation: str) -> dict:
@@ -134,6 +133,12 @@ def _modes(property: str) -> list[str]:
 	return payment_modes(pack_for(property))
 
 
+def _outlet_modes(property: str) -> list[str]:
+	"""What pos.pay_order accepts here."""
+	from kamra.localization import outlet_payment_modes, pack_for
+	return outlet_payment_modes(pack_for(property))
+
+
 def _main_mode(payments, modes: list[str]) -> str | None:
 	"""The mode most of the money came in by (what a refund goes back by).
 	A security deposit goes back through its own refund, by its own mode."""
@@ -227,7 +232,7 @@ def _pending_bills(res, modes: list[str]) -> list[dict]:
 				"can_mark_ready": False,
 				"billable": not o.nc,
 				"pay_modes": [] if (o.nc or not can_pos)
-				else [m for m in modes if m in POS_PAY_MODES],
+				else _outlet_modes(res.property),
 				"hint": _("Not on the bill yet. Post it to the room, or the guest pays "
 				          "for it at the outlet."),
 				"act_roles": list(POS_ROLES[:2])})
@@ -357,6 +362,17 @@ def _checkout_context(reservation: str) -> dict:
 	posted_charges = round(posted_charges, 2)
 	folio_rows: list[dict] = []
 	will_post_lines: list[dict] = []
+	early = early_departure_plan(res)
+	if res.get("booked_check_out_date") and in_house:
+		# already shortened: the step shows what was done
+		early = {"applied": True, "booked_check_out": str(res.booked_check_out_date),
+		         "new_check_out": str(res.check_out_date),
+		         "reason": res.get("early_departure_reason") or ""}
+	elif early and early["policy"] != "All Nights":
+		blockers.append({
+			"code": "early_departure", "step": "early",
+			"message": _("Leaving {0} night(s) early: shorten the stay before "
+			             "settling the bill.").format(early["unused_nights"])})
 
 	with _NoTrace("kamra_checkout_ctx"):
 		nights_error = None
@@ -673,6 +689,7 @@ def _checkout_context(reservation: str) -> dict:
 		"refunds": refunds,
 		"pending_bills": pending,
 		"late_checkout": late,
+		"early_departure": early,
 		"companions": companions,
 		"blockers": blockers,
 		"notices": notices,
@@ -693,3 +710,130 @@ def _deposit_mode(folio: str, modes: list[str]) -> str | None:
 	from kamra.deposit import _last_mode
 	mode = _last_mode(folio)
 	return mode if mode in modes else None
+
+
+# --- leaving early -------------------------------------------------------------
+
+EARLY_FEES = ("None", "One Night", "All Nights")
+
+
+def early_departure_plan(res) -> dict | None:
+	"""A guest in house checking out before the booked date: the nights they
+	won't use and what the property's early-departure charge
+	(settings: early_departure_fee) makes of them. None when the stay is
+	not leaving early. Reads only.
+
+	The stay is shortened to the business date (never below one night), so
+	check-out posts only the nights stayed; the charge, if any, is the
+	room rate of the first unused night or of all of them, one line per
+	tax rate: each night is taxed as its room charge would have been (an
+	Indian slab follows the night's tariff)."""
+	if res.status != "Checked In" or res.get("is_day_use"):
+		return None
+	from frappe.utils import add_days, date_diff
+
+	from kamra.business_date import get_business_date
+	from kamra.folio import _nightly_gst, _nightly_room_rate
+	from kamra.settings import get_setting
+
+	booked_out = getdate(res.check_out_date)
+	# the calendar too: leaving in the morning before the night audit has
+	# rolled the business date, last night was slept, not unused
+	new_out = max(getdate(get_business_date(res.property)), getdate(nowdate()),
+	              getdate(add_days(res.check_in_date, 1)))
+	if new_out >= booked_out:
+		return None
+	unused = [getdate(add_days(new_out, i))
+	          for i in range(date_diff(booked_out, new_out))]
+	rates = [round(flt(_nightly_room_rate(res, d)), 2) for d in unused]
+	taxes = [flt(_nightly_gst(res, d)) for d in unused]
+	by_tax = {}
+	for rate, tax in zip(rates, taxes):
+		line = by_tax.setdefault(tax, {"nights": 0, "amount": 0.0, "tax_rate": tax})
+		line["nights"] += 1
+		line["amount"] = round(line["amount"] + rate, 2)
+	policy = get_setting(res.property, "early_departure_fee")
+	if policy not in EARLY_FEES:
+		policy = "All Nights"
+	from kamra.credit import can_override
+	return {
+		"booked_check_out": str(booked_out),
+		"new_check_out": str(new_out),
+		"unused_nights": len(unused),
+		"policy": policy,
+		"fees": {"None": 0.0, "One Night": rates[0],
+		         "All Nights": round(sum(rates), 2)},
+		"lines": {"None": [],
+		          "One Night": [{"nights": 1, "amount": rates[0], "tax_rate": taxes[0]}],
+		          "All Nights": list(by_tax.values())},
+		"can_override": can_override(),
+	}
+
+
+def apply_early_departure(reservation: str, reason: str,
+                          fee: str | None = None) -> dict:
+	"""Shorten a stay that is leaving early and post its early-departure
+	charge. The stay goes through the amend path (api._amend_dates), so
+	availability, the channel manager and the price all follow; the booked
+	date and the reason stay on the reservation for the Early departures
+	report. `fee` other than the property's policy is Finance's or a Hotel
+	Admin's call (kamra.credit.can_override), never an agent's."""
+	# locked: two clicks at once must not shorten and charge twice; the
+	# second waits, then finds the stay already shortened and stops
+	res = frappe.get_doc("Reservation", reservation, for_update=True)
+	plan = early_departure_plan(res)
+	if not plan:
+		frappe.throw(_("This stay is not leaving before its booked date."))
+	reason = (reason or "").strip()
+	if not reason:
+		frappe.throw(_("Give a reason for the early departure."))
+	fee = fee or plan["policy"]
+	if fee not in EARLY_FEES:
+		frappe.throw(_("The early departure charge must be one of: {0}.").format(
+			", ".join(EARLY_FEES)))
+	if fee != plan["policy"] and not plan["can_override"]:
+		frappe.throw(_("Only Finance or a Hotel Admin can change the early departure "
+		               "charge from the property's policy ({0}).").format(_(plan["policy"])),
+		             frappe.PermissionError)
+	amount = plan["fees"][fee]
+	from kamra.api import _amend_dates
+	note = (f"early departure, {plan['unused_nights']} night(s) unused, "
+	        f"charge {fee}" + (f" (policy {plan['policy']})" if fee != plan["policy"] else "")
+	        + f": {reason}")
+	# the guest has agreed to leave: the desk confirmed the shorter stay.
+	# Role-gated by the caller; Finance has no Reservation DocPerm.
+	res.flags.ignore_permissions = True
+	_amend_dates(res, str(res.check_in_date), plan["new_check_out"],
+	             confirm_price=1, note=note[:500])
+	frappe.db.set_value("Reservation", res.name, {
+		"booked_check_out_date": res.get("booked_check_out_date") or plan["booked_check_out"],
+		"early_departure_reason": reason[:500]}, update_modified=False)
+	if amount > EPS:
+		from kamra.business_date import get_business_date
+		from kamra.folio import _recalculate, target_folio
+		from kamra.ledger import code_for_charge_type, save_folio
+		# the charge stands in for room nights: it bills where the room does
+		# (a company that pays the room pays it), as check-out would have
+		# billed those nights
+		folio = frappe.get_doc("Folio", target_folio(res, "Room"))
+		# its own charge type, not Room: a Room line is a posted night
+		# (deduped by date, counted in room nights and ADR); the rate rides
+		# on the line, so each slab bills exactly
+		for line in plan["lines"][fee]:
+			folio.append("charges", {
+				"posting_date": get_business_date(res.property),
+				"charge_type": "Early Departure",
+				"transaction_code": code_for_charge_type("Early Departure"),
+				"reservation": res.name,
+				"description": _("Early departure: {0} of {1} unused night(s) at {2}% tax").format(
+					line["nights"], plan["unused_nights"], f"{line['tax_rate']:g}"),
+				"qty": 1, "rate": line["amount"], "amount": line["amount"],
+				"gst_rate": line["tax_rate"], "auto_posted": 1,
+			})
+		_recalculate(folio)
+		save_folio(folio)
+	return {"ok": True, "reservation": res.name,
+	        "check_out_date": plan["new_check_out"],
+	        "booked_check_out": plan["booked_check_out"],
+	        "unused_nights": plan["unused_nights"],
+	        "fee": fee, "amount": amount}

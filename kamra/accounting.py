@@ -16,7 +16,7 @@ def export_invoices(property: str, from_date: str, to_date: str):
 	"""Every closed invoice in the window as accounting rows: one voucher per
 	invoice, taxable value, tax split (pack-shaped), party and identifiers."""
 	from kamra.api import folio_invoice
-	from kamra.localization import pack_for
+	from kamra.localization import default_currency, pack_for
 
 	prop = frappe.get_cached_doc("Property", property)
 	ctx = pack_for(property).invoice_context(prop)
@@ -69,7 +69,7 @@ def export_invoices(property: str, from_date: str, to_date: str):
 		"components": components,           # tax column keys, in order
 		"tax_label": ctx["tax_label"],      # "GST" / "Tax"
 		"tax_id_label": ctx["tax_id_label"],  # "GSTIN" / "Tax ID"
-		"currency": prop.get("currency") or "INR",
+		"currency": prop.get("currency") or default_currency(pack_for(property)),
 		"totals": totals,
 	}
 

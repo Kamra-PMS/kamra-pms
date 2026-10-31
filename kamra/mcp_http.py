@@ -357,11 +357,12 @@ def _tools_call(params: dict, grant) -> dict:
 	try:
 		result = call_tool(spec, arguments, grant.property)
 		text = frappe.as_json(result)
-		return {
-			"content": [{"type": "text", "text": text}],
-			"structuredContent": json.loads(text) if text not in ("", "null") else result,
-			"isError": False,
-		}
+		out = {"content": [{"type": "text", "text": text}], "isError": False}
+		# MCP requires structuredContent to be an object; list or scalar results
+		# (find_reservations, None) only go in the text block.
+		if isinstance(result, dict):
+			out["structuredContent"] = json.loads(text)
+		return out
 	except Exception as exc:
 		msg = str(exc)[:800]
 		return {

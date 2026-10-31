@@ -30,11 +30,11 @@ import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
-import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
+import { cur, locale, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
 import { useT, t as translate } from "../lib/i18n"
-import { adoptBrowserLanguage } from "../lib/dir"
+import { adoptGuestLanguage } from "../lib/dir"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
 import { addDays, nightsBetween, parseDate, stayFromParams, todayPlus } from "../lib/stay"
 import ChildAges, {
@@ -459,7 +459,7 @@ function PhotoStrip({ photos, name, onOpen }: {
 
 export default function PublicBooking() {
   const { t, tn, lang } = useT()
-  useEffect(() => adoptBrowserLanguage(), [])
+  useEffect(() => adoptGuestLanguage(), [])
   const params = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -661,7 +661,7 @@ export default function PublicBooking() {
       makesOffer: data.room_types.map((rt) => ({
         "@type": "Offer",
         name: rt.room_type_name,
-        priceCurrency: "INR",
+        priceCurrency: locale().currency || undefined,
         price: rt.base_price,
         itemOffered: {
           "@type": offerType,
@@ -1774,7 +1774,7 @@ export default function PublicBooking() {
                 </label>
                 <label className="block">
                   <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t("Phone")}</span>
-                  <input className={inputCls} value={form.phone} placeholder="+91 …" type="tel" autoComplete="tel" required
+                  <input className={inputCls} value={form.phone} placeholder="+…" type="tel" autoComplete="tel" required
                     onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 </label>
                 <label className="block sm:col-span-2">

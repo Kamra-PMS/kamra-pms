@@ -10,6 +10,9 @@ import { useAuth } from "../lib/auth"
 
 const VOID_REPORT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 const EDIT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
+// kamra.reports.manager_flash: the hotel's figures, not the front desk's
+const FLASH_ROLES = ["Finance", "Revenue Manager", "Night Auditor", "Kamra Agent", "Hotel Admin",
+  "System Manager", "Administrator"]
 
 type Tab = "saved" | "builder" | "packs" | "flash"
 
@@ -472,7 +475,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     { id: "saved", label: t("My reports") },
     { id: "builder", label: t("New report") },
     { id: "packs", label: t("Department packs") },
-    { id: "flash", label: t("Manager flash") },
+    ...(roles.some((r) => FLASH_ROLES.includes(r)) ? [{ id: "flash" as Tab, label: t("Manager flash") }] : []),
   ]
 
   return (
@@ -1030,11 +1033,11 @@ function FlashPanel(props: {
 
   return (
     <div>
-      <div className="mb-4 flex justify-end gap-2 print:hidden">
+      <div className="mb-4 flex flex-wrap justify-end gap-2 print:hidden">
         <input
           type="date"
           aria-label={t("From")}
-          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm sm:flex-none"
           value={from || date}
           max={date}
           onChange={(e) => setFrom(e.target.value === date ? "" : e.target.value)}
@@ -1043,7 +1046,7 @@ function FlashPanel(props: {
         <input
           type="date"
           aria-label={t("Report date")}
-          className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm sm:flex-none"
           value={date}
           onChange={(e) => e.target.value && setDate(e.target.value)}
         />

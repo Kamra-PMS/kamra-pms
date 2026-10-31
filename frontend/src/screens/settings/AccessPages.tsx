@@ -25,6 +25,11 @@ import { inputCls, Switch } from "./ModulePage"
 
 
 const ADMIN_ROLES = ["Hotel Admin", "System Manager", "Administrator"]
+// suggestions only: any job title can be typed
+const JOB_TITLES = [
+  "Front Office Manager", "Duty Manager", "General Manager", "Finance Manager",
+  "F&B Manager", "Night Auditor", "Receptionist",
+]
 
 const initials = (name: string) =>
   name.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?"
@@ -146,7 +151,9 @@ export function StaffPage() {
                       {r.is_self && <Badge tone="zinc">{t("You")}</Badge>}
                       {!Number(r.enabled) && <Badge tone="zinc">{t("Deactivated")}</Badge>}
                     </p>
-                    <p className="truncate text-xs text-zinc-500">{r.email}</p>
+                    <p className="truncate text-xs text-zinc-500">
+                      {r.job_title ? `${translate(r.job_title)} · ${r.email}` : r.email}
+                    </p>
                   </div>
                   <div className="col-span-2 col-start-2 row-start-2 flex min-w-0 flex-wrap gap-1 md:col-span-1 md:col-start-auto md:row-start-auto">
                     {r.roles.length ? (
@@ -194,15 +201,9 @@ export function StaffPage() {
                     )}
                     <Button
                       variant="outline"
-                      disabled={!r.editable}
+                      disabled={!r.editable && !r.is_self}
                       onClick={() => setEditing(r)}
-                      title={
-                        (r.editable
-                          ? undefined
-                          : r.is_self
-                            ? t("You can't change your own access")
-                            : t("Only IT can change this person"))
-                      }
+                      title={r.editable || r.is_self ? undefined : t("Only IT can change this person")}
                     >
                       {t("Manage")}
                     </Button>
@@ -253,6 +254,7 @@ function StaffSheet({
   const [f, setF] = useState<StaffInput>({
     email: row?.email ?? "",
     full_name: row?.full_name ?? "",
+    job_title: row?.job_title ?? "",
     roles: row?.roles ?? [],
     properties: row ? row.properties : null,
     enabled: row ? Boolean(Number(row.enabled)) : true,
@@ -309,6 +311,21 @@ function StaffSheet({
             <input className={inputCls} value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} />
           </label>
           <label className="block">
+            <span className="mb-1 block text-sm font-medium text-zinc-700">{t("Job title")}</span>
+            <input
+              className={inputCls}
+              list="kamra-job-titles"
+              value={f.job_title}
+              disabled={row?.is_self}
+              placeholder={t("e.g. Duty Manager")}
+              onChange={(e) => setF({ ...f, job_title: e.target.value })}
+            />
+            <datalist id="kamra-job-titles">
+              {JOB_TITLES.map((j) => <option key={j} value={j}>{t(j)}</option>)}
+            </datalist>
+            <span className="mt-1 block text-xs text-zinc-500">{t("Printed on allowance vouchers they approve.")}</span>
+          </label>
+          <label className="block">
             <span className="mb-1 block text-sm font-medium text-zinc-700">{t("Email")}</span>
             <input
               className={inputCls}
@@ -320,6 +337,12 @@ function StaffSheet({
           </label>
         </div>
 
+        {row?.is_self && (
+          <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+            {t("You can change your name. Ask another admin to change your job title or access.")}
+          </p>
+        )}
+        <fieldset disabled={row?.is_self} className="space-y-6 disabled:opacity-60">
         <fieldset>
           <legend className="mb-2 text-sm font-semibold text-zinc-900">{t("Roles")}</legend>
           <div className="space-y-2">
@@ -425,6 +448,7 @@ function StaffSheet({
             </span>
           </label>
         )}
+        </fieldset>
       </div>
     </Sheet>
   )

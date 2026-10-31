@@ -194,7 +194,7 @@ Hard rules enforced in code:
 ## Auth, roles and property scope
 
 Roles (examples): Front Desk, Revenue Manager, Finance, Housekeeping,
-Hotel Admin, System Manager, Kamra Agent, Night Auditor.
+Hotel Admin, System Manager, Kamra Agent, Night Auditor, F&B Manager.
 
 Every endpoint checks a Frappe permission on the record it touches
 (`@require_perm("Reservation", "check_in_out")`): a permission type that

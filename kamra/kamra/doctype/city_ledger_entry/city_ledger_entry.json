@@ -11,6 +11,7 @@
   "column_break_a",
   "folio",
   "invoice_number",
+  "invoice_date",
   "due_date",
   "debit",
   "credit",
@@ -62,6 +63,12 @@
    "fieldname": "invoice_number",
    "fieldtype": "Data",
    "label": "Invoice Number"
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "label": "Invoice Date",
+   "description": "When the bill was first raised, if earlier than this entry's posting date (a bill moved from another account). Aging and the due date count from it."
   },
   {
    "fieldname": "due_date",

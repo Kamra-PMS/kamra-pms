@@ -35,6 +35,8 @@ ROLES = (
 	 "Billing, ledgers, night audit, exports, tax and cashier controls."),
 	("Night Auditor", "Night Auditor",
 	 "End of Day: arrivals, departures, cashier closure, room and tax posting, the audit pack."),
+	("F&B Manager", "F&B Manager",
+	 "Outlets, the menu, waiters and tables, the kitchen display, F&B reports and approving POS voids."),
 	("Housekeeping Supervisor", "Housekeeping Supervisor",
 	 "The room board, inspections, task deadlines and laundry pricing."),
 	("Housekeeping", "Housekeeping",
@@ -118,7 +120,7 @@ def list_staff(property: str) -> list:
 		"User",
 		filters={"name": ("in", list(by_user)), "user_type": "System User"},
 		fields=["name", "full_name", "email", "enabled", "last_login",
-		        "last_active", "user_image"],
+		        "last_active", "user_image", "kamra_job_title"],
 		order_by="enabled desc, full_name asc")
 	perms: dict[str, list] = {}
 	for p in frappe.get_all("User Permission",
@@ -137,6 +139,7 @@ def list_staff(property: str) -> list:
 		is_it_user = any(r in IT_ONLY for r in roles)
 		out.append({
 			"user": u.name, "full_name": u.full_name or "", "email": u.email or u.name,
+			"job_title": u.kamra_job_title or "",
 			"enabled": u.enabled, "roles": roles, "properties": props,
 			"last_login": str(u.last_login) if u.last_login else None,
 			"last_active": str(u.last_active) if u.last_active else None,
@@ -160,9 +163,9 @@ def _parse_list(val) -> list | None:
 @require_perm("Property", "configure")
 @rate_limit(limit=120, seconds=3600)
 def save_staff(property: str, email: str, full_name: str, roles, properties=None,
-               enabled=1, send_welcome=0) -> dict:
-	"""Add a person, or change an existing person's roles, property access
-	and whether they can sign in."""
+               enabled=1, send_welcome=0, job_title=None) -> dict:
+	"""Add a person, or change an existing person's roles, property access,
+	job title and whether they can sign in. Your own record: name only."""
 	it = _caller_is_it()
 	me = frappe.session.user
 	email = (email or "").strip().lower()
@@ -201,9 +204,6 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 	exists = frappe.db.exists("User", email)
 	before = {"roles": [], "properties": None, "enabled": None}
 	if exists:
-		if email == me.lower():
-			frappe.throw(_("You can't change your own access - ask another admin."),
-			             frappe.PermissionError)
 		user = frappe.get_doc("User", email)
 		if user.user_type != "System User":
 			frappe.throw(_("{0} is a guest account, not staff.").format(email))
@@ -216,6 +216,16 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 			             frappe.PermissionError)
 		before = {"roles": [r for r in kamra_roles if r in held],
 		          "properties": cur_props, "enabled": user.enabled}
+		if email == me.lower() and (
+				set(want_roles) != set(before["roles"])
+				or (sorted(want_props) if want_props is not None else None) != cur_props
+				or on != bool(user.enabled)):
+			frappe.throw(_("You can't change your own access - ask another admin."),
+			             frappe.PermissionError)
+		if email == me.lower() and job_title is not None \
+				and str(job_title).strip()[:140] != (user.kamra_job_title or ""):
+			frappe.throw(_("You can't change your own job title - ask another admin."),
+			             frappe.PermissionError)
 	else:
 		held = []
 		user = frappe.get_doc({
@@ -235,12 +245,18 @@ def save_staff(property: str, email: str, full_name: str, roles, properties=None
 		if "Hotel Admin" not in mine_roles and (gained | lost) - mine_roles:
 			frappe.throw(_("Only a Hotel Admin can grant or remove {0}.").format(
 				", ".join(sorted((gained | lost) - mine_roles))), frappe.PermissionError)
+		# job titles print on vouchers: a Hotel Admin's call (owner decision)
+		if "Hotel Admin" not in mine_roles and job_title is not None \
+				and str(job_title).strip()[:140] != (user.get("kamra_job_title") or ""):
+			frappe.throw(_("Only a Hotel Admin can set a job title."), frappe.PermissionError)
 
 	# --- write ----------------------------------------------------------------
 	names = full_name.split(" ", 1)
 	user.first_name = names[0]
 	user.last_name = names[1] if len(names) > 1 else ""
 	user.enabled = 1 if on else 0
+	if job_title is not None:
+		user.kamra_job_title = str(job_title).strip()[:140]
 	keep = [r for r in user.roles if r.role not in kamra_roles]
 	user.set("roles", [])
 	for r in keep:

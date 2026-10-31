@@ -61,6 +61,8 @@ export interface BookingInitial {
   guest_name?: string
   phone?: string
   stays?: number
+  adults?: number
+  children?: number
   walkIn?: boolean
 }
 
@@ -218,9 +220,15 @@ export default function AppShell() {
   const [property, setProperty] = useState(getCurrentProperty())
   const [demoMode, setDemoMode] = useState(false)
   const [build, setBuild] = useState<string | null>(null)
+  // co-branding: the hotel's name and logo on top, Kamra PMS kept beneath
+  const [brand, setBrand] = useState<{ name: string | null; logo: string | null }>({ name: null, logo: null })
 
   useEffect(() => {
-    getSiteInfo().then((info) => setBuild(versionLabel(info)))
+    getSiteInfo().then((info) => {
+      setBuild(versionLabel(info))
+      setBrand({ name: info.brand_name ?? null, logo: info.brand_logo ?? null })
+      document.title = info.brand_name ? `${info.brand_name} · Kamra PMS` : "Kamra PMS"
+    })
   }, [])
 
   useEffect(() => {
@@ -257,6 +265,12 @@ export default function AppShell() {
     setCurrentProperty(name)
     setProperty(name)
   }
+  // a screen can switch the property too (the owner view on a phone)
+  useEffect(() => {
+    const on = (e: Event) => setProperty((e as CustomEvent<string>).detail)
+    window.addEventListener("kamra:property", on)
+    return () => window.removeEventListener("kamra:property", on)
+  }, [])
 
   // which parts of the product this property runs - undefined until it
   // answers, so nothing flashes in and then disappears
@@ -394,13 +408,20 @@ export default function AppShell() {
           aria-label={t("Home")}
           className="mb-5 flex items-center gap-2 rounded-lg px-1 outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
         >
-          <img src={asset("kamra-mark.svg")} alt="" className="size-7" aria-hidden />
-          <span className="text-lg font-semibold tracking-tight text-zinc-900">
-            kamra
-            <span className="ml-1 align-middle text-[10px] font-semibold tracking-[0.2em] text-brand-600">
-              PMS
+          <img src={brand.logo || asset("kamra-mark.svg")} alt="" className="size-7 object-contain" aria-hidden />
+          {brand.name ? (
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-sm font-semibold text-zinc-900">{brand.name}</span>
+              <span className="block text-[10px] font-semibold tracking-[0.2em] text-brand-600">KAMRA PMS</span>
             </span>
-          </span>
+          ) : (
+            <span className="text-lg font-semibold tracking-tight text-zinc-900">
+              kamra
+              <span className="ml-1 align-middle text-[10px] font-semibold tracking-[0.2em] text-brand-600">
+                PMS
+              </span>
+            </span>
+          )}
         </NavLink>
 
         {currentApp && (

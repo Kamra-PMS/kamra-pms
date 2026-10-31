@@ -105,7 +105,7 @@ export default function Guests() {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>{t("Guests")}</CardTitle>
+          <CardTitle>{t("Guest History")}</CardTitle>
           <p className="mt-0.5 text-xs text-zinc-400">
             {t("Every guest, their stays and lifetime value. Click for the full journey.")}
           </p>

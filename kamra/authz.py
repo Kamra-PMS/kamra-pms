@@ -74,7 +74,7 @@ def require_it_admin(fn):
 SCOPED_ARGS = {
 	"reservation": ("Reservation", "POS Table Reservation"),
 	"folio": ("Folio",), "from_folio": ("Folio",), "to_folio": ("Folio",),
-	"folios": ("Folio",),
+	"folios": ("Folio",), "allowance_request": ("Allowance Request",),
 	"group_booking": ("Group Booking",), "group": ("Group Booking",),
 	"order": ("POS Order", "Laundry Order"),
 	"outlet": ("POS Outlet",),
@@ -230,6 +230,36 @@ def guest_has_permission(doc, ptype: str | None = None, user: str | None = None,
 	props = set(frappe.get_all("Reservation", filters={"guest": doc.name},
 	                           pluck="property", distinct=True))
 	return not props or bool(props & allowed)
+
+
+def itinerary_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
+	"""permission_query_conditions hook for Itinerary. A trip has no property
+	of its own; a restricted user sees it only when every leg is at a
+	property they may access (kamra.crs._itinerary, same rule), and never
+	while it has no leg at all (nothing says which hotel it belongs to)."""
+	allowed = restricted_properties(user)
+	if allowed is None:
+		return ""
+	props = ", ".join(frappe.db.escape(p) for p in sorted(allowed)) or "''"
+	return (
+		"EXISTS (SELECT 1 FROM `tabReservation` il0"
+		" WHERE il0.itinerary = `tabItinerary`.name)"
+		" AND NOT EXISTS (SELECT 1 FROM `tabReservation` il"
+		" WHERE il.itinerary = `tabItinerary`.name"
+		f" AND il.property NOT IN ({props}))"
+	)
+
+
+def itinerary_has_permission(doc, ptype: str | None = None, user: str | None = None,
+                             debug: bool = False) -> bool:
+	"""has_permission hook for Itinerary (Desk, /api/resource): same rule
+	as itinerary_query_conditions. Must return True explicitly to allow."""
+	allowed = restricted_properties(user)
+	if allowed is None or not doc.name or doc.is_new():
+		return True
+	props = set(frappe.get_all("Reservation", filters={"itinerary": doc.name},
+	                           pluck="property", distinct=True))
+	return bool(props) and props <= allowed
 
 
 def _values(value) -> list[str]:
@@ -431,15 +461,19 @@ def require_cashier_pin(property: str, pin=None):
 # (kamra.ledger.require_reason).
 APPROVE = ("Folio", "approve")
 SUPERVISOR_ROLES = ("Hotel Admin", "Finance", "System Manager", "Administrator")  # the defaults
-_HUMAN_SUPERVISOR = {"Hotel Admin", "Finance", "System Manager"}
+# At the POS only (void approvals): POS Order "approve_voids". The F&B
+# Manager runs the floor too, but never approves folio corrections.
+POS_APPROVE = ("POS Order", "approve_voids")
+POS_SUPERVISOR_ROLES = SUPERVISOR_ROLES + ("F&B Manager",)  # the defaults
+_HUMAN_SUPERVISOR = {"Hotel Admin", "Finance", "System Manager", "F&B Manager"}
 
 
-def supervisor_roles() -> list[str]:
+def supervisor_roles(perm=APPROVE) -> list[str]:
 	"""Roles that may approve now (Role Permission Manager), Administrator aside."""
-	return sorted(perm_roles(*APPROVE) - {"Administrator"})
+	return sorted(perm_roles(*perm) - {"Administrator"})
 
 
-def is_supervisor(user: str | None = None) -> bool:
+def is_supervisor(user: str | None = None, perm=APPROVE) -> bool:
 	user = user or frappe.session.user
 	if user == "Administrator":
 		return True
@@ -449,10 +483,36 @@ def is_supervisor(user: str | None = None) -> bool:
 	# supervisor's account keeps that account's rights, as before)
 	if "Kamra Agent" in roles and not roles & _HUMAN_SUPERVISOR:
 		return False
-	return frappe.has_permission(*APPROVE, user=user, ignore_share_permissions=True)
+	return frappe.has_permission(*perm, user=user, ignore_share_permissions=True)
 
 
-def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
+def supervisors_for(property: str, perm=APPROVE, roles=None) -> list[dict]:
+	"""Who can approve on a till at this property: enabled users holding
+	`perm` (or one of `roles`, when a property setting names them), with
+	access to the property and a cashier PIN set. Names only."""
+	if roles is not None:
+		users = set(frappe.get_all(
+			"Has Role", filters={"role": ["in", [r for r in roles if r != "Administrator"]],
+			                     "parenttype": "User"},
+			pluck="parent", distinct=True))
+	else:
+		users = {u for u in frappe.get_all(
+			"Has Role", filters={"role": ["in", supervisor_roles(perm) or [""]],
+			                     "parenttype": "User"},
+			pluck="parent", distinct=True) if is_supervisor(u, perm)}
+	users &= set(frappe.get_all("Cashier PIN", pluck="name"))
+	out = []
+	for u in frappe.get_all("User", filters={"name": ["in", list(users) or [""]],
+	                                         "enabled": 1, "user_type": "System User"},
+	                        fields=["name", "full_name"], order_by="full_name"):
+		allowed = restricted_properties(u.name)
+		if allowed is None or property in allowed:
+			out.append({"user": u.name, "full_name": u.full_name or u.name})
+	return out
+
+
+def verify_supervisor(property: str, supervisor: str | None, pin,
+                      perm=APPROVE) -> str:
 	"""A supervisor approves at someone else's till with their user id and
 	their own cashier PIN. The PIN is always required here, whatever the
 	property's PIN setting, because it is the only proof the supervisor was
@@ -463,10 +523,9 @@ def verify_supervisor(property: str, supervisor: str | None, pin) -> str:
 		frappe.throw("SUPERVISOR_REQUIRED: pick the supervisor who approves this.",
 		             frappe.PermissionError)
 	if not frappe.db.get_value("User", supervisor, "enabled") or \
-			not is_supervisor(supervisor):
-		frappe.throw(f"{supervisor} cannot approve this. It needs a Hotel "
-		             "Admin or Finance user (or a role given Folio: Approve).",
-		             frappe.PermissionError)
+			not is_supervisor(supervisor, perm):
+		frappe.throw(f"{supervisor} cannot approve this. It needs one of: "
+		             f"{', '.join(supervisor_roles(perm))}.", frappe.PermissionError)
 	allowed = restricted_properties(supervisor)
 	if property and allowed is not None and property not in allowed:
 		frappe.throw(f"{supervisor} has no access to {property}.",

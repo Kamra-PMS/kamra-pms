@@ -22,12 +22,13 @@ FRONT_DESK = {"arrivals", "departures", "in_house", "no_shows_cancels",
 HK = {"hk_tasks", "room_status", "lost_found", "laundry_orders"}
 OPS = {"service_tickets"}
 FO_EXTRA = {"shift_handover", "early_departures"}
-FNB = {"pos_orders", "pos_items"}
+FNB = {"pos_orders", "pos_items", "kitchen_times"}
 
 # role -> (report tools, custom-report datasets, packs) it must get, exactly
 EXPECTED = {
+	# no manager's flash: the hotel's revenue and occupancy are not the desk's
 	"Front Desk": (
-		{"manager_flash", "cashier_shift_report", "sla_report", "outlets",
+		{"cashier_shift_report", "sla_report", "outlets",
 		 "outlet_dashboard", "wastage_report", "banquet_register", *BUILDER},
 		FRONT_DESK | HK | OPS | FO_EXTRA | FNB,
 		{"front_office", "housekeeping", "fnb", "engineering", "laundry",
@@ -45,6 +46,9 @@ EXPECTED = {
 		| FNB | FO_EXTRA | OPS,
 		{"front_office", "fnb", "engineering", "hotel_manager"}),
 	"Housekeeping": (BUILDER, HK | OPS, {"housekeeping", "laundry", "engineering"}),
+	"F&B Manager": (
+		{"outlets", "outlet_dashboard", "wastage_report", *BUILDER},
+		FNB, {"fnb"}),
 }
 
 
@@ -57,7 +61,7 @@ class AgentReportAccessTestCase(AuditTestCase):
 
 	def test_each_role_gets_exactly_its_reports(self):
 		for role, (tools, datasets, packs) in EXPECTED.items():
-			email = f"ut.reports.{role.lower().replace(' ', '')}@test.local"
+			email = f"ut.reports.{''.join(c for c in role.lower() if c.isalnum())}@test.local"
 			ensure_user(email, [role])
 			frappe.set_user(email)  # nosemgrep: frappe-setuser -- acting as the persona
 			try:

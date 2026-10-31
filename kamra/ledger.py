@@ -7,6 +7,7 @@ the four Opera ledgers (Guest / Deposit / AR / Package) can be balanced."""
 from __future__ import annotations
 
 import json
+from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
 from typing import Any
 
 import frappe
@@ -22,14 +23,22 @@ CHARGE_TYPE_TO_CODE = {
 	"Minibar": ("2100", "Minibar", "F&B", "Minibar"),
 	"Laundry": ("3000", "Laundry", "Other", "Laundry"),
 	"Spa": ("3100", "Spa", "Other", "Spa"),
+	"Taxi": ("3200", "Taxi", "Other", "Taxi"),
 	"Early Check-in": ("1200", "Early Check-in", "Rooms", "Early Check-in"),
 	"Late Checkout": ("1210", "Late Checkout", "Rooms", "Late Checkout"),
+	# the charge for booked nights a guest leaving early did not use: earned
+	# income, but not a night sold, so it stays out of room revenue (ADR,
+	# RevPAR) and sits with other income
+	"Early Departure": ("1220", "Early Departure", "Other", "Early Departure"),
 	"Cleaning Fee": ("1300", "Cleaning Fee", "Rooms", "Cleaning Fee"),
 	# extra beds in a let room - room revenue, so it lands in the Rooms group
 	"Extra Guests": ("1320", "Extra Guests", "Rooms", "Extra Guests"),
 	"Pet Charge": ("1330", "Pet Charge", "Rooms", "Pet Charge"),
 	# collected for the municipality / city - a levy, not hotel revenue
 	"Room Levy": ("1310", "Room Levy", "Levies", "Room Levy"),
+	# a later rate change or correction on a night already charged: room
+	# revenue, posted on the business date (folio.post_rate_lines)
+	"Rate Adjustment": ("1010", "Room Rate Adjustment", "Rooms", "Rate Adjustment"),
 	"Discount": ("9000", "Discount", "Adjustment", "Discount"),
 	"Misc": ("8000", "Miscellaneous", "Other", "Misc"),
 	"Allowance": ("9100", "Allowance", "Adjustment", "Allowance"),
@@ -510,10 +519,22 @@ def due_date_for(account: str | None, invoice_date, property: str | None = None)
 	return str(add_days(invoice_date, effective_credit_days(account, property)))
 
 
+def _transfer_company(folio, company: str | None = None) -> str | None:
+	"""Who a city ledger transfer bills: the company asked for, else the
+	stay's, else the group's."""
+	if not company and folio.get("reservation"):
+		company = frappe.db.get_value("Reservation", folio.reservation, "company")
+	if not company and folio.get("group_booking"):
+		company = frappe.db.get_value(
+			"Group Booking", folio.group_booking, "company")
+	return company
+
+
 def transfer_to_city_ledger(folio: str, company: str | None = None,
                             invoice_date: str | None = None,
                             credit_check: bool = True,
-                            credit_override_reason: str | None = None) -> dict:
+                            credit_override_reason: str | None = None,
+                            account: str | None = None) -> dict:
 	"""Move an unpaid folio balance to company AR at checkout.
 	`invoice_date` dates the AR invoice when it is older than today - an
 	unpaid bill carried over from the old system at go-live, so aging
@@ -524,16 +545,15 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 	warn lets it through with a warning, block refuses unless Finance or a
 	Hotel Admin overrides with a reason. Go-live passes False - those bills
 	were already on credit in the old system - and checkout passes False
-	because it has checked every company of the stay at once."""
+	because it has checked every company of the stay at once.
+
+	`account` bills that exact City Ledger Account (it must be the
+	company's) instead of the company's first open one."""
 	doc = frappe.get_doc("Folio", folio)
 	balance = float(doc.balance or 0)
 	if balance <= 0:
 		frappe.throw("No balance to transfer to city ledger.")
-	if not company and doc.get("reservation"):
-		company = frappe.db.get_value("Reservation", doc.reservation, "company")
-	if not company and doc.get("group_booking"):
-		company = frappe.db.get_value(
-			"Group Booking", doc.group_booking, "company")
+	company = _transfer_company(doc, company)
 	if not company:
 		frappe.throw("A company is required for city ledger transfer.")
 	if not frappe.db.get_value("Corporate Account", company, "credit_allowed"):
@@ -547,7 +567,11 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 			context="city ledger transfer",
 			reference_doctype="Folio", reference_name=doc.name,
 			exclude_folios=[doc.name])
-	account = _ar_account(doc.property, company)
+	if account and frappe.db.get_value(
+			"City Ledger Account", account, ["property", "company"]) != (
+			doc.property, company):
+		frappe.throw(f"{account} is not {company}'s account at this property.")
+	account = account or _ar_account(doc.property, company)
 	bd = get_business_date(doc.property)
 	inv_date = invoice_date or bd
 	# Zero the guest folio with a Company Credit payment
@@ -605,6 +629,61 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 	return out
 
 
+def reverse_city_ledger_transfer(folio: str, reason: str) -> float:
+	"""Undo transfer_to_city_ledger for a folio whose checkout is being
+	reinstated: the bill comes back to the stay and leaves the company's
+	account. Refused once the company has paid any of it. Returns the
+	amount brought back (0 when the folio was never billed on)."""
+	doc = frappe.get_doc("Folio", folio)
+	out = [p for p in doc.payments if p.mode == "Company Credit"
+	       and (p.reference or "").startswith(("city-ledger:", "city-ledger-back:"))]
+	net = round(sum(float(p.amount or 0) for p in out), 2)
+	if net <= 0.009:
+		return 0
+	account = out[0].reference.split(":", 1)[1]
+	# company payments are applied to the bill on its ledger (as in
+	# city_ledger_open_folios); a credit note lowers what is billed
+	paid = frappe.db.sql(
+		"""SELECT COALESCE(SUM(credit - debit), 0) FROM `tabFolio Ledger Entry`
+		   WHERE folio = %s AND source_doctype = 'City Ledger Entry'""", doc.name)[0][0]
+	billed = float(frappe.db.sql(
+		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
+		   WHERE folio = %s AND account = %s AND kind != 'Payment'""",
+		(doc.name, account))[0][0] or 0)
+	if float(paid or 0) > 0.009:
+		frappe.throw(frappe._("The company has already paid part of this bill (or money it "
+		              "paid ahead was applied), so the checkout can't be undone. Finance "
+		              "can correct it on the account."))
+	if billed < net - 0.009:
+		frappe.throw(frappe._("A credit note or adjustment already changed this bill on the "
+		              "company's account, so the checkout can't be undone. Finance can "
+		              "correct it on the account."))
+	bd = get_business_date(doc.property)
+	row = doc.append("payments", {
+		"posting_date": bd, "payment_kind": "Payment", "mode": "Company Credit",
+		"amount": -net, "reference": f"city-ledger-back:{account}",
+	})
+	from kamra.folio import _recalculate
+	_recalculate(doc)
+	doc.save(ignore_permissions=True)
+	record_payment_ledger(doc, row.as_dict())
+	company = frappe.db.get_value("City Ledger Account", account, "company")
+	write_ledger_entry(
+		property=doc.property, folio=doc.name, ledger="AR", credit=net,
+		description=f"Back from city ledger {company}",
+		source_doctype="Folio", source_name=doc.name)
+	frappe.get_doc({
+		"doctype": "City Ledger Entry", "account": account,
+		"property": doc.property, "posting_date": bd, "kind": "Credit Note",
+		"folio": doc.name, "debit": 0, "credit": net, "reference": doc.name,
+		"notes": f"Checkout reinstated: {reason}",
+	}).insert(ignore_permissions=True)
+	acc = frappe.get_doc("City Ledger Account", account)
+	acc.balance = float(acc.balance or 0) - net
+	acc.save(ignore_permissions=True)
+	return net
+
+
 @frappe.whitelist(methods=["POST"])
 @require_perm("Folio", "bill")
 def city_ledger_transfer(folio: str, company: str | None = None,
@@ -615,8 +694,16 @@ def city_ledger_transfer(folio: str, company: str | None = None,
 	it warns, or refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin
 	passes `credit_override_reason`. Agents can't override."""
 	from kamra.authz import require_cashier_pin
-	prop = frappe.db.get_value("Folio", folio, "property")
-	require_cashier_pin(prop, pin)
+	from kamra.receivables import assert_billable
+	doc = frappe.get_doc("Folio", folio)
+	require_cashier_pin(doc.property, pin)
+	# the stay's company too, not only one passed in: a restricted account
+	# takes no new bills either way
+	company = _transfer_company(doc, company)
+	if company:
+		assert_billable(frappe.db.get_value(
+			"City Ledger Account",
+			{"property": doc.property, "company": company, "disabled": 0}, "name"))
 	return transfer_to_city_ledger(
 		folio, company, credit_override_reason=credit_override_reason)
 
@@ -641,10 +728,11 @@ def city_ledger_open_folios(account: str) -> list[dict]:
 	billed = frappe.db.sql(
 		"""
 		SELECT folio,
-		       MIN(CASE WHEN kind = 'Invoice' THEN posting_date END) AS invoice_date,
+		       MIN(CASE WHEN kind = 'Invoice'
+		                 THEN COALESCE(invoice_date, posting_date) END) AS invoice_date,
 		       MIN(CASE WHEN kind = 'Invoice' THEN due_date END) AS due_date,
 		       MIN(posting_date) AS first_date,
-		       MAX(invoice_number) AS invoice_number,
+		       MAX(CASE WHEN kind = 'Invoice' THEN invoice_number END) AS invoice_number,
 		       COALESCE(SUM(debit - credit), 0) AS billed
 		FROM `tabCity Ledger Entry`
 		WHERE account = %s AND IFNULL(folio, '') != '' AND kind != 'Payment'
@@ -982,13 +1070,24 @@ def city_ledger_account(account: str):
 	today = nowdate()
 	for r in open_items:
 		r["days_overdue"] = max(days_overdue(r, today), 0)
+	# rolling credit: what is owed and what in-house stays will owe use the
+	# limit up, payments free it again (kamra.credit counts the same way)
+	from kamra.credit import in_house_exposure
+	in_house = in_house_exposure(acc.company, acc.property)
+	limit = float(acc.credit_limit or 0)
 	return {
+		"in_house": in_house,
+		"available_credit": round(limit - float(acc.balance or 0) - in_house, 2)
+		                    if limit > 0 else None,
 		"account": acc.name,
 		"company": acc.company,
 		"account_number": acc.account_number,
 		"credit_limit": acc.credit_limit,
 		"account_credit_days": int(acc.get("credit_days") or 0),
 		"use_default_credit_days": bool(acc.get("use_default_credit_days")),
+		"billing_address": acc.get("billing_address"),
+		"restricted": bool(acc.get("restricted")),
+		"restricted_reason": acc.get("restricted_reason"),
 		"balance": float(acc.balance or 0),
 		**pos,
 		"open_items": open_items,
@@ -1131,13 +1230,17 @@ def issue_credit_note(folio: str, amount: float, reason: str,
 		# the allowance line carries the Guest-ledger credit itself
 		save_folio(doc)
 	else:
-		# Post AR credit if company linked on the reservation
-		company = None
-		if doc.get("reservation"):
+		# AR credit on the account the bill was last invoiced to (an Account
+		# folio has no stay; a transferred bill lives on the new account),
+		# else the stay's company
+		account = frappe.db.get_value(
+			"City Ledger Entry", {"folio": folio, "kind": "Invoice"}, "account",
+			order_by="creation desc")
+		if not account and doc.get("reservation"):
 			company = frappe.db.get_value(
 				"Reservation", doc.reservation, "company")
-		if company:
-			account = _ar_account(doc.property, company)
+			account = _ar_account(doc.property, company) if company else None
+		if account:
 			frappe.get_doc({
 				"doctype": "City Ledger Entry",
 				"account": account,
@@ -1195,7 +1298,9 @@ def record_folio_reprint(folio: str, document: str = "Guest Folio",
 def folio_history(property: str, query: str | None = None,
                   status: str | None = None, from_date: str | None = None,
                   to_date: str | None = None):
-	filters: list = [["property", "=", property]]
+	# account invoices have no stay to show - they live on Receivables
+	filters: list = [["property", "=", property],
+	                 ["folio_type", "!=", "Account"]]
 	if status:
 		filters.append(["status", "=", status])
 	if from_date:  # by the day the bill was closed
@@ -1305,13 +1410,15 @@ def quick_checkout(reservation: str, pin: str | None = None):
 
 @frappe.whitelist(methods=["POST"])
 @require_perm("Group Booking", "book_group")
-def group_checkout(group: str, pin: str | None = None):
-	"""Quick-checkout every Checked In reservation on a group."""
-	res_names = frappe.get_all(
-		"Reservation",
-		filters={"group_booking": group, "status": "Checked In"},
-		pluck="name",
-	)
+def group_checkout(group: str, pin: str | None = None, reservations=None):
+	"""Quick-checkout every Checked In reservation on a group, or only the
+	`reservations` picked on the rooming list."""
+	if isinstance(reservations, str):
+		reservations = json.loads(reservations) if reservations.strip() else []
+	filters = {"group_booking": group, "status": "Checked In"}
+	if reservations:
+		filters["name"] = ("in", list(reservations))
+	res_names = frappe.get_all("Reservation", filters=filters, pluck="name")
 	results = []
 	for r in res_names:
 		try:
@@ -1331,7 +1438,8 @@ def list_exchange_rates(property: str):
 		"Exchange Rate",
 		filters={"property": property, "disabled": 0},
 		fields=["name", "currency", "rate_date", "buy_rate", "sell_rate",
-		        "service_tax_pct", "max_exchange"],
+		        "service_tax_pct", "max_exchange", "source", "set_by",
+		        "market_rate"],
 		order_by="currency asc, rate_date desc",
 	)
 	# Keep latest per currency
@@ -1350,6 +1458,17 @@ def list_exchange_rates(property: str):
 def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
                          sell_rate: float, service_tax_pct: float = 0,
                          max_exchange: float | None = None):
+	"""Set today's (business date) rate for one foreign currency. Rates are
+	home-currency units per 1 foreign unit. A rate typed in here is Manual
+	and wins over a fetched (Online) one for the same day: a later fetch
+	leaves it alone."""
+	currency = (currency or "").strip().upper()
+	if len(currency) != 3 or not currency.isalpha():
+		frappe.throw("Currency must be a 3-letter ISO code, e.g. USD.")
+	if currency == home_currency(property):
+		frappe.throw(f"{currency} is this hotel's own currency.")
+	if float(buy_rate or 0) <= 0 or float(sell_rate or 0) <= 0:
+		frappe.throw("Buy and sell rates must be above zero.")
 	bd = get_business_date(property)
 	existing = frappe.db.get_value(
 		"Exchange Rate",
@@ -1362,6 +1481,9 @@ def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
 		doc.sell_rate = float(sell_rate)
 		doc.service_tax_pct = float(service_tax_pct or 0)
 		doc.max_exchange = max_exchange
+		doc.source = "Manual"
+		doc.set_by = frappe.session.user
+		doc.market_rate = None
 		doc.save(ignore_permissions=True)
 	else:
 		doc = frappe.get_doc({
@@ -1373,25 +1495,182 @@ def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
 			"sell_rate": float(sell_rate),
 			"service_tax_pct": float(service_tax_pct or 0),
 			"max_exchange": max_exchange,
+			"source": "Manual",
+			"set_by": frappe.session.user,
 		})
 		doc.insert(ignore_permissions=True)
 	return doc.as_dict()
+
+
+# Online rates: ExchangeRate-API's free open endpoint. No key, HTTPS, covers
+# INR, SAR, AED, USD and ~160 more. Terms (exchangerate-api.com/docs/free):
+# free use, rates refresh once a day, rate limited (do not call more than
+# about hourly), and a page showing the rates must credit "Rates By Exchange
+# Rate API" with a link. Response shape:
+#   {"result": "success", "base_code": "INR",
+#    "time_last_update_utc": "Thu, 29 Oct 2026 00:02:31 +0000",
+#    "rates": {"INR": 1, "USD": 0.01189, ...}}   # foreign units per 1 base
+# and on failure {"result": "error", "error-type": "unsupported-code"}.
+# Swap the provider here; market_rates() is the only reader.
+FX_RATES_URL = "https://open.er-api.com/v6/latest/{base}"
+FX_TIMEOUT_S = 5
+FX_MAX_BYTES = 256 * 1024  # the real reply is ~4 KB
+
+
+def market_rates(home: str) -> tuple[dict, str | None]:
+	"""Market mid rates as home-currency units per 1 foreign unit, and the
+	provider's as-of time. Throws a plain message on any failure; never
+	called from a request that takes a payment. The reply is untrusted:
+	size-capped, its base must be our home currency, and a rate that isn't
+	a finite positive number is dropped."""
+	import math
+
+	import requests
+	try:
+		if not (len(home) == 3 and home.isalpha()):
+			raise ValueError(f"home currency {home!r} is not an ISO code")
+		r = requests.get(FX_RATES_URL.format(base=home.upper()), timeout=FX_TIMEOUT_S,
+		                 stream=True, allow_redirects=False)
+		r.raise_for_status()
+		body = r.raw.read(FX_MAX_BYTES + 1, decode_content=True)
+		if len(body) > FX_MAX_BYTES:
+			raise ValueError("reply too large")
+		data = json.loads(body)
+		if data.get("result") != "success":
+			raise ValueError(data.get("error-type") or "no rates returned")
+		if str(data.get("base_code") or "").upper() != home.upper():
+			raise ValueError(f"rates are for {data.get('base_code')}, not {home}")
+		mids = {}
+		for c, v in (data.get("rates") or {}).items():
+			try:
+				mid = 1 / float(v)
+			except (TypeError, ValueError, ZeroDivisionError, OverflowError):
+				continue
+			if math.isfinite(mid) and mid > 0:
+				mids[str(c).upper()] = mid
+	except Exception as e:
+		frappe.throw(f"Could not fetch exchange rates ({type(e).__name__}: {e}). "
+		             "Today's rates are unchanged; type them in on the Currency Desk.")
+	return mids, data.get("time_last_update_utc")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_perm("Exchange Rate", "set_rates")
+def fetch_exchange_rates(property: str):
+	"""Fetch today's market rates for the property's listed currencies
+	(Settings, Finance, Exchange rates) and store them for the business
+	date: buy = mid less the margin, sell = mid plus it. A Manual rate
+	already set for today is kept."""
+	return _fetch_rates(property)
+
+
+def _fetch_rates(property: str, only_missing: bool = False) -> dict:
+	from kamra.settings import get_setting, list_setting
+	home = home_currency(property)
+	wanted = [c.upper() for c in list_setting(property, "fx_currencies")
+	          if len(c) == 3 and c.isalpha() and c.upper() != home]
+	if not wanted:
+		frappe.throw("No foreign currencies listed. Add them under Settings, "
+		             "Finance, Exchange rates.")
+	bd = get_business_date(property)
+	existing = {r.currency: r for r in frappe.get_all(
+		"Exchange Rate",
+		filters={"property": property, "rate_date": bd, "currency": ["in", wanted]},
+		fields=["name", "currency", "source"])}
+	out = {"business_date": str(bd), "updated": [], "kept_manual": [],
+	       "not_offered": [], "as_of": None}
+	skip_key = f"kamra:fx_not_offered:{property}:{bd}"
+	if only_missing:
+		skipped = set(frappe.cache.get_value(skip_key) or ())
+		wanted = [c for c in wanted if c not in existing and c not in skipped]
+		if not wanted:
+			return out
+		mids, out["as_of"] = _market_rates_hourly(home)
+	else:
+		mids, out["as_of"] = market_rates(home)
+	margin = float(get_setting(property, "fx_margin_pct") or 0) / 100
+	for cur in wanted:
+		row = existing.get(cur)
+		if row and (row.source or "Manual") == "Manual":
+			out["kept_manual"].append(cur)
+			continue
+		mid = mids.get(cur)
+		if not mid:
+			out["not_offered"].append(cur)
+			continue
+		# 9 places: a weak currency (JPY, IDR) is a tiny rate against a strong home
+		values = {"buy_rate": round(mid * (1 - margin), 9),
+		          "sell_rate": round(mid * (1 + margin), 9),
+		          "market_rate": round(mid, 9), "source": "Online",
+		          "set_by": frappe.session.user}
+		if row:
+			doc = frappe.get_doc("Exchange Rate", row.name)
+			doc.update(values)
+			doc.save(ignore_permissions=True)
+		else:
+			# carry the desk's FX tax and per-transaction limit forward
+			prev = frappe.db.get_value(
+				"Exchange Rate", {"property": property, "currency": cur},
+				["service_tax_pct", "max_exchange"], as_dict=True,
+				order_by="rate_date desc") or {}
+			frappe.get_doc({"doctype": "Exchange Rate", "property": property,
+			                "currency": cur, "rate_date": bd,
+			                "service_tax_pct": prev.get("service_tax_pct") or 0,
+			                "max_exchange": prev.get("max_exchange"),
+			                **values}).insert(ignore_permissions=True)
+		out["updated"].append(cur)
+	if only_missing and out["not_offered"]:
+		# the provider lacks it: stop asking every hour until the date rolls
+		frappe.cache.set_value(skip_key, sorted(skipped | set(out["not_offered"])),
+		                       expires_in_sec=86400)
+	return out
+
+
+def _market_rates_hourly(home: str) -> tuple[dict, str | None]:
+	"""market_rates for the scheduler: one provider call per home currency
+	an hour, however many properties share it (the provider asks for no
+	more than about hourly). A failure is not cached."""
+	key = f"kamra:fx_market:{home}"
+	hit = frappe.cache.get_value(key)
+	if hit:
+		return hit[0], hit[1]
+	mids, as_of = market_rates(home)
+	frappe.cache.set_value(key, [mids, as_of], expires_in_sec=3600)
+	return mids, as_of
+
+
+def auto_fetch_exchange_rates():
+	"""Hourly: for properties that turned on the daily fetch, fill in any
+	listed currency with no rate yet for the business date. Runs again
+	next hour if the provider was down, and after the night audit rolls
+	the date."""
+	from kamra.settings import get_setting
+	for prop in frappe.get_all("Property", filters={"disabled": 0}, pluck="name"):
+		if not get_setting(prop, "fx_auto_fetch"):
+			continue
+		try:
+			_fetch_rates(prop, only_missing=True)
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- one property's rates stand even if a later property fails
+		except Exception:
+			frappe.db.rollback()
+			frappe.log_error(title=f"Exchange rate fetch failed: {prop}",
+			                 message=frappe.get_traceback())
 
 
 @frappe.whitelist()
 @require_perm("Exchange Rate", "use_currency_desk")
 def currency_calculator(property: str, currency: str, fx_amount: float,
                         direction: str = "Buy"):
-	rate_row = frappe.get_all(
+	currency = (currency or "").strip().upper()
+	bd = get_business_date(property)
+	# today's rate only, like payment_rate: an old rate is refused, not reused
+	rate_row = frappe.db.get_value(
 		"Exchange Rate",
-		filters={"property": property, "currency": currency, "disabled": 0},
-		fields=["buy_rate", "sell_rate", "service_tax_pct", "max_exchange"],
-		order_by="rate_date desc",
-		limit_page_length=1,
-	)
-	rate_row = rate_row[0] if rate_row else None
+		{"property": property, "currency": currency, "rate_date": bd, "disabled": 0},
+		["buy_rate", "sell_rate", "service_tax_pct", "max_exchange"], as_dict=True)
 	if not rate_row:
-		frappe.throw(f"No exchange rate for {currency}.")
+		frappe.throw(f"No {currency} rate set for {bd}. Finance fetches "
+		             "or types today's rate on the Currency Desk first.")
 	rate = float(rate_row.buy_rate if direction == "Buy" else rate_row.sell_rate)
 	local = float(fx_amount) * rate
 	tax = local * float(rate_row.service_tax_pct or 0) / 100.0
@@ -1445,27 +1724,74 @@ def post_exchange(property: str, currency: str, fx_amount: float,
 		notes=f"{direction} {fx_amount} {currency} @ {calc['exchange_rate']}",
 		session=sess,
 	)
-	if folio and direction == "Sell":
-		# Optionally record as folio payment in foreign currency
-		fdoc = frappe.get_doc("Folio", folio)
-		fdoc.append("payments", {
-			"posting_date": bd,
-			"payment_kind": "Payment",
-			"mode": "Cash",
-			"amount": calc["local_amount"],
-			"currency": currency.upper(),
-			"fx_amount": float(fx_amount),
-			"exchange_rate": calc["exchange_rate"],
-			"reference": f"fx:{txn.name}",
-		})
-		from kamra.folio import _recalculate
-		_recalculate(fdoc)
-		fdoc.save(ignore_permissions=True)
-		try:
-			record_payment_ledger(fdoc, fdoc.payments[-1].as_dict(), session=sess)
-		except Exception:
-			frappe.log_error(title="ledger payment write failed")
+	# ponytail: folio here is only a reference. Paying a bill in foreign
+	# money is api.add_folio_payment(currency=...), the one payment writer.
 	return {"transaction": txn.name, **calc}
+
+
+def home_currency(property: str) -> str:
+	"""The currency the hotel's books are kept in."""
+	from kamra import localization as loc
+	return (frappe.get_cached_value("Property", property, "currency")
+	        or loc.default_currency(loc.pack_for(property)))
+
+
+def _money(value) -> Decimal:
+	return Decimal(str(value or 0))
+
+
+def round_cents(value) -> float:
+	"""Half up to the cent, in Decimal (float round(2.345, 2) gives 2.34)."""
+	return float(_money(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def fx_to_home(fx_amount, rate) -> float:
+	"""Foreign money received -> home amount posted. Half up to the cent."""
+	return float((_money(fx_amount) * _money(rate)).quantize(
+		Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def home_to_fx(amount, rate) -> float:
+	"""Home amount -> foreign amount shown to the guest. Rounded UP to the
+	cent so paying the shown figure always settles the bill; any extra is
+	change, given back in home currency."""
+	return float((_money(amount) / _money(rate)).quantize(
+		Decimal("0.01"), rounding=ROUND_UP))
+
+
+def payment_rate(property: str, currency: str) -> dict:
+	"""The rate a foreign-currency payment converts at: the hotel's BUY
+	rate (it is buying the guest's foreign money) set for the current
+	business date. A rate from an earlier day is refused, not reused."""
+	currency = (currency or "").strip().upper()
+	if currency == home_currency(property):
+		frappe.throw(f"{currency} is this hotel's own currency.")
+	bd = get_business_date(property)
+	row = frappe.db.get_value(
+		"Exchange Rate",
+		{"property": property, "currency": currency, "rate_date": bd,
+		 "disabled": 0},
+		["buy_rate", "rate_date"], as_dict=True)
+	if not row or float(row.buy_rate or 0) <= 0:
+		frappe.throw(f"No {currency} rate set for {bd}. Finance fetches "
+		             "or types today's rate on the Currency Desk first.")
+	return {"currency": currency, "rate": float(row.buy_rate),
+	        "rate_date": str(row.rate_date)}
+
+
+@frappe.whitelist()
+@require_perm("Folio", "view_folio")
+def folio_in_currency(folio: str, currency: str):
+	"""A folio's total and balance shown in another currency, at today's
+	rate. Display only: the bill and tax invoice stay in home currency."""
+	doc = frappe.get_doc("Folio", folio)
+	r = payment_rate(doc.property, currency)
+	return {
+		**r,
+		"home_currency": home_currency(doc.property),
+		"grand_total": home_to_fx(doc.grand_total, r["rate"]),
+		"balance": home_to_fx(max(float(doc.balance or 0), 0), r["rate"]),
+	}
 
 
 @frappe.whitelist()

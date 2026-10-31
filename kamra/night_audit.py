@@ -770,8 +770,35 @@ def night_audit_pack(audit: str):
 		        "can_rebuild": run.status != "Draft",
 		        "message": _("No audit pack was saved for this run. Rebuild it "
 		                     "to print the night's reports.")}
-	return {"audit": audit, "run": run, "has_pack": True, "pack": pack,
+	return {"audit": audit, "run": run, "has_pack": True, "pack": _strip_figures(pack),
 	        "can_rebuild": True}
+
+
+# the money in a saved pack: the front desk runs End of Day but sees no
+# revenue, ADR, RevPAR, collections or balances (kamra.dashboards.sees_figures);
+# it keeps movement, prechecks, its cashier sessions and the journal
+PACK_FIGURE_SECTIONS = ("statistics", "manager_flash", "audit_report",
+                        "revenue_by_transaction_code", "ledger_balances", "city_ledger",
+                        "overdue_ar", "deposit_ledger")
+PACK_FIGURE_REPORTS = ("audit_report", "manager_flash", "city_ledger", "deposit_ledger",
+                       "trial_balance", "occupancy")
+
+
+def _visible_reports() -> list[dict]:
+	from kamra.dashboards import sees_figures
+	hide = () if sees_figures() else PACK_FIGURE_REPORTS
+	return [{"key": k, "title": t} for k, t in REPORTS if k not in hide]
+
+
+def _strip_figures(pack: dict) -> dict:
+	from kamra.dashboards import sees_figures
+	if sees_figures():
+		return pack
+	for key in PACK_FIGURE_SECTIONS:
+		pack.pop(key, None)
+	pack["reports"] = _visible_reports()
+	pack["figures_hidden"] = True
+	return pack
 
 
 def _pack_summary_from_run(run) -> dict:
@@ -1219,6 +1246,8 @@ def build_pack(property: str, bd: str, *, checks: list[dict],
 	                  "total_rooms": total_rooms})
 	_section(pack, "manager_flash",
 	         lambda: _raw(reports.manager_flash)(property, bd))
+	from kamra import audit_report
+	_section(pack, "audit_report", lambda: audit_report.build(property, bd))
 	_section(pack, "revenue_by_transaction_code",
 	         lambda: _raw(ledger.journal_by_transaction_code)(property, bd))
 	_section(pack, "ledger_balances",
@@ -1245,6 +1274,7 @@ def build_pack(property: str, bd: str, *, checks: list[dict],
 # The final reports the End of Day prints, in order. Each reads its section
 # of the saved pack, so history shows exactly what was printed.
 REPORTS = (
+	("audit_report", "Night audit report"),
 	("manager_flash", "Manager's flash"),
 	("journal", "Journal by cashier and transaction code"),
 	("cashier_summary", "Cashier summary"),
@@ -1450,7 +1480,7 @@ def _eod_state(property: str, audit: str | None = None) -> dict:
 		"blind_count": 0,
 		"high_balance_threshold": flt(_setting(property, "na_high_balance_threshold")),
 		"auto_audit_with_blockers": _setting(property, "na_auto_audit_with_blockers"),
-		"reports": [{"key": k, "title": t} for k, t in REPORTS],
+		"reports": _visible_reports(),
 		"stuck_date": stuck,
 		"open_business_date": get_business_date(property),
 	}

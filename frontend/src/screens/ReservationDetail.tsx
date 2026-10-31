@@ -18,6 +18,7 @@ import {
 import {
   acceptBookingRequest,
   amendStayConfirmed,
+  call,
   declineBookingRequest,
   idDocumentImage,
   promoteWaitlist,
@@ -31,6 +32,7 @@ import { serverError, updateResource, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
+import ReinstatePanel from "../components/ReinstatePanel"
 import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
@@ -191,6 +193,7 @@ export default function ReservationDetail({
   const [d, setD] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [reinstated, setReinstated] = useState<string[]>([])
   const [changingRoom, setChangingRoom] = useState(false)
   const [declineReason, setDeclineReason] = useState("")
 
@@ -250,6 +253,28 @@ export default function ReservationDetail({
   const navigate = useNavigate()
   const [checkingOut, setCheckingOut] = useState(false)
   const [checkingIn, setCheckingIn] = useState(false)
+  const [groupNotice, setGroupNotice] = useState<string | null>(null)
+
+  function checkInGroup(group: NonNullable<Detail["group"]>) {
+    if (!confirm(translate("Check in all {v0} waiting rooms of {v1}? Rooms with no room number get a free room of their type.", {
+      v0: String(group.to_check_in), v1: group.group_name,
+    }))) return
+    act(async () => {
+      const out = await call<{ results: { checked_in?: number; skipped?: string; error?: string }[] }>(
+        "kamra.api.group_check_in", { group_booking: group.name })
+      const done = out.results.filter((r) => r.checked_in).length
+      const failed = out.results.filter((r) => r.skipped || r.error)
+      setGroupNotice([
+        translate("{v0} checked in", { v0: String(done) }),
+        failed.length
+          ? translate("{v0} skipped: {v1}", {
+              v0: String(failed.length),
+              v1: [...new Set(failed.map((r) => translate(r.skipped ?? r.error ?? "")))].join("; "),
+            })
+          : "",
+      ].filter(Boolean).join(", "))
+    })
+  }
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true)
@@ -472,6 +497,28 @@ export default function ReservationDetail({
               <Field label={translate("Pre-check-in")} value={d.precheckin_status} />
             )}
           </dl>
+          {d.booked_check_out_date && (
+            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {translate("Left early: booked to {date}.", { date: d.booked_check_out_date })}
+              {d.early_departure_reason ? ` ${d.early_departure_reason}` : ""}
+            </p>
+          )}
+          {(d.occupants ?? []).length > 0 && (
+            <div className="mt-3">
+              <span className="text-xs text-zinc-400">{translate("In the room")}</span>
+              <ul className="mt-1 space-y-0.5 text-sm">
+                {(d.occupants ?? []).map((o, i) => (
+                  <li key={i} className="flex flex-wrap justify-between gap-x-2">
+                    <span className={o.left_at ? "text-zinc-400 line-through" : ""}>{o.full_name}</span>
+                    <span className="text-xs tabular-nums text-zinc-500">
+                      {o.arrived_at ? translate("Arrived {time}", { time: o.arrived_at.slice(0, 16) }) : ""}
+                      {o.left_at ? ` · ${translate("Left {time}", { time: o.left_at.slice(0, 16) })}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </Card>
 
         <IdentityCard d={d} reload={refresh} />
@@ -669,6 +716,17 @@ export default function ReservationDetail({
           <Button disabled={busy} onClick={() => setCheckingIn(true)}>
             <LogIn className="size-4" />{translate(" Check in")}</Button>
         )}
+        {d.group && d.group.to_check_in > 1 && (
+          <Button variant="outline" disabled={busy} onClick={() => checkInGroup(d.group!)}>
+            <LogIn className="size-4" />
+            {translate("Check in whole group ({v0})", { v0: String(d.group.to_check_in) })}
+          </Button>
+        )}
+        {groupNotice && (
+          <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-800">
+            {d.group?.group_name}: {groupNotice}
+          </span>
+        )}
         {d.status === "Checked In" && (d.checkin_backfill?.length ?? 0) > 0 && (
           <Button variant="outline" disabled={busy} onClick={() => setCheckingIn(true)}>
             <TriangleAlert className="size-4 text-amber-600" />
@@ -682,6 +740,14 @@ export default function ReservationDetail({
         {d.actions.can_check_out && (
           <Button disabled={busy} onClick={() => setCheckingOut(true)}>
             <LogOut className="size-4" />{translate(" Check out")}</Button>
+        )}
+        {d.actions.can_reinstate && (
+          <ReinstatePanel reservation={name} onDone={(w) => { setReinstated(w); refresh(); reload() }} />
+        )}
+        {reinstated.length > 0 && (
+          <div className="w-full space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            {reinstated.map((w) => <p key={w}>{w}</p>)}
+          </div>
         )}
         <Link
           to={`/grc/${encodeURIComponent(name)}`}

@@ -20,7 +20,7 @@ import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
 import { useT, t as translate } from "../lib/i18n"
-import { adoptBrowserLanguage } from "../lib/dir"
+import { adoptGuestLanguage } from "../lib/dir"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
 import { addDays, nightsBetween, stayFromParams, todayPlus } from "../lib/stay"
 import ChildAges, {
@@ -211,7 +211,7 @@ function HostBlock({
 
 export default function PublicListing() {
   const { t, tn } = useT()
-  useEffect(() => adoptBrowserLanguage(), [])
+  useEffect(() => adoptGuestLanguage(), [])
   const { slug, checkin, checkout, adults: adultsParam, children: childrenParam } =
     useParams()
   const navigate = useNavigate()
@@ -909,7 +909,7 @@ export default function PublicListing() {
                 <input
                   className={inputCls}
                   value={form.phone}
-                  placeholder="+91 …"
+                  placeholder="+…"
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
               </label>

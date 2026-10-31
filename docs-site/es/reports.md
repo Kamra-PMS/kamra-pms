@@ -124,6 +124,7 @@ que su rol no puede abrir.
 | Auditor nocturno | Resumen gerencial, informe de turno | Llegadas, salidas, alojados, no presentaciones, ocupación, cargos de folio, pagos | Recepción, Gerente del hotel |
 | Finanzas | Resumen gerencial, informe de turno, anulaciones, panel de Alimentos y bebidas, mermas, registros de banquetes | Conjuntos de datos de recepción, cargos de folio, pagos, anulaciones, aportación, pedidos del punto de venta | Recepción, Alimentos y bebidas, Gerente del hotel |
 | Limpieza, Supervisor de limpieza | Ninguno | Tareas de limpieza, estado de las habitaciones, objetos perdidos | Limpieza |
+| Gerente de alimentos y bebidas | Panel de alimentos y bebidas, mermas | Pedidos del TPV, artículos del TPV, tiempos de cocina | Alimentos y bebidas |
 
 El Administrador del hotel lo ve todo. Un conjunto de datos también
 necesita que su módulo esté activado en el alojamiento

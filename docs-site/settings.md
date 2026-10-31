@@ -33,10 +33,10 @@ each page title lists those roles; Hotel Admin can change all of them.
 
 | Page | What's on it | Guide |
 | --- | --- | --- |
-| Property | Name, legal name, logo, country (which selects the tax and invoicing pack), currency, time zone, address, tax registration number | [Country setup](/country-setup) |
-| Stay policies | Check-in and check-out times, minimum stay, free cancellation window, cancellation and no-show fees, deposits | [Reservations](/reservations) |
+| Property | Name, legal name, short code (numbers allowance vouchers; changing it starts a new series, invoice numbers are not affected), logo, country (which selects the tax and invoicing pack), currency, time zone, address, tax registration number | [Country setup](/country-setup) |
+| Stay policies | Check-in and check-out times, minimum stay, free cancellation window, cancellation, no-show and early departure charges, deposits | [Reservations](/reservations) |
 | Privacy & data | How long guest data and messages are kept, the privacy contact | |
-| Front Desk | Arrivals, holds, no-shows and the day view | [Front desk](/front-desk) |
+| Front Desk | Arrivals, guest alerts (WhatsApp room charge messages), holds, no-shows and the day view | [Front desk](/front-desk) |
 | Housekeeping | Task deadlines, room turnover and laundry pricing | [Housekeeping](/housekeeping) |
 | Operations | Guest request deadlines by priority | [Operations](/operations) |
 | F&B | Auto-accept KOT, void slips, table reservation window, kitchen printers, POS speed check | [F&B](/fnb#settings) |
@@ -58,7 +58,9 @@ roles and the properties they can reach.
 ![Staff & access: each person's roles and property access](/img/settings/staff.png)
 
 1. Press **Add staff**.
-2. Enter their **Full name** and **Email** (they sign in with it).
+2. Enter their **Full name** and **Email** (they sign in with it), and
+   their **Job title** if you like (pick a suggestion such as Duty Manager
+   or type your own). It is printed on the allowance vouchers they approve.
 3. Tick their **Roles**. Each role says what it opens.
 4. Choose **Property access**: all properties (including ones added
    later), or only some.
@@ -70,7 +72,8 @@ roles and the properties they can reach.
 To change someone later, press **Manage** on their row. From there you can
 change roles and properties, **Reset cashier PIN**, or **Deactivate** them.
 Deactivated staff can't sign in, and their history stays. You can't change
-your own access, and only IT can change an IT administrator.
+your own access (on your own row you can change only your name and job
+title), and only IT can change an IT administrator.
 
 ## What each role can do
 
@@ -89,6 +92,7 @@ change what each role may do in Desk (Role Permission Manager): see
 | Revenue Manager | Rates, seasons, guardrails, channels, the booking engine, banquet sales |
 | Finance | Billing, ledgers, night audit, exports, tax and cashier controls |
 | Night Auditor | End of Day: arrivals, departures, cashier closure, the audit pack |
+| F&B Manager | Outlets, the menu, waiters and tables, the kitchen display, F&B reports and settings, approving POS voids. No folios, till or finance |
 | Housekeeping Supervisor | The room board, inspections, task deadlines, laundry pricing |
 | Housekeeping | Their own tasks, room status, lost & found, usually on the phone app |
 

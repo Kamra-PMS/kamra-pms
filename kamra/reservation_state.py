@@ -39,6 +39,7 @@ TRANSITIONS: dict[str, frozenset[str]] = {
 	"Waitlist": frozenset({"Confirmed", "Held", "Pending Payment", "Cancelled"}),
 	"Confirmed": frozenset({"Checked In", "Cancelled", "No Show"}),
 	"Checked In": frozenset({"Checked Out", "Cancelled"}),
+	# reinstate_checkout only (same business day); it owns the transition
 	"Checked Out": frozenset(),
 	"Cancelled": frozenset(),
 	"No Show": frozenset(),

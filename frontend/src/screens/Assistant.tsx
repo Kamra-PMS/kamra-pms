@@ -436,7 +436,7 @@ export default function Assistant() {
         </div>
 
         {aiEnabled !== false && (
-          <div className="flex gap-1.5 overflow-x-auto border-t border-zinc-100 px-3 pt-2.5">
+          <div className="flex gap-1.5 overflow-x-auto border-t border-zinc-100 dark:border-zinc-800 px-3 pt-2.5">
             {SHORTCUTS.map((sc) => (
               <button
                 key={sc.label}
@@ -445,7 +445,7 @@ export default function Assistant() {
                 onClick={() =>
                   sc.prompt.endsWith(": ") ? setInput(translate(sc.prompt)) : send(translate(sc.prompt))
                 }
-                className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 disabled:opacity-50"
+                className="shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:border-brand-300 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-950/80 hover:text-brand-700 dark:hover:text-brand-300 transition-colors shadow-xs disabled:opacity-50"
               >
                 {translate(sc.label)}
               </button>
@@ -459,9 +459,9 @@ export default function Assistant() {
             send(input)
           }}
         >
-          <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-1.5 shadow-sm transition focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
+          <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 px-4 py-1.5 shadow-sm transition focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100 dark:focus-within:ring-brand-900">
             <input
-              className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent py-2 text-sm outline-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 disabled:cursor-not-allowed"
               placeholder={
                 (aiEnabled === false
                   ? translate("Add an AI key in Settings to start chatting")
