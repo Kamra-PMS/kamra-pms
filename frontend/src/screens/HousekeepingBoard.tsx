@@ -1,4 +1,4 @@
-/*  Room Board for the housekeeping supervisor (#99): every room at a
+/*  Housekeeping Board for the housekeeping supervisor (#99): every room at a
     glance - status, who is in it, who is on it - inside the Housekeeping
     module, not just on the front desk's Today. Status changes go through
     set_housekeeping_status, which checks role, property and DocPerm. */
@@ -151,7 +151,7 @@ export default function HousekeepingBoard() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">{t("Room Board")}</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">{t("Housekeeping Board")}</h1>
           <p className="text-sm text-zinc-500">
             {canSupervise
               ? t("Every room at a glance. Tap a room to set its status.")

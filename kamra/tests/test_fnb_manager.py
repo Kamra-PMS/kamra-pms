@@ -126,8 +126,8 @@ class FnbManagerTestCase(AuditTestCase):
 				call()
 		from kamra import mcp_tools
 		tools = {s.name for s in mcp_tools.allowed_tools(property=PROP_A)}
-		self.assertTrue({"pos_create_order", "pos_kitchen_queue", "pos_table_map"} <= tools)
-		self.assertFalse({"get_folio", "check_in", "record_payment", "set_room_rate"} & tools)
+		self.assertEqual({"pos_create_order", "pos_kitchen_queue", "pos_table_map"} - tools, set())
+		self.assertEqual({"get_folio", "check_in", "record_payment", "set_room_rate"} & tools, set())
 
 	def test_adjusts_kitchen_stock_and_sets_up_printers(self):
 		"""Wastage, counts and goods-in, plus kitchen printers and their

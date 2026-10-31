@@ -26,10 +26,14 @@ calcula nunca importes de dinero. Para cada noche de una estancia:
 
 Después, para toda la estancia:
 
-4. **Plan tarifario.** Su ajuste se aplica al total de habitación de la estancia.
-5. **Plan de comidas.** Precio por adulto y por menor, por noche.
-6. **Cupón.** Se descuenta del total de habitación y comidas.
-7. **Cargos e impuestos.** Cargo de limpieza, mascotas, tasa de alojamiento y después impuestos. Los tipos de impuesto
+4. **Descuento por estancia larga.** Una estancia lo bastante larga para un
+   [descuento por estancia larga](#dar-un-descuento-por-estancia-larga) descuenta
+   su porcentaje de cada noche, nunca por debajo del mínimo de los límites de
+   tarifas de esa noche.
+5. **Plan tarifario.** Su ajuste se aplica al total de habitación de la estancia.
+6. **Plan de comidas.** Precio por adulto y por menor, por noche.
+7. **Cupón.** Se descuenta del total de habitación y comidas.
+8. **Cargos e impuestos.** Cargo de limpieza, mascotas, tasa de alojamiento y después impuestos. Los tipos de impuesto
    y si sus precios incluyen impuestos vienen de **Configuración → Finanzas**
    y de su [paquete de país](/country-setup).
 
@@ -96,7 +100,14 @@ Una temporada cambia el precio por noche entre dos fechas.
 6. Opcional: **Mínimo de noches** (estancia más corta en estas fechas) y
    **No reembolsable** (una estancia que toque estas fechas no se puede cancelar
    sin cargo).
-7. Indique una **Prioridad** y pulse **Guardar**.
+7. Opcional: **Anticipo % al reservar**: el anticipo que debe una reserva en
+   estas fechas, por ejemplo 100 en Año Nuevo y 25 en la temporada de lluvias.
+   `0` mantiene el **Anticipo esperado al reservar** habitual del alojamiento. Una
+   estancia que cruza varias temporadas debe el más alto. El recuadro de
+   anticipo de recepción, la página de reservas (cuando cobra un anticipo en
+   línea) y los viajes lo usan. Para fijar un anticipo en unas fechas sin
+   cambiar el precio, cree una temporada con **Porcentaje** `0`.
+8. Indique una **Prioridad** y pulse **Guardar**.
 
 ![Creación de una temporada nueva: nombre, fechas, Porcentaje, 20, prioridad y mínimo de noches](/img/revenue/season-new.gif)
 
@@ -157,6 +168,27 @@ La página de reservas muestra todos los planes de comidas, además de **Solo ha
 Los huéspedes indican un cupón en **¿Tienes un código?** en la página de reservas; en
 recepción se indica en el formulario de reserva. **Usado** cuenta cada reserva que
 lo ha canjeado.
+
+## Dar un descuento por estancia larga
+
+Las estancias largas pueden pagar menos por noche sin que nadie escriba un código.
+
+1. Abra **Ingresos → Descuentos por estancia larga → Nuevo**.
+2. Indique **Estancias de al menos (noches)** y el **Descuento % sobre la tarifa
+   de la habitación**, por ejemplo `7` y `10`.
+3. Opcional: un **Tipo de habitación**. En blanco se aplica a todos los tipos.
+4. Pulse **Guardar**. Añada más tramos igual, por ejemplo 28 noches al 25%.
+
+Una estancia recibe el tramo más alto que alcanza: con 7 noches al 10% y 28
+noches al 25%, una estancia de 30 noches recibe el 25%. En el mismo tramo, una
+regla para el tipo de habitación gana sobre una de todo el alojamiento. El
+descuento se aplica a cada noche de habitación antes de impuestos, así que la
+cotización, las tarifas por noche fijadas en la reserva y el folio coinciden. La
+cotización de recepción lo muestra como **Estancia larga N% de descuento**. Ninguna
+noche baja del mínimo de sus [límites de tarifas](#definir-el-minimo-y-el-maximo-limites-de-tarifas).
+Se aplica igual en recepción, en la página de reservas y en la API, se suma a un
+plan tarifario y a un cupón, y no se aplica cuando recepción acuerda una tarifa a
+mano. Las reservas existentes conservan su precio.
 
 ## Agregar experiencias
 
@@ -245,6 +277,24 @@ Las **Agencias de viajes** son orígenes de reserva con comisión. Abra
 (Agencia de viajes, OTA, Operador turístico, Departamento corporativo) y la **Comisión (%)**.
 En recepción se elige la agencia en el formulario de reserva, y Kamra calcula la
 comisión de las reservas de esa agencia.
+
+## Este año frente al año pasado
+
+El **Panel de ingresos** (Finanzas, el Responsable de ingresos, el auditor nocturno y
+los gerentes) tiene una tabla **Este año frente al año pasado**. Elija **Hoy**,
+**Acumulado del mes**, **Acumulado del año** o **Próximos 90 días**; cada fila
+muestra la ocupación, las habitaciones vendidas, los ingresos de habitaciones, los
+ingresos totales, el ADR y el RevPAR de este año, de las mismas fechas un año
+antes, y la variación en porcentaje.
+
+- **Acumulado del año** empieza en el ejercicio fiscal del paquete de país: el 1 de
+  abril en India, el 1 de enero donde el paquete no fija ninguno.
+- **Próximos 90 días** compara las habitaciones reservadas (confirmadas y alojadas)
+  con lo que se vendió de verdad en las mismas fechas el año pasado. Los ingresos
+  futuros no se muestran: se registran noche a noche.
+- Las cifras del año pasado salen de los cargos registrados en los folios, las
+  mismas cifras que el Resumen gerencial. **n/d** significa que no se vendió nada
+  el año pasado.
 
 ## Configuración
 

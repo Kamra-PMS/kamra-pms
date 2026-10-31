@@ -86,7 +86,7 @@ Kamra reserva todas las habitaciones bajo un mismo grupo, para poder facturarlas
 algunas habitaciones no se pueden reservar, le indica cuántas reservó y por qué fallaron
 las demás. Los cupones, los servicios adicionales y los datos de quien reserva se añaden a cada estancia
 después. Para bloquear habitaciones para un grupo cuyos nombres llegarán más tarde,
-use [Grupos y bloqueos](#bloquear-habitaciones-para-un-grupo).
+use [Grupos y bloqueos](#reservas-de-grupo-empresas-bodas).
 
 ## Poner a un huésped en la lista de espera
 
@@ -211,9 +211,14 @@ ya puestos.
 ## Cobrar un anticipo antes de la llegada
 
 El recuadro **Anticipo de reserva** está en la pantalla de reserva confirmada y en el
-panel de detalle de la reserva. Muestra lo que espera el alojamiento (**Anticipo
-esperado al reservar** en Políticas de estancia), lo que ha entrado y lo que
-falta.
+panel de detalle de la reserva. Muestra lo que la reserva debe asegurar, lo que ha
+entrado y lo que falta. El porcentaje sale de las fechas de la estancia: una
+[temporada](/es/revenue#agregar-una-temporada) con **Anticipo % al reservar** lo
+fija (25%, 50%, 100%); si no, se aplica el **Anticipo esperado al reservar** del
+alojamiento en Políticas de estancia. Así, dos reservas del mismo huésped en el
+mismo hotel pueden deber anticipos distintos. Una estancia que cruza varias
+temporadas debe el porcentaje más alto. El porcentaje se guarda con la reserva
+cuando se calcula su precio; cambiar la temporada después no lo cambia.
 
 - **Registrar pago**: el huésped pagó en recepción o por transferencia. Elija el
   medio, compruebe el importe y pulse **Registrar ₹…**. Pasa por su
@@ -286,6 +291,57 @@ busca en todos a la vez.
 
 ![Central de reservas: disponibilidad para una noche y dos adultos en tres alojamientos, con un botón Reservar en cada tipo de habitación](/img/reservations/crs.png)
 
+## Reservar un viaje entre alojamientos
+
+Un huésped, una agencia de viajes o una empresa pueden reservar un solo viaje que
+pasa por varios de sus hoteles, por ejemplo 2 noches en uno y luego 3 noches en
+otro. El viaje recibe una sola referencia (ITN-...) que el huésped puede indicar.
+
+1. En **Recepción → Central de reservas**, busque la primera parada y pulse
+   **Añadir al viaje** en el tipo de habitación.
+2. El registro de entrada pasa al día en que termina esa estancia. Fije las noches,
+   vuelva a buscar y pulse **Añadir al viaje** para la siguiente parada. Repita
+   para cada parada.
+3. **Nuevo viaje** muestra las paradas por orden de fecha con el precio de cada
+   una, el total del viaje y el anticipo que se debe al reservar (cada parada con
+   su propio porcentaje). Introduzca el nombre y el teléfono del huésped y pulse
+   **Reservar viaje**.
+
+Cada parada se convierte en una reserva normal en su propio alojamiento, con su
+habitación, su cuenta y su factura. Se reservan todas las paradas o ninguna. Dos
+paradas no pueden compartir una noche; una parada puede empezar el día en que
+termina la anterior.
+
+**Viajes** muestra los viajes recientes. Pulse uno para ver el estado de cada
+parada, su precio, el porcentaje de anticipo, el anticipo pagado y el que falta, y
+el anticipo debido del viaje frente al pagado.
+
+- **Cobrar anticipo del viaje** cobra un solo pago para todo el viaje. El importe
+  empieza en el anticipo que aún falta del viaje; cámbielo y pulse **Ver reparto**
+  para ver cómo se reparte, y luego **Cobrar**. Cada parada recibe primero el
+  anticipo que piden sus propias fechas, empezando por la más próxima. Lo que
+  sobre va a la parada más próxima, hasta el importe de su cuenta, y luego a la
+  siguiente. (Poner el sobrante en la primera estancia significa que el dinero del
+  huésped se usa antes, y ningún hotel acaba con más dinero que su propia cuenta,
+  así que nadie tiene que devolver un pago de más en la salida.) Se rechaza un
+  pago mayor que lo que aún debe el viaje, y también un viaje cuyas paradas se
+  facturan en monedas distintas. Cada parte se registra como anticipo en el folio
+  de esa parada, en su propio alojamiento y a través de su caja, para que los
+  libros y los impuestos de cada hotel sigan siendo suyos. Se registran todas las
+  partes o ninguna.
+- **Cobrar un anticipo en una sola parada**: pulse **Abrir RES-...** y cóbrelo allí,
+  como en cualquier reserva. El dinero nunca queda en el viaje en sí. Los
+  reembolsos y la cancelación de una parada siguen la política de esa parada.
+- **Cambiar las fechas o cancelar una parada** de la misma forma, desde su
+  reserva. Se rechaza una fecha nueva que se cruce con otra parada.
+- **Cancelar todo el viaje** muestra el cargo de cada parada según la política de
+  su alojamiento y luego cancela todas las paradas confirmadas. Las paradas que ya
+  tienen la entrada registrada o han terminado se quedan como están.
+- **Confirmación** abre una página imprimible con todas las paradas y la
+  referencia.
+
+Solo ve un viaje si tiene acceso a todos los alojamientos que incluye.
+
 ## Bloquear habitaciones para un grupo
 
 Para una boda, una conferencia o un circuito, bloquee primero un conjunto de habitaciones y ponga
@@ -305,6 +361,42 @@ Las habitaciones del bloqueo quedan retenidas para el grupo hasta la fecha lími
 fecha límite, las habitaciones no tomadas vuelven a la venta. **Abrir folio del grupo** abre la
 cuenta principal del grupo. Para eventos vinculados al grupo, consulte
 [Banquetes](/es/banquets).
+
+## Reservas de grupo (empresas, bodas)
+
+Cuando una persona o una empresa paga varias habitaciones, resérvelas como un solo
+grupo con una **habitación principal**. El huésped de la habitación principal paga
+por el grupo; los demás pagan solo sus propios extras.
+
+1. En **Banquetes y grupos → Grupos y bloqueos**, pulse **Nueva reserva de grupo**
+   (o, en **Nueva reserva**, pulse **Reserva de grupo con habitación principal**).
+2. **Grupo:** el nombre del grupo, su tipo (Corporativo, Boda, Evento, Excursión,
+   Otro), las fechas y quién paga: **El huésped de la habitación principal** o
+   **Una empresa**. Rellene el nombre y el teléfono del huésped principal.
+3. **Habitaciones:** una fila por tipo de habitación con el número de
+   habitaciones. Para una sola habitación puede elegir la habitación exacta y poner
+   el nombre del huésped. Las habitaciones sin nombre se reservan como "Guest of
+   (grupo)"; ponga el nombre en el registro de entrada.
+4. **Habitación principal y facturación:** elija la fila cuya habitación es la
+   principal y lo que paga. Por defecto es **Habitación + impuestos**. Pulse
+   **Crear reserva de grupo**.
+
+Las habitaciones que no se pueden reservar aparecen con el motivo; las demás se
+reservan.
+
+**Registre la entrada de las habitaciones de una en una.** Abra el grupo: cada fila
+de la **Lista de huéspedes del grupo** tiene **Registrar entrada** (el registro de
+entrada guiado de siempre, con documentos) y **Registrar salida**. Los huéspedes
+pueden llegar en días distintos.
+
+**Cambie la habitación principal** con **Hacer habitación principal** en cualquier
+fila. La cuenta abierta del grupo pasa a esa habitación.
+
+**El huésped principal puede irse primero.** Registrar la salida de la habitación
+principal no cierra la cuenta del grupo: sigue abierta, y los cargos de las
+habitaciones que siguen alojadas continúan llegando a ella. Liquídela cuando el
+grupo termine (consulte
+[Facturación](/es/billing#facturar-a-un-grupo-desde-su-habitacion-principal)).
 
 ## Retirar una habitación de la venta
 
@@ -373,5 +465,8 @@ El panel de detalle lee `kamra.api.reservation_detail`; los cambios de fechas us
 lista de espera usa `kamra.api.promote_waitlist`. Los agentes de IA usan las herramientas `quote`,
 `create_booking`, `add_to_waitlist`, `promote_waitlist`,
 `cancellation_preview`, `cancel_booking`, `amend_stay`, `move_room` y
-`create_group_block`. Consulte [MCP tools](/mcp-tools) y la
+`create_group_block`. Los viajes entre alojamientos usan
+`kamra.crs.quote_itinerary`, `create_itinerary`, `get_itinerary`,
+`add_itinerary_leg`, `cancel_itinerary_preview` y `cancel_itinerary`
+(herramientas MCP con los mismos nombres). Consulte [MCP tools](/mcp-tools) y la
 [referencia de la API](/api-reference).

@@ -120,6 +120,21 @@ class DashboardRolesTestCase(AuditTestCase):
 		out = custom_reports._run_dataset(PROP_A, "occupancy_by_day", TODAY, TODAY)
 		self.assertIn("adr", {c["id"] for c in out["columns"]})
 
+	def test_briefing_and_manager_pack_have_no_figures_for_the_desk(self):
+		from kamra import api, custom_reports
+		frappe.set_user(DESK)  # nosemgrep: frappe-setuser -- the receptionist
+		out = api.position_briefing(PROP_A, TODAY)
+		self.assertTrue(out["figures_hidden"])
+		for key in ("occupancy", "sold", "overbooking_limit", "demand_tier", "outlook"):
+			self.assertNotIn(key, out)
+		self.assertIn("arrivals", out)
+		self.assertIn("departures", out)
+		with self.assertRaises(frappe.PermissionError):
+			custom_reports.run_report_pack(PROP_A, "hotel_manager")
+		frappe.set_user(FIN)  # nosemgrep: frappe-setuser -- finance
+		self.assertIn("occupancy", api.position_briefing(PROP_A, TODAY))
+		self.assertTrue(custom_reports.run_report_pack(PROP_A, "hotel_manager")["sections"])
+
 	def test_finance_gets_the_figures(self):
 		frappe.set_user(FIN)  # nosemgrep: frappe-setuser -- finance
 		out = dashboards.property_dashboard(PROP_A, TODAY)

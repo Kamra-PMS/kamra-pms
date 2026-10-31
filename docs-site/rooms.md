@@ -1,12 +1,12 @@
-# Rooms - every room, its status and its story
+# Room Board - every room, its status and its story
 
-The Rooms screen is the big room board: every room as a tile, grouped by
+The Room Board shows every room as a tile, grouped by
 floor, with what is happening in it today. Tap a room to change its
 status, deal with the guest in it, see the next weeks, and see who stayed
 and who cleaned it. **Insights** shows which rooms sell, earn and get
 cleaned, and how fast.
 
-Open it from **Front Desk → Rooms**, from **Housekeeping → Rooms**
+Open it from **Front Desk → Room Board**, from **Housekeeping → Room Board**
 (supervisors), or with **Open full view** on the Today room board. Front
 Desk, Housekeeping Supervisor, Night Auditor, Revenue Manager, Finance and
 Hotel Admin users can open it. Housekeeping attendants work from their task

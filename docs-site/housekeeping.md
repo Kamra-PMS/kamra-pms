@@ -2,11 +2,11 @@
 
 The Housekeeping module keeps every room's status current and gets rooms
 cleaned in the right order. Supervisors and the front desk watch the
-**Room Board**; attendants work from the **phone app**, where they take
+**Housekeeping Board**; attendants work from the **phone app**, where they take
 rooms, mark them done, post minibar charges and log lost property.
 Guest laundry runs from the same module.
 
-![The Room Board: every room by floor, coloured by status, with the guest in it and the open task and its assignee](/img/housekeeping/room-board.png)
+![The Housekeeping Board: every room by floor, coloured by status, with the guest in it and the open task and its assignee](/img/housekeeping/room-board.png)
 
 ## Before you start
 
@@ -15,7 +15,7 @@ Guest laundry runs from the same module.
      list, laundry and lost & found, and can mark rooms **Clean** or
      **Dirty**.
    - **Housekeeping Supervisor** for supervisors. It includes everything
-     Housekeeping can do, plus the **Room Board**, the right to mark rooms
+     Housekeeping can do, plus the **Housekeeping Board**, the right to mark rooms
      **Inspected**, **Ready** or **Out of Order**, to pass inspections and
      to assign tasks, and **Settings → Housekeeping**.
    - The **Front Desk** and **Hotel Admin** roles can also use the Room
@@ -49,9 +49,9 @@ Guest laundry runs from the same module.
 Every task gets a deadline when it is created: its priority's minutes
 from **Task deadlines**.
 
-## Check every room on the Room Board
+## Check every room on the Housekeeping Board
 
-1. Open **Housekeeping → Room Board**.
+1. Open **Housekeeping → Housekeeping Board**.
 2. Each tile shows the room number, its status, the guest staying in it,
    and the open task with its type and assignee. A bed icon means the
    room is occupied; an arrow icon means the guest is due out today.
@@ -68,11 +68,11 @@ the next weeks) and per-room numbers, open [Rooms](/rooms).
 
 ## Change a room's status
 
-1. On the Room Board, click the room.
+1. On the Housekeeping Board, click the room.
 2. Pick **Mark Clean**, **Mark Dirty**, **Mark Inspected**, **Mark
    Ready** or **Mark Out of Order**.
 
-![A room's menu on the Room Board with the Mark options and, below them, the list to assign the room's task to a housekeeper](/img/housekeeping/room-board-menu.png)
+![A room's menu on the Housekeeping Board with the Mark options and, below them, the list to assign the room's task to a housekeeper](/img/housekeeping/room-board-menu.png)
 
 **Ready** means the room passed its inspection, for hotels that inspect
 every checkout clean (see [Settings](#settings)). Attendants only see
@@ -169,7 +169,7 @@ Tasks**.
 Staff take rooms from the **Available** pool themselves. A supervisor can
 also hand a room's open task to a named person:
 
-1. On the Room Board, click the room.
+1. On the Housekeeping Board, click the room.
 2. Under **Assign *task* to** (for example **Assign Checkout Clean to**),
    pick the person in **Choose a housekeeper…**.
 
@@ -353,7 +353,7 @@ Report** (see [Billing](/billing)).
   sets a room back to **Clean**: passing it marks the room **Inspected**,
   or **Ready** when inspections are on.
 - Photos and videos on a task can be up to 25 MB each.
-- The phone app and the Room Board update by themselves every 20 and 30
+- The phone app and the Housekeeping Board update by themselves every 20 and 30
   seconds; tap **Refresh** after a change made on another device.
 - A laundry pickup request needs a checked-in guest in the room. A guest
   can't request a second pickup while one is still waiting.
@@ -392,7 +392,7 @@ there until someone takes them.
 
 ## For developers
 
-The phone app, Room Board and tasks run on `kamra.api` endpoints
+The phone app, Housekeeping Board and tasks run on `kamra.api` endpoints
 (`hk_queue`, `hk_update_task`, `hk_claim_task`, `hk_accept_task`,
 `hk_reject_task`, `hk_assign_task`, `hk_staff`, `hk_post_consumable`, `hk_log_item`,
 `room_board`, `set_housekeeping_status`); laundry runs on `kamra.laundry`.
