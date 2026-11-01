@@ -18,41 +18,41 @@ then the guide for every field and setting.
 
 | Ep | Video | Read alongside |
 |---|---|---|
-| 1 | [Hotel PMS Tour for Beginners: Sign In, Apps, Top Bar and Search](https://www.youtube.com/watch?v=95TAsb87-ck&list=PLcNTRQwzkzAs) | [How Kamra works](/how-it-works) |
-| 2 | [How to Set Up a New Hotel in a PMS, Step by Step](https://www.youtube.com/watch?v=qfAlcOU-Zmc&list=PLcNTRQwzkzAs) | [Go-live checklist](/go-live) |
-| 3 | [Rooms and Room Types in a Hotel PMS: Setup, Room Board and Room Blocks](https://www.youtube.com/watch?v=aeTDxJ0EEZo&list=PLcNTRQwzkzAs) | [Rooms](/rooms) |
-| 4 | [Hotel Rate Management: Rate Plans, Seasons, Vouchers and Price Guardrails](https://www.youtube.com/watch?v=fZbyq9RNVhc&list=PLcNTRQwzkzAs) | [Revenue & rates](/revenue) |
-| 5 | [Corporate Accounts, Travel Agent Commission and Staff Roles](https://www.youtube.com/watch?v=SuJp--MC5C4&list=PLcNTRQwzkzAs) | [Settings & staff](/settings) |
-| 6 | [Hotel PMS Settings Explained: Policies, Privacy, Taxes and Payments](https://www.youtube.com/watch?v=YWD2VSTV1-E&list=PLcNTRQwzkzAs) | [Settings & staff](/settings) |
+| 1 | [Hotel PMS Tour for Beginners: Sign In, Apps, Top Bar and Search](https://www.youtube.com/watch?v=JU7TYJy5Nag&list=PLcNTRQwzkzAs) | [How Kamra works](/how-it-works) |
+| 2 | [How to Set Up a New Hotel in a PMS, Step by Step](https://www.youtube.com/watch?v=1uoCOAMshW8&list=PLcNTRQwzkzAs) | [Go-live checklist](/go-live) |
+| 3 | [Rooms and Room Types in a Hotel PMS: Setup, Room Board and Room Blocks](https://www.youtube.com/watch?v=pUMmFRU4MWw&list=PLcNTRQwzkzAs) | [Rooms](/rooms) |
+| 4 | [Hotel Rate Management: Rate Plans, Seasons, Vouchers and Price Guardrails](https://www.youtube.com/watch?v=01bLtgI3tCI&list=PLcNTRQwzkzAs) | [Revenue & rates](/revenue) |
+| 5 | [Corporate Accounts, Travel Agent Commission and Staff Roles](https://www.youtube.com/watch?v=JsTAAYgN_5g&list=PLcNTRQwzkzAs) | [Settings & staff](/settings) |
+| 6 | [Hotel PMS Settings Explained: Policies, Privacy, Taxes and Payments](https://www.youtube.com/watch?v=TMw-vnez_4o&list=PLcNTRQwzkzAs) | [Settings & staff](/settings) |
 
 ## Front desk
 
 | Ep | Video | Read alongside |
 |---|---|---|
-| 7 | [Hotel Front Desk Dashboard: Arrivals, Departures and Room Board](https://www.youtube.com/watch?v=EvTlwMDPs8c&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
-| 8 | [How to Take a Hotel Reservation in a PMS, Step by Step](https://www.youtube.com/watch?v=hOypw-AV2g0&list=PLcNTRQwzkzAs) | [Reservations](/reservations) |
-| 9 | [Walk-in Check-in and Day Use Rooms in a Hotel PMS](https://www.youtube.com/watch?v=BWsWbkqSlDk&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
-| 10 | [Manage Hotel Bookings: Upgrades, Date Changes, Cancellations](https://www.youtube.com/watch?v=JfV5UcFsP0Y&list=PLcNTRQwzkzAs) | [Reservations](/reservations) |
-| 11 | [Hotel Check-in Step by Step: ID, Deposit and Online Check-in](https://www.youtube.com/watch?v=zuGeibOsOu0&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
-| 12 | [Hotel Folios and Billing: Charges, GST, Voids, Split Folios, Payments](https://www.youtube.com/watch?v=SL9V-vJ5hog&list=PLcNTRQwzkzAs) | [Billing & cashier](/billing) |
-| 13 | [Hotel Check-out and GST Tax Invoice, Step by Step](https://www.youtube.com/watch?v=E6lPPWJMZ7I&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
-| 14 | [Hotel Guest Profiles, Duplicate Merge and Guest Data Privacy](https://www.youtube.com/watch?v=tuSdjO5nIyc&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
+| 7 | [Hotel Front Desk Dashboard: Arrivals, Departures and Room Board](https://www.youtube.com/watch?v=0NE_xaj49OM&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
+| 8 | [How to Take a Hotel Reservation in a PMS, Step by Step](https://www.youtube.com/watch?v=hVgDLQku00w&list=PLcNTRQwzkzAs) | [Reservations](/reservations) |
+| 9 | [Walk-in Check-in and Day Use Rooms in a Hotel PMS](https://www.youtube.com/watch?v=wqJSr_5touE&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
+| 10 | [Manage Hotel Bookings: Upgrades, Date Changes, Cancellations](https://www.youtube.com/watch?v=7uWXfFkbBxE&list=PLcNTRQwzkzAs) | [Reservations](/reservations) |
+| 11 | Hotel Check-in Step by Step: ID, Deposit and Online Check-in | [Front desk](/front-desk) |
+| 12 | Hotel Folios and Billing: Charges, GST, Voids, Split Folios, Payments | [Billing & cashier](/billing) |
+| 13 | Hotel Check-out and GST Tax Invoice, Step by Step | [Front desk](/front-desk) |
+| 14 | Hotel Guest Profiles, Duplicate Merge and Guest Data Privacy | [Front desk](/front-desk) |
 
 ## Housekeeping and operations
 
 | Ep | Video | Read alongside |
 |---|---|---|
-| 15 | [Hotel Housekeeping Software: Room Status, Cleaning Tasks, Phone App](https://www.youtube.com/watch?v=VkCwLiFO2HU&list=PLcNTRQwzkzAs) | [Housekeeping](/housekeeping) |
-| 16 | [Hotel Guest Laundry Management: Pickup, Count, Express, Billing](https://www.youtube.com/watch?v=QjA9ls2FjaY&list=PLcNTRQwzkzAs) | [Housekeeping](/housekeeping) |
-| 17 | [Hotel Guest Requests, SLA Tracking, WhatsApp Inbox and Shift Handover](https://www.youtube.com/watch?v=SR-NhuzbE9g&list=PLcNTRQwzkzAs) | [Guest requests](/operations) |
+| 15 | Hotel Housekeeping Software: Room Status, Cleaning Tasks, Phone App | [Housekeeping](/housekeeping) |
+| 16 | Hotel Guest Laundry Management: Pickup, Count, Express, Billing | [Housekeeping](/housekeeping) |
+| 17 | Hotel Guest Requests, SLA Tracking, WhatsApp Inbox and Shift Handover | [Guest requests](/operations) |
 
 ## Restaurant POS and banquets
 
 | Ep | Video | Read alongside |
 |---|---|---|
-| 18 | [Restaurant POS for Hotels: Tables, KOT, Kitchen Display, Billing](https://www.youtube.com/watch?v=xa-rOfsSt1w&list=PLcNTRQwzkzAs) | [F&B: POS & kitchen](/fnb) |
-| 19 | [Restaurant Back Office: Room Service, Menu, Recipes, Kitchen Stock](https://www.youtube.com/watch?v=vsj2E5EMjoY&list=PLcNTRQwzkzAs) | [F&B: POS & kitchen](/fnb) |
-| 20 | [Hotel Banquet Software: Inquiries, Quotes, Function Diary, Group Blocks](https://www.youtube.com/watch?v=AkmAJ9lO7Dk&list=PLcNTRQwzkzAs) | [Banquets & groups](/banquets) |
+| 18 | Restaurant POS for Hotels: Tables, KOT, Kitchen Display, Billing | [F&B: POS & kitchen](/fnb) |
+| 19 | Restaurant Back Office: Room Service, Menu, Recipes, Kitchen Stock | [F&B: POS & kitchen](/fnb) |
+| 20 | Hotel Banquet Software: Inquiries, Quotes, Function Diary, Group Blocks | [Banquets & groups](/banquets) |
 
 ## Revenue, finance and night audit
 

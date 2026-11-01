@@ -11,6 +11,8 @@ STAFF_ROLES = ("Housekeeping Supervisor", "Night Auditor", "F&B Manager",
 
 
 def after_install():
+	from kamra.setup_guard import close_frappe_setup_wizard
+	close_frappe_setup_wizard()
 	set_site_home_and_favicon()
 	ensure_agent_identity()
 	ensure_staff_roles()
@@ -19,6 +21,9 @@ def after_install():
 
 
 def after_migrate():
+	# Frappe's wizard stays shut on sites made before this existed too
+	from kamra.setup_guard import close_frappe_setup_wizard
+	close_frappe_setup_wizard()
 	# heals sites that were installed before the agent identity existed here
 	ensure_agent_identity()
 	ensure_staff_roles()

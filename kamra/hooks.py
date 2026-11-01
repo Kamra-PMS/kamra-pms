@@ -351,9 +351,14 @@ doc_events["Reservation"] = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "kamra.event.get_events"
-# }
+# Frappe's setup wizard writes settings and a System Manager user; on a Kamra
+# site only a System Manager may call it (see kamra.setup_guard).
+override_whitelisted_methods = {
+	"frappe.desk.page.setup_wizard.setup_wizard.setup_complete":
+		"kamra.setup_guard.setup_complete",
+	"frappe.desk.page.setup_wizard.setup_wizard.initialize_system_settings_and_user":
+		"kamra.setup_guard.initialize_system_settings_and_user",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
