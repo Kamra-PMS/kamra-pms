@@ -197,6 +197,7 @@
 "Hotel Admin",
 "Housekeeping",
 "Housekeeping Supervisor",
+"Night Auditor",
 "Revenue Manager",
 "System Manager"
 ],
@@ -797,6 +798,7 @@
 "Housekeeping",
 "Housekeeping Supervisor",
 "Kamra Agent",
+"Night Auditor",
 "Revenue Manager",
 "System Manager"
 ],
@@ -966,6 +968,7 @@
 "Hotel Admin",
 "Housekeeping",
 "Housekeeping Supervisor",
+"Night Auditor",
 "Revenue Manager",
 "System Manager"
 ],
@@ -1184,6 +1187,7 @@
 "Hotel Admin",
 "Housekeeping",
 "Housekeeping Supervisor",
+"Night Auditor",
 "Revenue Manager",
 "System Manager"
 ],

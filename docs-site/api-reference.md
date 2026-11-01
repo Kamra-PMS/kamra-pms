@@ -2108,7 +2108,7 @@ Free a held room before its end date (the room returns to sale).
 
 ### `kamra.api.cashier_pin_status`
 
-**GET/POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
+**GET/POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Night Auditor`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
 
 Does this property demand a PIN on money actions, and does the
 signed-in user have one set yet? Includes unlock / lockout state.
@@ -2119,7 +2119,7 @@ signed-in user have one set yet? Includes unlock / lockout state.
 
 ### `kamra.api.set_cashier_pin`
 
-**POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
+**POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Night Auditor`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
 
 Set or change your own cashier PIN (4-8 digits). Changing an existing
 PIN needs the current one  -  unless must_reset was set by an admin.
@@ -2141,7 +2141,7 @@ Admin reset: wipe the user's PIN and force re-enrollment.
 
 ### `kamra.api.verify_cashier_pin`
 
-**POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
+**POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Night Auditor`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
 
 PinPad unlock: validate PIN and open a 15-minute sliding window.
 
@@ -2358,7 +2358,7 @@ can offer one-tap paths to billing and editing. One endpoint, all types.
 
 ### `kamra.api.property_locale`
 
-**GET/POST** · permission: `Property: view_locale` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`, `F&B Manager`
+**GET/POST** · permission: `Property: view_locale` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`, `F&B Manager`
 
 Currency, number locale and tax vocabulary for this property, from its
 localization pack. Drives the frontend's money formatting and tax dropdowns

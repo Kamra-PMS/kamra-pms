@@ -171,7 +171,7 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Cashier Session | Manage cash office (`manage_cash_office`) | Finance, Hotel Admin, System Manager | `cashier.save_terminal`, `cashier.bank_deposit`, `cashier.approve_variance` |
 | Cashier Session | Operate till (`operate_till`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `cashier.open_session`, `cashier.post_paid_out`, `cashier.cash_drop` and 2 more |
 | Cashier Session | Set float (`set_float`) | Finance, Hotel Admin, Kamra Agent, System Manager | `cashier.set_petty_cash_float` |
-| Cashier Session | Use pin (`use_pin`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `api.cashier_pin_status`, `api.set_cashier_pin`, `api.verify_cashier_pin` |
+| Cashier Session | Use pin (`use_pin`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Night Auditor, Revenue Manager, System Manager | `api.cashier_pin_status`, `api.set_cashier_pin`, `api.verify_cashier_pin` |
 | Cashier Session | View cash summary (`view_cash_summary`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `api.cash_summary`, `cashier.cash_summary_v2` |
 | Cashier Session | View tills (`view_tills`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `cashier.current_session`, `cashier.my_till`, `cashier.close_session` and 6 more |
 | Channel Manager Connection | Configure (`configure`) | Hotel Admin, System Manager | `marketplace.disconnect_channel` |
@@ -255,7 +255,7 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Property | View briefing (`view_briefing`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.position_briefing`, `onboarding.setup_checklist` |
 | Property | View dashboard (`view_dashboard`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `dashboards.property_dashboard` |
 | Property | View flash (`view_flash`) | Finance, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `audit_report.night_audit_report`, `dashboards.owner_snapshot`, `reports.manager_flash` |
-| Property | View locale (`view_locale`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Revenue Manager, System Manager | `api.property_locale` |
+| Property | View locale (`view_locale`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `api.property_locale` |
 | Property | View modules (`view_modules`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `api.enabled_modules` |
 | Property | View performance (`view_performance`) | Finance, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `dashboards.portfolio_dashboard`, `reports.budget_vs_actual`, `reports.contribution` |
 | Property | View settings (`view_settings`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `settings.settings_schema` |

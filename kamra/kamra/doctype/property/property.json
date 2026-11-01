@@ -928,6 +928,7 @@
    "role": "Night Auditor",
    "use_console": 1,
    "view_flash": 1,
+   "view_locale": 1,
    "view_snapshot": 1,
    "app_front_desk": 1,
    "app_finance": 1,
