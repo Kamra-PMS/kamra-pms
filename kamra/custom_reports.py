@@ -554,6 +554,8 @@ PACKS: dict[str, dict] = {
 			 "columns": ["outlet", "qty", "wait_minutes", "cook_minutes",
 			             "pass_minutes", "total_minutes"], "group_by": ["outlet"]},
 		],
+		# money columns; the front desk sees the counts only
+		"money": ("grand_total", "amount"),
 	},
 	"engineering": {
 		"label": "Engineering pack",
@@ -591,6 +593,7 @@ PACKS: dict[str, dict] = {
 			 "columns": ["name", "order_type", "status", "turnaround_hours", "qty"],
 			 "group_by": ["name"]},
 		],
+		"money": ("amount",),
 	},
 	"hotel_manager": {
 		"label": "Hotel Manager pack",
@@ -614,9 +617,14 @@ PACKS: dict[str, dict] = {
 def _pack_sections(property: str, pack_id: str) -> list[dict]:
 	"""The sections of a pack this user may run on this property."""
 	from kamra.dashboards import sees_figures
-	if PACKS[pack_id].get("figures") and not sees_figures():
+	pack = PACKS[pack_id]
+	figures = sees_figures()
+	if pack.get("figures") and not figures:
 		return []
-	return [s for s in PACKS[pack_id]["sections"]
+	money = () if figures else pack.get("money", ())
+	return [dict(s, columns=[c for c in s["columns"] if c not in money])
+	        if money and s.get("columns") else s
+	        for s in pack["sections"]
 	        if _dataset_allowed(DATASETS[s["dataset"]])
 	        and _module_enabled(property, DATASETS[s["dataset"]].get("module"))]
 

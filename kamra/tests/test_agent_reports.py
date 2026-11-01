@@ -91,6 +91,24 @@ class AgentReportAccessTestCase(AuditTestCase):
 		finally:
 			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
 
+	def test_the_desk_gets_fnb_and_laundry_counts_without_money(self):
+		def columns(role, pack):
+			email = f"ut.reports.{''.join(c for c in role.lower() if c.isalnum())}@test.local"
+			ensure_user(email, [role])
+			frappe.set_user(email)  # nosemgrep: frappe-setuser -- acting as the persona
+			try:
+				out = run_report_pack(PROP_A, pack)
+				return {c["id"] for s in out["sections"] for c in s["columns"]}
+			finally:
+				frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
+		money = {"grand_total", "amount", "rate"}
+		for pack in ("fnb", "laundry"):
+			desk = columns("Front Desk", pack)
+			self.assertFalse(desk & money, pack)
+			self.assertIn("qty", desk)
+		self.assertIn("covers", columns("Front Desk", "fnb"))
+		self.assertTrue({"grand_total", "amount"} <= columns("Finance", "fnb"))
+
 	def test_housekeeping_pack_runs_every_section(self):
 		email = "ut.reports.housekeeping@test.local"
 		ensure_user(email, ["Housekeeping"])
