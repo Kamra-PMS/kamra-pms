@@ -10,6 +10,7 @@ import CheckInDialog from "../components/CheckInDialog"
 import CheckOutDialog from "../components/CheckOutDialog"
 import type { ShellContext } from "../AppShell"
 import { cn } from "../lib/utils"
+import { shiftDate } from "../lib/stay"
 import { cur, moneyLocale } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
@@ -28,11 +29,8 @@ const iso = (d: Date) => {
   const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
   return z.toISOString().slice(0, 10)
 }
-const shift = (day: string, n: number) => {
-  const d = new Date(day + "T00:00:00")
-  d.setDate(d.getDate() + n)
-  return iso(d)
-}
+// "" for a bad ?date= in the URL rather than an Invalid Date crash
+const shift = shiftDate
 const money = (n: number) =>
   `${cur()}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })}`
 const short = (d: string) =>
@@ -81,7 +79,7 @@ export default function InHouse() {
   useEffect(() => {
     if (!until) { setRangeArrivals(null); return }
     const days: string[] = []
-    for (let d = shift(date, 1); d <= until && days.length < 13; d = shift(d, 1)) days.push(d)
+    for (let d = shift(date, 1); d && d <= until && days.length < 13; d = shift(d, 1)) days.push(d)
     let live = true
     Promise.all(days.map((d) => getSnapshot(d)))
       .then((snaps) => { if (live) setRangeArrivals(snaps.flatMap((s) => s.arrivals ?? [])) })

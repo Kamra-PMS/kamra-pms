@@ -5,14 +5,12 @@ import { useCashierAuth } from "../lib/cashierAuth"
 import { useAuth } from "../lib/auth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { moneyLocale } from "../lib/money"
+import { fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), {
-    maximumFractionDigits: 2,
-  })
+  fmtAmount(n)
 
 const FETCH_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 

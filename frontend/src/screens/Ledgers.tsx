@@ -4,7 +4,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { moneyLocale } from "../lib/money"
+import { fmtAmount } from "../lib/money"
 import { useAuth } from "../lib/auth"
 import CityLedgerPayment from "./CityLedgerPayment"
 import { t as translate, useUILanguage } from "../lib/i18n"
@@ -12,10 +12,7 @@ import { t as translate, useUILanguage } from "../lib/i18n"
 // recording a company's payment is a Finance action (the server gates it too)
 const CAN_SETTLE = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 
-const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), {
-    maximumFractionDigits: 2,
-  })
+const inr = fmtAmount
 
 type Ledger = {
   ledger: string

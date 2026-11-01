@@ -14,13 +14,13 @@ const box = async (loc, pad = 8) => {
 
 if (want("dashboard")) {
   await open(page, "/dashboard", 3500)
-  await shot(page, "reports/dashboard", { clip: { x: 340, y: 75, width: 985, height: 590 } })
+  await shot(page, "reports/dashboard", { clip: { x: 248, y: 75, width: 1168, height: 700 } })
 }
 if (want("portfolio")) {
   await open(page, "/dashboard", 3000)
   await page.getByRole("button", { name: "All properties" }).click()
   await page.waitForTimeout(3000)
-  await shot(page, "reports/portfolio", { clip: { x: 340, y: 75, width: 985, height: 445 } })
+  await shot(page, "reports/portfolio", { clip: { x: 248, y: 75, width: 1168, height: 520 } })
 }
 if (want("hub")) {
   await open(page, "/reports", 3000)
@@ -28,8 +28,7 @@ if (want("hub")) {
 }
 if (want("flash")) {
   await open(page, "/reports/flash", 4000)
-  const root = page.locator("div", { has: page.getByText("Manager flash", { exact: true }), hasText: "Next 7 days" }).last()
-  await shot(page, "reports/manager-flash", { fullPage: true, clip: await box(root, 12) })
+  await shot(page, "reports/manager-flash", { fullPage: true, clip: { x: 248, y: 180, width: 1168, height: 960 } })
 }
 if (want("budget")) {
   const period = new Date().toISOString().slice(0, 7)
@@ -67,6 +66,18 @@ if (want("budget-gif")) {
     await p.getByRole("button", { name: "Save targets" }).click()
     await p.waitForTimeout(2500)
   }, { crop: { x: 300, y: 59, width: 1080, height: 480 } })
+}
+
+if (want("owner")) {
+  // one column made for a phone
+  const phone = await session({ viewport: { width: 420, height: 900 } })
+  const p = await phone.newPage()
+  await open(p, "/owner", 4000)
+  // yesterday is a closed, audited day; today has nothing posted yet
+  await p.getByRole("tab", { name: "Yesterday", exact: true }).click()
+  await p.waitForTimeout(2500)
+  await shot(p, "reports/owner-view", { fullPage: true })
+  await phone.close()
 }
 
 await done()

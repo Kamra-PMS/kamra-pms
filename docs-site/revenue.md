@@ -6,7 +6,7 @@ owner's rate guardrails and demand pricing, plus the companies and travel
 agents who sell your rooms. Revenue Managers and Hotel Admins see it.
 **Room Types** is in the Revenue app and in the Admin app.
 
-![The Seasons list: a year-end peak at +25% and a monsoon saver at -400 on Standard rooms](/img/revenue/seasons.png)
+![The Seasons list: the sample hotel's seasons, among them a year-end peak at +25% and a monsoon saver at -400 on Standard rooms](/img/revenue/seasons.png)
 
 ## How Kamra works out a price
 
@@ -62,7 +62,7 @@ the same code as the quote, so what you see is what is charged.
 1. Open **Revenue → Room Types** (or **Admin → Room Types**) and pick a
    room type, or click **New**.
 2. Set **Base price / night** and **Adults included in base price**.
-3. Set **Extra adult / night**, **Child / night** and, if you sell the
+3. Set **Extra adult / night**, **Extra child / night** and, if you sell the
    room to one person for less, **Single occupancy price**.
 4. Set **Max adults** and **Max children**. The booking page won't sell
    more guests than this.
@@ -70,7 +70,7 @@ the same code as the quote, so what you see is what is charged.
 
 ![The Room Types list with base price, base occupancy, extra adult price and tax rate](/img/revenue/room-types.png)
 
-![The Deluxe room type: name, code, listing slug, base price, adults included, single occupancy, extra adult and small-group fields](/img/revenue/room-type-form.png)
+![The Deluxe room type: name, code, listing slug and category, then the prices (base price, adults included, single occupancy, extra adult and child, Tax %) and the capacity fields together](/img/revenue/room-type-form.png)
 
 Two optional prices:
 
@@ -125,7 +125,7 @@ non-refundable, corporate.
 4. Optional: a **Cancellation policy** line, and **Default plan**.
 5. Click **Save**.
 
-![Three rate plans: Best Available Rate at 0%, Non-refundable at -10% and Corporate at -15%](/img/revenue/rate-plans.png)
+![The rate plans: Best Available Rate, Non-refundable, Corporate negotiated and an unpublished Package, each with its modifier](/img/revenue/rate-plans.png)
 
 A booking uses a rate plan when it names one. On the desk **New
 booking** form, pick it in **Rate plan**; **Standard rate (no plan)**
@@ -148,7 +148,7 @@ company's contract doesn't re-price it.
 5. Tick **Default** for the plan the desk booking form should start with.
 6. Click **Save**.
 
-![Two meal plans: CP bed and breakfast and MAP breakfast and dinner, priced per adult and per child per night](/img/revenue/meal-plans.png)
+![The meal plans: Room Only, Breakfast Included and Breakfast + Dinner, priced per adult and per child per night](/img/revenue/meal-plans.png)
 
 The booking page lists every meal plan, plus **Room only**.
 
@@ -162,7 +162,7 @@ The booking page lists every meal plan, plus **Room only**.
    **Max uses (0 = unlimited)**.
 5. Click **Save**.
 
-![Two vouchers: WELCOME500 for 500 off and STAYLONGER for 10% off stays of three nights or more](/img/revenue/vouchers.png)
+![The vouchers, among them WELCOME500 for 500 off and STAYLONGER for 10% off stays of three nights or more](/img/revenue/vouchers.png)
 
 Guests enter a voucher under **Have a code?** on the booking page; the
 desk enters it on the booking form. **Used** counts each booking that

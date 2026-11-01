@@ -54,23 +54,29 @@ await dlg.locator("select").nth(0).selectOption("Housekeeping")
 await dlg.locator("select").nth(2).selectOption(`${PROPERTY}-201`)
 await dlg.getByPlaceholder("Anything the staff should know (optional)").fill("Two firm pillows, guest is in the room until 11")
 await page.waitForTimeout(300)
-await shot(page, "operations/new-ticket", { clip: { ...panel, height: 470 } })
+{
+  const b = await page.locator("[role=dialog] > div").last().boundingBox()
+  await shot(page, "operations/new-ticket", { clip: { x: b.x, y: 0, width: b.width, height: 470 } })
+}
 await page.keyboard.press("Escape")
 
 await open(page, "/tickets", 2000)
-await page.getByLabel("Show closed").check()
+await page.getByRole("tab", { name: /^Resolved/ }).click()
 await page.waitForTimeout(1500)
 await shot(page, "operations/show-closed", { clip: await card("Service Tickets") })
 
 // --- settings and the report -------------------------------------------------
 await open(page, "/settings/operations", 2500)
-await shot(page, "operations/settings", { clip: { x: 530, y: 80, width: 880, height: 445 } })
+await shot(page, "operations/settings", { clip: { x: 504, y: 75, width: 924, height: 445 } })
 await open(page, "/ops-sla", 3000)
 await shot(page, "operations/sla-report")
 
 // --- stay instructions on a reservation (removed again after the shot) ----------
 if (!process.env.SKIP_INSTRUCTIONS) {
-  const RES = process.env.KAMRA_DOCS_INSTR_RES || "RES-2026-00035"
+  const RES = process.env.KAMRA_DOCS_INSTR_RES || (await api(ctx, "frappe.client.get_list", {
+    doctype: "Reservation", filters: { property: PROPERTY, status: "Confirmed" },
+    fields: ["name"], order_by: "check_in_date asc", limit_page_length: 1,
+  }))[0].name
   const added = []
   try {
     for (const [department, instruction] of [
@@ -106,7 +112,8 @@ await open(page, "/whatsapp", 2500)
 await shot(page, "whatsapp/inbox", { clip: { x: 250, y: 70, width: 1170, height: 530 } })
 await open(page, "/channels", 2500)
 await page.getByRole("button", { name: "New", exact: true }).click()
-await page.waitForTimeout(600)
+await dlg.locator("select").first().waitFor()
+await page.waitForTimeout(1000)
 const fields = dlg.locator("select, input:not([type=checkbox])")
 await fields.nth(0).selectOption("WhatsApp")
 await fields.nth(1).selectOption("Meta Business")
@@ -122,7 +129,8 @@ await page.keyboard.press("Escape")
 // --- Channel Manager (channel-manager.md) ---------------------------------------
 await open(page, "/channel-manager", 2500)
 await page.getByRole("button", { name: "New", exact: true }).click()
-await page.waitForTimeout(600)
+await dlg.locator("select").first().waitFor()
+await page.waitForTimeout(1000)
 await fields.nth(0).selectOption("Channex")
 for (const [i, v] of ["(your Channex user API key)", "(Channex property id)", "", "my-webhook-secret-42"].entries())
   if (v) await fields.nth(i + 1).fill(v)
@@ -134,7 +142,8 @@ await page.keyboard.press("Escape")
 
 await open(page, "/ota-mappings", 2500)
 await page.getByRole("button", { name: "New", exact: true }).click()
-await page.waitForTimeout(600)
+await dlg.locator("select").first().waitFor()
+await page.waitForTimeout(1000)
 const types = await fields.nth(1).locator("option").evaluateAll((os) => os.map((o) => o.value))
 await fields.nth(1).selectOption(types.find((v) => v.startsWith(PROPERTY)))
 await fields.nth(2).fill("(Channex room_type_id)")
@@ -142,7 +151,18 @@ await fields.nth(3).fill("(Channex rate_plan_id)")
 await page.waitForTimeout(300)
 await shot(page, "channel-manager/room-mapping", { clip: { ...panel, height: 300 } })
 
-// --- GIF: a desk agent logs a request and starts it ---------------------------------
+// --- one ticket opened: who has it, move it on, timeline ---------------------
+await open(page, "/tickets", 2000)
+await page.locator("li", { hasText: "AC not cooling in 302" }).getByRole("button", { name: "Open", exact: true }).click()
+await page.getByText("Who has it").waitFor()
+await page.waitForTimeout(1200)
+{
+  const b = await page.locator("[role=dialog] > div").last().boundingBox()
+  await shot(page, "operations/ticket-detail", { clip: { x: b.x, y: 0, width: b.width, height: 680 } })
+}
+await page.keyboard.press("Escape")
+
+// --- GIF: a desk agent logs a request, takes it and starts work -----------------
 await gif("operations/new-ticket", async (g) => {
   await open(g, "/tickets", 2000)
   await g.waitForTimeout(500)
@@ -156,8 +176,11 @@ await gif("operations/new-ticket", async (g) => {
   await g.waitForTimeout(600)
   await d.getByRole("button", { name: "Create ticket" }).click()
   await g.waitForTimeout(1500)
-  const row = g.locator("li", { hasText: SUBJECT })
-  await row.getByRole("button", { name: "Start" }).click()
+  const row = g.locator("li", { hasText: SUBJECT }).first()
+  await row.getByRole("button", { name: "Take it" }).click()
+  await g.waitForTimeout(1500)
+  await row.getByRole("button", { name: "Open", exact: true }).click()
+  await g.getByRole("button", { name: "Start work" }).click()
   await g.waitForTimeout(1800)
 }, { width: 960, crop: { x: 240, y: 0, width: 1200, height: 900 } })
 

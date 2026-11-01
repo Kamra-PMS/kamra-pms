@@ -19,6 +19,7 @@ import {
 import { Button } from "./ui/button"
 import { cur, moneyLocale, useLocale } from "../lib/money"
 import { isPhoneComplete } from "../lib/phone"
+import { parseDate, shiftDate } from "../lib/stay"
 import PhoneInput from "./PhoneInput"
 import { clampGuests, sleeps } from "../lib/occupancy"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
@@ -150,7 +151,7 @@ export function BookingDialog(props: {
     guest_name: props.initial.guest_name ?? "",
     phone: props.initial.phone ?? "",
     room_type: props.initial.room_type ?? "",
-    check_in_date: props.initial.date ?? new Date().toISOString().slice(0, 10),
+    check_in_date: props.initial.date ?? todayLocal(),
     nights: props.initial.stays ?? 1,
     adults: props.initial.adults ?? 2,
     children: props.initial.children ?? 0,
@@ -375,16 +376,18 @@ export function BookingDialog(props: {
       ? options?.rate_plans.find((rp) => rp.name === quote.rate_plan) ?? null
       : null
 
-  const checkOut = (() => {
-    if (dayUse) return form.check_in_date
-    const d = new Date(form.check_in_date)
-    d.setDate(d.getDate() + Math.max(1, form.nights))
-    return d.toISOString().slice(0, 10)
-  })()
-
   // a new booking cannot start in the past - the input's `min` is advisory
   // only (typed and pasted values bypass it), so gate the submit too
-  const pastCheckIn = form.check_in_date < todayLocal()
+  const pastCheckIn = !!form.check_in_date && form.check_in_date < todayLocal()
+
+  // a date typed key by key is empty, or a year like 0002, until the year is
+  // complete: leave check-out empty and hold quotes and submit until then
+  const badDate = !parseDate(form.check_in_date) || pastCheckIn
+  const checkOut = badDate
+    ? ""
+    : dayUse
+      ? form.check_in_date
+      : shiftDate(form.check_in_date, Math.max(1, form.nights))
 
   // a blacklisted guest needs an explicit, reasoned confirmation (Hotel
   // Admin only - the server enforces it); a multi-room group can't override
@@ -408,6 +411,11 @@ export function BookingDialog(props: {
 
   useEffect(() => {
     if (!form.room_type) return
+    if (badDate) {
+      setQuote(null)
+      setQuoting(false)
+      return
+    }
     setQuoting(true)
     const t = setTimeout(() => {
       getQuote({
@@ -455,7 +463,7 @@ export function BookingDialog(props: {
 
   // quotes for the additional rooms
   useEffect(() => {
-    if (moreRooms.length === 0) {
+    if (moreRooms.length === 0 || badDate) {
       setMoreQuotes([])
       return
     }
@@ -482,7 +490,7 @@ export function BookingDialog(props: {
 
   // walk-in: the actual rooms free tonight, clean ones first
   useEffect(() => {
-    if (!walkIn || !form.room_type) return
+    if (!walkIn || !form.room_type || badDate) return
     setFreeRooms(null)
     let live = true
     call<FreeRoom[]>("kamra.api.available_rooms", {
@@ -817,6 +825,7 @@ export function BookingDialog(props: {
     busy ||
     !form.guest_name ||
     !quote ||
+    badDate ||
     badPhone ||
     badSlot ||
     !walk.room ||
@@ -2483,7 +2492,7 @@ export function BookingDialog(props: {
                 <>
                 <Button
                   className="w-full justify-center py-2.5 text-base"
-                  disabled={busy || !form.guest_name || !quote || pastCheckIn || badPhone || badSlot || blacklistBlocked || creditBlocked || extraNeedsReason}
+                  disabled={busy || !form.guest_name || !quote || badDate || pastCheckIn || badPhone || badSlot || blacklistBlocked || creditBlocked || extraNeedsReason}
                   onClick={() => submit()}
                 >
                   {busy ? t("Booking…") : t("Confirm booking")}
@@ -2499,7 +2508,7 @@ export function BookingDialog(props: {
                   <Button
                     variant="outline"
                     className="justify-center"
-                    disabled={busy || !form.guest_name || pastCheckIn || badPhone || badSlot || blacklistBlocked || extraNeedsReason}
+                    disabled={busy || !form.guest_name || badDate || pastCheckIn || badPhone || badSlot || blacklistBlocked || extraNeedsReason}
                     onClick={() => submit(true)}
                     title={t("Park this stay with no room; promote when inventory frees")}
                   >

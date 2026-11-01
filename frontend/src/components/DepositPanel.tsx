@@ -8,7 +8,7 @@ import { Check, Copy, Link2, MessageCircle } from "lucide-react"
 import { call, newIdempotencyKey } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
-import { cur, moneyLocale, useLocale } from "../lib/money"
+import { cur, useLocale, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
 
@@ -24,7 +24,7 @@ export interface DepositState {
 }
 
 const fmt = (n: number) =>
-  `${cur()}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })}`
+  `${cur()}${fmtAmount(n || 0)}`
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +

@@ -39,7 +39,7 @@ try {
 
   // with several properties live, /book starts with a chooser
   await open(g, `/book/${CI}/${CO}/2/0`, 3500)
-  await shot(g, "booking-engine/properties", { clip: { x: 200, y: 40, width: 1040, height: 590 } })
+  await shot(g, "booking-engine/properties", { clip: { x: 0, y: 0, width: 1440, height: 660 } })
 
   for (const name of VILLAS) {
     const was = (await api(staff, "frappe.client.get_value", {
@@ -94,7 +94,7 @@ try {
     await d.getByText("Booking confirmed").waitFor({ timeout: 20000 })
     await pg.waitForTimeout(2200)
     reservation = (await d.getByText("Booking number").locator("xpath=following-sibling::p[1]").textContent())?.trim()
-    await shot(pg, "booking-engine/confirmed", { clip: { x: 480, y: 0, width: 960, height: 200 } })
+    await shot(pg, "booking-engine/confirmed", { clip: { x: 480, y: 0, width: 960, height: 420 } })
   })
   if (!reservation) {
     const rows = await api(staff, "frappe.client.get_list", { doctype: "Reservation",

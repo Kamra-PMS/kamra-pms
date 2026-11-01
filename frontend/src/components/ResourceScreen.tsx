@@ -23,7 +23,7 @@ import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import ImageField from "./ImageField"
-import { moneyLocale } from "../lib/money"
+import { fmtAmount } from "../lib/money"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
 
@@ -326,7 +326,7 @@ const BADGE_TONES: Record<string, "green" | "sky" | "amber" | "rose" | "zinc"> =
 
 const cellValue = (v: unknown, t: (s: string) => string = translate) =>
   typeof v === "number"
-    ? v.toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
+    ? fmtAmount(v)
     : v == null || v === ""
       ? "-"
       : typeof v === "string"

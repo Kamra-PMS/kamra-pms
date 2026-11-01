@@ -83,12 +83,9 @@ acceso, y solo TI puede cambiar a un administrador de TI.
 
 ## Qué puede hacer cada rol
 
-**Configuración → Roles y permisos** muestra qué aplicaciones abre cada rol
-y qué páginas de configuración puede cambiar. Los roles son conjuntos
-fijos: cada pantalla, llamada a la API y herramienta de IA los comprueba en
-el servidor.
-
-![La matriz de roles: aplicaciones que abre cada rol y ajustes que puede cambiar cada rol](/img/settings/roles.png)
+Los roles son conjuntos fijos: cada pantalla, llamada a la API y
+herramienta de IA los comprueba en el servidor. Se asignan en
+**Configuración → Personal y acceso**.
 
 | Rol | Día a día |
 | --- | --- |

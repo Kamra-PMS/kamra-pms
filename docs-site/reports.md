@@ -34,11 +34,14 @@ Revenue Dashboard** (also under **Reports**). **This property** shows:
   open folios);
 - **Statistics (month to date)**: occupancy, revenue, ADR, RevPAR and
   rooms sold;
+- **This year against last year**: occupancy, rooms sold, room and total
+  revenue, ADR and RevPAR for **Today**, **Month to date**, **Year to
+  date** or **Next 90 days**, with the change in percent;
 - **Housekeeping**: clean, dirty, inspected and out-of-order rooms, open
   and overdue tasks;
 - **Finance**: collected today, outstanding and open folios.
 
-![The property dashboard: headline tiles, month-to-date statistics, and the Housekeeping and Finance panels](/img/reports/dashboard.png)
+![The Revenue Dashboard: headline tiles, month-to-date statistics, and this year against last year](/img/reports/dashboard.png)
 
 **All properties** (shown when you have more than one property, for
 Finance, Revenue Manager and Hotel Admin) rolls the same numbers up across
@@ -68,6 +71,8 @@ properties, today** shows each one's occupancy, revenue, collections and
 outstanding. The owner view is for Finance, Revenue Manager, Night
 Auditor and Hotel Admin; the front desk can't open it. Revenue Managers
 see everything except the audit packs.
+
+![The owner view on a phone: revenue with occupancy, ADR and RevPAR, guests, money collected and owed, the next 7 days and the last night audits](/img/reports/owner-view.png)
 
 Tip: add the page to your phone's home screen from the browser's share
 menu to open it like an app.

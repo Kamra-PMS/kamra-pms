@@ -77,11 +77,9 @@ title), and only IT can change an IT administrator.
 
 ## What each role can do
 
-**Settings → Roles & permissions** shows which apps each role opens and
-which settings pages it may change. Roles are fixed bundles: every screen,
-API call and AI tool checks them on the server.
-
-![The roles matrix: apps each role opens and settings each role may change](/img/settings/roles.png)
+Roles are fixed bundles: every screen, API call and AI tool checks them on
+the server. You give them under **Settings → Staff & access** (**Add staff**,
+or **Manage** on a row), where each role says in a line what it opens.
 
 | Role | Day to day |
 | --- | --- |
@@ -91,7 +89,7 @@ API call and AI tool checks them on the server.
 | Finance | Billing, ledgers, night audit, exports, tax and cashier controls |
 | Night Auditor | End of Day: arrivals, departures, cashier closure, the audit pack |
 | F&B Manager | Outlets, the menu, waiters and tables, the kitchen display, F&B reports and settings, approving POS voids. No folios, till or finance |
-| Housekeeping Supervisor | The room board, inspections, task deadlines, laundry pricing |
+| Housekeeping Supervisor | The Housekeeping Board, inspections, task deadlines, laundry pricing |
 | Housekeeping | Their own tasks, room status, lost & found, usually on the phone app |
 
 IT (System Manager) also manages developer keys and adds properties.
@@ -139,6 +137,12 @@ for this browser only. Choosing Arabic switches the layout to right to
 left.
 
 ![Appearance: theme and language](/img/settings/appearance.png)
+
+**Your hotel's name and logo** show at the top of the sidebar and in the
+browser tab, with Kamra PMS beneath, once they are set in Frappe's
+**Website Settings** (`/app/website-settings`: **App Name** and **App
+Logo**; the logo can also come from **Navbar Settings**). Until then the
+sidebar shows the Kamra logo.
 
 ## Good to know
 

@@ -7546,10 +7546,21 @@ def group_detail(group_booking: str):
 		fields=["name", "status", "balance"], order_by="creation desc", limit=1)
 	bill = bill[0] if bill else None
 	master = bill.name if bill else None
+	# the rooms the group has: per type, the block or the live bookings,
+	# whichever is more (a group booked straight off create_group_booking
+	# has no block at all, only its reservations)
+	per_type = {b.room_type: int(b.rooms_blocked or 0) for b in gb.blocks}
+	live = {}
+	for r in rooming:
+		if r.status in ("Confirmed", "Checked In", "Checked Out"):
+			live[r.room_type] = live.get(r.room_type, 0) + 1
+	rooms_total = sum(max(per_type.get(t, 0), live.get(t, 0))
+	                  for t in set(per_type) | set(live))
 	from kamra.business_date import get_business_date
 	return {
 		"business_date": get_business_date(gb.property),
 		"group": {
+			"rooms_total": rooms_total,
 			"name": gb.name, "group_name": gb.group_name,
 			"company": gb.company, "status": gb.status,
 			"group_type": gb.get("group_type"),
