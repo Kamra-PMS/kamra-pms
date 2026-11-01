@@ -26,6 +26,26 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.7.3](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.2...v2.7.3) (2026-11-01)
+
+
+### Bug Fixes
+
+* booking date crash, demo folios, group counts, money decimals ([#455](https://github.com/Kamra-PMS/kamra-pms/issues/455)) ([c25505f](https://github.com/Kamra-PMS/kamra-pms/commit/c25505f551876003422b7be216faa9b4dfa0510c))
+  * **booking:** the New booking dialog no longer crashes while a date is being typed; Tape Chart, Central Reservations and In House guard typed dates the same way
+  * **money:** every money figure shows the currency's own decimals (₹2,27,255.40, not ₹2,27,255.4), on finance screens, bills, check-out, deposits, allowances and POS
+  * **groups:** a group with no room blocks counts its booked rooms ("2 named of 3", not "of 0")
+  * **demo:** demo history puts past restaurant and laundry charges on the past stay, not on today's in-house guests
+
+### Documentation
+
+* Screenshots and pages re-shot for 2.7.2: receivables, payables, cash outlook, P&L, owner view, groups, tickets, night audit ([#453](https://github.com/Kamra-PMS/kamra-pms/pull/453))
+* A clearer README ([#452](https://github.com/Kamra-PMS/kamra-pms/pull/452))
+
+### Upgrade notes
+
+* No `bench migrate` needed.
+
 ## [2.7.2](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.1...v2.7.2) (2026-10-31)
 
 
