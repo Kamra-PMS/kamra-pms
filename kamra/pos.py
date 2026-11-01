@@ -225,7 +225,7 @@ def charge_to_room(order: str, room: str):
 		frappe.throw(_("Already paid."))
 	doc.room, doc.reservation = _in_house_stay(doc.property, room, None)
 	doc.guest = _bill_guest(doc.reservation, None)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "room": doc.room, "reservation": doc.reservation}
 
 
@@ -319,7 +319,7 @@ def create_order(outlet: str, items, property: str | None = None,
 	                   source, notes, order_type, guests, customer_name,
 	                   customer_phone, delivery_address, allergy_note, guest,
 	                   waiter)
-	doc.insert()
+	doc.insert(ignore_permissions=True)
 	return {"ok": True, "order": doc.name, "order_total": doc.order_total,
 	        "status": doc.status}
 
@@ -577,7 +577,7 @@ def reserve_table(outlet: str, table_no: str, guest_name: str,
 		"reserved_at": reserved_at,
 		"notes": (notes or "").strip()[:200] or None,
 	})
-	doc.insert()
+	doc.insert(ignore_permissions=True)
 	return {"ok": True, "reservation": doc.name}
 
 
@@ -589,7 +589,7 @@ def set_reservation(reservation: str, status: str):
 		frappe.throw(_("Status must be Seated, Cancelled or No Show."))
 	doc = frappe.get_doc("POS Table Reservation", reservation)
 	doc.status = status
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "status": status}
 
 
@@ -673,10 +673,10 @@ def split_order(order: str, item_rows, table_no: str | None = None):
 			"stock_posted": it.stock_posted,
 		} for it in move],
 	})
-	new.insert()
+	new.insert(ignore_permissions=True)
 	for it in move:
 		src.remove(it)
-	src.save()
+	src.save(ignore_permissions=True)
 	return {"ok": True, "new_order": new.name,
 	        "source_total": src.order_total, "new_total": new.order_total}
 
@@ -737,7 +737,7 @@ def add_items(order: str, items):
 		frappe.throw(_("This order is already closed."))
 	for line in _load_items(items):
 		doc.append("items", line)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "order_total": doc.order_total}
 
 
@@ -750,7 +750,7 @@ def confirm_order(order: str):
 	doc.status = "Confirmed"
 	if not doc.captain:
 		doc.captain = frappe.session.user
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "status": "Confirmed"}
 
 
@@ -761,7 +761,7 @@ def apply_discount(order: str, amount: float, reason: str = ""):
 	doc = frappe.get_doc("POS Order", order)
 	doc.discount_amount = float(amount or 0)
 	doc.discount_reason = reason or None
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "discount": doc.discount_amount,
 	        "order_total": doc.order_total}
 
@@ -884,7 +884,7 @@ def send_order(outlet: str, items, property: str | None = None,
 	if float(discount or 0) > 0:
 		doc.discount_amount = float(discount)
 		doc.discount_reason = discount_reason or None
-	doc.insert()
+	doc.insert(ignore_permissions=True)
 	out = _fire(doc)
 	out.update(order=doc.name, order_total=doc.order_total)
 	return out
@@ -1037,7 +1037,7 @@ def mark_prepared(order: str, item_row: str | None = None):
 	for it in lines:
 		it.kot_status = "Prepared"
 		it.prepared_at = now
-	doc.save()
+	doc.save(ignore_permissions=True)
 	live = [it for it in doc.items if not it.voided]
 	all_done = bool(live) and all(it.kot_status == "Prepared" for it in live)
 	return {"ok": True, "all_prepared": all_done}
@@ -1058,7 +1058,7 @@ def accept_ticket(order: str):
 		it.started_at = now
 	if started or not doc.accepted_at:
 		doc.accepted_at = doc.accepted_at or now
-		doc.save()
+		doc.save(ignore_permissions=True)
 	return {"ok": True, "accepted_at": doc.accepted_at, "started": len(started)}
 
 
@@ -1077,7 +1077,7 @@ def recall_prepared(order: str, item_row: str | None = None):
 			it.kot_status = "Fired"
 			it.prepared_at = None
 			it.picked_up_at = None
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True}
 
 
@@ -1098,7 +1098,7 @@ def mark_picked_up(order: str, item_row: str | None = None):
 		frappe.throw(_("Nothing is waiting at the pass."))
 	for it in picked:
 		it.picked_up_at = now
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "picked_up": len(picked), "picked_up_at": now}
 
 
@@ -1113,7 +1113,7 @@ def set_waiter(order: str, waiter: str = ""):
 	if doc.status == "Delivered":
 		frappe.throw(_("This bill is closed. The waiter on it cannot change."))
 	doc.waiter = (waiter or "").strip()[:140] or None
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "waiter": doc.waiter, "served_by": _served_by(doc)}
 
 
@@ -1189,7 +1189,7 @@ def acknowledge_void(order: str, item_row: str):
 	if not target.voided:
 		frappe.throw(_("That line is not voided."))
 	target.void_seen = 1
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True}
 
 
@@ -1200,7 +1200,7 @@ def deliver_order(order: str):
 	(controller) when there's a linked stay."""
 	doc = frappe.get_doc("POS Order", order)
 	doc.status = "Delivered"
-	doc.save()
+	doc.save(ignore_permissions=True)
 	_flag_cleaning_if_freed(doc)
 	return {"ok": True, "status": "Delivered",
 	        "posted_to_folio": bool(doc.posted_to_folio)}
@@ -1245,7 +1245,7 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 	doc.paid = 1
 	doc.payment_mode = mode
 	doc.status = "Delivered"
-	doc.save()
+	doc.save(ignore_permissions=True)
 	_flag_cleaning_if_freed(doc)
 	record_cashier_txn(
 		prop, "Payment", mode, float(doc.order_total or 0),
@@ -1329,7 +1329,7 @@ def mark_nc(order: str, authorized_by: str, note: str = "", undo: int = 0):
 		doc.nc = 1
 		doc.nc_authorized_by = authorized_by.strip()[:80]
 		doc.nc_note = (note or "").strip()[:200] or None
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "nc": bool(doc.nc), "order_total": doc.order_total}
 
 
@@ -1455,7 +1455,7 @@ def cancel_order(order: str, reason: str = "", reason_code: str | None = None,
 	doc.cancel_approved_by = approver
 	# kept for reports written before the cancel fields existed
 	doc.notes = (f"{doc.notes}\n" if doc.notes else "") + f"Cancelled: {text}"
-	doc.save()
+	doc.save(ignore_permissions=True)
 	if sent:
 		from kamra.printing import void_slip
 		void_slip(doc, sent)
@@ -1495,7 +1495,7 @@ def void_item(order: str, item_row: str, reason: str = "",
 	was_sent = (target.kot_status or "New") != "New"
 	approver = _approve_kitchen_void(doc, supervisor, supervisor_pin) if was_sent else None
 	_void_lines(doc, [target], text, approver)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	if was_sent:
 		from kamra.printing import void_slip
 		void_slip(doc, [target])
@@ -1528,7 +1528,7 @@ def remove_item(order: str, item_row: str):
 		frappe.throw(_("That is the last item on the bill. Cancel the bill "
 		              "instead."))
 	doc.remove(target)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "order_total": doc.order_total, "subtotal": doc.subtotal}
 
 
@@ -1903,7 +1903,7 @@ def attach_customer(outlet: str, order: str | None = None, guest: str | None = N
 			frappe.throw(_("This bill is for the in-house guest of its room."))
 		if cint(clear):
 			doc.guest = None
-			doc.save()
+			doc.save(ignore_permissions=True)
 			return {"ok": True, "guest": None}
 	created = False
 	name = (customer_name or "").strip()[:120]
@@ -1927,7 +1927,7 @@ def attach_customer(outlet: str, order: str | None = None, guest: str | None = N
 		doc.customer_name = full_name
 		if ph and doc.order_type in ("Takeaway", "Delivery") and not doc.customer_phone:
 			doc.customer_phone = ph
-		doc.save()
+		doc.save(ignore_permissions=True)
 	return {"ok": True, "guest": guest, "full_name": full_name, "created": created}
 
 

@@ -25,6 +25,17 @@ from frappe.permissions import add_permission, update_permission_property
 from frappe.tests import IntegrationTestCase
 
 from kamra import authz
+from kamra.tests.audit_fixtures import (
+	PROP_A,
+	TODAY,
+	AuditTestCase,
+	d,
+	ensure_user,
+	make_property,
+	make_reservation,
+	make_room,
+	make_room_type,
+)
 
 ROLE = "TEST RBAC Concierge"
 CUSTOM_USER = "rbac.concierge@test.local"
@@ -400,3 +411,46 @@ class RbacTestCase(IntegrationTestCase):
 		                "property": _property(HOME)}).insert(ignore_permissions=True)
 		self.as_user(DESK_USER)
 		self.assertFalse(frappe.get_list("Copilot Conversation", filters={"title": "GM only"}))
+
+
+class PermissionTypeIsThePermissionTestCase(AuditTestCase):
+	"""A role holding an action's Permission Type can finish the action even
+	without Desk write on the record it saves (require_perm is the check)."""
+
+	properties = (PROP_A,)
+
+	def setUp(self):
+		super().setUp()
+		make_property(PROP_A, business_date=TODAY)
+		self.at(TODAY)
+		self.rt = make_room_type(PROP_A, "RBQ")
+
+	def as_(self, *roles):
+		user = ensure_user(f"ut.rbac.{roles[0].lower().replace(' ', '')}@example.com", list(roles))
+		frappe.set_user(user)  # nosemgrep: frappe-setuser -- the role under test
+
+	def test_night_auditor_checks_a_late_arrival_in(self):
+		from kamra import api
+		room = make_room(PROP_A, self.rt, "RBQ1")
+		res = make_reservation(PROP_A, self.rt, TODAY, d(1), room=room)
+		self.as_("Night Auditor")
+		api.check_in(res.name)
+		self.assertEqual(frappe.db.get_value("Reservation", res.name, "status"), "Checked In")
+
+	def test_finance_rings_up_a_pos_order(self):
+		from kamra import pos
+		outlet = frappe.get_doc({"doctype": "POS Outlet", "property": PROP_A,
+		                         "outlet_name": "UT RBAC Cafe", "outlet_type": "Restaurant",
+		                         "gst_rate": 5}).insert(ignore_permissions=True).name
+		dish = frappe.get_doc({"doctype": "Menu Item", "property": PROP_A, "outlet": outlet,
+		                       "item_name": "UT RBAC Tea", "category": "Beverage", "price": 50,
+		                       "available": 1}).insert(ignore_permissions=True).name
+		self.as_("Finance")
+		r = pos.create_order(outlet, [{"menu_item": dish, "qty": 1}], property=PROP_A)
+		self.assertTrue(frappe.db.exists("POS Order", r["order"]))
+
+	def test_kamra_agent_sets_a_room_rate(self):
+		from kamra import api
+		self.as_("Kamra Agent")
+		api.set_room_rate(PROP_A, self.rt, d(30), d(30), 1500, reason="RBAC test")
+		self.assertTrue(frappe.db.exists("Season", {"property": PROP_A, "start_date": d(30)}))

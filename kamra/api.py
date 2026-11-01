@@ -242,7 +242,7 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 		"priority": 100,
 		"days_of_week": days_str
 	})
-	season.insert()
+	season.insert(ignore_permissions=True)
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("set_room_rate", "Season", season.name, property,
@@ -4136,7 +4136,7 @@ def check_in(reservation: str, room: str | None = None):
 	if room:
 		doc.room = room
 	doc.status = "Checked In"
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	if doc.room:
 		where = frappe.db.get_value("Room", doc.room, "room_number") or doc.room
@@ -4815,7 +4815,7 @@ def reinstate_checkout(reservation: str, reason: str, pin: str | None = None):
 	doc.status = "Checked In"
 	frappe.flags.kamra_status_transition = True
 	try:
-		doc.save()
+		doc.save(ignore_permissions=True)
 	finally:
 		frappe.flags.kamra_status_transition = False
 	from kamra.savings import log_action
@@ -4870,7 +4870,7 @@ def check_out(reservation: str, credit_override_reason: str | None = None,
 	from kamra.deposit import apply_held_to_bill
 	apply_held_to_bill(doc)
 	doc.status = "Checked Out"
-	doc.save()
+	doc.save(ignore_permissions=True)
 	_scrub_stay_ids(doc)
 	from kamra.savings import log_action
 	log_action("check_out", "Reservation", doc.name, doc.property,
@@ -7216,7 +7216,7 @@ def create_room_block(property: str, room: str, from_date: str,
 		"note": note or None,
 		"block_status": "Active",
 	})
-	doc.insert()
+	doc.insert(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("room_block", "Room Block", doc.name, property,
 	           rationale=f"{reason}: {room} {from_date}→{to_date}")
@@ -7231,7 +7231,7 @@ def release_room_block(name: str):
 	doc.block_status = "Released"
 	doc.released_by = frappe.session.user
 	doc.released_on = frappe.utils.now_datetime()
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("room_unblock", "Room Block", doc.name, doc.property,
 	           rationale=f"released {doc.room}")

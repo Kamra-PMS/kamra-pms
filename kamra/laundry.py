@@ -71,14 +71,14 @@ def save_laundry_rate(property: str, item_name: str, service_type: str,
 		"express_rate": float(express_rate) if express_rate else None,
 		"disabled": 1 if int(disabled or 0) else 0,
 	})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "name": doc.name}
 
 
 @frappe.whitelist(methods=["POST"])
 @require_perm("Laundry Order", "price_laundry", scope={"name": "Laundry Rate"})
 def delete_laundry_rate(name: str):
-	frappe.delete_doc("Laundry Rate", name)
+	frappe.delete_doc("Laundry Rate", name, ignore_permissions=True)
 	return {"ok": True}
 
 

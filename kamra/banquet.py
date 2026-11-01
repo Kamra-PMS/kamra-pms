@@ -182,14 +182,14 @@ def save_banquet_menu(property: str, menu_name: str, rate_per_pax: float,
 				"choice_of": int(c.get("choice_of") or 0),
 				"is_live_counter": 1 if c.get("is_live_counter") else 0,
 			})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "name": doc.name}
 
 
 @frappe.whitelist(methods=["POST"])
 @require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Menu"})
 def delete_banquet_menu(name: str):
-	frappe.delete_doc("Banquet Menu", name)
+	frappe.delete_doc("Banquet Menu", name, ignore_permissions=True)
 	return {"ok": True}
 
 
@@ -216,14 +216,14 @@ def save_service_item(property: str, item_name: str, category: str,
 	              "description", "disabled"):
 		if field in kw and kw[field] is not None:
 			doc.set(field, kw[field])
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "name": doc.name}
 
 
 @frappe.whitelist(methods=["POST"])
 @require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Service Item"})
 def delete_service_item(name: str):
-	frappe.delete_doc("Banquet Service Item", name)
+	frappe.delete_doc("Banquet Service Item", name, ignore_permissions=True)
 	return {"ok": True}
 
 
@@ -295,7 +295,7 @@ def create_enquiry(property: str, venue: str, event_date: str,
 				"chargeable": 1,
 				"gst_rate": float(v.gst_rate or 18),
 			})
-	doc.insert()
+	doc.insert(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_enquiry", "Venue Booking", doc.name, property,
 	           minutes_saved=6,
@@ -366,7 +366,7 @@ def update_function(function: str, fields):
 		_set_group_link(doc, group)
 	for k, v in fields.items():
 		doc.set(k, v)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "grand_total": doc.grand_total,
 	        "balance_due": doc.balance_due}
 
@@ -447,7 +447,7 @@ def link_group(function: str, group_booking: str | None = None):
 	if group == was:
 		return {"ok": True, "group_booking": was, "unchanged": True}
 	_set_group_link(doc, group)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_group_link", "Venue Booking", doc.name, doc.property,
 	           rationale=(f"{doc.customer_name}: tied to group {group}"
@@ -491,7 +491,7 @@ def set_status(function: str, status: str, reason: str | None = None,
 	if status == "Enquiry":
 		doc.lost_reason = None
 	doc.status = status
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_status", "Venue Booking", doc.name, doc.property,
 	           rationale=f"{doc.customer_name}: {was} → {status}"
@@ -535,7 +535,7 @@ def add_menu(function: str, menu: str, qty=None, rate=None, chargeable: int = 1,
 		"gst_rate": float(m.gst_rate or 0),
 		"notes": notes,
 	})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return _line_result(doc)
 
 
@@ -570,7 +570,7 @@ def add_service(function: str, service_item: str, qty=None, rate=None,
 		"gst_rate": float(s.gst_rate or 0),
 		"notes": notes,
 	})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return _line_result(doc)
 
 
@@ -606,7 +606,7 @@ def save_items(function: str, items):
 			"gst_rate": float(r.get("gst_rate") or 0),
 			"notes": r.get("notes"),
 		})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return _line_result(doc)
 
 
@@ -616,7 +616,7 @@ def remove_item(function: str, row: str):
 	doc = _fn(function)
 	_guard_closed(doc)
 	doc.set("items", [r for r in doc.items if r.name != row])
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return _line_result(doc)
 
 
@@ -668,7 +668,7 @@ def negotiate(function: str, rows=None, discount_amount=None,
 				f"Discount {float(doc.discount_amount or 0):,.0f}"
 				f"→{float(discount_amount):,.0f}")
 		doc.discount_amount = float(discount_amount)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	after = float(doc.grand_total or 0)
 	_snapshot(doc, note or (", ".join(changes) if changes
 	                        else _("Reviewed, no change")))
@@ -718,7 +718,7 @@ def save_open_items(function: str, rows):
 			"price_impact": float(r.get("price_impact") or 0),
 			"status": r.get("status") or "Open",
 		})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	open_rows = [o for o in doc.open_items if o.status == "Open"]
 	return {"ok": True, "open": len(open_rows),
 	        "impact": sum(float(o.price_impact or 0) for o in open_rows)}
@@ -748,7 +748,7 @@ def set_payment_terms(function: str, terms, note: str | None = None):
 		})
 	if note is not None:
 		doc.payment_terms_note = note
-	doc.save()
+	doc.save(ignore_permissions=True)
 	scheduled = sum(float(t.amount or 0) for t in doc.payment_terms)
 	return {"ok": True, "terms": len(doc.payment_terms),
 	        "scheduled": scheduled,
@@ -813,7 +813,7 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 		term.status = "Received"
 		term.received_on = rd
 		term.reference = reference or term.reference
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_receipt", "Venue Booking", doc.name, doc.property,
 	           rationale=f"{kind} {money_text(doc.property, round(float(amount)))} ({mode}) for "
@@ -854,7 +854,7 @@ def assign_green_room(function: str, room: str | None = None,
 			"chargeable": 0 if int(complimentary or 0) else 1,
 			"notes": "green-room",
 		})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "green_room": doc.green_room,
 	        "block": doc.green_room_block, "grand_total": doc.grand_total}
 
@@ -1469,7 +1469,7 @@ def generate_quote(function: str, valid_days: int = 15,
 		doc.quote_number = make_autoname(f"QTN-{str(doc.event_date)[:4]}-.#####")
 	doc.quote_sent_on = nowdate()
 	doc.quote_valid_till = add_days(nowdate(), int(valid_days or 15))
-	doc.save()
+	doc.save(ignore_permissions=True)
 	_snapshot(doc, note or _("Quote v{0} issued").format(doc.quote_version))
 	from kamra.savings import log_action
 	log_action("banquet_quote", "Venue Booking", doc.name, doc.property,
@@ -1493,7 +1493,7 @@ def generate_beo(function: str):
 	if not doc.beo_number:
 		doc.beo_number = f"BEO-{str(doc.event_date)[:4]}-{doc.name.split('-')[-1]}"
 	doc.beo_generated_on = now_datetime()
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_beo", "Venue Booking", doc.name, doc.property,
 	           minutes_saved=25,
@@ -1521,7 +1521,7 @@ def generate_invoice(function: str):
 		doc.invoice_number = make_autoname(
 			f"BINV-{str(doc.event_date)[:4]}-.#####")
 		doc.invoice_date = nowdate()
-		doc.save()
+		doc.save(ignore_permissions=True)
 		from kamra.savings import log_action
 		log_action("banquet_invoice", "Venue Booking", doc.name, doc.property,
 		           minutes_saved=10,
@@ -1600,7 +1600,7 @@ def post_to_folio(function: str, folio: str | None = None):
 		         "{0}").format(", ".join(d["item_name"] for d in deferred))
 		doc.internal_notes = ((doc.internal_notes + "\n")
 		                      if doc.internal_notes else "") + note
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_billed", "Venue Booking", doc.name, doc.property,
 	           minutes_saved=15,
@@ -1682,7 +1682,7 @@ def close_out(function: str, damage_amount: float = 0,
 			"notes": "damage-recovery",
 		})
 	doc.status = "Completed"
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_close_out", "Venue Booking", doc.name, doc.property,
 	           minutes_saved=10,
@@ -1750,7 +1750,7 @@ def reopen_function(function: str, reason: str):
 	note = _("Reopened by {0}: {1}").format(frappe.session.user, reason)
 	doc.internal_notes = ((doc.internal_notes + "\n")
 	                      if doc.internal_notes else "") + note
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_reopen", "Venue Booking", doc.name, doc.property,
 	           rationale=f"{doc.customer_name}: Completed → Confirmed ({reason})",
@@ -2109,7 +2109,7 @@ def save_dish(property: str, dish_name: str, recipe=None,
 			                      "qty": float(r["qty"]),
 			                      "note": r.get("note")})
 	doc.cost_per_portion = _dish_cost(doc)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "name": doc.name,
 	        "cost_per_portion": doc.cost_per_portion}
 
@@ -2117,7 +2117,7 @@ def save_dish(property: str, dish_name: str, recipe=None,
 @frappe.whitelist(methods=["POST"])
 @require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Dish"})
 def delete_dish(name: str):
-	frappe.delete_doc("Banquet Dish", name)
+	frappe.delete_doc("Banquet Dish", name, ignore_permissions=True)
 	return {"ok": True}
 
 
@@ -2135,7 +2135,7 @@ def recost_dishes(property: str):
 		now = _dish_cost(doc)
 		if abs(now - was) > 0.001:
 			doc.cost_per_portion = now
-			doc.save()
+			doc.save(ignore_permissions=True)
 			changed.append({"dish": doc.dish_name, "was": was, "now": now})
 	return {"ok": True, "recosted": len(changed), "changes": changed[:50]}
 
@@ -2300,7 +2300,7 @@ def compose_menu(function: str, menu: str, picks):
 			row.cost_rate = round(per_pax, 4)
 
 	_sync_supplement(doc, menu, supplement)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True,
 	        "chosen": len([s for s in doc.selections if s.banquet_menu == menu]),
 	        "cost_per_pax": round(per_pax, 2),
@@ -2471,7 +2471,7 @@ def record_consumption(function: str, rows=None, pax_actual: int | None = None):
 		if float(line.qty or 0) != float(qty):
 			changes.append(f"{line.item_name} {line.qty:g}→{float(qty):g}")
 		line.actual_qty = float(qty)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	if changes:
 		log_action("banquet_consumption", "Venue Booking", doc.name,
@@ -2503,7 +2503,7 @@ def add_supplementary(function: str, item_name: str, qty: float, rate: float,
 		"chargeable": 1, "is_supplementary": 1,
 		"is_alcohol": 1 if int(is_alcohol or 0) else 0, "notes": notes,
 	})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "grand_total": doc.grand_total,
 	        "supplementary_total": sum(
 		        float(r.total or 0) for r in doc.items if r.is_supplementary)}
@@ -2580,7 +2580,7 @@ def link_customer(function: str, guest: str | None = None):
 			or doc.customer_name
 	else:
 		doc.customer = _find_or_create_guest(doc)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "customer": doc.customer,
 	        "customer_name": doc.customer_name}
 
@@ -2820,7 +2820,7 @@ def offer_amenities(function: str, amenities=None, as_open_items: int = 0):
 				"list_rate": float(a.rate or 0), "rate": float(a.rate or 0),
 				"chargeable": 1, "notes": "hall-amenity",
 			})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "added": len(picked),
 	        "as_open_items": bool(int(as_open_items or 0)),
 	        "grand_total": doc.grand_total}
