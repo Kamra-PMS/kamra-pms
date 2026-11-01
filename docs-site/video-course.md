@@ -30,7 +30,7 @@ then the guide for every field and setting.
 | Ep | Video | Read alongside |
 |---|---|---|
 | 7 | [Hotel Front Desk Dashboard: Arrivals, Departures and Room Board](https://www.youtube.com/watch?v=0NE_xaj49OM&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
-| 8 | How to Take a Hotel Reservation in a PMS, Step by Step | [Reservations](/reservations) |
+| 8 | [How to Take a Hotel Reservation in a PMS, Step by Step](https://www.youtube.com/watch?v=hVgDLQku00w&list=PLcNTRQwzkzAs) | [Reservations](/reservations) |
 | 9 | [Walk-in Check-in and Day Use Rooms in a Hotel PMS](https://www.youtube.com/watch?v=wqJSr_5touE&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
 | 10 | [Manage Hotel Bookings: Upgrades, Date Changes, Cancellations](https://www.youtube.com/watch?v=7uWXfFkbBxE&list=PLcNTRQwzkzAs) | [Reservations](/reservations) |
 | 11 | Hotel Check-in Step by Step: ID, Deposit and Online Check-in | [Front desk](/front-desk) |
