@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 
 /** The printable allowance voucher: the digital form of the paper slip,
@@ -40,7 +40,7 @@ interface Voucher {
 }
 
 const money = (n: number) =>
-  `${cur()}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })}`
+  `${cur()}${fmtAmount(n || 0)}`
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (

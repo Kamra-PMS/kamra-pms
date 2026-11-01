@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import { call } from "../../lib/api"
 import { serverError } from "../../lib/resource"
-import { cur, locale, moneyLocale } from "../../lib/money"
+import { cur, locale, moneyLocale, fmtAmount } from "../../lib/money"
 import { useT, t as translate, uiDateLocale } from "../../lib/i18n"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
@@ -130,7 +130,7 @@ interface CustomerHit {
 }
 
 export const money = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
+  fmtAmount(n ?? 0)
 
 const BADGE: Record<ListState, string> = {
   open: "bg-amber-100 text-amber-900",
