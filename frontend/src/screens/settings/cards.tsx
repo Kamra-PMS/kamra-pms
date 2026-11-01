@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { call } from "../../lib/api"
+import { useAuth } from "../../lib/auth"
 import {
   createResource,
   listResource,
@@ -928,6 +929,7 @@ interface LaundryRate {
  * Express defaults to 1.5x when its column is left blank. */
 export function LaundryRatesCard({ property }: { property: string }) {
   useUILanguage()
+  const canDelete = useAuth().allowed("Laundry Order", "delete_rates", ["Finance", "Hotel Admin", "System Manager", "Administrator"])
   const [rates, setRates] = useState<LaundryRate[]>([])
   const [form, setForm] = useState<{ name?: string; item: string; service: string; rate: string; express: string } | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -1042,8 +1044,8 @@ export function LaundryRatesCard({ property }: { property: string }) {
                   <td className="text-right">
                     <button className="text-xs font-medium text-brand-700 hover:underline"
                       onClick={() => setForm({ name: r.name, item: r.item_name, service: r.service_type, rate: String(r.rate), express: "" })}>{translateUI("Edit")}</button>
-                    <button className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
-                      onClick={async () => { await call("kamra.laundry.delete_laundry_rate", { name: r.name }); load() }}>{translateUI("Delete")}</button>
+                    {canDelete && <button className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
+                      onClick={async () => { await call("kamra.laundry.delete_laundry_rate", { name: r.name }); load() }}>{translateUI("Delete")}</button>}
                   </td>
                 </tr>
               ))}

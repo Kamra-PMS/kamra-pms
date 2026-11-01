@@ -3548,7 +3548,7 @@ Add or edit one line of the rate card.
 
 ### `kamra.laundry.delete_laundry_rate`
 
-**POST** · permission: `Laundry Order: price_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Laundry Order: delete_rates` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3707,7 +3707,7 @@ the user is looking at is the truth.
 
 ### `kamra.banquet.delete_banquet_menu`
 
-**POST** · permission: `Banquet Menu: edit_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`
+**POST** · permission: `Banquet Menu: delete_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3733,7 +3733,7 @@ and the pack list.
 
 ### `kamra.banquet.delete_service_item`
 
-**POST** · permission: `Banquet Menu: edit_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`
+**POST** · permission: `Banquet Menu: delete_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4242,7 +4242,7 @@ without one the dish is free, and so is the margin it reports.
 
 ### `kamra.banquet.delete_dish`
 
-**POST** · permission: `Banquet Menu: edit_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`
+**POST** · permission: `Banquet Menu: delete_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |

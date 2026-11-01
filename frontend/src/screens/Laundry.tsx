@@ -57,6 +57,7 @@ export default function Laundry() {
   const property = getCurrentProperty()
   const canOperate = allowed("Laundry Order", "handle_laundry", OPERATOR_ROLES)
   const canEditRates = allowed("Laundry Order", "price_laundry", RATE_EDIT_ROLES)
+  const canDeleteRates = allowed("Laundry Order", "delete_rates", ["Finance", "Hotel Admin", "System Manager", "Administrator"])
 
   const { board, rates, error, busy, act, reload } = useLaundryBoard(property)
   const [rooms, setRooms] = useState<Room[]>([])
@@ -449,6 +450,7 @@ export default function Laundry() {
           rates={rates}
           property={property}
           canEdit={canEditRates}
+          canDelete={canDeleteRates}
           onChanged={reload}
         />
       )}
@@ -879,11 +881,13 @@ function PriceMenu({
   rates,
   property,
   canEdit,
+  canDelete,
   onChanged,
 }: {
   rates: Rate[]
   property: string
   canEdit: boolean
+  canDelete: boolean
   onChanged: () => void
 }) {
   const { t } = useT()
@@ -1030,17 +1034,19 @@ function PriceMenu({
                       >
                         {t("Edit")}
                       </button>
-                      <button
-                        className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
-                        onClick={async () => {
-                          await call("kamra.laundry.delete_laundry_rate", {
-                            name: r.name,
-                          })
-                          onChanged()
-                        }}
-                      >
-                        {t("Delete")}
-                      </button>
+                      {canDelete && (
+                        <button
+                          className="ml-2 text-xs text-zinc-400 hover:text-rose-600"
+                          onClick={async () => {
+                            await call("kamra.laundry.delete_laundry_rate", {
+                              name: r.name,
+                            })
+                            onChanged()
+                          }}
+                        >
+                          {t("Delete")}
+                        </button>
+                      )}
                     </td>
                   )}
                 </tr>

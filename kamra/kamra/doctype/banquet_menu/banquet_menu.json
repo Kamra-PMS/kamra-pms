@@ -159,7 +159,8 @@
    "delete": 1,
    "export": 1,
    "share": 1,
-   "edit_catalogue": 1
+   "edit_catalogue": 1,
+   "delete_catalogue": 1
   },
   {
    "role": "Hotel Admin",
@@ -172,7 +173,8 @@
    "delete": 1,
    "export": 1,
    "share": 1,
-   "edit_catalogue": 1
+   "edit_catalogue": 1,
+   "delete_catalogue": 1
   },
   {
    "role": "Front Desk",
@@ -200,7 +202,8 @@
    "report": 1,
    "print": 1,
    "email": 1,
-   "edit_catalogue": 1
+   "edit_catalogue": 1,
+   "delete_catalogue": 1
   },
   {
    "role": "Kamra Agent",

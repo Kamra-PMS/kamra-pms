@@ -477,3 +477,18 @@ class PermissionTypeIsThePermissionTestCase(AuditTestCase):
 		self.as_("Kamra Agent")
 		api.set_room_rate(PROP_A, self.rt, d(30), d(30), 1500, reason="RBAC test")
 		self.assertTrue(frappe.db.exists("Season", {"property": PROP_A, "start_date": d(30)}))
+
+	def test_the_desk_edits_prices_but_only_managers_delete_them(self):
+		from kamra import banquet, laundry
+		self.as_("Front Desk")
+		rate = laundry.save_laundry_rate(PROP_A, "UT RBAC Shirt", "Wash & Iron", 80)["name"]
+		menu = banquet.save_banquet_menu(PROP_A, "UT RBAC Lunch", 900)["name"]
+		with self.assertRaises(frappe.PermissionError):
+			laundry.delete_laundry_rate(rate)
+		with self.assertRaises(frappe.PermissionError):
+			banquet.delete_banquet_menu(menu)
+		self.as_("Hotel Admin")
+		laundry.delete_laundry_rate(rate)
+		banquet.delete_banquet_menu(menu)
+		self.assertFalse(frappe.db.exists("Laundry Rate", rate))
+		self.assertFalse(frappe.db.exists("Banquet Menu", menu))

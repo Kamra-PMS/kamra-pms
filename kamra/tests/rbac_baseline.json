@@ -1507,25 +1507,19 @@
 "banquet.delete_banquet_menu": [
 "Administrator",
 "Finance",
-"Front Desk",
 "Hotel Admin",
-"Revenue Manager",
 "System Manager"
 ],
 "banquet.delete_dish": [
 "Administrator",
 "Finance",
-"Front Desk",
 "Hotel Admin",
-"Revenue Manager",
 "System Manager"
 ],
 "banquet.delete_service_item": [
 "Administrator",
 "Finance",
-"Front Desk",
 "Hotel Admin",
-"Revenue Manager",
 "System Manager"
 ],
 "banquet.dish_library": [
@@ -2678,9 +2672,7 @@
 "laundry.delete_laundry_rate": [
 "Administrator",
 "Finance",
-"Front Desk",
 "Hotel Admin",
-"Kamra Agent",
 "System Manager"
 ],
 "laundry.deliver_laundry": [

@@ -59,6 +59,8 @@ export default function BanquetCatalogue() {
   useUILanguage()
   const { allowed } = useAuth()
   const canEdit = allowed("Banquet Menu", "edit_catalogue", EDIT_ROLES)
+  // editing is the desk's; deleting is a manager's
+  const canDelete = allowed("Banquet Menu", "delete_catalogue", ["Finance", "Hotel Admin", "System Manager", "Administrator"])
   const [cat, setCat] = useState<Cat | null>(null)
   const [dishes, setDishes] = useState<BanquetDish[] | null>(null)
   const [tab, setTab] = useState<Tab>("menus")
@@ -203,7 +205,7 @@ export default function BanquetCatalogue() {
             busy={busy}
             onChanged={load}
             onEdit={setDishDraft}
-            onDelete={(name) => act(() => banquet.deleteDish(name))}
+            onDelete={canDelete ? (name) => act(() => banquet.deleteDish(name)) : undefined}
           />
         )}
 
@@ -266,14 +268,16 @@ export default function BanquetCatalogue() {
                         className="!px-2 !py-1 !text-xs"
                         onClick={() => setMenuDraft(m)}
                       >{translate("Edit")}</Button>
-                      <Button
-                        variant="ghost"
-                        className="!px-2 !py-1 !text-xs !text-rose-600"
-                        disabled={busy}
-                        onClick={() => act(() => banquet.deleteMenu(m.name))}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          className="!px-2 !py-1 !text-xs !text-rose-600"
+                          disabled={busy}
+                          onClick={() => act(() => banquet.deleteMenu(m.name))}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      )}
                     </div>
                   )}
                 </li>
@@ -343,16 +347,18 @@ export default function BanquetCatalogue() {
                             className="!px-2 !py-1 !text-xs"
                             onClick={() => setSvcDraft(s)}
                           >{translate("Edit")}</Button>
-                          <Button
-                            variant="ghost"
-                            className="!px-2 !py-1 !text-xs !text-rose-600"
-                            disabled={busy}
-                            onClick={() =>
-                              act(() => banquet.deleteService(s.name))
-                            }
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              className="!px-2 !py-1 !text-xs !text-rose-600"
+                              disabled={busy}
+                              onClick={() =>
+                                act(() => banquet.deleteService(s.name))
+                              }
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     )}
@@ -795,7 +801,7 @@ function DishLibrary({
   busy: boolean
   onChanged: () => void
   onEdit: (d: BanquetDish) => void
-  onDelete: (name: string) => void
+  onDelete?: (name: string) => void
 }) {
   useUILanguage()
   const [error, setError] = useState<string | null>(null)
@@ -918,14 +924,16 @@ function DishLibrary({
                             className="text-xs font-medium text-brand-700 hover:underline"
                             onClick={() => onEdit(d)}
                           >{translate("Edit")}</button>
-                          <button
-                            className="text-zinc-300 hover:text-rose-600"
-                            aria-label={translate("Delete {v0}", { v0: String(d.dish_name) })}
-                            disabled={busy}
-                            onClick={() => onDelete(d.name)}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </button>
+                          {onDelete && (
+                            <button
+                              className="text-zinc-300 hover:text-rose-600"
+                              aria-label={translate("Delete {v0}", { v0: String(d.dish_name) })}
+                              disabled={busy}
+                              onClick={() => onDelete(d.name)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          )}
                         </span>
                       )}
                     </div>

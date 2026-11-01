@@ -26,6 +26,7 @@ For example:
 | Open or close a till | Cashier Session: Operate Till |
 | Run the night audit | Night Audit Run: Run Audit |
 | Approve a void or a supervisor reason | Folio: Approve |
+| Delete a banquet menu, dish or service, or a laundry rate (editing them is Edit catalogue and Price laundry) | Banquet Menu: Delete catalogue, Laundry Order: Delete rates |
 | Override a company's credit limit | Corporate Account: Override Credit |
 | See an app in the app switcher | Property: App Front Desk (and one per app) |
 
@@ -166,7 +167,8 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | --- | --- | --- | --- |
 | Agent Action Log | View activity (`view_activity`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `agents_api.activity_feed`, `agents_api.activity_detail` |
 | Agent Action Log | View sign ins (`view_sign_ins`) | Finance, Hotel Admin, System Manager | `agents_api.staff_sign_ins` |
-| Banquet Menu | Edit catalogue (`edit_catalogue`) | Finance, Front Desk, Hotel Admin, Revenue Manager, System Manager | `banquet.save_banquet_menu`, `banquet.delete_banquet_menu`, `banquet.save_service_item` and 4 more |
+| Banquet Menu | Delete catalogue (`delete_catalogue`) | Finance, Hotel Admin, System Manager | `banquet.delete_banquet_menu`, `banquet.delete_service_item`, `banquet.delete_dish` |
+| Banquet Menu | Edit catalogue (`edit_catalogue`) | Finance, Front Desk, Hotel Admin, Revenue Manager, System Manager | `banquet.save_banquet_menu`, `banquet.save_service_item`, `banquet.save_dish` and 1 more |
 | Cashier Session | Configure (`configure`) | Hotel Admin, System Manager | `api.reset_cashier_pin` |
 | Cashier Session | Manage cash office (`manage_cash_office`) | Finance, Hotel Admin, System Manager | `cashier.save_terminal`, `cashier.bank_deposit`, `cashier.approve_variance` |
 | Cashier Session | Operate till (`operate_till`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `cashier.open_session`, `cashier.post_paid_out`, `cashier.cash_drop` and 2 more |
@@ -220,8 +222,9 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Kamra Custom Report | Run reports (`run_reports`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `custom_reports.list_report_datasets`, `custom_reports.list_report_packs`, `custom_reports.run_report_pack` and 6 more |
 | Kitchen Printer | Configure printers (`configure_printers`) | F&B Manager, Finance, Hotel Admin, System Manager | `printing.save_printer`, `printing.delete_printer`, `printing.test_print` |
 | Kitchen Printer | Print tickets (`print_tickets`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `printing.print_bill`, `printing.claim_jobs`, `printing.ack_jobs` and 3 more |
+| Laundry Order | Delete rates (`delete_rates`) | Finance, Hotel Admin, System Manager | `laundry.delete_laundry_rate` |
 | Laundry Order | Handle laundry (`handle_laundry`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `laundry.request_pickup`, `laundry.collect_laundry`, `laundry.laundry_status` and 3 more |
-| Laundry Order | Price laundry (`price_laundry`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `laundry.save_laundry_rate`, `laundry.delete_laundry_rate`, `laundry.import_laundry_rates` and 1 more |
+| Laundry Order | Price laundry (`price_laundry`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `laundry.save_laundry_rate`, `laundry.import_laundry_rates`, `laundry.laundry_revenue` |
 | Laundry Order | View laundry (`view_laundry`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `laundry.laundry_rates`, `laundry.laundry_board` |
 | Menu Item | Edit menu (`edit_menu`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_recipe`, `inventory.set_menu_availability`, `menu_import.preview_menu_import` and 2 more |
 | Menu Item | View menu lists (`view_menu_lists`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `settings.menu_masters` |

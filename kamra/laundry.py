@@ -76,7 +76,7 @@ def save_laundry_rate(property: str, item_name: str, service_type: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_perm("Laundry Order", "price_laundry", scope={"name": "Laundry Rate"})
+@require_perm("Laundry Order", "delete_rates", scope={"name": "Laundry Rate"})
 def delete_laundry_rate(name: str):
 	frappe.delete_doc("Laundry Rate", name, ignore_permissions=True)
 	return {"ok": True}
