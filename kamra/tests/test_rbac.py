@@ -492,3 +492,15 @@ class PermissionTypeIsThePermissionTestCase(AuditTestCase):
 		banquet.delete_banquet_menu(menu)
 		self.assertFalse(frappe.db.exists("Laundry Rate", rate))
 		self.assertFalse(frappe.db.exists("Banquet Menu", menu))
+
+	def test_night_auditor_keeps_assistant_chats_and_writes_the_shift_handover(self):
+		from kamra import assistant
+		self.as_("Night Auditor")
+		chat = assistant.create_conversation(PROP_A, "Overnight")
+		listed = assistant.list_conversations(PROP_A)
+		self.assertIn(chat["name"], [c["name"] for c in listed])
+		handover = frappe.get_doc({"doctype": "Shift Handover", "property": PROP_A,
+		                           "shift": "Night", "shift_date": TODAY}).insert()
+		handover.handover_notes = "Two late arrivals still due"
+		handover.save()
+		self.assertTrue(frappe.has_permission("Shift Handover", "read", handover.name))

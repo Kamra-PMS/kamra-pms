@@ -185,10 +185,10 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | City Ledger Account | View account (`view_account`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `ledger.city_ledger_account`, `receivables.ar_accounts`, `receivables.ar_invoice` |
 | City Ledger Entry | View financials (`view_financials`) | Finance, Hotel Admin, Kamra Agent, System Manager | `books.cash_forecast`, `books.profit_and_loss`, `books.balance_sheet` and 2 more |
 | City Ledger Entry | View ledgers (`view_ledgers`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `ledger.ledger_balances`, `ledger.journal_by_transaction_code`, `ledger.city_ledger_aging` and 1 more |
-| Copilot Conversation | Ask agent (`ask_agent`) | Finance, Front Desk, Hotel Admin, Revenue Manager, System Manager | `assistant.ask`, `assistant.ask_stream` |
-| Copilot Conversation | Ask help (`ask_help`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Revenue Manager, System Manager | `assistant.help_ask` |
+| Copilot Conversation | Ask agent (`ask_agent`) | Finance, Front Desk, Hotel Admin, Night Auditor, Revenue Manager, System Manager | `assistant.ask`, `assistant.ask_stream` |
+| Copilot Conversation | Ask help (`ask_help`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Night Auditor, Revenue Manager, System Manager | `assistant.help_ask` |
 | Copilot Conversation | Configure (`configure`) | Hotel Admin, System Manager | `assistant.test_connection` |
-| Copilot Conversation | Keep conversations (`keep_conversations`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `assistant.list_conversations`, `assistant.get_conversation`, `assistant.create_conversation` and 3 more |
+| Copilot Conversation | Keep conversations (`keep_conversations`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `assistant.list_conversations`, `assistant.get_conversation`, `assistant.create_conversation` and 3 more |
 | Copilot Conversation | View presets (`view_presets`) | Front Desk, Hotel Admin, System Manager | `assistant.provider_presets` |
 | Corporate Account | Override credit (`override_credit`) | Finance, Hotel Admin, System Manager | checked inside Kamra |
 | Corporate Account | Set credit (`set_credit`) | Finance, Hotel Admin, System Manager | `credit.set_company_credit_terms` |
@@ -410,6 +410,7 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Copilot Conversation | Front Desk | read, write, create, delete |
 | Copilot Conversation | Finance | read, write, create, delete |
 | Copilot Conversation | Revenue Manager | read, write, create, delete |
+| Copilot Conversation | Night Auditor | read, write, create, delete |
 | Copilot Conversation | Kamra Agent | read, write, create, delete |
 | Corporate Account | System Manager | read, write, create, delete, report, export |
 | Corporate Account | Hotel Admin | read, write, create, delete, report |
@@ -696,6 +697,7 @@ Record access over Desk and REST (standard rights, permission level 0):
 | Shift Handover | Front Desk | read, write, create, report |
 | Shift Handover | Finance | read, report |
 | Shift Handover | Kamra Agent | read, report |
+| Shift Handover | Night Auditor | read, write, create, report |
 | SOP Template | System Manager | read, write, create, delete, report |
 | SOP Template | Hotel Admin | read, write, create, report |
 | SOP Template | Front Desk | read |

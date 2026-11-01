@@ -83,6 +83,14 @@
    "if_owner": 1
   },
   {
+   "role": "Night Auditor",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "if_owner": 1
+  },
+  {
    "role": "Kamra Agent",
    "read": 1,
    "write": 1,
@@ -116,6 +124,13 @@
   },
   {
    "role": "Revenue Manager",
+   "ask_agent": 1,
+   "ask_help": 1,
+   "keep_conversations": 1,
+   "select": 1
+  },
+  {
+   "role": "Night Auditor",
    "ask_agent": 1,
    "ask_help": 1,
    "keep_conversations": 1,
