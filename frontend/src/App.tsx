@@ -34,6 +34,7 @@ const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
 const Rooms = lazy(() => import("./screens/Rooms"))
+const AdminRooms = lazy(() => import("./screens/AdminRooms"))
 const Settings = lazy(() => import("./screens/settings/SettingsHub"))
 const FinishSetup = lazy(() => import("./screens/FinishSetup"))
 const SystemHealth = lazy(() => import("./screens/SystemHealth"))
@@ -205,9 +206,10 @@ export default function App() {
           <Route path="trip/:name" element={<TripConfirmation />} />
           <Route path="guests" element={<Guests />} />
           <Route path="guests/:name" element={<GuestJourney />} />
+          <Route path="rooms" element={<AdminRooms />} />
           <Route
-            path="rooms"
-            element={<ConfiguredScreen config="roomsConfig" />}
+            path="floors"
+            element={<ConfiguredScreen config="floorsConfig" />}
           />
           <Route
             path="room-types"

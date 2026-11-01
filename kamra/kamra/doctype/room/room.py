@@ -6,6 +6,13 @@ from frappe.model.document import Document
 
 
 class Room(Document):
+	def validate(self):
+		# Room.floor stays the floor's name; make sure the Floor master has it
+		from kamra.floors import ensure_floor
+		self.floor = (self.floor or "").strip() or None
+		if self.floor and (self.is_new() or self.has_value_changed("floor")):
+			ensure_floor(self.property, self.floor)
+
 	def after_insert(self):
 		# Keep Sellable Units in sync with physical inventory (ADR-001).
 		try:

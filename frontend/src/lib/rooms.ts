@@ -56,6 +56,8 @@ export interface RoomsBoard {
   date: string
   rooms: BoardRoom[]
   room_types: { name: string; room_type_name: string }[]
+  /** the Floor master's order (older servers omit it) */
+  floors?: { name: string; sort_order: number }[]
   can: RoomPermissions
 }
 

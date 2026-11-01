@@ -10,6 +10,7 @@ import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
+import { sortFloors, type FloorOrder } from "../lib/floors"
 import { useT, t as translate } from "../lib/i18n"
 
 
@@ -68,16 +69,26 @@ export default function HousekeepingBoard() {
   const [open, setOpen] = useState<string | null>(null)
   const [floor, setFloor] = useState("All")
   const [filter, setFilter] = useState<Filter>("All")
+  const [floorOrder, setFloorOrder] = useState<FloorOrder[]>([])
+  const [roomTypes, setRoomTypes] = useState<{ name: string; room_type_name: string }[]>([])
+  const [type, setType] = useState("All")
   // housekeepers a supervisor can hand a task to (hk_assign_task)
   const [staff, setStaff] = useState<{ user: string; full_name: string }[]>([])
 
   const load = useCallback(() => {
-    call<{ rooms: BoardRoom[]; can_supervise: boolean }>("kamra.api.room_board", {
+    call<{
+      rooms: BoardRoom[]
+      can_supervise: boolean
+      floors?: FloorOrder[]
+      room_types?: { name: string; room_type_name: string }[]
+    }>("kamra.api.room_board", {
       property: getCurrentProperty(),
     })
       .then((d) => {
         setRooms(d.rooms)
         setCanSupervise(d.can_supervise)
+        setFloorOrder(d.floors ?? [])
+        setRoomTypes(d.room_types ?? [])
         setError(null)
       })
       .catch((e) => setError(serverError(e)))
@@ -132,7 +143,10 @@ export default function HousekeepingBoard() {
     )
   if (!rooms) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
 
-  const floors = Array.from(new Set(rooms.map((r) => r.floor).filter(Boolean))).sort() as string[]
+  const floors = sortFloors(
+    Array.from(new Set(rooms.map((r) => r.floor).filter(Boolean))) as string[],
+    floorOrder,
+  )
   const counts = Object.fromEntries(
     STATUSES.map((s) => [s, rooms.filter((r) => r.housekeeping_status === s).length]),
   ) as Record<HkStatus, number>
@@ -141,6 +155,7 @@ export default function HousekeepingBoard() {
   const shown = rooms.filter(
     (r) =>
       (floor === "All" || r.floor === floor) &&
+      (type === "All" || r.room_type === type) &&
       (filter === "All" ||
         (filter === "Due out" ? r.due_out : filter === "Has task" ? !!r.task : r.housekeeping_status === filter)),
   )
@@ -204,6 +219,22 @@ export default function HousekeepingBoard() {
       <Card>
         <CardHeader>
           <CardTitle>{t("Rooms")}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+          {roomTypes.length > 1 && (
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              aria-label={t("Room type")}
+              className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs"
+            >
+              <option value="All">{t("All room types")}</option>
+              {roomTypes.map((rt) => (
+                <option key={rt.name} value={rt.name}>
+                  {rt.room_type_name}
+                </option>
+              ))}
+            </select>
+          )}
           {floors.length > 1 && (
             <div className="flex flex-wrap gap-1">
               {["All", ...floors].map((f) => (
@@ -221,6 +252,7 @@ export default function HousekeepingBoard() {
               ))}
             </div>
           )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {shown.length === 0 && (

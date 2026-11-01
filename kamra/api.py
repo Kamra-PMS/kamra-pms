@@ -4976,7 +4976,12 @@ def room_board(property: str):
 			"priority": t.priority,
 			"assignee": names.get(t.assigned_to_user) or t.assigned_to_user,
 		} if t else None
-	return {"rooms": rooms, "can_supervise": _is_room_supervisor()}
+	from kamra.floors import floors_for
+	room_types = [{"name": t.name, "room_type_name": t.room_type_name} for t in frappe.get_all(
+		"Room Type", filters={"property": property}, fields=["name", "room_type_name"],
+		order_by="room_type_name asc")]
+	return {"rooms": rooms, "can_supervise": _is_room_supervisor(),
+	        "floors": floors_for(property), "room_types": room_types}
 
 
 @frappe.whitelist()

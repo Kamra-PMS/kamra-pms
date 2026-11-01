@@ -255,7 +255,7 @@ _PROPERTY_SCOPED = (
 	"Cashier Transaction", "Channel Manager Connection",
 	"Channel Provider Connection", "City Ledger Account", "City Ledger Entry",
 	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
-	"Exchange Transaction", "Experience", "External POS Charge", "Folio", "Folio Ledger Entry",
+	"Exchange Transaction", "Experience", "External POS Charge", "Floor", "Folio", "Folio Ledger Entry",
 	"Folio Reprint", "Group Booking", "Housekeeping Task", "Hurdle Rate",
 	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kamra Custom Report", "Kitchen Printer",
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",

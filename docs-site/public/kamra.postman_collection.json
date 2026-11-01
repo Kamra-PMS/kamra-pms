@@ -15990,6 +15990,48 @@
    ]
   },
   {
+   "name": "Floors (Admin > Rooms: Add rooms)",
+   "item": [
+    {
+     "name": "add_rooms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.floors.add_rooms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.floors.add_rooms"
+       ]
+      },
+      "description": "Create rooms start..end on a floor (numbers that already exist are\nskipped). preview=1 only reports what would happen. Admin > Rooms >\nAdd rooms.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"floor\": \"<floor>\",\n  \"room_type\": \"Your Property-DLX\",\n  \"start\": \"<start>\",\n  \"end\": \"<end>\",\n  \"prefix\": \"\",\n  \"preview\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Today layout (per-user widgets, hotel default)",
    "item": [
     {
