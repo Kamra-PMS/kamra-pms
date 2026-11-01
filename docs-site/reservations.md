@@ -86,7 +86,7 @@ Kamra books every room under one group, so it can be billed together. If
 some rooms can't be booked, it tells you how many it booked and why the
 rest failed. Vouchers, add-ons and booker details are added to each stay
 afterwards. To hold a block of rooms for a group whose names come later,
-use [Groups & blocks](#group-bookings-corporate-wedding) instead.
+use [Groups & blocks](#hold-rooms-for-a-group) instead.
 
 ## Put a guest on the waitlist
 
@@ -244,7 +244,7 @@ the folio; see [Billing](/billing).
    call)**.
 6. Click **Confirm cancellation**.
 
-![Cancelling a booking on its arrival day: inside the 1-day window, so the first night (₹2,800) will be charged, with the reason, note and waive option](/img/reservations/cancel-preview.png)
+![Cancelling a booking on its arrival day: inside the 2-day window, so the first night will be charged, with the reason, note and waive option](/img/reservations/cancel-preview.png)
 
 Kamra gives a cancellation number (CXL-…) and posts any fee to the folio.
 Click **Print / share the confirmation letter** for a letter to send the
@@ -342,50 +342,58 @@ You only see a trip if you can access every property in it.
 
 ## Hold rooms for a group
 
-For a wedding, conference or tour, hold a block of rooms first and name
-the guests later. Groups live in **Banquets & Groups → Groups & Blocks**.
+For a wedding, conference or tour, keep a block of rooms first and name
+the guests later. Groups live in **Front Desk → Group Booking** (the
+**Groups & Blocks** list).
 
-1. Click **New**, give the **Group name**, **Arrival** and **Departure**,
-   and the **Block cutoff**. Save.
-2. Open the group. Under **Room block**, click **Add room type**, pick the
-   type, the number of rooms and the rate per night, then **Save block**.
-3. As names come in, use **Pick up a room**: pick the room type, type the
-   guest's name and phone, and click **Pick up**. Each pickup is a normal
-   booking in the **Rooming list**.
-
-![A group with a block of four Deluxe rooms, two picked up, the pickup form and the rooming list](/img/reservations/group.png)
-
-Rooms in the block are held for the group until the cutoff. After the
-cutoff, rooms not picked up go back on sale. **Open group folio** opens the
-group's master bill. For events tied to the group, see
-[Banquets](/banquets).
-
-## Group bookings (corporate, wedding)
-
-When one person or company pays for several rooms, book them as one group
-with a **main room**. The main room's guest pays for the group; everyone
-else pays only their own extras.
-
-1. In **Banquets & Groups → Groups & Blocks**, click **New group booking**
-   (or, in **New booking**, click **Group booking with a main room**).
-2. **Group:** the group name, its type (Corporate, Wedding, Event, Tour,
-   Other), the dates and who pays: **The main room's guest** or **A
-   company**. Fill in the main guest's name and phone.
-3. **Rooms:** one row per room type with the number of rooms. For a single
-   room you can pick the exact room, and you can name the guest. Rooms
-   without a name are booked as "Guest of (group)"; name them at check-in.
-4. **Main room and billing:** pick the row whose room is the main room and
-   what it pays. The default is **Room + tax**. Click **Create group
-   booking**.
+1. Click **New group booking** (or, in **New booking**, click **Group
+   booking with a main room**). The window has four steps.
+2. **Group:** the **Group name**, **Group type** (Corporate, Wedding,
+   Event, Tour, Other), **Arrival** and **Departure**, and **Who pays**:
+   **The main room's guest** or **A company**. Fill in the main guest's
+   name and phone.
+3. **Rooms:** one row per **Room type** with the number of rooms; each
+   row shows how many are free on these dates. **More options** sets a
+   **Group rate / night** (Revenue Manager or Hotel Admin) and a
+   **Different number of rooms each night**.
+4. **Guest names:** name the guest for each room, one by one or with
+   **Paste from Excel** (Name, Phone, Room type, Other guests) or **Upload
+   CSV**. Rooms left empty stay held for the group and can be named later.
+   Pick the **Main room**.
+5. **Price and confirm:** the room-nights, rate and total, and what the
+   main room pays (**Room + tax** by default). **More options** sets the
+   **Deposit to ask for** and the **Rooms they can give back free (%)**.
+   Click **Book group**, or **Save as quotation** when the client hasn't
+   agreed yet: nothing is kept or booked, and you can print it.
 
 Rooms that can't be booked are listed with the reason; the rest are booked.
 
-**Check rooms in one at a time.** Open the group: each row of the
-**Rooming list** has **Check in** (the usual guided check-in, with ID and
-documents) and **Check out**. Guests can arrive on different days.
+## Run the group
 
-**Change the main room** with **Make main room** on any row. The open group
-bill moves to that room.
+Click a group in the list to open it. **What to do next** at the top says
+what the group needs now (name guests, take the deposit, check rooms in,
+settle the group bill) with the button for it, and the tiles show rooms
+named, room charges, paid so far and still to pay.
+
+![A wedding group: what to do next, the rooms named, charges and payments, and the guest list with each room, its status and Check in](/img/reservations/group.png)
+
+- **Guests:** the guest list. Type names and phones straight into the
+  rows and press **Save names**, or use **Paste from Excel**. **Add a
+  guest** books one more room from the rooms still kept free. Tick rooms
+  to act on some of them, or none for all: **Check in**, **Check out**,
+  **Change dates** or **Cancel rooms**. Each row also has its own **Check
+  in** (the usual guided check-in, with ID and documents) and **Check
+  out**, so guests can arrive on different days.
+- **Rooms:** **Rooms kept for this group**, by room type, with how many
+  have guests and how many are free. Change the rooms or the group rate,
+  **Keep free rooms until** (after this date, rooms without a guest name
+  go back on sale) and **Rooms they can give back free (%)**, then press
+  **Save changes**. A quotation gets **Confirm booking** here.
+- **Bill:** **Who pays**: the main guest or the company, and **Each
+  guest's own bill** with what each guest owes for their extras.
+
+Kamra warns you before the hold date if the group has used fewer rooms
+than agreed. For events tied to the group, see [Banquets](/banquets).
 
 **The main guest can leave first.** Checking out the main room does not
 close the group bill: it stays open, and room charges of the rooms still in

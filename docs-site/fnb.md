@@ -33,7 +33,7 @@ access**; like every role, it reaches only the properties ticked there.
    P1:2
    ```
 
-   ![An outlet record with its type, tax rate, tables and the KOT on send setting](/img/fnb/outlet-form.png)
+   ![An outlet record with its name, type, tax rate, the KOT on send setting and the Waiters list](/img/fnb/outlet-form.png)
 
    Under **Waiters** on the outlet, add the people who serve there. The
    till offers them first in its **Waiter** box; they don't need a login.
@@ -52,7 +52,7 @@ access**; like every role, it reaches only the properties ticked there.
    display. To load a whole menu at once, use **Bulk upload** on the Menu
    screen: upload a spreadsheet, check the preview, then run it.
 
-   ![The menu list with photos, prices, outlets and stations](/img/fnb/menu.png)
+   ![The menu list: each item with its outlet, category, price and whether it is available, with Recipes, Bulk upload and New](/img/fnb/menu.png)
 
 5. **Decide how KOTs reach the kitchen.** See
    [Kitchen printers](#kitchen-printers) and

@@ -31,7 +31,7 @@ screens with pictures and short clips.
 | You need to… | Guide |
 | --- | --- |
 | Use the phone app: take a room, start, finish | [Housekeeping → Phone app](/housekeeping) |
-| Run the room board and set room status | [Housekeeping → Room board](/housekeeping) |
+| Run the Housekeeping Board and set room status | [Housekeeping → Housekeeping Board](/housekeeping) |
 | Post minibar items, handle laundry, log lost property | [Housekeeping](/housekeeping) |
 
 ## Restaurant and kitchen

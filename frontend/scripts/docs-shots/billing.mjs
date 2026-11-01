@@ -18,7 +18,7 @@ const MAIN = { x: 262, width: 1140 }
 
 if (want("billing-list")) {
   await open(page, "/billing", 2500)
-  await shot(page, "billing/billing-list", { clip: { x: 320, y: 75, width: 1020, height: 520 } })
+  await shot(page, "billing/billing-list", { clip: { x: 236, y: 75, width: 1192, height: 760 } })
 }
 
 if (want("folio")) {
@@ -110,24 +110,24 @@ if (want("my-till")) {
     await open(page, "/cashier", 4500)
     if (!(await page.getByText("Record has changed").count())) break
   }
-  await shot(page, "billing/my-till", { fullPage: true, clip: { x: 320, y: 75, width: 1020, height: 600 } })
+  await shot(page, "billing/my-till", { fullPage: true, clip: { x: 248, y: 75, width: 1168, height: 640 } })
 }
 
 if (want("shift-report")) {
   await open(page, "/cashier/shift-report", 4000)
-  await shot(page, "billing/shift-report", { clip: { x: 580, y: 95, width: 505, height: 430 } })
+  await shot(page, "billing/shift-report", { clip: { x: 248, y: 75, width: 1168, height: 560 } })
 }
 
 if (want("petty-cash")) {
   await open(page, "/cashier/petty-cash", 4000)
-  await shot(page, "billing/petty-cash", { clip: { x: 570, y: 95, width: 525, height: 425 } })
+  await shot(page, "billing/petty-cash", { clip: { x: 248, y: 75, width: 1168, height: 560 } })
 }
 
 if (want("currency-desk")) {
   await open(page, "/cashier/fx", 4000)
   await page.getByRole("button", { name: "Calculate" }).click()
   await page.waitForTimeout(1200)
-  await shot(page, "billing/currency-desk", { clip: { x: 392, y: 95, width: 880, height: 515 } })
+  await shot(page, "billing/currency-desk", { clip: { x: 248, y: 75, width: 1168, height: 560 } })
 }
 
 if (want("voids-allowances")) {
@@ -141,5 +141,11 @@ if (want("ledgers")) {
   const root = page.getByRole("heading", { name: "Ledgers", exact: true }).locator("xpath=ancestor::div[contains(@class,'max-w-5xl')][1]")
   await shot(page, "billing/ledgers", (await root.count()) ? { locator: root } : {})
 }
+
+if (want("receivables")) {
+  await open(page, "/receivables", 3500)
+  await shot(page, "billing/receivables", { clip: { x: 236, y: 75, width: 1192, height: 420 } })
+}
+
 
 await done()

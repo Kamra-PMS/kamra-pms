@@ -77,6 +77,8 @@ and how many bills wait for approval. The strip below ages it by due
 date: not due, 1 to 30 days overdue, 31 to 60, 61 to 90 and 90+, the
 same buckets as company accounts.
 
+![Payables: owed to suppliers, overdue and awaiting approval, the aging strip, and the bills with their vendor, category, due date, total, owed and status](/img/books/payables.png)
+
 ## Cash outlook
 
 **Finance → Cash outlook** lists, day by day from today, for the next
@@ -100,6 +102,8 @@ position; open a day for the detail.
 Payroll, rent and other costs that you don't enter as supplier bills are
 not in it, and neither are extras guests may still spend.
 
+![Cash outlook for 5 days: the starting position, money in and out, the position after 5 days, and each day's company bills, guests leaving, deposits, supplier bills, net and position](/img/books/cash-outlook.png)
+
 ## Profit and loss
 
 **Finance → Profit and loss** shows a period (this month, last month, or
@@ -117,6 +121,8 @@ any dates up to a year):
   them as drafts).
 - **Profit for the period**, plus the tax collected on bills and the tax
   paid on supplier bills, for reference.
+
+![Profit and loss for this month: revenue by department, expenses by category, and the profit for the period](/img/books/profit-and-loss.png)
 
 ## Balance sheet
 

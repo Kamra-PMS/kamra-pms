@@ -120,7 +120,9 @@ if (want("departures")) {
 // --------------------------------------------------------------- guests
 if (want("guests")) {
   await open(page, "/guests", 2500)
-  await shot(page, "front-desk/guests", { locator: page.locator("main div.rounded-xl, main div.rounded-2xl").first() })
+  // the first rows are enough; a hotel with history has hundreds of guests
+  const b = await page.locator("main div.rounded-xl, main div.rounded-2xl").first().boundingBox()
+  await shot(page, "front-desk/guests", { clip: { x: b.x, y: b.y, width: b.width, height: Math.min(b.height, 640) } })
 }
 if (want("guest-journey")) {
   const [g] = await api(ctx, "frappe.client.get_list", {
@@ -144,15 +146,18 @@ async function fillWalkIn(p, slow) {
   await idType.selectOption({ index: 1 })
   const idNo = dlg.locator("label").filter({ hasText: "ID number" }).locator("input")
   slow ? await typeSlow(idNo, "XXXX XXXX 4417", 40) : await idNo.fill("XXXX XXXX 4417")
-  await dlg.locator("label").filter({ hasText: "Room type" }).locator("select").selectOption(`${PROPERTY}-STD`)
+  await dlg.locator("label").filter({ hasText: "Room type" }).locator("select").first().selectOption(`${PROPERTY}-STD`)
   await p.waitForTimeout(1500)
   // pick a room nobody is in (the list can include a room whose guest
   // departs today but has not checked out yet)
-  await dlg.locator("select").nth(2).selectOption({ index: 1 })
+  await dlg.locator("label").filter({ hasText: /^Room/ }).locator("select:not([disabled])").last().selectOption({ index: 1 })
   await p.waitForTimeout(400)
   const amt = dlg.locator("label").filter({ hasText: "Amount collected" }).locator("input")
   await amt.fill("0")
   await p.waitForTimeout(1200)
+  // show the guest, ID and room part, not the payment box at the bottom
+  await dlg.getByPlaceholder("Type to find or create").evaluate((el) => el.scrollIntoView({ block: "start" }))
+  await p.waitForTimeout(400)
   return dlg
 }
 if (want("walkin")) {

@@ -39,7 +39,7 @@ from the reservation.
 guest, invoice or folio, filter by status, or set **Closed from** and
 **To** to see the bills closed in a date range.
 
-![The Billing screen: shortcuts to End of Day and My Till, and the list of folios with their balances](/img/billing/billing-list.png)
+![The Billing screen: the Night audit card with its recent runs and Open End of Day, the Cashier till card, and the list of folios with their balances](/img/billing/billing-list.png)
 
 A folio opens by itself at check-in. Until it is settled it is a
 **Provisional Bill** with no invoice number.
@@ -245,6 +245,8 @@ allowed credit.
 **Receivables** (Finance → Receivables) is the home of every company
 account: who owes what, how late, and how much credit is left.
 
+![Receivables: what companies owe in total and overdue, and each account with its company, contact, terms, credit limit, overdue amount and balance](/img/billing/receivables.png)
+
 - **Open an account** (Finance and Hotel Admin): press **New account**,
   pick the company, and set the **Account number**, **Credit limit**
   (0 = no limit), the **payment terms** (the property's, or days to pay
@@ -326,7 +328,7 @@ times the days in the period.
 ## Bill a group from its main room
 
 A group booked with a main room (see
-[Group bookings](/reservations#group-bookings-corporate-wedding)) has one
+[Group bookings](/reservations#hold-rooms-for-a-group)) has one
 **Group** folio, the group bill, kept on the main room. As each charge is
 posted, Kamra sends what the main room pays to the group bill:
 
@@ -338,13 +340,15 @@ posted, Kamra sends what the main room pays to the group bill:
 Anything else stays on the guest's own folio. Alcohol never goes to the
 group bill. A company group keeps its own billing rules, which come first.
 
-**A room that pays for itself:** tick **Pays own charges** on its row in
-the rooming list. Only new charges stay on that room's folio; move charges
+**A room that pays for itself:** on the group's **Bill** tab, tick **Pays
+own room** on its row under **Each guest's own bill**. Only new charges stay on that room's folio; move charges
 already posted with **Move charges** on the folio.
 
 **Settle the group bill:**
 
-1. Open the group. The header shows **Open group bill** with its balance.
+1. Open the group and its **Bill** tab: **Open group bill** shows the
+   balance. Once everyone has checked out, **What to do next** offers
+   **Settle group bill** too.
 2. Click **Settle group bill**. Pick the payment mode and amount, or, for a
    company with credit, tick **Send to the company's city ledger**.
 3. Click **Settle**. Once nothing is left on it, the bill closes and gets its

@@ -1,5 +1,5 @@
 // Docs images for docs-site/settings.md - the settings hub, a module page,
-// staff & access, roles, modules, integrations and appearance.
+// staff & access, modules, integrations and appearance.
 import { done, gif, open, session, settle, shot, typeSlow } from "./lib.mjs"
 
 const ctx = await session()
@@ -22,8 +22,6 @@ if (await add.count()) {
   await page.getByRole("button", { name: "Cancel" }).click().catch(() => {})
 }
 
-await open(page, "/settings/roles", 2000)
-await shot(page, "settings/roles")
 await open(page, "/settings/modules", 2000)
 await shot(page, "settings/modules")
 await open(page, "/settings/payments", 2000)

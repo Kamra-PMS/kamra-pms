@@ -67,13 +67,13 @@ and an accounting export for Tally, Zoho Books or ERPNext.
 
 ## Housekeeping
 
-A room board for supervisors and a phone app for floor staff: take a room
+The Housekeeping Board for supervisors and a phone app for floor staff: take a room
 from the pool, accept or decline, start, finish with a photo. Tasks have
 deadlines and escalate when they're late. Minibar posting, guest laundry
 from collection to folio, lost & found and shift handover are on the same
 screens.
 
-![The housekeeping room board](/img/housekeeping/room-board.png)
+![The Housekeeping Board](/img/housekeeping/room-board.png)
 
 [Housekeeping guide →](/housekeeping)
 

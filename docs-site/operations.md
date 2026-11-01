@@ -7,7 +7,7 @@ priority and a deadline, whether a person or an AI agent raised it. The
 Hotel Admin users see this module; only a Hotel Admin changes its
 settings.
 
-![The Guest Requests list: open tickets with their priority, category, source badge, room and deadline, one of them overdue](/img/operations/guest-requests.png)
+![The Service Tickets list: the Open, Mine, Unassigned, Overdue, Resolved and All tabs, filters, and open tickets with their priority, category, source badge, room and deadline, two of them overdue](/img/operations/guest-requests.png)
 
 ## Before you start
 
@@ -20,7 +20,7 @@ settings.
 
 ## Log a guest request
 
-1. Open **Operations → Guest Requests**.
+1. Open **Operations → Guest Requests (Tickets)**.
 2. Press **New ticket**.
 3. Write the **Subject** ("Extra pillows for 201"), and pick the
    **Category**, **Priority** and **Room**. Add **Details** if staff need
@@ -34,26 +34,46 @@ priority. The list shows it as *due 10-19 22:40* (month-day, time).
 
 ## Work a request through
 
+The tabs along the top filter the list: **Open**, **Mine**,
+**Unassigned**, **Overdue**, **Resolved** and **All**, each with its
+count. Below them you can search by subject, room, guest or ticket id,
+and narrow by category, priority or age (**Open for over 1 day** and
+so on).
+
 Each open ticket has two buttons:
 
-- **Start** when someone is on it. The ticket moves to **In Progress**.
-- **Resolve** when it's done. The ticket moves to **Resolved** and
-  leaves the list.
+- **Take it** gives the ticket to you. The line then says *with* your
+  name.
+- **Open** opens the ticket.
 
-![Logging a request for extra pillows in room 201 and starting it](/img/operations/new-ticket.gif)
+![Logging a request for extra pillows in room 201, taking it and starting work](/img/operations/new-ticket.gif)
 
-A ticket past its deadline shows **overdue** in red. Tick **Show
-closed** to see resolved, closed and cancelled tickets too; a ticket
-resolved after its deadline shows **SLA breached**.
+An opened ticket shows its priority, status, room and guest, then
+**Age**, **Time left** (or **Overdue by**), **First response** and
+**SLA**. Under that:
 
-![The list with Show closed ticked: resolved and closed tickets are greyed, one marked SLA breached](/img/operations/show-closed.png)
+- **Who has it**: pick someone from the list, or press **Assign to me**.
+- **Move it on**: **Start work** moves the ticket to **In Progress**.
+  When it's done, write what was done and press **Mark solved**. The
+  ticket moves to **Resolved** and leaves the **Open** tab.
+- **Came back?**: on a solved ticket, write why and press **Reopen**.
+- **Timeline**: who raised, assigned, moved or noted what, and when.
+  Add a note (who was called, what was tried) at the bottom.
+
+![An opened ticket: priority and status, age, time left, first response and SLA, Who has it, Move it on with Mark solved, and the timeline](/img/operations/ticket-detail.png)
+
+A ticket past its deadline shows **overdue** in red. The **Resolved**
+tab lists solved tickets; a ticket solved after its deadline shows
+**SLA breached**.
+
+![The Resolved tab: solved tickets with who solved them, several marked SLA breached](/img/operations/show-closed.png)
 
 **Closed** and **Cancelled** are set by AI agents and integrations; the
 screen shows them but has no button for them.
 
 ### Maintenance requests go to housekeeping
 
-When you press **Start** on a **Maintenance** ticket that has a room,
+When you press **Start work** on a **Maintenance** ticket that has a room,
 Kamra adds a **Maintenance** task to that room's housekeeping queue,
 with the ticket's priority and a note *From ticket TKT-…*. It shows on
 the [Housekeeping Board and the phone app](/housekeeping). If the room already
@@ -102,7 +122,7 @@ resolved inside their deadline?
 4. **Overdue now** lists open tickets past their deadline and by how many
    hours.
 
-![The Operations SLA report: 10 tickets, 4 resolved, 20% breach rate, 19 min average, tables by category and priority, and one ticket overdue now](/img/operations/sla-report.png)
+![The Operations SLA report: tickets, resolved, breach rate and average resolve time, tables by category and priority, and the tickets overdue now](/img/operations/sla-report.png)
 
 A ticket counts as breached if it was resolved after its deadline, or is
 still open past it. The breach rate turns amber at 10% and red at 25%. A
@@ -187,7 +207,7 @@ priority's minutes have passed since it was created. Check **Settings →
 Operations**.
 
 **No Maintenance task appeared.** The ticket needs the **Maintenance**
-category and a room, and someone must press **Start**. Resolving it
+category and a room, and someone must press **Start work**. Resolving it
 straight away doesn't create a task.
 
 ## For developers
