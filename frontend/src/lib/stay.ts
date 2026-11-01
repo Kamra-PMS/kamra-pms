@@ -29,6 +29,15 @@ export function addDays(date: string, days: number) {
   return isoDate(d)
 }
 
+/** `date` moved by `days`, or "" while `date` is not a whole date yet (an
+ *  empty or half-typed date input), so callers never hit an Invalid Date. */
+export function shiftDate(date: string, days: number) {
+  const d = parseDate(date)
+  if (!d) return ""
+  d.setDate(d.getDate() + days)
+  return isoDate(d)
+}
+
 export function nightsBetween(a: string, b: string) {
   const x = parseDate(a), y = parseDate(b)
   if (!x || !y) return 1

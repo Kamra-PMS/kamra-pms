@@ -62,6 +62,8 @@ interface Detail {
     master_reservation: string | null
     master_pays: string | null
     in_house: number
+    /** rooms the group has: the block, or its bookings where there is none */
+    rooms_total: number
     attrition_pct: number
     deposit_due: number
   }
@@ -284,7 +286,7 @@ export default function GroupControl({
   const amendCount = countOf("Confirmed", "Checked In")
   const toArrive = list.filter((r) => r.status === "Confirmed").length
   const inHouse = list.filter((r) => r.status === "Checked In").length
-  const kept = d.pickup.reduce((s, p) => s + p.rooms_blocked, 0)
+  const kept = g.rooms_total
   const stillFree = d.pickup.reduce((s, p) => s + p.remaining, 0)
   const guestsOwe = list.filter((r) => r.own_balance > 0.5)
   const today = d.business_date ?? todayLocal()

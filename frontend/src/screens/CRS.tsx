@@ -11,6 +11,7 @@ import { Sheet } from "../components/ui/sheet"
 import { cur, moneyLocale, useLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { useCashierAuth } from "../lib/cashierAuth"
+import { shiftDate } from "../lib/stay"
 
 
 const inr = (n: unknown) =>
@@ -130,11 +131,6 @@ function openLeg(property: string, reservation: string) {
 function isoToday() {
   return new Date().toISOString().slice(0, 10)
 }
-function plusDays(iso: string, n: number) {
-  const d = new Date(iso)
-  d.setDate(d.getDate() + n)
-  return d.toISOString().slice(0, 10)
-}
 
 export default function CRS() {
   const { t, tn } = useT()
@@ -159,7 +155,7 @@ export default function CRS() {
   const [tripSearch, setTripSearch] = useState("")
   const [openTrip, setOpenTrip] = useState<string | null>(null)
 
-  const checkOut = plusDays(checkIn, Math.max(1, nights))
+  const checkOut = shiftDate(checkIn, Math.max(1, nights))
 
   const loadTrips = () =>
     call<TripRow[]>("kamra.crs.list_itineraries", { search: tripSearch || null })
@@ -283,7 +279,7 @@ export default function CRS() {
               onChange={(e) => setChildren(Math.max(0, Number(e.target.value)))} />
           </label>
           <div className="flex items-end">
-            <Button className="w-full" disabled={busy} onClick={search}>
+            <Button className="w-full" disabled={busy || !checkOut} onClick={search}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
               {t("Search")}
             </Button>

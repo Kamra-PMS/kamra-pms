@@ -39,6 +39,13 @@ class GroupActionsTestCase(IntegrationTestCase):
 		self.assertEqual(len(created), 3)
 		self.assertEqual(len(group_detail(gb)["rooming_list"]), 3)
 
+	def test_a_group_with_no_block_counts_its_booked_rooms(self):
+		# no room blocks: the screen said "2 named of 0"
+		gb, created = self.group(count=3)
+		self.assertEqual(group_detail(gb)["group"]["rooms_total"], 3)
+		group_cancel(gb, [created[0]])
+		self.assertEqual(group_detail(gb)["group"]["rooms_total"], 2)
+
 	def test_rooming_names_give_each_room_its_own_guest(self):
 		gb, (r1, r2, r3) = self.group()
 		lead = frappe.db.get_value("Reservation", r1, "guest")
