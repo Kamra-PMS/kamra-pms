@@ -147,6 +147,8 @@ class RbacTestCase(IntegrationTestCase):
 		with self.assertRaises(frappe.PermissionError) as e:
 			api.set_room_rate(property=HOME, room_type="x", rate=1)
 		self.assertIn("Revenue Manager", str(e.exception))
+		self.assertIn("Hotel Admin", str(e.exception))
+		self.assertNotIn("System Manager", str(e.exception))
 
 	def test_no_endpoint_uses_a_fixed_role_list(self):
 		"""require_roles is legacy (a hotel can't change it): every endpoint

@@ -362,10 +362,11 @@ def require_perm(doctype: str, ptype: str, scope: dict | None = None):
 		def guarded(*args, **kwargs):
 			if not frappe.has_permission(doctype, ptype,
 			                             ignore_share_permissions=True):
-				shown = sorted(perm_roles(doctype, ptype) - set(ADMIN))
+				# every role that holds it; IT always may, so it isn't listed
+				shown = sorted(perm_roles(doctype, ptype) - set(IT_ADMIN))
 				frappe.throw(
 					f"Not permitted - needs one of: {', '.join(shown)}."
-					if shown else "Not permitted - needs Hotel Admin.",
+					if shown else "Not permitted - needs IT (System Manager).",
 					frappe.PermissionError)
 			_enforce_property_scope(fn, args, kwargs, scope)
 			return fn(*args, **kwargs)
