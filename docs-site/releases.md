@@ -16,7 +16,8 @@ Released 27 Oct 2026.
 A 27-part [video course](/video-course) on YouTube takes you through
 Kamra from the first sign-in to night audit, reports and AI agents. Each
 episode is about 8 minutes, with chapters, English captions and a link to
-the matching guide. The first twenty are out now, and new episodes follow
+the matching guide. Updated 1 Nov 2026: the episodes now have a clearer
+voice and cleaner audio. The first episodes are out now, and the rest follow
 every Monday, Wednesday and Friday.
 [Watch the playlist](https://www.youtube.com/playlist?list=PLcNTRQwzkzAs).
 
