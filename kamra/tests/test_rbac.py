@@ -333,6 +333,27 @@ class RbacTestCase(IntegrationTestCase):
 		apps = [p for p in api.whoami()["can"]["Property"] if p.startswith("app_")]
 		self.assertEqual(apps, ["app_operations"])
 
+	def test_menus_gate_on_permissions_the_role_holds(self):
+		"""Every menu item and Reports card gated by perm names a real
+		permission, and the gate hides what the server would refuse."""
+		import re
+		front = os.path.join(os.path.dirname(__file__), "../../frontend/src")
+		gates = set()
+		for rel in ("lib/apps.ts", "screens/ReportsHub.tsx"):
+			src = open(os.path.join(front, rel)).read()
+			gates |= set(re.findall(r'perm: \["([^"]+)", "([^"]+)"\]', src))
+		self.assertIn(("Folio Ledger Entry", "export_books"), gates)
+		for dt, pt in gates:
+			self.assertTrue(pt in ("read", "write", "create") or frappe.db.exists(
+				"Permission Type", {"doc_type": dt, "perm_type": pt}), f"{dt}: {pt}")
+		night = _user("rbac.nightauditor@test.local", "Night Auditor")
+		for gate in (("Room", "view_tape"), ("Guest", "handle_guests"),
+		             ("Folio Ledger Entry", "export_books")):
+			self.assertIn(gate, gates)
+			self.assertFalse(frappe.has_permission(*gate, user=night), gate)
+		self.assertFalse(frappe.has_permission(
+			"Venue", "read", user=_user("rbac.revenuemanager@test.local", "Revenue Manager")))
+
 	def test_it_only_actions_stay_it_only(self):
 		from kamra import api
 		self.assertFalse(getattr(api.generate_api_key, "_kamra_perm", None))

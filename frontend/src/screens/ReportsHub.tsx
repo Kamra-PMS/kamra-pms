@@ -18,6 +18,7 @@ import {
 
 import { useAuth } from "../lib/auth"
 import { visibleApps } from "../lib/apps"
+import { hasPerm } from "../lib/can"
 import type { ShellContext } from "../AppShell"
 import { useT } from "../lib/i18n"
 
@@ -32,6 +33,8 @@ interface ReportLink {
   icon: LucideIcon
   app?: string
   roles?: string[]
+  /** [doctype, permission type] the page behind it needs (roles = fallback) */
+  perm?: [string, string]
 }
 
 const MONEY_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
@@ -53,8 +56,10 @@ const SECTIONS: { title: string; items: ReportLink[] }[] = [
   {
     title: "Daily",
     items: [
-      { to: "/owner", label: "Owner view", blurb: "Today, yesterday or the month on your phone: revenue, occupancy, money owed, the next 7 days and the last night audits.", icon: Smartphone, roles: FIGURE_ROLES },
-      { to: "/reports/flash", label: "Manager flash", blurb: "Occupancy, ADR, RevPAR, revenue and collections for a day, with the month to date.", icon: ChartLine, app: "finance" },
+      { to: "/owner", label: "Owner view", blurb: "Today, yesterday or the month on your phone: revenue, occupancy, money owed, the next 7 days and the last night audits.", icon: Smartphone,
+        perm: ["Property", "view_flash"], roles: FIGURE_ROLES },
+      { to: "/reports/flash", label: "Manager flash", blurb: "Occupancy, ADR, RevPAR, revenue and collections for a day, with the month to date.", icon: ChartLine, app: "finance",
+        perm: ["Property", "view_flash"], roles: FIGURE_ROLES },
       { to: "/end-of-day", label: "Night audit history", blurb: "Each closed business date and its audit pack.", icon: MoonStar, app: "finance" },
       { to: "/cashier/shift-report", label: "Shift report", blurb: "What each till took, by payment mode.", icon: ScrollText, app: "finance" },
     ],
@@ -73,8 +78,10 @@ const SECTIONS: { title: string; items: ReportLink[] }[] = [
     items: [
       { to: "/ledgers", label: "Ledgers", blurb: "Guest, city ledger, deposit and AR aging.", icon: BookOpen, app: "finance" },
       { to: "/folio-history", label: "Folio history", blurb: "Closed bills and invoices.", icon: History, app: "finance" },
-      { to: "/voids-allowances", label: "Voids and allowances", blurb: "Every void and allowance, with who and why.", icon: FileX2, app: "finance", roles: MONEY_ROLES },
-      { to: "/accounting-export", label: "Accounting export", blurb: "Books for your accounting software.", icon: FileSpreadsheet, app: "finance" },
+      { to: "/voids-allowances", label: "Voids and allowances", blurb: "Every void and allowance, with who and why.", icon: FileX2, app: "finance",
+        perm: ["Folio", "audit_voids"], roles: MONEY_ROLES },
+      { to: "/accounting-export", label: "Accounting export", blurb: "Books for your accounting software.", icon: FileSpreadsheet, app: "finance",
+        perm: ["Folio Ledger Entry", "export_books"], roles: [...MONEY_ROLES, "Kamra Agent"] },
     ],
   },
   {
@@ -94,7 +101,9 @@ export default function ReportsHub() {
   const sections = SECTIONS.map((s) => ({
     ...s,
     items: s.items.filter(
-      (r) => (!r.app || apps.has(r.app)) && (!r.roles || r.roles.some((x) => roles.includes(x))),
+      (r) => (!r.app || apps.has(r.app)) &&
+        (r.perm ? hasPerm(can, roles, r.perm[0], r.perm[1], r.roles)
+          : !r.roles || r.roles.some((x) => roles.includes(x))),
     ),
   })).filter((s) => s.items.length)
 

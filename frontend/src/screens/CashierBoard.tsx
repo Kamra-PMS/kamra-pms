@@ -93,8 +93,9 @@ export default function CashierBoard() {
       const [b, tl, pr, ol] = await Promise.all([
         call<Board>("kamra.cashier.tills_board", { property }),
         call<TerminalRow[]>("kamra.cashier.terminals", { property, include_disabled: 1 }),
-        call<Printer[]>("kamra.printing.printers", { property }),
-        call<Outlet[]>("kamra.pos.outlets", { property }),
+        // names only, for the terminal list; not every till role may read them
+        allowed("Kitchen Printer", "print_tickets") ? call<Printer[]>("kamra.printing.printers", { property }) : [],
+        allowed("POS Order", "take_orders") ? call<Outlet[]>("kamra.pos.outlets", { property }) : [],
       ])
       setBoard(b)
       setTerminals(tl)
@@ -103,7 +104,7 @@ export default function CashierBoard() {
     } catch (e) {
       setErr(serverError(e))
     }
-  }, [property])
+  }, [property, allowed])
 
   useEffect(() => {
     void load()
