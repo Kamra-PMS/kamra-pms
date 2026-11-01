@@ -11,6 +11,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cn } from "../lib/utils"
+import { parseDate, shiftDate } from "../lib/stay"
 import { cur, moneyLocale } from "../lib/money"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
@@ -160,12 +161,6 @@ function todayIso() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
-function shiftDate(iso: string, days: number) {
-  const d = new Date(iso)
-  d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
-}
-
 /** Whole days from `a` to `b` (YYYY-MM-DD). */
 const dayDiff = (a: string, b: string) =>
   Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000)
@@ -253,6 +248,7 @@ export default function TapeChart() {
   )
 
   const load = useCallback(() => {
+    if (!parseDate(start)) return // the date input is mid-edit
     if (mode === "day") {
       call<TapeData>("kamra.api.tape_chart", {
         property: getCurrentProperty(), start_date: start, days: DAYS,
@@ -478,13 +474,13 @@ export default function TapeChart() {
         </Button>
         <div className="ms-auto flex items-center gap-1">
           <Button variant="outline" aria-label={t("Previous")}
-            onClick={() => setStart(shiftDate(start, mode === "day" ? -7 : -1))}>
+            onClick={() => setStart(shiftDate(start, mode === "day" ? -7 : -1) || todayIso())}>
             <ChevronLeft className="size-4 rtl:rotate-180" />
           </Button>
           <input type="date" className={cn(inputCls, "w-40")} value={start}
             onChange={(e) => setStart(e.target.value)} />
           <Button variant="outline" aria-label={t("Next")}
-            onClick={() => setStart(shiftDate(start, mode === "day" ? 7 : 1))}>
+            onClick={() => setStart(shiftDate(start, mode === "day" ? 7 : 1) || todayIso())}>
             <ChevronRight className="size-4 rtl:rotate-180" />
           </Button>
         </div>

@@ -175,11 +175,7 @@ export const inputCls =
 
 export const today = () => new Date().toISOString().slice(0, 10)
 
-export function shiftDate(date: string, by: number) {
-  const d = new Date(date + "T00:00:00")
-  d.setDate(d.getDate() + by)
-  return d.toISOString().slice(0, 10)
-}
+export { shiftDate } from "../../lib/stay"
 
 export const dayName = (d: string) =>
   new Date(d + "T00:00:00").toLocaleDateString(uiDateLocale("en-US"), { weekday: "short" })

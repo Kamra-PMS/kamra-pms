@@ -6,13 +6,13 @@ import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
 import AllowanceRequests from "../components/AllowanceRequests"
 import ChangeCompany from "../components/ChangeCompany"
-import { loadLocale, taxRates } from "../lib/money"
+import { loadLocale, taxRates, fmtAmount } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { useAuth } from "../lib/auth"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
+import { cur, locale, taxLabel, useLocale } from "../lib/money"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import {
   Card,
@@ -23,7 +23,7 @@ import {
 
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })
+  fmtAmount(n ?? 0)
 
 interface InvoiceData {
   folio: {

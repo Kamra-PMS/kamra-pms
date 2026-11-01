@@ -3,7 +3,7 @@ import { ArrowLeft, Printer } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { Button } from "../components/ui/button"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
@@ -55,7 +55,7 @@ interface Quote {
 }
 
 const money = (n: number) =>
-  `${cur()}${Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })}`
+  `${cur()}${fmtAmount(n)}`
 
 export default function GroupQuotation() {
   useUILanguage()

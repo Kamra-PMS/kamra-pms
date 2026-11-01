@@ -120,9 +120,26 @@ export const locale = () => cache
 export const cur = () => cache.currency_symbol
 /** The number-formatting locale, e.g. "en-IN" (lakhs) or "id-ID". */
 export const moneyLocale = () => cache.locale
-export const fmtMoney = (n: unknown) =>
-  cache.currency_symbol +
-  Number(n ?? 0).toLocaleString(cache.locale, { maximumFractionDigits: 2 })
+/** The currency's minor-unit digits (2 for INR/USD, 0 for JPY), 2 until
+ *  the pack resolves or for a code Intl does not know. */
+export function moneyDigits(currency = cache.currency) {
+  try {
+    if (currency)
+      return new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions()
+        .maximumFractionDigits ?? 2
+  } catch {
+    /* unknown currency code */
+  }
+  return 2
+}
+/** An amount with the currency's normal decimals, always the same count
+ *  (2,27,255.40, never 2,27,255.4), so a column of figures lines up. */
+export const fmtAmount = (n: unknown) => {
+  const d = moneyDigits()
+  return Number(n ?? 0).toLocaleString(cache.locale, { minimumFractionDigits: d, maximumFractionDigits: d })
+}
+/** fmtAmount with the currency symbol in front. */
+export const fmtMoney = (n: unknown) => cache.currency_symbol + fmtAmount(n)
 export const taxRates = () => cache.tax_rates
 export const taxLabel = () => cache.tax_label
 /** Heading for the till's instant-mode bucket, "" where the country has none. */

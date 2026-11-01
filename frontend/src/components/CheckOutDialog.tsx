@@ -5,7 +5,7 @@ import { checkOutWithCredit } from "./CreditCheckout"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
-import { moneyLocale, useLocale } from "../lib/money"
+import { useLocale, fmtAmount } from "../lib/money"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
@@ -345,7 +345,7 @@ export default function CheckOutDialog(props: {
 
   const sym = ctx?.currency_symbol ?? ""
   const fmt = (n: number) =>
-    `${sym}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })}`
+    `${sym}${fmtAmount(n || 0)}`
   const folioLink = (f: string) => toFullPath(`/billing/${encodeURIComponent(f)}`)
   const blockersFor = (step: StepKey) => (ctx?.blockers ?? []).filter((b) => b.step === step &&
     !["owed", "refund"].includes(b.code))

@@ -53,6 +53,31 @@ class SimulatedPastTestCase(IntegrationTestCase):
 			nowdate())
 		self.assertFalse(frappe.db.count("Error Log", {"method": ("like", "seed_history%")}))
 
+	def test_past_room_charges_name_the_past_stay(self):
+		# today's demo guests are already checked in while the past replays,
+		# so a POS bill or laundry bag sent by room alone landed on their folio
+		from types import SimpleNamespace
+
+		h = seed_history.History.__new__(seed_history.History)
+		h.rng, h.stats = seed_history.random.Random(1), {}
+		h.outlets, h.menu = ["Restaurant"], {"Restaurant": ["Dal", "Rice"]}
+		day = add_days(nowdate(), -5)
+		past = {"in": True, "arrive": add_days(day, -1), "depart": add_days(day, 2),
+		        "room": "R-101", "res": "RES-PAST"}
+		h.plan = [past]
+		orders = []
+		order = SimpleNamespace(items=[], name="POS-1")
+		with patch("kamra.pos.create_order",
+		           side_effect=lambda *a, **k: orders.append(k) or {"name": "POS-1"}), \
+				patch("kamra.pos.confirm_order"), patch("kamra.pos.deliver_order"), \
+				patch("kamra.pos.pay_order"), patch.object(seed_history.frappe, "get_doc",
+				                                           return_value=order), \
+				patch.object(h, "as_user"), patch.object(h.rng, "random", return_value=0.1):
+			h._pos(day, "dinner")
+		to_rooms = [k for k in orders if k.get("room")]
+		self.assertTrue(to_rooms)
+		self.assertEqual({k["reservation"] for k in to_rooms}, {"RES-PAST"})
+
 
 class RebuildGuardTestCase(IntegrationTestCase):
 	def tearDown(self):

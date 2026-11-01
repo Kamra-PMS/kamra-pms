@@ -10,7 +10,7 @@ import { Link } from "react-router-dom"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
 
@@ -40,7 +40,7 @@ const inputCls =
   "rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
 const money = (n: number) =>
-  `${cur()}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 2 })}`
+  `${cur()}${fmtAmount(n || 0)}`
 
 export default function AllowanceRequests({ property, folio, status = "Pending", refreshKey, onChanged, showStay }: {
   property: string
