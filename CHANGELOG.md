@@ -26,6 +26,20 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.7.5](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.4...v2.7.5) (2026-11-02)
+
+
+### Features
+
+* folio discounts, promo codes on folios, room import and night audit options ([#469](https://github.com/Kamra-PMS/kamra-pms/issues/469)) ([feb51fb](https://github.com/Kamra-PMS/kamra-pms/commit/feb51fb77418260fbb75e681ec3f652e846f67aa))
+
+
+### Bug Fixes
+
+* charge type sent in English, plain Invoice title, named floors as entered ([#472](https://github.com/Kamra-PMS/kamra-pms/issues/472)) ([d8be66b](https://github.com/Kamra-PMS/kamra-pms/commit/d8be66b085fcd889733faa7e428997f55595be62))
+* **i18n:** standardize Brazilian Portuguese (pt-BR) hotel terminology and missing strings ([#454](https://github.com/Kamra-PMS/kamra-pms/issues/454)) ([65a8dd0](https://github.com/Kamra-PMS/kamra-pms/commit/65a8dd0bcb551700232c3ac27a6fbc1487df5b59))
+* untaxed bills print no tax columns; allowances read as Discount on the bill ([#475](https://github.com/Kamra-PMS/kamra-pms/issues/475)) ([01b3574](https://github.com/Kamra-PMS/kamra-pms/commit/01b357475a5d08cfca54606663d980c357b090e0))
+
 ## [2.7.4](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.3...v2.7.4) (2026-11-01)
 
 
