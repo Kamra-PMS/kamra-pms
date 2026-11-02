@@ -551,7 +551,8 @@ def import_bookings(property: str, bookings):
 			if not rt:
 				raise frappe.ValidationError(
 					f"unknown room type code {row['room_type_code']}")
-			guest = _find_or_create_guest(row["guest_name"], row.get("phone"))
+			guest = _find_or_create_guest(row["guest_name"], row.get("phone"),
+			                              property, where="an import")
 			doc = frappe.get_doc({
 				"doctype": "Reservation",
 				"property": property,
@@ -3284,7 +3285,9 @@ def guest_alert(guest: str | None = None, phone: str | None = None):
 	before booking so the warning shows up front, not as a refusal at the
 	end. Resolves exactly like create_booking: the chosen profile, else the
 	profile with this phone number."""
-	name = guest or (frappe.db.get_value("Guest", {"phone": phone}) if phone else None)
+	from kamra import phone as phone_mod
+	name = guest or (frappe.db.get_value("Guest", {"phone": phone_mod.matching(phone)})
+	                 if phone else None)
 	if not name:
 		return {"guest": None, "blacklisted": 0, "blacklist_reason": None}
 	g = frappe.db.get_value(
@@ -6162,10 +6165,23 @@ def cancellation_outlook(property: str, room_type: str, check_in_date: str,
 	        "fee_label": "", "non_refundable_season": None}
 
 
+def _phone_for(raw: str | None, property: str | None) -> str:
+	"""A phone read with the property's country (kamra.phone): E.164, or as
+	typed when it can't be read. Blank stays blank."""
+	from kamra import phone as phone_mod
+	return phone_mod.for_property(raw, property)[0]
+
+
 def _find_or_create_guest(guest_name: str, phone: str | None,
-                          property: str | None = None):
+                          property: str | None = None, where: str = "a booking"):
+	# one shape for every phone that comes in (#468): E.164 with the
+	# property's country, or kept as typed and flagged - never refused
+	from kamra import phone as phone_mod
+	typed = (phone or "").strip()
+	phone, problem = phone_mod.for_property(typed, property)
 	if phone:
-		existing = frappe.db.get_value("Guest", {"phone": phone})
+		# a profile saved before numbers were normalised still matches
+		existing = frappe.db.get_value("Guest", {"phone": ("in", {phone, typed})})
 		if existing:
 			return existing
 	parts = guest_name.strip().split(" ", 1)
@@ -6177,9 +6193,10 @@ def _find_or_create_guest(guest_name: str, phone: str | None,
 		"doctype": "Guest",
 		"first_name": parts[0],
 		"last_name": parts[1] if len(parts) > 1 else "",
-		"phone": phone,
+		"phone": phone or None,
 		"nationality": nationality or None,
 	}).insert(ignore_permissions=True)
+	phone_mod.flag(problem, "Guest", guest.name, property, where)
 	return guest.name
 
 
@@ -6187,6 +6204,8 @@ def _guest_for_row(guest_name: str, phone: str | None, property: str | None = No
 	"""The guest for one name typed on a rooming list. A shared phone (one
 	number for a family or an office) never replaces the typed name: the
 	existing guest is used only when the name matches too."""
+	from kamra import phone as phone_mod
+	phone = phone_mod.for_property(phone, property)[0]
 	if phone:
 		same = frappe.db.get_value(
 			"Guest", {"phone": phone, "full_name": guest_name.strip()}, "name")
@@ -6583,7 +6602,9 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		"planned_check_out_time": check_out_time,
 		"travel_agent": travel_agent or None,
 		"booked_by_name": booked_by_name or None,
-		"booked_by_phone": booked_by_phone or None,
+		# read with the property's country, like the guest's (#468); a CRS
+		# leg copying an older itinerary's booker phone is read here too
+		"booked_by_phone": _phone_for(booked_by_phone, property) or None,
 		"booker_relation": booker_relation or None,
 		"contact_preference": contact_preference
 			or ("Booker" if booked_by_name else "Guest"),
