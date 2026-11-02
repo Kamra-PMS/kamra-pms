@@ -1,4 +1,4 @@
-"""Front desk feedback from a Yemen property (2026-11-02).
+"""Folio discounts, refunds, room setup and night audit options.
 
 - A refund goes out only when the guest is in credit, up to that credit.
 - A discount on the folio: a percent, or an amount for the stay or per
