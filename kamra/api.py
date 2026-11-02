@@ -3079,9 +3079,11 @@ def folio_invoice(folio: str):
 		slot = by_rate.setdefault(key, {"taxable": 0.0, "tax": 0.0})
 		slot["taxable"] += float(c.amount or 0)
 		slot["tax"] += float(c.gst_amount or 0)
+		# the guest's bill calls an allowance what it is to them: a discount
+		head_name = "Discount" if c.charge_type == "Allowance" else (c.charge_type or "Other")
 		head = by_head.setdefault(
-			c.charge_type or "Other",
-			{"head": c.charge_type or "Other", "amount": 0.0, "tax": 0.0,
+			head_name,
+			{"head": head_name, "amount": 0.0, "tax": 0.0,
 			 "total": 0.0, "lines": 0, "service_code": (code or {}).get("value")})
 		head["amount"] += float(c.amount or 0)
 		head["tax"] += float(c.gst_amount or 0)
