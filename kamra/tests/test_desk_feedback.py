@@ -179,3 +179,10 @@ class DeskFeedbackTestCase(AuditTestCase):
 		                 "Tax Invoice")
 		from kamra.localization import generic
 		self.assertEqual(loc.invoice_title(generic), "Invoice")
+
+	def test_bill_shows_a_discount_not_an_allowance(self):
+		_res, folio = self.stay()
+		api.post_discount(folio, value=10, kind="Percent", reason="UT")
+		heads = {h["head"] for h in api.folio_invoice(folio)["summary_by_head"]}
+		self.assertIn("Discount", heads)
+		self.assertNotIn("Allowance", heads)

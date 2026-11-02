@@ -419,6 +419,9 @@ export default function FolioView() {
   // to the raw folio rows so a cached older payload still renders
   const lines = data.lines ?? folio.charges.map((c) => ({ ...c, row: c.name, qty: 1, rate: c.amount, service_code: null }))
   const taxRows = data.tax_summary ?? []
+  // a bill with no tax on any line prints no tax columns or totals
+  const taxed = Number(folio.tax_total) !== 0 ||
+    folio.charges.some((c) => Number(c.gst_rate) !== 0 || Number(c.gst_amount) !== 0)
   const open = folio.status === "Open"
 
   return (
@@ -1095,8 +1098,8 @@ export default function FolioView() {
                         {doc?.service_code_label ?? t("SAC")}
                       </th>
                       <th className="py-2 pr-3 text-right">{t("Amount {cur}", { cur: cur() })}</th>
-                      <th className="py-2 pr-3 text-right">{taxLabel()} %</th>
-                      <th className="py-2 pr-3 text-right">{taxLabel()} {cur()}</th>
+                      {taxed && <th className="py-2 pr-3 text-right">{taxLabel()} %</th>}
+                      {taxed && <th className="py-2 pr-3 text-right">{taxLabel()} {cur()}</th>}
                       <th className="py-2 text-right">{t("Total {cur}", { cur: cur() })}</th>
                       {editable && (
                         <th className="py-2 pl-3 print:hidden" aria-label={t("Actions")} />
@@ -1127,7 +1130,8 @@ export default function FolioView() {
                           )}
                           <td className="py-2 pr-3 text-zinc-500">{c.posting_date}</td>
                           <td className="py-2 pr-3">
-                            <span className="font-medium">{translate(c.charge_type)}</span>
+                            {/* on the guest's bill an allowance reads as a discount */}
+                            <span className="font-medium">{translate(c.charge_type === "Allowance" ? "Discount" : c.charge_type)}</span>
                             {c.description && (
                               <span className="text-zinc-500"> - {c.description}</span>
                             )}
@@ -1143,8 +1147,8 @@ export default function FolioView() {
                             {lines.find((l) => l.row === c.name)?.service_code ?? ""}
                           </td>
                           <td className="py-2 pr-3 text-right">{inr(c.amount)}</td>
-                          <td className="py-2 pr-3 text-right">{c.gst_rate}%</td>
-                          <td className="py-2 pr-3 text-right">{inr(c.gst_amount)}</td>
+                          {taxed && <td className="py-2 pr-3 text-right">{c.gst_rate}%</td>}
+                          {taxed && <td className="py-2 pr-3 text-right">{inr(c.gst_amount)}</td>}
                           <td className="py-2 text-right font-medium">{inr(c.total)}</td>
                           {editable && (
                             <td className="relative whitespace-nowrap py-2 pl-3 text-right print:hidden">
@@ -1232,7 +1236,7 @@ export default function FolioView() {
                   {data.summary_by_head.map((h) => (
                     <tr key={h.head}>
                       <td className="py-1">
-                        {h.head}
+                        {translate(h.head)}
                         <span className="ml-1.5 text-xs text-zinc-400">
                           {t("{n} line{s}", { n: h.lines, s: h.lines === 1 ? "" : "s" })}
                         </span>
@@ -1240,9 +1244,11 @@ export default function FolioView() {
                       <td className="py-1 text-right text-zinc-500">
                         {cur()}{inr(h.amount)}
                       </td>
-                      <td className="py-1 text-right text-zinc-400">
-                        + {cur()}{inr(h.tax)} {taxLabel().toLowerCase()}
-                      </td>
+                      {taxed && (
+                        <td className="py-1 text-right text-zinc-400">
+                          + {cur()}{inr(h.tax)} {taxLabel().toLowerCase()}
+                        </td>
+                      )}
                       <td className="py-1 text-right font-medium">
                         {cur()}{inr(h.total)}
                       </td>
@@ -1254,7 +1260,7 @@ export default function FolioView() {
           )}
 
           <div className="mb-6 grid gap-6 sm:grid-cols-2">
-            <div>
+            {taxed ? <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 {t("{tax} summary", { tax: taxLabel() })}
               </h3>
@@ -1281,14 +1287,16 @@ export default function FolioView() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </div> : <div />}
             <div className="space-y-1.5 text-sm sm:text-right">
               <p className="text-zinc-500">
                 {t("Charges")}: <span className="text-zinc-900">{cur()}{inr(folio.charges_total)}</span>
               </p>
-              <p className="text-zinc-500">
-                {taxLabel()}: <span className="text-zinc-900">{cur()}{inr(folio.tax_total)}</span>
-              </p>
+              {taxed && (
+                <p className="text-zinc-500">
+                  {taxLabel()}: <span className="text-zinc-900">{cur()}{inr(folio.tax_total)}</span>
+                </p>
+              )}
               <p className="text-lg font-semibold">
                 {t("Grand total")}: {cur()}{inr(folio.grand_total)}
               </p>
