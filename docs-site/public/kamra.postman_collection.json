@@ -2462,6 +2462,43 @@
      }
     },
     {
+     "name": "post_discount",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.post_discount",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.post_discount"
+       ]
+      },
+      "description": "Give a discount on the room nights already on the bill: a percent, or\nan amount for the whole stay or per room night. A promo code\n(voucher_code, a Discount Voucher) sets the kind and value instead.\n\nIt posts as an allowance, so the property's allowance approval, the\nvoucher serial and the allowance report all apply: above the approval\nline the desk only asks and a manager approves. preview=1 returns the\nlines without posting.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"value\": 0,\n  \"kind\": \"Percent\",\n  \"basis\": \"Stay\",\n  \"reason\": \"\",\n  \"preview\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "decide_allowance",
      "request": {
       "method": "POST",
@@ -11514,6 +11551,80 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "preview_rooms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.golive.preview_rooms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.golive.preview_rooms"
+       ]
+      },
+      "description": "Dry run of the rooms file: which rooms are new, which already exist\n(their type, floor and notes are updated, never duplicated).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"csv_text\": \"<csv_text>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "run_rooms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.golive.run_rooms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.golive.run_rooms"
+       ]
+      },
+      "description": "Create the file's rooms and update the ones that exist. Rows with a\nproblem are skipped and listed; the rest go in.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"csv_text\": \"<csv_text>\"\n}",
        "options": {
         "raw": {
          "language": "json"

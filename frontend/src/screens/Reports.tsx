@@ -587,7 +587,9 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                       <td className="px-3 py-2 text-zinc-600">
                         {r.schedule_frequency === "Off"
                           ? t("Off")
-                          : `${translate(r.schedule_frequency)} · ${r.schedule_time}`}
+                          : r.schedule_frequency === "After night audit"
+                            ? t("After night audit")
+                            : `${translate(r.schedule_frequency)} · ${r.schedule_time}`}
                       </td>
                       <td className="px-3 py-2">{r.is_shared ? t("Yes") : t("No")}</td>
                       <td className="px-3 py-2">
@@ -876,15 +878,16 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                     <option value="Off">{t("Off")}</option>
                     <option value="Daily">{t("Daily")}</option>
                     <option value="Weekly">{t("Weekly")}</option>
+                    <option value="After night audit">{t("After night audit")}</option>
                   </select>
                   {scheduleFrequency !== "Off" && (
                     <>
-                      <input
+                      {scheduleFrequency !== "After night audit" && <input
                         type="time"
                         className="w-full rounded border border-zinc-300 px-2 py-1.5"
                         value={scheduleTime}
                         onChange={(e) => setScheduleTime(e.target.value)}
-                      />
+                      />}
                       {scheduleFrequency === "Weekly" && (
                         <select
                           className="w-full rounded border border-zinc-300 px-2 py-1.5"

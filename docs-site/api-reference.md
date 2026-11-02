@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **480 endpoints**, generated from the source
+the UI and the AI use. **483 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -908,6 +908,31 @@ voucher serial (allowance_voucher).
 | `gst_rate` | no | `0` |
 | `pin` | no | `None` |
 | `reason_code` | no | `None` |
+
+### `kamra.api.post_discount`
+
+**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+
+Give a discount on the room nights already on the bill: a percent, or
+an amount for the whole stay or per room night. A promo code
+(voucher_code, a Discount Voucher) sets the kind and value instead.
+
+It posts as an allowance, so the property's allowance approval, the
+voucher serial and the allowance report all apply: above the approval
+line the desk only asks and a manager approves. preview=1 returns the
+lines without posting.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `folio` | yes |  |
+| `value` | no | `0` |
+| `kind` | no | `'Percent'` |
+| `basis` | no | `'Stay'` |
+| `reason` | no | `''` |
+| `reason_code` | no | `None` |
+| `pin` | no | `None` |
+| `voucher_code` | no | `None` |
+| `preview` | no | `0` |
 
 ### `kamra.api.decide_allowance`
 
@@ -4494,7 +4519,7 @@ business, so they never reach outbound webhook subscribers.
 
 ### `kamra.golive.csv_template`
 
-**GET/POST** · roles: `Finance`
+**GET/POST** · roles: `Finance`, `Hotel Admin`
 
 The header row of one of Kamra's go-live CSV templates.
 
@@ -4567,6 +4592,30 @@ row of any file was left out - the gate before the hotel goes live.
 | `opening_csv` | no | `None` |
 | `companies_csv` | no | `None` |
 | `bookings_csv` | no | `None` |
+
+### `kamra.golive.preview_rooms`
+
+**POST** · roles: `Hotel Admin`
+
+Dry run of the rooms file: which rooms are new, which already exist
+(their type, floor and notes are updated, never duplicated).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
+
+### `kamra.golive.run_rooms`
+
+**POST** · roles: `Hotel Admin`
+
+Create the file's rooms and update the ones that exist. Rows with a
+problem are skipped and listed; the rest go in.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `csv_text` | yes |  |
 
 
 ## Inventory & recipes

@@ -83,6 +83,50 @@ has already moved the database forward, restore that backup when the
 older image will not run cleanly. Details:
 [Going back (downgrade)](/quickstart#going-back-downgrade).
 
+## How do I give a guest a discount?
+
+On the folio, under **Post a charge**, use **Give a discount**: a percent,
+an amount for the whole stay or per night, or a promo code. It comes off
+the room nights on the bill. At check-out, press **Give a discount before
+collecting**. See [Give a discount](/billing#give-a-discount).
+
+## Who can give discounts?
+
+Turn on **Allowances need a manager's approval** (Settings → Finance →
+Cashier controls) and pick who approves. Above the amount you set, the
+desk only asks and a manager approves with their PIN.
+
+## Can a promo code be used more than once?
+
+Yes. **Max uses** on the voucher (Revenue → Vouchers) sets how many times;
+0 means unlimited. Each stay can use a code once.
+
+## Why can't I refund?
+
+A refund goes out only when the guest is in credit, and only up to what is
+due back. A guest who still owes settles first.
+
+## Does night audit post the room charges?
+
+Yes, for every in-house guest in one run. Guests past their departure
+date show in step 3: check them out or extend the stay, or turn on
+**Extend unchecked-out departures one night** and the audit extends and
+posts them. See [Night audit](/night-audit).
+
+## Can reports be emailed after night audit?
+
+Yes. Set a custom report's email schedule to **After night audit**. See
+[Email reports after the audit](/night-audit#email-reports-after-the-audit).
+
+## We don't serve alcohol. Can we hide it?
+
+Yes. Turn off **Sells alcohol** under Settings → Property → Location &
+locale, and every alcohol field and label disappears in every language.
+
+## How do I correct a translation?
+
+See [Fix a translation](/contributors#fix-a-translation).
+
 ## How do I report a bug or ask for a feature?
 
 [GitHub issues](https://github.com/Kamra-PMS/kamra-pms/issues) for bugs

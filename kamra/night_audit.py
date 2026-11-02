@@ -254,12 +254,51 @@ def check_departures_due(property: str, bd: str) -> dict:
 		fields=["name", "guest_name", "room", "check_in_date", "check_out_date"],
 		order_by="check_out_date asc, name asc", limit_page_length=0)
 	items = [_stay_cols(frappe.get_doc("Reservation", r.name)) for r in rows]
+	if cint(_setting(property, "na_auto_extend")):
+		# the run extends them one night itself (auto_extend_departures)
+		return _check(
+			"departures_due", "Departures still in house", "warn", items,
+			"The audit extends each of these stays by one night and posts it. "
+			"Check out anyone who has left before you run it.", "/")
 	return _check(
 		"departures_due", "Departures still in house",
 		_severity(property, "departures_due"), items,
 		"Check the guest out, or extend the stay if they are staying on. "
 		"The audit does not post a night for a stay past its departure date.",
 		"/")
+
+
+def auto_extend_departures(property: str, bd: str) -> list[dict]:
+	"""With na_auto_extend on: every stay still Checked In on or past its
+	departure date gets one more night (departure = business date + 1)
+	through the desk's own amend path, so availability, pricing and the
+	audit trail are the same as pressing Extend stay. A stay that can't be
+	extended (the room is booked) is left for the checklist."""
+	if not cint(_setting(property, "na_auto_extend")):
+		return []
+	from frappe.utils import add_days
+	from kamra.api import _amend_dates
+	out = []
+	for name in frappe.get_all(
+		"Reservation", filters={"property": property, "status": "Checked In",
+		                        "check_out_date": ("<=", bd)}, pluck="name",
+		limit_page_length=0):
+		doc = frappe.get_doc("Reservation", name)
+		frappe.db.savepoint("na_auto_extend")
+		try:
+			# the audit is already role-gated; the night auditor may not
+			# have write on Reservation
+			doc.flags.ignore_permissions = True
+			_amend_dates(doc, str(doc.check_in_date), add_days(bd, 1),
+			             confirm_price=1, note="Extended one night by night audit")
+			out.append({"reservation": name, "guest": doc.guest_name,
+			            "room": _room_no(doc.room), "extended": True})
+		except Exception as e:
+			frappe.db.rollback(save_point="na_auto_extend")
+			out.append({"reservation": name, "guest": doc.guest_name,
+			            "room": _room_no(doc.room), "extended": False,
+			            "error": frappe.utils.strip_html(str(e))[:200]})
+	return out
 
 
 def check_arrivals_pending(property: str, bd: str, run_at=None) -> dict:

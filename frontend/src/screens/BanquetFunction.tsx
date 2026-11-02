@@ -43,7 +43,7 @@ import { useAuth } from "../lib/auth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Sheet } from "../components/ui/sheet"
-import { taxLabel } from "../lib/money"
+import { sellsAlcohol, taxLabel } from "../lib/money"
 import {
   daysAway,
   Empty,
@@ -1140,7 +1140,7 @@ function ItemsTab({
                             edit(i, { item_type: e.target.value })
                           }
                         >
-                          {ITEM_TYPES.map((t) => (
+                          {ITEM_TYPES.filter((it) => it !== "Alcohol" || sellsAlcohol()).map((t) => (
                             <option key={t} value={t}>{translate(t)}</option>
                           ))}
                         </select>

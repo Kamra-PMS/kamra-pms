@@ -11,7 +11,7 @@ const HkTaskMediaPanel = lazy(() =>
   import("../components/HkMedia").then((m) => ({ default: m.HkTaskMediaPanel })),
 )
 const ReservationDetail = lazy(() => import("./ReservationDetail"))
-import { cur, locale } from "../lib/money"
+import { cur, locale, sellsAlcohol } from "../lib/money"
 
 export const roomsConfig: ScreenConfig = {
   doctype: "Room",
@@ -755,7 +755,7 @@ export const menuItemsConfig: ScreenConfig = {
       options: ["Egg", "Dairy", "Nuts", "Peanuts", "Gluten", "Soy", "Shellfish", "Fish", "Sesame", "Sulphites"],
       hint: "Edit the list under Settings → F&B → Menu master lists. Matched against the guest allergy note on the kitchen display." },
     { field: "is_veg", label: "Vegetarian", type: "check" },
-    { field: "is_alcohol", label: "Alcohol", type: "check",
+    { field: "is_alcohol", label: "Alcohol", type: "check", dependsOn: sellsAlcohol,
       hint: "Alcohol always bills the guest folio, never the company" },
     { field: "available", label: "Available", type: "check" },
   ],
@@ -916,7 +916,7 @@ export const transactionCodesConfig: ScreenConfig = {
       hint: "e.g. Rooms, F&B, Other - used on ledgers and exports." },
     { field: "subgroup", label: "Subgroup", type: "data" },
     { field: "default_tax_rate", label: "Default tax %", type: "float" },
-    { field: "is_alcohol", label: "Alcohol", type: "check",
+    { field: "is_alcohol", label: "Alcohol", type: "check", dependsOn: sellsAlcohol,
       hint: "Alcohol never bills a Company folio." },
     { field: "charge_type", label: "Legacy charge type", type: "select",
       options: [

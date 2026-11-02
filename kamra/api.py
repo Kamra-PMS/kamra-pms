@@ -1741,6 +1741,16 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 		from kamra.localization import money_text
 		frappe.throw(f"Only {money_text(doc.property, received - refunded)} was collected on "
 		             "this folio - can't refund more than that.")
+	# money goes back only when the guest is in credit; a guest who still
+	# owes settles first. A security deposit release (ledger set) has its
+	# own balance check in kamra.deposit.
+	if not ledger and float(amount) > -float(doc.balance or 0) + 0.005:
+		from kamra.localization import money_text
+		if float(doc.balance or 0) >= 0:
+			frappe.throw(_("The guest owes {0} - nothing is due back to refund.").format(
+				money_text(doc.property, doc.balance)))
+		frappe.throw(_("Only {0} is due back to the guest - can't refund more than that.").format(
+			money_text(doc.property, -float(doc.balance))))
 	# Pre-arrival advance: release Deposit liability, not Guest (#343)
 	release_advance = False
 	if not ledger:
@@ -2608,6 +2618,102 @@ def post_allowance(folio: str, amount: float, reason: str = "",
 	serial = _post_allowance(doc.name, amount, text, gst_rate,
 	                         reason_code=reason_code)
 	return {"ok": True, "folio": folio, "serial": serial}
+
+
+def _discount_lines(doc, kind: str, value: float, basis: str) -> list[dict]:
+	"""What a discount takes off the room nights on the bill, one line per
+	tax rate (the allowance reverses tax at the rate of the nights it
+	reduces). Percent is the same per night or for the stay; an Amount is
+	either for the stay (spread over the rates by value) or per room night."""
+	groups: dict[float, dict] = {}
+	for c in doc.charges:
+		if c.charge_type != "Room" or flt(c.amount) <= 0:
+			continue
+		g = groups.setdefault(flt(c.gst_rate), {"base": 0.0, "nights": 0})
+		g["base"] += flt(c.amount)
+		g["nights"] += 1
+	if not groups:
+		frappe.throw(_("There are no room nights on this bill yet. A discount "
+		               "comes off posted nights: give it after night audit or "
+		               "at check-out."))
+	base = sum(g["base"] for g in groups.values())
+	value = flt(value)
+	if value <= 0:
+		frappe.throw(_("Enter a discount above zero."))
+	if kind == "Percent":
+		if value > 100:
+			frappe.throw(_("A discount can't be more than 100%."))
+		want = {r: g["base"] * value / 100 for r, g in groups.items()}
+	elif basis == "Night":
+		want = {r: value * g["nights"] for r, g in groups.items()}
+	else:
+		want = {r: value * g["base"] / base for r, g in groups.items()}
+	lines = [{"gst_rate": r, "amount": round(a, 2), "nights": groups[r]["nights"],
+	          "base": round(groups[r]["base"], 2)} for r, a in want.items() if round(a, 2) > 0]
+	if sum(ln["amount"] for ln in lines) > base + 0.005:
+		from kamra.localization import money_text
+		frappe.throw(_("The discount is more than the room nights on the bill ({0}).")
+		             .format(money_text(doc.property, base)))
+	return lines
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def post_discount(folio: str, value: float = 0, kind: str = "Percent",
+                  basis: str = "Stay", reason: str = "",
+                  reason_code: str | None = None, pin: str | None = None,
+                  voucher_code: str | None = None, preview: int = 0):
+	"""Give a discount on the room nights already on the bill: a percent, or
+	an amount for the whole stay or per room night. A promo code
+	(voucher_code, a Discount Voucher) sets the kind and value instead.
+
+	It posts as an allowance, so the property's allowance approval, the
+	voucher serial and the allowance report all apply: above the approval
+	line the desk only asks and a manager approves. preview=1 returns the
+	lines without posting."""
+	from kamra.localization import money_text
+	doc = frappe.get_doc("Folio", folio)
+	if doc.status == "Closed":
+		frappe.throw(_("This folio is settled - give the discount on the guest's "
+		               "open folio, or cancel the invoice first."))
+	if kind not in ("Percent", "Amount") or basis not in ("Stay", "Night"):
+		frappe.throw(_("Pick a percent or an amount, per night or for the stay."))
+	label = ""
+	if (voucher_code or "").strip():
+		from kamra.pricing import validate_voucher
+		nights = sum(1 for c in doc.charges if c.charge_type == "Room")
+		v = validate_voucher(doc.property, voucher_code, max(nights, 1))
+		if any(v.voucher_code in (c.description or "") for c in doc.charges
+		       if c.charge_type == "Allowance") or (
+			doc.reservation and frappe.db.get_value(
+				"Reservation", doc.reservation, "voucher") == v.name):
+			frappe.throw(_("Promo code {0} is already on this stay.").format(v.voucher_code))
+		kind = "Percent" if v.discount_type == "Percent" else "Amount"
+		value, basis = flt(v.value), "Stay"
+		label = _("Promo code {0}").format(v.voucher_code)
+	lines = _discount_lines(doc, kind, value, basis)
+	total = sum(ln["amount"] for ln in lines)
+	if not label:
+		label = (_("Discount {0}%").format(f"{flt(value):g}") if kind == "Percent"
+		         else _("Discount {0} per night").format(money_text(doc.property, value))
+		         if basis == "Night" else _("Discount"))
+	if cint(preview):
+		return {"lines": lines, "total": round(total, 2), "label": label}
+	note = (reason or "").strip()
+	if not (note or reason_code or (voucher_code or "").strip()):
+		frappe.throw(_("A discount needs a reason - it goes on the record."))
+	# post_allowance puts the reason code's text in front of this
+	text = f"{label}: {note}" if note else label
+	results = [post_allowance(folio, ln["amount"], reason=text,
+	                          gst_rate=ln["gst_rate"], pin=pin,
+	                          reason_code=reason_code)
+	           for ln in lines]
+	if (voucher_code or "").strip():
+		frappe.db.sql("""UPDATE `tabDiscount Voucher`
+		                 SET times_used = COALESCE(times_used, 0) + 1
+		                 WHERE name = %s""", v.name)
+	return {"ok": True, "folio": folio, "total": round(total, 2),
+	        "pending": any(r.get("pending") for r in results), "results": results}
 
 
 _ALLOWANCE_APPROVERS = {
@@ -8099,6 +8205,7 @@ def property_locale(property: str):
 	so no screen hardcodes ₹ or GST %. `integrations` says which country
 	integrations (gateways, tax return, ID checks) this property has."""
 	from kamra.localization import front_desk_vocabulary, integrations, pack_for
+	from kamra.settings import get_setting
 	prop = frappe.get_cached_doc("Property", property)
 	pack = pack_for(property)
 	return {**pack.locale(prop), **front_desk_vocabulary(pack),
@@ -8108,7 +8215,9 @@ def property_locale(property: str):
 	        # charge form shows the rate that will apply instead of a choice
 	        # that is ignored
 	        "fnb_tax_rate": float(pack.fnb_tax_rate(property)),
-	        "fnb_charge_words": list(_FNB_WORDS)}
+	        "fnb_charge_words": list(_FNB_WORDS),
+	        # a dry property hides every alcohol field and label
+	        "sells_alcohol": bool(int(get_setting(property, "sells_alcohol") or 0))}
 
 
 @frappe.whitelist(methods=["POST"])
