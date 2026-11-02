@@ -28,6 +28,19 @@ desk, or disclosed a security problem responsibly.
 | [@omar99elnemr](https://github.com/omar99elnemr) | Checkout refused until the bill is settled (#132) |
 | [@Syzygy2048](https://github.com/Syzygy2048) | Current OpenAI models in the assistant (#23) |
 
+## Fix a translation
+
+All screen text lives in one file per language in the repository:
+`frontend/src/i18n/locales/ar.json` (Arabic), `es.json` (Spanish) and
+`pt.json` (Portuguese). Each line is `"English": "translation"`. Change
+the translation on the right, keep any `{placeholder}` exactly as it is,
+and open a pull request (GitHub's pencil icon on the file does this for
+you). Messages from the server live in `kamra/translations/<lang>.csv`.
+
+Not on GitHub? Send us a list with three columns (English, current
+translation, correct translation) and we apply it. Use the word your
+front desk, night auditor or housekeeper says every day.
+
 ## Security
 
 | Reporter | Advisory |

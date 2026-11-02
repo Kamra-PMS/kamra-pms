@@ -28,7 +28,7 @@ import { useAuth } from "../lib/auth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Sheet } from "../components/ui/sheet"
-import { taxLabel } from "../lib/money"
+import { sellsAlcohol, taxLabel } from "../lib/money"
 import {
   CATALOGUE_UOMS,
   Empty,
@@ -328,7 +328,7 @@ export default function BanquetCatalogue() {
                       >
                         {s.chargeable ? translate("Chargeable") : translate("Complimentary")}
                       </span>
-                      {s.is_alcohol ? (
+                      {s.is_alcohol && sellsAlcohol() ? (
                         <span className="ml-1.5 text-amber-700">{translate("alcohol")}</span>
                       ) : null}
                       {s.on_pack_list ? (
@@ -688,7 +688,7 @@ function ServiceSheet({
             <Select
               value={s.category ?? "Audio Visual"}
               onChange={(v) => set("category", v)}
-              options={SERVICE_CATEGORIES}
+              options={SERVICE_CATEGORIES.filter((c) => c !== "Alcohol" || sellsAlcohol())}
             />
           </Field>
           <Field label={translate("Charged")}>
@@ -736,12 +736,13 @@ function ServiceSheet({
             label={translate("Goes on the pack list")}
             hint={translate("A physical thing someone has to carry to the hall.")}
           />
+          {sellsAlcohol() && (
           <Toggle
             checked={Boolean(s.is_alcohol)}
             onChange={(v) => set("is_alcohol", v ? 1 : 0)}
             label={translate("Alcohol")}
             hint={translate("Alcohol never rides a company or group folio - it settles separately.")}
-          />
+          />)}
         </div>
       </div>
     </Sheet>

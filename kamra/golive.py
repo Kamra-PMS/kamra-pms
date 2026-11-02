@@ -62,6 +62,9 @@ TEMPLATES = {
 		["Company Name", "Tax ID", "Contact Name", "Contact Phone",
 		 "Contact Email", "Credit Allowed", "Credit Limit", "Credit Days",
 		 "Account No"]),
+	"rooms": (
+		"kamra-rooms.csv",
+		["Room Number", "Room Type", "Floor", "Notes"]),
 	"opening": (
 		"kamra-opening-balances.csv",
 		["Type", "Reservation No", "Guest Name", "Room", "Check In",
@@ -71,7 +74,7 @@ TEMPLATES = {
 
 
 @frappe.whitelist()
-@require_roles("Finance")
+@require_roles("Finance", "Hotel Admin")
 def csv_template(kind: str):
 	"""The header row of one of Kamra's go-live CSV templates."""
 	if kind not in TEMPLATES:
@@ -945,3 +948,95 @@ def reconcile(property: str, opening_csv: str | None = None,
 		"blockers": blockers[:100],
 		"ready": bool(categories) and not blockers,
 	}
+
+
+# ── rooms ────────────────────────────────────────────────────────────────────
+
+ROOM_SYNONYMS = {
+	"room_number": ["Room Number", "Room No", "Room", "Number", "Room #"],
+	"room_type": ["Room Type", "Type", "Category", "Room Type Code"],
+	"floor": ["Floor", "Level", "Floor No"],
+	"notes": ["Notes", "Note", "Remarks", "Description"],
+}
+
+
+def _normalize_rooms(property: str, csv_text: str):
+	"""Rows to create or update. A room type is matched by code, name or ID
+	(as the bookings import does) and must exist: room types carry rates
+	and capacity, so they are set up first."""
+	from kamra.migrate import _room_type_resolver
+	headers, raw = _parse_csv(csv_text)
+	mapping = _map_headers(headers, ROOM_SYNONYMS)
+	missing = [f for f in ("room_number", "room_type") if f not in mapping]
+	if missing:
+		return headers, mapping, [], [{
+			"row": 0, "room": "",
+			"error": "Couldn't find a Room Number and a Room Type column. "
+			         "Use Kamra's rooms template."}]
+	resolve, _available = _room_type_resolver(property)
+	rows, issues, seen = [], [], set()
+	for i, r in enumerate(raw, start=1):
+		def get(f, r=r):
+			return (r.get(mapping.get(f, ""), "") or "").strip()
+		number, wanted = get("room_number"), get("room_type")
+		rt = resolve(wanted)
+		problems = []
+		if not number:
+			problems.append("no room number")
+		elif number.lower() in seen:
+			problems.append("room number repeated in the file")
+		if not rt:
+			problems.append(f"room type '{wanted}' is not set up at this property")
+		if problems:
+			issues.append({"row": i, "room": number, "error": "; ".join(problems)})
+			continue
+		seen.add(number.lower())
+		rows.append({"room_number": number, "room_type": rt,
+		             "floor": get("floor"), "notes": get("notes"),
+		             "existing": frappe.db.get_value(
+			             "Room", {"property": property, "room_number": number})})
+	return headers, mapping, rows, issues
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin")
+def preview_rooms(property: str, csv_text: str):
+	"""Dry run of the rooms file: which rooms are new, which already exist
+	(their type, floor and notes are updated, never duplicated)."""
+	headers, mapping, rows, issues = _normalize_rooms(property, csv_text)
+	existing = sum(1 for r in rows if r["existing"])
+	return {"headers": headers, "mapping": mapping,
+	        "unmapped": [h for h in headers if h not in mapping.values()],
+	        "ok": len(rows), "skipped": len(issues),
+	        "new": len(rows) - existing, "existing": existing,
+	        "issues": issues[:25], "sample": rows[:10]}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin")
+def run_rooms(property: str, csv_text: str):
+	"""Create the file's rooms and update the ones that exist. Rows with a
+	problem are skipped and listed; the rest go in."""
+	_headers, _mapping, rows, issues = _normalize_rooms(property, csv_text)
+	created = updated = 0
+	for r in rows:
+		if r["existing"]:
+			doc = frappe.get_doc("Room", r["existing"])
+			doc.room_type = r["room_type"]
+			doc.floor = r["floor"] or doc.floor
+			doc.notes = r["notes"] or doc.notes
+			doc.save()
+			updated += 1
+		else:
+			frappe.get_doc({"doctype": "Room", "property": property,
+			                "room_number": r["room_number"],
+			                "room_type": r["room_type"], "floor": r["floor"],
+			                "notes": r["notes"],
+			                "housekeeping_status": "Clean"}).insert()
+			created += 1
+	from kamra.savings import log_action
+	log_action("import_rooms", "Property", property, property,
+	           rationale=f"Rooms import: {created} new, {updated} updated, "
+	                     f"{len(issues)} skipped")
+	return {"created": created, "updated": updated, "skipped": len(issues),
+	        "issues": issues[:25]}

@@ -165,8 +165,10 @@ The booking page lists every meal plan, plus **Room only**.
 ![The vouchers, among them WELCOME500 for 500 off and STAYLONGER for 10% off stays of three nights or more](/img/revenue/vouchers.png)
 
 Guests enter a voucher under **Have a code?** on the booking page; the
-desk enters it on the booking form. **Used** counts each booking that
-redeemed it.
+desk enters it on the booking form, or on an open folio under **Give a
+discount** (see [Billing](/billing#give-a-discount)). **Used** counts each
+booking or folio that redeemed it. **Max uses** 0 means a code can be used
+any number of times.
 
 ## Give a long-stay discount
 

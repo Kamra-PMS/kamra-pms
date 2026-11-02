@@ -38,6 +38,8 @@ interface Locale {
    *  caller picked, and the words that make a charge F&B. */
   fnb_tax_rate?: number
   fnb_charge_words?: string[]
+  /** Off for a dry property: alcohol fields and labels are hidden. */
+  sells_alcohol?: boolean
 }
 
 export interface Integrations {
@@ -116,6 +118,8 @@ export function adoptUiLocale(ui?: { currency_symbol?: string; locale?: string; 
 }
 
 export const locale = () => cache
+/** False on a dry property (Settings → Property): hide every alcohol field. */
+export const sellsAlcohol = () => cache.sells_alcohol !== false
 /** The property's currency symbol, e.g. "₹" or "Rp". */
 export const cur = () => cache.currency_symbol
 /** The number-formatting locale, e.g. "en-IN" (lakhs) or "id-ID". */

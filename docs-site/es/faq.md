@@ -89,6 +89,52 @@ una copia de seguridad; si la migración ya ha avanzado la base de datos,
 restaure esa copia cuando la imagen anterior no funcione bien. Detalles:
 [Going back (downgrade)](/quickstart#going-back-downgrade).
 
+## ¿Cómo doy un descuento a un huésped?
+
+En la cuenta, bajo **Registrar un cargo**, use **Dar un descuento**: un
+porcentaje, un importe para toda la estancia o por noche, o un código
+promocional. Se descuenta de las noches de la cuenta. En el check-out,
+pulse **Dar un descuento antes de cobrar**. Vea [Facturación](/es/billing).
+
+## ¿Quién puede dar descuentos?
+
+Active **Los ajustes necesitan aprobación de un gerente**
+(Configuración → Finanzas → Controles de caja) y elija quién aprueba. Por encima
+del importe que fije, recepción solo pide y un gerente aprueba con su PIN.
+
+## ¿Se puede usar un código promocional más de una vez?
+
+Sí. **Máximo de usos** en el vale (Ingresos → Vales) fija cuántas veces; 0
+significa ilimitado. Cada estancia puede usar un código una vez.
+
+## ¿Por qué no puedo hacer un reembolso?
+
+Solo se devuelve dinero cuando el huésped tiene saldo a favor, y como
+máximo lo que se le debe. Un huésped que aún debe paga primero.
+
+## ¿La auditoría nocturna carga las noches?
+
+Sí, para todos los huéspedes alojados en una sola ejecución. Los que
+pasaron su fecha de salida aparecen en el paso 3: haga el check-out o
+extienda la estancia, o active **Extender una noche las salidas sin
+check-out** y la auditoría las extiende y carga. Vea
+[Auditoría nocturna](/es/night-audit).
+
+## ¿Se pueden enviar informes por correo después de la auditoría?
+
+Sí. Ponga el envío de un informe personalizado en **Después de la
+auditoría nocturna**.
+
+## No servimos alcohol. ¿Se puede ocultar?
+
+Sí. Desactive **Vende alcohol** en Configuración → Alojamiento → Ubicación y
+configuración regional, y desaparecen todos los campos y etiquetas de alcohol en todos los
+idiomas.
+
+## ¿Cómo corrijo una traducción?
+
+Vea [Colaboradores](/contributors#fix-a-translation).
+
 ## ¿Cómo informo de un error o pido una función?
 
 [Issues de GitHub](https://github.com/Kamra-PMS/kamra-pms/issues) para

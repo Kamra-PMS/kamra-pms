@@ -5,7 +5,7 @@ import { checkOutWithCredit } from "./CreditCheckout"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
-import { useLocale, fmtAmount } from "../lib/money"
+import { useLocale, fmtAmount, sellsAlcohol } from "../lib/money"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
@@ -13,6 +13,7 @@ import { Sheet } from "./ui/sheet"
 import { StepFlowFooter, StepFlowHeader, useStepFlow, type FlowStep } from "./StepFlow"
 import TillCard, { type TillState } from "./TillCard"
 import ChangeCompany from "./ChangeCompany"
+import FolioDiscount from "./FolioDiscount"
 
 
 /* Guided check-out, one stay at a time:
@@ -295,6 +296,7 @@ export default function CheckOutDialog(props: {
   const [payRef, setPayRef] = useState("")
   const [refundModes, setRefundModes] = useState<Record<string, string>>({})
   const [refundReason, setRefundReason] = useState("")
+  const [discountOn, setDiscountOn] = useState(false)
   const [withholdAmt, setWithholdAmt] = useState("")
   const [withholdReason, setWithholdReason] = useState("")
   const [earlyReason, setEarlyReason] = useState("")
@@ -783,9 +785,11 @@ export default function CheckOutDialog(props: {
                                 : t("Guest")}
                             </li>
                           ))}
-                          <li className="text-zinc-500">
-                            {t("Alcohol always stays with the guest.")}
-                          </li>
+                          {sellsAlcohol() && (
+                            <li className="text-zinc-500">
+                              {t("Alcohol always stays with the guest.")}
+                            </li>
+                          )}
                         </ul>
                       ) : (
                         <p className="text-xs text-zinc-500">
@@ -1147,7 +1151,9 @@ export default function CheckOutDialog(props: {
                   </ul>
                 )}
                 <p className="mt-2 text-xs text-zinc-500">
-                  {t("At check-out this moves to the company's account (city ledger). Alcohol always stays with the guest.")}
+                  {sellsAlcohol()
+                    ? t("At check-out this moves to the company's account (city ledger). Alcohol always stays with the guest.")
+                    : t("At check-out this moves to the company's account (city ledger).")}
                 </p>
               </Section>
               {credit && !credit.ok && (
@@ -1215,6 +1221,21 @@ export default function CheckOutDialog(props: {
                       </li>
                     ))}
                   </ul>
+                  {discountOn ? (
+                    <div className="mb-3 rounded-lg border border-zinc-200 p-3">
+                      <FolioDiscount folio={ctx.collect[0].folio}
+                        act={async (fn) => {
+                          setError(null)
+                          try { await fn() } catch (e) { setError(serverError(e)) }
+                        }}
+                        onPosted={() => { setDiscountOn(false); void load() }} />
+                    </div>
+                  ) : (
+                    <button type="button" className="mb-3 text-xs font-medium text-brand-700 hover:underline"
+                      onClick={() => setDiscountOn(true)}>
+                      {t("Give a discount before collecting")}
+                    </button>
+                  )}
                   <div className="grid gap-2 sm:grid-cols-2">
                     <label className="block text-xs">
                       <span className="mb-1 block text-zinc-500">{t("Payment mode")}</span>

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
-import { fmtMoney, loadLocale, locale, useLocale } from "../lib/money"
+import { fmtMoney, loadLocale, locale, sellsAlcohol, useLocale } from "../lib/money"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
@@ -444,6 +444,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
             </select>
           </label>
         </div>
+        {sellsAlcohol() && (
         <label className="flex min-h-11 items-center gap-2 text-sm text-zinc-600">
           <input
             type="checkbox"
@@ -452,7 +453,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
             onChange={(e) => setCharge({ ...charge, is_alcohol: e.target.checked })}
           />
           {t("Alcohol")}
-        </label>
+        </label>)}
         <p className="text-xs text-zinc-400">
           {t("The hotel's billing rules pick the folio, and food and drink take the hotel's food tax rate.")}
         </p>

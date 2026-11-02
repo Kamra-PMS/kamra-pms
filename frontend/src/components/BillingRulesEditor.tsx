@@ -3,6 +3,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { Button } from "./ui/button"
 import type { Row } from "../lib/resource"
 import { t as translate, useUILanguage } from "../lib/i18n"
+import { sellsAlcohol } from "../lib/money"
 
 /** Which charge types bill to the company on corporate stays. Anything
  * unchecked - and all alcohol, always - goes to the guest folio. */
@@ -97,7 +98,9 @@ export default function BillingRulesEditor({ row }: { row: Row; reload: () => vo
   return (
     <div className="border-t border-zinc-200 pt-4">
       <h3 className="text-sm font-medium text-zinc-600">{translate("Billing rules")}</h3>
-      <p className="mb-2 mt-0.5 text-xs text-zinc-400">{translate("Ticked charge types post to the Company folio on corporate stays. Everything else - and alcohol, always - bills to the guest.")}</p>
+      <p className="mb-2 mt-0.5 text-xs text-zinc-400">{sellsAlcohol()
+        ? translate("Ticked charge types post to the Company folio on corporate stays. Everything else - and alcohol, always - bills to the guest.")
+        : translate("Ticked charge types post to the Company folio on corporate stays. Everything else bills to the guest.")}</p>
       {fallback?.applies && (
         <p className="mb-2 rounded-md bg-brand-50 px-2 py-1.5 text-xs text-brand-700">{translate("No rules: using the property default - ")}{translate(shortLabel(fallback))}
           {fallback.charge_types === null
