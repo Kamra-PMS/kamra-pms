@@ -169,3 +169,13 @@ class DeskFeedbackTestCase(AuditTestCase):
 		self.assertTrue(api.property_locale(PROP_A)["sells_alcohol"])
 		set_setting(PROP_A, "sells_alcohol", 0)
 		self.assertFalse(api.property_locale(PROP_A)["sells_alcohol"])
+
+	# invoice title -------------------------------------------------------
+
+	def test_invoice_title_follows_the_tax_law(self):
+		from kamra import localization as loc
+		self.assertEqual(loc.invoice_title(loc.pack_for_country("India")), "Tax Invoice")
+		self.assertEqual(loc.invoice_title(loc.pack_for_country("United Arab Emirates")),
+		                 "Tax Invoice")
+		from kamra.localization import generic
+		self.assertEqual(loc.invoice_title(generic), "Invoice")

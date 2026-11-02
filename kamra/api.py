@@ -3101,7 +3101,7 @@ def folio_invoice(folio: str):
 			# a bill before settlement is provisional and must say so - the
 			# invoice number only exists once the folio closes
 			"title": (statutory or {}).get("title") or (
-				_("Tax Invoice") if settled else _("Provisional Bill")),
+				_(loc.invoice_title(pack)) if settled else _("Provisional Bill")),
 			"title_local": (statutory or {}).get("title_ar"),
 			"is_final": settled,
 			"number": doc.invoice_number or doc.name,

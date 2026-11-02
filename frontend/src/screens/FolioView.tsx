@@ -780,7 +780,7 @@ export default function FolioView() {
                   : "border border-dashed border-amber-400 bg-amber-50 text-amber-700")
               }
             >
-              {translate(doc?.title) ?? (folio.invoice_number ? t("Tax Invoice") : t("Provisional Bill"))}
+              {translate(doc?.title) ?? (folio.invoice_number ? t("Invoice") : t("Provisional Bill"))}
               {doc?.title_local && (
                 <>
                   <span aria-hidden className="mx-2 opacity-50">·</span>
@@ -1445,7 +1445,7 @@ export default function FolioView() {
                 }
               >
                 {CHARGE_TYPES.map((ct) => (
-                  <option key={ct}>{t(ct)}</option>
+                  <option key={ct} value={ct}>{t(ct)}</option>
                 ))}
               </select>
               <input

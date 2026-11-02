@@ -1242,7 +1242,7 @@ def banquet_document(function: str, kind: str = "quote"):
 		"kind": kind,
 		"title": {"quote": _("Quotation"), "contract": _("Function Contract"),
 		          "beo": _("Banquet Event Order"), "pack_list": _("Pack List"),
-		          "invoice": _("Tax Invoice")}[kind],
+		          "invoice": _(loc.invoice_title(pack))}[kind],
 		"number": number,
 		"is_final": bool(number != doc.name),
 		"function": doc.name,
