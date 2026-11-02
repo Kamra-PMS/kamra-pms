@@ -239,6 +239,10 @@ MODULES: tuple[Module, ...] = (
 				S("na_block_departures", "Departures still in house block the audit", "check", 1,
 				  hint="Guests due out on the business date who are still Checked In: check them "
 				       "out or extend the stay. Off: listed as a warning."),
+				S("na_auto_extend", "Extend unchecked-out departures one night", "check", 0,
+				  hint="On: a guest still Checked In past their departure date is extended by one "
+				       "night when the audit runs, and that night is posted like any other. A stay "
+				       "that can't be extended (the room is booked) stays on the checklist."),
 				S("na_high_balance_threshold", "Flag in-house folios owing more than", "number", 50000,
 				  min=0, hint="0 turns the high-balance check off."),
 				S("na_rate_variance_tolerance", "Rate variance tolerance", "number", 1.0,
@@ -397,6 +401,9 @@ MODULES: tuple[Module, ...] = (
 				S("cleaning_fee_taxable", "Cleaning fee is taxable", "check", 1, P),
 				S("pets_allowed", "Pets allowed", "check", 0, P,
 				  hint="Shows a Pets count on the booking pages and the desk booking form."),
+				S("sells_alcohol", "Sells alcohol", "check", 1,
+				  hint="Off for a dry property: every alcohol field, tick box and label is hidden, in "
+				       "every language. Nothing posted before changes."),
 				S("pet_charge", "Pet charge", "number", 0, P, min=0,
 				  hint="Per pet, taxed at the room's rate. 0 lets pets stay free."),
 				S("pet_charge_basis", "Pet charge applies", "select", "Per stay", P,

@@ -1774,7 +1774,7 @@ def save_custom_report(
 	srt = _parse_json(sort, [])
 
 	freq = schedule_frequency or "Off"
-	if freq not in ("Off", "Daily", "Weekly"):
+	if freq not in ("Off", "Daily", "Weekly", AFTER_AUDIT):
 		frappe.throw(_("Invalid schedule frequency."))
 
 	if name:
@@ -1968,6 +1968,34 @@ def email_custom_report(
 		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persist last_sent_on after mail; reviewed as intentional
 
 	return {"ok": True, "sent_to": emails, "row_count": meta.get("row_count", 0)}
+
+
+AFTER_AUDIT = "After night audit"
+
+
+def send_after_night_audit(property: str, business_date: str):
+	"""Email every report scheduled "After night audit" for the day the
+	audit just closed (enqueued by run_night_audit after it commits). Each
+	goes as its owner, like the timed schedule, so a report never shows
+	more than its owner may see."""
+	from kamra.authz import act_as
+	for r in frappe.get_all(
+		"Kamra Custom Report",
+		filters={"property": property, "schedule_frequency": AFTER_AUDIT},
+		fields=["name", "owner", "recipients", "lang"],
+	):
+		if not r.recipients or not frappe.db.get_value("User", r.owner, "enabled"):
+			continue
+		try:
+			with act_as(r.owner):
+				email_custom_report(
+					property=property, recipients=r.recipients, name=r.name,
+					from_date=business_date, to_date=business_date,
+					attach_format="csv", lang=r.lang or "en",
+				)
+		except Exception:
+			frappe.log_error(title=f"After-audit report failed: {r.name}",
+			                 message=frappe.get_traceback())
 
 
 def _weekday_code(dt: datetime) -> str:

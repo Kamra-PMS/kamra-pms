@@ -5,8 +5,9 @@ import { call, getCurrentProperty } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
 import AllowanceRequests from "../components/AllowanceRequests"
+import FolioDiscount from "../components/FolioDiscount"
 import ChangeCompany from "../components/ChangeCompany"
-import { loadLocale, taxRates, fmtAmount } from "../lib/money"
+import { loadLocale, sellsAlcohol, taxRates, fmtAmount } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { useAuth } from "../lib/auth"
@@ -779,7 +780,7 @@ export default function FolioView() {
                   : "border border-dashed border-amber-400 bg-amber-50 text-amber-700")
               }
             >
-              {translate(doc?.title) ?? (folio.invoice_number ? t("Tax Invoice") : t("Provisional Bill"))}
+              {translate(doc?.title) ?? (folio.invoice_number ? t("Invoice") : t("Provisional Bill"))}
               {doc?.title_local && (
                 <>
                   <span aria-hidden className="mx-2 opacity-50">·</span>
@@ -1395,9 +1396,11 @@ export default function FolioView() {
                   </Button>
                   <Button variant="ghost" onClick={() => setRefund(null)}>✕</Button>
                 </div>
-              ) : (
+              ) : folio.balance < 0 && (
+                /* only money the guest is owed goes back; a guest who still
+                   owes settles first (the server refuses it too) */
                 <button className="mt-1 text-xs font-medium text-rose-600 hover:underline"
-                  onClick={() => setRefund({ amount: "", mode: "Cash", reason: "" })}>
+                  onClick={() => setRefund({ amount: String(-folio.balance), mode: "Cash", reason: "" })}>
                   {t("Refund money (deposit return / over-collection)")}
                 </button>
               )}
@@ -1442,7 +1445,7 @@ export default function FolioView() {
                 }
               >
                 {CHARGE_TYPES.map((ct) => (
-                  <option key={ct}>{t(ct)}</option>
+                  <option key={ct} value={ct}>{t(ct)}</option>
                 ))}
               </select>
               <input
@@ -1487,6 +1490,7 @@ export default function FolioView() {
                   ))}
                 </select>
               )}
+              {sellsAlcohol() && (
               <label className="flex items-center gap-1.5 text-sm text-zinc-600">
                 <input
                   type="checkbox"
@@ -1497,7 +1501,7 @@ export default function FolioView() {
                   }
                 />
                 {t("Alcohol")}
-              </label>
+              </label>)}
               <Button
                 disabled={busy || !charge.amount}
                 onClick={() =>
@@ -1516,6 +1520,13 @@ export default function FolioView() {
               >
                 {t("Post")}
               </Button>
+              <FolioDiscount folio={folio.name} adjustCodes={adjustCodes} act={act}
+                onPosted={(pending) => {
+                  setAllowanceNote(pending
+                    ? t("Sent to a manager. It goes on the bill once approved.")
+                    : null)
+                  setAllowanceKey((k) => k + 1)
+                }} />
               <div className="mt-1 w-full border-t border-zinc-100 pt-3">
                 <div className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">
                   {t("Pass an allowance")}

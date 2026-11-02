@@ -30,7 +30,7 @@ import { listResource, serverError, type Row } from "../../lib/resource"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Sheet } from "../../components/ui/sheet"
-import { taxLabel } from "../../lib/money"
+import { sellsAlcohol, taxLabel } from "../../lib/money"
 import { Empty, ErrorNote, Field, inputCls, inr, Select } from "./shared"
 import { t as translate, useUILanguage } from "../../lib/i18n"
 
@@ -697,7 +697,7 @@ function SupplementarySheet({
               onChange={(v) => set("item_type", v)}
               options={[
                 "Food & Beverage",
-                "Alcohol",
+                ...(sellsAlcohol() ? ["Alcohol"] : []),
                 "Audio Visual",
                 "Decor",
                 "Staffing",
@@ -737,6 +737,7 @@ function SupplementarySheet({
             />
           </Field>
         </div>
+        {sellsAlcohol() && (
         <label className="flex items-start gap-2">
           <input
             type="checkbox"
@@ -748,7 +749,7 @@ function SupplementarySheet({
             <span className="block text-sm font-medium text-zinc-700">{translate("Alcohol")}</span>
             <span className="block text-xs text-zinc-400">{translate("Never rides a company bill - it settles separately.")}</span>
           </span>
-        </label>
+        </label>)}
       </div>
     </Sheet>
   )

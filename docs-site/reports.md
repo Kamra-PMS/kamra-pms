@@ -89,10 +89,11 @@ your role can open (see [Who sees which report](#who-sees-which-report)).
    filters, set the date range (up to 92 days), and press **Preview**.
 2. **Save** to keep the definition under **My reports**. Finance and
    Hotel Admin can **share** a report with the property and set a
-   **Daily** or **Weekly** email schedule (recipients + time).
+   **Daily** or **Weekly** email schedule (recipients + time), or
+   **After night audit**: sent as soon as the audit closes the day.
 3. **CSV**, **Print** and **Email** work for new or saved reports.
-   Scheduled sends attach yesterday (or the last 7 days for weekly) as
-   CSV.
+   Scheduled sends attach yesterday (or the last 7 days for weekly, or
+   the day just closed for after night audit) as CSV.
 
 ### Group and drill down
 

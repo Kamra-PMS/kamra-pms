@@ -1308,6 +1308,9 @@ def run_night_audit(property: str, business_date: str | None = None,
 	# the checklist, as it stands before anything is posted
 	from kamra import night_audit as na
 	run_at = audit_clock(property)
+	# guests still in past their departure, with na_auto_extend on, stay one
+	# more night before the checklist and the posting run (so it is posted)
+	extended = na.auto_extend_departures(property, business_date)
 	checks = na.run_checks(property, business_date, run_at)
 	blockers = na.open_blockers(checks)
 	acks: list[dict] = []
@@ -1429,6 +1432,9 @@ def run_night_audit(property: str, business_date: str | None = None,
 	for a in acks:
 		log_lines.append(f"acknowledged {a['key']} ({a['count']}) by {a['by']}: "
 		                 f"{a['note']}")
+	for x in extended:
+		log_lines.append(f"extended {x['reservation']} one night" if x["extended"]
+		                 else f"could not extend {x['reservation']}: {x.get('error')}")
 	unacked = [c for c in blockers if c["key"] not in {a["key"] for a in acks}]
 	for c in unacked:
 		log_lines.append(f"exception: {c['title']} ({c['count']})")
@@ -1440,6 +1446,7 @@ def run_night_audit(property: str, business_date: str | None = None,
 		"late_arrivals_held": len(held_late),
 		"no_show_fees_waived": fees_waived,
 		"folios_opened": folios_opened,
+		"stays_extended": sum(1 for x in extended if x["extended"]),
 		"trigger": trigger,
 		"run_by": frappe.session.user,
 		"exceptions": len(blockers),
@@ -1489,6 +1496,10 @@ def run_night_audit(property: str, business_date: str | None = None,
 	from kamra.business_date import advance_business_date, ensure_business_date
 	ensure_business_date(property)
 	new_bd = advance_business_date(property, business_date)
+	# reports scheduled "After night audit" go out once this commits
+	frappe.enqueue("kamra.custom_reports.send_after_night_audit",
+	               property=property, business_date=business_date,
+	               enqueue_after_commit=True)
 
 	from kamra.savings import log_action
 	log_action(

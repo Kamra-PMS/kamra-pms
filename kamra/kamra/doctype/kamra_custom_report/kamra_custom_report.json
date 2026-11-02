@@ -84,7 +84,7 @@
    "fieldname": "schedule_frequency",
    "fieldtype": "Select",
    "label": "Schedule",
-   "options": "Off\nDaily\nWeekly"
+   "options": "Off\nDaily\nWeekly\nAfter night audit"
   },
   {
    "default": "07:00",

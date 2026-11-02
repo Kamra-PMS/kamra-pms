@@ -29,7 +29,12 @@ links to the deeper guide.
   selects your [tax pack](/features#your-countrys-taxes) - GST slabs,
   PB1, VAT, SST - and your currency/number format), address, contacts
 - [ ] **Room types** with base prices, occupancy/capacity limits, bed
-  types, photos - then **rooms** with numbers and floors
+  types, photos - then **rooms** with numbers and floors. Many rooms:
+  **Admin → Rooms → Import rooms** takes a spreadsheet (room number,
+  room type code or name, floor, notes); download the template there.
+  Changing a room type's **Code** later renames its ID too.
+- [ ] **Dry property**: turn off **Sells alcohol** (Settings → Property →
+  Location & locale) and every alcohol field and label is hidden
 - [ ] **Rate card**: seasons, rate plans, meal plans; optional
   guardrails, hurdle rates and an overbooking allowance (Revenue menu)
 - [ ] **Taxes**: verify a test quote shows the right tax for your

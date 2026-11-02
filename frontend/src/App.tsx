@@ -73,6 +73,7 @@ const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
 const MenuItems = lazy(() => import("./screens/MenuItems"))
+const RoomsSetup = lazy(() => import("./screens/RoomsSetup"))
 const Groups = lazy(() => import("./screens/Groups"))
 const KitchenPrinters = lazy(() => import("./screens/KitchenPrinters"))
 const Today = lazy(() => import("./screens/Today"))
@@ -205,10 +206,7 @@ export default function App() {
           <Route path="trip/:name" element={<TripConfirmation />} />
           <Route path="guests" element={<Guests />} />
           <Route path="guests/:name" element={<GuestJourney />} />
-          <Route
-            path="rooms"
-            element={<ConfiguredScreen config="roomsConfig" />}
-          />
+          <Route path="rooms" element={<RoomsSetup />} />
           <Route
             path="room-types"
             element={<ConfiguredScreen config="roomTypesConfig" />}

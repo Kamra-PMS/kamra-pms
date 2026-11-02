@@ -227,3 +227,21 @@ Served by,Atendido por
 Start to plated minutes,Minutos del inicio al emplatado
 Started at,Iniciado a las
 Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,Su clave de IA no tiene saldo. Recárguela con su proveedor o cambie la clave en Configuración > Asistente de IA.
+Sells alcohol,Vende alcohol
+"Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","Desactívelo en una propiedad sin alcohol: se ocultan todos los campos, casillas y etiquetas de alcohol, en todos los idiomas. Nada de lo ya cargado cambia."
+Extend unchecked-out departures one night,Extender una noche las salidas sin check-out
+"On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.","Activado: un huésped que sigue alojado después de su fecha de salida se extiende una noche al correr la auditoría, y esa noche se carga como cualquier otra. Una estancia que no se puede extender (la habitación está reservada) queda en la lista de verificación."
+The guest owes {0} - nothing is due back to refund.,El huésped debe {0}; no hay nada que devolver.
+Only {0} is due back to the guest - can't refund more than that.,Solo se le deben {0} al huésped; no se puede devolver más.
+Room type code {0} is already used at this property.,El código de tipo de habitación {0} ya se usa en esta propiedad.
+There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,Todavía no hay noches en esta cuenta. El descuento se aplica a las noches cargadas: déselo después de la auditoría nocturna o en el check-out.
+Enter a discount above zero.,Ingrese un descuento mayor que cero.
+A discount can't be more than 100%.,Un descuento no puede superar el 100%.
+The discount is more than the room nights on the bill ({0}).,El descuento supera las noches de la cuenta ({0}).
+"This folio is settled - give the discount on the guest's open folio, or cancel the invoice first.",Esta cuenta está liquidada: dé el descuento en la cuenta abierta del huésped o anule primero la factura.
+"Pick a percent or an amount, per night or for the stay.","Elija un porcentaje o un importe, por noche o para la estancia."
+Promo code {0} is already on this stay.,El código promocional {0} ya está en esta estancia.
+Promo code {0},Código promocional {0}
+Discount {0}%,Descuento {0}%
+Discount {0} per night,Descuento {0} por noche
+A discount needs a reason - it goes on the record.,Un descuento necesita un motivo; queda en el registro.

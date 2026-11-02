@@ -115,7 +115,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
               onChange={(e) => setReason(e.target.value)}
             >
               {REASONS.map((r) => (
-                <option key={r}>{t(r)}</option>
+                <option key={r} value={r}>{t(r)}</option>
               ))}
             </select>
           </label>

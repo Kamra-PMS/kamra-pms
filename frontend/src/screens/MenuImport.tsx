@@ -6,7 +6,7 @@ import { Sheet } from "../components/ui/sheet"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { cn } from "../lib/utils"
-import { cur } from "../lib/money"
+import { cur, sellsAlcohol } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 /** Bulk menu upload: paste or drop a spreadsheet export, see exactly how the
@@ -93,7 +93,7 @@ export default function MenuImport({
       "category",
       "price",
       "veg",
-      "alcohol",
+      ...(sellsAlcohol() ? ["alcohol"] : []),
       "available",
       "station",
       "description",
@@ -103,7 +103,9 @@ export default function MenuImport({
       ["Chicken Biryani", "Mains", "380", "non-veg", "no", "yes", "Kitchen", ""],
       ["Kingfisher Draught", "Beverages", "250", "", "yes", "yes", "Bar", ""],
     ]
-    const text = [headers, ...rows]
+    // a dry property's template has no alcohol column (index 4) or bar row
+    const shown = sellsAlcohol() ? rows : rows.slice(0, 2).map((r) => r.filter((_, i) => i !== 4))
+    const text = [headers, ...shown]
       .map((r) => r.map((c) => (/[",]/.test(c) ? `"${c}"` : c)).join(","))
       .join("\n")
     const blob = new Blob(["﻿" + text], {
@@ -285,7 +287,7 @@ export default function MenuImport({
                                 s.is_veg ? "text-emerald-700" : "text-rose-600",
                               )}
                             >
-                              {s.is_alcohol
+                              {s.is_alcohol && sellsAlcohol()
                                 ? translate("alcohol")
                                 : s.is_veg
                                   ? translate("veg")
@@ -358,8 +360,11 @@ export default function MenuImport({
               <textarea
                 className={cn(inputCls, "h-56 font-mono text-xs")}
                 placeholder={
-                  "item_name,category,price,veg,alcohol,available,station\n" +
-                  "Paneer Tikka,Starters,320,veg,no,yes,Kitchen"
+                  (sellsAlcohol()
+                    ? "item_name,category,price,veg,alcohol,available,station\n" +
+                      "Paneer Tikka,Starters,320,veg,no,yes,Kitchen"
+                    : "item_name,category,price,veg,available,station\n" +
+                      "Paneer Tikka,Starters,320,veg,yes,Kitchen")
                 }
                 value={csv}
                 onChange={(e) => {

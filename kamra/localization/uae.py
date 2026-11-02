@@ -23,6 +23,7 @@ import frappe
 
 DEFAULT_VAT = Decimal("5")
 
+INVOICE_TITLE = "Tax Invoice"  # the words the tax law requires on the bill
 DEFAULT_CURRENCY = "AED"
 # foreign money guests bring most; Settings, Finance, Exchange rates can change it
 FX_CURRENCIES = ["USD", "EUR", "GBP", "SAR", "INR", "PKR", "CNY", "RUB"]
