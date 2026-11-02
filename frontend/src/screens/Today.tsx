@@ -333,7 +333,8 @@ function ordinalFloor(
 ) {
   if (f === NO_FLOOR) return t("Unassigned floor")
   const n = Number(f)
-  if (Number.isNaN(n)) return /floor/i.test(f) ? f : t("{f} Floor", { f })
+  // a named floor ("Garden wing", "Mezzanine") shows as the hotel wrote it
+  if (Number.isNaN(n)) return f
   // English ordinals ("1st") only read right in English
   if (!lang.startsWith("en")) return t("{n} Floor", { n })
   const s = ["th", "st", "nd", "rd"]

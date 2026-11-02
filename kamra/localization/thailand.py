@@ -24,6 +24,7 @@ import frappe
 
 DEFAULT_VAT = Decimal("7")
 
+INVOICE_TITLE = "Tax Invoice"  # the words the tax law requires on the bill
 DEFAULT_CURRENCY = "THB"
 # foreign money guests bring most; Settings, Finance, Exchange rates can change it
 FX_CURRENCIES = ["USD", "EUR", "GBP", "CNY", "JPY", "AUD", "SGD", "INR"]

@@ -221,7 +221,7 @@
 {date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} من {total} غرف محجوزة ({pct}%),{date}: {booked} de {total} habitaciones reservadas ({pct}%),,date booked total pct,translated
 {diners} guests,{diners} guests,{diners} ضيوف,Comensales: {diners},screens/Kitchen.tsx,diners,translated
 {done} of {total} done,{done} of {total} done,تم {done} من {total},{done} de {total} completados,screens/FinishSetup.tsx,done total,translated
-{f} Floor,{f} Floor,طابق {f},Piso {f},screens/Today.tsx,f,translated
+{f} Floor,{f} Floor,طابق {f},Piso {f},,f,translated
 {free} free · {booked} booked · {blocked} held,{free} free · {booked} booked · {blocked} held,{free} متاحة · {booked} محجوزة · {blocked} موقوفة,{free} disponibles · {booked} reservadas · {blocked} bloqueadas,components/RoomDrawer.tsx,free booked blocked,translated
 {from} to {to},{from} to {to},من {from} إلى {to},{from} a {to},components/RoomDrawer.tsx; screens/Dashboard.tsx,from to,translated
 "{from} to {to}, nights up to last night","{from} to {to}, nights up to last night",من {from} إلى {to}، حتى الليلة الماضية,"Del {from} al {to}, con las noches hasta anoche",components/RoomInsights.tsx,from to,translated
@@ -2304,6 +2304,7 @@ Express {v0} (opt),Express {v0} (opt),سريع {v0} (اختياري),Exprés {v0
 Express price,Express price,السعر السريع,Tarifa exprés,,,translated
 Extend a stay,Extend a stay,تمديد إقامة,Extender una estancia,,,translated
 Extend stay,Extend stay,تمديد الإقامة,Extender estancia,screens/EndOfDayWizard.tsx; screens/Today.tsx,,translated
+Extend unchecked-out departures one night,Extend unchecked-out departures one night,تمديد المغادرين غير المسجّلين ليلة واحدة,Extender una noche las salidas sin check-out,,,translated
 External POS,External POS,نقاط بيع خارجية,Punto de venta externo,,,translated
 Extra,Extra,إضافية,Extra,,,translated
 Extra adult {v0},Extra adult {v0},بالغ إضافي {v0},Adulto adicional {v0},,v0,translated
@@ -2940,7 +2941,7 @@ Inventory,Inventory,المخزون,Inventario,,,translated
 Invite a short review of the stay. It keeps the farewell warm and useful.,Invite a short review of the stay. It keeps the farewell warm and useful.,ادعُ الضيف إلى تقييم قصير للإقامة. يجعل الوداع ودياً ومفيداً.,Pida al huésped una breve opinión sobre su estancia para despedirlo de forma cercana y recoger sus comentarios.,,,translated
 Invite or manage staff,Invite or manage staff,دعوة الموظفين أو إدارتهم,Invitar o administrar personal,,,translated
 Invite staff and give each the right role.,Invite staff and give each the right role.,ادعُ الموظفين وامنح كلا منهم الدور المناسب.,Invite al personal y asigne el rol adecuado a cada integrante.,../../kamra/onboarding.py,,translated
-Invoice,Invoice,فاتورة,Factura,components/CheckOutDialog.tsx; components/CommandPalette.tsx; screens/Billing.tsx; screens/FolioHistory.tsx; screens/Receivables.tsx,,translated
+Invoice,Invoice,فاتورة,Factura,components/CheckOutDialog.tsx; components/CommandPalette.tsx; screens/Billing.tsx; screens/FolioHistory.tsx; screens/FolioView.tsx; screens/Receivables.tsx,,translated
 Invoice {0} for {1} is due on {2}.,Invoice {0} for {1} is due on {2}.,الفاتورة {0} بمبلغ {1} تستحق في {2}.,La factura {0} por {1} vence el {2}.,,0 1 2,translated
 Invoice {0} for {1} is due today.,Invoice {0} for {1} is due today.,الفاتورة {0} بمبلغ {1} تستحق اليوم.,La factura {0} por {1} vence hoy.,,0 1,translated
 Invoice {0} for {1} was due on {2} and is {3} days overdue.,Invoice {0} for {1} was due on {2} and is {3} days overdue.,الفاتورة {0} بمبلغ {1} كانت مستحقة في {2} ومتأخرة {3} يومًا.,La factura {0} por {1} venció el {2} y lleva {3} días de retraso.,,0 1 2 3,translated
@@ -3866,6 +3867,7 @@ of which advance,of which advance,منها دفعة مقدمة,Anticipo incluido
 off,off,إيقاف,desactivado,screens/Kitchen.tsx,,translated
 Off,Off,إيقاف,Desactivado,screens/Reports.tsx; screens/settings/ModulePage.tsx; screens/settings/SettingsHub.tsx,,translated
 Off = thrown in as standard. It still prints on the event order and the pack list; any function can override it.,Off = thrown in as standard. It still prints on the event order and the pack list; any function can override it.,إيقاف = مشمول ضمن الأساسي. يُطبع مع ذلك على أمر المناسبة وقائمة التجهيز، ويمكن لأي مناسبة تجاوزه.,Desactivado = se incluye sin cargo. Aun así aparece en la orden del evento y la lista de materiales; se puede cambiar en cada evento.,screens/BanquetCatalogue.tsx,,translated
+"Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.",أوقفه لمنشأة لا تقدم الكحول: تُخفى كل حقول الكحول وخاناته وتسمياته بكل اللغات. لا يتغير شيء مما قُيّد سابقًا.,"Desactívelo en una propiedad sin alcohol: se ocultan todos los campos, casillas y etiquetas de alcohol, en todos los idiomas. Nada de lo ya cargado cambia.",,,translated
 "Off: nobody can connect an AI client to this property, and existing connections stop working.","Off: nobody can connect an AI client to this property, and existing connections stop working.",إيقاف: لا يمكن لأحد ربط عميل ذكاء اصطناعي بهذا العقار، وتتوقف الاتصالات الحالية عن العمل.,Desactivado: nadie puede conectar un cliente de IA a este alojamiento y las conexiones existentes dejan de funcionar.,screens/settings/McpAccessPage.tsx,,translated
 Off: the scheduler never closes this property; staff close the day from End of Day.,Off: the scheduler never closes this property; staff close the day from End of Day.,عند الإيقاف: لا يغلق المجدول هذه المنشأة أبدًا؛ يغلق الموظفون اليوم من نهاية اليوم.,Desactivado: el programador nunca cierra esta propiedad; el personal cierra el día desde Cierre del día.,,,translated
 Offer,Offer,عرض,Oferta,,,translated
@@ -3885,6 +3887,7 @@ On its way,On its way,في الطريق,En camino,screens/CashierBoard.tsx,,tran
 On the books,On the books,محجوز,Reservado,screens/Dashboard.tsx,,translated
 "On the food and the people serving it, not the hall","On the food and the people serving it, not the hall",على الطعام وطاقم الخدمة، لا على القاعة,"Sobre los alimentos y el personal de servicio, sin incluir el salón",screens/BanquetFunction.tsx,,translated
 on the night,on the night,خلال المناسبة,durante el evento,screens/banquet/Economics.tsx,,translated
+"On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.","On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.",مفعّل: يُمدَّد الضيف الذي ما زال مقيمًا بعد تاريخ مغادرته ليلة واحدة عند تشغيل التدقيق، وتُرحَّل تلك الليلة كغيرها. الإقامة التي لا يمكن تمديدها (الغرفة محجوزة) تبقى في قائمة التدقيق.,"Activado: un huésped que sigue alojado después de su fecha de salida se extiende una noche al correr la auditoría, y esa noche se carga como cualquier otra. Una estancia que no se puede extender (la habitación está reservada) queda en la lista de verificación.",,,translated
 "On: sending an order prints the KOT and shows it on the kitchen display as started, so nobody presses Start. Off: the kitchen presses Start and each till chooses whether to print. An outlet can override this on its own record.","On: sending an order prints the KOT and shows it on the kitchen display as started, so nobody presses Start. Off: the kitchen presses Start and each till chooses whether to print. An outlet can override this on its own record.",تشغيل: إرسال الطلب يطبع أمر المطبخ ويظهره على شاشة المطبخ كمبدوء، فلا يحتاج أحد للضغط على بدء. إيقاف: يضغط المطبخ بدء ويختار كل صندوق ما إذا كان سيطبع. يمكن للمنفذ تجاوز ذلك في سجله الخاص.,Activado: enviar el pedido imprime la comanda y la marca como iniciada en cocina. Desactivado: cocina debe pulsar Iniciar y cada caja decide si imprime. Cada punto de venta puede cambiar esta opción en su configuración.,,,translated
 "On: staff open their till (with an opening float) before taking or giving back money, and close it with a cash count. Off, for a small place with no cash drawer: payments and refunds are recorded without a till.","On: staff open their till (with an opening float) before taking or giving back money, and close it with a cash count. Off, for a small place with no cash drawer: payments and refunds are recorded without a till.",تشغيل: يفتح الموظفون صندوقهم (برصيد افتتاحي) قبل استلام الأموال أو ردها، ويغلقونه بعد عدّ النقد. إيقاف، للمنشآت الصغيرة بلا درج نقدي: تُسجل الدفعات والمبالغ المستردة بدون صندوق.,"Activado: el personal abre su caja con un fondo inicial antes de cobrar o reembolsar y la cierra con un recuento. Desactivado: para alojamientos pequeños sin caja física, permite registrar pagos y reembolsos sin caja.",,,translated
 One advance for the whole trip,One advance for the whole trip,دفعة مقدمة واحدة للرحلة كلها,Un solo anticipo para todo el viaje,screens/CRS.tsx,,translated
@@ -5129,6 +5132,7 @@ Sell (guest buys FX),Sell (guest buys FX),بيع (الضيف يشتري عملة
 Sell message,Sell message,رسالة البيع الإضافي,Mensaje de venta adicional,,,translated
 "Sellable plans (BAR, non-refundable, corporate). Clear Disabled to publish a plan at booking; tick it to unpublish.","Sellable plans (BAR, non-refundable, corporate). Clear Disabled to publish a plan at booking; tick it to unpublish.",الخطط القابلة للبيع (BAR، غير قابلة للاسترداد، الشركات). ألغِ تحديد معطّل لنشر الخطة عند الحجز، وحدّده لإلغاء نشرها.,"Planes disponibles para venta (BAR, no reembolsable, corporativo). Desmarque Desactivado para publicar el plan al reservar; márquelo para retirarlo.",,,translated
 Seller name (as registered),Seller name (as registered),اسم البائع (كما هو مسجّل),Nombre del emisor (según registro),,,translated
+Sells alcohol,Sells alcohol,يبيع المشروبات الكحولية,Vende alcohol,,,translated
 Seminar,Seminar,ندوة,Seminario,,,translated
 Send,Send,إرسال,Enviar,components/HelpPanel.tsx; screens/Assistant.tsx; screens/WhatsAppChat.tsx,,translated
 Send {cur}{amount} to,Send {cur}{amount} to,أرسل {cur}{amount} إلى,Enviar {cur}{amount} a,screens/FolioView.tsx,cur amount,translated
@@ -5564,7 +5568,7 @@ Tax Id,Tax Id,الرقم الضريبي,Identificación fiscal,,,translated
 Tax ID,Tax ID,الرقم الضريبي,Número de identificación fiscal,screens/Setup.tsx,,translated
 Tax ID and guest ID checks through Kamra Connect.,Tax ID and guest ID checks through Kamra Connect.,التحقق من الرقم الضريبي وهوية الضيف عبر Kamra Connect.,Verificación fiscal y de documentos de huéspedes mediante Kamra Connect.,,,translated
 tax invoice,tax invoice,فاتورة ضريبية,factura fiscal,,,translated
-Tax Invoice,Tax Invoice,فاتورة ضريبية,Factura fiscal,screens/FolioView.tsx,,translated
+Tax Invoice,Tax Invoice,فاتورة ضريبية,Factura fiscal,,,translated
 "Tax labels, ID types, payment methods and the guest phone code follow it.","Tax labels, ID types, payment methods and the guest phone code follow it.",تتبعها مسميات الضرائب وأنواع الهوية وطرق الدفع ورمز هاتف الضيف.,"Determina las etiquetas fiscales, documentos de identidad, medios de pago y prefijo telefónico de los huéspedes.",,,translated
 Tax mode,Tax mode,طريقة الضريبة,Modalidad de impuesto,,,translated
 Tax on the room rate. Outlet and service rates come from the country pack.,Tax on the room rate. Outlet and service rates come from the country pack.,الضريبة على سعر الغرفة. نسب المنافذ والخدمات تأتي من حزمة الدولة.,Impuesto sobre la tarifa de habitación. Los impuestos de puntos de venta y servicios se obtienen de la configuración del país.,,,translated

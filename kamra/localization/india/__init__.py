@@ -14,6 +14,7 @@ import frappe
 FNB_GST = 5.0  # F&B / meal-plan GST rate
 SERVICES_GST = 18.0  # laundry and other guest services
 
+INVOICE_TITLE = "Tax Invoice"  # the words the tax law requires on the bill
 DEFAULT_CURRENCY = "INR"
 # foreign money guests bring most; Settings, Finance, Exchange rates can change it
 FX_CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "SGD", "AUD", "JPY"]
