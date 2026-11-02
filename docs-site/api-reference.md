@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **483 endpoints**, generated from the source
+the UI and the AI use. **484 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -48,6 +48,16 @@ Turn parts of the product on or off for one property.
 | --- | --- | --- |
 | `property` | yes |  |
 | `modules` | yes |  |
+
+### `kamra.api.csrf_token` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+The session's current CSRF token. An open tab asks for it when its
+page-load token went stale because someone signed in or out in another
+tab (Frappe rotates the token on login). None for a guest. A GET, like
+the boot page that already carries the token, and readable only by the
+same origin.
 
 ### `kamra.api.whoami` <Badge type='tip' text='public' />
 

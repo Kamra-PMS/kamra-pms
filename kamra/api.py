@@ -49,6 +49,18 @@ def set_enabled_modules(property: str, modules) -> dict:
 	return {"ok": True, "modules": picked}
 
 
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def csrf_token():
+	"""The session's current CSRF token. An open tab asks for it when its
+	page-load token went stale because someone signed in or out in another
+	tab (Frappe rotates the token on login). None for a guest. A GET, like
+	the boot page that already carries the token, and readable only by the
+	same origin."""
+	if frappe.session.user == "Guest":
+		return None
+	return frappe.sessions.get_csrf_token()
+
+
 @frappe.whitelist(allow_guest=True)
 def whoami():
 	"""Current user + roles - drives which modules the UI shows.

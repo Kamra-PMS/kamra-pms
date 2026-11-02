@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { HelpCircle, Loader2, Send, X } from "lucide-react"
 
-import { call, getCurrentProperty } from "../lib/api"
+import { call, getCurrentProperty, postRaw } from "../lib/api"
 import { cn } from "../lib/utils"
 import { Markdown } from "../lib/markdown"
 import { t as translate, useUILanguage } from "../lib/i18n"
@@ -62,16 +62,7 @@ export default function HelpPanel() {
       messages: history.map(({ role, content }) => ({ role, content })),
     }
     try {
-      const csrf = (window as unknown as { csrf_token?: string }).csrf_token
-      const res = await fetch("/api/method/kamra.assistant.help_ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrf && csrf !== "None" ? { "X-Frappe-CSRF-Token": csrf } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      })
+      const res = await postRaw("/api/method/kamra.assistant.help_ask", payload)
       if (!res.ok || !res.body) throw new Error(`stream ${res.status}`)
       const reader = res.body.getReader()
       const dec = new TextDecoder()
