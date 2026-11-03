@@ -13,7 +13,8 @@
   "room_type",
   "start_date",
   "end_date",
-  "minimum_nights",
+  "package_nights",
+  "extra_night_price",
   "column_break_rates",
   "price_1_pax",
   "price_2_pax",
@@ -31,6 +32,7 @@
   "non_refundable",
   "inclusions",
   "priority",
+  "minimum_nights",
   "disabled"
  ],
  "fields": [
@@ -76,11 +78,19 @@
   },
   {
    "default": "3",
-   "description": "Minimum stay duration required to qualify for this package",
-   "fieldname": "minimum_nights",
+   "description": "Total duration in nights included in this package (e.g. 3 nights)",
+   "fieldname": "package_nights",
    "fieldtype": "Int",
-   "label": "Minimum Nights",
-   "reqd": 1
+   "label": "Package Nights",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "description": "Nightly rate for additional nights beyond package duration (0 = pro-rata)",
+   "fieldname": "extra_night_price",
+   "fieldtype": "Currency",
+   "label": "Extra Night Rate",
+   "in_list_view": 1
   },
   {
    "fieldname": "column_break_rates",
@@ -187,6 +197,14 @@
    "fieldname": "priority",
    "fieldtype": "Int",
    "label": "Priority"
+  },
+  {
+   "default": "3",
+   "description": "Duration in nights; kept in sync with package_nights",
+   "fieldname": "minimum_nights",
+   "fieldtype": "Int",
+   "label": "Minimum Nights",
+   "hidden": 1
   },
   {
    "default": "0",

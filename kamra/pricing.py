@@ -386,7 +386,8 @@ def active_holiday_package(property: str, check_in, check_out,
 			"room_type": ("in", [room_type, "", None]),
 		},
 		fields=["name", "package_name", "room_type", "start_date", "end_date",
-		        "minimum_nights", "price_1_pax", "price_2_pax", "price_3_pax",
+		        "package_nights", "minimum_nights", "extra_night_price",
+		        "price_1_pax", "price_2_pax", "price_3_pax",
 		        "price_4_pax", "price_5_pax", "extra_adult_price", "child_price",
 		        "flyer_image", "ota_strategy", "ota_daily_rate", "advance_percent",
 		        "non_refundable", "inclusions", "priority"],
@@ -397,10 +398,9 @@ def active_holiday_package(property: str, check_in, check_out,
 
 	valid = []
 	for p in packages:
-		min_n = int(p.minimum_nights or 1)
-		if nights < min_n:
-			continue
-		if getdate(p.start_date) <= getdate(check_in) and getdate(last_night) <= getdate(p.end_date):
+		if (getdate(p.start_date) <= getdate(check_in) <= getdate(p.end_date)) or (
+			getdate(check_in) <= getdate(p.start_date) and getdate(last_night) >= getdate(p.end_date)
+		):
 			valid.append(p)
 
 	if not valid:
@@ -421,7 +421,8 @@ def package_covering_date(property: str, date, room_type: str | None = None):
 			"room_type": ("in", [room_type, "", None]),
 		},
 		fields=["name", "package_name", "room_type", "start_date", "end_date",
-		        "minimum_nights", "price_1_pax", "price_2_pax", "price_3_pax",
+		        "package_nights", "minimum_nights", "extra_night_price",
+		        "price_1_pax", "price_2_pax", "price_3_pax",
 		        "price_4_pax", "price_5_pax", "extra_adult_price", "child_price",
 		        "flyer_image", "ota_strategy", "ota_daily_rate", "priority"],
 		order_by="priority desc",
@@ -493,8 +494,9 @@ def stay_season_rules(property: str, check_in, check_out,
 
 	pkg = active_holiday_package(property, check_in, check_out, room_type)
 	if pkg:
-		if int(pkg.minimum_nights or 0) > min_nights:
-			min_nights, named = int(pkg.minimum_nights), pkg.package_name
+		pkg_nights = int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1)
+		if pkg_nights > min_nights:
+			min_nights, named = pkg_nights, pkg.package_name
 		if pkg.non_refundable:
 			non_refundable = True
 		if float(pkg.advance_percent or 0) > advance_pct:
@@ -707,37 +709,94 @@ def quote(
 	pkg = None if agreed_rate else active_holiday_package(property, check_in_date, check_out_date, room_type)
 	if pkg:
 		pkg_doc = frappe.get_doc("Holiday Package", pkg.name)
-		pkg_total_rate = pkg_doc.package_price_for(adults, children)
+		pkg_nights = int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1)
 		billable_nights = max(nights, 1)
-		base_per_night = (pkg_total_rate / Decimal(billable_nights)).quantize(Decimal("0.01"))
-		accum = Decimal(0)
-		for i in range(billable_nights):
-			date = add_days(check_in_date, i)
-			if i == billable_nights - 1:
-				rate = pkg_total_rate - accum
-			else:
-				rate = base_per_night
+
+		# The package base covers up to pkg_nights
+		pkg_base_rate = pkg_doc.package_price_for(adults, children, nights=pkg_nights)
+
+		if billable_nights <= pkg_nights:
+			base_per_night = (pkg_base_rate / Decimal(billable_nights)).quantize(Decimal("0.01"))
+			accum = Decimal(0)
+			for i in range(billable_nights):
+				date = add_days(check_in_date, i)
+				rate = (pkg_base_rate - accum) if i == billable_nights - 1 else base_per_night
 				accum += rate
 
-			gst = room_gst_rate(property, rt, rate + night_over_cap)
-			if inclusive:
-				rate = rate / (Decimal(1) + gst / Decimal(100))
-			if night_over_cap:
-				net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
-				       if inclusive else night_over_cap)
-				over_cap += net
-				over_cap_tax += net * gst / Decimal(100)
+				gst = room_gst_rate(property, rt, rate + night_over_cap)
+				if inclusive:
+					rate = rate / (Decimal(1) + gst / Decimal(100))
+				if night_over_cap:
+					net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
+					       if inclusive else night_over_cap)
+					over_cap += net
+					over_cap_tax += net * gst / Decimal(100)
 
-			nightly.append({
-				"date": str(date),
-				"rate": float(rate),
-				"gst_rate": float(gst),
-				"demand_premium_pct": 0,
-				"package": pkg.package_name,
-				"occupancy": 0
-			})
-			room_total += rate
-			room_tax += rate * gst / Decimal(100)
+				nightly.append({
+					"date": str(date),
+					"rate": float(rate),
+					"gst_rate": float(gst),
+					"demand_premium_pct": 0,
+					"package": pkg.package_name,
+					"occupancy": 0
+				})
+				room_total += rate
+				room_tax += rate * gst / Decimal(100)
+		else:
+			extra_night_rate = _dec(getattr(pkg, "extra_night_price", 0))
+			if extra_night_rate <= 0:
+				extra_night_rate = (pkg_base_rate / Decimal(pkg_nights)).quantize(Decimal("0.01"))
+
+			base_per_night = (pkg_base_rate / Decimal(pkg_nights)).quantize(Decimal("0.01"))
+			accum = Decimal(0)
+			for i in range(pkg_nights):
+				date = add_days(check_in_date, i)
+				rate = (pkg_base_rate - accum) if i == pkg_nights - 1 else base_per_night
+				accum += rate
+
+				gst = room_gst_rate(property, rt, rate + night_over_cap)
+				if inclusive:
+					rate = rate / (Decimal(1) + gst / Decimal(100))
+				if night_over_cap:
+					net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
+					       if inclusive else night_over_cap)
+					over_cap += net
+					over_cap_tax += net * gst / Decimal(100)
+
+				nightly.append({
+					"date": str(date),
+					"rate": float(rate),
+					"gst_rate": float(gst),
+					"demand_premium_pct": 0,
+					"package": pkg.package_name,
+					"occupancy": 0
+				})
+				room_total += rate
+				room_tax += rate * gst / Decimal(100)
+
+			for i in range(pkg_nights, billable_nights):
+				date = add_days(check_in_date, i)
+				rate = extra_night_rate
+
+				gst = room_gst_rate(property, rt, rate + night_over_cap)
+				if inclusive:
+					rate = rate / (Decimal(1) + gst / Decimal(100))
+				if night_over_cap:
+					net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
+					       if inclusive else night_over_cap)
+					over_cap += net
+					over_cap_tax += net * gst / Decimal(100)
+
+				nightly.append({
+					"date": str(date),
+					"rate": float(rate),
+					"gst_rate": float(gst),
+					"demand_premium_pct": 0,
+					"package": f"{pkg.package_name} (Extra Night)",
+					"occupancy": 0
+				})
+				room_total += rate
+				room_tax += rate * gst / Decimal(100)
 	else:
 		# a day-use stay bills one "night" on the check-in date
 		for i in range(max(nights, 1)):
@@ -990,6 +1049,8 @@ def quote(
 		"package": {
 			"name": pkg.name,
 			"package_name": pkg.package_name,
+			"package_nights": int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1),
+			"extra_night_price": float(getattr(pkg, "extra_night_price", 0) or 0),
 			"inclusions": pkg.inclusions or "",
 			"flyer_image": pkg.flyer_image or None,
 			"ota_strategy": pkg.ota_strategy,
