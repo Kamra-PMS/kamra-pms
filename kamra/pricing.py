@@ -388,7 +388,7 @@ def active_holiday_package(property: str, check_in, check_out,
 		fields=["name", "package_name", "room_type", "start_date", "end_date",
 		        "minimum_nights", "price_1_pax", "price_2_pax", "price_3_pax",
 		        "price_4_pax", "price_5_pax", "extra_adult_price", "child_price",
-		        "ota_strategy", "ota_daily_rate", "advance_percent",
+		        "flyer_image", "ota_strategy", "ota_daily_rate", "advance_percent",
 		        "non_refundable", "inclusions", "priority"],
 		order_by="priority desc",
 	)
@@ -423,7 +423,7 @@ def package_covering_date(property: str, date, room_type: str | None = None):
 		fields=["name", "package_name", "room_type", "start_date", "end_date",
 		        "minimum_nights", "price_1_pax", "price_2_pax", "price_3_pax",
 		        "price_4_pax", "price_5_pax", "extra_adult_price", "child_price",
-		        "ota_strategy", "ota_daily_rate", "priority"],
+		        "flyer_image", "ota_strategy", "ota_daily_rate", "priority"],
 		order_by="priority desc",
 	)
 	if not packages:
@@ -1035,6 +1035,7 @@ def quote(
 			"name": pkg.name,
 			"package_name": pkg.package_name,
 			"inclusions": pkg.inclusions or "",
+			"flyer_image": pkg.flyer_image or None,
 			"ota_strategy": pkg.ota_strategy,
 			"ota_daily_rate": float(pkg.ota_daily_rate or 0)
 		} if pkg else None,
