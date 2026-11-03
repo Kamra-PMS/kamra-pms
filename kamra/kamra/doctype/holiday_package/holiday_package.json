@@ -22,6 +22,7 @@
   "price_5_pax",
   "extra_adult_price",
   "child_price",
+  "flyer_image",
   "sb_ota",
   "ota_strategy",
   "ota_daily_rate",
@@ -129,6 +130,12 @@
    "fieldname": "child_price",
    "fieldtype": "Currency",
    "label": "Child Package Rate"
+  },
+  {
+   "description": "Promotional flyer or banner image sent to guests by WhatsApp agents",
+   "fieldname": "flyer_image",
+   "fieldtype": "Attach Image",
+   "label": "Flyer / Promo Image"
   },
   {
    "fieldname": "sb_ota",

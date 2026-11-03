@@ -43,6 +43,7 @@ class HolidayPackageTestCase(AuditTestCase):
 			"child_price": 200,
 			"ota_strategy": "Markup",
 			"ota_daily_rate": 1300,
+			"flyer_image": "/files/carnaval_2026.png",
 			"advance_percent": 50,
 			"non_refundable": 1,
 			"inclusions": "Café da manhã incluso e passeio no rio",
@@ -182,6 +183,7 @@ class HolidayPackageTestCase(AuditTestCase):
 		self.assertEqual(len(q2["nightly"]), 3)
 		self.assertAlmostEqual(sum(n["rate"] for n in q2["nightly"]), 1850.0, places=2)
 		self.assertEqual(q2["package"]["package_name"], "Pacote Feriado 3 Noites")
+		self.assertEqual(q2["package"]["flyer_image"], "/files/carnaval_2026.png")
 		self.assertEqual(q2["package"]["ota_daily_rate"], 1300.0)
 		self.assertEqual(q2["advance"]["percent"], 50.0)
 
@@ -220,5 +222,6 @@ class HolidayPackageTestCase(AuditTestCase):
 		n = rates.explain_night(PROP_A, rt_doc, self.day0)
 		self.assertIsNotNone(n.get("package"))
 		self.assertEqual(n["package"]["label"], "Pacote Feriado 3 Noites")
+		self.assertEqual(n["package"]["flyer_image"], "/files/carnaval_2026.png")
 		self.assertEqual(n["package"]["ota_rate"], 1300.0)
 		self.assertEqual(n["package"]["min_nights"], 3)

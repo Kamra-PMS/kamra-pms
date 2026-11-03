@@ -53,6 +53,7 @@ def explain_night(property: str, rt, date, adults: int = 2, children: int = 0,
 		"package": {
 			"name": pkg.name,
 			"label": pkg.package_name,
+			"flyer_image": pkg.flyer_image or None,
 			"ota_strategy": pkg.ota_strategy,
 			"ota_rate": float(pkg.ota_daily_rate or 0),
 			"min_nights": int(pkg.minimum_nights or 1),
