@@ -116,3 +116,36 @@ class RatesTestCase(AuditTestCase):
 		                    over_capacity_charge=50)
 		self.assertEqual(q5b["totals"]["total"], 430.5)  # (360 + 50) + 5% tax
 
+	def test_holiday_package_rate_integration(self):
+		"""Holiday Package overrides base rate with tiered occupancy pricing (e.g. 1850 for 2, 2500 for 3)."""
+		day2 = str(add_days(self.day, 2))
+		day3 = str(add_days(self.day, 3))
+		frappe.get_doc({
+			"doctype": "Holiday Package",
+			"property": PROP_A,
+			"package_name": "Pacote Feriado 3N",
+			"room_type": self.rt,
+			"start_date": self.day,
+			"end_date": day2,
+			"minimum_nights": 3,
+			"price_2_pax": 1850,
+			"price_3_pax": 2500,
+			"price_4_pax": 3000,
+			"ota_strategy": "Markup",
+			"ota_daily_rate": 1300,
+		}).insert(ignore_permissions=True)
+
+		# 2 pax -> 1850
+		q2 = pricing.quote(PROP_A, self.rt, self.day, day3, adults=2, children=0)
+		self.assertEqual(q2["room_total"], 1850.0)
+		self.assertEqual(q2["package"]["package_name"], "Pacote Feriado 3N")
+		self.assertEqual(q2["package"]["ota_daily_rate"], 1300.0)
+
+		# 3 pax -> 2500
+		q3 = pricing.quote(PROP_A, self.rt, self.day, day3, adults=3, children=0)
+		self.assertEqual(q3["room_total"], 2500.0)
+
+		# 4 pax -> 3000
+		q4 = pricing.quote(PROP_A, self.rt, self.day, day3, adults=4, children=0)
+		self.assertEqual(q4["room_total"], 3000.0)
+

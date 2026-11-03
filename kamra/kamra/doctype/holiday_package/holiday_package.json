@@ -1,0 +1,255 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:PKG-{#####}",
+ "creation": "2026-11-03 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "package_name",
+  "room_type",
+  "start_date",
+  "end_date",
+  "minimum_nights",
+  "column_break_rates",
+  "price_1_pax",
+  "price_2_pax",
+  "price_3_pax",
+  "price_4_pax",
+  "price_5_pax",
+  "extra_adult_price",
+  "child_price",
+  "sb_ota",
+  "ota_strategy",
+  "ota_daily_rate",
+  "column_break_terms",
+  "advance_percent",
+  "non_refundable",
+  "inclusions",
+  "priority",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "description": "e.g. Pacote Carnaval, Pacote Réveillon, Feriado 3 Noites",
+   "fieldname": "package_name",
+   "fieldtype": "Data",
+   "label": "Package Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "description": "Blank = every room type of the property",
+   "fieldname": "room_type",
+   "fieldtype": "Link",
+   "label": "Room Type",
+   "options": "Room Type",
+   "in_list_view": 1
+  },
+  {
+   "description": "First night covered by the package",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "description": "Last night covered by the package (inclusive)",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "default": "3",
+   "description": "Minimum stay duration required to qualify for this package",
+   "fieldname": "minimum_nights",
+   "fieldtype": "Int",
+   "label": "Minimum Nights",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_rates",
+   "fieldtype": "Column Break",
+   "label": "Package Rates"
+  },
+  {
+   "description": "Package total for 1 guest (Single). Blank = use 2 pax rate",
+   "fieldname": "price_1_pax",
+   "fieldtype": "Currency",
+   "label": "Package Rate 1 Pax"
+  },
+  {
+   "description": "Package total for 2 guests (Base occupancy)",
+   "fieldname": "price_2_pax",
+   "fieldtype": "Currency",
+   "label": "Package Rate 2 Pax (Base)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "description": "Package total for 3 guests",
+   "fieldname": "price_3_pax",
+   "fieldtype": "Currency",
+   "label": "Package Rate 3 Pax"
+  },
+  {
+   "description": "Package total for 4 guests",
+   "fieldname": "price_4_pax",
+   "fieldtype": "Currency",
+   "label": "Package Rate 4 Pax"
+  },
+  {
+   "description": "Package total for 5 guests",
+   "fieldname": "price_5_pax",
+   "fieldtype": "Currency",
+   "label": "Package Rate 5 Pax"
+  },
+  {
+   "description": "Total charge per extra adult beyond stated tiers for the whole package",
+   "fieldname": "extra_adult_price",
+   "fieldtype": "Currency",
+   "label": "Extra Adult Package Rate"
+  },
+  {
+   "description": "Total charge per child for the whole package",
+   "fieldname": "child_price",
+   "fieldtype": "Currency",
+   "label": "Child Package Rate"
+  },
+  {
+   "fieldname": "sb_ota",
+   "fieldtype": "Section Break",
+   "label": "Channel Manager & OTA Strategy"
+  },
+  {
+   "default": "Markup",
+   "description": "Markup: push high daily rate to OTAs; Stop Sell: close dates on OTAs; None: regular sync",
+   "fieldname": "ota_strategy",
+   "fieldtype": "Select",
+   "label": "OTA Strategy",
+   "options": "Markup\nStop Sell\nNone"
+  },
+  {
+   "description": "Nightly rate to push to OTAs (e.g. 1300/night to induce direct booking)",
+   "fieldname": "ota_daily_rate",
+   "fieldtype": "Currency",
+   "label": "OTA Daily Rate"
+  },
+  {
+   "fieldname": "column_break_terms",
+   "fieldtype": "Column Break",
+   "label": "Booking Terms & Policies"
+  },
+  {
+   "default": "50",
+   "description": "Advance deposit % required when booking this package (e.g. 50% or 100%)",
+   "fieldname": "advance_percent",
+   "fieldtype": "Percent",
+   "label": "Advance Deposit %"
+  },
+  {
+   "default": "1",
+   "description": "Bookings on this package cannot be cancelled free of charge",
+   "fieldname": "non_refundable",
+   "fieldtype": "Check",
+   "label": "Non-Refundable"
+  },
+  {
+   "description": "Inclusions for the guest (e.g. Breakfast included, Special gala dinner, Late checkout)",
+   "fieldname": "inclusions",
+   "fieldtype": "Small Text",
+   "label": "Inclusions"
+  },
+  {
+   "default": "20",
+   "description": "Higher priority wins when overlapping with seasons or other packages",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "label": "Priority"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-11-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Holiday Package",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Revenue Manager",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Kamra Agent"
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "package_name",
+ "track_changes": 1
+}
