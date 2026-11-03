@@ -1607,6 +1607,8 @@ export interface ChatMsg {
   actions?: { tool: string; ok: boolean }[]
   /** Stays and quotes the turn touched (kamra.assistant._turn_cards). */
   cards?: import("../components/AgentCards").AgentCard[]
+  /** Tap answers under a guided question (components/AgentGuide). */
+  choices?: import("../components/AgentGuide").Choice[]
 }
 export interface ConversationSummary {
   name: string
