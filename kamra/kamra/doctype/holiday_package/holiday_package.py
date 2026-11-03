@@ -20,11 +20,19 @@ class HolidayPackage(Document):
 		if getdate(self.start_date) > getdate(self.end_date):
 			frappe.throw(_("Start Date cannot be after End Date."))
 
-		if int(self.minimum_nights or 0) < 1:
-			frappe.throw(_("Minimum Nights must be at least 1."))
+		if self.package_nights is None or self.package_nights == "":
+			self.package_nights = self.minimum_nights if (self.minimum_nights is not None and self.minimum_nights != "") else 1
+		if int(self.package_nights or 0) < 1:
+			frappe.throw(_("Package Nights must be at least 1."))
+
+		# Keep minimum_nights synchronized
+		self.minimum_nights = self.package_nights
 
 		if _dec(self.price_2_pax) <= 0:
 			frappe.throw(_("Package Rate 2 Pax (Base) must be greater than zero."))
+
+		if self.extra_night_price and _dec(self.extra_night_price) < 0:
+			frappe.throw(_("Extra Night Rate cannot be negative."))
 
 		pct = float(self.get("advance_percent") or 0)
 		if pct and not (0 <= pct <= 100):
@@ -33,8 +41,12 @@ class HolidayPackage(Document):
 		if self.ota_strategy == "Markup" and self.ota_daily_rate and _dec(self.ota_daily_rate) < 0:
 			frappe.throw(_("OTA Daily Rate cannot be negative."))
 
-	def package_price_for(self, adults: int, children: int = 0) -> Decimal:
-		"""Calculate the package total for the party size based on occupancy tiers."""
+	def package_price_for(self, adults: int, children: int = 0, nights: int | None = None) -> Decimal:
+		"""Calculate the package total for the party size and stay duration.
+
+		If nights is supplied and exceeds package_nights, extra nights are charged
+		at extra_night_price (or pro-rata if extra_night_price is not configured).
+		"""
 		adults = max(1, int(adults or 2))
 		children = max(0, int(children or 0))
 
@@ -67,5 +79,13 @@ class HolidayPackage(Document):
 
 		if children and self.child_price:
 			base += Decimal(children) * _dec(self.child_price)
+
+		pkg_nights = int(getattr(self, "package_nights", None) or getattr(self, "minimum_nights", None) or 1)
+		if nights is not None and nights > pkg_nights:
+			extra_n = nights - pkg_nights
+			extra_rate = _dec(getattr(self, "extra_night_price", 0))
+			if extra_rate <= 0:
+				extra_rate = (base / Decimal(pkg_nights)).quantize(Decimal("0.01"))
+			base += Decimal(extra_n) * extra_rate
 
 		return base
