@@ -398,9 +398,8 @@ def active_holiday_package(property: str, check_in, check_out,
 
 	valid = []
 	for p in packages:
-		if (getdate(p.start_date) <= getdate(check_in) <= getdate(p.end_date)) or (
-			getdate(check_in) <= getdate(p.start_date) and getdate(last_night) >= getdate(p.end_date)
-		):
+		# If any night of the stay falls within the package window [start_date, end_date], the package applies
+		if getdate(check_in) <= getdate(p.end_date) and getdate(last_night) >= getdate(p.start_date):
 			valid.append(p)
 
 	if not valid:
@@ -714,12 +713,12 @@ def quote(
 
 		# The package base covers up to pkg_nights
 		pkg_base_rate = pkg_doc.package_price_for(adults, children, nights=pkg_nights)
+		stay_dates = [add_days(check_in_date, i) for i in range(billable_nights)]
 
 		if billable_nights <= pkg_nights:
 			base_per_night = (pkg_base_rate / Decimal(billable_nights)).quantize(Decimal("0.01"))
 			accum = Decimal(0)
-			for i in range(billable_nights):
-				date = add_days(check_in_date, i)
+			for i, d in enumerate(stay_dates):
 				rate = (pkg_base_rate - accum) if i == billable_nights - 1 else base_per_night
 				accum += rate
 
@@ -733,7 +732,7 @@ def quote(
 					over_cap_tax += net * gst / Decimal(100)
 
 				nightly.append({
-					"date": str(date),
+					"date": str(d),
 					"rate": float(rate),
 					"gst_rate": float(gst),
 					"demand_premium_pct": 0,
@@ -743,16 +742,42 @@ def quote(
 				room_total += rate
 				room_tax += rate * gst / Decimal(100)
 		else:
+			# Identify which dates are package dates (prefer inside [start_date, end_date])
+			inside_pkg = [d for d in stay_dates if getdate(pkg.start_date) <= getdate(d) <= getdate(pkg.end_date)]
+			outside_pkg = [d for d in stay_dates if not (getdate(pkg.start_date) <= getdate(d) <= getdate(pkg.end_date))]
+
+			# Sort outside_pkg by proximity to package window
+			def _dist(d):
+				dt = getdate(d)
+				if dt < getdate(pkg.start_date):
+					return (getdate(pkg.start_date) - dt).days
+				return (dt - getdate(pkg.end_date)).days
+			outside_pkg.sort(key=_dist)
+
+			if len(inside_pkg) >= pkg_nights:
+				pkg_dates_set = set(inside_pkg[:pkg_nights])
+			else:
+				needed = pkg_nights - len(inside_pkg)
+				pkg_dates_set = set(inside_pkg + outside_pkg[:needed])
+
 			extra_night_rate = _dec(getattr(pkg, "extra_night_price", 0))
 			if extra_night_rate <= 0:
 				extra_night_rate = (pkg_base_rate / Decimal(pkg_nights)).quantize(Decimal("0.01"))
 
 			base_per_night = (pkg_base_rate / Decimal(pkg_nights)).quantize(Decimal("0.01"))
 			accum = Decimal(0)
-			for i in range(pkg_nights):
-				date = add_days(check_in_date, i)
-				rate = (pkg_base_rate - accum) if i == pkg_nights - 1 else base_per_night
-				accum += rate
+			pkg_count = len(pkg_dates_set)
+			pkg_i = 0
+
+			for d in stay_dates:
+				if d in pkg_dates_set:
+					pkg_i += 1
+					rate = (pkg_base_rate - accum) if pkg_i == pkg_count else base_per_night
+					accum += rate
+					label = pkg.package_name
+				else:
+					rate = extra_night_rate
+					label = f"{pkg.package_name} (Diária Adicional)"
 
 				gst = room_gst_rate(property, rt, rate + night_over_cap)
 				if inclusive:
@@ -764,35 +789,11 @@ def quote(
 					over_cap_tax += net * gst / Decimal(100)
 
 				nightly.append({
-					"date": str(date),
+					"date": str(d),
 					"rate": float(rate),
 					"gst_rate": float(gst),
 					"demand_premium_pct": 0,
-					"package": pkg.package_name,
-					"occupancy": 0
-				})
-				room_total += rate
-				room_tax += rate * gst / Decimal(100)
-
-			for i in range(pkg_nights, billable_nights):
-				date = add_days(check_in_date, i)
-				rate = extra_night_rate
-
-				gst = room_gst_rate(property, rt, rate + night_over_cap)
-				if inclusive:
-					rate = rate / (Decimal(1) + gst / Decimal(100))
-				if night_over_cap:
-					net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
-					       if inclusive else night_over_cap)
-					over_cap += net
-					over_cap_tax += net * gst / Decimal(100)
-
-				nightly.append({
-					"date": str(date),
-					"rate": float(rate),
-					"gst_rate": float(gst),
-					"demand_premium_pct": 0,
-					"package": f"{pkg.package_name} (Extra Night)",
+					"package": label,
 					"occupancy": 0
 				})
 				room_total += rate
