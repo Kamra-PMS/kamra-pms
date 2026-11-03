@@ -235,8 +235,47 @@ class HolidayPackageTestCase(AuditTestCase):
 		self.assertEqual(q_4n["room_total"], 2350.0)
 		self.assertEqual(len(q_4n["nightly"]), 4)
 		self.assertAlmostEqual(sum(n["rate"] for n in q_4n["nightly"]), 2350.0, places=2)
-		self.assertEqual(q_4n["nightly"][-1]["package"], "Pacote Feriado 3 Noites (Extra Night)")
+		self.assertIn("Diária Adicional", q_4n["nightly"][-1]["package"])
 		self.assertEqual(q_4n["nightly"][-1]["rate"], 500.0)
+
+	def test_reveillon_flyer_scenarios_touching_peak_date(self):
+		"""Real-world Réveillon flyer test:
+		Package window is day4..day6 (3 nights, e.g. 31/12, 01/01, 02/01).
+		1. Guest staying day2..day5 (3 nights: day2, day3, day4; touches day4) -> Charged full 3-night package (1850.00).
+		2. Guest staying day0..day7 (7 nights; touches day4..day6) -> 3 nights package (1850) + 4 extra nights @ 400 = 3450.00.
+		"""
+		d0 = self.day0
+		d2 = str(add_days(d0, 2))
+		d4 = str(add_days(d0, 4))
+		d5 = str(add_days(d0, 5))
+		d6 = str(add_days(d0, 6))
+		d7 = str(add_days(d0, 7))
+
+		self.make_package(
+			package_name="Pacote Réveillon Costa do Mar",
+			start_date=d4,
+			end_date=d6,
+			package_nights=3,
+			price_2_pax=1850,
+			extra_night_price=400,
+			priority=50,
+		)
+
+		# Case 1: 3 nights (d2..d5) that touch the 31st (d4)
+		q_shifted = pricing.quote(PROP_A, self.rt, d2, d5, adults=2)
+		self.assertEqual(q_shifted["room_total"], 1850.0)
+		self.assertEqual(len(q_shifted["nightly"]), 3)
+		self.assertEqual(q_shifted["package"]["package_name"], "Pacote Réveillon Costa do Mar")
+
+		# Case 2: 7 nights (d0..d7) enclosing the package: 3 package nights + 4 extra nights @ 400
+		q_extended = pricing.quote(PROP_A, self.rt, d0, d7, adults=2)
+		self.assertEqual(q_extended["room_total"], 3450.0)
+		self.assertEqual(len(q_extended["nightly"]), 7)
+		pkg_nights = [n for n in q_extended["nightly"] if n["package"] == "Pacote Réveillon Costa do Mar"]
+		extra_nights = [n for n in q_extended["nightly"] if "Diária Adicional" in n["package"]]
+		self.assertEqual(len(pkg_nights), 3)
+		self.assertEqual(len(extra_nights), 4)
+		self.assertEqual(extra_nights[0]["rate"], 400.0)
 
 	def test_agreed_rate_bypasses_package(self):
 		"""When staff specifies an agreed rate at front desk, it overrides the package rate."""
