@@ -14,6 +14,7 @@
   "start_date",
   "end_date",
   "package_nights",
+  "extra_night_percent",
   "extra_night_price",
   "column_break_rates",
   "price_1_pax",
@@ -86,11 +87,18 @@
    "in_list_view": 1
   },
   {
-   "description": "Nightly rate for additional nights beyond package duration (0 = pro-rata)",
+   "default": "100",
+   "description": "% of package daily rate charged per extra night (e.g. 50% or 100%). Automatically scales for 2p, 3p, 4p",
+   "fieldname": "extra_night_percent",
+   "fieldtype": "Percent",
+   "label": "Extra Night Rate %",
+   "in_list_view": 1
+  },
+  {
+   "description": "Optional fixed rate override instead of %",
    "fieldname": "extra_night_price",
    "fieldtype": "Currency",
-   "label": "Extra Night Rate",
-   "in_list_view": 1
+   "label": "Extra Night Fixed Override"
   },
   {
    "fieldname": "column_break_rates",

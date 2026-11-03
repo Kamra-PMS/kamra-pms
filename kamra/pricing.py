@@ -386,7 +386,7 @@ def active_holiday_package(property: str, check_in, check_out,
 			"room_type": ("in", [room_type, "", None]),
 		},
 		fields=["name", "package_name", "room_type", "start_date", "end_date",
-		        "package_nights", "minimum_nights", "extra_night_price",
+		        "package_nights", "minimum_nights", "extra_night_percent", "extra_night_price",
 		        "price_1_pax", "price_2_pax", "price_3_pax",
 		        "price_4_pax", "price_5_pax", "extra_adult_price", "child_price",
 		        "flyer_image", "ota_strategy", "ota_daily_rate", "advance_percent",
@@ -420,7 +420,7 @@ def package_covering_date(property: str, date, room_type: str | None = None):
 			"room_type": ("in", [room_type, "", None]),
 		},
 		fields=["name", "package_name", "room_type", "start_date", "end_date",
-		        "package_nights", "minimum_nights", "extra_night_price",
+		        "package_nights", "minimum_nights", "extra_night_percent", "extra_night_price",
 		        "price_1_pax", "price_2_pax", "price_3_pax",
 		        "price_4_pax", "price_5_pax", "extra_adult_price", "child_price",
 		        "flyer_image", "ota_strategy", "ota_daily_rate", "priority"],
@@ -760,11 +760,17 @@ def quote(
 				needed = pkg_nights - len(inside_pkg)
 				pkg_dates_set = set(inside_pkg + outside_pkg[:needed])
 
-			extra_night_rate = _dec(getattr(pkg, "extra_night_price", 0))
-			if extra_night_rate <= 0:
-				extra_night_rate = (pkg_base_rate / Decimal(pkg_nights)).quantize(Decimal("0.01"))
+			package_daily = (pkg_base_rate / Decimal(pkg_nights)).quantize(Decimal("0.01"))
+			fixed_extra = _dec(getattr(pkg, "extra_night_price", 0))
+			pct_raw = getattr(pkg, "extra_night_percent", None)
+			pct_extra = float(pct_raw) if (pct_raw is not None and pct_raw != "") else 100.0
 
-			base_per_night = (pkg_base_rate / Decimal(pkg_nights)).quantize(Decimal("0.01"))
+			if fixed_extra > 0:
+				extra_night_rate = fixed_extra
+			else:
+				extra_night_rate = (package_daily * Decimal(str(pct_extra)) / Decimal(100)).quantize(Decimal("0.01"))
+
+			base_per_night = package_daily
 			accum = Decimal(0)
 			pkg_count = len(pkg_dates_set)
 			pkg_i = 0
@@ -1050,8 +1056,9 @@ def quote(
 		"package": {
 			"name": pkg.name,
 			"package_name": pkg.package_name,
-			"package_nights": int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1),
-			"extra_night_price": float(getattr(pkg, "extra_night_price", 0) or 0),
+			"package_nights": pkg_nights,
+			"extra_night_percent": pct_extra if "pct_extra" in locals() else float(getattr(pkg, "extra_night_percent", 0) or 100),
+			"extra_night_price": float(extra_night_rate if "extra_night_rate" in locals() else (getattr(pkg, "extra_night_price", 0) or 0)),
 			"inclusions": pkg.inclusions or "",
 			"flyer_image": pkg.flyer_image or None,
 			"ota_strategy": pkg.ota_strategy,
