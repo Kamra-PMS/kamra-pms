@@ -173,6 +173,48 @@ export const seasonsConfig: ScreenConfig = {
   ],
 }
 
+export const holidayPackagesConfig: ScreenConfig = {
+  doctype: "Holiday Package",
+  title: "Packages",
+  description:
+    "Fixed holiday packages with tiered occupancy pricing (Carnaval, Réveillon, long weekends) and OTA markup strategies.",
+  propertyScoped: true,
+  orderBy: "start_date asc",
+  columns: [
+    { field: "package_name", label: "Package" },
+    { field: "start_date", label: "From" },
+    { field: "end_date", label: "To" },
+    { field: "minimum_nights", label: "Nights" },
+    { field: "price_2_pax", label: "Base (2p)" },
+    { field: "price_3_pax", label: "3p" },
+    { field: "price_4_pax", label: "4p" },
+    { field: "ota_strategy", label: "OTA Strategy" },
+    { field: "ota_daily_rate", label: "OTA Rate" },
+    { field: "disabled", label: "Status", statusCheck: true },
+  ],
+  form: [
+    { field: "package_name", label: "Name", type: "data", required: true },
+    { field: "room_type", label: "Room type (blank = all)", type: "link", linkDoctype: "Room Type" },
+    { field: "start_date", label: "Start date", type: "date", required: true },
+    { field: "end_date", label: "End date (inclusive)", type: "date", required: true },
+    { field: "minimum_nights", label: "Minimum nights", type: "int", required: true, hint: "Stay duration required to qualify for package" },
+    { field: "price_1_pax", label: "Package rate 1 pax (Single)", type: "float", hint: "Blank = use 2 pax base rate" },
+    { field: "price_2_pax", label: "Package rate 2 pax (Base)", type: "float", required: true },
+    { field: "price_3_pax", label: "Package rate 3 pax", type: "float" },
+    { field: "price_4_pax", label: "Package rate 4 pax", type: "float" },
+    { field: "price_5_pax", label: "Package rate 5 pax", type: "float" },
+    { field: "extra_adult_price", label: "Extra adult package rate", type: "float" },
+    { field: "child_price", label: "Child package rate", type: "float" },
+    { field: "ota_strategy", label: "OTA strategy", type: "select", options: ["Markup", "Stop Sell", "None"] },
+    { field: "ota_daily_rate", label: "OTA daily rate", type: "float", hint: "Nightly rate pushed to OTAs during package" },
+    { field: "advance_percent", label: "Advance deposit %", type: "float", hint: "Deposit required (e.g. 50 or 100)" },
+    { field: "non_refundable", label: "Non-refundable", type: "check" },
+    { field: "inclusions", label: "Inclusions", type: "data", hint: "Breakfast, gala dinner, late checkout" },
+    { field: "priority", label: "Priority", type: "int" },
+    { field: "disabled", label: "Disabled", type: "check" },
+  ],
+}
+
 export const vouchersConfig: ScreenConfig = {
   doctype: "Discount Voucher",
   title: "Vouchers",

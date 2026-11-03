@@ -24,6 +24,7 @@ export const FEATURES: FeatureEntry[] = [
   { label: "Print an invoice", to: "/billing", where: "Finance · Billing", keywords: ["gst invoice", "tax invoice", "reprint", "bill"] },
   { label: "Change a room rate", to: "/rate-plans", where: "Revenue · Rate Plans", keywords: ["bar", "best available rate", "base price", "rack rate", "tariff", "pricing"] },
   { label: "Seasonal pricing", to: "/seasons", where: "Revenue · Seasons", keywords: ["peak", "weekend rate", "festival", "date range", "bar"] },
+  { label: "Holiday packages", to: "/packages", where: "Revenue · Packages", keywords: ["package", "pacote", "carnaval", "reveillon", "holiday", "feriado", "closed package", "pricing tier"] },
   { label: "Move a guest to another room", to: "/", where: "Front Desk · Today", keywords: ["room change", "upgrade", "downgrade", "swap room"] },
   { label: "Extend a stay", to: "/reservations", where: "Front Desk · Reservations", keywords: ["late checkout", "change dates", "amend"] },
   { label: "Cancel a booking", to: "/reservations", where: "Front Desk · Reservations", keywords: ["no show", "cancellation fee", "waive fee"] },
