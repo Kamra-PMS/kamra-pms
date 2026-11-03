@@ -107,6 +107,19 @@ class HolidayPackageTestCase(AuditTestCase):
 		})
 		self.assertRaises(frappe.ValidationError, doc_bad_extra_night.insert)
 
+		# extra_night_percent < 0 throws
+		doc_bad_extra_pct = frappe.get_doc({
+			"doctype": "Holiday Package",
+			"property": PROP_A,
+			"package_name": "Bad Extra Night %",
+			"start_date": self.day0,
+			"end_date": self.day2,
+			"package_nights": 3,
+			"price_2_pax": 1850,
+			"extra_night_percent": -10,
+		})
+		self.assertRaises(frappe.ValidationError, doc_bad_extra_pct.insert)
+
 		# advance_percent > 100 throws
 		doc_bad_adv = frappe.get_doc({
 			"doctype": "Holiday Package",
@@ -181,6 +194,21 @@ class HolidayPackageTestCase(AuditTestCase):
 
 		# 5 nights (2 pax): 1850 + 2 * 600 = 3050
 		self.assertEqual(pkg.package_price_for(2, nights=5), Decimal(3050))
+
+	def test_package_extra_night_pricing_with_percentage(self):
+		"""Extra night rate as a % of package daily rate scales automatically with occupancy (2p, 3p, 4p)."""
+		# 3 nights package: 2p = 1850 (daily 616.67), 3p = 2500 (daily 833.33), 4p = 3000 (daily 1000.00)
+		# extra_night_percent = 50%
+		pkg = self.make_package(package_nights=3, extra_night_percent=50, extra_night_price=0)
+
+		# 2 pax, 4 nights: 1850 + (616.67 * 0.50 = 308.34) = 2158.34
+		self.assertEqual(pkg.package_price_for(2, nights=4), Decimal("2158.34"))
+
+		# 3 pax, 4 nights: 2500 + (833.33 * 0.50 = 416.66) = 2916.66
+		self.assertEqual(pkg.package_price_for(3, nights=4), Decimal("2916.66"))
+
+		# 4 pax, 4 nights: 3000 + (1000.00 * 0.50 = 500.00) = 3500.00
+		self.assertEqual(pkg.package_price_for(4, nights=4), Decimal("3500.00"))
 
 	def test_active_holiday_package_resolution_and_priority(self):
 		"""Package discovery respects date coverage, room type specificity and priority."""
