@@ -924,6 +924,7 @@ export interface BanquetDocument {
     amount_in_words: string
     service_code_label: string
     footer: string | null
+    invoice_footer?: string | null
     place_of_supply: string | null
     tax_label: string
     tax_id_label: string

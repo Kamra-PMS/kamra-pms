@@ -997,6 +997,16 @@ class TestDocumentCompliance(BanquetTestCase):
 		self.assertEqual(h["place_of_supply"], "Karnataka")
 		self.assertEqual(h["tax_id_label"], "GSTIN")
 
+	def test_the_hotels_own_footer_prints_under_the_statutory_one(self):
+		# a private limited company owes its CIN on every invoice, and a
+		# corporate payer wants the bank details to transfer to
+		note = "CIN: U55100TN2022PTC151477\nBank: HDFC · A/c 123 · IFSC HDFC0000001"
+		frappe.db.set_value("Property", PROPERTY, "invoice_footer", note)
+		self.addCleanup(frappe.db.set_value, "Property", PROPERTY, "invoice_footer", None)
+		h =bq.banquet_document(self._sold(), "invoice")["header"]
+		self.assertEqual(h["invoice_footer"], note)
+		self.assertIn("computer-generated", h["footer"])   # still there
+
 	def test_an_unsold_function_cannot_be_invoiced(self):
 		fn = enquiry(self.f)
 		bq.add_menu(fn, self.f["menu"])

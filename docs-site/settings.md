@@ -33,7 +33,7 @@ each page title lists those roles; Hotel Admin can change all of them.
 
 | Page | What's on it | Guide |
 | --- | --- | --- |
-| Property | Name, legal name, short code (numbers allowance vouchers; changing it starts a new series, invoice numbers are not affected), logo, country (which selects the tax and invoicing pack), currency, time zone, address, tax registration number | [Country setup](/country-setup) |
+| Property | Name, legal name, short code (numbers allowance vouchers; changing it starts a new series, invoice numbers are not affected), logo, country (which selects the tax and invoicing pack), currency, time zone, address, tax registration number, invoice footer (your own lines under the tax note on every invoice, such as a company's CIN and bank details for transfers) | [Country setup](/country-setup) |
 | Stay policies | Check-in and check-out times, minimum stay, free cancellation window, cancellation, no-show and early departure charges, deposits | [Reservations](/reservations) |
 | Privacy & data | How long guest data and messages are kept, the privacy contact | |
 | Front Desk | Arrivals, guest alerts (WhatsApp room charge messages), holds, no-shows and the day view | [Front desk](/front-desk) |
