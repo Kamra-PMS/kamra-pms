@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react"
 import {
+  Globe,
   IndianRupee,
   LayoutGrid,
   Moon,
@@ -31,6 +32,7 @@ import { asset } from "./lib/asset"
 import { useAuth } from "./lib/auth"
 import { subscribeRealtime } from "./lib/realtime"
 import { getTheme, setTheme } from "./lib/theme"
+import { LANGS, setLang } from "./lib/dir"
 import { useT } from "./lib/i18n"
 import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
@@ -38,6 +40,7 @@ import { useKiosk } from "./lib/kiosk"
 import { getSiteInfo, versionLabel } from "./lib/siteInfo"
 import AlertSettings from "./components/AlertSettings"
 import NotificationHost from "./components/NotificationHost"
+import NotificationBell from "./components/NotificationBell"
 
 
 // On-demand UI kept out of the entry chunk: the booking dialog opens on
@@ -124,6 +127,31 @@ function ThemeToggle() {
         <Moon className="size-4" aria-hidden />
       )}
     </button>
+  )
+}
+
+/** Language beside the theme button: switches every screen at once. */
+function LanguageToggle() {
+  const { t, lang } = useT()
+  return (
+    <label
+      title={t("Language")}
+      className="flex items-center gap-1 rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+    >
+      <Globe className="size-4 shrink-0" aria-hidden />
+      <select
+        aria-label={t("Language")}
+        value={lang}
+        onChange={(e) => setLang(e.target.value)}
+        className="max-w-[6rem] cursor-pointer bg-transparent text-xs outline-none"
+      >
+        {LANGS.map((l) => (
+          <option key={l.code} value={l.code}>
+            {l.nativeLabel}
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }
 
@@ -400,7 +428,7 @@ export default function AppShell() {
       {!kiosk && !demoMode && <SetupNag />}
       <div className="flex min-h-0 flex-1">
       {!kiosk && (
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:flex sm:h-screen sm:overflow-y-auto">
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:flex sm:h-screen sm:overflow-y-auto sm:overscroll-contain">
         <NavLink
           to="/"
           end
@@ -516,6 +544,8 @@ export default function AppShell() {
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <ThemeToggle />
+            <NotificationBell property={property} />
+            <LanguageToggle />
             <span className="hidden text-xs text-zinc-500 xl:inline">
               {user}
             </span>

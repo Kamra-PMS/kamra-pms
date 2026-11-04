@@ -70,6 +70,8 @@ scheduler_events = {
 		# 03:50 - finished kitchen print jobs (guest names on the ticket)
 		# are kept a week for reprints, then dropped
 		"50 3 * * *": ["kamra.printing.purge_old_jobs"],
+		# 03:55 - bell notifications are kept 30 days, then dropped
+		"55 3 * * *": ["kamra.notifications.purge_old"],
 		# 04:45 - drop old kamrapms.com Hosting Enquiry leads (default 24 months;
 		# Won / converted stays; site_config hosting_enquiry_retention_months)
 		"45 4 * * *": ["kamra.hosting_enquiry_retention.purge_expired_hosting_enquiries"],
@@ -257,7 +259,7 @@ _PROPERTY_SCOPED = (
 	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
 	"Exchange Transaction", "Experience", "External POS Charge", "Folio", "Folio Ledger Entry",
 	"Folio Reprint", "Group Booking", "Housekeeping Task", "Hurdle Rate",
-	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kamra Custom Report", "Kitchen Printer",
+	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kamra Custom Report", "Kamra Notification", "Kitchen Printer",
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",
 	"Meal Plan", "Menu Item", "Night Audit Log", "Night Audit Run", "Outbound Webhook",
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
@@ -295,8 +297,32 @@ doc_events = {
 	}
 	for doctype in ("Reservation", "Folio", "Room", "Housekeeping Task",
 	                "Venue Booking", "Group Booking", "POS Order",
-	                "Service Ticket", "Agent Action Log")
+	                "Service Ticket", "Laundry Order", "Agent Action Log")
 }
+
+# The notification bell (kamra.notifications): a short line for the module
+# that should know, written next to the realtime ping. The bell itself
+# re-fetches when a new Kamra Notification is pinged.
+for _dt, _events in {
+	"Folio": {"on_update": "on_folio_update"},
+	"Housekeeping Task": {"after_insert": "on_housekeeping_task_insert",
+	                      "on_update": "on_housekeeping_task_update"},
+	"Ingredient Ledger Entry": {"after_insert": "on_ingredient_ledger_insert"},
+	"Laundry Order": {"after_insert": "on_laundry_order_insert"},
+	"POS Order": {"after_insert": "on_pos_order_insert",
+	              "on_update": "on_pos_order_update"},
+	"Rate Plan": {"on_update": "on_rate_plan_update"},
+	"Room Type": {"on_update": "on_room_type_update"},
+	"Season": {"after_insert": "on_season_change", "on_update": "on_season_change"},
+	"Service Ticket": {"after_insert": "on_service_ticket_insert",
+	                   "on_update": "on_service_ticket_update"},
+	"Venue Booking": {"after_insert": "on_venue_booking_insert",
+	                  "on_update": "on_venue_booking_update"},
+}.items():
+	for _event, _fn in _events.items():
+		_have = doc_events.setdefault(_dt, {}).get(_event)
+		doc_events[_dt][_event] = ([_have] if _have else []) + [f"kamra.notifications.{_fn}"]
+doc_events["Kamra Notification"] = {"after_insert": "kamra.realtime.notify"}
 
 # A reservation booked/modified/cancelled moves availability, so fan the new
 # numbers out to the channel manager (Pipeline 1). Runs alongside the realtime
@@ -307,10 +333,12 @@ doc_events = {
 doc_events["Reservation"] = {
 	"after_insert": ["kamra.realtime.notify",
 	                 "kamra.channel_manager.on_reservation_change",
-	                 "kamra.webhooks.on_reservation_insert"],
+	                 "kamra.webhooks.on_reservation_insert",
+	                 "kamra.notifications.on_reservation_insert"],
 	"on_update": ["kamra.realtime.notify",
 	              "kamra.channel_manager.on_reservation_change",
-	              "kamra.webhooks.on_reservation_update"],
+	              "kamra.webhooks.on_reservation_update",
+	              "kamra.notifications.on_reservation_update"],
 	"on_trash": "kamra.realtime.notify",
 }
 

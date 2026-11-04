@@ -1222,6 +1222,9 @@ def apply_no_show(res, pol, decision, business_date) -> dict:
 	emit("reservation.modified", res.property,
 	     {**reservation_payload(res), "status": "No Show",
 	      "changes": {"status": [before, "No Show"]}})
+	# and the bell, for the same reason
+	from kamra.notifications import no_show
+	no_show(res)
 	ns = {"reservation": res.name, "guest_name": res.guest_name,
 	      "room_type": (res.room_type or "").split("-")[-1],
 	      "check_in_date": str(res.check_in_date),
