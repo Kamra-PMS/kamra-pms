@@ -32,23 +32,47 @@ def region_for(property: str | None) -> str | None:
 	return code.upper() if code else None
 
 
-def normalise(raw: str | None, region: str | None) -> tuple[str, str | None]:
-	"""(value to store, problem). Blank stays blank. A number that parses
-	and is valid comes back as E.164; anything else comes back as typed
-	(trimmed) with NO_COUNTRY or INVALID."""
+def _parsed(raw: str | None, region: str | None):
+	"""(trimmed text, parsed number or None, problem or None). A valid
+	number has problem None. Anything else is the trimmed text plus
+	NO_COUNTRY or INVALID."""
 	text = (raw or "").strip()
 	if not text:
-		return "", None
+		return "", None, None
 	dialled = "+" + text[2:].lstrip() if text.startswith("00") else text
 	international = dialled.startswith("+")
 	if not international and not region:
-		return text, NO_COUNTRY
+		return text, None, NO_COUNTRY
 	try:
 		number = phonenumbers.parse(dialled, None if international else region)
 	except phonenumbers.NumberParseException:
-		return text, INVALID
+		return text, None, INVALID
 	if not phonenumbers.is_valid_number(number):
-		return text, INVALID
+		return text, None, INVALID
+	return text, number, None
+
+
+def canonical(raw: str | None, region: str | None) -> str:
+	"""E.164 when the number is valid, otherwise the trimmed text. This is
+	how two writings of one number are compared; it is not always what is
+	stored."""
+	text, number, _problem = _parsed(raw, region)
+	if number is None:
+		return text
+	return phonenumbers.format_number(number, phonenumbers.PhoneNumberFormat.E164)
+
+
+def normalise(raw: str | None, region: str | None) -> tuple[str, str | None]:
+	"""(value to store, problem). Blank stays blank. A number that already
+	starts with + and is valid is kept as written: the desk, the POS guest
+	panel and an agent retry compare that string. A local number, or a
+	00-prefix, that is valid is stored as E.164. Anything else comes back
+	as typed (trimmed) with NO_COUNTRY or INVALID."""
+	text, number, problem = _parsed(raw, region)
+	if not text or number is None:
+		return text, problem
+	if text.startswith("+"):
+		return text, None
 	return phonenumbers.format_number(number, phonenumbers.PhoneNumberFormat.E164), None
 
 
@@ -59,9 +83,13 @@ def for_property(raw: str | None, property: str | None) -> tuple[str, str | None
 
 def matching(raw: str | None, property: str | None = None) -> tuple:
 	"""A Guest filter value that finds a profile by phone whether it was
-	saved normalised or (before #468) as typed: ("in", {typed, E.164})."""
+	saved as written, as E.164, or (before #468) as typed:
+	("in", {typed, stored, E.164})."""
 	typed = (raw or "").strip()
-	return ("in", {typed, for_property(typed, property)[0]})
+	region = region_for(property)
+	forms = {typed, normalise(typed, region)[0], canonical(typed, region)}
+	forms.discard("")
+	return ("in", forms)
 
 
 def flag(problem: str | None, doctype: str, name: str, property: str | None,

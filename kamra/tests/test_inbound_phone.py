@@ -19,6 +19,7 @@ class InboundPhoneTestCase(AuditTestCase):
 		super().setUp()
 		make_property(PROP, country="Uganda")
 		frappe.db.delete("Guest", {"phone": ("in", ["+256772123456", "0772123456",
+		                                            "+256 772 123456",
 		                                            "+442079460958", "12345"])})
 
 	def test_normalise(self):
@@ -30,6 +31,9 @@ class InboundPhoneTestCase(AuditTestCase):
 		self.assertEqual(n("0772123456", None), ("0772123456", phone_mod.NO_COUNTRY))
 		self.assertEqual(n("12345", "UG"), ("12345", phone_mod.INVALID))
 		self.assertEqual(n("  ", "UG"), ("", None))
+		# a valid international number is kept as written, not compacted
+		self.assertEqual(n("+256 772 123456", "UG"), ("+256 772 123456", None))
+		self.assertEqual(phone_mod.canonical("+256 772 123456", "UG"), "+256772123456")
 
 	def test_region_from_the_property(self):
 		self.assertEqual(phone_mod.region_for(PROP), "UG")
@@ -38,6 +42,12 @@ class InboundPhoneTestCase(AuditTestCase):
 		g = api._find_or_create_guest("UT Phone One", "0772123456", PROP)
 		self.assertEqual(frappe.db.get_value("Guest", g, "phone"), "+256772123456")
 		self.assertEqual(api._find_or_create_guest("UT Phone One", "+256 772 123456", PROP), g)
+
+	def test_spaced_international_is_kept_and_found_again(self):
+		g = api._find_or_create_guest("UT Phone Spaced", "+256 772 123456", PROP)
+		self.assertEqual(frappe.db.get_value("Guest", g, "phone"), "+256 772 123456")
+		self.assertEqual(
+			api._find_or_create_guest("UT Phone Spaced", "+256 772 123456", PROP), g)
 
 	def test_foreign_number_stays_foreign(self):
 		g = api._find_or_create_guest("UT Phone Two", "+442079460958", PROP)

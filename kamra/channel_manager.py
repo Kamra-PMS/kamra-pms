@@ -325,7 +325,7 @@ def _find_or_create_guest(name: str, phone: str, email: str,
 	from kamra import phone as phone_mod
 	typed = (phone or "").strip()
 	phone, problem = phone_mod.for_property(typed, property)
-	for filt in ({"phone": ("in", {phone, typed})} if phone else None,
+	for filt in ({"phone": phone_mod.matching(typed, property)} if phone else None,
 	             {"email": email} if email else None):
 		if filt:
 			g = frappe.db.get_value("Guest", filt)

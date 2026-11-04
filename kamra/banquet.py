@@ -2593,7 +2593,8 @@ def _find_or_create_guest(doc):
 	typed = (doc.customer_phone or "").strip()
 	phone = phone_mod.for_property(typed, doc.property)[0]
 	if phone:
-		existing = frappe.db.get_value("Guest", {"phone": ("in", {phone, typed})})
+		existing = frappe.db.get_value(
+			"Guest", {"phone": phone_mod.matching(typed, doc.property)})
 		if existing:
 			return existing
 	parts = (doc.customer_name or "Guest").strip().split(" ", 1)
