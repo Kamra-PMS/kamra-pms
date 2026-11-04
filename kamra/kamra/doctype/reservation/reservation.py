@@ -182,6 +182,21 @@ class Reservation(Document):
 			              (prefix, int(top or 0)))
 		self.name = make_autoname(f"{prefix}.#####")
 
+	def insert(self, *args, **kwargs):
+		"""Insert, and report a taken OTA reference as DuplicateEntryError.
+
+		The unique index on ota_live_key is what stops two deliveries of one
+		OTA booking. Frappe turns that collision into UniqueValidationError
+		inside db_insert, before the caller sees it. create_booking and the
+		channel manager catch DuplicateEntryError and hand back the stay that
+		won, so translate just this key."""
+		try:
+			return super().insert(*args, **kwargs)
+		except frappe.UniqueValidationError as exc:
+			if self.ota_live_key and "ota_live_key" in str(exc):
+				raise frappe.DuplicateEntryError(self.ota_live_key) from exc
+			raise
+
 	def _sync_ota_live_key(self):
 		"""Set the unique live-stay key, or clear it when this stay no
 		longer claims the reference. An older duplicate left in place by
