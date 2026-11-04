@@ -34,7 +34,6 @@ const Setup = lazy(() => import("./screens/Setup"))
 const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
 const Rooms = lazy(() => import("./screens/Rooms"))
-const AdminRooms = lazy(() => import("./screens/AdminRooms"))
 const Settings = lazy(() => import("./screens/settings/SettingsHub"))
 const FinishSetup = lazy(() => import("./screens/FinishSetup"))
 const SystemHealth = lazy(() => import("./screens/SystemHealth"))
@@ -74,6 +73,7 @@ const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
 const MenuItems = lazy(() => import("./screens/MenuItems"))
+const RoomsSetup = lazy(() => import("./screens/RoomsSetup"))
 const Groups = lazy(() => import("./screens/Groups"))
 const KitchenPrinters = lazy(() => import("./screens/KitchenPrinters"))
 const Today = lazy(() => import("./screens/Today"))
@@ -206,7 +206,7 @@ export default function App() {
           <Route path="trip/:name" element={<TripConfirmation />} />
           <Route path="guests" element={<Guests />} />
           <Route path="guests/:name" element={<GuestJourney />} />
-          <Route path="rooms" element={<AdminRooms />} />
+          <Route path="rooms" element={<RoomsSetup />} />
           <Route
             path="floors"
             element={<ConfiguredScreen config="floorsConfig" />}

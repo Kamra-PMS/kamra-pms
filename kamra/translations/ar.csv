@@ -227,3 +227,21 @@ Served by,قدّمه
 Start to plated minutes,دقائق من البدء إلى التجهيز
 Started at,وقت البدء
 Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,نفد رصيد مفتاح الذكاء الاصطناعي. اشحن الرصيد لدى مزوّدك أو غيّر المفتاح من الإعدادات > مساعد الذكاء الاصطناعي.
+Sells alcohol,يبيع المشروبات الكحولية
+"Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.",أوقفه لمنشأة لا تقدم الكحول: تُخفى كل حقول الكحول وخاناته وتسمياته بكل اللغات. لا يتغير شيء مما قُيّد سابقًا.
+Extend unchecked-out departures one night,تمديد المغادرين غير المسجّلين ليلة واحدة
+"On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.",مفعّل: يُمدَّد الضيف الذي ما زال مقيمًا بعد تاريخ مغادرته ليلة واحدة عند تشغيل التدقيق، وتُرحَّل تلك الليلة كغيرها. الإقامة التي لا يمكن تمديدها (الغرفة محجوزة) تبقى في قائمة التدقيق.
+The guest owes {0} - nothing is due back to refund.,الضيف مدين بمبلغ {0} - لا يوجد مبلغ مستحق للاسترداد.
+Only {0} is due back to the guest - can't refund more than that.,المستحق للضيف {0} فقط - لا يمكن استرداد أكثر من ذلك.
+Room type code {0} is already used at this property.,رمز نوع الغرفة {0} مستخدم بالفعل في هذه المنشأة.
+There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,لا توجد ليالٍ على هذه الفاتورة بعد. الخصم يُطبَّق على الليالي المرحّلة: امنحه بعد تدقيق الليل أو عند المغادرة.
+Enter a discount above zero.,أدخل خصمًا أكبر من صفر.
+A discount can't be more than 100%.,لا يمكن أن يزيد الخصم عن 100%.
+The discount is more than the room nights on the bill ({0}).,الخصم أكبر من ليالي الإقامة على الفاتورة ({0}).
+"This folio is settled - give the discount on the guest's open folio, or cancel the invoice first.",هذا الحساب مُسوّى - امنح الخصم على حساب الضيف المفتوح، أو ألغِ الفاتورة أولًا.
+"Pick a percent or an amount, per night or for the stay.",اختر نسبة أو مبلغًا، لكل ليلة أو للإقامة.
+Promo code {0} is already on this stay.,الرمز الترويجي {0} مطبّق بالفعل على هذه الإقامة.
+Promo code {0},رمز ترويجي {0}
+Discount {0}%,خصم {0}%
+Discount {0} per night,خصم {0} لكل ليلة
+A discount needs a reason - it goes on the record.,الخصم يحتاج سببًا - يُسجَّل في السجل.

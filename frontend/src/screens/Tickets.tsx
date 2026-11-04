@@ -582,7 +582,7 @@ export default function Tickets() {
                   }
                 >
                   {CATEGORIES.map((c) => (
-                    <option key={c}>{t(c)}</option>
+                    <option key={c} value={c}>{t(c)}</option>
                   ))}
                 </select>
               </label>
@@ -598,7 +598,7 @@ export default function Tickets() {
                   }
                 >
                   {["Low", "Medium", "High", "Urgent"].map((p) => (
-                    <option key={p}>{t(p)}</option>
+                    <option key={p} value={p}>{t(p)}</option>
                   ))}
                 </select>
               </label>

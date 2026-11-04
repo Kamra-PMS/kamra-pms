@@ -137,6 +137,14 @@ arrival or the fee is waived for an OTA booking.
 The audit also removes waitlist entries two days past their requested
 departure.
 
+## Email reports after the audit
+
+Any custom report can go out by email as soon as the audit closes the
+day: open it under **Reports → Custom reports**, set **Email schedule** to
+**After night audit**, add the recipients and **Save**. Each one is sent
+for the business date just closed, as a CSV. See
+[Build a custom report](/reports#build-a-custom-report).
+
 ## Print the audit pack
 
 Step 11 lists the final reports on the left. Pick one to read it, then
@@ -235,6 +243,7 @@ that is actually due.
 | Open tills block the audit | Settings → Front Desk → Night audit checklist | On | Off lists open cashier sessions as a warning. |
 | Open restaurant bills block the audit | Settings → Front Desk → Night audit checklist | On | Off lists them as a warning. |
 | Departures still in house block the audit | Settings → Front Desk → Night audit checklist | On | Off lists them as a warning. |
+| Extend unchecked-out departures one night | Settings → Front Desk → Night audit checklist | Off | On: a guest still checked in past their departure date gets one more night when the audit runs, through the same path as **Extend stay**, and that night is posted. A stay that can't be extended (the room is booked) stays on the checklist. Step 3 lists these guests as a warning instead of a blocker. |
 | Flag in-house folios owing more than | Settings → Front Desk → Night audit checklist | 50000 | 0 turns the high-balance check off. |
 | Rate variance tolerance | Settings → Front Desk → Night audit checklist | 1 | How far (in currency units) a posted room night may be from the booked rate before it is listed. |
 | Run the night audit automatically | Settings → Front Desk → Automatic night audit | On | Off: only staff close the day. |

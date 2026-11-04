@@ -479,6 +479,12 @@ def on_pos_bill_paid(pack, order_name: str, tax_rate: float):
 	return _hook(pack, "on_pos_bill_paid", order_name, tax_rate)
 
 
+def invoice_title(pack) -> str:
+	"""What a settled bill is called. "Tax Invoice" only where the law asks
+	for those words (a pack sets INVOICE_TITLE); everywhere else "Invoice"."""
+	return getattr(pack, "INVOICE_TITLE", "Invoice")
+
+
 def invoice_print_block(pack, source_doctype: str, source_name: str,
                         number: str | None = None):
 	"""Whatever the authority requires ON the printed bill (ZATCA's QR and

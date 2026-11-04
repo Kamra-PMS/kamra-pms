@@ -333,8 +333,10 @@ function ordinalFloor(
 ) {
   if (f === NO_FLOOR) return t("Unassigned floor")
   const n = Number(f)
-  if (Number.isNaN(n)) return /floor/i.test(f) ? f : t("{f} Floor", { f })
-  if (lang === "es") return t("{n} Floor", { n })
+  // a named floor ("Garden wing", "Mezzanine") shows as the hotel wrote it
+  if (Number.isNaN(n)) return f
+  // English ordinals ("1st") only read right in English
+  if (!lang.startsWith("en")) return t("{n} Floor", { n })
   const s = ["th", "st", "nd", "rd"]
   const v = n % 100
   return t("{n}{ord} Floor", { n, ord: s[(v - 20) % 10] || s[v] || s[0] })
@@ -582,10 +584,6 @@ export default function Today() {
   )
   const shownFloors = floor === "All" ? floors : [floor]
   const renderRoom = (room: RoomRow) => {
-    const next =
-      HK_CYCLE[
-        (HK_CYCLE.indexOf(room.housekeeping_status) + 1) % HK_CYCLE.length
-      ]
     const occupied = room.occupancy_status === "Occupied"
     const stay = occupied
       ? (snap?.in_house ?? []).find((r) => r.room === room.name)
@@ -594,7 +592,6 @@ export default function Today() {
     const arriving = !occupied
       ? (snap?.arrivals ?? []).find((r) => r.room === room.name)
       : undefined
-    const hasMenu = !!(stay || arriving)
     const item = "block w-full px-3 py-2.5 text-start hover:bg-zinc-50"
     const openRoom = (tab?: RoomTab) => {
       setRoomMenu(null)
@@ -608,19 +605,16 @@ export default function Today() {
               ? t("{guest} · check out or open registration", { guest: stay.guest_name })
               : arriving
                 ? t("{guest} arrives today · check in", { guest: arriving.guest_name })
-                : t("Housekeeping: {from} → {to} (click to advance)", {
-                    from: room.housekeeping_status,
-                    to: next,
+                : t("Housekeeping: {status} · click to change", {
+                    status: t(room.housekeeping_status),
                   }))
           }
           disabled={busy === room.name}
-          aria-haspopup={hasMenu ? "menu" : undefined}
-          aria-expanded={hasMenu ? roomMenu === room.name : undefined}
-          onClick={() =>
-            hasMenu
-              ? setRoomMenu((m) => (m === room.name ? null : room.name))
-              : act(room.name, () => setHousekeepingStatus(room.name, next))
-          }
+          aria-haspopup="menu"
+          aria-expanded={roomMenu === room.name}
+          // a click opens the menu, never changes a status by itself: one
+          // stray tap used to mark a room Clean or Out of Order
+          onClick={() => setRoomMenu((m) => (m === room.name ? null : room.name))}
           className={cn(
             "w-full cursor-pointer rounded-lg border px-2 pb-1.5 pt-2 text-start transition-transform",
             "hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
@@ -649,13 +643,13 @@ export default function Today() {
         {(occupied || room.housekeeping_status === "Clean") && (
           <RoomMediaButton room={room.name} />
         )}
-        {hasMenu && roomMenu === room.name && (
+        {roomMenu === room.name && (
           <div
             role="menu"
             className="fixed inset-x-4 bottom-4 z-40 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 text-base shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:start-0 sm:top-full sm:z-20 sm:mt-1 sm:w-52 sm:rounded-lg sm:text-sm sm:shadow-lg"
           >
             <p className="truncate px-3 py-1 text-xs text-zinc-500">
-              {(stay ?? arriving)!.guest_name}
+              {(stay ?? arriving)?.guest_name ?? t("Room {n}", { n: room.room_number })}
             </p>
             {stay && (
               <>
@@ -714,18 +708,21 @@ export default function Today() {
                 >
                   {t("Check in")}
                 </button>
-                <button
-                  role="menuitem"
-                  className={cn(item, "text-zinc-700")}
-                  onClick={() => {
-                    setRoomMenu(null)
-                    void act(room.name, () => setHousekeepingStatus(room.name, next))
-                  }}
-                >
-                  {t("Housekeeping: mark {to}", { to: t(next) })}
-                </button>
               </>
             )}
+            {!occupied && HK_CYCLE.filter((st) => st !== room.housekeeping_status).map((st) => (
+              <button
+                key={st}
+                role="menuitem"
+                className={cn(item, "text-zinc-700")}
+                onClick={() => {
+                  setRoomMenu(null)
+                  void act(room.name, () => setHousekeepingStatus(room.name, st))
+                }}
+              >
+                {t("Housekeeping: mark {to}", { to: t(st) })}
+              </button>
+            ))}
             <button
               role="menuitem"
               className={cn(item, "text-zinc-700")}
@@ -909,7 +906,7 @@ export default function Today() {
           <CardTitle>{t("Room board")}</CardTitle>
           <span className="flex min-w-0 items-center gap-3">
             <span className="hidden truncate text-xs text-zinc-400 sm:inline">
-              {t("Click a room to advance its housekeeping status")}
+              {t("Click a room to change its status or open it")}
             </span>
             <Link
               to="/room-board"

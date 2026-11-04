@@ -168,9 +168,12 @@ class LedgerAuditTestCase(AuditTestCase):
 		wrong = self.charge(200)
 		api.void_folio_charge(self.folio, wrong, reason="UT wrong outlet")
 		self.pay(500, kind="Advance")
-		self.pay(300)
-		api.refund_folio_payment(self.folio, 100, "Cash", reason="UT goodwill")
+		self.pay(780)  # 1,180 owed: 100 over-collected
+		api.refund_folio_payment(self.folio, 100, "Cash", reason="UT over-collected")
 		self.assert_ledger_matches_folio()
+		self.charge(100)
+		with self.assertRaisesRegex(frappe.ValidationError, "nothing is due back"):
+			api.refund_folio_payment(self.folio, 10, "Cash", reason="UT owes")
 		ledger.transfer_to_city_ledger(self.folio, COMPANY)
 		self.assert_ledger_matches_folio()
 		self.assertAlmostEqual(

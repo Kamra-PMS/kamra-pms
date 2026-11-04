@@ -13,7 +13,7 @@ import {
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
-import { fmtMoney } from "../lib/money"
+import { fmtMoney, sellsAlcohol } from "../lib/money"
 import { useT, t as translateUI, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
@@ -878,7 +878,7 @@ export default function CheckInDialog(props: {
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-1 text-xs text-zinc-400">{t("Alcohol is always paid by the guest.")}</p>
+                  {sellsAlcohol() && <p className="mt-1 text-xs text-zinc-400">{t("Alcohol is always paid by the guest.")}</p>}
                 </div>
               )}
               {payer === "OTA prepaid" && (

@@ -170,6 +170,80 @@ class CashOfficeTestCase(TillTestCase):
 		cashier.cash_drop(PROP_A, 30, "safe")
 		self.assertEqual(frappe.db.count("Cash Transfer", {"property": PROP_A}), 0)
 
+	def fund_safe(self, amount=400, name="Safe"):
+		"""A cash office that already holds `amount`, received from a till."""
+		office = self.terminal(name, "Cash Office")
+		lobby = self.terminal(f"{name} Lobby")
+		self.as_user(self.ONE)
+		cashier.open_session(PROP_A, max(float(amount), 1000), cashier_terminal=lobby)
+		cashier.cash_drop(PROP_A, amount, to_terminal=office)
+		pending = frappe.db.get_value(
+			"Cash Transfer", {"to_terminal": office, "status": "Pending"}, "name")
+		self.as_user(self.FIN)
+		cashier.receive_transfer(pending)
+		return office
+
+	def test_back_to_back_deposits_stop_when_the_safe_is_short(self):
+		office = self.fund_safe(400)
+		self.assertEqual(cashier.bank_deposit(office, 250)["safe"]["balance"], 150)
+		with self.assertRaises(frappe.ValidationError) as over:
+			cashier.bank_deposit(office, 200)
+		self.assertIn("more than the safe holds", str(over.exception))
+		self.assertEqual(cashier._safe_balance(office)["balance"], 150)
+		self.assertEqual(frappe.db.count(
+			"Cash Transfer", {"from_terminal": office, "kind": "Bank Deposit"}), 1)
+		# the rest can leave, and the safe can sit at zero
+		self.assertEqual(cashier.bank_deposit(office, 150)["safe"]["balance"], 0)
+		with self.assertRaises(frappe.ValidationError):
+			cashier.bank_deposit(office, 0.01)
+		self.assertEqual(cashier._safe_balance(office)["balance"], 0)
+
+	def test_a_deposit_waiting_on_the_lock_sees_the_one_that_went_first(self):
+		"""Two deposits overlap on one safe.
+
+		A second database connection cannot see this test's uncommitted
+		rows, so the deposit that wins the lock is applied at the moment
+		the other request acquires it — the point where that request
+		resumes after the winner commits. The balance check has to run
+		after that, or both deposits clear and the safe goes negative.
+		"""
+		office = self.fund_safe(400, name="Race Safe")
+		real_lock = cashier._lock_cash_office
+		state = {"done": False}
+
+		def other_deposit_commits_first(name):
+			real_lock(name)
+			if not state["done"]:
+				state["done"] = True
+				cashier.bank_deposit(office, 300)
+
+		with patch.object(cashier, "_lock_cash_office", other_deposit_commits_first):
+			with self.assertRaises(frappe.ValidationError) as raced:
+				cashier.bank_deposit(office, 300)
+		self.assertIn("more than the safe holds", str(raced.exception))
+		self.assertEqual(cashier._safe_balance(office)["balance"], 100)
+		self.assertEqual(frappe.db.count(
+			"Cash Transfer", {"from_terminal": office, "kind": "Bank Deposit"}), 1)
+		self.assertGreaterEqual(cashier._safe_balance(office)["balance"], 0)
+
+	def test_a_bank_deposit_document_cannot_be_saved_overdrawn(self):
+		office = self.fund_safe(400, name="Desk Safe")
+		with self.assertRaises(frappe.ValidationError) as over:
+			frappe.get_doc({
+				"doctype": "Cash Transfer", "property": PROP_A, "kind": "Bank Deposit",
+				"status": "Received", "amount": 500, "from_terminal": office,
+			}).insert(ignore_permissions=True)
+		self.assertIn("more than the safe holds", str(over.exception))
+		self.assertEqual(cashier._safe_balance(office)["balance"], 400)
+		name = cashier.bank_deposit(office, 100)["transfer"]
+		doc = frappe.get_doc("Cash Transfer", name)
+		doc.amount = 500
+		with self.assertRaises(frappe.ValidationError) as raised:
+			doc.save(ignore_permissions=True)
+		self.assertIn("more than the safe holds", str(raised.exception))
+		self.assertEqual(float(frappe.db.get_value("Cash Transfer", name, "amount")), 100)
+		self.assertEqual(cashier._safe_balance(office)["balance"], 300)
+
 
 class VarianceTestCase(TillTestCase):
 

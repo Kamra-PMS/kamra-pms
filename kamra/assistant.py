@@ -102,6 +102,15 @@ Rules:
 - Confirm irreversible actions (cancel, checkout with balance, voiding a
   charge) in one short question before calling the tool.
 - Be brief and concrete - front desk answers, not essays.
+- Staff may be new and may not know hotel words. Use plain everyday
+  words, and when something is missing ask for ONE thing at a time.
+- When a question has a few likely answers (yes/no, a guest to pick, a
+  room type, a payment mode), end your reply with one last line exactly
+  like: Options: Yes, go ahead | No, change it
+  The screen turns each option into a button that sends it back as the
+  reply. At most 6 options, a few words each, only ones you can act on.
+  For "who", list real names from a tool (e.g. front_desk_today arrivals
+  for a check-in, in-house guests for a check-out), never invented ones.
 - The property's currency is {currency}. Its display label is {currency_label}.
   Use that label for monetary amounts in the property's currency. It comes
   from Frappe's Currency.symbol, falling back to the ISO currency code when
@@ -673,7 +682,26 @@ def _settings(property: str):
 	return frappe.get_doc("AI Assistant Settings", name) if name else None
 
 
-def _system_prompt(property: str, settings) -> str:
+# the agent's language picker (same list as the mic's); English needs no rule
+REPLY_LANGS = {
+	"hi-IN": "Hindi", "ta-IN": "Tamil", "kn-IN": "Kannada", "te-IN": "Telugu",
+	"ml-IN": "Malayalam", "ar-SA": "Arabic", "es-ES": "Spanish",
+	"pt-BR": "Brazilian Portuguese",
+}
+
+
+def _reply_language(lang: str | None) -> str:
+	name = REPLY_LANGS.get(lang or "")
+	if not name:
+		return ""
+	return (f"\n- Write every reply in {name}, in its own script, even when the "
+	        "staff type in English. Keep guest names, room numbers, booking "
+	        "references and amounts exactly as the tools give them. Keep the "
+	        "word \"Options:\" in English at the start of the options line; "
+	        "write the options themselves in " + name + ".")
+
+
+def _system_prompt(property: str, settings, lang: str | None = None) -> str:
 	"""Use the property's currency and Frappe symbol in both chat paths."""
 	prop = frappe.get_cached_doc("Property", property)
 	currency = prop.get("currency")
@@ -689,7 +717,8 @@ def _system_prompt(property: str, settings) -> str:
 		currency=currency or "unspecified",
 		currency_label=symbol or currency or "unspecified",
 		tax_mode=tax_mode,
-		extra=("\n" + settings.extra_instructions) if settings.extra_instructions else "")
+		extra=("\n" + settings.extra_instructions) if settings.extra_instructions else "",
+	) + _reply_language(lang)
 
 
 @frappe.whitelist()
@@ -1075,7 +1104,7 @@ def _tool_json_for_provider(result, settings):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager")
-def ask(property: str, messages):
+def ask(property: str, messages, lang: str | None = None):
 	"""One Kamra Agent turn: history in, answer out. The model may call
 	governed tools along the way; every call is returned so the UI can
 	show what actually happened."""
@@ -1090,7 +1119,7 @@ def ask(property: str, messages):
 	if isinstance(messages, str):
 		messages = frappe.parse_json(messages)
 
-	system = _system_prompt(property, s)
+	system = _system_prompt(property, s, lang)
 	convo = [{"role": "system", "content": system}] + list(messages)
 
 	base = (s.base_url or "https://api.openai.com/v1").rstrip("/")
@@ -1138,7 +1167,7 @@ def ask(property: str, messages):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Finance", "Revenue Manager")
-def ask_stream(property: str, messages):
+def ask_stream(property: str, messages, lang: str | None = None):
 	"""Streaming Kamra Agent turn (Server-Sent Events). Governed tools run FIRST
 	(they need the DB, which the request context still holds), emitting an
 	`action` event each; then the final answer is streamed token-by-token as
@@ -1163,7 +1192,7 @@ def ask_stream(property: str, messages):
 	model = s.model or "gpt-4o-mini"
 	headers = {"Authorization": f"Bearer {api_key}",
 	           "Content-Type": "application/json"}
-	system = _system_prompt(property, s)
+	system = _system_prompt(property, s, lang)
 	convo = [{"role": "system", "content": system}] + list(messages)
 
 	# --- resolve tools synchronously (DB access happens here, before streaming)

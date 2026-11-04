@@ -93,9 +93,48 @@ payment posts to the folio by itself.
 by, and sends a held security deposit back through the deposit's own
 refund (see [Front desk](/front-desk)). For any other refund, under the
 payments list, **Refund money (deposit return / over-collection)** opens a
-refund row: amount, mode and a reason, then **Refund**. You can't refund
-more than was collected on the folio, and a closed folio can't be
-refunded. Every refund is written to the activity log with your name.
+refund row: amount, mode and a reason, then **Refund**. The link shows
+only when the guest is in credit (the folio reads **Advance**), and the
+amount starts at what is due back: a guest who still owes settles first.
+You can't refund more than the guest is owed or more than was collected,
+and a closed folio can't be refunded. Every refund is written to the
+activity log with your name.
+
+## Give a discount
+
+A discount comes off the room nights already on the bill. Under **Post a
+charge**, the **Give a discount** row takes:
+
+- **Percent (%)**: that share of every room night on the bill; or
+- **Amount**: **For the whole stay** (one amount) or **Per night** (that
+  amount for each room night on the bill); or
+- a **Promo code**: a voucher from **Revenue → Vouchers**. Its own type,
+  value, dates, minimum nights and **Max uses** apply, and it counts as a
+  use. A code can go on a stay once.
+
+Pick a reason (or type one; a promo code needs none) and press **Give
+discount**. Before you press it, the row shows what it takes off and from
+how many nights. The discount posts as an allowance at the room's tax
+rate, so the tax comes down with it, the room nights stay on the bill, and
+it gets an allowance voucher number.
+
+Who may give one follows **Allowances need a manager's approval** (see
+[When an allowance needs a manager](#when-an-allowance-needs-a-manager)):
+above the line the desk asks and a manager approves with their PIN.
+
+At check-out, when the guest still owes and you agreed a discount, press
+**Give a discount before collecting** on the check-out sheet's payment
+step, then collect the rest.
+
+Nights post at night audit, so a discount given on the day of arrival
+has nothing to come off yet: give it after the audit or at check-out.
+
+::: tip Why a discount is not a payment mode
+A payment is money received; a discount lowers what the stay earned.
+Booked as a payment, a discount would overstate room revenue and tax, and
+the till would not match the cash in it. Every discount is an allowance
+line, so **Review voids and allowances** lists them all for the manager.
+:::
 
 ## Correct a charge
 

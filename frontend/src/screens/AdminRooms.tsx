@@ -17,7 +17,7 @@ type Plan = { create: string[]; skipped: string[]; created: number }
 type Opt = { value: string; label: string }
 
 /** Add rooms: a floor, a number range and a room type, previewed first. */
-function AddRooms({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+export function AddRooms({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const { t } = useT()
   const [floors, setFloors] = useState<string[]>([])
   const [types, setTypes] = useState<Opt[]>([])

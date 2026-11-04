@@ -20,3 +20,22 @@ Taxable value,Valor tributável
 "Your bill for {0} is attached: {1} billed, {2} due.","Segue sua fatura de {0}: {1} faturado, {2} em aberto."
 Balance due,Saldo devedor
 Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,Sua chave de IA está sem crédito. Recarregue com seu provedor ou troque a chave em Configurações > Assistente de IA.
+Sells alcohol,Vende bebida alcoólica
+"Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","Desligue em uma propriedade sem bebida alcoólica: todos os campos, caixas e rótulos de bebida alcoólica ficam ocultos, em todos os idiomas. Nada do que já foi lançado muda."
+Extend unchecked-out departures one night,Estender por uma diária as saídas sem check-out
+"On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.","Ligado: um hóspede ainda hospedado após a data de saída é estendido por uma diária quando o fechamento roda, e essa diária é lançada como qualquer outra. Uma estadia que não pode ser estendida (o quarto está reservado) fica na lista de verificação."
+The guest owes {0} - nothing is due back to refund.,O hóspede deve {0}; não há nada a devolver.
+Only {0} is due back to the guest - can't refund more than that.,Só {0} é devido ao hóspede; não é possível devolver mais.
+Room type code {0} is already used at this property.,O código de tipo de quarto {0} já é usado nesta propriedade.
+There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,Ainda não há diárias nesta conta. O desconto incide sobre as diárias lançadas: dê depois do fechamento de dia ou no check-out.
+Enter a discount above zero.,Informe um desconto maior que zero.
+A discount can't be more than 100%.,Um desconto não pode passar de 100%.
+The discount is more than the room nights on the bill ({0}).,O desconto é maior que as diárias da conta ({0}).
+"This folio is settled - give the discount on the guest's open folio, or cancel the invoice first.",Esta conta está quitada: dê o desconto na conta aberta do hóspede ou cancele a fatura primeiro.
+"Pick a percent or an amount, per night or for the stay.","Escolha um percentual ou um valor, por diária ou para a estadia."
+Promo code {0} is already on this stay.,O código promocional {0} já está nesta estadia.
+Promo code {0},Código promocional {0}
+Discount {0}%,Desconto {0}%
+Discount {0} per night,Desconto {0} por diária
+A discount needs a reason - it goes on the record.,Um desconto precisa de um motivo; ele fica no registro.
+Invoice,Fatura
