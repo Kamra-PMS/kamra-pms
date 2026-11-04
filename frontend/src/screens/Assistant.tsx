@@ -46,7 +46,7 @@ import {
   type GuideOutlet,
   type Outcome,
 } from "../components/AgentGuide"
-import VoiceButton from "../components/VoiceButton"
+import VoiceButton, { agentLang, type VoiceHandle } from "../components/VoiceButton"
 import type { ShellContext } from "../AppShell"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
@@ -157,6 +157,7 @@ export default function Assistant() {
   const [noCredit, setNoCredit] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const voiceRef = useRef<VoiceHandle>(null)
   const [aiEnabled, setAiEnabled] = useState<boolean | null>(null)
   const shell = useOutletContext<ShellContext | undefined>()
 
@@ -437,6 +438,7 @@ export default function Assistant() {
         body: JSON.stringify({
           property: getCurrentProperty(),
           messages: history.map(({ role, content }) => ({ role, content })),
+          lang: agentLang(),
         }),
       })
       if (!res.ok || !res.body) throw new Error(`stream ${res.status}`)
@@ -734,6 +736,8 @@ export default function Assistant() {
           className="p-3"
           onSubmit={(e) => {
             e.preventDefault()
+            // Send is the only way spoken words go out; it ends the listening
+            voiceRef.current?.stop()
             submit(input)
           }}
         >
@@ -752,8 +756,9 @@ export default function Assistant() {
               disabled={busy || aiEnabled === false}
             />
             <VoiceButton
+              ref={voiceRef}
               disabled={busy || stepping || aiEnabled === false}
-              onText={(text, final) => (final ? submit(text) : setInput(text))}
+              onText={setInput}
               onError={setError}
             />
             <button

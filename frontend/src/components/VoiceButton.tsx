@@ -1,8 +1,9 @@
 /** Talk instead of type. Uses the browser's own speech recognition
  *  (Chrome, Edge, Safari) - no Kamra server, no AI cost. Hidden where the
- *  browser can't do it (Firefox). The words appear in the box as they are
- *  heard; when the speaker stops, they are handed on as if typed. */
-import { useEffect, useRef, useState } from "react"
+ *  browser can't do it (Firefox). The words only fill the box: it keeps
+ *  listening through pauses, and nothing is sent until the person presses
+ *  Send (which stops the mic) or taps the mic again. */
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react"
 import { Mic, Square } from "lucide-react"
 
 import { getLang } from "../lib/dir"
@@ -49,7 +50,8 @@ export const VOICE_LANGS: [string, string][] = [
 
 const KEY = "kamra_voice_lang"
 
-function defaultLang(): string {
+/** the picked language: the mic listens in it and the agent replies in it */
+export function agentLang(): string {
   try {
     const saved = localStorage.getItem(KEY)
     if (saved && VOICE_LANGS.some(([c]) => c === saved)) return saved
@@ -62,15 +64,21 @@ function defaultLang(): string {
     "en-IN"
 }
 
+export interface VoiceHandle {
+  /** stop listening, e.g. when the message is sent */
+  stop: () => void
+}
+
 export default function VoiceButton(props: {
   disabled?: boolean
-  /** called as words arrive; final once the speaker stops */
-  onText: (text: string, final: boolean) => void
+  /** everything heard so far, each time more arrives */
+  onText: (text: string) => void
   onError?: (message: string) => void
+  ref?: Ref<VoiceHandle>
 }) {
   useUILanguage()
   const [listening, setListening] = useState(false)
-  const [lang, setLang] = useState(defaultLang)
+  const [lang, setLang] = useState(agentLang)
   const rec = useRef<Recognizer | null>(null)
   // the newest handlers, so a recognizer started earlier never calls stale ones
   const handlers = useRef(props)
@@ -80,6 +88,10 @@ export default function VoiceButton(props: {
 
   useEffect(() => () => rec.current?.abort(), [])
 
+  // abort, not stop: a stopped recognizer can still deliver one last
+  // result, which would refill the box after it was sent
+  useImperativeHandle(props.ref, () => ({ stop: () => rec.current?.abort() }), [])
+
   if (!Ctor) return null
 
   function start() {
@@ -87,13 +99,12 @@ export default function VoiceButton(props: {
     const r = new Ctor()
     r.lang = lang
     r.interimResults = true
-    r.continuous = false
-    let heard = ""
+    // keep listening through pauses; the person decides when it's done
+    r.continuous = true
     r.onresult = (e) => {
       let text = ""
       for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript
-      heard = text.trim()
-      handlers.current.onText(heard, false)
+      handlers.current.onText(text.trim())
     }
     r.onerror = (e) => {
       if (e.error === "no-speech" || e.error === "aborted") return
@@ -106,7 +117,6 @@ export default function VoiceButton(props: {
     r.onend = () => {
       setListening(false)
       rec.current = null
-      if (heard) handlers.current.onText(heard, true)
     }
     rec.current = r
     setListening(true)
@@ -132,8 +142,8 @@ export default function VoiceButton(props: {
         value={lang}
         onChange={(e) => pickLang(e.target.value)}
         disabled={listening}
-        aria-label={translate("Voice language")}
-        title={translate("Voice language")}
+        aria-label={translate("Language for voice and replies")}
+        title={translate("Language for voice and replies")}
         className="hidden max-w-[5.5rem] truncate rounded-md bg-transparent py-1 text-xs text-zinc-500 outline-none hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 sm:block"
       >
         {VOICE_LANGS.map(([code, name]) => (
