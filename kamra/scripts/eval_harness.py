@@ -10334,6 +10334,88 @@ def t_nicaragua_pack():
 		frappe.clear_document_cache("Property", "EVAL Nicaragua Hotel")
 
 
+@check("safe: two deposits on one cash office cannot overdraw it")
+def t_safe_deposit_race():
+	# Back-to-back, then overlapped. A second connection cannot see this
+	# check's uncommitted rows, so the deposit that wins the lock is applied
+	# when the other request acquires it — where that request resumes after
+	# the winner commits. The balance check has to run after the lock.
+	from unittest.mock import patch
+
+	from kamra import cashier
+	from kamra.authz import act_as
+
+	sp = "safe_deposit_race"
+	frappe.db.savepoint(sp)
+	try:
+		with act_as("Administrator"):
+			office = cashier.save_terminal(P, "Eval Safe Race", kind="Cash Office")["name"]
+			cashier.open_session(P, 1000)
+			cashier.cash_drop(P, 400, to_terminal=office)
+			pending = frappe.db.get_value(
+				"Cash Transfer", {"to_terminal": office, "status": "Pending"}, "name")
+			assert cashier.receive_transfer(pending)["safe"]["balance"] == 400
+
+			first = cashier.bank_deposit(office, 150)
+			assert first["safe"]["balance"] == 250, first
+			try:
+				cashier.bank_deposit(office, 300)
+				raise AssertionError("a deposit larger than the safe was accepted")
+			except frappe.ValidationError as e:
+				assert "more than the safe holds" in str(e), e
+			assert cashier._safe_balance(office)["balance"] == 250
+
+			doc = frappe.get_doc("Cash Transfer", first["transfer"])
+			doc.amount = 500
+			try:
+				doc.save(ignore_permissions=True)
+				raise AssertionError("raising a deposit overdrew the safe")
+			except frappe.ValidationError as e:
+				assert "more than the safe holds" in str(e), e
+			assert float(frappe.db.get_value(
+				"Cash Transfer", first["transfer"], "amount")) == 150
+			assert cashier._safe_balance(office)["balance"] == 250
+
+			try:
+				frappe.get_doc({
+					"doctype": "Cash Transfer", "property": P, "kind": "Bank Deposit",
+					"status": "Received", "amount": 300, "from_terminal": office,
+				}).insert(ignore_permissions=True)
+				raise AssertionError("saving a bank deposit overdrew the safe")
+			except frappe.ValidationError as e:
+				assert "more than the safe holds" in str(e), e
+			assert cashier._safe_balance(office)["balance"] == 250
+
+			real_lock = cashier._lock_cash_office
+			state = {"done": False}
+
+			def other_deposit_commits_first(name):
+				real_lock(name)
+				if not state["done"]:
+					state["done"] = True
+					cashier.bank_deposit(office, 200)
+
+			with patch.object(cashier, "_lock_cash_office", other_deposit_commits_first):
+				try:
+					cashier.bank_deposit(office, 200)
+					raise AssertionError("overlapped deposits both cleared")
+				except frappe.ValidationError as e:
+					assert "more than the safe holds" in str(e), e
+			assert cashier._safe_balance(office)["balance"] == 50, cashier._safe_balance(office)
+			assert frappe.db.count("Cash Transfer", {
+				"from_terminal": office, "kind": "Bank Deposit"}) == 2
+
+			assert cashier.bank_deposit(office, 50)["safe"]["balance"] == 0
+			try:
+				cashier.bank_deposit(office, 0.01)
+				raise AssertionError("the safe went negative")
+			except frappe.ValidationError as e:
+				assert "more than the safe holds" in str(e), e
+			assert cashier._safe_balance(office)["balance"] == 0
+	finally:
+		frappe.db.rollback(save_point=sp)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10373,7 +10455,8 @@ def execute():
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
-		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack):
+		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
+		           t_safe_deposit_race):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
