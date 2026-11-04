@@ -33,32 +33,32 @@ then the guide for every field and setting.
 | 8 | [How to Take a Hotel Reservation in a PMS, Step by Step](https://www.youtube.com/watch?v=hVgDLQku00w&list=PLcNTRQwzkzAs) | [Reservations](/reservations) |
 | 9 | [Walk-in Check-in and Day Use Rooms in a Hotel PMS](https://www.youtube.com/watch?v=wqJSr_5touE&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
 | 10 | [Manage Hotel Bookings: Upgrades, Date Changes, Cancellations](https://www.youtube.com/watch?v=7uWXfFkbBxE&list=PLcNTRQwzkzAs) | [Reservations](/reservations) |
-| 11 | Hotel Check-in Step by Step: ID, Deposit and Online Check-in | [Front desk](/front-desk) |
-| 12 | Hotel Folios and Billing: Charges, GST, Voids, Split Folios, Payments | [Billing & cashier](/billing) |
-| 13 | Hotel Check-out and GST Tax Invoice, Step by Step | [Front desk](/front-desk) |
-| 14 | Hotel Guest Profiles, Duplicate Merge and Guest Data Privacy | [Front desk](/front-desk) |
+| 11 | [Hotel Check-in Step by Step: ID, Deposit and Online Check-in](https://www.youtube.com/watch?v=odlU3bfLb-c&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
+| 12 | [Hotel Folios and Billing: Charges, GST, Voids, Split Folios, Payments](https://www.youtube.com/watch?v=1jMu07cRU54&list=PLcNTRQwzkzAs) | [Billing & cashier](/billing) |
+| 13 | [Hotel Check-out and GST Tax Invoice, Step by Step](https://www.youtube.com/watch?v=_6uWm9p5mJ4&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
+| 14 | [Hotel Guest Profiles, Duplicate Merge and Guest Data Privacy](https://www.youtube.com/watch?v=L7xrHfUDDPI&list=PLcNTRQwzkzAs) | [Front desk](/front-desk) |
 
 ## Housekeeping and operations
 
 | Ep | Video | Read alongside |
 |---|---|---|
-| 15 | Hotel Housekeeping Software: Room Status, Cleaning Tasks, Phone App | [Housekeeping](/housekeeping) |
-| 16 | Hotel Guest Laundry Management: Pickup, Count, Express, Billing | [Housekeeping](/housekeeping) |
-| 17 | Hotel Guest Requests, SLA Tracking, WhatsApp Inbox and Shift Handover | [Guest requests](/operations) |
+| 15 | [Hotel Housekeeping Software: Room Status, Cleaning Tasks, Phone App](https://www.youtube.com/watch?v=sgvH7Iq66Fo&list=PLcNTRQwzkzAs) | [Housekeeping](/housekeeping) |
+| 16 | [Hotel Guest Laundry Management: Pickup, Count, Express, Billing](https://www.youtube.com/watch?v=UL-fQk602bM&list=PLcNTRQwzkzAs) | [Housekeeping](/housekeeping) |
+| 17 | [Hotel Guest Requests, SLA Tracking, WhatsApp Inbox and Shift Handover](https://www.youtube.com/watch?v=vK0TULN8erM&list=PLcNTRQwzkzAs) | [Guest requests](/operations) |
 
 ## Restaurant POS and banquets
 
 | Ep | Video | Read alongside |
 |---|---|---|
-| 18 | Restaurant POS for Hotels: Tables, KOT, Kitchen Display, Billing | [F&B: POS & kitchen](/fnb) |
-| 19 | Restaurant Back Office: Room Service, Menu, Recipes, Kitchen Stock | [F&B: POS & kitchen](/fnb) |
-| 20 | Hotel Banquet Software: Inquiries, Quotes, Function Diary, Group Blocks | [Banquets & groups](/banquets) |
+| 18 | [Restaurant POS for Hotels: Tables, KOT, Kitchen Display, Billing](https://www.youtube.com/watch?v=l11lCBCiOF8&list=PLcNTRQwzkzAs) | [F&B: POS & kitchen](/fnb) |
+| 19 | [Restaurant Back Office: Room Service, Menu, Recipes, Kitchen Stock](https://www.youtube.com/watch?v=SdqRIdpS-wo&list=PLcNTRQwzkzAs) | [F&B: POS & kitchen](/fnb) |
+| 20 | [Hotel Banquet Software: Inquiries, Quotes, Function Diary, Group Blocks](https://www.youtube.com/watch?v=H1A5rXGTOws&list=PLcNTRQwzkzAs) | [Banquets & groups](/banquets) |
 
 ## Revenue, finance and night audit
 
 | Ep | Video | Read alongside |
 |---|---|---|
-| 21 | Hotel Revenue Management and Channel Manager: OTA Sync, Demand Pricing | [Channel manager](/channel-manager) |
+| 21 | [Hotel Revenue Management and Channel Manager: OTA Sync, Demand Pricing](https://www.youtube.com/watch?v=gpbKDd4sZZc&list=PLcNTRQwzkzAs) | [Channel manager](/channel-manager) |
 | 22 | Commission-Free Hotel Booking Engine: Setup and Guest Booking | [Booking engine](/booking-engine) |
 | 23 | Hotel Cashier and Finance: Till, Petty Cash, Currency Exchange, Ledgers | [Billing & cashier](/billing) |
 | 24 | Hotel Night Audit Step by Step: No-Shows, Room Posting, Day Close | [Night audit](/night-audit) |
