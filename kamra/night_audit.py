@@ -1128,6 +1128,10 @@ def alert_staff(property: str, roles: tuple[str, ...], subject: str, body: str) 
 				                message=body, delayed=True)
 			except Exception:
 				frappe.log_error(title=f"Night audit alert (email) failed: {u.name}")
+	# and the Kamra bell, for the finance team of this property
+	from kamra.notifications import record
+	record(property, "finance", subject, doctype="Property", name=property,
+	       route="/end-of-day")
 	return len(users)
 
 

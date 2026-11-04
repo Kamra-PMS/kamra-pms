@@ -45,6 +45,7 @@
   "auto_send_checkin_links",
   "column_break_c",
   "gstin",
+  "invoice_footer",
   "disabled",
   "locale",
   "sb_gst",
@@ -335,6 +336,12 @@
    "fieldname": "gstin",
    "fieldtype": "Data",
    "label": "GSTIN"
+  },
+  {
+   "description": "Printed at the foot of every invoice, under the tax note - e.g. CIN and bank details for transfers.",
+   "fieldname": "invoice_footer",
+   "fieldtype": "Small Text",
+   "label": "Invoice Footer"
   },
   {
    "default": "0",
@@ -735,7 +742,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 19:00:00.000000",
+ "modified": "2026-11-03 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",
