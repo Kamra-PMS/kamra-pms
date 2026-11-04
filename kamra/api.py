@@ -3122,6 +3122,9 @@ def folio_invoice(folio: str):
 			"date": str(doc.closed_on or "")[:10] or nowdate(),
 			"amount_in_words": loc.amount_in_words(pack, prop, doc.grand_total),
 			"footer": _loc_ctx.get("footer"),
+			# the hotel's own lines under the statutory one - CIN, bank
+			# details for a transfer
+			"invoice_footer": prop.get("invoice_footer"),
 			"service_code_label": (_loc_ctx.get("service_code") or {}).get(
 				"label", "SAC"),
 		},
@@ -5044,6 +5047,10 @@ def set_housekeeping_status(room: str, status: str):
 	from kamra.savings import log_action
 	log_action("room_status", "Room", room, r.property,
 	           rationale=f"{r.housekeeping_status or '-'} → {status}")
+	if status == "Out of Order":
+		# set_value skips the Room hooks, so the bell is told here
+		from kamra.notifications import room_out_of_order
+		room_out_of_order(r.property, room)
 	return {"ok": True, "room": room, "status": status}
 
 

@@ -257,7 +257,8 @@ export default function SettingsHub() {
     <div className="w-full lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
       {/* rail */}
       <aside className="mb-6 lg:mb-0">
-        <div className="lg:sticky lg:top-20">
+        {/* the menu scrolls on its own; the settings page scrolls with the window */}
+        <div className="lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100dvh-6rem)] lg:flex-col">
           <h1 className="mb-3 text-xl font-semibold tracking-tight">{t("Settings")}</h1>
           <div className="relative mb-4">
             <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" aria-hidden />
@@ -334,7 +335,10 @@ export default function SettingsHub() {
             })}
           </select>
 
-          <nav className="hidden space-y-5 lg:block" aria-label={t("Settings")}>
+          <nav
+            className="hidden space-y-5 lg:block lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:pe-1"
+            aria-label={t("Settings")}
+          >
             {GROUPS.map((g) => {
               const items = nav.filter((n) => n.group === g.id)
               if (!items.length) return null

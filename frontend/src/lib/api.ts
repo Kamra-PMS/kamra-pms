@@ -969,6 +969,7 @@ export interface BanquetDocument {
     amount_in_words: string
     service_code_label: string
     footer: string | null
+    invoice_footer?: string | null
     place_of_supply: string | null
     tax_label: string
     tax_id_label: string
@@ -1651,6 +1652,8 @@ export interface ChatMsg {
   actions?: { tool: string; ok: boolean }[]
   /** Stays and quotes the turn touched (kamra.assistant._turn_cards). */
   cards?: import("../components/AgentCards").AgentCard[]
+  /** Tap answers under a guided question (components/AgentGuide). */
+  choices?: import("../components/AgentGuide").Choice[]
 }
 export interface ConversationSummary {
   name: string

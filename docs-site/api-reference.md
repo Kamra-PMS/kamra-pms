@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **484 endpoints**, generated from the source
+the UI and the AI use. **487 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -3388,6 +3388,45 @@ A solved ticket that came back. Needs a reason; it is kept in the timeline.
 | --- | --- | --- |
 | `ticket` | yes |  |
 | `reason` | yes |  |
+
+
+## Notification bell (what each department should know)
+
+> Each person sees only the modules their roles open; their own actions are left out.
+
+### `kamra.notifications.bell`
+
+**GET/POST**
+
+What this person hasn't opened yet, newest first, and how many. An
+opened notification leaves the list (open_one); "Mark all read" clears
+everything up to now (mark_read).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `limit` | no | `40` |
+
+### `kamra.notifications.open_one`
+
+**POST**
+
+This person opened one notification: it leaves their list only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `notification` | yes |  |
+
+### `kamra.notifications.mark_read`
+
+**POST**
+
+Everything up to now counts as read for this person.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 
 ## ID scanner (passport strip, Aadhaar QR)
