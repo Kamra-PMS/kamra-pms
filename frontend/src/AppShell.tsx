@@ -40,6 +40,7 @@ import { useKiosk } from "./lib/kiosk"
 import { getSiteInfo, versionLabel } from "./lib/siteInfo"
 import AlertSettings from "./components/AlertSettings"
 import NotificationHost from "./components/NotificationHost"
+import NotificationBell from "./components/NotificationBell"
 
 
 // On-demand UI kept out of the entry chunk: the booking dialog opens on
@@ -543,6 +544,7 @@ export default function AppShell() {
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <ThemeToggle />
+            <NotificationBell property={property} />
             <LanguageToggle />
             <span className="hidden text-xs text-zinc-500 xl:inline">
               {user}
