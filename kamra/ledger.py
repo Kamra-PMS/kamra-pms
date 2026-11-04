@@ -776,6 +776,81 @@ def city_ledger_open_folios(account: str) -> list[dict]:
 	return out
 
 
+def locked_account_figures(account: str) -> dict:
+	"""Open bills and the account balance from a locking read.
+
+	The caller holds the City Ledger Account row. A plain SUM after that
+	wait can still be the snapshot from the start of the request, so two
+	transfers would each move the full amount. These reads are FOR UPDATE.
+	"""
+	entries = frappe.db.sql(
+		"""SELECT folio, kind, debit, credit, posting_date, invoice_date,
+		          due_date, invoice_number
+		   FROM `tabCity Ledger Entry`
+		   WHERE account = %s
+		   FOR UPDATE""",
+		account, as_dict=True)
+	applied = frappe.db.sql(
+		"""SELECT e.folio, e.credit, e.debit
+		   FROM `tabFolio Ledger Entry` e
+		   JOIN `tabCity Ledger Entry` c ON c.name = e.source_name
+		   WHERE e.source_doctype = 'City Ledger Entry' AND c.account = %s
+		   FOR UPDATE""",
+		account, as_dict=True)
+	ar = round(sum(float(e.debit or 0) - float(e.credit or 0) for e in entries), 2)
+	paid: dict[str, float] = {}
+	for row in applied:
+		if not row.folio:
+			continue
+		paid[row.folio] = paid.get(row.folio, 0.0) + float(row.credit or 0) - float(row.debit or 0)
+	groups: dict[str, dict] = {}
+	for e in entries:
+		if not e.folio or e.kind == "Payment":
+			continue
+		g = groups.setdefault(e.folio, {
+			"billed": 0.0, "invoice_date": None, "due": None,
+			"first": None, "number": None,
+		})
+		g["billed"] += float(e.debit or 0) - float(e.credit or 0)
+		posted = str(e.posting_date)
+		if g["first"] is None or posted < g["first"]:
+			g["first"] = posted
+		if e.kind == "Invoice":
+			inv = str(e.invoice_date or e.posting_date)
+			if g["invoice_date"] is None or inv < g["invoice_date"]:
+				g["invoice_date"] = inv
+			if e.due_date and (g["due"] is None or str(e.due_date) < str(g["due"])):
+				g["due"] = str(e.due_date)
+			number = e.invoice_number or ""
+			if g["number"] is None or number > g["number"]:
+				g["number"] = number
+	days = None
+	out = []
+	for folio, g in groups.items():
+		inv = g["invoice_date"] or g["first"]
+		due = g["due"]
+		if not due:
+			if days is None:
+				days = effective_credit_days(account)
+			from frappe.utils import add_days
+			due = str(add_days(inv, days))
+		billed = round(g["billed"], 2)
+		settled = round(paid.get(folio) or 0, 2)
+		out.append({
+			"folio": folio,
+			"invoice_number": g["number"],
+			"invoice_date": inv,
+			"due_date": str(due),
+			"billed": billed,
+			"paid": settled,
+			"outstanding": round(billed - settled, 2),
+		})
+	out.sort(key=lambda r: (r["invoice_date"], r["folio"]))
+	outstanding = round(sum(max(r["outstanding"], 0) for r in out), 2)
+	unapplied = round(max(outstanding - ar, 0.0), 2)
+	return {"open_items": out, "unapplied_credit": unapplied, "ar_balance": ar}
+
+
 def _unapplied_payments(account: str) -> list[dict]:
 	"""Company payments on this account with money not yet applied to a
 	folio, oldest first."""

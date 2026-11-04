@@ -321,23 +321,31 @@ def open_session(property: str, opening_float: float | None = None,
 			frappe.throw("That terminal is not at this property.")
 		if term.disabled:
 			frappe.throw("That terminal is switched off.")
-		taken = frappe.db.get_value(
-			"Cashier Session", {"cashier_terminal": term.name, "status": "Open"},
-			["name", "user"], as_dict=True)
+		# The second opener waits here, then the locking read sees the session
+		# the first one inserted.
+		frappe.db.get_value("Cashier Terminal", term.name, "name", for_update=True)
+		taken_rows = frappe.db.sql(
+			"""SELECT name, `user` FROM `tabCashier Session`
+			   WHERE cashier_terminal = %s AND status = 'Open'
+			   FOR UPDATE""",
+			term.name, as_dict=True)
+		taken = taken_rows[0] if taken_rows else None
 		if taken:
 			if taken.user == user:
 				return session_as_dict(taken.name)
 			frappe.throw(f"{term.terminal_name} is already open under {taken.user}. "
 			             "Ask them (or a manager) to close it first.")
 	else:
-		existing = frappe.db.get_value(
-			"Cashier Session",
-			{"property": property, "user": user, "status": "Open",
-			 "cashier_terminal": ["is", "not set"]},
-			"name",
-		)
-		if existing:
-			return session_as_dict(existing)
+		cashier_name = ensure_cashier(property, user)
+		frappe.db.get_value("Cashier", cashier_name, "name", for_update=True)
+		existing_rows = frappe.db.sql(
+			"""SELECT name FROM `tabCashier Session`
+			   WHERE property = %s AND `user` = %s AND status = 'Open'
+			     AND IFNULL(cashier_terminal, '') = ''
+			   FOR UPDATE""",
+			(property, user), as_dict=True)
+		if existing_rows:
+			return session_as_dict(existing_rows[0].name)
 	cashier = ensure_cashier(property, user)
 	bd = get_business_date(property)
 	opening = float(opening_float) if opening_float not in (None, "") else \

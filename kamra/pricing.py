@@ -475,6 +475,31 @@ def validate_voucher(property: str, voucher_code: str, nights: int,
 	return v
 
 
+def consume_voucher_use(voucher: str) -> None:
+	"""Count one redemption, under a lock, and refuse a code that is used up.
+
+	The check in validate_voucher is only the friendly early answer. Two
+	bookings can both pass it. This update runs in the same transaction as
+	the booking and only increments while the code is still under its cap
+	(max_uses 0 means unlimited).
+	"""
+	row = frappe.db.sql(
+		"""SELECT voucher_code, IFNULL(max_uses, 0), IFNULL(times_used, 0)
+		   FROM `tabDiscount Voucher` WHERE name = %s FOR UPDATE""",
+		voucher)
+	if not row:
+		frappe.throw(f"Voucher '{voucher}' does not exist.")
+	code, max_uses, times_used = row[0][0], int(row[0][1] or 0), int(row[0][2] or 0)
+	if max_uses and times_used >= max_uses:
+		frappe.throw(f"Voucher {code} has been fully redeemed.")
+	frappe.db.sql(
+		"""UPDATE `tabDiscount Voucher`
+		   SET times_used = COALESCE(times_used, 0) + 1
+		   WHERE name = %s
+		     AND (IFNULL(max_uses, 0) = 0 OR COALESCE(times_used, 0) < max_uses)""",
+		voucher)
+
+
 def apply_rate_plan(rate_plan: str | None, room_total: Decimal) -> Decimal:
 	"""The stay's room total after its rate plan's modifier.
 

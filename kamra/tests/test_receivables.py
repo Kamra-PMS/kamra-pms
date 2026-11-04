@@ -8,6 +8,8 @@ helpers come from the credit-control fixture.
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import frappe
 
 from kamra import credit, ledger, receivables
@@ -148,6 +150,28 @@ class ReceivablesTestCase(cc.CreditControlTestCase):
 		# the parent pays it off
 		ledger.city_ledger_settle(parent, 300)
 		self.assertAlmostEqual(_open(parent)[folio]["outstanding"], 0, 2)
+
+	def test_a_transfer_that_lands_while_this_one_waits_is_seen(self):
+		parent = receivables.save_ar_account(
+			PROP_A, self.other_company(), account_number="UT-PARENT-2")["account"]
+		_, folio = self.bill(400)
+		state = {"done": False}
+		real = frappe.db.get_value
+
+		def move_first(*args, **kwargs):
+			out = real(*args, **kwargs)
+			if (not state["done"] and args and args[0] == "City Ledger Account"
+			        and kwargs.get("for_update")):
+				state["done"] = True
+				receivables.transfer_ar_invoice(self.account, folio, parent)
+			return out
+
+		with patch.object(frappe.db, "get_value", side_effect=move_first):
+			with self.assertRaises(frappe.ValidationError):
+				receivables.transfer_ar_invoice(self.account, folio, parent,
+				                                reason="too late")
+		self.assertAlmostEqual(_open(self.account)[folio]["outstanding"], 0, 2)
+		self.assertAlmostEqual(_open(parent)[folio]["outstanding"], 400, 2)
 
 	# review follow-ups ---------------------------------------------------------
 

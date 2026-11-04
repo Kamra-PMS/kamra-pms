@@ -104,14 +104,19 @@ def _resolve(account_or_company: str, property: str) -> tuple[str | None, str]:
 	return account, account_or_company
 
 
+def _lock_city_ledger_account(account: str | None) -> None:
+	"""Serialise credit checks and AR moves on one account."""
+	if account:
+		frappe.db.get_value("City Ledger Account", account, "name", for_update=True)
+
+
 def in_house_exposure(company: str, property: str,
-                      exclude_folios=None) -> float:
+                      exclude_folios=None, *, for_update: bool = False) -> float:
 	"""What the company's stays in house owe on their company / group master
 	folios right now (not yet on the city ledger)."""
 	from kamra.ledger import company_payer_of
 	skip = set(exclude_folios or ())
-	rows = frappe.db.sql(
-		"""
+	in_house_sql = """
 		SELECT f.name, f.folio_type, f.reservation, f.group_booking, f.balance
 		FROM `tabFolio` f
 		JOIN `tabReservation` r ON r.name = f.reservation
@@ -120,7 +125,10 @@ def in_house_exposure(company: str, property: str,
 		  AND r.status = 'Checked In'
 		  AND (r.company = %(c)s OR f.group_booking IN (
 		       SELECT name FROM `tabGroup Booking` WHERE company = %(c)s))
-		""", {"p": property, "c": company}, as_dict=True)
+	"""
+	if for_update:
+		in_house_sql += " FOR UPDATE"
+	rows = frappe.db.sql(in_house_sql, {"p": property, "c": company}, as_dict=True)
 	total = 0.0
 	for f in rows:
 		if f.name in skip or flt(f.balance) <= 0:
@@ -131,7 +139,8 @@ def in_house_exposure(company: str, property: str,
 
 
 def check_company_credit(account_or_company: str, property: str,
-                         amount: float = 0, exclude_folios=None) -> dict:
+                         amount: float = 0, exclude_folios=None, *,
+                         lock: bool = False) -> dict:
 	"""Can `amount` more be billed to this company at this property?
 
 	Returns {ok, reasons, over_limit_by, overdue_amount, ...}. ok is False
@@ -155,16 +164,24 @@ def check_company_credit(account_or_company: str, property: str,
 	limit = 0.0
 	ar = 0.0
 	if account:
+		if lock:
+			_lock_city_ledger_account(account)
 		limit = flt(frappe.db.get_value("City Ledger Account", account,
 		                                "credit_limit"))
-		pos = _account_position(account)
-		ar = round(flt(frappe.db.sql(
-			"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
-			   WHERE account = %s""", account)[0][0]), 2)
+		if lock:
+			from kamra.ledger import locked_account_figures
+			pos = locked_account_figures(account)
+			ar = pos["ar_balance"]
+		else:
+			pos = _account_position(account)
+			ar = round(flt(frappe.db.sql(
+				"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
+				   WHERE account = %s""", account)[0][0]), 2)
 		overdue, oldest = overdue_past_grace(
 			pos["open_items"], pos["unapplied_credit"], out["grace_days"])
 		out["overdue_amount"], out["oldest_due_date"] = overdue, oldest
-	in_house = in_house_exposure(company, property, exclude_folios)
+	in_house = in_house_exposure(company, property, exclude_folios,
+	                             for_update=lock)
 	exposure = round(ar + in_house + amount, 2)
 	out.update(credit_limit=limit, ar_balance=ar, in_house=in_house,
 	           exposure=exposure)
@@ -214,7 +231,8 @@ def enforce_company_credit(company: str, property: str, amount: float,
 	(with `warning` set when it failed under Warn, `overridden` when a
 	block was overridden); raises CreditBlocked under Block, or
 	PermissionError when someone who may not override tries to."""
-	res = check_company_credit(company, property, amount, exclude_folios)
+	res = check_company_credit(company, property, amount, exclude_folios,
+	                           lock=True)
 	if res["ok"]:
 		return res
 	from kamra.savings import log_action

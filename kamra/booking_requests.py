@@ -107,7 +107,8 @@ def accept_booking_request(reservation: str, room: str | None = None):
 	refused with the reason; decline it instead."""
 	from kamra.api import agent_channel, available_rooms
 	from kamra.kamra.doctype.reservation.reservation import (
-		InventoryRefused, uses_member_rooms, villa_lockout_conflict)
+		InventoryRefused, lock_property_for_inventory, uses_member_rooms,
+		villa_lockout_conflict)
 	from kamra.reservation_state import lock_sius_for_booking
 
 	res = _load_request(reservation)
@@ -115,12 +116,15 @@ def accept_booking_request(reservation: str, room: str | None = None):
 	if getdate(ci) < getdate(nowdate()):
 		frappe.throw(_("The arrival date of {0} has passed - decline it.").format(
 			res.name), title=_("Request expired"))
+	# Property before sellable units and the room type, the same order as
+	# Reservation.validate, so the two paths cannot deadlock.
+	lock_property_for_inventory(res.property)
 	lock_sius_for_booking(res.property, res.room_type)
 	# serialize against a booking of the same category landing right now
 	frappe.db.get_value("Room Type", res.room_type, "name", for_update=True)
 
 	conflict = villa_lockout_conflict(res.property, res.room_type, ci, co,
-	                                  exclude=res.name)
+	                                  exclude=res.name, for_update=True)
 	if conflict:
 		frappe.throw(
 			_("Can't accept {0}: the villa and its rooms can't both be sold, "
