@@ -3110,6 +3110,9 @@ def folio_invoice(folio: str):
 			"date": str(doc.closed_on or "")[:10] or nowdate(),
 			"amount_in_words": loc.amount_in_words(pack, prop, doc.grand_total),
 			"footer": _loc_ctx.get("footer"),
+			# the hotel's own lines under the statutory one - CIN, bank
+			# details for a transfer
+			"invoice_footer": prop.get("invoice_footer"),
 			"service_code_label": (_loc_ctx.get("service_code") or {}).get(
 				"label", "SAC"),
 		},

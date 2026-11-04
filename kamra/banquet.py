@@ -1213,7 +1213,7 @@ def banquet_document(function: str, kind: str = "quote"):
 		"Property", doc.property,
 		["property_name", "legal_name", "address_line", "city", "state",
 		 "pincode", "country", "phone", "email", "website", "gstin",
-		 "logo_url"], as_dict=True) or {}
+		 "logo_url", "invoice_footer"], as_dict=True) or {}
 	prop["address"] = ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- drops empty address parts
 		prop.get("address_line"), prop.get("city"), prop.get("state"),
 		prop.get("pincode")]))
@@ -1255,6 +1255,7 @@ def banquet_document(function: str, kind: str = "quote"):
 		"amount_in_words": loc.amount_in_words(pack, prop_doc, doc.grand_total),
 		"service_code_label": (ctx.get("service_code") or {}).get("label", "SAC"),
 		"footer": ctx.get("footer"),
+		"invoice_footer": prop.get("invoice_footer"),
 		"place_of_supply": ctx.get("place_of_supply"),
 		"tax_label": ctx.get("tax_label"),
 		"tax_id_label": ctx.get("tax_id_label"),
