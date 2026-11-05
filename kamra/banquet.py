@@ -2587,10 +2587,14 @@ def link_customer(function: str, guest: str | None = None):
 
 
 def _find_or_create_guest(doc):
-	"""Dedupe on the phone number, the way the front desk does."""
-	phone = (doc.customer_phone or "").strip()
+	"""Dedupe on the phone number, the way the front desk does: read with
+	the property's country (#468), as typed when it can't be read."""
+	from kamra import phone as phone_mod
+	typed = (doc.customer_phone or "").strip()
+	phone = phone_mod.for_property(typed, doc.property)[0]
 	if phone:
-		existing = frappe.db.get_value("Guest", {"phone": phone})
+		existing = frappe.db.get_value(
+			"Guest", {"phone": phone_mod.matching(typed, doc.property)})
 		if existing:
 			return existing
 	parts = (doc.customer_name or "Guest").strip().split(" ", 1)
@@ -2611,7 +2615,8 @@ def customer_profile(property: str, guest: str | None = None,
 	phone: what this client has run with us, what they spent, what they
 	usually book, and what's still owed."""
 	if not guest and phone:
-		guest = frappe.db.get_value("Guest", {"phone": phone.strip()})
+		from kamra import phone as phone_mod
+		guest = frappe.db.get_value("Guest", {"phone": phone_mod.matching(phone, property)})
 	if not guest:
 		return {"found": False}
 	# a phone lookup resolves to a guest the decorator never saw
