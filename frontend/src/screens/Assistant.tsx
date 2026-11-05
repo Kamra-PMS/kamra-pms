@@ -22,6 +22,7 @@ import {
   getCurrentProperty,
   getSnapshot,
   listConversations,
+  postRaw,
   saveConversation,
   type BookingOptions,
   type ChatMsg,
@@ -427,19 +428,10 @@ export default function Assistant() {
         ])
       }
 
-      const csrf = (window as unknown as { csrf_token?: string }).csrf_token
-      const res = await fetch("/api/method/kamra.assistant.ask_stream", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrf && csrf !== "None" ? { "X-Frappe-CSRF-Token": csrf } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          property: getCurrentProperty(),
-          messages: history.map(({ role, content }) => ({ role, content })),
-          lang: agentLang(),
-        }),
+      const res = await postRaw("/api/method/kamra.assistant.ask_stream", {
+        property: getCurrentProperty(),
+        messages: history.map(({ role, content }) => ({ role, content })),
+        lang: agentLang(),
       })
       if (!res.ok || !res.body) throw new Error(`stream ${res.status}`)
       const reader = res.body.getReader()
