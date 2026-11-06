@@ -26,6 +26,27 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.7.6](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.5...v2.7.6) (2026-11-06)
+
+
+### Features
+
+* **agent:** guided desk tasks, food orders and voice input ([6735d7c](https://github.com/Kamra-PMS/kamra-pms/commit/6735d7cf5035f394f8355b438d596583ad9b0181))
+* **agent:** reply in the picked language; voice waits for Send ([c73c208](https://github.com/Kamra-PMS/kamra-pms/commit/c73c2082899ad69bf942472ab29f70a73069cbce))
+* **invoice:** property invoice footer for CIN and bank details ([38ee9ba](https://github.com/Kamra-PMS/kamra-pms/commit/38ee9ba729187feb36183703ccb58b707c883168))
+* notification bell for each department ([#487](https://github.com/Kamra-PMS/kamra-pms/issues/487)) ([bbb9568](https://github.com/Kamra-PMS/kamra-pms/commit/bbb9568451cdb9e49b44ff0ee1cbb62ccc903119))
+* **rooms:** floors master, room type and floor filters, Unit kind label ([#461](https://github.com/Kamra-PMS/kamra-pms/issues/461)) ([e8e3205](https://github.com/Kamra-PMS/kamra-pms/commit/e8e320591338afd05558311caaf771a467a05ac5))
+* **ui:** language picker in the top bar; settings menu scrolls on its own ([46ca20d](https://github.com/Kamra-PMS/kamra-pms/commit/46ca20d2717a9597caa777d04d0be5e540f1de84))
+
+
+### Bug Fixes
+
+* close check-then-write races on bookings, credit, tills and stock ([#486](https://github.com/Kamra-PMS/kamra-pms/issues/486)) ([6c9f58e](https://github.com/Kamra-PMS/kamra-pms/commit/6c9f58edae52c879f7b93d02ce3a2e79b227b11a))
+* open tabs recover from a stale CSRF token after a sign-in elsewhere ([#480](https://github.com/Kamra-PMS/kamra-pms/issues/480)) ([d80b533](https://github.com/Kamra-PMS/kamra-pms/commit/d80b5331345c022745a7da933926a8ecd2898907)), closes [#467](https://github.com/Kamra-PMS/kamra-pms/issues/467)
+* read inbound phones with the property's country, never lose a booking over one ([#481](https://github.com/Kamra-PMS/kamra-pms/issues/481)) ([2de66c8](https://github.com/Kamra-PMS/kamra-pms/commit/2de66c8cf49cac3c09668e22050afb721994fa81))
+* room menu on Today closes on outside click, colour-coded statuses ([#479](https://github.com/Kamra-PMS/kamra-pms/issues/479)) ([8b31ab3](https://github.com/Kamra-PMS/kamra-pms/commit/8b31ab3ca3b87c4d93264fb4d06cab381fc91bef))
+* serialise bank deposits so one safe cannot be overdrawn ([#485](https://github.com/Kamra-PMS/kamra-pms/issues/485)) ([eaa0779](https://github.com/Kamra-PMS/kamra-pms/commit/eaa0779f3bd04baa069a149b0ba949eaa041f80f))
+
 ## [2.7.5](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.4...v2.7.5) (2026-11-02)
 
 
