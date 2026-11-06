@@ -26,6 +26,7 @@ import {
   HeartPulse,
   Home,
   Landmark,
+  Layers,
   LayoutGrid,
   ListChecks,
   ListTodo,
@@ -361,9 +362,12 @@ export const APPS: AppDef[] = [
     items: [
       { to: "/settings/general", label: "Settings", icon: SettingsIcon },
       { to: "/health", label: "System Health", icon: HeartPulse },
+      // the setup trio, in the order you set a property up
+      { to: "/floors", label: "Floors", icon: Layers,
+        keywords: ["Floor order", "Storeys", "Levels"] },
+      { to: "/room-types", label: "Room Types", icon: LayoutGrid },
       { to: "/rooms", label: "Rooms", icon: BedDouble,
         keywords: ["Add rooms", "Room setup", "Floors", "Room numbers"] },
-      { to: "/room-types", label: "Room Types", icon: LayoutGrid },
       { to: "/activity", label: "Activity Log", icon: ScrollText },
       { to: "/marketplace", label: "Marketplace", icon: Store },
       {

@@ -124,6 +124,7 @@ interface InvoiceData {
     date: string
     amount_in_words: string
     footer: string | null
+    invoice_footer?: string | null
     service_code_label: string
   }
   /** Charges with the service code the tax authority expects per LINE -
@@ -1426,6 +1427,12 @@ export default function FolioView() {
                 {property.gstin && property.tax_note
                   ? ` ${t(property.tax_note)}`
                   : ""}
+                {/* the hotel's own lines - CIN, bank details - as typed */}
+                {doc?.invoice_footer && (
+                  <span className="mt-2 block whitespace-pre-line">
+                    {doc.invoice_footer}
+                  </span>
+                )}
               </p>
               <div className="text-center">
                 <div className="mb-1 h-8 w-40 border-b border-zinc-300" />

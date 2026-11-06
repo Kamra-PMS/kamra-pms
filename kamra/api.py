@@ -49,6 +49,18 @@ def set_enabled_modules(property: str, modules) -> dict:
 	return {"ok": True, "modules": picked}
 
 
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def csrf_token():
+	"""The session's current CSRF token. An open tab asks for it when its
+	page-load token went stale because someone signed in or out in another
+	tab (Frappe rotates the token on login). None for a guest. A GET, like
+	the boot page that already carries the token, and readable only by the
+	same origin."""
+	if frappe.session.user == "Guest":
+		return None
+	return frappe.sessions.get_csrf_token()
+
+
 @frappe.whitelist(allow_guest=True)
 def whoami():
 	"""Current user + roles - drives which modules the UI shows.
@@ -551,7 +563,8 @@ def import_bookings(property: str, bookings):
 			if not rt:
 				raise frappe.ValidationError(
 					f"unknown room type code {row['room_type_code']}")
-			guest = _find_or_create_guest(row["guest_name"], row.get("phone"))
+			guest = _find_or_create_guest(row["guest_name"], row.get("phone"),
+			                              property, where="an import")
 			doc = frappe.get_doc({
 				"doctype": "Reservation",
 				"property": property,
@@ -2709,9 +2722,8 @@ def post_discount(folio: str, value: float = 0, kind: str = "Percent",
 	                          reason_code=reason_code)
 	           for ln in lines]
 	if (voucher_code or "").strip():
-		frappe.db.sql("""UPDATE `tabDiscount Voucher`
-		                 SET times_used = COALESCE(times_used, 0) + 1
-		                 WHERE name = %s""", v.name)
+		from kamra.pricing import consume_voucher_use
+		consume_voucher_use(v.name)
 	return {"ok": True, "folio": folio, "total": round(total, 2),
 	        "pending": any(r.get("pending") for r in results), "results": results}
 
@@ -3110,6 +3122,9 @@ def folio_invoice(folio: str):
 			"date": str(doc.closed_on or "")[:10] or nowdate(),
 			"amount_in_words": loc.amount_in_words(pack, prop, doc.grand_total),
 			"footer": _loc_ctx.get("footer"),
+			# the hotel's own lines under the statutory one - CIN, bank
+			# details for a transfer
+			"invoice_footer": prop.get("invoice_footer"),
 			"service_code_label": (_loc_ctx.get("service_code") or {}).get(
 				"label", "SAC"),
 		},
@@ -3284,7 +3299,9 @@ def guest_alert(guest: str | None = None, phone: str | None = None):
 	before booking so the warning shows up front, not as a refusal at the
 	end. Resolves exactly like create_booking: the chosen profile, else the
 	profile with this phone number."""
-	name = guest or (frappe.db.get_value("Guest", {"phone": phone}) if phone else None)
+	from kamra import phone as phone_mod
+	name = guest or (frappe.db.get_value("Guest", {"phone": phone_mod.matching(phone)})
+	                 if phone else None)
 	if not name:
 		return {"guest": None, "blacklisted": 0, "blacklist_reason": None}
 	g = frappe.db.get_value(
@@ -5032,6 +5049,10 @@ def set_housekeeping_status(room: str, status: str):
 	from kamra.savings import log_action
 	log_action("room_status", "Room", room, r.property,
 	           rationale=f"{r.housekeeping_status or '-'} → {status}")
+	if status == "Out of Order":
+		# set_value skips the Room hooks, so the bell is told here
+		from kamra.notifications import room_out_of_order
+		room_out_of_order(r.property, room)
 	return {"ok": True, "room": room, "status": status}
 
 
@@ -5084,7 +5105,12 @@ def room_board(property: str):
 			"priority": t.priority,
 			"assignee": names.get(t.assigned_to_user) or t.assigned_to_user,
 		} if t else None
-	return {"rooms": rooms, "can_supervise": _is_room_supervisor()}
+	from kamra.floors import floors_for
+	room_types = [{"name": t.name, "room_type_name": t.room_type_name} for t in frappe.get_all(
+		"Room Type", filters={"property": property}, fields=["name", "room_type_name"],
+		order_by="room_type_name asc")]
+	return {"rooms": rooms, "can_supervise": _is_room_supervisor(),
+	        "floors": floors_for(property), "room_types": room_types}
 
 
 @frappe.whitelist()
@@ -6022,9 +6048,14 @@ def _refuse_taken_ota_ref(property: str, ota_ref: str | None,
 	share it (same group booking); any other booking with it is refused."""
 	if not ota_ref:
 		return
-	for r in frappe.get_all("Reservation", filters={
-			"property": property, "ota_ref": ota_ref,
-			"status": ["!=", "Cancelled"]}, fields=["name", "group_booking"]):
+	from kamra.kamra.doctype.reservation.reservation import lock_property_for_inventory
+	lock_property_for_inventory(property)
+	rows = frappe.db.sql(
+		"""SELECT name, group_booking FROM `tabReservation`
+		   WHERE property = %s AND ota_ref = %s AND status != 'Cancelled'
+		   FOR UPDATE""",
+		(property, ota_ref), as_dict=True)
+	for r in rows:
 		if not group_booking or r.group_booking != group_booking:
 			frappe.throw(_("OTA booking {0} is already reservation {1}.").format(
 				ota_ref, r.name))
@@ -6162,10 +6193,25 @@ def cancellation_outlook(property: str, room_type: str, check_in_date: str,
 	        "fee_label": "", "non_refundable_season": None}
 
 
+def _phone_for(raw: str | None, property: str | None) -> str:
+	"""A phone read with the property's country (kamra.phone): E.164, or as
+	typed when it can't be read. Blank stays blank."""
+	from kamra import phone as phone_mod
+	return phone_mod.for_property(raw, property)[0]
+
+
 def _find_or_create_guest(guest_name: str, phone: str | None,
-                          property: str | None = None):
+                          property: str | None = None, where: str = "a booking"):
+	# read with the property's country (#468). A local number is stored as
+	# E.164; one already written with + is kept as written. A number that
+	# can't be read is kept as typed and flagged - never refused.
+	from kamra import phone as phone_mod
+	typed = (phone or "").strip()
+	phone, problem = phone_mod.for_property(typed, property)
 	if phone:
-		existing = frappe.db.get_value("Guest", {"phone": phone})
+		# a profile saved before numbers were normalised, or stored as
+		# E.164, still matches a spaced or local writing of the same number
+		existing = frappe.db.get_value("Guest", {"phone": phone_mod.matching(typed, property)})
 		if existing:
 			return existing
 	parts = guest_name.strip().split(" ", 1)
@@ -6177,9 +6223,10 @@ def _find_or_create_guest(guest_name: str, phone: str | None,
 		"doctype": "Guest",
 		"first_name": parts[0],
 		"last_name": parts[1] if len(parts) > 1 else "",
-		"phone": phone,
+		"phone": phone or None,
 		"nationality": nationality or None,
 	}).insert(ignore_permissions=True)
+	phone_mod.flag(problem, "Guest", guest.name, property, where)
 	return guest.name
 
 
@@ -6187,12 +6234,16 @@ def _guest_for_row(guest_name: str, phone: str | None, property: str | None = No
 	"""The guest for one name typed on a rooming list. A shared phone (one
 	number for a family or an office) never replaces the typed name: the
 	existing guest is used only when the name matches too."""
+	from kamra import phone as phone_mod
+	typed = (phone or "").strip()
+	phone = phone_mod.for_property(typed, property)[0]
 	if phone:
+		found = phone_mod.matching(typed, property)
 		same = frappe.db.get_value(
-			"Guest", {"phone": phone, "full_name": guest_name.strip()}, "name")
+			"Guest", {"phone": found, "full_name": guest_name.strip()}, "name")
 		if same:
 			return same
-		if frappe.db.exists("Guest", {"phone": phone}):
+		if frappe.db.exists("Guest", {"phone": found}):
 			parts = guest_name.strip().split(" ", 1)
 			from kamra.localization import pack_for
 			nationality = getattr(pack_for(property), "DEFAULT_NATIONALITY", None) \
@@ -6280,7 +6331,8 @@ def _assert_key_matches(reservation: str, key: str, room_type: str,
 	rather than hand back someone else's reservation as a success."""
 	r = frappe.db.get_value(
 		"Reservation", reservation,
-		["room_type", "check_in_date", "check_out_date", "guest", "guest_name"],
+		["room_type", "check_in_date", "check_out_date", "guest", "guest_name",
+		 "property"],
 		as_dict=True)
 	same_stay = (r.room_type == room_type
 	             and getdate(r.check_in_date) == getdate(check_in_date)
@@ -6289,11 +6341,17 @@ def _assert_key_matches(reservation: str, key: str, room_type: str,
 		same_guest = r.guest == guest
 	else:
 		# the stored name comes from the guest profile; a phone match covers
-		# a profile found by phone under a different spelling
+		# a profile found by phone under a different spelling. Compare the
+		# canonical number: storage keeps a leading + as written and stores
+		# a local number as E.164.
+		from kamra import phone as phone_mod
+		stored = frappe.db.get_value("Guest", r.guest, "phone") if r.guest else None
+		region = phone_mod.region_for(r.property)
 		same_guest = (
 			_collapse(r.guest_name).casefold() == _collapse(guest_name).casefold()
-			or bool(phone and str(phone).strip() and _collapse(
-				frappe.db.get_value("Guest", r.guest, "phone")) == _collapse(phone)))
+			or bool(phone and str(phone).strip() and stored and
+			        phone_mod.canonical(stored, region)
+			        == phone_mod.canonical(phone, region)))
 	if not (same_stay and same_guest):
 		frappe.throw(
 			_("This idempotency_key ({0}) was already used for a different "
@@ -6344,8 +6402,11 @@ def _recent_agent_duplicate(property: str, room_type: str, check_in_date: str,
 		conds.append("r.guest = %(guest)s")
 		values["guest"] = guest
 	elif phone and str(phone).strip():
-		conds.append("g.phone = %(phone)s")
-		values["phone"] = str(phone).strip()
+		# storage keeps a leading + as written and stores a local number as
+		# E.164, so a retry matches every form of that number
+		from kamra import phone as phone_mod
+		conds.append("g.phone IN %(phones)s")
+		values["phones"] = tuple(phone_mod.matching(phone, property)[1])
 	elif _collapse(guest_name):
 		conds.append(
 			"REGEXP_REPLACE(TRIM(r.guest_name), '[[:space:]]+', ' ') = %(gname)s")
@@ -6446,8 +6507,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 	`credit_override_reason`, which is logged. Agents can't override."""
 	from kamra.crs import assert_property_access
+	from kamra.kamra.doctype.reservation.reservation import lock_property_for_inventory
 	from kamra.reservation_state import find_by_idempotency, lock_sius_for_booking
 	assert_property_access(property)
+	# Before the free-room read and the stay insert, so a second booking
+	# waits and then sees this one.
+	lock_property_for_inventory(property)
 	check_in_time, check_out_time = _stay_slot(
 		check_in_date, check_out_date, check_in_time, check_out_time)
 
@@ -6583,7 +6648,9 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		"planned_check_out_time": check_out_time,
 		"travel_agent": travel_agent or None,
 		"booked_by_name": booked_by_name or None,
-		"booked_by_phone": booked_by_phone or None,
+		# read with the property's country, like the guest's (#468); a CRS
+		# leg copying an older itinerary's booker phone is read here too
+		"booked_by_phone": _phone_for(booked_by_phone, property) or None,
 		"booker_relation": booker_relation or None,
 		"contact_preference": contact_preference
 			or ("Booker" if booked_by_name else "Guest"),
@@ -6704,6 +6771,15 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 					frappe.db.rollback(save_point="kamra_credit_gate")
 					raise
 			break
+		except frappe.DuplicateEntryError:
+			existing = None
+			if getattr(doc, "ota_live_key", None):
+				existing = frappe.db.get_value(
+					"Reservation", {"ota_live_key": doc.ota_live_key}, "name")
+			if existing:
+				frappe.throw(_("OTA booking {0} is already reservation {1}.").format(
+					ota_ref or doc.ota_ref, existing))
+			raise
 		except frappe.QueryDeadlockError:
 			frappe.db.rollback()
 			if attempt == 3:

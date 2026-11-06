@@ -93,6 +93,8 @@ MODULES: tuple[Module, ...] = (
 				S("email", "Email", "email", store=P),
 				S("website", "Website", store=P),
 				S("gstin", "Tax registration number", store=P, hint="GSTIN, VAT or TRN - printed on invoices."),
+				S("invoice_footer", "Invoice footer", "textarea", store=P,
+				  hint="Your own lines at the foot of every invoice - e.g. CIN, bank name, account number and IFSC."),
 			)),
 		),
 	),

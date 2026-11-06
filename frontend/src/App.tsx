@@ -208,6 +208,10 @@ export default function App() {
           <Route path="guests/:name" element={<GuestJourney />} />
           <Route path="rooms" element={<RoomsSetup />} />
           <Route
+            path="floors"
+            element={<ConfiguredScreen config="floorsConfig" />}
+          />
+          <Route
             path="room-types"
             element={<ConfiguredScreen config="roomTypesConfig" />}
           />

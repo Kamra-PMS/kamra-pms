@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Check, Download, Upload } from "lucide-react"
+import { Check, Download, Plus, Upload } from "lucide-react"
 import { ResourceScreen } from "../components/ResourceScreen"
 import { Sheet } from "../components/ui/sheet"
 import { Button } from "../components/ui/button"
@@ -9,10 +9,12 @@ import { useAuth } from "../lib/auth"
 import { serverError } from "../lib/resource"
 import { t as translate, useUILanguage } from "../lib/i18n"
 import { roomsConfig } from "./configs"
+import { AddRooms } from "./AdminRooms"
 
-/** Admin → Rooms: the generic room list plus a spreadsheet import, so a
- *  property with 80 rooms is set up in one go (kamra.golive.*_rooms).
- *  Room types come first: they carry rates and capacity. */
+/** Admin → Rooms: the generic room list, a numbered run on one floor
+ *  (kamra.floors.add_rooms), and a spreadsheet import for a property that
+ *  already has its rooms in a file (kamra.golive.*_rooms). Room types come
+ *  first: they carry rates and capacity. */
 
 interface Issue { row: number; room: string; error: string }
 interface Preview {
@@ -31,17 +33,30 @@ export default function RoomsSetup() {
   const { roles } = useAuth()
   const canImport = roles.some((r) => ["Hotel Admin", "System Manager", "Administrator"].includes(r))
   const [importing, setImporting] = useState(false)
+  const [adding, setAdding] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
+  const reload = () => setReloadKey((k) => k + 1)
   return (
     <>
       <ResourceScreen
         key={reloadKey}
         config={roomsConfig}
-        headerAction={canImport ? (
-          <Button variant="outline" onClick={() => setImporting(true)}>
-            <Upload className="mr-1 size-4" aria-hidden />{translate("Import rooms")}</Button>
-        ) : undefined}
+        headerAction={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setAdding(true)}>
+              <Plus className="mr-1 size-4" aria-hidden />{translate("Add rooms")}
+            </Button>
+            {canImport && (
+              <Button variant="outline" onClick={() => setImporting(true)}>
+                <Upload className="mr-1 size-4" aria-hidden />{translate("Import rooms")}
+              </Button>
+            )}
+          </div>
+        }
       />
+      {adding && (
+        <AddRooms onClose={() => setAdding(false)} onDone={() => { setAdding(false); reload() }} />
+      )}
       {importing && (
         <RoomImport onClose={() => setImporting(false)} onDone={() => setReloadKey((k) => k + 1)} />
       )}

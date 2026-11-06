@@ -97,6 +97,30 @@
      }
     },
     {
+     "name": "csrf_token",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.csrf_token",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.csrf_token"
+       ]
+      },
+      "description": "The session's current CSRF token. An open tab asks for it when its\npage-load token went stale because someone signed in or out in another\ntab (Frappe rotates the token on login). None for a guest. A GET, like\nthe boot page that already carries the token, and readable only by the\nsame origin."
+     }
+    },
+    {
      "name": "whoami",
      "request": {
       "method": "POST",
@@ -8345,6 +8369,122 @@
    ]
   },
   {
+   "name": "Notification bell (what each department should know)",
+   "item": [
+    {
+     "name": "bell",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.notifications.bell",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.notifications.bell"
+       ]
+      },
+      "description": "What this person hasn't opened yet, newest first, and how many. An\nopened notification leaves the list (open_one); \"Mark all read\" clears\neverything up to now (mark_read).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"limit\": 40\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "open_one",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.notifications.open_one",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.notifications.open_one"
+       ]
+      },
+      "description": "This person opened one notification: it leaves their list only.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"notification\": \"<notification>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "mark_read",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.notifications.mark_read",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.notifications.mark_read"
+       ]
+      },
+      "description": "Everything up to now counts as read for this person.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "ID scanner (passport strip, Aadhaar QR)",
    "item": [
     {
@@ -16090,6 +16230,48 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"days\": 30,\n  \"refresh\": 0,\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Floors (Admin > Rooms: Add rooms)",
+   "item": [
+    {
+     "name": "add_rooms",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.floors.add_rooms",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.floors.add_rooms"
+       ]
+      },
+      "description": "Create rooms start..end on a floor (numbers that already exist are\nskipped). preview=1 only reports what would happen. Admin > Rooms >\nAdd rooms.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"floor\": \"<floor>\",\n  \"room_type\": \"Your Property-DLX\",\n  \"start\": \"<start>\",\n  \"end\": \"<end>\",\n  \"prefix\": \"\",\n  \"preview\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

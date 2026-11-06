@@ -321,23 +321,31 @@ def open_session(property: str, opening_float: float | None = None,
 			frappe.throw("That terminal is not at this property.")
 		if term.disabled:
 			frappe.throw("That terminal is switched off.")
-		taken = frappe.db.get_value(
-			"Cashier Session", {"cashier_terminal": term.name, "status": "Open"},
-			["name", "user"], as_dict=True)
+		# The second opener waits here, then the locking read sees the session
+		# the first one inserted.
+		frappe.db.get_value("Cashier Terminal", term.name, "name", for_update=True)
+		taken_rows = frappe.db.sql(
+			"""SELECT name, `user` FROM `tabCashier Session`
+			   WHERE cashier_terminal = %s AND status = 'Open'
+			   FOR UPDATE""",
+			term.name, as_dict=True)
+		taken = taken_rows[0] if taken_rows else None
 		if taken:
 			if taken.user == user:
 				return session_as_dict(taken.name)
 			frappe.throw(f"{term.terminal_name} is already open under {taken.user}. "
 			             "Ask them (or a manager) to close it first.")
 	else:
-		existing = frappe.db.get_value(
-			"Cashier Session",
-			{"property": property, "user": user, "status": "Open",
-			 "cashier_terminal": ["is", "not set"]},
-			"name",
-		)
-		if existing:
-			return session_as_dict(existing)
+		cashier_name = ensure_cashier(property, user)
+		frappe.db.get_value("Cashier", cashier_name, "name", for_update=True)
+		existing_rows = frappe.db.sql(
+			"""SELECT name FROM `tabCashier Session`
+			   WHERE property = %s AND `user` = %s AND status = 'Open'
+			     AND IFNULL(cashier_terminal, '') = ''
+			   FOR UPDATE""",
+			(property, user), as_dict=True)
+		if existing_rows:
+			return session_as_dict(existing_rows[0].name)
 	cashier = ensure_cashier(property, user)
 	bd = get_business_date(property)
 	opening = float(opening_float) if opening_float not in (None, "") else \
@@ -832,21 +840,119 @@ def save_terminal(property: str, terminal_name: str, kind: str = "Front Desk",
 	return {"ok": True, "name": doc.name}
 
 
-def _safe_balance(terminal: str) -> dict[str, float]:
-	got = frappe.db.sql(
-		"""SELECT COALESCE(SUM(amount), 0) FROM `tabCash Transfer`
-		   WHERE to_terminal = %s AND kind = 'Drop' AND status = 'Received'""",
-		terminal)[0][0]
-	banked = frappe.db.sql(
-		"""SELECT COALESCE(SUM(amount), 0) FROM `tabCash Transfer`
-		   WHERE from_terminal = %s AND kind = 'Bank Deposit' AND status = 'Received'""",
-		terminal)[0][0]
-	pending = frappe.db.sql(
+# Half a cent. The same slack the till totals use when they decide a figure
+# has actually changed.
+_MONEY_TOLERANCE = 0.004
+
+
+def _lock_cash_office(terminal: str) -> None:
+	"""One deposit at a time for this safe.
+
+	The balance is a sum of transfers, not a column, so two requests can
+	both read it and both insert. Locking the cash-office row makes the
+	second wait until the first commits. The balance has to be read again
+	after this returns: under REPEATABLE READ a plain SELECT still shows
+	the snapshot from before the wait.
+	"""
+	if terminal:
+		frappe.db.get_value("Cashier Terminal", terminal, "name", for_update=True)
+
+
+def _sum_amount(query: str, terminal: str) -> float:
+	return float(frappe.db.sql(query, terminal)[0][0] or 0)
+
+
+def _locked_sum(query: str, terminal: str) -> float:
+	"""Locking read of the rows behind the balance.
+
+	A consistent read taken after `_lock_cash_office` can still be the
+	snapshot from earlier in the request, and would miss the deposit that
+	committed while this one waited. FOR UPDATE reads the latest committed
+	rows.
+	"""
+	return float(sum(float(row[0] or 0) for row in frappe.db.sql(query, terminal)))
+
+
+def _safe_balance(terminal: str, *, for_update: bool = False) -> dict[str, float]:
+	if for_update:
+		got = _locked_sum(
+			"""SELECT amount FROM `tabCash Transfer`
+			   WHERE to_terminal = %s AND kind = 'Drop' AND status = 'Received'
+			   FOR UPDATE""",
+			terminal)
+		banked = _locked_sum(
+			"""SELECT amount FROM `tabCash Transfer`
+			   WHERE from_terminal = %s AND kind = 'Bank Deposit' AND status = 'Received'
+			   FOR UPDATE""",
+			terminal)
+	else:
+		got = _sum_amount(
+			"""SELECT COALESCE(SUM(amount), 0) FROM `tabCash Transfer`
+			   WHERE to_terminal = %s AND kind = 'Drop' AND status = 'Received'""",
+			terminal)
+		banked = _sum_amount(
+			"""SELECT COALESCE(SUM(amount), 0) FROM `tabCash Transfer`
+			   WHERE from_terminal = %s AND kind = 'Bank Deposit' AND status = 'Received'""",
+			terminal)
+	pending = _sum_amount(
 		"""SELECT COALESCE(SUM(amount), 0) FROM `tabCash Transfer`
 		   WHERE to_terminal = %s AND kind = 'Drop' AND status = 'Pending'""",
-		terminal)[0][0]
-	return {"received": float(got), "banked": float(banked),
-	        "in_transit": float(pending), "balance": float(got) - float(banked)}
+		terminal)
+	return {"received": got, "banked": banked,
+	        "in_transit": pending, "balance": got - banked}
+
+
+def _counted_safe_effect(row) -> tuple[str | None, float]:
+	"""(cash office, signed effect on its balance). Positive puts cash in.
+
+	Mirrors `_safe_balance`: only a received drop into the office and a
+	received bank deposit out of it count. Anything else is not in the safe.
+	"""
+	if not row:
+		return None, 0.0
+	kind, status = row.get("kind"), row.get("status")
+	amount = float(row.get("amount") or 0)
+	if kind == "Drop" and status == "Received" and row.get("to_terminal"):
+		return row.get("to_terminal"), amount
+	if kind == "Bank Deposit" and status == "Received" and row.get("from_terminal"):
+		return row.get("from_terminal"), -amount
+	return None, 0.0
+
+
+def assert_transfer_keeps_safe_solvent(doc) -> None:
+	"""A save may not take a safe balance below zero.
+
+	`bank_deposit` checks before it inserts. This is the same rule on the
+	document, so a Desk save cannot go around it. A save that does not
+	reduce the safe (cash arriving, a smaller deposit) is allowed, including
+	when the safe is already short, so the office can still receive the
+	drop that repairs it.
+	"""
+	new_terminal, new_effect = _counted_safe_effect(doc)
+	if doc.flags.in_insert or doc.is_new():
+		old_terminal, old_effect = None, 0.0
+	else:
+		# check_if_latest loads this before validate. Fall back to the row
+		# when validate runs outside save, so a note edit is not treated as
+		# a brand-new withdrawal of the whole amount.
+		prev = doc.get_doc_before_save()
+		if prev is None and doc.name and frappe.db.exists("Cash Transfer", doc.name):
+			prev = frappe.db.get_value(
+				"Cash Transfer", doc.name,
+				["kind", "status", "amount", "from_terminal", "to_terminal"],
+				as_dict=True)
+		old_terminal, old_effect = _counted_safe_effect(prev)
+	for terminal in sorted({t for t in (new_terminal, old_terminal) if t}):
+		effect = new_effect if terminal == new_terminal else 0.0
+		saved = old_effect if terminal == old_terminal else 0.0
+		# Not a reduction: nothing to refuse.
+		if effect >= saved - _MONEY_TOLERANCE:
+			continue
+		_lock_cash_office(terminal)
+		current = _safe_balance(terminal, for_update=True)["balance"]
+		resulting = current - saved + effect
+		if resulting < -_MONEY_TOLERANCE:
+			frappe.throw("That is more than the safe holds.")
 
 
 @frappe.whitelist()
@@ -925,7 +1031,9 @@ def bank_deposit(cash_office: str, amount: float, notes: str | None = None,
 	amt = float(amount)
 	if amt <= 0:
 		frappe.throw("Amount must be positive.")
-	if amt > _safe_balance(office.name)["balance"] + 0.004:
+	# Serialise on the safe, then read the balance the lock waited for.
+	_lock_cash_office(office.name)
+	if amt > _safe_balance(office.name, for_update=True)["balance"] + _MONEY_TOLERANCE:
 		frappe.throw("That is more than the safe holds.")
 	now = now_datetime()
 	doc = frappe.get_doc({

@@ -101,7 +101,8 @@ def _apply_move(property: str, outlet: str, ingredient: str,
                 qty_change: float, reason: str, *, ref_dt: str | None = None,
                 ref_dn: str | None = None, note: str | None = None,
                 supplier: str | None = None, invoice_no: str | None = None,
-                batch_id: str | None = None, set_counted: bool = False) -> float:
+                batch_id: str | None = None, set_counted: bool = False,
+                set_qty: float | None = None) -> float:
 	"""THE only writer of qty_on_hand. One move = one locked row + one ledger
 	entry, in one transaction. Never blocks: a move that takes the balance
 	negative still lands, because a stale count must not stop service.
@@ -116,7 +117,13 @@ def _apply_move(property: str, outlet: str, ingredient: str,
 	name = _stock_row(property, outlet, ingredient, for_update=True)
 	current = float(frappe.db.get_value("Ingredient Stock", name, "qty_on_hand",
 	                                    for_update=True) or 0)
-	after = current + float(qty_change)
+	# A count reports what is on the shelf. Applying a delta taken before
+	# the lock would miss a sale that landed while this count waited.
+	if set_qty is not None:
+		after = float(set_qty)
+		qty_change = after - current
+	else:
+		after = current + float(qty_change)
 	cost = frappe.db.get_value("Ingredient", ingredient, "cost_per_unit")
 
 	frappe.db.set_value("Ingredient Stock", name, "qty_on_hand", after,
@@ -427,16 +434,16 @@ def adjust_stock(property: str, outlet: str, rows, note: str):
 	for r in rows:
 		ing = r["ingredient"]
 		counted = float(r.get("counted_qty") or 0)
-		name = _stock_row(property, outlet, ing)
-		current = float(frappe.db.get_value("Ingredient Stock", name, "qty_on_hand") or 0)
-		delta = counted - current
-		if abs(delta) < 1e-9:
+		name = _stock_row(property, outlet, ing, for_update=True)
+		current = float(frappe.db.get_value("Ingredient Stock", name, "qty_on_hand",
+		                                    for_update=True) or 0)
+		if abs(counted - current) < 1e-9:
 			continue  # counted exactly what we thought: nothing to record
-		after = _apply_move(property, outlet, ing, delta, "Count",
+		after = _apply_move(property, outlet, ing, 0, "Count",
 		                    note=note.strip()[:500], batch_id=batch,
-		                    set_counted=True)
+		                    set_counted=True, set_qty=counted)
 		out.append({"ingredient": ing, "was": current, "now": after,
-		            "variance": delta})
+		            "variance": after - current})
 
 	if out:
 		from kamra.savings import log_action

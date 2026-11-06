@@ -13,13 +13,40 @@ function csrfToken(): string | undefined {
   return t && t !== "None" ? t : undefined
 }
 
+/** Fetch the session's current CSRF token into window.csrf_token. Signing in
+ *  or out in another tab rotates it, and every POST from this tab is then
+ *  refused with a 400 CSRFTokenError until the token is refreshed. Resolves
+ *  false when there is no session any more. */
+async function refreshCsrfToken(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/method/kamra.api.csrf_token", { credentials: "include" })
+    const token = res.ok ? ((await res.json()) as { message?: string | null }).message : null
+    ;(window as unknown as { csrf_token?: string }).csrf_token = token ?? undefined
+    return Boolean(token)
+  } catch {
+    return false
+  }
+}
+
+const isCsrfError = (status: number, body: string) =>
+  status === 400 && body.includes("CSRFTokenError")
+
+// a sign-in or sign-out in one tab tells the others to take the new token
+const sessionChannel = typeof BroadcastChannel !== "undefined"
+  ? new BroadcastChannel("kamra-session") : null
+sessionChannel?.addEventListener("message", () => { void refreshCsrfToken() })
+function announceSessionChange() {
+  void refreshCsrfToken()
+  sessionChannel?.postMessage("changed")
+}
+
 /** Marks errors where the request never reached the server (offline, server
  * restarting). Callers keep the user's session and data intact for these. */
 export function isNetworkError(err: unknown): boolean {
   return Boolean((err as { network?: boolean }).network)
 }
 
-async function doFetch(path: string, init?: RequestInit) {
+async function doFetch(path: string, init?: RequestInit, retried = false): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any -- whatever the method returns
   const token = csrfToken()
   const request = () =>
     fetch(path, {
@@ -52,6 +79,12 @@ async function doFetch(path: string, init?: RequestInit) {
   window.dispatchEvent(new Event("kamra:online"))
   if (!res.ok) {
     const body = await res.text()
+    // a stale CSRF token (a sign-in in another tab): take the current one
+    // and send it again once; no session left means sign in again
+    if (isCsrfError(res.status, body) && !retried) {
+      if (await refreshCsrfToken()) return doFetch(path, init, true)
+      window.dispatchEvent(new Event("kamra:auth-error"))
+    }
     // A 401/403 on anything other than the auth endpoints means the session may
     // be gone. Signal the auth layer to re-check (and redirect to /login if so)
     // instead of leaving a dead screen. Login's own 401 (wrong password) is
@@ -119,10 +152,35 @@ export async function login(usr: string, pwd: string) {
     method: "POST",
     body: JSON.stringify({ usr, pwd }),
   })
+  announceSessionChange()
 }
 
 export async function logout() {
   await doFetch("/api/method/logout", { method: "POST" })
+  announceSessionChange()
+}
+
+/** A raw POST (a multipart upload, or a stream read as it arrives) that
+ *  refreshes a stale CSRF token once, like doFetch. A JSON body is sent as
+ *  JSON; a FormData body lets the browser set the multipart boundary. */
+export async function postRaw(url: string, body: FormData | object): Promise<Response> {
+  const form = body instanceof FormData
+  const send = () => {
+    const token = csrfToken()
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        ...(form ? {} : { "Content-Type": "application/json" }),
+        ...(token ? { "X-Frappe-CSRF-Token": token } : {}),
+      },
+      body: form ? body : JSON.stringify(body),
+      credentials: "include",
+    })
+  }
+  const res = await send()
+  if (res.status !== 400) return res
+  const text = await res.clone().text()
+  return isCsrfError(res.status, text) && await refreshCsrfToken() ? send() : res
 }
 
 /** Upload an image to Frappe's public files; resolves to its served URL.
@@ -132,20 +190,13 @@ export async function uploadFile(
   file: File,
   opts?: { doctype?: string; docname?: string; fieldname?: string },
 ): Promise<string> {
-  const token = csrfToken()
   const fd = new FormData()
   fd.append("file", file, file.name)
   fd.append("is_private", "0")
   if (opts?.doctype) fd.append("doctype", opts.doctype)
   if (opts?.docname) fd.append("docname", opts.docname)
   if (opts?.fieldname) fd.append("fieldname", opts.fieldname)
-  const res = await fetch("/api/method/upload_file", {
-    method: "POST",
-    // no Content-Type header: the browser sets the multipart boundary
-    headers: token ? { "X-Frappe-CSRF-Token": token } : undefined,
-    body: fd,
-    credentials: "include",
-  })
+  const res = await postRaw("/api/method/upload_file", fd)
   if (!res.ok) throw httpError(res.status, await res.text())
   const out = (await res.json()) as { message?: { file_url?: string } }
   const url = out.message?.file_url
@@ -162,16 +213,10 @@ export async function uploadTo(
   file: File,
   fields: Record<string, string> = {},
 ): Promise<{ file_url: string; file_name: string }> {
-  const token = csrfToken()
   const fd = new FormData()
   fd.append("file", file, file.name)
   for (const [k, v] of Object.entries(fields)) fd.append(k, v)
-  const res = await fetch(`/api/method/${method}`, {
-    method: "POST",
-    headers: token ? { "X-Frappe-CSRF-Token": token } : undefined,
-    body: fd,
-    credentials: "include",
-  })
+  const res = await postRaw(`/api/method/${method}`, fd)
   if (!res.ok) throw httpError(res.status, await res.text())
   const out = (await res.json()) as {
     message?: { file_url?: string; file_name?: string }
@@ -924,6 +969,7 @@ export interface BanquetDocument {
     amount_in_words: string
     service_code_label: string
     footer: string | null
+    invoice_footer?: string | null
     place_of_supply: string | null
     tax_label: string
     tax_id_label: string
@@ -1606,6 +1652,8 @@ export interface ChatMsg {
   actions?: { tool: string; ok: boolean }[]
   /** Stays and quotes the turn touched (kamra.assistant._turn_cards). */
   cards?: import("../components/AgentCards").AgentCard[]
+  /** Tap answers under a guided question (components/AgentGuide). */
+  choices?: import("../components/AgentGuide").Choice[]
 }
 export interface ConversationSummary {
   name: string

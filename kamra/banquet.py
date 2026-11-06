@@ -1213,7 +1213,7 @@ def banquet_document(function: str, kind: str = "quote"):
 		"Property", doc.property,
 		["property_name", "legal_name", "address_line", "city", "state",
 		 "pincode", "country", "phone", "email", "website", "gstin",
-		 "logo_url"], as_dict=True) or {}
+		 "logo_url", "invoice_footer"], as_dict=True) or {}
 	prop["address"] = ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- drops empty address parts
 		prop.get("address_line"), prop.get("city"), prop.get("state"),
 		prop.get("pincode")]))
@@ -1255,6 +1255,7 @@ def banquet_document(function: str, kind: str = "quote"):
 		"amount_in_words": loc.amount_in_words(pack, prop_doc, doc.grand_total),
 		"service_code_label": (ctx.get("service_code") or {}).get("label", "SAC"),
 		"footer": ctx.get("footer"),
+		"invoice_footer": prop.get("invoice_footer"),
 		"place_of_supply": ctx.get("place_of_supply"),
 		"tax_label": ctx.get("tax_label"),
 		"tax_id_label": ctx.get("tax_id_label"),
@@ -2586,10 +2587,14 @@ def link_customer(function: str, guest: str | None = None):
 
 
 def _find_or_create_guest(doc):
-	"""Dedupe on the phone number, the way the front desk does."""
-	phone = (doc.customer_phone or "").strip()
+	"""Dedupe on the phone number, the way the front desk does: read with
+	the property's country (#468), as typed when it can't be read."""
+	from kamra import phone as phone_mod
+	typed = (doc.customer_phone or "").strip()
+	phone = phone_mod.for_property(typed, doc.property)[0]
 	if phone:
-		existing = frappe.db.get_value("Guest", {"phone": phone})
+		existing = frappe.db.get_value(
+			"Guest", {"phone": phone_mod.matching(typed, doc.property)})
 		if existing:
 			return existing
 	parts = (doc.customer_name or "Guest").strip().split(" ", 1)
@@ -2610,7 +2615,8 @@ def customer_profile(property: str, guest: str | None = None,
 	phone: what this client has run with us, what they spent, what they
 	usually book, and what's still owed."""
 	if not guest and phone:
-		guest = frappe.db.get_value("Guest", {"phone": phone.strip()})
+		from kamra import phone as phone_mod
+		guest = frappe.db.get_value("Guest", {"phone": phone_mod.matching(phone, property)})
 	if not guest:
 		return {"found": False}
 	# a phone lookup resolves to a guest the decorator never saw

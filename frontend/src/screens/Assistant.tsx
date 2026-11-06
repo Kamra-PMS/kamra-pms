@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useOutletContext } from "react-router-dom"
 import {
   ArrowRight,
   KeyRound,
+  LayoutGrid,
   Loader2,
   MessageSquare,
   Plus,
@@ -16,16 +17,38 @@ import {
   call,
   createConversation,
   deleteConversation,
+  getBookingOptions,
   getConversation,
   getCurrentProperty,
+  getSnapshot,
   listConversations,
+  postRaw,
   saveConversation,
+  type BookingOptions,
   type ChatMsg,
   type ConversationSummary,
+  type Snapshot,
 } from "../lib/api"
 import { cn } from "../lib/utils"
+import { cur, moneyLocale } from "../lib/money"
 import { Markdown } from "../lib/markdown"
 import AgentCards, { type AgentCard } from "../components/AgentCards"
+import {
+  flows,
+  menuChoices,
+  menuTiles,
+  splitOptions,
+  startOver,
+  type Answers,
+  type Choice,
+  type FlowId,
+  type GuideData,
+  type GuideMenu,
+  type GuideOutlet,
+  type Outcome,
+} from "../components/AgentGuide"
+import VoiceButton, { agentLang, type VoiceHandle } from "../components/VoiceButton"
+import type { ShellContext } from "../AppShell"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 const TOOL_LABEL: Record<string, string> = {
@@ -65,14 +88,13 @@ const SUGGESTIONS = [
   "Which waitlisted guests can I now give a room?",
 ]
 
-// one tap, sent as typed: the desk's most common asks
-const SHORTCUTS: { label: string; prompt: string }[] = [
-  { label: "Today's arrivals", prompt: "Who is arriving today, and are their rooms ready?" },
-  { label: "Departures and balances", prompt: "Who is leaving today and what does each still owe?" },
-  { label: "In-house guests", prompt: "List the guests in house now with their rooms." },
-  { label: "Quote a stay", prompt: "Quote a stay for 2 adults: " },
-  { label: "Night audit check", prompt: "Run the night audit precheck and tell me what blocks it." },
-]
+// one tap above the box: the desk's most common tasks, then the full list
+const SHORTCUT_FLOWS: FlowId[] = ["walkin", "checkin", "checkout", "booking", "order", "payment", "today"]
+
+// "check in", "Check-in" and "check in." all name the same task
+const norm = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()
+
+type FlowState = { id: FlowId; step: number; answers: Answers }
 
 function ThinkingDots() {
   useUILanguage()
@@ -135,7 +157,190 @@ export default function Assistant() {
   // the provider refused for money: the error gets a link to the AI settings
   const [noCredit, setNoCredit] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const voiceRef = useRef<VoiceHandle>(null)
   const [aiEnabled, setAiEnabled] = useState<boolean | null>(null)
+  const shell = useOutletContext<ShellContext | undefined>()
+
+  // msgs mirrored in a ref so a guided step can add a message and send
+  // to the AI in the same tick without reading stale state
+  const msgsRef = useRef<ChatMsg[]>([])
+  const setAll = (next: ChatMsg[]) => {
+    msgsRef.current = next
+    setMsgs(next)
+  }
+  const push = (...m: ChatMsg[]) => setAll([...msgsRef.current, ...m])
+
+  // the guided task in progress, if any (components/AgentGuide)
+  const [flow, setFlowState] = useState<FlowState | null>(null)
+  const flowRef = useRef<FlowState | null>(null)
+  const setFlow = (f: FlowState | null) => {
+    flowRef.current = f
+    setFlowState(f)
+  }
+  const [stepping, setStepping] = useState(false)
+  // today's board, the booking options, outlets and menus, fetched once per task
+  const cache = useRef<{
+    snap?: Promise<Snapshot>
+    opts?: Promise<BookingOptions>
+    outlets?: Promise<GuideOutlet[]>
+    menus?: Record<string, Promise<GuideMenu>>
+  }>({})
+  const data: GuideData = {
+    snapshot: () => (cache.current.snap ??= getSnapshot()),
+    options: () => (cache.current.opts ??= getBookingOptions()),
+    outlets: () =>
+      (cache.current.outlets ??= call<GuideOutlet[]>("kamra.pos.outlets", { property: getCurrentProperty() })),
+    menu: (outlet) =>
+      ((cache.current.menus ??= {})[outlet] ??= call<GuideMenu>("kamra.pos.pos_menu", { outlet })),
+  }
+
+  async function runStep(f: FlowState) {
+    const def = flows()[f.id]
+    // questions that don't apply to this answer set are passed over
+    while (f.step < def.steps.length && def.steps[f.step].skip?.(f.answers)) f = { ...f, step: f.step + 1 }
+    if (f.step >= def.steps.length) {
+      setFlow(null)
+      return finish(def.finish(f.answers, aiEnabled !== false))
+    }
+    setFlow(f)
+    setStepping(true)
+    try {
+      const step = def.steps[f.step]
+      const { ask, choices, auto } = await step.load(f.answers, data)
+      // one possible answer (a hotel with one kitchen): taken, not asked
+      if (auto) return runStep({ ...f, step: f.step + 1, answers: { ...f.answers, [step.key]: auto } })
+      push({ role: "assistant", content: ask, choices: [...choices, startOver()] })
+    } catch {
+      cache.current = {}
+      push({
+        role: "assistant",
+        content: translate("I couldn't load that list. Type the answer instead."),
+        choices: [startOver()],
+      })
+    } finally {
+      setStepping(false)
+      setTimeout(() => inputRef.current?.focus(), 0)
+    }
+  }
+
+  function startFlow(id: FlowId | "menu", label?: string) {
+    if (busy) return
+    setError(null)
+    if (label) push({ role: "user", content: label })
+    if (id === "menu") {
+      setFlow(null)
+      push({ role: "assistant", content: translate("What would you like to do? Tap one."), choices: menuChoices() })
+      return
+    }
+    cache.current = {}
+    runStep({ id, step: 0, answers: {} })
+  }
+
+  function answer(value: string, label: string, typed = false) {
+    const f = flowRef.current
+    if (!f) return
+    const step = flows()[f.id].steps[f.step]
+    push({ role: "user", content: label || translate("Skip") })
+    const picked = { label, value, typed }
+    if (step.collect) {
+      // a basket (food order): add to it and ask again until Done
+      const next = step.collect(f.answers[step.key], picked)
+      if (next) return runStep({ ...f, answers: { ...f.answers, [step.key]: next } })
+      return runStep({ ...f, step: f.step + 1 })
+    }
+    runStep({ ...f, step: f.step + 1, answers: { ...f.answers, [step.key]: picked } })
+  }
+
+  // the guide sends a food order itself - the same call the POS till makes
+  async function placeOrder(c: Choice) {
+    if (!c.order) return
+    push({ role: "user", content: c.label })
+    setStepping(true)
+    try {
+      const r = await call<{ order: string; order_total: number }>("kamra.pos.send_order", {
+        ...c.order,
+        property: getCurrentProperty(),
+      })
+      push({
+        role: "assistant",
+        content: translate("Sent to the kitchen. Order {order}, total {total}.", {
+          order: r.order,
+          total: `${cur()}${Number(r.order_total || 0).toLocaleString(moneyLocale())}`,
+        }),
+        choices: [{ label: translate("Another food order"), goto: "order" }, startOver()],
+      })
+    } catch (e) {
+      push({
+        role: "assistant",
+        content: translate("The order didn't go through: {reason}", {
+          reason: e instanceof Error ? e.message : translate("unknown error"),
+        }),
+        choices: [{ label: translate("Try again"), goto: "order" }, startOver()],
+      })
+    } finally {
+      setStepping(false)
+    }
+  }
+
+  function finish(o: Outcome) {
+    if ("prompt" in o) {
+      if (aiEnabled === false) {
+        push({ role: "assistant", content: translate("This step needs the AI. Add an AI key in Settings → AI assistant."), choices: [startOver()] })
+        return
+      }
+      send(o.prompt)
+      return
+    }
+    push({ role: "assistant", content: o.say, cards: o.cards, choices: o.choices })
+  }
+
+  function pick(c: Choice) {
+    if (busy || stepping) return
+    if (c.goto) return startFlow(c.goto, c.label)
+    if (c.book) {
+      push({ role: "user", content: c.label })
+      setFlow(null)
+      shell?.openBooking(c.book)
+      return
+    }
+    if (c.order) return placeOrder(c)
+    if (c.prompt !== undefined) return send(c.prompt)
+    if (c.value !== undefined && flowRef.current) return answer(c.value, c.label)
+    // an option the AI offered: sent back as the reply
+    send(c.label)
+  }
+
+  function submit(text: string) {
+    const q = text.trim()
+    const f = flowRef.current
+    if (!q || busy || stepping) return
+    if (f && flows()[f.id].steps[f.step]?.text) {
+      setInput("")
+      return answer(q, q, true)
+    }
+    // a tap-only question: typing (or saying) one of the answers counts as
+    // tapping it - the guest's name, or the room number shown under it
+    const open = msgsRef.current[msgsRef.current.length - 1]?.choices ?? []
+    const said = norm(q)
+    const hit = said && open.find((c) =>
+      (f ? c.value !== undefined : !!(c.goto || c.order || c.book)) &&
+      (norm(c.label).includes(said) ||
+       (/\d/.test(said) && !!c.hint && ` ${norm(c.hint)} `.includes(` ${said} `))))
+    if (hit) {
+      setInput("")
+      return pick(hit)
+    }
+    // no task open: naming one ("check in", "food order") starts it
+    const tile = !f && menuTiles().find((tl) => norm(tl.label) === said)
+    if (tile) {
+      setInput("")
+      return startFlow(tile.id, tile.label)
+    }
+    // typed while a tap-only question was open: a free question for the AI
+    setFlow(null)
+    send(q)
+  }
   // a screen can hand the agent a ready question (End of Day blockers);
   // it is put in the box for the user to read and send, not sent for them
   const handoff = (useLocation().state as { prompt?: string } | null)?.prompt
@@ -170,7 +375,8 @@ export default function Assistant() {
     try {
       const c = await getConversation(name)
       setActiveId(c.name)
-      setMsgs(c.messages)
+      setFlow(null)
+      setAll(c.messages)
     } catch {
       setError(translate("Couldn't open that conversation."))
     }
@@ -179,7 +385,8 @@ export default function Assistant() {
   function newChat() {
     if (busy) return
     setActiveId(null)
-    setMsgs([])
+    setFlow(null)
+    setAll([])
     setError(null)
   }
 
@@ -196,13 +403,15 @@ export default function Assistant() {
     setInput("")
     setError(null)
     setNoCredit(false)
-    const isFirst = msgs.length === 0
-    const history: ChatMsg[] = [...msgs, { role: "user", content: q }]
+    setFlow(null)
+    const isFirst = !activeId
+    // the AI reads only what was said; old tap buttons stay on screen
+    const history: ChatMsg[] = [...msgsRef.current, { role: "user", content: q }]
     const aIdx = history.length
-    setMsgs([...history, { role: "assistant", content: "", actions: [] }])
+    setAll([...history, { role: "assistant", content: "", actions: [] }])
     setBusy(true)
     const patch = (fn: (m: ChatMsg) => ChatMsg) =>
-      setMsgs((ms) => ms.map((m, i) => (i === aIdx ? fn(m) : m)))
+      setAll(msgsRef.current.map((m, i) => (i === aIdx ? fn(m) : m)))
 
     let content = ""
     const actions: { tool: string; ok: boolean }[] = []
@@ -219,18 +428,10 @@ export default function Assistant() {
         ])
       }
 
-      const csrf = (window as unknown as { csrf_token?: string }).csrf_token
-      const res = await fetch("/api/method/kamra.assistant.ask_stream", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrf && csrf !== "None" ? { "X-Frappe-CSRF-Token": csrf } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          property: getCurrentProperty(),
-          messages: history.map(({ role, content }) => ({ role, content })),
-        }),
+      const res = await postRaw("/api/method/kamra.assistant.ask_stream", {
+        property: getCurrentProperty(),
+        messages: history.map(({ role, content }) => ({ role, content })),
+        lang: agentLang(),
       })
       if (!res.ok || !res.body) throw new Error(`stream ${res.status}`)
       const reader = res.body.getReader()
@@ -280,7 +481,7 @@ export default function Assistant() {
       if (isFirst) refreshList()
     } catch {
       setError(translate("The agent couldn't finish - check the AI key in Settings."))
-      if (!content) setMsgs((ms) => ms.filter((_, i) => i !== aIdx))
+      if (!content) setAll(msgsRef.current.filter((_, i) => i !== aIdx))
     } finally {
       setBusy(false)
     }
@@ -355,11 +556,29 @@ export default function Assistant() {
             </div>
           )}
           {msgs.length === 0 && aiEnabled !== false && (
-            <div className="mx-auto max-w-xl space-y-3 py-8 text-center">
+            <div className="mx-auto max-w-3xl space-y-3 py-4 text-center">
               <Sparkles className="mx-auto size-8 text-brand-500" />
-              <h2 className="text-lg font-semibold">{translate("Your AI, acting as you")}</h2>
-              <p className="text-sm text-zinc-500">{translate("It can look things up and act - quote and book stays, check guests in and out, post charges and payments, work the waitlist, and read the day's numbers.")}</p>
-              <div className="grid gap-2 pt-2 sm:grid-cols-2">
+              <h2 className="text-lg font-semibold">{translate("What would you like to do?")}</h2>
+              <p className="text-sm text-zinc-500">{translate("Tap a task and I'll ask you one thing at a time. Or just type what you need.")}</p>
+              <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-3 lg:grid-cols-4">
+                {menuTiles().map((tl) => (
+                  <button
+                    key={tl.id}
+                    onClick={() => startFlow(tl.id, tl.label)}
+                    className="flex items-start gap-2.5 rounded-xl border border-zinc-200 bg-white px-3 py-3 text-left shadow-sm transition hover:border-brand-400 hover:bg-brand-50/40"
+                  >
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 ring-1 ring-brand-100">
+                      <tl.icon className="size-4 text-brand-600" aria-hidden />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-zinc-900">{tl.label}</span>
+                      <span className="block text-xs text-zinc-500">{tl.hint}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="pt-3 text-xs font-medium uppercase tracking-wide text-zinc-400">{translate("Or ask in your own words")}</p>
+              <div className="grid gap-2 sm:grid-cols-2">
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
@@ -372,7 +591,13 @@ export default function Assistant() {
               </div>
             </div>
           )}
-          {msgs.map((m, i) => (
+          {msgs.map((m, i) => {
+            const last = i === msgs.length - 1
+            const { text, options } =
+              m.role === "assistant" ? splitOptions(m.content) : { text: m.content, options: [] }
+            const choices: Choice[] =
+              m.choices ?? (last && !busy ? options.map((o) => ({ label: o })) : [])
+            return (
             <div key={i} className="space-y-2">
             <div
               className={cn(
@@ -413,8 +638,8 @@ export default function Assistant() {
                         ))}
                       </div>
                     )}
-                    {m.content ? (
-                      <Markdown text={m.content} />
+                    {text ? (
+                      <Markdown text={text} />
                     ) : (
                       busy && <ThinkingDots />
                     )}
@@ -429,8 +654,36 @@ export default function Assistant() {
                 <AgentCards cards={m.cards} />
               </div>
             )}
+            {m.role === "assistant" && choices.length > 0 && (
+              // only the newest question can still be answered
+              <div className={cn("ms-9 flex max-w-[85%] flex-wrap gap-1.5", !last && "opacity-50")}>
+                {choices.map((c, j) => (
+                  <button
+                    key={j}
+                    type="button"
+                    disabled={!last || busy || stepping}
+                    onClick={() => pick(c)}
+                    className={cn(
+                      "rounded-xl border px-3 py-1.5 text-left text-sm transition disabled:cursor-default",
+                      c.goto === "menu"
+                        ? "border-transparent text-zinc-500 hover:text-zinc-800"
+                        : "border-brand-200 bg-white text-zinc-800 shadow-sm hover:border-brand-400 hover:bg-brand-50",
+                    )}
+                  >
+                    <span className="block font-medium">{c.label}</span>
+                    {c.hint && <span className="block text-xs text-zinc-500">{c.hint}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
             </div>
-          ))}
+            )
+          })}
+          {stepping && (
+            <div className="ms-9">
+              <ThinkingDots />
+            </div>
+          )}
           {error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">
               {translate(error)}
@@ -445,45 +698,65 @@ export default function Assistant() {
         </div>
 
         {aiEnabled !== false && (
-          <div className="flex gap-1.5 overflow-x-auto border-t border-zinc-100 dark:border-zinc-800 px-3 pt-2.5">
-            {SHORTCUTS.map((sc) => (
-              <button
-                key={sc.label}
-                type="button"
-                disabled={busy}
-                onClick={() =>
-                  sc.prompt.endsWith(": ") ? setInput(translate(sc.prompt)) : send(translate(sc.prompt))
-                }
-                className="shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:border-brand-300 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-950/80 hover:text-brand-700 dark:hover:text-brand-300 transition-colors shadow-xs disabled:opacity-50"
-              >
-                {translate(sc.label)}
-              </button>
-            ))}
+          // wraps rather than scrolls: every task stays in sight, no scrollbar
+          <div className="flex flex-wrap gap-1.5 border-t border-zinc-100 dark:border-zinc-800 px-3 pt-2.5">
+            <button
+              type="button"
+              disabled={busy || stepping}
+              onClick={() => startFlow("menu", translate("All tasks"))}
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950/80 px-3 py-1 text-xs font-medium text-brand-700 dark:text-brand-300 hover:border-brand-300 disabled:opacity-50"
+            >
+              <LayoutGrid className="size-3.5" aria-hidden />
+              {translate("All tasks")}
+            </button>
+            {menuTiles()
+              .filter((tl) => SHORTCUT_FLOWS.includes(tl.id))
+              .map((tl) => (
+                <button
+                  key={tl.id}
+                  type="button"
+                  disabled={busy || stepping}
+                  onClick={() => startFlow(tl.id, tl.label)}
+                  className="shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:border-brand-300 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-950/80 hover:text-brand-700 dark:hover:text-brand-300 transition-colors shadow-xs disabled:opacity-50"
+                >
+                  {tl.label}
+                </button>
+              ))}
           </div>
         )}
         <form
           className="p-3"
           onSubmit={(e) => {
             e.preventDefault()
-            send(input)
+            // Send is the only way spoken words go out; it ends the listening
+            voiceRef.current?.stop()
+            submit(input)
           }}
         >
           <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 px-4 py-1.5 shadow-sm transition focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100 dark:focus-within:ring-brand-900">
             <input
+              ref={inputRef}
               className="flex-1 bg-transparent py-2 text-sm outline-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 disabled:cursor-not-allowed"
               placeholder={
                 (aiEnabled === false
                   ? translate("Add an AI key in Settings to start chatting")
-                  : translate("Ask anything about the hotel…"))
+                  : (flow && flows()[flow.id].steps[flow.step]?.text) ||
+                    translate("Ask anything about the hotel…"))
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={busy || aiEnabled === false}
             />
+            <VoiceButton
+              ref={voiceRef}
+              disabled={busy || stepping || aiEnabled === false}
+              onText={setInput}
+              onError={setError}
+            />
             <button
               type="submit"
               aria-label={translate("Send")}
-              disabled={busy || aiEnabled === false || !input.trim()}
+              disabled={busy || stepping || aiEnabled === false || !input.trim()}
               className="flex size-9 items-center justify-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-40"
             >
               {busy ? (

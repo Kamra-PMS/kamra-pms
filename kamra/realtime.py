@@ -11,7 +11,7 @@ re-fetch always sees the new state."""
 
 import frappe
 
-WATCHED = {"Reservation", "Folio", "Room", "Housekeeping Task",
+WATCHED = {"Kamra Notification", "Reservation", "Folio", "Room", "Housekeeping Task",
            "Venue Booking", "Group Booking", "POS Order", "Service Ticket",
            "Laundry Order", "Agent Action Log"}
 

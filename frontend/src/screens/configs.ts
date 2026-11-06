@@ -1,4 +1,5 @@
 import type { ScreenConfig } from "../components/ResourceScreen"
+import { floorSource } from "../components/ResourceScreen"
 import { lazy } from "react"
 
 // Drawer panels load when a row is opened, not with the app shell
@@ -13,18 +14,40 @@ const HkTaskMediaPanel = lazy(() =>
 const ReservationDetail = lazy(() => import("./ReservationDetail"))
 import { cur, locale, sellsAlcohol } from "../lib/money"
 
+export const floorsConfig: ScreenConfig = {
+  doctype: "Floor",
+  title: "Floors",
+  description: "The floors of the property, in the order the room boards and filters show them.",
+  propertyScoped: true,
+  orderBy: "sort_order asc, floor_name asc",
+  columns: [
+    { field: "floor_name", label: "Floor" },
+    { field: "sort_order", label: "Floor order" },
+    { field: "disabled", label: "Status", statusCheck: true },
+  ],
+  form: [
+    { field: "floor_name", label: "Floor", type: "data", required: true, hint: "Renaming a floor renames it on its rooms." },
+    { field: "sort_order", label: "Floor order", type: "int", hint: "Lower numbers come first (for example 0, 10, 20)." },
+    { field: "disabled", label: "Disabled", type: "check", hint: "Only a floor with no rooms can be disabled." },
+  ],
+}
+
 export const roomsConfig: ScreenConfig = {
   doctype: "Room",
   title: "Rooms",
   description: "Physical rooms - number, type, floor and live status.",
   searchFields: ["room_number", "name"],
-  filters: [{ field: "housekeeping_status", label: "Status", options: ["Clean", "Dirty", "Inspected", "Ready", "Out of Order"] }],
+  filters: [
+    { field: "housekeeping_status", label: "Status", options: ["Clean", "Dirty", "Inspected", "Ready", "Out of Order"] },
+    { field: "room_type", label: "Room type", linkDoctype: "Room Type", labelField: "room_type_name", propertyScoped: true },
+    { field: "floor", label: "Floor", optionsFrom: "Floor" },
+  ],
   pageSize: 25,
   propertyScoped: true,
   orderBy: "room_number asc",
   columns: [
     { field: "room_number", label: "Room" },
-    { field: "room_type", label: "Type" },
+    { field: "room_type", label: "Room type" },
     { field: "floor", label: "Floor" },
     { field: "housekeeping_status", label: "Housekeeping", badge: true },
     { field: "occupancy_status", label: "Occupancy", badge: true },
@@ -32,8 +55,8 @@ export const roomsConfig: ScreenConfig = {
   form: [
     { field: "room_number", label: "Room number", type: "data", required: true },
     { field: "room_type", label: "Room type", type: "link", linkDoctype: "Room Type", required: true },
-    { field: "floor", label: "Floor", type: "data" },
-    { field: "housekeeping_status", label: "Housekeeping status", type: "select", options: ["Clean", "Dirty", "Inspected", "Out of Order"] },
+    { field: "floor", label: "Floor", type: "select", source: floorSource, allowNew: "Add a floor", hint: "Floors are set up in Admin > Floors. Pick one or add a new floor here." },
+    { field: "housekeeping_status", label: "Housekeeping status", type: "select", options: ["Clean", "Dirty", "Inspected", "Ready", "Out of Order"] },
     { field: "notes", label: "Notes", type: "data" },
   ],
 }
@@ -41,13 +64,13 @@ export const roomsConfig: ScreenConfig = {
 export const roomTypesConfig: ScreenConfig = {
   doctype: "Room Type",
   title: "Room Types",
-  description: "Categories with occupancy-based pricing.",
+  description: "Room types with occupancy-based pricing.",
   propertyScoped: true,
   orderBy: "base_price asc",
   columns: [
     { field: "room_type_name", label: "Name" },
     { field: "room_type_code", label: "Code", badge: true },
-    { field: "room_category", label: "Category" },
+    { field: "room_category", label: "Unit kind" },
     { field: "base_price", label: `Base ${cur()}/night` },
     { field: "base_occupancy", label: "Base occ." },
     { field: "extra_adult_price", label: `Extra adult ${cur()}` },
@@ -57,7 +80,7 @@ export const roomTypesConfig: ScreenConfig = {
     { field: "room_type_name", label: "Name", type: "data", required: true },
     { field: "room_type_code", label: "Code (e.g. DLX)", type: "data", required: true },
     { field: "listing_slug", label: "Public listing URL slug (/stay/…)", type: "data" },
-    { field: "room_category", label: "Category", type: "select", options: ["Villa", "Private", "Shared"] },
+    { field: "room_category", label: "Unit kind", type: "select", options: ["Villa", "Private", "Shared"] },
     { field: "base_price", label: "Base price / night", type: "currency", required: true },
     { field: "base_occupancy", label: "Adults included in base price", type: "int" },
     { field: "single_occupancy_price", label: "Single occupancy price", type: "currency", dependsOn: (d) => d.room_category !== "Villa" },

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **483 endpoints**, generated from the source
+the UI and the AI use. **487 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -48,6 +48,16 @@ Turn parts of the product on or off for one property.
 | --- | --- | --- |
 | `property` | yes |  |
 | `modules` | yes |  |
+
+### `kamra.api.csrf_token` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+The session's current CSRF token. An open tab asks for it when its
+page-load token went stale because someone signed in or out in another
+tab (Frappe rotates the token on login). None for a guest. A GET, like
+the boot page that already carries the token, and readable only by the
+same origin.
 
 ### `kamra.api.whoami` <Badge type='tip' text='public' />
 
@@ -3380,6 +3390,45 @@ A solved ticket that came back. Needs a reason; it is kept in the timeline.
 | `reason` | yes |  |
 
 
+## Notification bell (what each department should know)
+
+> Each person sees only the modules their roles open; their own actions are left out.
+
+### `kamra.notifications.bell`
+
+**GET/POST**
+
+What this person hasn't opened yet, newest first, and how many. An
+opened notification leaves the list (open_one); "Mark all read" clears
+everything up to now (mark_read).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `limit` | no | `40` |
+
+### `kamra.notifications.open_one`
+
+**POST**
+
+This person opened one notification: it leaves their list only.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `notification` | yes |  |
+
+### `kamra.notifications.mark_read`
+
+**POST**
+
+Everything up to now counts as read for this person.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+
 ## ID scanner (passport strip, Aadhaar QR)
 
 > Read only: turns what a scanner or camera read into guest fields. Nothing is saved.
@@ -6348,6 +6397,29 @@ per room.
 | `refresh` | no | `0` |
 | `from_date` | no | `None` |
 | `to_date` | no | `None` |
+
+
+## Floors (Admin > Rooms: Add rooms)
+
+> Hotel Admin. add_rooms with preview=1 only reports what it would create.
+
+### `kamra.floors.add_rooms`
+
+**GET/POST** · roles: `Hotel Admin`
+
+Create rooms start..end on a floor (numbers that already exist are
+skipped). preview=1 only reports what would happen. Admin > Rooms >
+Add rooms.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `floor` | yes |  |
+| `room_type` | yes |  |
+| `start` | yes |  |
+| `end` | yes |  |
+| `prefix` | no | `''` |
+| `preview` | no | `0` |
 
 
 ## Today layout (per-user widgets, hotel default)

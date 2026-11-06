@@ -130,6 +130,30 @@ The presets count nights up to last night.
 
 The numbers are worked out on the server and kept for ten minutes.
 
+## Set up floors and rooms
+
+Open **Admin** and use the three setup pages in this order: **Floors**,
+**Room Types**, **Rooms**. Each is a list you can search, filter, add to
+and edit.
+
+- **Floors** lists the floors of the property. **Floor order** decides the
+  order of the floor tabs and lists on the Room Board, the Housekeeping
+  Board and the **Floor** filter on **Rooms**: lower numbers come first.
+  Click **New** to add a floor. Renaming a floor renames it on all its
+  rooms. A floor that still has rooms cannot be deleted or disabled; move
+  the rooms first.
+- **Rooms** has **Floor** and **Room type** lists next to **Status**. In
+  the room form, **Floor** is a list of your floors; choose **Add a floor**
+  to type a new one. A floor name used for the first time is added to
+  **Floors** for you, so imports and the setup wizard keep working.
+- **Add rooms** creates a run of rooms at once. Pick the floor and the room
+  type, enter the first and last number (and an optional prefix, so 1 to 4
+  with prefix V gives V1 to V4), then **Preview**. Numbers that already
+  exist are skipped and listed. **Create** adds the rest.
+
+The room type's old **Category** is now called **Unit kind** (Villa,
+Private or Shared). Nothing else about it changed.
+
 ## Good to know
 
 - A room shows as occupied from check-in to check-out. A guest due today

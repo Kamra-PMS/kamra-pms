@@ -278,18 +278,20 @@ def transfer_ar_invoice(account: str, folio: str, to_account: str,
 	the bill keeps its invoice number and invoice date, so it ages from when
 	it was really raised. Credit control on the receiving company is not
 	re-run - finance is choosing who pays."""
-	from kamra.ledger import city_ledger_open_folios, due_date_for
+	from kamra.ledger import due_date_for, locked_account_figures
 	if account == to_account:
 		frappe.throw(_("Pick a different account to transfer to."))
 	# lock both accounts (fixed order) so two transfers of one bill can't
-	# both read the same amount owed and move it twice
+	# both read the same amount owed and move it twice. The figures are a
+	# locking read: a plain sum would still show the balance from before
+	# the wait.
 	for name in sorted((account, to_account)):
 		frappe.db.get_value("City Ledger Account", name, "name", for_update=True)
 	src, dst = _account(account), _account(to_account)
 	if src.property != dst.property:
 		frappe.throw(_("Both accounts must be at the same property."))
 	assert_billable(to_account)
-	item = next((r for r in city_ledger_open_folios(account)
+	item = next((r for r in locked_account_figures(account)["open_items"]
 	             if r["folio"] == folio), None)
 	amount = round(float(item["outstanding"]) if item else 0, 2)
 	if amount <= 0.005:

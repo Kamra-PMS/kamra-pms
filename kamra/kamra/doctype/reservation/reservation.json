@@ -22,6 +22,7 @@
   "source",
   "channel",
   "ota_ref",
+  "ota_live_key",
   "idempotency_key",
   "hold_expires_on",
   "travel_agent",
@@ -193,6 +194,15 @@
    "label": "OTA Booking Ref",
    "read_only": 1,
    "description": "The channel manager's booking id - modifications and cancellations match on it"
+  },
+  {
+   "fieldname": "ota_live_key",
+   "fieldtype": "Data",
+   "label": "OTA Live Key",
+   "unique": 1,
+   "read_only": 1,
+   "hidden": 1,
+   "description": "property and OTA reference while this stay is not cancelled and not a group room that shares the reference. Empty otherwise, so a duplicate delivery cannot insert a second live stay."
   },
   {
    "description": "Caller-supplied key so duplicate public/OTA book requests return the same reservation (ADR-007).",

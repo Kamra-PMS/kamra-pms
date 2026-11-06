@@ -10334,6 +10334,206 @@ def t_nicaragua_pack():
 		frappe.clear_document_cache("Property", "EVAL Nicaragua Hotel")
 
 
+@check("concurrency: a second booking, villa, OTA delivery, voucher, credit, till and stock count see what the first one wrote")
+def t_concurrency_guards():
+	from frappe.utils import add_days, nowdate
+
+	from kamra import cashier, inventory
+	from kamra.authz import act_as
+	from kamra.kamra.doctype.reservation.reservation import ota_live_key
+	from kamra.pricing import consume_voucher_use
+
+	sp = "concurrency_guards"
+	frappe.db.savepoint(sp)
+	try:
+		with act_as("Administrator"):
+			prop = frappe.get_doc({
+				"doctype": "Property", "property_name": "Eval Race Hotel",
+			}).insert(ignore_permissions=True).name
+			rt = frappe.get_doc({
+				"doctype": "Room Type", "property": prop, "room_type_code": "STD",
+				"room_type_name": "Standard", "base_price": 1000,
+			}).insert(ignore_permissions=True).name
+			frappe.get_doc({
+				"doctype": "Room", "property": prop, "room_type": rt, "room_number": "101",
+			}).insert(ignore_permissions=True)
+			guest = frappe.get_doc({
+				"doctype": "Guest", "first_name": "Eval Race",
+			}).insert(ignore_permissions=True).name
+			ci, co = nowdate(), str(add_days(nowdate(), 1))
+
+			def stay(**kw):
+				return frappe.get_doc({
+					"doctype": "Reservation", "property": prop, "room_type": rt,
+					"guest": guest, "status": "Confirmed", "adults": 2,
+					"check_in_date": ci, "check_out_date": co, **kw,
+				})
+
+			stay().insert(ignore_permissions=True)
+			try:
+				stay().insert(ignore_permissions=True)
+				raise AssertionError("the only room was sold twice")
+			except frappe.ValidationError:
+				pass
+			assert frappe.db.count("Reservation", {"property": prop, "status": "Confirmed"}) == 1
+
+			villa = frappe.get_doc({
+				"doctype": "Room Type", "property": prop, "room_type_code": "VILLA",
+				"room_type_name": "Villa", "room_category": "Villa", "base_price": 4000,
+			}).insert(ignore_permissions=True).name
+			try:
+				stay(room_type=villa).insert(ignore_permissions=True)
+				raise AssertionError("the villa sold while a member room is occupied")
+			except frappe.ValidationError:
+				pass
+
+			booked = stay(ota_ref="EVAL-OTA-1")
+			# the room is taken; this insert is only to claim the reference,
+			# so park it as a request that holds no inventory
+			booked.status = "Requested"
+			booked.insert(ignore_permissions=True)
+			assert booked.ota_live_key == ota_live_key(prop, "EVAL-OTA-1")
+			again = stay(ota_ref="EVAL-OTA-1", status="Requested")
+			try:
+				again.insert(ignore_permissions=True)
+				raise AssertionError("the same OTA reference booked twice")
+			except frappe.DuplicateEntryError:
+				pass
+
+			voucher = frappe.get_doc({
+				"doctype": "Discount Voucher", "property": prop, "voucher_code": "ONCE",
+				"discount_type": "Percent", "value": 10, "max_uses": 1,
+			}).insert(ignore_permissions=True)
+			consume_voucher_use(voucher.name)
+			try:
+				consume_voucher_use(voucher.name)
+				raise AssertionError("a one-use code redeemed twice")
+			except frappe.ValidationError as e:
+				assert "fully redeemed" in str(e), e
+			assert frappe.db.get_value("Discount Voucher", voucher.name, "times_used") == 1
+
+			from kamra.credit import enforce_company_credit
+			from kamra.ledger import _ar_account, locked_account_figures
+			company = frappe.get_doc({
+				"doctype": "Corporate Account", "company_name": "Eval Race Co",
+				"credit_allowed": 1,
+			}).insert(ignore_permissions=True)
+			account = _ar_account(prop, company.name)
+			frappe.db.set_value("City Ledger Account", account, "credit_limit", 100)
+			frappe.get_doc({
+				"doctype": "City Ledger Entry", "account": account, "property": prop,
+				"posting_date": nowdate(), "kind": "Adjustment", "debit": 80, "credit": 0,
+				"folio": None,
+			}).insert(ignore_permissions=True)
+			figures = locked_account_figures(account)
+			assert figures["ar_balance"] == 80, figures
+			credit = enforce_company_credit(company.name, prop, 30)
+			assert not credit["ok"], credit
+
+			till = cashier.save_terminal(prop, "Eval Till")["name"]
+			first = cashier.open_session(prop, cashier_terminal=till)
+			second = cashier.open_session(prop, cashier_terminal=till)
+			assert first["name"] == second["name"]
+			assert frappe.db.count("Cashier Session",
+			                        {"cashier_terminal": till, "status": "Open"}) == 1
+
+			outlet = frappe.get_doc({
+				"doctype": "POS Outlet", "property": prop, "outlet_name": "Eval Kitchen",
+				"outlet_type": "Restaurant", "gst_rate": 5,
+			}).insert(ignore_permissions=True).name
+			ing = inventory.save_ingredient(prop, "Eval Onion", "kg", cost_per_unit=10)["name"]
+			inventory.receive_stock(prop, outlet, [{"ingredient": ing, "qty": 10}])
+			counted = inventory.adjust_stock(
+				prop, outlet, [{"ingredient": ing, "counted_qty": 4}], "eval count")
+			assert counted["adjusted"][0]["now"] == 4, counted
+	finally:
+		frappe.db.rollback(save_point=sp)
+		for name in ("Eval Race Hotel",):
+			frappe.clear_document_cache("Property", name)
+
+
+@check("safe: two deposits on one cash office cannot overdraw it")
+def t_safe_deposit_race():
+	# Back-to-back, then overlapped. A second connection cannot see this
+	# check's uncommitted rows, so the deposit that wins the lock is applied
+	# when the other request acquires it — where that request resumes after
+	# the winner commits. The balance check has to run after the lock.
+	from unittest.mock import patch
+
+	from kamra import cashier
+	from kamra.authz import act_as
+
+	sp = "safe_deposit_race"
+	frappe.db.savepoint(sp)
+	try:
+		with act_as("Administrator"):
+			office = cashier.save_terminal(P, "Eval Safe Race", kind="Cash Office")["name"]
+			cashier.open_session(P, 1000)
+			cashier.cash_drop(P, 400, to_terminal=office)
+			pending = frappe.db.get_value(
+				"Cash Transfer", {"to_terminal": office, "status": "Pending"}, "name")
+			assert cashier.receive_transfer(pending)["safe"]["balance"] == 400
+
+			first = cashier.bank_deposit(office, 150)
+			assert first["safe"]["balance"] == 250, first
+			try:
+				cashier.bank_deposit(office, 300)
+				raise AssertionError("a deposit larger than the safe was accepted")
+			except frappe.ValidationError as e:
+				assert "more than the safe holds" in str(e), e
+			assert cashier._safe_balance(office)["balance"] == 250
+
+			doc = frappe.get_doc("Cash Transfer", first["transfer"])
+			doc.amount = 500
+			try:
+				doc.save(ignore_permissions=True)
+				raise AssertionError("raising a deposit overdrew the safe")
+			except frappe.ValidationError as e:
+				assert "more than the safe holds" in str(e), e
+			assert float(frappe.db.get_value(
+				"Cash Transfer", first["transfer"], "amount")) == 150
+			assert cashier._safe_balance(office)["balance"] == 250
+
+			try:
+				frappe.get_doc({
+					"doctype": "Cash Transfer", "property": P, "kind": "Bank Deposit",
+					"status": "Received", "amount": 300, "from_terminal": office,
+				}).insert(ignore_permissions=True)
+				raise AssertionError("saving a bank deposit overdrew the safe")
+			except frappe.ValidationError as e:
+				assert "more than the safe holds" in str(e), e
+			assert cashier._safe_balance(office)["balance"] == 250
+
+			real_lock = cashier._lock_cash_office
+			state = {"done": False}
+
+			def other_deposit_commits_first(name):
+				real_lock(name)
+				if not state["done"]:
+					state["done"] = True
+					cashier.bank_deposit(office, 200)
+
+			with patch.object(cashier, "_lock_cash_office", other_deposit_commits_first):
+				try:
+					cashier.bank_deposit(office, 200)
+					raise AssertionError("overlapped deposits both cleared")
+				except frappe.ValidationError as e:
+					assert "more than the safe holds" in str(e), e
+			assert cashier._safe_balance(office)["balance"] == 50, cashier._safe_balance(office)
+			assert frappe.db.count("Cash Transfer", {
+				"from_terminal": office, "kind": "Bank Deposit"}) == 2
+
+			assert cashier.bank_deposit(office, 50)["safe"]["balance"] == 0
+			try:
+				cashier.bank_deposit(office, 0.01)
+				raise AssertionError("the safe went negative")
+			except frappe.ValidationError as e:
+				assert "more than the safe holds" in str(e), e
+			assert cashier._safe_balance(office)["balance"] == 0
+	finally:
+		frappe.db.rollback(save_point=sp)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10373,7 +10573,8 @@ def execute():
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
-		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack):
+		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
+		           t_concurrency_guards, t_safe_deposit_race):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
