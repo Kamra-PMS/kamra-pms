@@ -6149,5 +6149,6 @@
   "Sells alcohol": "Vende alcohol",
   "Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.": "Desactívelo en una propiedad sin alcohol: se ocultan todos los campos, casillas y etiquetas de alcohol, en todos los idiomas. Nada de lo ya cargado cambia.",
   "Extend unchecked-out departures one night": "Extender una noche las salidas sin check-out",
-  "On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.": "Activado: un huésped que sigue alojado después de su fecha de salida se extiende una noche al correr la auditoría, y esa noche se carga como cualquier otra. Una estancia que no se puede extender (la habitación está reservada) queda en la lista de verificación."
+  "On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.": "Activado: un huésped que sigue alojado después de su fecha de salida se extiende una noche al correr la auditoría, y esa noche se carga como cualquier otra. Una estancia que no se puede extender (la habitación está reservada) queda en la lista de verificación.",
+  "Tap again to confirm": "Toque de nuevo para confirmar"
 }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
 import {
   BedDouble,
+  Check,
+  ChevronRight,
   LogIn,
   LogOut,
   Users,
@@ -8,6 +10,7 @@ import {
   ListChecks,
   PieChart,
   SlidersHorizontal,
+  X,
 } from "lucide-react"
 import { Link, useNavigate, useLocation, useOutletContext } from "react-router-dom"
 import {
@@ -51,12 +54,12 @@ import {
   type WidgetId,
 } from "../lib/rooms"
 
-
-const HK_CYCLE: RoomRow["housekeeping_status"][] = [
-  "Dirty",
-  "Clean",
-  "Inspected",
-  "Out of Order",
+// the menu's status buttons, in the board's colours and workflow order
+const HK_CHOICES: { status: RoomRow["housekeeping_status"]; label: string; tone: string }[] = [
+  { status: "Dirty", label: "Dirty", tone: "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100" },
+  { status: "Clean", label: "Clean", tone: "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100" },
+  { status: "Inspected", label: "Inspected", tone: "border-sky-300 bg-sky-50 text-sky-900 hover:bg-sky-100" },
+  { status: "Out of Order", label: "Out of order", tone: "border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100" },
 ]
 
 const hkTone: Record<RoomRow["housekeeping_status"], string> = {
@@ -535,6 +538,15 @@ export default function Today() {
   const location = useLocation()
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
   const [roomMenu, setRoomMenu] = useState<string | null>(null)
+  // Out of order takes a room off sale: the first tap asks, the second sets it
+  const [confirmOoo, setConfirmOoo] = useState(false)
+  useEffect(() => {
+    setConfirmOoo(false)
+    if (!roomMenu) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setRoomMenu(null) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [roomMenu])
   // the room panel from the Rooms screen, opened over Today
   const [roomPanel, setRoomPanel] = useState<{ room: string; tab?: RoomTab } | null>(null)
   const [moving, setMoving] = useState<{ res: string; number: string } | null>(null)
@@ -592,7 +604,7 @@ export default function Today() {
     const arriving = !occupied
       ? (snap?.arrivals ?? []).find((r) => r.room === room.name)
       : undefined
-    const item = "block w-full px-3 py-2.5 text-start hover:bg-zinc-50"
+    const item = "flex w-full items-center px-3 py-2.5 text-start hover:bg-zinc-50"
     const openRoom = (tab?: RoomTab) => {
       setRoomMenu(null)
       setRoomPanel({ room: room.name, tab })
@@ -644,93 +656,100 @@ export default function Today() {
           <RoomMediaButton room={room.name} />
         )}
         {roomMenu === room.name && (
-          <div
-            role="menu"
-            className="fixed inset-x-4 bottom-4 z-40 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 text-base shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:start-0 sm:top-full sm:z-20 sm:mt-1 sm:w-52 sm:rounded-lg sm:text-sm sm:shadow-lg"
-          >
-            <p className="truncate px-3 py-1 text-xs text-zinc-500">
-              {(stay ?? arriving)?.guest_name ?? t("Room {n}", { n: room.room_number })}
-            </p>
-            {stay && (
-              <>
-                <button
-                  role="menuitem"
-                  className={cn(item, "font-medium text-zinc-800")}
-                  onClick={() => {
-                    setRoomMenu(null)
-                    setCheckingOut(stay.name)
-                  }}
-                >
-                  {t("Check out")}
-                </button>
-                <button
-                  role="menuitem"
-                  className={cn(item, "text-zinc-700")}
-                  onClick={() => {
-                    setRoomMenu(null)
-                    navigate(`/reservations/${stay.name}`)
-                  }}
-                >
-                  {t("Extend stay")}
-                </button>
-                <button
-                  role="menuitem"
-                  className={cn(item, "text-zinc-700")}
-                  onClick={() => openRoom("billing")}
-                >
-                  {t("Folio and billing")}
-                </button>
-                <button
-                  role="menuitem"
-                  className={cn(item, "text-zinc-700")}
-                  onClick={() => openRoom("requests")}
-                >
-                  {t("Guest requests")}
-                </button>
-                <button
-                  role="menuitem"
-                  className={cn(item, "text-zinc-700")}
-                  onClick={() => navigate(`/grc/${stay.name}`)}
-                >
-                  {t("Registration card")}
-                </button>
-              </>
-            )}
-            {arriving && (
-              <>
-                <button
-                  role="menuitem"
-                  className={cn(item, "font-medium text-zinc-800")}
-                  onClick={() => {
-                    setRoomMenu(null)
-                    setCheckingIn(arriving.name)
-                  }}
-                >
-                  {t("Check in")}
-                </button>
-              </>
-            )}
-            {!occupied && HK_CYCLE.filter((st) => st !== room.housekeeping_status).map((st) => (
-              <button
-                key={st}
-                role="menuitem"
-                className={cn(item, "text-zinc-700")}
-                onClick={() => {
-                  setRoomMenu(null)
-                  void act(room.name, () => setHousekeepingStatus(room.name, st))
-                }}
-              >
-                {t("Housekeeping: mark {to}", { to: t(st) })}
-              </button>
-            ))}
-            <button
-              role="menuitem"
-              className={cn(item, "text-zinc-700")}
-              onClick={() => openRoom()}
+          <>
+            {/* a click anywhere outside closes it; dimmed on a phone */}
+            <div className="fixed inset-0 z-30 bg-zinc-900/30 sm:z-10 sm:bg-transparent"
+              aria-hidden onClick={() => setRoomMenu(null)} />
+            <div
+              role="menu"
+              aria-label={t("Room {n}", { n: room.room_number })}
+              className="fixed inset-x-4 bottom-4 z-40 overflow-hidden rounded-xl border border-zinc-200 bg-white text-base shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:start-0 sm:top-full sm:z-20 sm:mt-1 sm:w-64 sm:rounded-lg sm:text-sm sm:shadow-lg"
             >
-              {t("Room details")}
-            </button>
-          </div>
+              <div className="flex items-start gap-2 border-b border-zinc-100 px-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-zinc-900">{t("Room {n}", { n: room.room_number })}</span>
+                    <span className={cn("rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                      occupied ? "border-brand-700 bg-brand-700 text-white" : hkTone[room.housekeeping_status])}>
+                      {occupied ? t("Occupied") : t(room.housekeeping_status)}
+                    </span>
+                  </div>
+                  {(stay ?? arriving) && (
+                    <p className="mt-0.5 truncate text-xs text-zinc-500">{(stay ?? arriving)!.guest_name}</p>
+                  )}
+                </div>
+                <button className="-me-1 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+                  aria-label={t("Close")} onClick={() => setRoomMenu(null)}>
+                  <X className="size-4" aria-hidden />
+                </button>
+              </div>
+              {stay && (
+                <div className="py-1">
+                  <button role="menuitem" className={cn(item, "font-medium text-zinc-800")}
+                    onClick={() => { setRoomMenu(null); setCheckingOut(stay.name) }}>
+                    {t("Check out")}
+                  </button>
+                  <button role="menuitem" className={cn(item, "text-zinc-700")}
+                    onClick={() => { setRoomMenu(null); navigate(`/reservations/${stay.name}`) }}>
+                    {t("Extend stay")}
+                  </button>
+                  <button role="menuitem" className={cn(item, "text-zinc-700")} onClick={() => openRoom("billing")}>
+                    {t("Folio and billing")}
+                  </button>
+                  <button role="menuitem" className={cn(item, "text-zinc-700")} onClick={() => openRoom("requests")}>
+                    {t("Guest requests")}
+                  </button>
+                  <button role="menuitem" className={cn(item, "text-zinc-700")} onClick={() => navigate(`/grc/${stay.name}`)}>
+                    {t("Registration card")}
+                  </button>
+                </div>
+              )}
+              {arriving && (
+                <div className="py-1">
+                  <button role="menuitem" className={cn(item, "font-medium text-zinc-800")}
+                    onClick={() => { setRoomMenu(null); setCheckingIn(arriving.name) }}>
+                    {t("Check in")}
+                  </button>
+                </div>
+              )}
+              {!occupied && (
+                <div className={cn("px-3 pb-3 pt-2", arriving && "border-t border-zinc-100")}>
+                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                    {t("Housekeeping status")}
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {HK_CHOICES.map((c) => {
+                      const current = c.status === room.housekeeping_status
+                      const asking = c.status === "Out of Order" && confirmOoo
+                      return (
+                        <button key={c.status} role="menuitemradio" aria-checked={current}
+                          disabled={current}
+                          className={cn("flex min-h-10 items-center justify-center gap-1 rounded-lg border px-2 text-sm font-medium",
+                            c.tone, current && "cursor-default ring-2 ring-zinc-900/70 ring-offset-1",
+                            asking && "bg-rose-600 text-white hover:bg-rose-700")}
+                          onClick={() => {
+                            if (c.status === "Out of Order" && !confirmOoo) {
+                              setConfirmOoo(true)
+                              return
+                            }
+                            setRoomMenu(null)
+                            void act(room.name, () => setHousekeepingStatus(room.name, c.status))
+                          }}>
+                          {current && <Check className="size-3.5" aria-hidden />}
+                          {asking ? t("Tap again to confirm") : t(c.label)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              <button role="menuitem" className={cn(item, "justify-between border-t border-zinc-100 text-zinc-700")}
+                onClick={() => openRoom()}>
+                {t("Room details")}
+                <ChevronRight className="size-4 text-zinc-400 rtl:rotate-180" aria-hidden />
+              </button>
+            </div>
+          </>
         )}
       </div>
     )
