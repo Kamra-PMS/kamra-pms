@@ -698,9 +698,7 @@ export default function Assistant() {
         </div>
 
         {aiEnabled !== false && (
-          // wraps rather than scrolls: every task stays in sight, no scrollbar
-          {/* ponytail: no dark:bg-* here — .dark remaps zinc/white vars; dark:bg-zinc-900
-              was painting the composer black in light mode when the variant misfired. */}
+          // wraps rather than scrolls; no dark:bg — .dark remaps zinc/white vars
           <div className="flex flex-wrap gap-1.5 border-t border-zinc-100 px-3 pt-2.5">
             <button
               type="button"
