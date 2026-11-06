@@ -127,6 +127,28 @@ class TerminalSessionsTestCase(TillTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			cashier.open_session(PROP_A, cashier_terminal=off)
 
+	def test_two_openers_cannot_both_hold_one_till(self):
+		bar = self.terminal("Shared")
+		state = {"done": False}
+		real = frappe.db.get_value
+
+		def other_opens(*args, **kwargs):
+			out = real(*args, **kwargs)
+			if (not state["done"] and args and args[0] == "Cashier Terminal"
+			        and kwargs.get("for_update")):
+				state["done"] = True
+				self.as_user(self.TWO)
+				cashier.open_session(PROP_A, cashier_terminal=bar)
+				self.as_user(self.ONE)
+			return out
+
+		self.as_user(self.ONE)
+		with patch.object(frappe.db, "get_value", side_effect=other_opens):
+			with self.assertRaises(frappe.ValidationError):
+				cashier.open_session(PROP_A, cashier_terminal=bar)
+		self.assertEqual(frappe.db.count(
+			"Cashier Session", {"cashier_terminal": bar, "status": "Open"}), 1)
+
 	def test_front_desk_cannot_add_tills(self):
 		self.as_user(self.ONE)
 		with self.assertRaises(frappe.PermissionError):

@@ -2722,9 +2722,8 @@ def post_discount(folio: str, value: float = 0, kind: str = "Percent",
 	                          reason_code=reason_code)
 	           for ln in lines]
 	if (voucher_code or "").strip():
-		frappe.db.sql("""UPDATE `tabDiscount Voucher`
-		                 SET times_used = COALESCE(times_used, 0) + 1
-		                 WHERE name = %s""", v.name)
+		from kamra.pricing import consume_voucher_use
+		consume_voucher_use(v.name)
 	return {"ok": True, "folio": folio, "total": round(total, 2),
 	        "pending": any(r.get("pending") for r in results), "results": results}
 
@@ -6044,9 +6043,14 @@ def _refuse_taken_ota_ref(property: str, ota_ref: str | None,
 	share it (same group booking); any other booking with it is refused."""
 	if not ota_ref:
 		return
-	for r in frappe.get_all("Reservation", filters={
-			"property": property, "ota_ref": ota_ref,
-			"status": ["!=", "Cancelled"]}, fields=["name", "group_booking"]):
+	from kamra.kamra.doctype.reservation.reservation import lock_property_for_inventory
+	lock_property_for_inventory(property)
+	rows = frappe.db.sql(
+		"""SELECT name, group_booking FROM `tabReservation`
+		   WHERE property = %s AND ota_ref = %s AND status != 'Cancelled'
+		   FOR UPDATE""",
+		(property, ota_ref), as_dict=True)
+	for r in rows:
 		if not group_booking or r.group_booking != group_booking:
 			frappe.throw(_("OTA booking {0} is already reservation {1}.").format(
 				ota_ref, r.name))
@@ -6498,8 +6502,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 	`credit_override_reason`, which is logged. Agents can't override."""
 	from kamra.crs import assert_property_access
+	from kamra.kamra.doctype.reservation.reservation import lock_property_for_inventory
 	from kamra.reservation_state import find_by_idempotency, lock_sius_for_booking
 	assert_property_access(property)
+	# Before the free-room read and the stay insert, so a second booking
+	# waits and then sees this one.
+	lock_property_for_inventory(property)
 	check_in_time, check_out_time = _stay_slot(
 		check_in_date, check_out_date, check_in_time, check_out_time)
 
@@ -6758,6 +6766,15 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 					frappe.db.rollback(save_point="kamra_credit_gate")
 					raise
 			break
+		except frappe.DuplicateEntryError:
+			existing = None
+			if getattr(doc, "ota_live_key", None):
+				existing = frappe.db.get_value(
+					"Reservation", {"ota_live_key": doc.ota_live_key}, "name")
+			if existing:
+				frappe.throw(_("OTA booking {0} is already reservation {1}.").format(
+					ota_ref or doc.ota_ref, existing))
+			raise
 		except frappe.QueryDeadlockError:
 			frappe.db.rollback()
 			if attempt == 3:

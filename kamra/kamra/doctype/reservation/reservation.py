@@ -17,6 +17,31 @@ class InventoryRefused(frappe.ValidationError):
 NON_VILLA_SQL = "(rt.room_category != 'Villa' OR rt.room_category IS NULL)"
 
 
+def lock_property_for_inventory(property: str) -> None:
+	"""One inventory decision at a time for this property.
+
+	Category capacity and the villa/room lockout both re-read after this
+	returns. A plain SELECT would keep the snapshot from before the wait
+	and a second booking would sell a room the first one just took.
+	"""
+	if property:
+		frappe.db.get_value("Property", property, "name", for_update=True)
+
+
+def ota_live_key(property: str, ota_ref: str) -> str:
+	"""Unique key for one live, non-group stay with this OTA reference.
+
+	Group rooming lists share a reference on purpose, so they do not use
+	this key. Longer than the field allows, the key is a hash of the same
+	pair so the unique index still rejects a duplicate delivery.
+	"""
+	raw = f"{property}::{(ota_ref or '').strip()}"
+	if len(raw) <= 140:
+		return raw
+	import hashlib
+	return hashlib.sha256(raw.encode()).hexdigest()
+
+
 def is_entire_place(room_type: str | None) -> bool:
 	"""An entire-place (whole villa) stay: its room type is Villa-category,
 	sold as one unit - the same test validate_villa_lockout uses."""
@@ -72,7 +97,8 @@ _LIVE_SQL = "('Confirmed', 'Checked In', 'Held', 'Pending Payment')"
 
 def villa_lockout_bookings(property: str, room_type: str | None, check_in,
                            check_out, exclude: str | None = None,
-                           limit: int | None = None) -> list[dict]:
+                           limit: int | None = None,
+                           for_update: bool = False) -> list[dict]:
 	"""Live reservations on the OTHER side of the villa <-> room lockout that
 	overlap [check_in, check_out): for a whole-villa type, any booked
 	non-villa (member) room; for any other type, a booked whole villa.
@@ -97,6 +123,7 @@ def villa_lockout_bookings(property: str, room_type: str | None, check_in,
 		  AND GREATEST(r.check_out_date, DATE_ADD(r.check_in_date, INTERVAL 1 DAY)) > %(check_in)s
 		ORDER BY r.check_in_date
 		{"LIMIT %d" % int(limit) if limit else ""}
+		{" FOR UPDATE" if for_update else ""}
 		""",
 		{
 			"property": property,
@@ -109,11 +136,12 @@ def villa_lockout_bookings(property: str, room_type: str | None, check_in,
 
 
 def villa_lockout_conflict(property: str, room_type: str | None, check_in,
-                           check_out, exclude: str | None = None) -> str | None:
+                           check_out, exclude: str | None = None,
+                           for_update: bool = False) -> str | None:
 	"""The reservation that stops `room_type` selling for the stay under the
 	villa <-> room lockout, or None when it is free to sell."""
 	rows = villa_lockout_bookings(property, room_type, check_in, check_out,
-	                              exclude=exclude, limit=1)
+	                              exclude=exclude, limit=1, for_update=for_update)
 	return rows[0].name if rows else None
 
 
@@ -154,6 +182,36 @@ class Reservation(Document):
 			              (prefix, int(top or 0)))
 		self.name = make_autoname(f"{prefix}.#####")
 
+	def insert(self, *args, **kwargs):
+		"""Insert, and report a taken OTA reference as DuplicateEntryError.
+
+		The unique index on ota_live_key is what stops two deliveries of one
+		OTA booking. Frappe turns that collision into UniqueValidationError
+		inside db_insert, before the caller sees it. create_booking and the
+		channel manager catch DuplicateEntryError and hand back the stay that
+		won, so translate just this key."""
+		try:
+			return super().insert(*args, **kwargs)
+		except frappe.UniqueValidationError as exc:
+			if self.ota_live_key and "ota_live_key" in str(exc):
+				raise frappe.DuplicateEntryError(self.ota_live_key) from exc
+			raise
+
+	def _sync_ota_live_key(self):
+		"""Set the unique live-stay key, or clear it when this stay no
+		longer claims the reference. An older duplicate left in place by
+		the patch keeps a blank key so editing it is still possible."""
+		ref = (self.ota_ref or "").strip()
+		desired = None
+		if ref and (self.status or "") != "Cancelled" and not self.group_booking:
+			desired = ota_live_key(self.property, ref)
+		if desired and self.name and not self.is_new():
+			other = frappe.db.get_value("Reservation", {"ota_live_key": desired}, "name")
+			if other and other != self.name:
+				self.ota_live_key = None
+				return
+		self.ota_live_key = desired
+
 	def after_insert(self):
 		# every booking gets a pre-arrival check-in link
 		self.db_set(
@@ -161,12 +219,8 @@ class Reservation(Document):
 			update_modified=False,
 		)
 		if self.voucher:
-			frappe.db.sql(
-				"""UPDATE `tabDiscount Voucher`
-				   SET times_used = COALESCE(times_used, 0) + 1
-				   WHERE name = %s""",
-				self.voucher,
-			)
+			from kamra.pricing import consume_voucher_use
+			consume_voucher_use(self.voucher)
 		# WhatsApp booking confirmation - enqueued so a booking never
 		# waits on Meta; skipped entirely unless the property connected
 		# its own number (Channel Provider Connection, Meta Business)
@@ -200,6 +254,9 @@ class Reservation(Document):
 		if self.status in ("Cancelled", "No Show", "Checked Out", "Waitlist"):
 			return
 		# Serialize bookings of a category, even before a room is assigned.
+		# The property lock in validate() is already held; this lock orders
+		# category checks. The count below is a locking read so it sees a
+		# booking that committed while this one waited.
 		frappe.db.get_value("Room Type", self.room_type, "name", for_update=True)
 		total = frappe.db.count("Room", {"room_type": self.room_type})
 		if not total:
@@ -224,17 +281,18 @@ class Reservation(Document):
 		if self._takes_new_inventory():
 			from kamra.group_blocks import block_hold_by_night
 			held = block_hold_by_night(self.property, self.room_type, dates,
-			                           for_group=self.group_booking)
+			                           for_group=self.group_booking, for_update=True)
 		for d in dates:
-			cnt = frappe.db.sql(
-				"""SELECT COUNT(*) FROM `tabReservation`
+			cnt = len(frappe.db.sql(
+				"""SELECT name FROM `tabReservation`
 				   WHERE room_type = %(rt)s AND name != %(name)s
 				     AND status IN ('Confirmed', 'Checked In', 'Held', 'Pending Payment')
 				     AND check_in_date <= %(d)s
 				     AND GREATEST(check_out_date,
-				                  DATE_ADD(check_in_date, INTERVAL 1 DAY)) > %(d)s""",
+				                  DATE_ADD(check_in_date, INTERVAL 1 DAY)) > %(d)s
+				   FOR UPDATE""",
 				{"rt": self.room_type, "name": self.name or "new", "d": d},
-			)[0][0]
+			))
 			hold = held.get(d, 0)
 			if cnt + hold + 1 > limit:
 				if hold:
@@ -263,6 +321,11 @@ class Reservation(Document):
 			!= (str(self.check_in_date), str(self.check_out_date), self.room_type)
 
 	def validate(self):
+		# Before any other inventory lock, so villa vs room and category
+		# capacity take this row in the same order as booking and accept.
+		if self.property:
+			lock_property_for_inventory(self.property)
+		self._sync_ota_live_key()
 		if self.get("booked_check_out_date") and getdate(self.check_out_date) \
 				>= getdate(self.booked_check_out_date):
 			# extended back to (or past) the booked date: no longer leaving early
@@ -865,7 +928,7 @@ class Reservation(Document):
 
 		conflict = villa_lockout_conflict(
 			self.property, self.room_type, self.check_in_date,
-			self.check_out_date, exclude=self.name)
+			self.check_out_date, exclude=self.name, for_update=True)
 		if not conflict:
 			return
 		if is_entire_place(self.room_type):

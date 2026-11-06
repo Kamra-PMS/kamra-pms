@@ -356,12 +356,29 @@ def _reservations_for_booking(property: str, booking_id: str) -> list[dict]:
 		as_dict=True)
 
 
+def _locked_live_ota(property: str, ota_ref: str | None):
+	"""The stay for this OTA reference, after the property inventory lock.
+
+	A non-cancelled stay wins when a cancelled one shares the reference.
+	The locking read sees a delivery that committed while this one waited.
+	"""
+	if not ota_ref:
+		return None
+	from kamra.kamra.doctype.reservation.reservation import lock_property_for_inventory
+	lock_property_for_inventory(property)
+	rows = frappe.db.sql(
+		"""SELECT name, status FROM `tabReservation`
+		   WHERE property = %s AND ota_ref = %s
+		   ORDER BY CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END, creation
+		   FOR UPDATE""",
+		(property, ota_ref), as_dict=True)
+	return rows[0] if rows else None
+
+
 def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 	"""One normalized OTA event -> the same paths a human would take."""
 	e["channel"] = canonical_channel(e.get("channel")) or "OTA"
-	existing = frappe.db.get_value(
-		"Reservation", {"property": conn.property, "ota_ref": e["ota_ref"]},
-		["name", "status"], as_dict=True) if e.get("ota_ref") else None
+	existing = _locked_live_ota(conn.property, e.get("ota_ref"))
 
 	if e["event"] == "cancel":
 		# A cancel frees the room(s) and - per the property's cancellation
@@ -458,7 +475,16 @@ def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 	if e.get("total"):
 		doc.amount_after_tax = e["total"]
 		lock_channel_rates(doc, e["total"], e.get("nightly"))
-	doc.insert(ignore_permissions=True)
+	try:
+		doc.insert(ignore_permissions=True)
+	except frappe.DuplicateEntryError:
+		# The other delivery committed while this one waited on the property
+		# lock. Hand back that stay instead of booking the guest twice.
+		winner = _locked_live_ota(conn.property, e.get("ota_ref"))
+		if winner:
+			return {"ota_ref": e.get("ota_ref"), "result": "duplicate_ignored",
+			        "reservation": winner.name}
+		raise
 	# the channel's own commission when it sends one, else the site's default
 	if e.get("commission"):
 		doc.db_set("commission_amount", float(e["commission"]))
