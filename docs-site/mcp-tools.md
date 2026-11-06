@@ -26,12 +26,13 @@ days. start_date YYYY-MM-DD (default today).
 
 Endpoint: `kamra.api.availability_calendar`.
 
-### `quote(room_type, check_in_date, check_out_date, adults, children, meal_plan, rate_plan, voucher_code, company)`
+### `quote(room_type, check_in_date, check_out_date, adults, children, meal_plan, rate_plan, voucher_code, company, check_in_time, check_out_time)`
 
 Price a stay (deterministic: occupancy pricing, seasons, meal plan,
 voucher, GST). Use before every booking. Room type, meal plan and rate
 plan accept the id, code or exact name; an unknown or ambiguous value
-is refused with the valid options.
+is refused with the valid options. For a same-day stay on an hourly or
+block rate plan, pass check_in_time / check_out_time (HH:MM).
 
 Endpoint: `kamra.api.get_quote`.
 
@@ -42,13 +43,15 @@ for booking at this property.
 
 Endpoint: `kamra.api.booking_options`.
 
-### `create_booking(guest_name, room_type, check_in_date, check_out_date, phone, adults, children, meal_plan, rate_plan, voucher_code, company, market_segment, idempotency_key)`
+### `create_booking(guest_name, room_type, check_in_date, check_out_date, phone, adults, children, meal_plan, rate_plan, voucher_code, company, market_segment, check_in_time, check_out_time, idempotency_key)`
 
 Create a reservation. Dedupes the guest by phone, auto-assigns a
 free room, applies the voucher, prices via the engine. Room type,
 meal plan and rate plan accept the id, code or exact name. Safe to
 retry: a repeated call returns the existing booking (see
-idempotency_key) - check idempotent_replay in the result.
+idempotency_key) - check idempotent_replay in the result. Same-day
+dates are day-use; optional check_in_time / check_out_time (HH:MM)
+set the slot and price an hourly or block rate plan.
 
 Endpoint: `kamra.api.create_booking`.
 Mutating - logged to the activity ledger.

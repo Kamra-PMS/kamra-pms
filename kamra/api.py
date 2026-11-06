@@ -2670,6 +2670,47 @@ def _discount_lines(doc, kind: str, value: float, basis: str) -> list[dict]:
 	return lines
 
 
+def _discount_tax_inclusive(lines: list[dict]) -> float:
+	"""How much an allowance set of lines takes off the folio balance
+	(base + the tax those lines reverse)."""
+	return round(sum(flt(ln["amount"]) * (1 + flt(ln["gst_rate"]) / 100)
+	                 for ln in lines), 2)
+
+
+def _cap_discount_to_open_balance(doc, lines: list[dict]) -> list[dict]:
+	"""Refuse a discount on a settled open folio, and never let one push
+	the balance below zero. The room-night base cap in `_discount_lines`
+	still applies first; this is a second guard against the open balance
+	(tax-inclusive), so a fully paid folio cannot take a discount."""
+	balance = flt(doc.balance)
+	if balance <= 0:
+		frappe.throw(_("This folio has no open balance. Use a refund or "
+		               "credit note instead."))
+	impact = _discount_tax_inclusive(lines)
+	if impact <= balance + 0.005:
+		return lines
+	# Scale each line's pre-tax amount so the tax-inclusive total fits.
+	# Lines share one scale so the mix of GST rates stays proportional.
+	scale = balance / impact if impact else 0
+	capped = []
+	for ln in lines:
+		amount = round(flt(ln["amount"]) * scale, 2)
+		if amount > 0:
+			capped.append({**ln, "amount": amount})
+	if not capped or _discount_tax_inclusive(capped) <= 0:
+		frappe.throw(_("This folio has no open balance. Use a refund or "
+		               "credit note instead."))
+	# Fix residual rounding so we never exceed the open balance.
+	while capped and _discount_tax_inclusive(capped) > balance + 0.005:
+		capped[-1]["amount"] = round(flt(capped[-1]["amount"]) - 0.01, 2)
+		if capped[-1]["amount"] <= 0:
+			capped.pop()
+	if not capped:
+		frappe.throw(_("This folio has no open balance. Use a refund or "
+		               "credit note instead."))
+	return capped
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def post_discount(folio: str, value: float = 0, kind: str = "Percent",
@@ -2704,7 +2745,7 @@ def post_discount(folio: str, value: float = 0, kind: str = "Percent",
 		kind = "Percent" if v.discount_type == "Percent" else "Amount"
 		value, basis = flt(v.value), "Stay"
 		label = _("Promo code {0}").format(v.voucher_code)
-	lines = _discount_lines(doc, kind, value, basis)
+	lines = _cap_discount_to_open_balance(doc, _discount_lines(doc, kind, value, basis))
 	total = sum(ln["amount"] for ln in lines)
 	if not label:
 		label = (_("Discount {0}%").format(f"{flt(value):g}") if kind == "Percent"
@@ -5076,8 +5117,7 @@ def room_board(property: str):
 			filters={"property": property, "status": "Checked In",
 			         "room": ("is", "set")},
 			fields=["room", "guest_name", "check_out_date", "is_day_use",
-			        "planned_check_out_time"])}
-	due_out = str(nowdate())
+			        "planned_check_out_time", "status"])}
 	tasks = {}
 	for t in frappe.get_all(
 			"Housekeeping Task",
@@ -5094,7 +5134,10 @@ def room_board(property: str):
 	for r in rooms:
 		stay = in_house.get(r.name)
 		r["guest_name"] = stay.guest_name if stay else None
-		r["due_out"] = bool(stay and str(stay.check_out_date) <= due_out)
+		# Day-use is due only once its planned ETD has passed; overnight
+		# stays stay date-based (checkout date ≤ today).
+		from kamra.day_use import is_due_out as _is_due_out
+		r["due_out"] = bool(stay and _is_due_out(stay))
 		# a day-use room turns the same day: housekeeping plans on its slot
 		r["day_use"] = bool(stay and stay.is_day_use)
 		r["etd"] = str(stay.planned_check_out_time)[:5] \
@@ -5359,7 +5402,19 @@ def set_stay_times(reservation: str, eta: str | None = None,
 	"""Set the planned arrival (ETA) and departure (ETD) times for any stay.
 	These drive the hotel-position view on the tape chart: back-to-back
 	rooms conflict when the incoming guest lands before the outgoing one
-	leaves, and the day's arrival flow is planned around them."""
+	leaves, and the day's arrival flow is planned around them.
+
+	On a day-use stay the times also re-price an hourly or block rate plan
+	(same write path as booking — Reservation.save → apply_pricing)."""
+	doc = frappe.get_doc("Reservation", reservation)
+	eta, etd = _stay_slot(str(doc.check_in_date), str(doc.check_out_date),
+	                      eta, etd)
+	if cint(doc.is_day_use):
+		doc.planned_check_in_time = eta or None
+		doc.planned_check_out_time = etd or None
+		doc.save(ignore_permissions=True)
+		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
+		return {"ok": True, "amount_after_tax": float(doc.amount_after_tax or 0)}
 	frappe.db.set_value("Reservation", reservation, {
 		"planned_check_in_time": eta or None,
 		"planned_check_out_time": etd or None,
@@ -6099,9 +6154,12 @@ def get_quote(property: str, room_type: str, check_in_date: str,
               meal_plan: str | None = None, rate_plan: str | None = None,
               voucher_code: str | None = None,
               over_capacity_charge: float = 0, pets: int = 0,
-              company: str | None = None):
+              company: str | None = None,
+              check_in_time: str | None = None,
+              check_out_time: str | None = None):
 	"""Price a stay. With a company and no rate plan, the company's
-	negotiated plan applies - the same plan create_booking stores."""
+	negotiated plan applies - the same plan create_booking stores.
+	check_in_time / check_out_time price an hourly or block day-use plan."""
 	from kamra.booking_refs import (resolve_meal_plan, resolve_rate_plan,
 	                                resolve_room_type)
 	from kamra.pricing import quote
@@ -6115,7 +6173,9 @@ def get_quote(property: str, room_type: str, check_in_date: str,
 	          int(adults), int(children), meal_plan or None,
 	          rate_plan or None, voucher_code or None,
 	          over_capacity_charge=float(over_capacity_charge or 0),
-	          pets=int(pets or 0), company=company or None)
+	          pets=int(pets or 0), company=company or None,
+	          check_in_time=check_in_time or None,
+	          check_out_time=check_out_time or None)
 	if isinstance(q, dict):
 		q["cancellation"] = cancellation_outlook(
 			property, room_type, check_in_date, check_out_date)

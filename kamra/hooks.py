@@ -54,6 +54,8 @@ scheduler_events = {
 			# group blocks past their cutoff give unpicked rooms back to sale
 			"kamra.group_blocks.release_expired_blocks",
 			"kamra.no_show.release_non_guaranteed_arrivals",
+			# day-use past planned ETD → front-desk bell once per stay
+			"kamra.day_use.alert_overdue_day_use",
 		],
 		# 08:30 - the banquet team's morning list: follow-ups gone quiet,
 		# tentative holds about to lapse, payments due, event orders missing

@@ -579,6 +579,8 @@ def quote(
 	pets: int = 0,
 	company: str | None = None,
 	agreed_rate: float = 0,
+	check_in_time: str | None = None,
+	check_out_time: str | None = None,
 ) -> dict:
 	# a stay for a company is priced on the plan the company negotiated,
 	# unless the caller named a plan of its own
@@ -621,6 +623,7 @@ def quote(
 	# the nights' floors (net of tax) on a long-stay discounted stay: the
 	# rate plan and a voucher stack on top and must not undercut them either
 	los_floor = Decimal(0)
+	day_use_meta = None
 	# a day-use stay bills one "night" on the check-in date
 	for i in range(max(nights, 1)):
 		date = add_days(check_in_date, i)
@@ -678,7 +681,45 @@ def quote(
 		room_total += rate
 		room_tax += rate * gst / Decimal(100)
 
-	if rate_plan and not agreed_rate:
+	# Hourly / block day-use: replace the one nightly rate with hours/blocks
+	# from the planned slot. Overnight stays and Nightly day-use plans are
+	# untouched. An agreed desk rate still wins.
+	if day_use and not agreed_rate:
+		from kamra.day_use import quote_day_use_amount
+		# Gross nightly (before tax back-out) as the Full-day overstay stand-in.
+		nightly_gross = room_total * (Decimal(1) + (
+			_dec(nightly[0]["gst_rate"]) / Decimal(100) if nightly else Decimal(0)
+		)) if inclusive else room_total
+		day_use_meta = quote_day_use_amount(
+			property, rate_plan, check_in_time, check_out_time, nightly_gross)
+		if day_use_meta:
+			gross = _dec(day_use_meta["amount"])
+			gst = room_gst_rate(property, rt, gross + night_over_cap)
+			rate = (gross / (Decimal(1) + gst / Decimal(100))
+			        if inclusive else gross)
+			nightly[0] = {
+				"date": str(check_in_date), "rate": float(rate),
+				"gst_rate": float(gst),
+				"demand_premium_pct": 0,
+				"occupancy": occ_cache.get(str(check_in_date), 0),
+				"billing_basis": day_use_meta["billing_basis"],
+				"units": day_use_meta["units"],
+				"unit_rate": float(
+					rate / _dec(day_use_meta["units"])
+					if day_use_meta["units"] else rate),
+				"hours": day_use_meta["hours"],
+			}
+			room_total = rate
+			room_tax = rate * gst / Decimal(100)
+			# Hourly/block plans own the room total; nightly modifiers do not
+			# stack on top (Absolute would wipe the hour math).
+			rate_plan_applied = True
+		else:
+			rate_plan_applied = False
+	else:
+		rate_plan_applied = False
+
+	if rate_plan and not agreed_rate and not rate_plan_applied:
 		old_room_total = room_total
 		room_total = max(apply_rate_plan(rate_plan, room_total), los_floor)
 		if old_room_total:
@@ -776,10 +817,13 @@ def quote(
 
 	deposit_required = float(prop.get("security_deposit_amount") or 0)
 
+	room_label = "Room nights"
+	if day_use_meta:
+		room_label = day_use_meta.get("description") or "Day use"
 	line_items = [
 		{
 			"component": "accommodation",
-			"description": "Room nights",
+			"description": room_label,
 			"amount": float(room_total),
 			"tax_amount": float(room_tax * (taxable / subtotal) if subtotal else 0),
 			"tax_rate": float(room_tax / room_total * 100) if room_total else 0,
@@ -847,7 +891,7 @@ def quote(
 	adv_pct, adv_season = advance_percent(property, stay_rules)
 
 	from frappe.utils import now_datetime
-	return {
+	out = {
 		"nights": nights,
 		"day_use": day_use,
 		"nightly": nightly,
@@ -892,3 +936,13 @@ def quote(
 		"is_holiday": stay_rules["is_holiday"],
 		"quoted_at": str(now_datetime()),
 	}
+	if day_use_meta:
+		out["day_use_billing"] = {
+			"billing_basis": day_use_meta["billing_basis"],
+			"units": day_use_meta["units"],
+			"hours": day_use_meta["hours"],
+			"unit_rate": day_use_meta["unit_rate"],
+			"full_day": bool(day_use_meta.get("full_day")),
+			"description": day_use_meta.get("description"),
+		}
+	return out

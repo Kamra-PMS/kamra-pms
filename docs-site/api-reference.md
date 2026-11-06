@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **487 endpoints**, generated from the source
+the UI and the AI use. **488 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1612,6 +1612,9 @@ These drive the hotel-position view on the tape chart: back-to-back
 rooms conflict when the incoming guest lands before the outgoing one
 leaves, and the day's arrival flow is planned around them.
 
+On a day-use stay the times also re-price an hourly or block rate plan
+(same write path as booking  -  Reservation.save → apply_pricing).
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
@@ -1855,6 +1858,7 @@ Everything the booking form needs to render its dropdowns.
 
 Price a stay. With a company and no rate plan, the company's
 negotiated plan applies - the same plan create_booking stores.
+check_in_time / check_out_time price an hourly or block day-use plan.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1870,6 +1874,8 @@ negotiated plan applies - the same plan create_booking stores.
 | `over_capacity_charge` | no | `0` |
 | `pets` | no | `0` |
 | `company` | no | `None` |
+| `check_in_time` | no | `None` |
+| `check_out_time` | no | `None` |
 
 ### `kamra.api.create_booking`
 
