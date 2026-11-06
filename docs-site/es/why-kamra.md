@@ -47,8 +47,8 @@ del modelo. Consulte [Conecte su IA](/ai-and-mcp).
 - Sus datos se exportan gratis, en cualquier momento.
 - La API, los webhooks y las herramientas MCP siguen siendo gratuitos, sin
   cuota de interfaz.
-- Una edición empresarial, cuando llegue, se sumará a Kamra de código
-  abierto y nunca le quitará funciones.
+- La edición Enterprise solo se suma a Kamra de código abierto. Nunca le
+  quita funciones.
 
 ## Más información
 

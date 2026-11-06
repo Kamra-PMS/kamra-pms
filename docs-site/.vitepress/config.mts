@@ -188,6 +188,13 @@ export default defineConfig({
   base,
   outDir,
   cleanUrls: true,
+  // /docs/sitemap.xml: robots.txt and the site sitemap index point at it
+  sitemap: { hostname: "https://kamrapms.com/docs/" },
+  // Archived /docs/vX.Y.Z/ builds point at the latest page, so they never compete with it.
+  transformHead: ({ page }) => {
+    const path = page.replace(/(^|\/)index\.md$/, "$1").replace(/\.md$/, "")
+    return [["link", { rel: "canonical", href: `https://kamrapms.com/docs/${path}` }]]
+  },
   // the writing guide for contributors is not a published page
   srcExclude: ["STYLE.md", "README.md", "archives/**"],
   // local bench URLs in install guides are examples, not site pages
