@@ -97,6 +97,30 @@
      }
     },
     {
+     "name": "csrf_token",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.csrf_token",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.csrf_token"
+       ]
+      },
+      "description": "The session's current CSRF token. An open tab asks for it when its\npage-load token went stale because someone signed in or out in another\ntab (Frappe rotates the token on login). None for a guest. A GET, like\nthe boot page that already carries the token, and readable only by the\nsame origin."
+     }
+    },
+    {
      "name": "whoami",
      "request": {
       "method": "POST",

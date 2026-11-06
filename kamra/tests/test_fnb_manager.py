@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
+from unittest.mock import patch
 
 import frappe
 
@@ -157,3 +158,29 @@ class FnbManagerTestCase(AuditTestCase):
 		                                           name=saved["name"])):
 			with self.assertRaises(frappe.PermissionError):
 				call()
+
+	def test_a_count_sets_the_quantity_seen_under_the_lock(self):
+		"""A sale that lands before the count is written must not be added
+		on top of a delta taken from the old quantity. The shelf is what
+		was counted."""
+		from kamra import inventory
+		self.as_(self.fnb)
+		ing = inventory.save_ingredient(PROP_A, "UT FnB Count", "kg",
+		                                cost_per_unit=10)["name"]
+		inventory.receive_stock(PROP_A, self.outlet, [{"ingredient": ing, "qty": 10}])
+		real = inventory._apply_move
+		state = {"done": False}
+
+		def sale_then_count(*args, **kwargs):
+			if not state["done"] and kwargs.get("set_qty") is not None:
+				state["done"] = True
+				real(PROP_A, self.outlet, ing, -3, "Consumed")
+			return real(*args, **kwargs)
+
+		with patch.object(inventory, "_apply_move", side_effect=sale_then_count):
+			out = inventory.adjust_stock(
+				PROP_A, self.outlet, [{"ingredient": ing, "counted_qty": 8}],
+				"count after a sale")
+		self.assertEqual(out["adjusted"][0]["now"], 8)
+		self.assertEqual(frappe.db.get_value(
+			"Ingredient Stock", f"{self.outlet}::{ing}", "qty_on_hand"), 8)

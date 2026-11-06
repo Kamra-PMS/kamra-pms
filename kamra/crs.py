@@ -307,7 +307,7 @@ def create_itinerary(legs, guest_name: str | None = None,
 	one itinerary reference. All legs book or none do. Quote first with
 	quote_itinerary. Take one advance for the trip with record_trip_advance,
 	or per leg with record_advance."""
-	from kamra.api import _find_or_create_guest
+	from kamra.api import _find_or_create_guest, _phone_for
 
 	legs = _parse_legs(legs)
 	key = (idempotency_key or "").strip() or None
@@ -328,7 +328,7 @@ def create_itinerary(legs, guest_name: str | None = None,
 			"doctype": "Itinerary", "guest": guest, "company": company or None,
 			"travel_agent": travel_agent or None,
 			"booked_by_name": booked_by_name or None,
-			"booked_by_phone": booked_by_phone or None,
+			"booked_by_phone": _phone_for(booked_by_phone, legs[0]["property"]) or None,
 			"notes": notes or None, "idempotency_key": key,
 		}).insert(ignore_permissions=True)  # gated above; the doctype is read only
 		_book_legs(itn, legs, adults, children, phone, key)

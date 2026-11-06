@@ -317,19 +317,28 @@ def _room_type_for(connection: str, external_id: str) -> str | None:
 		"room_type")
 
 
-def _find_or_create_guest(name: str, phone: str, email: str) -> str:
-	for filt in ({"phone": phone} if phone else None,
+def _find_or_create_guest(name: str, phone: str, email: str,
+                          property: str | None = None) -> str:
+	"""The OTA guest's profile. The phone is read with the property's
+	country (#468); one that can't be read is kept as typed and flagged,
+	never a reason to drop an already-acknowledged booking."""
+	from kamra import phone as phone_mod
+	typed = (phone or "").strip()
+	phone, problem = phone_mod.for_property(typed, property)
+	for filt in ({"phone": phone_mod.matching(typed, property)} if phone else None,
 	             {"email": email} if email else None):
 		if filt:
 			g = frappe.db.get_value("Guest", filt)
 			if g:
 				return g
 	parts = (name or "OTA Guest").split(" ", 1)
-	return frappe.get_doc({
+	guest = frappe.get_doc({
 		"doctype": "Guest", "first_name": parts[0],
 		"last_name": parts[1] if len(parts) > 1 else "",
 		"phone": phone or "", "email": email or "",
 	}).insert(ignore_permissions=True).name
+	phone_mod.flag(problem, "Guest", guest, property, "an OTA booking")
+	return guest
 
 
 def _reservations_for_booking(property: str, booking_id: str) -> list[dict]:
@@ -347,12 +356,29 @@ def _reservations_for_booking(property: str, booking_id: str) -> list[dict]:
 		as_dict=True)
 
 
+def _locked_live_ota(property: str, ota_ref: str | None):
+	"""The stay for this OTA reference, after the property inventory lock.
+
+	A non-cancelled stay wins when a cancelled one shares the reference.
+	The locking read sees a delivery that committed while this one waited.
+	"""
+	if not ota_ref:
+		return None
+	from kamra.kamra.doctype.reservation.reservation import lock_property_for_inventory
+	lock_property_for_inventory(property)
+	rows = frappe.db.sql(
+		"""SELECT name, status FROM `tabReservation`
+		   WHERE property = %s AND ota_ref = %s
+		   ORDER BY CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END, creation
+		   FOR UPDATE""",
+		(property, ota_ref), as_dict=True)
+	return rows[0] if rows else None
+
+
 def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 	"""One normalized OTA event -> the same paths a human would take."""
 	e["channel"] = canonical_channel(e.get("channel")) or "OTA"
-	existing = frappe.db.get_value(
-		"Reservation", {"property": conn.property, "ota_ref": e["ota_ref"]},
-		["name", "status"], as_dict=True) if e.get("ota_ref") else None
+	existing = _locked_live_ota(conn.property, e.get("ota_ref"))
 
 	if e["event"] == "cancel":
 		# A cancel frees the room(s) and - per the property's cancellation
@@ -428,7 +454,7 @@ def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 		        "reservation": existing.name}
 
 	guest = _find_or_create_guest(e.get("guest_name"), e.get("phone"),
-	                              e.get("email"))
+	                              e.get("email"), conn.property)
 	doc = frappe.get_doc({
 		"doctype": "Reservation",
 		"property": conn.property,
@@ -449,7 +475,16 @@ def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 	if e.get("total"):
 		doc.amount_after_tax = e["total"]
 		lock_channel_rates(doc, e["total"], e.get("nightly"))
-	doc.insert(ignore_permissions=True)
+	try:
+		doc.insert(ignore_permissions=True)
+	except frappe.DuplicateEntryError:
+		# The other delivery committed while this one waited on the property
+		# lock. Hand back that stay instead of booking the guest twice.
+		winner = _locked_live_ota(conn.property, e.get("ota_ref"))
+		if winner:
+			return {"ota_ref": e.get("ota_ref"), "result": "duplicate_ignored",
+			        "reservation": winner.name}
+		raise
 	# the channel's own commission when it sends one, else the site's default
 	if e.get("commission"):
 		doc.db_set("commission_amount", float(e["commission"]))

@@ -6165,5 +6165,6 @@
   "Sells alcohol": "يبيع المشروبات الكحولية",
   "Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.": "أوقفه لمنشأة لا تقدم الكحول: تُخفى كل حقول الكحول وخاناته وتسمياته بكل اللغات. لا يتغير شيء مما قُيّد سابقًا.",
   "Extend unchecked-out departures one night": "تمديد المغادرين غير المسجّلين ليلة واحدة",
-  "On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.": "مفعّل: يُمدَّد الضيف الذي ما زال مقيمًا بعد تاريخ مغادرته ليلة واحدة عند تشغيل التدقيق، وتُرحَّل تلك الليلة كغيرها. الإقامة التي لا يمكن تمديدها (الغرفة محجوزة) تبقى في قائمة التدقيق."
+  "On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.": "مفعّل: يُمدَّد الضيف الذي ما زال مقيمًا بعد تاريخ مغادرته ليلة واحدة عند تشغيل التدقيق، وتُرحَّل تلك الليلة كغيرها. الإقامة التي لا يمكن تمديدها (الغرفة محجوزة) تبقى في قائمة التدقيق.",
+  "Tap again to confirm": "اضغط مرة أخرى للتأكيد"
 }

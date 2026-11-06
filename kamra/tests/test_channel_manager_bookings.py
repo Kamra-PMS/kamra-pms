@@ -84,6 +84,18 @@ class ChannelManagerBookingTestCase(IntegrationTestCase):
 		self.assertEqual(self.received().status, "Requested")
 		self.assertEqual(frappe.db.count("Reservation", {"property": self.property, "ota_ref": self.ref}), 1)
 
+	def test_a_second_delivery_returns_the_original_stay(self):
+		payload = self.payload()
+		self.deliver(payload)
+		original = self.received()
+		self.assertEqual(original.status, "Confirmed")
+		self.deliver(payload)
+		self.assertEqual(frappe.db.get_value(
+			"Reservation", {"property": self.property, "ota_ref": self.ref}, "name"),
+			original.name)
+		self.assertEqual(frappe.db.count(
+			"Reservation", {"property": self.property, "ota_ref": self.ref}), 1)
+
 	def test_missing_currency_defaults_to_property_currency(self):
 		payload = self.payload()
 		payload["amount"].pop("currency")

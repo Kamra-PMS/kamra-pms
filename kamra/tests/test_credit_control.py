@@ -427,3 +427,21 @@ class CreditControlTestCase(AuditTestCase):
 		                                      use_default_credit_days=1)
 		self.assertEqual(out["effective_credit_days"], 30)
 		self.assertTrue(self.logs("credit_terms_changed"))
+
+	def test_a_bill_that_lands_while_the_account_is_locked_counts(self):
+		"""800 already owed, discovered only after this check takes the
+		account lock, plus 300 more is over a 1000 limit."""
+		self.terms(limit=1000)
+		state = {"done": False}
+		real = credit._lock_city_ledger_account
+
+		def bill_first(account):
+			real(account)
+			if not state["done"]:
+				state["done"] = True
+				self.bill(800)
+
+		with patch.object(credit, "_lock_city_ledger_account", bill_first):
+			res = credit.enforce_company_credit(self.company, PROP_A, 300)
+		self.assertFalse(res["ok"])
+		self.assertGreater(res["over_limit_by"], 0)

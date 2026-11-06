@@ -344,7 +344,8 @@ def _resolve_caller(guest_phone: str | None, property: str | None) -> tuple[str 
 	"""Best-effort: find a guest by E.164 phone, then their active reservation."""
 	if not guest_phone:
 		return None, None
-	guest = frappe.db.get_value("Guest", {"phone": guest_phone}, "name")
+	from kamra import phone as phone_mod
+	guest = frappe.db.get_value("Guest", {"phone": phone_mod.matching(guest_phone, property)}, "name")
 	if not guest:
 		return None, None
 

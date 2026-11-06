@@ -7,8 +7,9 @@ from unittest.mock import patch
 
 import frappe
 import unittest
+from frappe.tests import IntegrationTestCase
 
-from kamra.pricing import validate_voucher
+from kamra.pricing import consume_voucher_use, validate_voucher
 
 
 def _voucher(**kw):
@@ -47,3 +48,35 @@ class TestVoucherLimits(unittest.TestCase):
 	def test_min_nights_still_applies_without_limits(self):
 		with self.assertRaisesRegex(frappe.ValidationError, "at least"):
 			_run(_voucher(min_nights=5), check_limits=False)
+
+
+class TestVoucherConsume(IntegrationTestCase):
+	def test_the_second_redemption_stops_at_the_cap(self):
+		prop = frappe.get_doc({
+			"doctype": "Property",
+			"property_name": "TEST Voucher " + frappe.generate_hash(length=6),
+		}).insert(ignore_permissions=True).name
+		voucher = frappe.get_doc({
+			"doctype": "Discount Voucher", "property": prop,
+			"voucher_code": "ONCE", "discount_type": "Percent", "value": 10,
+			"max_uses": 1,
+		}).insert(ignore_permissions=True)
+		consume_voucher_use(voucher.name)
+		self.assertEqual(frappe.db.get_value("Discount Voucher", voucher.name, "times_used"), 1)
+		with self.assertRaisesRegex(frappe.ValidationError, "fully redeemed"):
+			consume_voucher_use(voucher.name)
+		self.assertEqual(frappe.db.get_value("Discount Voucher", voucher.name, "times_used"), 1)
+
+	def test_unlimited_voucher_keeps_counting(self):
+		prop = frappe.get_doc({
+			"doctype": "Property",
+			"property_name": "TEST Voucher " + frappe.generate_hash(length=6),
+		}).insert(ignore_permissions=True).name
+		voucher = frappe.get_doc({
+			"doctype": "Discount Voucher", "property": prop,
+			"voucher_code": "FREE", "discount_type": "Percent", "value": 10,
+			"max_uses": 0,
+		}).insert(ignore_permissions=True)
+		consume_voucher_use(voucher.name)
+		consume_voucher_use(voucher.name)
+		self.assertEqual(frappe.db.get_value("Discount Voucher", voucher.name, "times_used"), 2)

@@ -334,7 +334,8 @@ def _run_import(property: str, csv_text: str, preset: str = "auto"):
 		sp = f"imp_{i}"
 		frappe.db.savepoint(sp)
 		try:
-			guest = _find_or_create_guest(row["guest_name"], row["phone"])
+			guest = _find_or_create_guest(row["guest_name"], row["phone"],
+			                              property, where="an import")
 			if row["email"] and not frappe.db.get_value("Guest", guest, "email"):
 				frappe.db.set_value("Guest", guest, "email", row["email"],
 				                    update_modified=False)

@@ -35,6 +35,14 @@ def default_short_code(name: str, exclude: str | None = None) -> str:
 class Property(Document):
 	def validate(self):
 		self._validate_short_code()
+		# setup, Settings and the booking engine all save the hotel's phone
+		# here: read it with the hotel's own country (#468), as typed if not
+		if self.phone and (self.is_new() or self.has_value_changed("phone")
+		                   or self.has_value_changed("country")):
+			from kamra import phone as phone_mod
+			code = frappe.get_cached_value("Country", self.country, "code") \
+				if self.country else None
+			self.phone = phone_mod.normalise(self.phone, code.upper() if code else None)[0]
 		# A kind switch in Settings (or Desk) gets the new kind's preset,
 		# the same way setup_property applies it at creation. Only empty
 		# preset fields are filled, so explicit admin values survive.

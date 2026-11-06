@@ -1573,7 +1573,7 @@ Click a room to advance its housekeeping status,Click a room to advance its hous
 Click a room to change its status or open it,Click a room to change its status or open it,انقر على غرفة لتغيير حالتها أو فتحها,Haga clic en una habitación para cambiar su estado o abrirla,screens/Today.tsx,,translated
 Click a row to see the rows behind it.,Click a row to see the rows behind it.,انقر على صف لعرض التفاصيل.,Haga clic en una fila para ver el detalle.,screens/Reports.tsx,,translated
 Client,Client,العميل,Cliente,screens/BanquetFunction.tsx,,translated
-Close,Close,إغلاق,Cerrar,components/BookingDialog.tsx; components/CameraCapture.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/HkMedia.tsx; components/IdScan.tsx; components/PinPad.tsx; components/RoomChangeDialog.tsx; components/ui/sheet.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/Inventory.tsx; screens/POS.tsx; screens/Payables.tsx; screens/PublicBooking.tsx; screens/Receivables.tsx; screens/RecipeManager.tsx; screens/TapeChart.tsx; screens/pos/MoveRoomBill.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/SettleSheet.tsx,,translated
+Close,Close,إغلاق,Cerrar,components/BookingDialog.tsx; components/CameraCapture.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/HkMedia.tsx; components/IdScan.tsx; components/PinPad.tsx; components/RoomChangeDialog.tsx; components/ui/sheet.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/Inventory.tsx; screens/POS.tsx; screens/Payables.tsx; screens/PublicBooking.tsx; screens/Receivables.tsx; screens/RecipeManager.tsx; screens/TapeChart.tsx; screens/Today.tsx; screens/pos/MoveRoomBill.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/SettleSheet.tsx,,translated
 Close & generate invoice,Close & generate invoice,إغلاق وإنشاء فاتورة,Cerrar y generar factura,screens/FolioView.tsx,,translated
 Close and generate invoice,Close and generate invoice,إغلاق وإصدار الفاتورة,Cerrar y generar factura,components/CheckOutDialog.tsx,,translated
 Close complimentary bill,Close complimentary bill,إغلاق الفاتورة المجانية,Cerrar cuenta de cortesía,screens/pos/SettleSheet.tsx,,translated
@@ -2791,7 +2791,7 @@ Housekeeping,Housekeeping,التدبير المنزلي,Limpieza,screens/Dashboa
 Housekeeping Board,Housekeeping Board,لوحة التدبير المنزلي,Panel de limpieza,screens/HousekeepingBoard.tsx,,translated
 Housekeeping has your laundry pickup - they'll be by shortly.,Housekeeping has your laundry pickup - they'll be by shortly.,استلم التدبير المنزلي طلب الغسيل، وسيصلون قريبا.,Limpieza recibió su solicitud de lavandería y pasará a recogerla en breve.,screens/laundry/GuestLaundryCard.tsx,,translated
 Housekeeping pack,Housekeeping pack,حزمة التدبير المنزلي,Paquete de Limpieza,,,translated
-Housekeeping status,Housekeeping status,حالة التدبير المنزلي,Estado de limpieza,components/RoomDrawer.tsx,,translated
+Housekeeping status,Housekeeping status,حالة التدبير المنزلي,Estado de limpieza,components/RoomDrawer.tsx; screens/Today.tsx,,translated
 Housekeeping Supervisor,Housekeeping Supervisor,مشرف التدبير المنزلي,Supervisor de limpieza,,,translated
 Housekeeping Supplies,Housekeeping Supplies,مستلزمات التدبير المنزلي,Insumos de limpieza,,,translated
 Housekeeping Task,Housekeeping Task,مهمة التدبير المنزلي,Tarea de limpieza,,,translated
@@ -2799,7 +2799,7 @@ Housekeeping tasks,Housekeeping tasks,مهام التدبير الفندقي,Tar
 Housekeeping Tasks,Housekeeping Tasks,مهام التدبير المنزلي,Tareas de limpieza,,,translated
 Housekeeping: {from} → {to} (click to advance),Housekeeping: {from} → {to} (click to advance),التدبير المنزلي: {from} ← {to} (انقر للتقديم),Limpieza: {from} → {to} (haga clic para avanzar),screens/Today.tsx,from to,translated
 Housekeeping: {status} · click to change,Housekeeping: {status} · click to change,التدبير المنزلي: {status} · انقر للتغيير,Limpieza: {status} · haga clic para cambiar,screens/Today.tsx,status,translated
-Housekeeping: mark {to},Housekeeping: mark {to},التدبير الفندقي: وضع {to},Limpieza: marcar como {to},screens/Today.tsx,to,translated
+Housekeeping: mark {to},Housekeeping: mark {to},التدبير الفندقي: وضع {to},Limpieza: marcar como {to},,to,translated
 How,How,الطريقة,Cómo,components/RoomStayPanels.tsx; screens/BanquetFunction.tsx; screens/POS.tsx,,translated
 How do guests book this property? This sets Sellable Units and competition groups - not a separate product fork.,How do guests book this property? This sets Sellable Units and competition groups - not a separate product fork.,كيف يحجز الضيوف هذا العقار؟ يحدد الوحدات القابلة للبيع ومجموعات المنافسة - وليس منتجاً منفصلاً.,¿Cómo reservan los huéspedes este alojamiento? Esta opción define las unidades que se pueden reservar y qué unidades comparten disponibilidad dentro del mismo producto.,screens/Setup.tsx,,translated
 How do I add photos to a room type?,How do I add photos to a room type?,كيف أضيف صورا إلى نوع غرفة؟,¿Cómo agrego fotos a un tipo de habitación?,,,translated
@@ -5561,6 +5561,7 @@ Taken off the bill,Taken off the bill,المخصوم من الفاتورة,Desco
 Tandoor,Tandoor,تنور,Horno tandoor,../../kamra/settings.py,,translated
 Tap a panel to show or hide it. Use the arrows to change the order.,Tap a panel to show or hide it. Use the arrows to change the order.,اضغط على اللوحة لإظهارها أو إخفائها. استخدم الأسهم لتغيير الترتيب.,Toque un panel para mostrarlo u ocultarlo. Utilice las flechas para cambiar el orden.,components/CustomizeToday.tsx,,translated
 "Tap a room to change its status, see who is in it, who stayed and who cleaned it.","Tap a room to change its status, see who is in it, who stayed and who cleaned it.",اضغط على غرفة لتغيير حالتها ومعرفة من فيها ومن أقام فيها ومن نظّفها.,"Toque una habitación para cambiar su estado, ver quién está en ella, quién se quedó y quién la limpió.",screens/Rooms.tsx,,translated
+Tap again to confirm,Tap again to confirm,اضغط مرة أخرى للتأكيد,Toque de nuevo para confirmar,screens/Today.tsx,,translated
 Tap an occupied room to post minibar or laundry.,Tap an occupied room to post minibar or laundry.,انقر غرفة مشغولة لترحيل ميني بار أو غسيل.,Toque una habitación ocupada para cargar los consumos del minibar o la lavandería al folio.,screens/HkApp.tsx,,translated
 Tap menu items to add.,Tap menu items to add.,انقر عناصر القائمة للإضافة.,Toque los artículos del menú para agregarlos.,,,translated
 Tape chart,Tape chart,مخطط الغرف,Calendario de ocupación,screens/TapeChart.tsx,,translated
