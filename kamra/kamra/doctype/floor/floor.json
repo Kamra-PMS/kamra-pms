@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:{property}-{floor_name}",
+ "creation": "2026-11-01 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "floor_name",
+  "sort_order",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "floor_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Floor",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Lower numbers come first on the boards and in the Floor filters.",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Floor order"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-11-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Floor",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Housekeeping"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Revenue Manager"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Kamra Agent"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Housekeeping Supervisor"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "role": "Night Auditor"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "floor_name"
+}

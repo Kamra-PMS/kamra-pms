@@ -17,6 +17,7 @@ import RoomInsights from "../components/RoomInsights"
 import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
 import RoomChangeDialog from "../components/RoomChangeDialog"
+import { sortFloors } from "../lib/floors"
 
 
 const NO_FLOOR = "__none__"
@@ -102,13 +103,13 @@ export default function Rooms() {
 
   const rooms = board?.rooms ?? []
   const floorOf = (r: BoardRoom) => (r.floor || "").trim() || NO_FLOOR
-  const floors = useMemo(
-    () =>
-      Array.from(new Set(rooms.map(floorOf))).sort((a, b) =>
-        a === NO_FLOOR ? 1 : b === NO_FLOOR ? -1 : a.localeCompare(b, undefined, { numeric: true }),
-      ),
-    [rooms],
-  )
+  const floors = useMemo(() => {
+    const names = Array.from(new Set(rooms.map(floorOf)))
+    return [
+      ...sortFloors(names.filter((n) => n !== NO_FLOOR), board?.floors),
+      ...names.filter((n) => n === NO_FLOOR),
+    ]
+  }, [rooms, board?.floors])
   const shown = rooms.filter(
     (r) =>
       (floor === "all" || floorOf(r) === floor) &&

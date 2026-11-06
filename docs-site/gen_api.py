@@ -77,6 +77,8 @@ MODULES = [
     ("settings", "Settings hub (module settings)", ""),
     ("rooms", "Rooms (room board, room detail and history, insights)",
      "Read-only. Room changes go through set_housekeeping_status, the room block endpoints, check_in / check_out and move_reservation."),
+    ("floors", "Floors (Admin > Rooms: Add rooms)",
+     "Hotel Admin. add_rooms with preview=1 only reports what it would create."),
     ("today_layout", "Today layout (per-user widgets, hotel default)", ""),
     ("sop", "Desk procedures (check-out, check-in and other SOPs)", ""),
     ("checkin", "Guided check-in (steps, who did each, room-charges permission)",

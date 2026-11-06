@@ -19,6 +19,7 @@ from frappe.utils import add_days, cint, date_diff, get_datetime, getdate, nowda
 
 from kamra.api import HK_SUPERVISOR, _is_room_supervisor, _stay_balances
 from kamra.authz import ADMIN, assert_property_access, require_roles
+from kamra.floors import floors_for
 
 # who may look at rooms: the desk, housekeeping supervisors, night audit,
 # revenue, and the agent. Admins always pass.
@@ -152,6 +153,8 @@ def rooms_board(property: str):
 		"rooms": rooms,
 		"room_types": [{"name": k, "room_type_name": v} for k, v in
 		               sorted(rt_names.items(), key=lambda kv: kv[1] or "")],
+		# the Floor master's order (name, sort_order); rooms[].floor is unchanged
+		"floors": floors_for(property),
 		"can": _permissions(),
 	}
 

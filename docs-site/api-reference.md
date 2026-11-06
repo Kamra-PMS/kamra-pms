@@ -6399,6 +6399,29 @@ per room.
 | `to_date` | no | `None` |
 
 
+## Floors (Admin > Rooms: Add rooms)
+
+> Hotel Admin. add_rooms with preview=1 only reports what it would create.
+
+### `kamra.floors.add_rooms`
+
+**GET/POST** · roles: `Hotel Admin`
+
+Create rooms start..end on a floor (numbers that already exist are
+skipped). preview=1 only reports what would happen. Admin > Rooms >
+Add rooms.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `floor` | yes |  |
+| `room_type` | yes |  |
+| `start` | yes |  |
+| `end` | yes |  |
+| `prefix` | no | `''` |
+| `preview` | no | `0` |
+
+
 ## Today layout (per-user widgets, hotel default)
 
 ### `kamra.today_layout.get_today_layout`

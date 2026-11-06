@@ -152,6 +152,32 @@ noches hasta anoche.
 
 Las cifras se calculan en el servidor y se guardan durante diez minutos.
 
+## Configurar pisos y habitaciones
+
+Abra **Administración** y use las tres páginas de configuración en este
+orden: **Pisos**, **Tipos de habitación**, **Habitaciones**. Cada una es una
+lista donde puede buscar, filtrar, añadir y editar.
+
+- **Pisos** muestra los pisos del alojamiento. **Orden del piso** define el
+  orden de las pestañas y listas de pisos en el panel de habitaciones, el
+  panel de limpieza y el filtro **Piso** de **Habitaciones**: los números
+  más bajos van primero. Pulse **Nuevo** para añadir un piso. Cambiar el
+  nombre de un piso lo cambia en todas sus habitaciones. Un piso con
+  habitaciones no se puede eliminar ni desactivar; mueva primero las
+  habitaciones.
+- **Habitaciones** tiene las listas **Piso** y **Tipo de habitación** junto
+  a **Estado**. En el formulario, **Piso** es una lista de sus pisos; elija
+  **Añadir un piso** para escribir uno nuevo. Un nombre de piso usado por
+  primera vez se añade solo a **Pisos**, así que las importaciones y el
+  asistente de configuración siguen funcionando.
+- **Añadir habitaciones** crea una serie de una vez. Elija el piso y el tipo
+  de habitación, escriba el primer y el último número (y un prefijo
+  opcional: de 1 a 4 con prefijo V da V1 a V4) y pulse **Vista previa**. Los
+  números que ya existen se omiten y se listan. **Crear** añade el resto.
+
+La antigua **Categoría** del tipo de habitación ahora se llama **Tipo de
+unidad** (Villa, Privada o Compartida). Nada más cambió.
+
 ## Conviene saber
 
 - Una habitación aparece como ocupada desde el registro de entrada hasta el
