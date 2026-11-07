@@ -55,7 +55,8 @@ class AssistantCurrencyTestCase(unittest.TestCase):
 		self.settings.extra_instructions = "Responde en español. Example: {amount}."
 		text = self.prompt("NIO")
 		self.assertIn("assistant for Test Hotel", text)
-		self.assertIn("Today is 2031-03-12", text)
+		self.assertIn("Today is Wednesday 2031-03-12", text)
+		self.assertIn("Friday 2031-03-14", text)
 		self.assertTrue(text.endswith(self.settings.extra_instructions))
 
 	def test_name_falls_back_to_the_property_id(self):
