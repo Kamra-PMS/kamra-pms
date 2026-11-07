@@ -249,6 +249,7 @@ export default defineConfig({
       docVersions: versionsFile.versions,
       docLatest: versionsFile.latest,
       docCurrent,
+      docTranslated: [...TRANSLATED],
     } as Record<string, unknown>),
   },
 })

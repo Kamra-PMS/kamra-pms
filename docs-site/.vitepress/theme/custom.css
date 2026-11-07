@@ -3,3 +3,10 @@
   height: 28px;
   width: auto;
 }
+
+/* A 404 has no page to translate, and VitePress builds wrong language links there. */
+.Layout:has(.NotFound) .VPNavBarTranslations,
+.Layout:has(.NotFound) .VPNavBarExtra .translations,
+.Layout:has(.NotFound) .VPNavScreenTranslations {
+  display: none;
+}
