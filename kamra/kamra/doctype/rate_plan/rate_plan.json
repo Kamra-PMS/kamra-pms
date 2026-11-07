@@ -16,7 +16,13 @@
   "modifier_value",
   "cancellation_policy",
   "is_default",
-  "disabled"
+  "disabled",
+  "sb_day_use",
+  "billing_basis",
+  "hourly_rate",
+  "min_hours",
+  "block_hours",
+  "block_rate"
  ],
  "fields": [
   {
@@ -73,6 +79,49 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "fieldname": "sb_day_use",
+   "fieldtype": "Section Break",
+   "label": "Day-use billing",
+   "description": "For same-day stays. Nightly keeps the usual one-night price; Hourly and Block charge from the planned (then actual) times."
+  },
+  {
+   "default": "Nightly",
+   "fieldname": "billing_basis",
+   "fieldtype": "Select",
+   "label": "Day-use billing",
+   "options": "Nightly\nHourly\nBlock",
+   "in_list_view": 1
+  },
+  {
+   "depends_on": "eval:doc.billing_basis==\"Hourly\" || doc.billing_basis==\"Block\"",
+   "description": "Charged per hour on Hourly plans; also used to derive a block rate when Block rate is blank.",
+   "fieldname": "hourly_rate",
+   "fieldtype": "Currency",
+   "label": "Hourly Rate"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.billing_basis==\"Hourly\" || doc.billing_basis==\"Block\"",
+   "fieldname": "min_hours",
+   "fieldtype": "Float",
+   "label": "Minimum Hours"
+  },
+  {
+   "default": "3",
+   "depends_on": "eval:doc.billing_basis==\"Block\"",
+   "description": "Length of one sellable block (for example 3, 6 or 12 hours).",
+   "fieldname": "block_hours",
+   "fieldtype": "Float",
+   "label": "Block Hours"
+  },
+  {
+   "depends_on": "eval:doc.billing_basis==\"Block\"",
+   "description": "Price of one block. When blank, Hourly Rate × Block Hours is used.",
+   "fieldname": "block_rate",
+   "fieldtype": "Currency",
+   "label": "Block Rate"
   }
  ],
  "grid_page_length": 50,

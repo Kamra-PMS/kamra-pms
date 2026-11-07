@@ -588,6 +588,15 @@ class Reservation(Document):
 		# same rule: only when set, so existing rate-lock keys stay put
 		if flt(self.get("agreed_rate")) > 0:
 			inputs["agreed_rate"] = flt(self.get("agreed_rate"))
+		# Day-use times only enter the lock key when the stay is same-day:
+		# overnight ETA/ETD is display-only and must not re-price.
+		if cint(self.get("is_day_use")) or (
+				self.check_in_date and self.check_out_date
+				and getdate(self.check_in_date) == getdate(self.check_out_date)):
+			if self.get("planned_check_in_time"):
+				inputs["check_in_time"] = str(self.planned_check_in_time)[:5]
+			if self.get("planned_check_out_time"):
+				inputs["check_out_time"] = str(self.planned_check_out_time)[:5]
 		return inputs
 
 	@staticmethod

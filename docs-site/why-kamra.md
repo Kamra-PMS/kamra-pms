@@ -44,8 +44,8 @@ taxes always come from code, never from the model. See
 - No per-room or per-user pricing, ever.
 - Your data exports free, any time.
 - The API, webhooks and MCP tools stay free, with no interface fee.
-- An enterprise edition, when it comes, adds to open-source Kamra and
-  never takes features away.
+- The Enterprise edition only adds to open-source Kamra. It never takes
+  features away.
 
 ## Read more
 

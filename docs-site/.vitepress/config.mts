@@ -188,6 +188,13 @@ export default defineConfig({
   base,
   outDir,
   cleanUrls: true,
+  // /docs/sitemap.xml: robots.txt and the site sitemap index point at it
+  sitemap: { hostname: "https://kamrapms.com/docs/" },
+  // Archived /docs/vX.Y.Z/ builds point at the latest page, so they never compete with it.
+  transformHead: ({ page }) => {
+    const path = page.replace(/(^|\/)index\.md$/, "$1").replace(/\.md$/, "")
+    return [["link", { rel: "canonical", href: `https://kamrapms.com/docs/${path}` }]]
+  },
   // the writing guide for contributors is not a published page
   srcExclude: ["STYLE.md", "README.md", "archives/**"],
   // local bench URLs in install guides are examples, not site pages
@@ -201,7 +208,12 @@ export default defineConfig({
     es: { label: "Español", lang: "es", link: "/es/", themeConfig: themeWords("es") },
     ar: { label: "العربية", lang: "ar", dir: "rtl", link: "/ar/", themeConfig: themeWords("ar") },
   },
-  head: [["link", { rel: "icon", type: "image/svg+xml", href: `${base}kamra-mark.svg` }]],
+  head: [
+    ["link", { rel: "icon", type: "image/svg+xml", href: `${base}kamra-mark.svg` }],
+    // Ask Kamra: the same drawer as the website, served from kamrapms.com/ask
+    ["link", { rel: "stylesheet", href: "/ask/widget.css?v=6" }],
+    ["script", { src: "/ask/widget.js?v=6", defer: "", "data-mode": "drawer", "data-endpoint": "/ask" }],
+  ],
   themeConfig: {
     logo: {
       light: "/kamra-horizontal.svg",
@@ -242,6 +254,7 @@ export default defineConfig({
       docVersions: versionsFile.versions,
       docLatest: versionsFile.latest,
       docCurrent,
+      docTranslated: [...TRANSLATED],
     } as Record<string, unknown>),
   },
 })

@@ -4157,7 +4157,7 @@
         "kamra.api.set_stay_times"
        ]
       },
-      "description": "Set the planned arrival (ETA) and departure (ETD) times for any stay.\nThese drive the hotel-position view on the tape chart: back-to-back\nrooms conflict when the incoming guest lands before the outgoing one\nleaves, and the day's arrival flow is planned around them.",
+      "description": "Set the planned arrival (ETA) and departure (ETD) times for any stay.\nThese drive the hotel-position view on the tape chart: back-to-back\nrooms conflict when the incoming guest lands before the outgoing one\nleaves, and the day's arrival flow is planned around them.\n\nOn a day-use stay the times also re-price an hourly or block rate plan\n(same write path as booking \u2014 Reservation.save \u2192 apply_pricing).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
@@ -4749,7 +4749,7 @@
         "kamra.api.get_quote"
        ]
       },
-      "description": "Price a stay. With a company and no rate plan, the company's\nnegotiated plan applies - the same plan create_booking stores.",
+      "description": "Price a stay. With a company and no rate plan, the company's\nnegotiated plan applies - the same plan create_booking stores.\ncheck_in_time / check_out_time price an hourly or block day-use plan.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"over_capacity_charge\": 0,\n  \"pets\": 0\n}",

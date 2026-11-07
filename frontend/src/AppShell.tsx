@@ -1,18 +1,24 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react"
 import {
+  ChevronDown,
   Globe,
   IndianRupee,
   LayoutGrid,
+  LogOut,
+  Menu,
   Moon,
   Plus,
   Search,
+  Settings as SettingsIcon,
   Sun,
-  LogOut,
+  UserRound,
+  X,
 } from "lucide-react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import UpdateNag from "./components/UpdateNag"
 import ErrorBoundary from "./components/ErrorBoundary"
 import SetupNag from "./components/SetupNag"
+import { Avatar } from "./components/ui/avatar"
 import { Button } from "./components/ui/button"
 import {
   appForPath,
@@ -106,31 +112,131 @@ function SearchShortcut() {
   )
 }
 
-function ThemeToggle() {
+/** Account menu: theme, profile, settings, sign out — keeps the top bar quiet. */
+function AccountMenu({
+  user,
+  onSignOut,
+}: {
+  user: string
+  onSignOut: () => void
+}) {
   const { t } = useT()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains("dark"),
   )
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("mousedown", onDown)
+    window.addEventListener("keydown", onKey)
+    return () => {
+      window.removeEventListener("mousedown", onDown)
+      window.removeEventListener("keydown", onKey)
+    }
+  }, [open])
+
+  const go = (to: string) => {
+    setOpen(false)
+    navigate(to)
+  }
+
+  const itemCls =
+    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+
   return (
-    <button
-      aria-label={(dark ? t("Switch to light mode") : t("Switch to dark mode"))}
-      className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-      onClick={() => {
-        setTheme(dark ? "light" : "dark")
-        setDark(!dark)
-      }}
-      title={(getTheme() === "system" ? t("Theme (system)") : t("Theme"))}
-    >
-      {dark ? (
-        <Sun className="size-4" aria-hidden />
-      ) : (
-        <Moon className="size-4" aria-hidden />
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={t("Account menu")}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        title={user}
+        className="inline-flex max-w-[11rem] items-center gap-1.5 rounded-lg px-1.5 py-1 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+      >
+        <Avatar name={user} className="size-7 text-[10px]" />
+        <span className="hidden min-w-0 truncate text-xs font-medium sm:inline">
+          {user}
+        </span>
+        <ChevronDown className="size-3.5 shrink-0 text-zinc-400" aria-hidden />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute end-0 top-10 z-50 w-56 rounded-lg border border-zinc-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5"
+        >
+          <p className="truncate px-2.5 py-1.5 text-xs font-medium text-zinc-500">
+            {user}
+          </p>
+          <div className="my-1 border-t border-zinc-100" />
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => {
+              setTheme(dark ? "light" : "dark")
+              setDark(!dark)
+            }}
+          >
+            {dark ? (
+              <Sun className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            ) : (
+              <Moon className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            )}
+            <span className="min-w-0 flex-1 text-start">
+              {dark ? t("Switch to light mode") : t("Switch to dark mode")}
+            </span>
+            {getTheme() === "system" ? (
+              <span className="text-[10px] text-zinc-400">{t("System")}</span>
+            ) : null}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => go("/settings/appearance")}
+          >
+            <UserRound className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            {t("Profile")}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => go("/settings/general")}
+          >
+            <SettingsIcon className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            {t("Settings")}
+          </button>
+          <div className="my-1 border-t border-zinc-100" />
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => {
+              setOpen(false)
+              onSignOut()
+            }}
+          >
+            <LogOut className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            {t("Sign out")}
+          </button>
+        </div>
       )}
-    </button>
+    </div>
   )
 }
 
-/** Language beside the theme button: switches every screen at once. */
+/** Language beside the account menu: switches every screen at once. */
 function LanguageToggle() {
   const { t, lang } = useT()
   return (
@@ -249,6 +355,7 @@ export default function AppShell() {
   const [build, setBuild] = useState<string | null>(null)
   // co-branding: the hotel's name and logo on top, Kamra PMS kept beneath
   const [brand, setBrand] = useState<{ name: string | null; logo: string | null }>({ name: null, logo: null })
+  const [navOpen, setNavOpen] = useState(false)
 
   useEffect(() => {
     getSiteInfo().then((info) => {
@@ -257,6 +364,24 @@ export default function AppShell() {
       document.title = info.brand_name ? `${info.brand_name} · Kamra PMS` : "Kamra PMS"
     })
   }, [])
+
+  // Phone drawer: close when the route changes (tap a nav link).
+  useEffect(() => {
+    setNavOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!navOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNavOpen(false)
+    }
+    document.addEventListener("keydown", onKey)
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.removeEventListener("keydown", onKey)
+      document.body.style.overflow = ""
+    }
+  }, [navOpen])
 
   useEffect(() => {
     myProperties().then((props) => {
@@ -407,6 +532,85 @@ export default function AppShell() {
       </NavLink>
     )
 
+  const navGroups = (() => {
+    const groups: { label?: string; items: typeof items }[] = []
+    for (const item of items) {
+      const g = item.group
+      const last = groups[groups.length - 1]
+      if (!last || last.label !== g) {
+        groups.push({ label: g, items: [item] })
+      } else {
+        last.items.push(item)
+      }
+    }
+    return groups.map((g, gi) => (
+      <div key={g.label ?? `ungrouped-${gi}`} className={gi > 0 ? "mt-3" : undefined}>
+        {g.label ? (
+          <div className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
+            {t(g.label)}
+          </div>
+        ) : null}
+        <div className="space-y-0.5">{g.items.map(renderItem)}</div>
+      </div>
+    ))
+  })()
+
+  const navBrand = (
+    <NavLink
+      to="/"
+      end
+      aria-label={t("Home")}
+      className="flex items-center gap-2 rounded-lg px-1 outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+    >
+      <img src={brand.logo || asset("kamra-mark.svg")} alt="" className="size-7 object-contain" aria-hidden />
+      {brand.name ? (
+        <span className="min-w-0 leading-tight">
+          <span className="block truncate text-sm font-semibold text-zinc-900">{brand.name}</span>
+          <span className="block text-[10px] font-semibold tracking-[0.2em] text-brand-600">KAMRA PMS</span>
+        </span>
+      ) : (
+        <span className="text-lg font-semibold tracking-tight text-zinc-900">
+          kamra
+          <span className="ml-1 align-middle text-[10px] font-semibold tracking-[0.2em] text-brand-600">
+            PMS
+          </span>
+        </span>
+      )}
+    </NavLink>
+  )
+
+  const navAppLabel = currentApp ? (
+    <div className="mb-2 flex items-center gap-2 rounded-lg px-2 py-1.5">
+      <span
+        className={cn(
+          "flex size-6 items-center justify-center rounded-md",
+          currentApp.tint,
+        )}
+      >
+        <currentApp.icon className="size-3.5" aria-hidden />
+      </span>
+      <span className="text-sm font-semibold text-zinc-800">
+        {t(currentApp.name)}
+      </span>
+    </div>
+  ) : null
+
+  const navFooter = (
+    <>
+      <div className="mt-auto pt-6">
+        <AlertSettings />
+      </div>
+      {build ? (
+        <p
+          className="px-2.5 pt-2 text-[11px] text-zinc-400"
+          title={t("The Kamra version this site is running")}
+        >
+          Kamra v{build}
+        </p>
+      ) : null}
+    </>
+  )
+
   return (
     // Floor pages (POS / Kitchen) get a bounded frame at lg+ so only pane
     // content scrolls; everything else keeps normal page flow.
@@ -429,85 +633,53 @@ export default function AppShell() {
       <div className="flex min-h-0 flex-1">
       {!kiosk && (
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-200 bg-white px-3 py-5 sm:sticky sm:top-0 sm:flex sm:h-screen sm:overflow-y-auto sm:overscroll-contain">
-        <NavLink
-          to="/"
-          end
-          aria-label={t("Home")}
-          className="mb-5 flex items-center gap-2 rounded-lg px-1 outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
-        >
-          <img src={brand.logo || asset("kamra-mark.svg")} alt="" className="size-7 object-contain" aria-hidden />
-          {brand.name ? (
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate text-sm font-semibold text-zinc-900">{brand.name}</span>
-              <span className="block text-[10px] font-semibold tracking-[0.2em] text-brand-600">KAMRA PMS</span>
-            </span>
-          ) : (
-            <span className="text-lg font-semibold tracking-tight text-zinc-900">
-              kamra
-              <span className="ml-1 align-middle text-[10px] font-semibold tracking-[0.2em] text-brand-600">
-                PMS
-              </span>
-            </span>
-          )}
-        </NavLink>
-
-        {currentApp && (
-          <div className="mb-2 flex items-center gap-2 rounded-lg px-2 py-1.5">
-            <span
-              className={cn(
-                "flex size-6 items-center justify-center rounded-md",
-                currentApp.tint,
-              )}
-            >
-              <currentApp.icon className="size-3.5" aria-hidden />
-            </span>
-            <span className="text-sm font-semibold text-zinc-800">
-              {t(currentApp.name)}
-            </span>
-          </div>
-        )}
-
-        <nav className="space-y-0.5">
-          {(() => {
-            const groups: { label?: string; items: typeof items }[] = []
-            for (const item of items) {
-              const g = item.group
-              const last = groups[groups.length - 1]
-              if (!last || last.label !== g) {
-                groups.push({ label: g, items: [item] })
-              } else {
-                last.items.push(item)
-              }
-            }
-            return groups.map((g, gi) => (
-              <div key={g.label ?? `ungrouped-${gi}`} className={gi > 0 ? "mt-3" : undefined}>
-                {g.label ? (
-                  <div className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400">
-                    {t(g.label)}
-                  </div>
-                ) : null}
-                <div className="space-y-0.5">{g.items.map(renderItem)}</div>
-              </div>
-            ))
-          })()}
-        </nav>
-        <div className="mt-auto pt-6">
-          <AlertSettings />
-        </div>
-        {build ? (
-          <p
-            className="px-2.5 pt-2 text-[11px] text-zinc-400"
-            title={t("The Kamra version this site is running")}
-          >
-            Kamra v{build}
-          </p>
-        ) : null}
+        <div className="mb-5">{navBrand}</div>
+        {navAppLabel}
+        <nav className="space-y-0.5">{navGroups}</nav>
+        {navFooter}
       </aside>
+      )}
+
+      {/* Phone: same nav as the sticky aside, in a left drawer (aside is sm+ only). */}
+      {!kiosk && navOpen && (
+        <div className="fixed inset-0 z-50 sm:hidden" role="dialog" aria-modal="true" aria-label={t("Navigation")}>
+          <div
+            className="absolute inset-0 bg-black/40 animate-fade-in"
+            onClick={() => setNavOpen(false)}
+            aria-hidden
+          />
+          <aside className="absolute inset-y-0 start-0 flex w-64 max-w-[85vw] flex-col border-e border-zinc-200 bg-white px-3 py-5 shadow-2xl animate-fade-in">
+            <div className="mb-5 flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">{navBrand}</div>
+              <button
+                type="button"
+                className="grid size-9 shrink-0 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100"
+                aria-label={t("Close")}
+                onClick={() => setNavOpen(false)}
+              >
+                <X className="size-5" aria-hidden />
+              </button>
+            </div>
+            {navAppLabel}
+            <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">{navGroups}</nav>
+            {navFooter}
+          </aside>
+        </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
         {!kiosk && (
         <header className="sticky top-0 z-40 flex min-w-0 items-center gap-2 border-b border-zinc-200 bg-white/90 px-4 py-2.5 backdrop-blur">
+          <button
+            type="button"
+            className="grid size-8 shrink-0 place-items-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 sm:hidden"
+            aria-label={t("Open menu")}
+            title={t("Open menu")}
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen(true)}
+          >
+            <Menu className="size-5" strokeWidth={1.75} aria-hidden />
+          </button>
           <AppSwitcher apps={apps} current={currentApp ?? apps[0]} />
           {properties.length > 1 ? (
             <select
@@ -543,35 +715,14 @@ export default function AppShell() {
             </button>
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <ThemeToggle />
             <NotificationBell property={property} />
             <LanguageToggle />
-            <span className="hidden text-xs text-zinc-500 xl:inline">
-              {user}
-            </span>
-            <button
-              onClick={signOut}
-              className="inline-flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-700"
-              aria-label={t("Sign out")}
-              title={t("Sign out")}
-            >
-              <LogOut className="size-4 lg:hidden" aria-hidden />
-              <span className="hidden lg:inline">{t("Sign out")}</span>
-            </button>
+            {user ? <AccountMenu user={user} onSignOut={signOut} /> : null}
             {canBook && (
-              <>
-                <Button
-                  variant="outline"
-                  className="hidden md:inline-flex"
-                  onClick={() => setBooking({ walkIn: true })}
-                >
-                  {t("Walk-in")}
-                </Button>
-                <Button onClick={() => setBooking({})} aria-label={t("New booking")}>
-                  <Plus className="size-4" aria-hidden />
-                  <span className="hidden sm:inline">{t("New booking")}</span>
-                </Button>
-              </>
+              <Button onClick={() => setBooking({})} aria-label={t("New booking")}>
+                <Plus className="size-4" aria-hidden />
+                <span className="hidden sm:inline">{t("New booking")}</span>
+              </Button>
             )}
           </div>
         </header>

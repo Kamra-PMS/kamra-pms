@@ -362,6 +362,75 @@ def season_adjust(property: str, date, base: Decimal,
 	return v  # Absolute
 
 
+def active_holiday_package(property: str, check_in, check_out,
+                           room_type: str | None = None):
+	"""The active Holiday Package that prices this stay, or None.
+
+	A stay qualifies for a holiday package when:
+	1. Stay dates fall within package bounds (start_date <= check_in, last_night <= end_date).
+	2. Stay meets or exceeds package minimum_nights.
+	3. Room-type specific package beats house-wide, priority breaks ties.
+	"""
+	from frappe.utils import add_days, date_diff, getdate
+
+	nights = max(1, int(date_diff(check_out, check_in) or 0))
+	last_night = add_days(check_in, nights - 1)
+
+	packages = frappe.get_all(
+		"Holiday Package",
+		filters={
+			"property": property,
+			"disabled": 0,
+			"start_date": ("<=", last_night),
+			"end_date": (">=", check_in),
+			"room_type": ("in", [room_type, "", None]),
+		},
+		fields=["name", "package_name", "room_type", "start_date", "end_date",
+		        "package_nights", "minimum_nights", "extra_night_percent", "extra_night_price",
+		        "price_1_pax", "price_2_pax", "price_3_pax",
+		        "price_4_pax", "price_5_pax", "extra_adult_price", "child_price",
+		        "flyer_image", "ota_strategy", "ota_daily_rate", "advance_percent",
+		        "non_refundable", "inclusions", "priority"],
+		order_by="priority desc",
+	)
+	if not packages:
+		return None
+
+	valid = []
+	for p in packages:
+		# If any night of the stay falls within the package window [start_date, end_date], the package applies
+		if getdate(check_in) <= getdate(p.end_date) and getdate(last_night) >= getdate(p.start_date):
+			valid.append(p)
+
+	if not valid:
+		return None
+
+	return max(valid, key=lambda x: (1 if x.room_type else 0, float(x.priority or 0)))
+
+
+def package_covering_date(property: str, date, room_type: str | None = None):
+	"""The Holiday Package covering this single date, or None."""
+	packages = frappe.get_all(
+		"Holiday Package",
+		filters={
+			"property": property,
+			"disabled": 0,
+			"start_date": ("<=", date),
+			"end_date": (">=", date),
+			"room_type": ("in", [room_type, "", None]),
+		},
+		fields=["name", "package_name", "room_type", "start_date", "end_date",
+		        "package_nights", "minimum_nights", "extra_night_percent", "extra_night_price",
+		        "price_1_pax", "price_2_pax", "price_3_pax",
+		        "price_4_pax", "price_5_pax", "extra_adult_price", "child_price",
+		        "flyer_image", "ota_strategy", "ota_daily_rate", "priority"],
+		order_by="priority desc",
+	)
+	if not packages:
+		return None
+	return max(packages, key=lambda x: (1 if x.room_type else 0, float(x.priority or 0)))
+
+
 def room_gst_rate(property: str, room_type_doc, nightly_rate: Decimal) -> Decimal:
 	"""Room-night tax rate, resolved by the property's localization pack
 	(India = GST slab/fixed; other countries = their own). Kept named
@@ -421,11 +490,25 @@ def stay_season_rules(property: str, check_in, check_out,
 			no_small_group = no_small_group or bool(s.no_small_group)
 			if s.is_holiday and not holiday:
 				holiday = s.season_name
+
+	pkg = active_holiday_package(property, check_in, check_out, room_type)
+	if pkg:
+		pkg_nights = int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1)
+		if pkg_nights > min_nights:
+			min_nights, named = pkg_nights, pkg.package_name
+		if pkg.non_refundable:
+			non_refundable = True
+		if float(pkg.advance_percent or 0) > advance_pct:
+			advance_pct = float(pkg.advance_percent)
+			advance_season = pkg.package_name
+		holiday = pkg.package_name
+
 	return {"minimum_nights": min_nights, "non_refundable": non_refundable,
 	        "season": named, "nights": nights, "full_payment": full_payment,
 	        "no_small_group": no_small_group, "is_holiday": bool(holiday),
 	        "holiday": holiday, "advance_percent": advance_pct,
-	        "advance_season": advance_season}
+	        "advance_season": advance_season,
+	        "package": pkg.package_name if pkg else None}
 
 
 def advance_percent(property: str, stay_rules: dict) -> tuple[float, str | None]:
@@ -579,6 +662,8 @@ def quote(
 	pets: int = 0,
 	company: str | None = None,
 	agreed_rate: float = 0,
+	check_in_time: str | None = None,
+	check_out_time: str | None = None,
 ) -> dict:
 	# a stay for a company is priced on the plan the company negotiated,
 	# unless the caller named a plan of its own
@@ -621,64 +706,204 @@ def quote(
 	# the nights' floors (net of tax) on a long-stay discounted stay: the
 	# rate plan and a voucher stack on top and must not undercut them either
 	los_floor = Decimal(0)
-	# a day-use stay bills one "night" on the check-in date
-	for i in range(max(nights, 1)):
-		date = add_days(check_in_date, i)
-		rate = season_adjust(
-			property, date,
-			occupancy_rate(rt, adults, children, date,
-			               allow_small_group=small_ok),
-			room_type
-		)
-		# demand pricing: when the house fills past a hurdle tier, the
-		# premium applies and the tier's floor holds - decided here, in
-		# code, never by the caller
-		if str(date) not in occ_cache:
-			occ_cache[str(date)] = forecast_occupancy(
-				property, date, exclude=exclude_reservation)
-		rate, tier = demand_adjust(property, room_type, date, rate,
-		                           occupancy=occ_cache[str(date)])
-		if agreed_rate:
-			# a rate the desk agreed replaces the card and the premium
-			rate, tier = _dec(agreed_rate), None
-		if los_pct:
-			off = rate * (Decimal(1) - los_pct / Decimal(100))
-			# never below the owner's floor or the hurdle tier's minimum for
-			# this night (a rate already under them is not raised by them)
-			rail = rail_for_day(rails, room_type,
-			                    getdate(date).strftime("%a").lower())
-			floor = max(_dec(rail.floor_price) if rail else Decimal(0),
-			            _dec(tier["min_rate"]) if tier else Decimal(0))
-			floor = min(rate, floor)
-			off = max(off, floor)
-			gst_off = room_gst_rate(property, rt, off + night_over_cap)
-			saved = rate - off
-			los_saved += (saved / (Decimal(1) + gst_off / Decimal(100))
-			              if inclusive else saved)
-			los_floor += (floor / (Decimal(1) + gst_off / Decimal(100))
-			              if inclusive else floor)
-			rate = off
-		# The agreed amount for extra beds counts toward the slab even though
-		# it bills as its own line: GST reads what the unit fetches for the
-		# day, not the occupancy its rate card started from. A room at 7,000
-		# with 2,000 of extra beds is a 9,000 night, so 18%, not 5%.
-		gst = room_gst_rate(property, rt, rate + night_over_cap)
-		if inclusive:
-			# configured price is gross — back out the taxable value
-			rate = rate / (Decimal(1) + gst / Decimal(100))
-		if night_over_cap:
-			net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
-			       if inclusive else night_over_cap)
-			over_cap += net
-			over_cap_tax += net * gst / Decimal(100)
-		nightly.append({"date": str(date), "rate": float(rate),
-		                "gst_rate": float(gst),
-		                "demand_premium_pct": tier["premium_pct"] if tier else 0,
-		                "occupancy": occ_cache[str(date)]})
-		room_total += rate
-		room_tax += rate * gst / Decimal(100)
+	day_use_meta = None
 
-	if rate_plan and not agreed_rate:
+	pkg = None if agreed_rate else active_holiday_package(property, check_in_date, check_out_date, room_type)
+	if pkg:
+		pkg_doc = frappe.get_doc("Holiday Package", pkg.name)
+		pkg_nights = int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1)
+		billable_nights = max(nights, 1)
+
+		# The package base covers up to pkg_nights
+		pkg_base_rate = pkg_doc.package_price_for(adults, children, nights=pkg_nights)
+		stay_dates = [add_days(check_in_date, i) for i in range(billable_nights)]
+
+		if billable_nights <= pkg_nights:
+			base_per_night = (pkg_base_rate / Decimal(billable_nights)).quantize(Decimal("0.01"))
+			accum = Decimal(0)
+			for i, d in enumerate(stay_dates):
+				rate = (pkg_base_rate - accum) if i == billable_nights - 1 else base_per_night
+				accum += rate
+
+				gst = room_gst_rate(property, rt, rate + night_over_cap)
+				if inclusive:
+					rate = rate / (Decimal(1) + gst / Decimal(100))
+				if night_over_cap:
+					net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
+					       if inclusive else night_over_cap)
+					over_cap += net
+					over_cap_tax += net * gst / Decimal(100)
+
+				nightly.append({
+					"date": str(d),
+					"rate": float(rate),
+					"gst_rate": float(gst),
+					"demand_premium_pct": 0,
+					"package": pkg.package_name,
+					"occupancy": 0
+				})
+				room_total += rate
+				room_tax += rate * gst / Decimal(100)
+		else:
+			# Identify which dates are package dates (prefer inside [start_date, end_date])
+			inside_pkg = [d for d in stay_dates if getdate(pkg.start_date) <= getdate(d) <= getdate(pkg.end_date)]
+			outside_pkg = [d for d in stay_dates if not (getdate(pkg.start_date) <= getdate(d) <= getdate(pkg.end_date))]
+
+			# Sort outside_pkg by proximity to package window
+			def _dist(d):
+				dt = getdate(d)
+				if dt < getdate(pkg.start_date):
+					return (getdate(pkg.start_date) - dt).days
+				return (dt - getdate(pkg.end_date)).days
+			outside_pkg.sort(key=_dist)
+
+			if len(inside_pkg) >= pkg_nights:
+				pkg_dates_set = set(inside_pkg[:pkg_nights])
+			else:
+				needed = pkg_nights - len(inside_pkg)
+				pkg_dates_set = set(inside_pkg + outside_pkg[:needed])
+
+			package_daily = (pkg_base_rate / Decimal(pkg_nights)).quantize(Decimal("0.01"))
+			fixed_extra = _dec(getattr(pkg, "extra_night_price", 0))
+			pct_raw = getattr(pkg, "extra_night_percent", None)
+			pct_extra = float(pct_raw) if (pct_raw is not None and pct_raw != "") else 100.0
+
+			if fixed_extra > 0:
+				extra_night_rate = fixed_extra
+			else:
+				extra_night_rate = (package_daily * Decimal(str(pct_extra)) / Decimal(100)).quantize(Decimal("0.01"))
+
+			base_per_night = package_daily
+			accum = Decimal(0)
+			pkg_count = len(pkg_dates_set)
+			pkg_i = 0
+
+			for d in stay_dates:
+				if d in pkg_dates_set:
+					pkg_i += 1
+					rate = (pkg_base_rate - accum) if pkg_i == pkg_count else base_per_night
+					accum += rate
+					label = pkg.package_name
+				else:
+					rate = extra_night_rate
+					label = f"{pkg.package_name} (Diária Adicional)"
+
+				gst = room_gst_rate(property, rt, rate + night_over_cap)
+				if inclusive:
+					rate = rate / (Decimal(1) + gst / Decimal(100))
+				if night_over_cap:
+					net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
+					       if inclusive else night_over_cap)
+					over_cap += net
+					over_cap_tax += net * gst / Decimal(100)
+
+				nightly.append({
+					"date": str(d),
+					"rate": float(rate),
+					"gst_rate": float(gst),
+					"demand_premium_pct": 0,
+					"package": label,
+					"occupancy": 0
+				})
+				room_total += rate
+				room_tax += rate * gst / Decimal(100)
+	else:
+		# a day-use stay bills one "night" on the check-in date
+		for i in range(max(nights, 1)):
+			date = add_days(check_in_date, i)
+			rate = season_adjust(
+				property, date,
+				occupancy_rate(rt, adults, children, date,
+				               allow_small_group=small_ok),
+				room_type
+			)
+			# demand pricing: when the house fills past a hurdle tier, the
+			# premium applies and the tier's floor holds - decided here, in
+			# code, never by the caller
+			if str(date) not in occ_cache:
+				occ_cache[str(date)] = forecast_occupancy(
+					property, date, exclude=exclude_reservation)
+			rate, tier = demand_adjust(property, room_type, date, rate,
+			                           occupancy=occ_cache[str(date)])
+			if agreed_rate:
+				# a rate the desk agreed replaces the card and the premium
+				rate, tier = _dec(agreed_rate), None
+			if los_pct:
+				off = rate * (Decimal(1) - los_pct / Decimal(100))
+				# never below the owner's floor or the hurdle tier's minimum for
+				# this night (a rate already under them is not raised by them)
+				rail = rail_for_day(rails, room_type,
+				                    getdate(date).strftime("%a").lower())
+				floor = max(_dec(rail.floor_price) if rail else Decimal(0),
+				            _dec(tier["min_rate"]) if tier else Decimal(0))
+				floor = min(rate, floor)
+				off = max(off, floor)
+				gst_off = room_gst_rate(property, rt, off + night_over_cap)
+				saved = rate - off
+				los_saved += (saved / (Decimal(1) + gst_off / Decimal(100))
+				              if inclusive else saved)
+				los_floor += (floor / (Decimal(1) + gst_off / Decimal(100))
+				              if inclusive else floor)
+				rate = off
+			# The agreed amount for extra beds counts toward the slab even though
+			# it bills as its own line: GST reads what the unit fetches for the
+			# day, not the occupancy its rate card started from. A room at 7,000
+			# with 2,000 of extra beds is a 9,000 night, so 18%, not 5%.
+			gst = room_gst_rate(property, rt, rate + night_over_cap)
+			if inclusive:
+				# configured price is gross — back out the taxable value
+				rate = rate / (Decimal(1) + gst / Decimal(100))
+			if night_over_cap:
+				net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
+				       if inclusive else night_over_cap)
+				over_cap += net
+				over_cap_tax += net * gst / Decimal(100)
+			nightly.append({"date": str(date), "rate": float(rate),
+			                "gst_rate": float(gst),
+			                "demand_premium_pct": tier["premium_pct"] if tier else 0,
+			                "occupancy": occ_cache[str(date)]})
+			room_total += rate
+			room_tax += rate * gst / Decimal(100)
+
+	# Hourly / block day-use: replace the one nightly rate with hours/blocks
+	# from the planned slot. Overnight stays and Nightly day-use plans are
+	# untouched. An agreed desk rate still wins.
+	if day_use and not agreed_rate:
+		from kamra.day_use import quote_day_use_amount
+		# Gross nightly (before tax back-out) as the Full-day overstay stand-in.
+		nightly_gross = room_total * (Decimal(1) + (
+			_dec(nightly[0]["gst_rate"]) / Decimal(100) if nightly else Decimal(0)
+		)) if inclusive else room_total
+		day_use_meta = quote_day_use_amount(
+			property, rate_plan, check_in_time, check_out_time, nightly_gross)
+		if day_use_meta:
+			gross = _dec(day_use_meta["amount"])
+			gst = room_gst_rate(property, rt, gross + night_over_cap)
+			rate = (gross / (Decimal(1) + gst / Decimal(100))
+			        if inclusive else gross)
+			nightly[0] = {
+				"date": str(check_in_date), "rate": float(rate),
+				"gst_rate": float(gst),
+				"demand_premium_pct": 0,
+				"occupancy": occ_cache.get(str(check_in_date), 0),
+				"billing_basis": day_use_meta["billing_basis"],
+				"units": day_use_meta["units"],
+				"unit_rate": float(
+					rate / _dec(day_use_meta["units"])
+					if day_use_meta["units"] else rate),
+				"hours": day_use_meta["hours"],
+			}
+			room_total = rate
+			room_tax = rate * gst / Decimal(100)
+			# Hourly/block plans own the room total; nightly modifiers do not
+			# stack on top (Absolute would wipe the hour math).
+			rate_plan_applied = True
+		else:
+			rate_plan_applied = False
+	else:
+		rate_plan_applied = False
+
+	if rate_plan and not agreed_rate and not rate_plan_applied:
 		old_room_total = room_total
 		room_total = max(apply_rate_plan(rate_plan, room_total), los_floor)
 		if old_room_total:
@@ -776,10 +1001,13 @@ def quote(
 
 	deposit_required = float(prop.get("security_deposit_amount") or 0)
 
+	room_label = "Room nights"
+	if day_use_meta:
+		room_label = day_use_meta.get("description") or "Day use"
 	line_items = [
 		{
 			"component": "accommodation",
-			"description": "Room nights",
+			"description": room_label,
 			"amount": float(room_total),
 			"tax_amount": float(room_tax * (taxable / subtotal) if subtotal else 0),
 			"tax_rate": float(room_tax / room_total * 100) if room_total else 0,
@@ -847,7 +1075,7 @@ def quote(
 	adv_pct, adv_season = advance_percent(property, stay_rules)
 
 	from frappe.utils import now_datetime
-	return {
+	out = {
 		"nights": nights,
 		"day_use": day_use,
 		"nightly": nightly,
@@ -869,6 +1097,17 @@ def quote(
 		# for (a season's advance %, else the property's usual deposit %)
 		"advance": {"percent": adv_pct, "season": adv_season,
 		            "amount": round(float(total) * adv_pct / 100, 2)},
+		"package": {
+			"name": pkg.name,
+			"package_name": pkg.package_name,
+			"package_nights": pkg_nights,
+			"extra_night_percent": pct_extra if "pct_extra" in locals() else float(getattr(pkg, "extra_night_percent", 0) or 100),
+			"extra_night_price": float(extra_night_rate if "extra_night_rate" in locals() else (getattr(pkg, "extra_night_price", 0) or 0)),
+			"inclusions": pkg.inclusions or "",
+			"flyer_image": pkg.flyer_image or None,
+			"ota_strategy": pkg.ota_strategy,
+			"ota_daily_rate": float(pkg.ota_daily_rate or 0)
+		} if pkg else None,
 		"rate_plan": rate_plan or None,
 		"amount_before_tax": float(total_base),
 		"tax_percent": round(effective_pct, 2),
@@ -892,3 +1131,13 @@ def quote(
 		"is_holiday": stay_rules["is_holiday"],
 		"quoted_at": str(now_datetime()),
 	}
+	if day_use_meta:
+		out["day_use_billing"] = {
+			"billing_basis": day_use_meta["billing_basis"],
+			"units": day_use_meta["units"],
+			"hours": day_use_meta["hours"],
+			"unit_rate": day_use_meta["unit_rate"],
+			"full_day": bool(day_use_meta.get("full_day")),
+			"description": day_use_meta.get("description"),
+		}
+	return out

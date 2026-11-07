@@ -105,6 +105,30 @@ class DeskFeedbackTestCase(AuditTestCase):
 		with self.assertRaisesRegex(frappe.ValidationError, "needs a reason"):
 			api.post_discount(folio, value=5, kind="Percent")
 
+	def test_discount_refused_when_folio_balance_is_zero(self):
+		_res, folio = self.stay()
+		api.add_folio_payment(folio, "Cash", bal(folio))
+		self.assertAlmostEqual(bal(folio), 0, places=2)
+		with self.assertRaisesRegex(frappe.ValidationError, "no open balance"):
+			api.post_discount(folio, value=10, kind="Percent", reason="UT")
+		with self.assertRaisesRegex(frappe.ValidationError, "no open balance"):
+			api.post_discount(folio, value=10, kind="Percent", preview=1)
+
+	def test_discount_capped_to_open_balance(self):
+		_res, folio = self.stay()
+		owed = bal(folio)
+		# Leave a small open balance that a 50% room discount would overshoot.
+		leave = round(owed * 0.05, 2)
+		api.add_folio_payment(folio, "Cash", round(owed - leave, 2))
+		open_bal = bal(folio)
+		self.assertGreater(open_bal, 0)
+		self.assertLess(open_bal, owed * 0.2)
+		preview = api.post_discount(folio, value=50, kind="Percent", preview=1)
+		impact = api._discount_tax_inclusive(preview["lines"])
+		self.assertLessEqual(impact, open_bal + 0.005)
+		api.post_discount(folio, value=50, kind="Percent", reason="UT partial")
+		self.assertGreaterEqual(bal(folio), -0.005)
+
 	def test_no_room_nights_yet(self):
 		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
 		                       room=self.room)

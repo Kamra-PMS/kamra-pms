@@ -46,6 +46,7 @@ export function Markdown({ text }: { text: string }) {
   const blocks: ReactNode[] = []
   let listType: "ul" | "ol" | null = null
   let items: string[] = []
+  let start = 1
 
   const flushList = (key: string) => {
     if (!listType) return
@@ -56,7 +57,7 @@ export function Markdown({ text }: { text: string }) {
           {lis}
         </ul>
       ) : (
-        <ol key={key} className="list-decimal space-y-0.5 pl-5">
+        <ol key={key} start={start} className="list-decimal space-y-0.5 pl-5">
           {lis}
         </ol>
       ),
@@ -68,7 +69,7 @@ export function Markdown({ text }: { text: string }) {
   lines.forEach((line, i) => {
     const heading = line.match(/^\s*#{1,6}\s+(.*)/)
     const bullet = line.match(/^\s*[-*]\s+(.*)/)
-    const num = line.match(/^\s*\d+\.\s+(.*)/)
+    const num = line.match(/^\s*(\d+)\.\s+(.*)/)
     if (heading) {
       flushList("l" + i)
       blocks.push(
@@ -81,9 +82,13 @@ export function Markdown({ text }: { text: string }) {
       listType = "ul"
       items.push(bullet[1])
     } else if (num) {
-      if (listType !== "ol") flushList("l" + i)
+      if (listType !== "ol") {
+        flushList("l" + i)
+        // keep the model's number: sub-bullets or a blank line split one list in two
+        start = Number(num[1])
+      }
       listType = "ol"
-      items.push(num[1])
+      items.push(num[2])
     } else {
       flushList("l" + i)
       if (line.trim())

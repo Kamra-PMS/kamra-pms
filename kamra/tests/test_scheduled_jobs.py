@@ -58,6 +58,7 @@ class SchedulerHooksTestCase(AuditTestCase):
 		cron = hooks.scheduler_events["cron"]
 		# per-property run time on the property clock (#203)
 		self.assertIn("kamra.folio.nightly_audit_all_properties", cron["*/15 * * * *"])
+		self.assertIn("kamra.day_use.alert_overdue_day_use", cron["*/15 * * * *"])
 		self.assertNotIn("0 3 * * *", cron)
 		self.assertIn("kamra.privacy.apply_retention", cron["30 3 * * *"])
 		self.assertIn("kamra.channel_manager.push_all_ari", cron["0 * * * *"])

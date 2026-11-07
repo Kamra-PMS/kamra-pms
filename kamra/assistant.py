@@ -11,7 +11,7 @@ import json
 
 import frappe
 import requests
-from frappe.utils import cint, nowdate
+from frappe.utils import add_days, cint, getdate, nowdate
 
 from kamra.assistant_privacy import processor_disclosure, scrub_for_llm
 from kamra.authz import require_roles
@@ -55,7 +55,12 @@ running Kamra PMS. Today is {today}. You help staff work faster: look
 things up, quote, book, check guests in and out, post charges, take
 payments, preview and process cancellations.
 
+The next 7 days: {week}.
+
 Rules:
+- Read weekdays from that list, never work them out. "This Friday" is the
+  Friday in the list, or today if today is a Friday. Say the weekday and date
+  back when you use one.
 - Numbers come from tools, never from you. Always call `quote` with the requested dates and exact adult/child occupancy before quoting or booking. Never quote prices using the base_price from `booking_options` or `availability`, which only reflect base occupancy without extra guests or taxes.
   Always quote the total payable price (`amount_after_tax` or `totals.total`).
   This property's {tax_mode}. When rates include taxes, present the quote directly as the final total price (e.g. "{currency_label}360, taxes included").
@@ -107,6 +112,7 @@ Rules:
 - When a question has a few likely answers (yes/no, a guest to pick, a
   room type, a payment mode), end your reply with one last line exactly
   like: Options: Yes, go ahead | No, change it
+  Only add this line when your reply asks a question, never after a plain answer.
   The screen turns each option into a button that sends it back as the
   reply. At most 6 options, a few words each, only ones you can act on.
   For "who", list real names from a tool (e.g. front_desk_today arrivals
@@ -283,8 +289,10 @@ EXTRA_TOOLS = {
 		"open tills, open restaurant bills, departures still in house, arrivals "
 		"and what the no-show policy will do, rate variances, outlet bills on "
 		"rooms, high balances, companies over credit limit, room status "
-		"discrepancies. Each check has a severity (block | warn | info), a "
-		"count, the rows and a suggested action. Run it before run_night_audit.",
+		"discrepancies. Only checks under `blocking` stop the audit. `warnings` "
+		"are worth a look but do not stop it, and `clear` lists checks with "
+		"nothing to do. If `blocking` is empty, say the audit can run. Run it "
+		"before run_night_audit.",
 		{}, True, False),
 	"run_night_audit": (
 		"run_night_audit",
@@ -393,7 +401,10 @@ TOOLS = {
 	**EXTRA_TOOLS,
 	"front_desk_today": (
 		"front_desk_snapshot",
-		"Today's arrivals, departures, in-house guests (with paid/due) and room board.",
+		"Today's board. `arrivals` are still to come, not in the hotel yet; "
+		"`in_house` are staying now; `departures` leave today. balance_due is "
+		"what a guest owes, and `credit` is what they have overpaid. A guest "
+		"with balance_due 0 owes nothing.",
 		{}, True, False),
 	"availability": (
 		"availability_calendar",
@@ -712,8 +723,10 @@ def _system_prompt(property: str, settings, lang: str | None = None) -> str:
 	symbol = (frappe.db.get_value("Currency", currency, "symbol") or "").strip() if currency else ""
 	inclusive = bool(prop.get("rates_include_tax"))
 	tax_mode = "rates include taxes" if inclusive else "rates exclude taxes"
+	today = getdate(nowdate())
+	week = ", ".join(f"{d:%A} {d}" for d in (add_days(today, i) for i in range(1, 8)))
 	return SYSTEM.format(
-		property_name=prop.property_name or property, today=nowdate(),
+		property_name=prop.property_name or property, today=f"{today:%A} {today}", week=week,
 		currency=currency or "unspecified",
 		currency_label=symbol or currency or "unspecified",
 		tax_mode=tax_mode,
@@ -1043,6 +1056,32 @@ def _missing_refs(text: str) -> str:
 	return f"\n\nRef: {', '.join(missing)}" if missing else ""
 
 
+def _audit_for_agent(result: dict) -> dict:
+	"""Sort the checklist so a clear or warn-only check can't be read as a blocker."""
+	checks = result.pop("checks")
+	blockers = set(result["blockers"])
+	return {
+		**result,
+		"blocking": [c for c in checks if c["key"] in blockers],
+		"warnings": [c for c in checks if c["count"] and c["key"] not in blockers],
+		"clear": [c["title"] for c in checks if not c["count"]],
+	}
+
+
+def _desk_for_agent(result: dict) -> dict:
+	"""An overpaid stay shows as a credit, so a negative due can't be read as owing."""
+	for key in ("arrivals", "departures", "in_house"):
+		for row in result[key]:
+			if row["balance_due"] < 0:
+				row["credit"] = -row["balance_due"]
+				row["balance_due"] = 0
+	return result
+
+
+# what the model sees of a tool's result; the endpoint's own output is unchanged
+_AGENT_VIEW = {"night_audit_precheck": _audit_for_agent, "front_desk_today": _desk_for_agent}
+
+
 def _run_tool(name: str, args: dict, property: str):
 	if not _tool_allowed(name):
 		frappe.throw("Your role doesn't include this action.",
@@ -1091,7 +1130,8 @@ def _run_tool(name: str, args: dict, property: str):
 	_note_refs(clean, result)
 	if name == "quote":
 		_note_quote(clean, result)
-	return json.loads(frappe.as_json(result))
+	result = json.loads(frappe.as_json(result))
+	return _AGENT_VIEW[name](result) if name in _AGENT_VIEW else result
 
 
 def _tool_json_for_provider(result, settings):

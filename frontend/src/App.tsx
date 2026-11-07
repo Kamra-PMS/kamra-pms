@@ -11,6 +11,7 @@ import {
 import AppShell, { type ShellContext } from "./AppShell"
 const Login = lazy(() => import("./screens/Login"))
 import { useAuth } from "./lib/auth"
+import { visibleApps } from "./lib/apps"
 import { t, useT, t as translate, useUILanguage } from "./lib/i18n"
 import { toFullPath } from "./lib/routing"
 import { syncLang } from "./lib/dir"
@@ -117,6 +118,22 @@ function RequireAuth() {
   return <Outlet />
 }
 
+/** Roles the Today board's API accepts (kamra front_desk_today). Anyone else
+ *  would land on a permission error, so they start in their own app instead. */
+const TODAY_ROLES = [
+  "Front Desk", "Finance", "Night Auditor", "Revenue Manager", "Kamra Agent",
+  "Hotel Admin", "System Manager", "Administrator",
+]
+
+function Home() {
+  const { roles } = useAuth()
+  if (roles.some((r) => TODAY_ROLES.includes(r))) return <Today />
+  const first = visibleApps(roles)
+    .flatMap((a) => a.items)
+    .find((i) => i.to && i.to !== "/" && (!i.roles || i.roles.some((r) => roles.includes(r))))
+  return first?.to ? <Navigate to={first.to} replace /> : <Today />
+}
+
 /** The /login route. Already signed in → bounce to where you came from.
  *  On success, a full-page nav re-boots with the authenticated session's CSRF
  *  token (login rotates it); dev soft-navigates. */
@@ -188,7 +205,7 @@ export default function App() {
         <Route path="login" element={<LoginPage />} />
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
-          <Route index element={<Today />} />
+          <Route index element={<Home />} />
           <Route path="apps" element={<AppLauncher />} />
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="agents" element={<Agents />} />
@@ -230,6 +247,10 @@ export default function App() {
           <Route
             path="seasons"
             element={<ConfiguredScreen config="seasonsConfig" />}
+          />
+          <Route
+            path="packages"
+            element={<ConfiguredScreen config="holidayPackagesConfig" />}
           />
           <Route
             path="long-stay"

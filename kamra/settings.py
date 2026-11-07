@@ -118,6 +118,10 @@ MODULES: tuple[Module, ...] = (
 				  hint="A guest checking out before the booked date: the stay is shortened and the unused "
 				       "nights are charged at none, one or all of them. Finance or a Hotel Admin can "
 				       "change it for one stay, with a reason."),
+				S("day_use_overstay", "Day-use overstay", "select", "Next hour",
+				  options=("Next hour", "Next block", "Full day"),
+				  hint="When a day-use guest stays past the planned checkout time: bill the next hour, "
+				       "the next block on a block plan, or switch to a full daily rate."),
 			)),
 			Section("deposits", "Deposits", "", (
 				S("deposit_pct", "Deposit expected at booking", "number", 0, P, min=0, max=100, unit="%"),
