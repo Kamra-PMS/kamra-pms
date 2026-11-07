@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Kamra-PMS/kamra",
+  "title": "Kamra PMS",
+  "description": "Open-source hotel PMS: governed MCP tools for bookings, folios, POS and housekeeping.",
+  "websiteUrl": "https://kamrapms.com/mcp/",
+  "repository": { "url": "https://github.com/Kamra-PMS/kamra-pms", "source": "github" },
+  "version": "2.7.6",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://{kamra_site}/mcp",
+      "variables": {
+        "kamra_site": {
+          "description": "Domain of your Kamra site, for example hotel.example.com",
+          "isRequired": true
+        }
+      }
+    }
+  ]
+}
