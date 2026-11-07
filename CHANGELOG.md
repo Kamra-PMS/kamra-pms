@@ -26,6 +26,28 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.7.7](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.6...v2.7.7) (2026-11-07)
+
+
+### Features
+
+* **revenue:** add holiday packages with tiered occupancy pricing and OTA strategies ([032f778](https://github.com/Kamra-PMS/kamra-pms/commit/032f7782d31fc5ebfaa88eecf111076b445879ff))
+* **revenue:** apply holiday package pricing to any stay intersecting peak dates with extra night extension ([5318511](https://github.com/Kamra-PMS/kamra-pms/commit/5318511634dbe6c74a530e01241ab933d276374f))
+* **revenue:** support extra night percentage scaling by party size ([059afb9](https://github.com/Kamra-PMS/kamra-pms/commit/059afb922a7541177bce664c54adbbc2ea80c944))
+* **revenue:** support fixed package nights and extra night pricing ([de14ad6](https://github.com/Kamra-PMS/kamra-pms/commit/de14ad66138ea4e7e4be0de043720651abd13ba7))
+* **revenue:** support promotional flyer image upload on holiday packages ([8006c4b](https://github.com/Kamra-PMS/kamra-pms/commit/8006c4bbc8525b9617ab8fcc1f7ff52f870ec3c6))
+
+
+### Bug Fixes
+
+* **agent:** correct weekdays, audit blockers and balances in answers ([0e167a0](https://github.com/Kamra-PMS/kamra-pms/commit/0e167a0d6a4eb4822a77f64101eb7b64502bf040))
+* **docs:** add the Ask Kamra drawer to the docs site ([596254f](https://github.com/Kamra-PMS/kamra-pms/commit/596254fcc82720a8ffe44fffb0838f499f01b908))
+* **docs:** language menu no longer leads to 404 pages ([210d2ec](https://github.com/Kamra-PMS/kamra-pms/commit/210d2ec75a6648193abd40ac7d262d50f1c6b019))
+* **ui:** Agent composer stays light when the theme is light ([38f7642](https://github.com/Kamra-PMS/kamra-pms/commit/38f7642e548810586288d144356ff30ebf1bb178))
+* **ui:** fold account controls into one navbar menu ([5a8f2fa](https://github.com/Kamra-PMS/kamra-pms/commit/5a8f2fa2459393859290ad1312c29375efb9b58e))
+* **ui:** phone menu for in-app nav; quiet reload on stale chunks ([8c035a6](https://github.com/Kamra-PMS/kamra-pms/commit/8c035a6f40590122a9192cbb3de58bd50438b85e))
+* **ui:** rebuild SPA after Agent light-theme composer fix ([eb81058](https://github.com/Kamra-PMS/kamra-pms/commit/eb810581628cc0a91437cc3d28742e06547e9881))
+
 ## [2.7.6](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.5...v2.7.6) (2026-11-06)
 
 
