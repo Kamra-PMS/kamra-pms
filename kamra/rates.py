@@ -39,16 +39,28 @@ def explain_night(property: str, rt, date, adults: int = 2, children: int = 0,
                   occupancy: float | None = None, small_ok: bool = True) -> dict:
 	"""One night, layer by layer. `rt` is the Room Type document."""
 	from kamra.pricing import (_dec, active_season, demand_adjust, forecast_occupancy,
-	                           occupancy_rate, season_adjust)
+	                           occupancy_rate, package_covering_date, season_adjust)
 	bar = occupancy_rate(rt, adults, children, date, allow_small_group=small_ok)
 	season = active_season(property, date, rt.name)
 	after_season = season_adjust(property, date, bar, rt.name)
 	occ = forecast_occupancy(property, date) if occupancy is None else occupancy
 	final, tier = demand_adjust(property, rt.name, date, after_season, occupancy=occ)
+	pkg = package_covering_date(property, date, rt.name)
 	return {
 		"date": str(date),
 		"bar": float(_dec(bar)),
 		"season": _season_label(season) if season else None,
+		"package": {
+			"name": pkg.name,
+			"label": pkg.package_name,
+			"flyer_image": pkg.flyer_image or None,
+			"ota_strategy": pkg.ota_strategy,
+			"ota_rate": float(pkg.ota_daily_rate or 0),
+			"package_nights": int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1),
+			"min_nights": int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1),
+			"extra_night_percent": float(getattr(pkg, "extra_night_percent", 0) or 100),
+			"extra_night_price": float(getattr(pkg, "extra_night_price", 0) or 0),
+		} if pkg else None,
 		"after_season": float(_dec(after_season)),
 		"demand": ({"premium_pct": tier["premium_pct"], "min_rate": tier["min_rate"],
 		            "from_occupancy": tier["occupancy_from"]} if tier else None),

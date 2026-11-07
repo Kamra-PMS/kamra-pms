@@ -249,6 +249,10 @@ export default function App() {
             element={<ConfiguredScreen config="seasonsConfig" />}
           />
           <Route
+            path="packages"
+            element={<ConfiguredScreen config="holidayPackagesConfig" />}
+          />
+          <Route
             path="long-stay"
             element={<ConfiguredScreen config="longStayConfig" />}
           />
