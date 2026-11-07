@@ -156,7 +156,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""Price a stay (deterministic: occupancy pricing, seasons, meal plan,
 		voucher, GST). Use before every booking. Room type, meal plan and rate
 		plan accept the id, code or exact name; an unknown or ambiguous value
-		is refused with the valid options.""",
+		is refused with the valid options. For a same-day stay on an hourly or
+		block rate plan, pass check_in_time / check_out_time (HH:MM).""",
 		{
 			"room_type": ROOM_TYPE_PARAM,
 			"check_in_date": _p("string"),
@@ -167,6 +168,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"rate_plan": RATE_PLAN_PARAM,
 			"voucher_code": _p("string"),
 			"company": COMPANY_PARAM,
+			"check_in_time": _p("string"),
+			"check_out_time": _p("string"),
 		},
 		required=("room_type", "check_in_date", "check_out_date"),
 		property=True,
@@ -186,7 +189,9 @@ TOOLS: tuple[ToolSpec, ...] = (
 		free room, applies the voucher, prices via the engine. Room type,
 		meal plan and rate plan accept the id, code or exact name. Safe to
 		retry: a repeated call returns the existing booking (see
-		idempotency_key) - check idempotent_replay in the result.""",
+		idempotency_key) - check idempotent_replay in the result. Same-day
+		dates are day-use; optional check_in_time / check_out_time (HH:MM)
+		set the slot and price an hourly or block rate plan.""",
 		{
 			"guest_name": _p("string"),
 			"room_type": ROOM_TYPE_PARAM,
@@ -202,6 +207,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"market_segment": _p("string", enum=[
 				"Corporate", "Leisure", "Group", "MICE", "Government", "Wedding",
 				"Long Stay", "Airline Crew", "Complimentary", "House Use"]),
+			"check_in_time": _p("string"),
+			"check_out_time": _p("string"),
 			"idempotency_key": IDEMPOTENCY_KEY_PARAM,
 		},
 		required=("guest_name", "room_type", "check_in_date", "check_out_date"),

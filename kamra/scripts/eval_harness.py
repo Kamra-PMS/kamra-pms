@@ -5646,8 +5646,35 @@ def t177():
 			pass
 
 
-@check("day use: hourly tape places the slot, the room board flags the same-day turn")
+@check("day use: hourly rate plan quotes by hours, not one full night (#497)")
+def t177b():
+	from kamra.pricing import quote
+	d = "2035-03-15"
+	frappe.db.delete("Rate Plan", {"property": P, "code": "EHRLY"})
+	plan = frappe.get_doc({
+		"doctype": "Rate Plan", "property": P, "rate_plan_name": "Eval Hourly",
+		"code": "EHRLY", "modifier_type": "Percent", "modifier_value": 0,
+		"billing_basis": "Hourly", "hourly_rate": 250, "min_hours": 2,
+	}).insert(ignore_permissions=True)
+	nightly = quote(P, RT, d, d, 2, 0)
+	hourly = quote(P, RT, d, d, 2, 0, rate_plan=plan.name,
+	               check_in_time="10:00", check_out_time="14:00")
+	assert hourly["day_use"] and hourly.get("day_use_billing"), hourly
+	assert hourly["day_use_billing"]["hours"] == 4, hourly["day_use_billing"]
+	assert abs(hourly["room_total"] - 1000) < 0.01, hourly["room_total"]
+	assert hourly["amount_after_tax"] < nightly["amount_after_tax"], \
+		(hourly["amount_after_tax"], nightly["amount_after_tax"])
+	# overnight with the same plan stays nightly
+	from frappe.utils import add_days
+	ov = quote(P, RT, d, add_days(d, 1), 2, 0, rate_plan=plan.name)
+	assert not ov["day_use"] and "day_use_billing" not in ov, ov
+
+
+@check("day use: hourly tape places the slot; due-out waits for the planned ETD")
 def t178():
+	from datetime import datetime
+	from unittest.mock import patch
+
 	from kamra import api
 	room = _dep_room("E178")
 	g = _guest("Eval Day Use HK", "+91 70000 00178")
@@ -5661,9 +5688,17 @@ def t178():
 	res = frappe.get_doc("Reservation", out["reservation"])
 	res.status = "Checked In"
 	res.save(ignore_permissions=True)
-	board = api.room_board(P)
+	# Before ETD the room is day-use but not yet due out (#497).
+	before = datetime.strptime(f"{nowdate()} 12:00:00", "%Y-%m-%d %H:%M:%S")
+	with patch("kamra.day_use.now_datetime", return_value=before):
+		board = api.room_board(P)
 	tile = next(x for x in board["rooms"] if x.name == room)
-	assert tile["day_use"] and tile["due_out"] and tile["etd"] == "13:00", tile
+	assert tile["day_use"] and not tile["due_out"] and tile["etd"] == "13:00", tile
+	after = datetime.strptime(f"{nowdate()} 13:00:00", "%Y-%m-%d %H:%M:%S")
+	with patch("kamra.day_use.now_datetime", return_value=after):
+		board = api.room_board(P)
+	tile = next(x for x in board["rooms"] if x.name == room)
+	assert tile["due_out"] and tile["etd"] == "13:00", tile
 
 
 @check("Security deposit MCP tools are exposed; withhold stays desk-only")

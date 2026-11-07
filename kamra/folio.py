@@ -382,6 +382,51 @@ def _nightly_room_rate(reservation, date) -> float:
 	return float(rate)
 
 
+def _day_use_room_charge(reservation, date) -> tuple[float, float, str] | None:
+	"""Taxable amount, GST rate and label for an hourly/block day-use stay.
+
+	Uses elapsed hours from planned check-in to now (checkout), rounded by
+	the property's day-use overstay rule. Returns None for overnight stays
+	and for Nightly day-use plans (those keep the locked one-night rate)."""
+	from kamra.day_use import (
+		billable_units,
+		overstay_rule,
+		plan_billing,
+		reservation_slot_hours,
+	)
+	from kamra.pricing import rates_include_tax, room_gst_rate
+
+	if not getattr(reservation, "is_day_use", 0):
+		return None
+	plan = plan_billing(reservation.get("rate_plan"))
+	if not plan:
+		return None
+	elapsed, planned = reservation_slot_hours(reservation)
+	units = billable_units(
+		elapsed, plan,
+		overstay=overstay_rule(reservation.property),
+		planned_hours=planned,
+	)
+	if units["full_day"]:
+		# Overstay past planned ETD under "Full day": one card night.
+		amount = float(_plan_free_night_rate(reservation, date))
+		return amount, _nightly_gst(reservation, date), "day use · full day"
+	gross = Decimal(str(units["amount"]))
+	rt = frappe.get_doc("Room Type", reservation.room_type)
+	gst = float(room_gst_rate(reservation.property, rt,
+	                          gross + _over_cap_night(reservation)))
+	if rates_include_tax(reservation.property):
+		amount = float(gross / (Decimal(1) + Decimal(str(gst)) / Decimal(100)))
+	else:
+		amount = float(gross)
+	if plan["billing_basis"] == "Hourly":
+		label = f"day use · {units['hours']:g} h"
+	else:
+		label = (f"day use · {units['units']:g} × "
+		         f"{plan['block_hours']:g}h")
+	return amount, gst, label
+
+
 def _rate_plan_factor(reservation, plan) -> Decimal:
 	"""The stay's rate-plan factor, worked out once per loaded reservation:
 	a plan that adds or fixes an amount works on the whole stay's total, so
@@ -480,17 +525,25 @@ def post_room_night(reservation, date, folios=None) -> bool:
 
 	if not _charge_posted(reservation.name, "Room", date):
 		room_no = (reservation.room or "").split("-")[-1]
-		night_rate = _nightly_room_rate(reservation, date)
+		day_use = _day_use_room_charge(reservation, date)
+		if day_use:
+			night_rate, gst_rate, du_label = day_use
+			desc = (f"Room {room_no} · {reservation.room_type.split('-')[-1]}"
+			        f" · {du_label}")
+		else:
+			night_rate = _nightly_room_rate(reservation, date)
+			gst_rate = _nightly_gst(reservation, date)
+			desc = (f"Room {room_no} · {reservation.room_type.split('-')[-1]}"
+			        + (" · day use" if getattr(reservation, "is_day_use", 0) else ""))
 		_append_charge(folios, reservation, "Room", {
 			"posting_date": date,
 			"charge_type": "Room",
 			"reservation": reservation.name,
-			"description": f"Room {room_no} · {reservation.room_type.split('-')[-1]}"
-			               + (" · day use" if getattr(reservation, "is_day_use", 0) else ""),
+			"description": desc,
 			"qty": 1,
 			"rate": night_rate,
 			"amount": night_rate,
-			"gst_rate": _nightly_gst(reservation, date),
+			"gst_rate": gst_rate,
 			"auto_posted": 1,
 		})
 		posted = True
