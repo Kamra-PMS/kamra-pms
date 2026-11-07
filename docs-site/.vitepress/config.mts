@@ -208,7 +208,12 @@ export default defineConfig({
     es: { label: "Español", lang: "es", link: "/es/", themeConfig: themeWords("es") },
     ar: { label: "العربية", lang: "ar", dir: "rtl", link: "/ar/", themeConfig: themeWords("ar") },
   },
-  head: [["link", { rel: "icon", type: "image/svg+xml", href: `${base}kamra-mark.svg` }]],
+  head: [
+    ["link", { rel: "icon", type: "image/svg+xml", href: `${base}kamra-mark.svg` }],
+    // Ask Kamra: the same drawer as the website, served from kamrapms.com/ask
+    ["link", { rel: "stylesheet", href: "/ask/widget.css?v=6" }],
+    ["script", { src: "/ask/widget.js?v=6", defer: "", "data-mode": "drawer", "data-endpoint": "/ask" }],
+  ],
   themeConfig: {
     logo: {
       light: "/kamra-horizontal.svg",
