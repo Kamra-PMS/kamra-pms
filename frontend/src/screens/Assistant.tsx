@@ -698,13 +698,13 @@ export default function Assistant() {
         </div>
 
         {aiEnabled !== false && (
-          // wraps rather than scrolls: every task stays in sight, no scrollbar
-          <div className="flex flex-wrap gap-1.5 border-t border-zinc-100 dark:border-zinc-800 px-3 pt-2.5">
+          // wraps rather than scrolls; no dark:bg — .dark remaps zinc/white vars
+          <div className="flex flex-wrap gap-1.5 border-t border-zinc-100 px-3 pt-2.5">
             <button
               type="button"
               disabled={busy || stepping}
               onClick={() => startFlow("menu", translate("All tasks"))}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950/80 px-3 py-1 text-xs font-medium text-brand-700 dark:text-brand-300 hover:border-brand-300 disabled:opacity-50"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 hover:border-brand-300 disabled:opacity-50"
             >
               <LayoutGrid className="size-3.5" aria-hidden />
               {translate("All tasks")}
@@ -717,7 +717,7 @@ export default function Assistant() {
                   type="button"
                   disabled={busy || stepping}
                   onClick={() => startFlow(tl.id, tl.label)}
-                  className="shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:border-brand-300 dark:hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-950/80 hover:text-brand-700 dark:hover:text-brand-300 transition-colors shadow-xs disabled:opacity-50"
+                  className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 transition-colors shadow-xs disabled:opacity-50"
                 >
                   {tl.label}
                 </button>
@@ -733,10 +733,10 @@ export default function Assistant() {
             submit(input)
           }}
         >
-          <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 px-4 py-1.5 shadow-sm transition focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100 dark:focus-within:ring-brand-900">
+          <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-1.5 shadow-sm transition focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-100">
             <input
               ref={inputRef}
-              className="flex-1 bg-transparent py-2 text-sm outline-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent py-2 text-sm outline-none text-zinc-900 placeholder:text-zinc-400 disabled:cursor-not-allowed"
               placeholder={
                 (aiEnabled === false
                   ? translate("Add an AI key in Settings to start chatting")

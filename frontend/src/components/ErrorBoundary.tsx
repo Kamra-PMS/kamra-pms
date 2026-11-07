@@ -38,27 +38,38 @@ function reloadForNewBuild(): boolean {
 
 type Props = { children: ReactNode; resetKey: string; staff: boolean }
 
-class Boundary extends Component<Props, { error: Error | null }> {
-  state = { error: null as Error | null }
+class Boundary extends Component<Props, { error: Error | null; updating: boolean }> {
+  state = { error: null as Error | null, updating: false }
 
   static getDerivedStateFromError(error: Error) {
-    return { error }
+    // Stale hashed chunk after a deploy: soft-reload instead of the crash panel.
+    if (isChunkError(error)) return { error, updating: true }
+    return { error, updating: false }
   }
 
   componentDidCatch(error: Error, info: { componentStack?: string | null }) {
     // the details are for us, never for the guest or the desk
     console.error("[kamra] screen crashed", error, info.componentStack)
-    if (isChunkError(error)) reloadForNewBuild()
+    if (isChunkError(error) && !reloadForNewBuild()) {
+      this.setState({ updating: false })
+    }
   }
 
   componentDidUpdate(prev: Props) {
     // navigating away recovers: the next screen gets a clean slate
     if (prev.resetKey !== this.props.resetKey && this.state.error)
-      this.setState({ error: null })
+      this.setState({ error: null, updating: false })
   }
 
   render() {
-    const { error } = this.state
+    const { error, updating } = this.state
+    if (updating) {
+      return (
+        <div className="mx-auto max-w-md px-4 py-16 text-center" role="status">
+          <p className="text-sm text-zinc-500">{t("Loading…")}</p>
+        </div>
+      )
+    }
     if (!error) return this.props.children
     const chunk = isChunkError(error)
     const offline = !navigator.onLine

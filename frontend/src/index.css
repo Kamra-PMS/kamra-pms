@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Theme toggle uses <html class="dark"> (see lib/theme.ts). Without this,
+   Tailwind v4's dark: variants follow prefers-color-scheme — or worse, paint
+   dark:bg-* as always-on — so the Agent composer goes black on a light theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Kamra brand: deep hotel green, warm neutrals */
   --color-brand-50: #ecf7f2;
