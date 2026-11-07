@@ -1,20 +1,24 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react"
 import {
+  ChevronDown,
   Globe,
   IndianRupee,
   LayoutGrid,
+  LogOut,
   Menu,
   Moon,
   Plus,
   Search,
+  Settings as SettingsIcon,
   Sun,
-  LogOut,
+  UserRound,
   X,
 } from "lucide-react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import UpdateNag from "./components/UpdateNag"
 import ErrorBoundary from "./components/ErrorBoundary"
 import SetupNag from "./components/SetupNag"
+import { Avatar } from "./components/ui/avatar"
 import { Button } from "./components/ui/button"
 import {
   appForPath,
@@ -108,31 +112,131 @@ function SearchShortcut() {
   )
 }
 
-function ThemeToggle() {
+/** Account menu: theme, profile, settings, sign out — keeps the top bar quiet. */
+function AccountMenu({
+  user,
+  onSignOut,
+}: {
+  user: string
+  onSignOut: () => void
+}) {
   const { t } = useT()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains("dark"),
   )
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("mousedown", onDown)
+    window.addEventListener("keydown", onKey)
+    return () => {
+      window.removeEventListener("mousedown", onDown)
+      window.removeEventListener("keydown", onKey)
+    }
+  }, [open])
+
+  const go = (to: string) => {
+    setOpen(false)
+    navigate(to)
+  }
+
+  const itemCls =
+    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+
   return (
-    <button
-      aria-label={(dark ? t("Switch to light mode") : t("Switch to dark mode"))}
-      className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-      onClick={() => {
-        setTheme(dark ? "light" : "dark")
-        setDark(!dark)
-      }}
-      title={(getTheme() === "system" ? t("Theme (system)") : t("Theme"))}
-    >
-      {dark ? (
-        <Sun className="size-4" aria-hidden />
-      ) : (
-        <Moon className="size-4" aria-hidden />
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={t("Account menu")}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        title={user}
+        className="inline-flex max-w-[11rem] items-center gap-1.5 rounded-lg px-1.5 py-1 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+      >
+        <Avatar name={user} className="size-7 text-[10px]" />
+        <span className="hidden min-w-0 truncate text-xs font-medium sm:inline">
+          {user}
+        </span>
+        <ChevronDown className="size-3.5 shrink-0 text-zinc-400" aria-hidden />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute end-0 top-10 z-50 w-56 rounded-lg border border-zinc-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5"
+        >
+          <p className="truncate px-2.5 py-1.5 text-xs font-medium text-zinc-500">
+            {user}
+          </p>
+          <div className="my-1 border-t border-zinc-100" />
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => {
+              setTheme(dark ? "light" : "dark")
+              setDark(!dark)
+            }}
+          >
+            {dark ? (
+              <Sun className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            ) : (
+              <Moon className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            )}
+            <span className="min-w-0 flex-1 text-start">
+              {dark ? t("Switch to light mode") : t("Switch to dark mode")}
+            </span>
+            {getTheme() === "system" ? (
+              <span className="text-[10px] text-zinc-400">{t("System")}</span>
+            ) : null}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => go("/settings/appearance")}
+          >
+            <UserRound className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            {t("Profile")}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => go("/settings/general")}
+          >
+            <SettingsIcon className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            {t("Settings")}
+          </button>
+          <div className="my-1 border-t border-zinc-100" />
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => {
+              setOpen(false)
+              onSignOut()
+            }}
+          >
+            <LogOut className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            {t("Sign out")}
+          </button>
+        </div>
       )}
-    </button>
+    </div>
   )
 }
 
-/** Language beside the theme button: switches every screen at once. */
+/** Language beside the account menu: switches every screen at once. */
 function LanguageToggle() {
   const { t, lang } = useT()
   return (
@@ -611,35 +715,14 @@ export default function AppShell() {
             </button>
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <ThemeToggle />
             <NotificationBell property={property} />
             <LanguageToggle />
-            <span className="hidden text-xs text-zinc-500 xl:inline">
-              {user}
-            </span>
-            <button
-              onClick={signOut}
-              className="inline-flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-700"
-              aria-label={t("Sign out")}
-              title={t("Sign out")}
-            >
-              <LogOut className="size-4 lg:hidden" aria-hidden />
-              <span className="hidden lg:inline">{t("Sign out")}</span>
-            </button>
+            {user ? <AccountMenu user={user} onSignOut={signOut} /> : null}
             {canBook && (
-              <>
-                <Button
-                  variant="outline"
-                  className="hidden md:inline-flex"
-                  onClick={() => setBooking({ walkIn: true })}
-                >
-                  {t("Walk-in")}
-                </Button>
-                <Button onClick={() => setBooking({})} aria-label={t("New booking")}>
-                  <Plus className="size-4" aria-hidden />
-                  <span className="hidden sm:inline">{t("New booking")}</span>
-                </Button>
-              </>
+              <Button onClick={() => setBooking({})} aria-label={t("New booking")}>
+                <Plus className="size-4" aria-hidden />
+                <span className="hidden sm:inline">{t("New booking")}</span>
+              </Button>
             )}
           </div>
         </header>
