@@ -1,0 +1,16 @@
+---
+description: Require a full site backup before any Kamra update or migrate on a live site
+alwaysApply: true
+---
+
+# No backup, no update
+
+Before any production or customer-trial Kamra update:
+
+1. Run `bench --site <site> backup --with-files` (or `--site all`).
+2. Confirm it succeeded and note the archive under `sites/<site>/private/backups`.
+3. Only then pull / recreate / `bench migrate` / restart.
+
+Docker path: `sudo /opt/kamra/install.sh update` already backs up first and **aborts if backup fails** — use that when the site was installed with `install.sh`.
+
+If backup fails, stop. Do not migrate. Do not suggest an upgrade command that skips the backup step.

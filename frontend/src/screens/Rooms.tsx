@@ -86,8 +86,23 @@ export default function Rooms() {
 
   useEffect(() => {
     load()
-    const id = setInterval(load, 30_000)
-    return () => clearInterval(id)
+    let id: ReturnType<typeof setInterval> | null = null
+    const arm = () => {
+      if (id) clearInterval(id)
+      id = null
+      if (document.visibilityState === "hidden") return
+      id = setInterval(load, 60_000)
+    }
+    const onVis = () => {
+      arm()
+      if (document.visibilityState === "visible") load()
+    }
+    arm()
+    document.addEventListener("visibilitychange", onVis)
+    return () => {
+      if (id) clearInterval(id)
+      document.removeEventListener("visibilitychange", onVis)
+    }
   }, [load, refreshKey])
 
   const setParam = (k: string, v: string | null) =>
