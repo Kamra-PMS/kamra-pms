@@ -14,12 +14,14 @@
 #   open http://localhost:8080/kamra   (user: Administrator)
 #
 # Pulls ghcr.io/kamra-pms/kamra (Frappe + payments + kamra) with MariaDB and
-# Redis, then a one-shot `configurator` writes the bench config and
-# `create-site` creates the site, installs the apps and runs Kamra's first
-# boot (home → /kamra, scheduler on). Same pattern as frappe_docker's
-# pwd.yml. Nothing secret is committed here: both passwords come from your
-# shell (or a .env file next to this one) and compose refuses to start
-# without them.
+# Valkey (Redis-compatible cache/queue), then a one-shot `configurator`
+# writes the bench config and `create-site` creates the site, installs the
+# apps and runs Kamra's first boot (home → /kamra, scheduler on). Same
+# pattern as frappe_docker's pwd.yml. Nothing secret is committed here:
+# both passwords come from your shell (or a .env file next to this one)
+# and compose refuses to start without them.
+# Service names stay redis-* and bench still uses redis:// URLs — Frappe
+# speaks RESP; Valkey is the default image (#392).
 #
 # Knobs (env or .env):
 #   KAMRA_TAG        stable (default) | vX.Y.Z | nightly
@@ -171,11 +173,11 @@ services:
       - db-data:/var/lib/mysql
 
   redis-cache:
-    image: redis:8.6-alpine
+    image: valkey/valkey:8-alpine
     restart: unless-stopped
 
   redis-queue:
-    image: redis:8.6-alpine
+    image: valkey/valkey:8-alpine
     restart: unless-stopped
     volumes:
       - redis-queue-data:/data
