@@ -4,6 +4,7 @@ are sent to an external LLM provider (DPDP s.8 / s.16 — issue #88)."""
 from __future__ import annotations
 
 import re
+from urllib.parse import urlsplit
 
 _CONTACT_KEY_TOKENS = (
 	"phone",
@@ -23,9 +24,7 @@ _CONTACT_KEY_TOKENS = (
 
 # Whole snake_case tokens only: a bare substring test would redact
 # "occupancy" / "company" (pan) and "paid_now" (id_no).
-_CONTACT_KEY_RE = re.compile(
-	r"(?:^|_)(?:" + "|".join(_CONTACT_KEY_TOKENS) + r")s?(?:_|$)"
-)
+_CONTACT_KEY_RE = re.compile(r"(?:^|_)(?:" + "|".join(_CONTACT_KEY_TOKENS) + r")s?(?:_|$)")
 
 
 def is_contact_field(key: str) -> bool:
@@ -76,28 +75,36 @@ def scrub_for_llm(data, *, strict: bool):
 
 def processor_disclosure(base_url: str | None) -> str:
 	"""Plain-language note for Settings — who processes chat/tool payloads."""
-	base = (base_url or "").lower()
-	if "11434" in base or "ollama" in base or base.startswith("http://127.0.0.1"):
+	try:
+		parts = urlsplit((base_url or "").strip().lower())
+		host, port = parts.hostname or "", parts.port
+	except ValueError:
+		host, port = "", None
+
+	def on(*domains: str) -> bool:
+		return any(host == d or host.endswith("." + d) for d in domains)
+
+	if port == 11434 or "ollama" in host or host in ("127.0.0.1", "localhost"):
 		return (
 			"Local (Ollama): when the endpoint runs on this server or your LAN, "
 			"chat and tool data stay on your infrastructure — no third-party LLM transfer."
 		)
-	if "openai.com" in base or "azure.com" in base:
+	if on("openai.com", "azure.com"):
 		return (
 			"OpenAI / Azure OpenAI: messages and tool results are processed under "
 			"your cloud account (typically outside India unless you chose a regional deployment)."
 		)
-	if "generativelanguage.googleapis.com" in base or "google" in base:
+	if on("googleapis.com", "google.com"):
 		return (
 			"Google Gemini: messages and tool results are processed under your "
 			"Google AI / Cloud account (cross-border transfer may apply)."
 		)
-	if "groq.com" in base:
+	if on("groq.com"):
 		return (
 			"Groq: messages and tool results are processed under your Groq account "
 			"(United States — cross-border transfer may apply)."
 		)
-	if "openrouter.ai" in base:
+	if on("openrouter.ai"):
 		return (
 			"OpenRouter: routes to the model you selected; that upstream provider "
 			"processes messages and tool results under its terms and region."
