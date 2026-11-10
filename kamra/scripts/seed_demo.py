@@ -105,10 +105,10 @@ def _execute():
 			}
 		).insert(ignore_permissions=True)
 		rooms_by_type[rt.name] = []
-		# spread the rooms across two floors so "high/low floor" preferences
-		# have something to resolve against
-		for idx, num in enumerate(room_numbers):
-			floor = int(num[0]) + (1 if idx >= len(room_numbers) // 2 else 0)
+		# the floor is the room number's first digit, as staff read it (204 is
+		# on floor 2); the room types already span floors 1 to 3
+		for num in room_numbers:
+			floor = int(num[0])
 			room = frappe.get_doc(
 				{
 					"doctype": "Room",
