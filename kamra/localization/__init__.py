@@ -98,21 +98,31 @@ def default_nationality(pack) -> str:
 def money_text(property: str | None, amount) -> str:
 	"""An amount in the property's currency for server-written text (the
 	activity log, alerts) - never a hardcoded rupee sign."""
-	symbol = ""
+	symbol, currency = "", ""
 	try:
 		if property:
 			prop = frappe.get_cached_doc("Property", property)
-			symbol = pack_for(property).locale(prop).get("currency_symbol") or ""
+			loc = pack_for(property).locale(prop)
+			symbol, currency = loc.get("currency_symbol") or "", loc.get("currency") or ""
 	except Exception:
 		symbol = ""
 	try:
 		value = float(amount or 0)
 	except (TypeError, ValueError):
 		return f"{symbol}{amount}"
-	text = f"{value:,.2f}"
-	if text.endswith(".00"):
-		text = text[:-3]
-	return f"{symbol}{text}"
+	return f"{'-' if value < 0 else ''}{symbol}{group_digits(abs(value), currency == 'INR')}"
+
+
+def group_digits(value: float, lakh: bool = False) -> str:
+	"""11025 -> 11,025 and 28360.4 -> 28,360.40; with lakh, 120000 -> 1,20,000
+	as the desk shows rupees."""
+	text = f"{value:,.2f}".removesuffix(".00")
+	if not lakh:
+		return text
+	whole, _, frac = text.replace(",", "").partition(".")
+	head, tail = whole[:-3], whole[-3:]
+	groups = [head[max(i - 2, 0):i] for i in range(len(head), 0, -2)][::-1]
+	return ",".join([*groups, tail]) + (f".{frac}" if frac else "")
 
 
 def service_code_for(pack, prop_doc, charge_type: str | None = None):

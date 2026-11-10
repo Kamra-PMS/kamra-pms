@@ -8,6 +8,7 @@ Agent Action Log. If the model is wrong, the tools refuse.
 """
 
 import json
+import re
 
 import frappe
 import requests
@@ -125,6 +126,10 @@ Rules:
   Never infer currency from the conversation language or earlier messages.
   Do not convert amounts or replace a tool result's explicit currency.
   If currency is unspecified, ask rather than guess.
+- When a tool gives `<field>_text` beside an amount (balance_due_text), write
+  that text exactly. Never write a raw amount such as 2940.0.
+- A room's floor is its `floor` field. Without one, say the floor is not
+  recorded; never work it out from the room number.
 {extra}"""
 
 # tool name → (kamra.api function, description, JSON-schema params,
@@ -1078,6 +1083,30 @@ def _desk_for_agent(result: dict) -> dict:
 	return result
 
 
+# money keys the model reads; rates and percents are not amounts to restate
+_MONEY_KEY = re.compile(r"(amount|total|balance|due|credit|paid|deposit|price|outstanding|charges?)$")
+
+
+def _with_money_text(data, property: str, currency: str):
+	"""Adds `<key>_text` beside each money field, as the screen shows it, so
+	the reply copies it instead of writing 2940.0 or its own number style."""
+	if isinstance(data, list):
+		return [_with_money_text(v, property, currency) for v in data]
+	if not isinstance(data, dict):
+		return data
+	from kamra.localization import money_text
+
+	# a row in another currency (an FX payment) keeps its raw amounts
+	foreign = data.get("currency") not in (None, "", currency)
+	out = {}
+	for k, v in data.items():
+		out[k] = _with_money_text(v, property, currency)
+		# money is a float; an int "total" or "overdue" is a count of rows
+		if not foreign and isinstance(v, float) and _MONEY_KEY.search(k):
+			out[f"{k}_text"] = money_text(property, v)
+	return out
+
+
 # what the model sees of a tool's result; the endpoint's own output is unchanged
 _AGENT_VIEW = {"night_audit_precheck": _audit_for_agent, "front_desk_today": _desk_for_agent}
 
@@ -1131,7 +1160,8 @@ def _run_tool(name: str, args: dict, property: str):
 	if name == "quote":
 		_note_quote(clean, result)
 	result = json.loads(frappe.as_json(result))
-	return _AGENT_VIEW[name](result) if name in _AGENT_VIEW else result
+	result = _AGENT_VIEW[name](result) if name in _AGENT_VIEW else result
+	return _with_money_text(result, property, frappe.get_cached_value("Property", property, "currency"))
 
 
 def _tool_json_for_provider(result, settings):

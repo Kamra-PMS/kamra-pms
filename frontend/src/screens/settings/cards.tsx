@@ -446,8 +446,10 @@ function presetForBaseUrl(presets: AiPreset[], baseUrl: string): string | null {
   if (!url) return has("openai") ? "openai" : presets[0].id
   const exact = presets.find((p) => p.base_url && norm(p.base_url) === url)
   if (exact) return exact.id
-  if (url.includes(".openai.azure.com") && has("azure")) return "azure"
-  if (url.includes(":11434") && has("ollama")) return "ollama"
+  let host = "", port = ""
+  try { ({ hostname: host, port } = new URL(url)) } catch { /* not a URL: falls through to custom */ }
+  if (host.endsWith(".openai.azure.com") && has("azure")) return "azure"
+  if (port === "11434" && has("ollama")) return "ollama"
   if (has("custom")) return "custom"
   return presets[0].id
 }

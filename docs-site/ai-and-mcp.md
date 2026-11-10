@@ -192,7 +192,7 @@ Gemini, Groq, OpenRouter, Ollama, Azure, or Custom) → paste the key →
 
 ## What work it can do
 
-Kamra ships **130 governed tools** on MCP (see the
+Kamra ships **161 governed tools** on MCP (see the
 [tool reference](/mcp-tools)). Visibility is the intersection of the
 connected user's **roles**, their **MCP role** (Read hides every write),
 the property's **enabled modules** and its **AI switches** - a house
