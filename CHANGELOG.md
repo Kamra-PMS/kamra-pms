@@ -35,6 +35,11 @@ upgrade-breaking changes (removed doctypes / API contracts).
 * **docs:** bump vite to 6.4.5 for server.fs.deny bypass ([#507](https://github.com/Kamra-PMS/kamra-pms/issues/507)) ([08eb746](https://github.com/Kamra-PMS/kamra-pms/commit/08eb746c439e40227f4c4388682f5c4db8b44bee))
 * **security:** match AI provider URLs by host, not substring ([#508](https://github.com/Kamra-PMS/kamra-pms/issues/508)) ([e46dd0c](https://github.com/Kamra-PMS/kamra-pms/commit/e46dd0c2516bc811a7c078812d014655f75d847e))
 
+### Documentation
+
+* register v2.7.7 in the docs version switcher ([#505](https://github.com/Kamra-PMS/kamra-pms/issues/505))
+* add the world's first claim and star prompt to the README ([#506](https://github.com/Kamra-PMS/kamra-pms/issues/506))
+
 ## [2.7.7](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.6...v2.7.7) (2026-11-07)
 
 
