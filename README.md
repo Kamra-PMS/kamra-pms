@@ -5,7 +5,8 @@
 <h1 align="center">Kamra PMS</h1>
 
 <p align="center">
-  <b>The open-source hotel PMS your staff and your AI can both run.</b><br/>
+  <b>The world's first open-source, agentic AI-ready PMS.</b><br/>
+  The hotel PMS your staff and your AI can both run.<br/>
   Front desk, housekeeping, billing, F&amp;B, banquets and a booking engine for hotels, resorts and villas,<br/>
   with a governed MCP layer so Claude or ChatGPT works as a permission-checked member of staff.
 </p>
@@ -25,7 +26,9 @@
   <a href="#install"><b>Install</b></a>
 </p>
 
-Kamra is a full property management system for hotels, resorts and short-term rentals. It runs on [Frappe](https://frappe.io) (the framework behind ERPNext), it is AGPL-3.0, and every feature is in the open-source app: no editions, no per-room fees. Current release: **v2.7.2** ([changelog](CHANGELOG.md)).
+**Why "first":** [Kamra 1.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v1.0.0) shipped on 5 July 2026 as open source, free, and MCP-driven. We know of no open-source PMS that shipped all three earlier. If Kamra is useful to you, [star the repo](https://github.com/Kamra-PMS/kamra-pms/stargazers) so other hoteliers and developers can find it.
+
+Kamra is a full property management system for hotels, resorts and short-term rentals. It runs on [Frappe](https://frappe.io) (the framework behind ERPNext), it is AGPL-3.0, and every feature is in the open-source app: no editions, no per-room fees. Current release: **v2.7.6** ([changelog](CHANGELOG.md)).
 
 On the [demo](https://demo.kamrapms.com), tap any role to sign in. The guest booking page is at [/book](https://demo.kamrapms.com/book) and the housekeeping phone app at [/kamra/hk](https://demo.kamrapms.com/kamra/hk).
 

@@ -9,7 +9,7 @@
     ".": {
       "package-name": "kamra",
       "changelog-path": "CHANGELOG.md",
-      "extra-files": ["kamra/__init__.py"]
+      "extra-files": ["kamra/__init__.py", {"type": "json", "path": "server.json", "jsonpath": "$.version"}]
     }
   }
 }

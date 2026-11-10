@@ -213,7 +213,7 @@ flowchart LR
   API --> AAL[Activity Log]
 ```
 
-- **116 governed tools** on develop (see [MCP tools](/mcp-tools)); stable
+- **161 governed tools** on develop (see [MCP tools](/mcp-tools)); stable
   `main` publishes the count for that tag.
 - Tools are filtered by **role ∩ MCP role ∩ enabled modules ∩ the
   property's AI switches** (see [Who can use MCP](/ai-and-mcp#who-can-use-mcp)).
