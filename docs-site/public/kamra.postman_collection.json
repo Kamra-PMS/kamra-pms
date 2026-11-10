@@ -13720,7 +13720,7 @@
         "kamra.ledger.city_ledger_settle"
        ]
       },
-      "description": "Record a company's payment against its city ledger account and clear\nthe AR it pays. By default it pays the oldest open bills first;\n`allocations` ([{folio, amount}]) names the folios instead. Any excess\nstays on the account as unapplied credit and settles the company's next\nbill.",
+      "description": "Record a company's payment against its city ledger account and clear\nthe AR it pays. By default it pays the oldest open bills first;\n`allocations` ([{folio, amount}]) names the folios instead. Any excess\nstays on the account as unapplied credit and settles the company's next\nbill.\n\nPass idempotency_key (one per \"Record payment\" press): a retry with the\nsame key returns the first result and posts nothing. Two payments on\none account at once run one after the other, so they never both clear\nthe same bill.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"account\": \"<account>\",\n  \"amount\": 1000,\n  \"mode\": \"Bank Transfer\"\n}",
