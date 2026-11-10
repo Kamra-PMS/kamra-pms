@@ -1068,7 +1068,7 @@ def hk_queue(property: str):
 	rooms = frappe.get_all(
 		"Room",
 		filters={"property": property},
-		fields=["name", "room_number", "housekeeping_status",
+		fields=["name", "room_number", "floor", "housekeeping_status",
 		        "occupancy_status"],
 		order_by="room_number asc",
 	)
