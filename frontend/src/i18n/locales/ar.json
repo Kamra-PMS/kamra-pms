@@ -1,4 +1,9 @@
 {
+  "Rows per page": "صفوف في الصفحة",
+  "{a}-{b} of {n}": "{a}-{b} من {n}",
+  "Previous page": "الصفحة السابقة",
+  "Next page": "الصفحة التالية",
+  "Nothing to show.": "لا شيء لعرضه.",
   "Check-out waits for these. Go back to the Bill step and post them to the room, or settle them at the outlet.": "المغادرة تنتظر هذه الفواتير. ارجع إلى خطوة الفاتورة وانقلها إلى الغرفة، أو سدّدها في المنفذ.",
   "Account history": "سجل الحساب",
   "Advances held": "العربون المحتجز",

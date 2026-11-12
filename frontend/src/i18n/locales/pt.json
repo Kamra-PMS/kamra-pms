@@ -1,4 +1,9 @@
 {
+  "Rows per page": "Linhas por página",
+  "{a}-{b} of {n}": "{a}-{b} de {n}",
+  "Previous page": "Página anterior",
+  "Next page": "Próxima página",
+  "Nothing to show.": "Nada para mostrar.",
   "Check-out waits for these. Go back to the Bill step and post them to the room, or settle them at the outlet.": "O check-out aguarda estas contas. Volte à etapa Conta e lance-as no quarto, ou acerte-as no ponto de venda.",
   "Account history": "Histórico da conta",
   "Advances held": "Adiantamentos retidos",
