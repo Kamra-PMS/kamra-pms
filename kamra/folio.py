@@ -799,7 +799,8 @@ def transfer_charges(from_folio: str, charge_rows: list, to_folio: str):
 	move_charges(src, dst, charge_rows)
 
 
-def move_charges(src, dst, charge_rows: list, reservation: str | None = None):
+def move_charges(src, dst, charge_rows: list, reservation: str | None = None,
+                 key: str | None = None):
 	"""Take charge lines off one open folio and put them on another, ledger
 	and all. Callers decide whose bill a line may move to: transfer_charges
 	keeps it within a stay or group, pos.move_room_bill to the right room.
@@ -829,6 +830,7 @@ def move_charges(src, dst, charge_rows: list, reservation: str | None = None):
 			# the line keeps the codes it was posted with
 			"transaction_code": row.get("transaction_code"),
 			"gl_code": row.get("gl_code"),
+			"idempotency_key": key,
 		})
 		moved.append(dst.charges[-1])
 		src.charges.remove(row)

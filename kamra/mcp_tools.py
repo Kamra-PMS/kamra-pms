@@ -92,6 +92,13 @@ PAYMENT_KEY_PARAM = _p(
 	"first result (idempotent_replay) instead of taking the money twice.",
 )
 
+WRITE_KEY_PARAM = _p(
+	"string",
+	description="Optional unique key for this action (e.g. a UUID), new for "
+	"each one you mean to do. Retrying with the same key returns the first "
+	"result (idempotent_replay) instead of doing it twice.",
+)
+
 ITINERARY_LEGS_PARAM = _p(
 	"array",
 	description="The stays, any order: each {property, room_type, "
@@ -986,16 +993,88 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
-		"move_charges",
+		"transfer_folio_charge",
 		"api.transfer_folio_charges",
-		"""Move charge lines to another folio of the same stay or group.
-		charge_rows is a list of charge line names from get_folio.""",
+		"""Move charge lines (names from get_folio or folio_statement) off an
+		open folio, ledger and all. Give ONE target: to_folio (another folio
+		of the same stay or group), to_company=true (the stay's Company
+		folio, opened if needed; alcohol never moves there) or
+		to_reservation (another checked-in stay here: Finance or Hotel Admin
+		only, reason required). Lines keep their GL code.""",
 		{
 			"from_folio": _p("string"),
 			"charge_rows": _p("array", items=_p("string")),
 			"to_folio": _p("string"),
+			"to_company": _p("boolean"),
+			"to_reservation": _p("string"),
+			"reason": _p("string"),
+			"idempotency_key": WRITE_KEY_PARAM,
 		},
-		required=("from_folio", "charge_rows", "to_folio"),
+		required=("from_folio", "charge_rows"),
+		mutating=True,
+		bools=("to_company",),
+		group="Billing",
+	),
+	# ponytail: old name kept so connected clients keep working; drop in a major release
+	_t(
+		"move_charges",
+		"api.transfer_folio_charges",
+		"""Old name for transfer_folio_charge, kept for existing clients.
+		Moves charge lines to another folio of the same stay or group.""",
+		{
+			"from_folio": _p("string"),
+			"charge_rows": _p("array", items=_p("string")),
+			"to_folio": _p("string"),
+			"idempotency_key": WRITE_KEY_PARAM,
+		},
+		required=("from_folio", "charge_rows"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"refund_payment",
+		"api.refund_folio_payment",
+		"""Give money back on an open folio, with a reason (or a Refund
+		reason_code). payment_row (a payment line from get_folio) refunds
+		that payment: to its own mode by default, or pass mode Cash to give
+		cash back; amount defaults to what is left of it. Without
+		payment_row give amount and mode. Refuses more than the guest is in
+		credit. A security deposit is refunded with refund_deposit. Confirm
+		the amount with staff first.""",
+		{
+			"folio": _p("string"),
+			"payment_row": _p("string"),
+			"amount": _p("number"),
+			"mode": _p("string"),
+			"reason": _p("string"),
+			"reason_code": _p("string", description="Optional Refund reason code"),
+			"idempotency_key": WRITE_KEY_PARAM,
+		},
+		required=("folio",),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"correct_folio_charge",
+		"api.correct_folio_charge",
+		"""Correct a posted charge on an open folio: the original line stays,
+		a reversal of it and a repost with the right amount (pre-tax),
+		tax rate, charge type or description are added, both linked to it
+		(corrects_row). Give only what changes. Needs a reason (or a Void
+		reason_code). Room nights change through the stay's rate, not here;
+		settled bills need a credit note.""",
+		{
+			"folio": _p("string"),
+			"charge_row": _p("string"),
+			"reason": _p("string"),
+			"amount": _p("number"),
+			"gst_rate": _p("number"),
+			"charge_type": _p("string"),
+			"description": _p("string"),
+			"reason_code": _p("string", description="Optional Void reason code"),
+			"idempotency_key": WRITE_KEY_PARAM,
+		},
+		required=("folio", "charge_row"),
 		mutating=True,
 		group="Billing",
 	),
@@ -2399,7 +2478,7 @@ def input_schema(spec: ToolSpec) -> dict[str, Any]:
 DESTRUCTIVE = frozenset({
 	"cancel_booking", "cancel_itinerary", "decline_booking_request", "check_out", "early_departure",
 	"void_charge", "close_folio", "waive_security_deposit", "pos_cancel_order", "pos_remove_item",
-	"pos_move_room_bill",
+	"pos_move_room_bill", "refund_payment",
 	"run_night_audit", "recover_stuck_business_date",
 })
 # Writes where the same call twice has the effect of one (idempotency keys,
@@ -2408,6 +2487,7 @@ IDEMPOTENT = frozenset({
 	"create_booking", "create_itinerary", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
 	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
 	"assign_rooms_apply", "open_guest_bills",
+	"refund_payment", "correct_folio_charge", "transfer_folio_charge",
 })
 # Tools that reach someone outside Kamra (a message to the guest)
 OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link"})
