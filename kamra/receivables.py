@@ -91,37 +91,42 @@ def ar_accounts(property: str):
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin")
-def save_ar_account(property: str, company: str, account_number: str | None = None,
-                    credit_limit: float = 0, use_default_credit_days: int = 1,
-                    credit_days: int = 0, billing_address: str | None = None,
-                    restricted: int = 0, restricted_reason: str | None = None,
-                    account: str | None = None):
+def save_ar_account(property: str, company: str | None = None,
+                    account_number: str | None = None,
+                    credit_limit: float | None = None,
+                    use_default_credit_days: int | None = None,
+                    credit_days: int | None = None, billing_address: str | None = None,
+                    restricted: int | None = None, restricted_reason: str | None = None,
+                    account: str | None = None, idempotency_key: str | None = None):
 	"""Open a company's AR account at a property, or edit it (`account`).
 	One open account per company per property - checkout bills into it.
 	The account number is the company's reference on statements and must
 	be unique at the property. Opening an account puts the company on
-	credit (Corporate Account.credit_allowed), since that is what it is for."""
+	credit (Corporate Account.credit_allowed), since that is what it is for.
+
+	On an edit, a field left out (None) keeps its value; an empty string
+	clears it. A create retried with the same `idempotency_key` returns the
+	account it opened instead of failing."""
 	assert_property_access(property)
-	if not frappe.db.exists("Corporate Account", company):
-		frappe.throw(_("Company {0} not found.").format(company))
-	number = (account_number or "").strip() or f"AR-{company[:20]}"
-	if int(restricted or 0) and not (restricted_reason or "").strip():
-		frappe.throw(_("Say why the account is restricted - it shows to "
-		               "whoever tries to bill it."))
-	if float(credit_limit or 0) < 0 or int(credit_days or 0) < 0:
-		frappe.throw(_("Credit limit and credit days can't be negative."))
-	clash = frappe.db.get_value(
-		"City Ledger Account",
-		{"property": property, "account_number": number,
-		 "name": ("!=", account or "")}, "name")
-	if clash:
-		frappe.throw(_("Account number {0} is already used at this "
-		               "property.").format(number))
+	key = (idempotency_key or "").strip()[:140] or None
 	if account:
 		doc = _account(account)
+		company = company or doc.company
 		if doc.property != property or doc.company != company:
 			frappe.throw(_("An account's property and company can't change."))
 	else:
+		if not company:
+			frappe.throw(_("Pick the company to open an account for."))
+		if key:
+			first = frappe.db.get_value(
+				"City Ledger Account", {"idempotency_key": key},
+				["name", "account_number", "company", "property"], as_dict=True)
+			if first:
+				if (first.company, first.property) != (company, property):
+					frappe.throw(_("This key already opened another account ({0}).").format(
+						first.name))
+				return {"account": first.name, "account_number": first.account_number,
+				        "idempotent_replay": True}
 		existing = frappe.db.get_value(
 			"City Ledger Account",
 			{"property": property, "company": company, "disabled": 0}, "name")
@@ -130,15 +135,42 @@ def save_ar_account(property: str, company: str, account_number: str | None = No
 				company, existing))
 		doc = frappe.get_doc({"doctype": "City Ledger Account",
 		                      "property": property, "company": company,
-		                      "balance": 0})
+		                      "balance": 0, "credit_limit": 0,
+		                      "use_default_credit_days": 1, "credit_days": 0,
+		                      "restricted": 0, "idempotency_key": key})
+	if not frappe.db.exists("Corporate Account", company):
+		frappe.throw(_("Company {0} not found.").format(company))
+
+	def given(value, current):
+		return current if value is None else value
+
+	number = (given(account_number, doc.get("account_number")) or "").strip() \
+		or f"AR-{company[:20]}"
+	limit = float(given(credit_limit, doc.get("credit_limit")) or 0)
+	days = int(given(credit_days, doc.get("credit_days")) or 0)
+	is_restricted = 1 if int(given(restricted, doc.get("restricted")) or 0) else 0
+	reason = (given(restricted_reason, doc.get("restricted_reason")) or "").strip()
+	if is_restricted and not reason:
+		frappe.throw(_("Say why the account is restricted - it shows to "
+		               "whoever tries to bill it."))
+	if limit < 0 or days < 0:
+		frappe.throw(_("Credit limit and credit days can't be negative."))
+	clash = frappe.db.get_value(
+		"City Ledger Account",
+		{"property": property, "account_number": number,
+		 "name": ("!=", account or "")}, "name")
+	if clash:
+		frappe.throw(_("Account number {0} is already used at this "
+		               "property.").format(number))
 	doc.update({
 		"account_number": number,
-		"credit_limit": float(credit_limit or 0),
-		"use_default_credit_days": 1 if int(use_default_credit_days or 0) else 0,
-		"credit_days": int(credit_days or 0),
-		"billing_address": (billing_address or "").strip() or None,
-		"restricted": 1 if int(restricted or 0) else 0,
-		"restricted_reason": (restricted_reason or "").strip() or None,
+		"credit_limit": limit,
+		"use_default_credit_days": 1 if int(given(use_default_credit_days,
+		                                          doc.get("use_default_credit_days")) or 0) else 0,
+		"credit_days": days,
+		"billing_address": (given(billing_address, doc.get("billing_address")) or "").strip() or None,
+		"restricted": is_restricted,
+		"restricted_reason": reason or None,
 	})
 	doc.save(ignore_permissions=True)
 	if not frappe.db.get_value("Corporate Account", company, "credit_allowed"):
@@ -182,11 +214,9 @@ def create_ar_invoice(account: str, lines, reference: str | None = None,
 	alcohol lines take the hotel's own rate whatever is sent. Credit control
 	runs as at checkout. Returns the invoice number and the account's new
 	balance."""
-	from kamra.api import (_check_charge_amount_and_tax, _refuse_opening_balance,
-	                       _resolve_charge_gst)
+	from kamra.api import _check_charge_amount_and_tax, _refuse_opening_balance, _resolve_charge_gst
 	from kamra.folio import _recalculate, close_folio
-	from kamra.ledger import (CHARGE_TYPE_TO_CODE, code_for_charge_type,
-	                          save_folio, transfer_to_city_ledger)
+	from kamra.ledger import CHARGE_TYPE_TO_CODE, code_for_charge_type, save_folio, transfer_to_city_ledger
 
 	acc = _account(account)
 	assert_billable(account)

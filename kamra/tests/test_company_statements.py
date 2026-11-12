@@ -29,15 +29,12 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 
 	def on(self, day):
 		"""Pin today for the ledger and the statements."""
-		stack = patch("kamra.ledger.nowdate", return_value=day)
-		stack2 = patch("kamra.statements.nowdate", return_value=day)
-		stack.start(), stack2.start()
+		stack = patch("kamra.ledger.aging_date", return_value=day)
+		stack.start()
 		self.addCleanup(stack.stop)
-		self.addCleanup(stack2.stop)
 
 	def remind(self, day):
-		with patch("kamra.ledger.nowdate", return_value=day), \
-		     patch("kamra.statements.nowdate", return_value=day), \
+		with patch("kamra.ledger.aging_date", return_value=day), \
 		     patch("frappe.sendmail") as mail, \
 		     patch("kamra.night_audit.alert_staff") as alert:
 			out = statements.send_property_reminders(PROP_A)

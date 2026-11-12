@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **161 governed tools** on the hosted MCP
+Kamra exposes **164 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -760,6 +760,43 @@ an agent can't override a block. Refused on a restricted account.
 Confirm the lines and total with the user first.
 
 Endpoint: `kamra.receivables.create_ar_invoice`.
+Mutating - logged to the activity ledger.
+
+### `create_ar_account(company, account_number, credit_limit, use_default_credit_days, credit_days, billing_address, restricted, restricted_reason, idempotency_key)`
+
+Open a company account (AR) at this property, so the company can
+be billed on credit at check-out. `company` is the Corporate Account
+id. Payment terms: the property default unless
+use_default_credit_days is false, then credit_days. credit_limit 0
+means no limit. A restricted account needs restricted_reason and
+takes no new bills. One account per company per property. Needs a
+Finance or Hotel Admin user.
+
+Endpoint: `kamra.receivables.save_ar_account`.
+Mutating - logged to the activity ledger.
+
+### `update_ar_account(account, account_number, credit_limit, use_default_credit_days, credit_days, billing_address, restricted, restricted_reason, idempotency_key)`
+
+Edit a company account (see ar_accounts): account number, credit
+limit, payment terms, billing address, or restrict it (with
+restricted_reason) and lift the restriction. Only the fields you pass
+change. Needs a Finance or Hotel Admin user.
+
+Endpoint: `kamra.receivables.save_ar_account`.
+Mutating - logged to the activity ledger.
+
+### `record_ar_payment(account, amount, mode, reference, allocations, received_on, idempotency_key)`
+
+Record a payment a company made on its account (bank transfer,
+cheque). From an agent it does not post: it waits for a Finance user
+to confirm it with their PIN, and the result says pending with the
+request id and the bills it would clear (oldest first unless
+`allocations` [{folio, amount}] names them). received_on
+(YYYY-MM-DD) is the date the bank received it, the business date if
+left out. Confirm the amount and reference with the user first.
+An agent can't reverse a payment; Finance does that on the account.
+
+Endpoint: `kamra.ledger.city_ledger_settle`.
 Mutating - logged to the activity ledger.
 
 ### `payables_aging()`

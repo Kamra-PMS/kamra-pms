@@ -8443,7 +8443,7 @@ def t225():
 	                          ["posting_date", "due_date"], as_dict=True)
 	assert str(inv.due_date) == str(add_days(inv.posting_date, 45)), inv
 	def row(day):
-		with patch("kamra.ledger.nowdate", return_value=str(add_days(inv.posting_date, day))):
+		with patch("kamra.ledger.aging_date", return_value=str(add_days(inv.posting_date, day))):
 			return next(a for a in city_ledger_aging(P)["accounts"] if a["name"] == acct)
 	r = row(35)
 	assert r["not_due"] == 1000 and r["overdue"] == 0, r
@@ -8536,10 +8536,10 @@ def t228():
 		acct, f = _credit_bill(corp, "Eval Credit G", "+91 70009 22801", "C2801", 700, days=30)
 		due = frappe.db.get_value("City Ledger Entry", {"folio": f, "kind": "Invoice"}, "due_date")
 		_credit_setting("credit_overdue_grace_days", 7)
-		with patch("kamra.ledger.nowdate", return_value=str(add_days(due, 5))):
+		with patch("kamra.ledger.aging_date", return_value=str(add_days(due, 5))):
 			r = check_company_credit(corp, P)
 		assert r["ok"] and r["overdue_amount"] == 0, r
-		with patch("kamra.ledger.nowdate", return_value=str(add_days(due, 8))):
+		with patch("kamra.ledger.aging_date", return_value=str(add_days(due, 8))):
 			r = check_company_credit(acct, P)
 		assert not r["ok"] and r["overdue_amount"] == 700, r
 	finally:
@@ -10674,6 +10674,188 @@ def t_ar_balance_from_entries():
 	_assert_company_ar(acct)
 
 
+def _ar_snapshot(account):
+	from kamra.ledger import city_ledger_account
+	v = city_ledger_account(account)
+	return {"balance": round(float(v["balance"]), 2),
+	        "unapplied": v["unapplied_credit"],
+	        "buckets": {k: v[k] for k in ("not_due", "d1_30", "d31_60", "d61_90", "d90p")},
+	        "open": {r["folio"]: r["outstanding"] for r in v["open_items"]}}
+
+
+@check("city ledger: reversing a company payment reopens exactly what it cleared, once, never by an agent (#520)")
+def t_ar_reverse_payment():
+	from kamra.ledger import (
+		_unapplied_payments,
+		apply_unapplied_credit,
+		city_ledger_settle,
+		reverse_city_ledger_payment,
+	)
+	corp = _credit_corp("EVAL Reverse Pay Corp")
+	acct, f1, owed1 = _ar_bill("Eval Reverse 1", "+91 70000 05201", 9, "L5201", corp, 1000)
+	_, f2, owed2 = _ar_bill("Eval Reverse 2", "+91 70000 05202", 11, "L5202", corp, 600)
+	before = _ar_snapshot(acct)
+	# clears bill 1, part of bill 2, and leaves 200 as credit
+	paid = city_ledger_settle(acct, owed1 + owed2 + 200, "Cheque", "EVAL-CHQ-520")
+	assert paid["unapplied"] == 200, paid
+	assert _ar_snapshot(acct)["balance"] == round(before["balance"] - owed1 - owed2 - 200, 2)
+	# an agent never reverses, by role or by channel
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		_refused(reverse_city_ledger_payment, paid["payment"], "bounced",
+		         exc=frappe.PermissionError)
+	finally:
+		frappe.flags.kamra_agent_call = None
+	out = reverse_city_ledger_payment(paid["payment"], "returned unpaid",
+	                                  reason_code="REV-BOUNCE")
+	assert sorted((r["folio"], r["amount"]) for r in out["reopened"]) == \
+		sorted([(f1, owed1), (f2, owed2)]), out
+	assert out["unapplied_removed"] == 200, out
+	after = _ar_snapshot(acct)
+	assert after == before, (before, after)
+	assert not _unapplied_payments(acct), "the reversed payment's credit is still there"
+	notes = frappe.db.get_value("City Ledger Entry", out["reversal"], "notes")
+	assert "REV-BOUNCE" in notes and "returned unpaid" in notes, notes
+	_assert_company_ar(acct)
+	_refused(reverse_city_ledger_payment, paid["payment"], "again",
+	         contains="already reversed")
+	_refused(reverse_city_ledger_payment, out["reversal"], "the reversal",
+	         contains="not a company payment")
+	# the taken-back credit does not settle the company's next bill
+	_, f3, _owed3 = _ar_bill("Eval Reverse 3", "+91 70000 05203", 13, "L5203", corp, 300)
+	assert apply_unapplied_credit(acct, only_folio=f3) == []
+	assert frappe.db.exists("Agent Action Log", {
+		"action_type": "city_ledger_payment_reversed", "reference_name": acct})
+
+
+@check("city ledger: an agent's company payment waits for Finance's PIN and posts exactly what it proposed (#523)")
+def t_ar_agent_payment_confirm():
+	from kamra.ledger import city_ledger_settle, decide_city_ledger_payment
+	corp = _credit_corp("EVAL Agent Pay Corp")
+	acct, f1, owed1 = _ar_bill("Eval Agent Pay 1", "+91 70000 05231", 15, "L5231", corp, 900)
+	_, f2, _owed2 = _ar_bill("Eval Agent Pay 2", "+91 70000 05232", 17, "L5232", corp, 400)
+	before = _ar_snapshot(acct)
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		req = city_ledger_settle(acct, owed1 + 100, "Bank Transfer", "EVAL-UTR-523",
+		                         idempotency_key="eval-agent-523")
+		again = city_ledger_settle(acct, owed1 + 100, "Bank Transfer", "EVAL-UTR-523",
+		                           idempotency_key="eval-agent-523")
+		# an agent can't confirm its own (or any) payment
+		_refused(decide_city_ledger_payment, req["request"], pin=SUP_PIN,
+		         exc=frappe.PermissionError)
+	finally:
+		frappe.flags.kamra_agent_call = None
+	assert req["pending"] and req["applied"] == [{"folio": f1, "amount": owed1},
+	                                              {"folio": f2, "amount": 100}], req
+	assert again["request"] == req["request"] and again["idempotent_replay"], again
+	assert frappe.db.count("Company Payment Request", {"account": acct}) == 1
+	assert _ar_snapshot(acct) == before, "a pending payment touched the account"
+	assert frappe.db.count("City Ledger Entry", {"account": acct, "kind": "Payment"}) == 0
+	# the person behind the agent call confirms someone else's, not their own
+	_refused(decide_city_ledger_payment, req["request"], pin=SUP_PIN,
+	         exc=frappe.PermissionError)
+	sup = _supervisor()
+	with _as_user(sup):
+		_refused(decide_city_ledger_payment, req["request"], pin="0000", contains="Wrong")
+		frappe.cache.delete_value(f"kamra_supervisor_pin_fails:{sup}")
+		out = decide_city_ledger_payment(req["request"], pin=SUP_PIN)
+		_refused(decide_city_ledger_payment, req["request"], pin=SUP_PIN,
+		         contains="already")
+	assert out["status"] == "Confirmed" and out["applied"] == req["applied"], out
+	pay = frappe.get_doc("City Ledger Entry", out["payment"])
+	assert (float(pay.credit), pay.reference) == (owed1 + 100, "EVAL-UTR-523"), pay.as_dict()
+	assert pay.idempotency_key == "eval-agent-523"
+	assert _ar_snapshot(acct)["balance"] == round(before["balance"] - owed1 - 100, 2)
+	_assert_company_ar(acct)
+	# the agent retrying after confirmation gets the posted payment back
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		late = city_ledger_settle(acct, owed1 + 100, idempotency_key="eval-agent-523")
+	finally:
+		frappe.flags.kamra_agent_call = None
+	assert late["payment"] == out["payment"] and late["idempotent_replay"], late
+	# a rejection needs a note and posts nothing
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		req2 = city_ledger_settle(acct, 50, idempotency_key="eval-agent-523b")
+	finally:
+		frappe.flags.kamra_agent_call = None
+	with _as_user(sup):
+		_refused(decide_city_ledger_payment, req2["request"], approve=0, contains="why")
+		decide_city_ledger_payment(req2["request"], approve=0, note="not on the statement")
+	assert frappe.db.get_value("Company Payment Request", req2["request"], "status") == "Rejected"
+	assert frappe.db.count("City Ledger Entry", {"account": acct, "kind": "Payment"}) == 1
+	# Desk or /api/resource can't flip a request to Confirmed
+	doc = frappe.get_doc("Company Payment Request", req2["request"])
+	doc.status = "Confirmed"
+	_refused(doc.save, contains="already")
+	# with the setting on, a desk payment needs the user's own PIN
+	_credit_setting("city_ledger_payment_pin", 1)
+	try:
+		with _as_user(sup):
+			_refused(city_ledger_settle, acct, 10, contains="PIN")
+			city_ledger_settle(acct, 10, pin=SUP_PIN)
+	finally:
+		frappe.db.delete("Property Setting", {"property": P,
+		                                      "setting_key": "city_ledger_payment_pin"})
+		from kamra.settings import clear_cache
+		clear_cache(P)
+
+
+@check("city ledger: payment received date, disputed bills and business-date aging (#524)")
+def t_ar_received_dispute_aging():
+	from unittest.mock import patch
+
+	from frappe.utils import add_days
+
+	from kamra import statements
+	from kamra.business_date import get_business_date
+	from kamra.credit import check_company_credit
+	from kamra.ledger import city_ledger_account, city_ledger_settle, set_city_ledger_dispute
+	corp = _credit_corp("EVAL Dispute Corp")
+	acct, f1, owed1 = _ar_bill("Eval Dispute 1", "+91 70000 05241", 19, "L5241", corp, 700)
+	bd = get_business_date(P)
+	# received date: stored, defaults to the business date, never later
+	early = str(add_days(bd, -3))
+	pay = city_ledger_settle(acct, 100, "Bank Transfer", "EVAL-524", received_on=early)
+	row = frappe.db.get_value("City Ledger Entry", pay["payment"],
+	                          ["posting_date", "received_on"], as_dict=True)
+	assert (str(row.posting_date), str(row.received_on)) == (bd, early), row
+	pay2 = city_ledger_settle(acct, 50)
+	assert str(frappe.db.get_value("City Ledger Entry", pay2["payment"], "received_on")) == bd
+	_refused(city_ledger_settle, acct, 10, received_on=str(add_days(bd, 1)),
+	         contains="after the business date")
+	# aging counts from the business date, not the calendar
+	due = frappe.db.get_value("City Ledger Entry", {"folio": f1, "kind": "Invoice"}, "due_date")
+	frappe.db.set_value("Property", P, "business_date", str(add_days(due, 20)))
+	view = city_ledger_account(acct)
+	item = next(r for r in view["open_items"] if r["folio"] == f1)
+	assert item["days_overdue"] == 20 and view["d1_30"] == round(owed1 - 150, 2), view
+	r = check_company_credit(acct, P)
+	assert r["overdue_amount"] == round(owed1 - 150, 2), r
+	# a disputed bill: shown and summed, no credit block, no reminder
+	_refused(set_city_ledger_dispute, acct, f1, 1, "", contains="dispute")
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		_refused(set_city_ledger_dispute, acct, f1, 1, "rate", exc=frappe.PermissionError)
+	finally:
+		frappe.flags.kamra_agent_call = None
+	set_city_ledger_dispute(acct, f1, 1, "rate not as contracted")
+	view = city_ledger_account(acct)
+	item = next(r for r in view["open_items"] if r["folio"] == f1)
+	assert item["disputed"] and item["dispute_note"] == "rate not as contracted", item
+	assert view["disputed"] == round(owed1 - 150, 2) and view["d1_30"] == view["disputed"], view
+	assert check_company_credit(acct, P)["overdue_amount"] == 0
+	frappe.db.set_value("Corporate Account", corp, "contact_email", "ap@eval-dispute.test")
+	with patch("frappe.sendmail"), patch("kamra.night_audit.alert_staff"):
+		sent = statements.send_property_reminders(P)["sent"]
+	assert not [s for s in sent if s["folio"] == f1], sent
+	set_city_ledger_dispute(acct, f1, 0)
+	assert check_company_credit(acct, P)["overdue_amount"] == round(owed1 - 150, 2)
+	_assert_company_ar(acct)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10715,7 +10897,8 @@ def execute():
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
 		           t_concurrency_guards, t_safe_deposit_race,
-		           t_ar_settle_idempotent, t_ar_settle_race, t_ar_balance_from_entries):
+		           t_ar_settle_idempotent, t_ar_settle_race, t_ar_balance_from_entries,
+		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

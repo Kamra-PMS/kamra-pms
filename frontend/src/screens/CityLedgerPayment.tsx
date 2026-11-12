@@ -39,14 +39,17 @@ type Account = {
   d90p: number
   overdue: number
   open_items: OpenItem[]
-  payments: { name: string; posting_date: string; credit: number; reference?: string }[]
+  payments: { name: string; posting_date: string; credit: number; debit?: number; reference?: string; reverses?: string | null }[]
+  payment_pin_required?: boolean
 }
 
 type Result = {
-  payment: string
-  balance: number
+  payment?: string
+  balance?: number
   applied: { folio: string; amount: number }[]
   unapplied: number
+  // an AI agent's payment waits for Finance (never from this screen's user)
+  pending?: boolean
 }
 
 // plus the country's instant modes (a wallet / instant transfer)
@@ -65,6 +68,9 @@ export default function CityLedgerPayment(props: {
   const [amount, setAmount] = useState("")
   const [mode, setMode] = useState("Bank Transfer")
   const [reference, setReference] = useState("")
+  // blank = the business date
+  const [receivedOn, setReceivedOn] = useState("")
+  const [pin, setPin] = useState("")
   const [manual, setManual] = useState(false)
   const [picks, setPicks] = useState<Record<string, string>>({})
   const [step, setStep] = useState<"form" | "confirm" | "done">("form")
@@ -142,6 +148,8 @@ export default function CityLedgerPayment(props: {
         reference: reference.trim() || undefined,
         allocations: manual ? JSON.stringify(plan) : undefined,
         idempotency_key: payKey,
+        received_on: receivedOn || undefined,
+        pin: pin || undefined,
       })
       setPayKey(newIdempotencyKey())
       setResult(out)
@@ -169,7 +177,7 @@ export default function CityLedgerPayment(props: {
     ) : step === "confirm" ? (
       <div className="flex justify-end gap-2">
         <Button variant="outline" disabled={busy} onClick={() => setStep("form")}>{translate("Back")}</Button>
-        <Button disabled={busy} onClick={() => void submit()}>
+        <Button disabled={busy || (!!acc?.payment_pin_required && !pin)} onClick={() => void submit()}>
           {busy ? translate("Recording…") : translate("Confirm {v0}", { v0: String(fmtMoney(amt)) })}
         </Button>
       </div>
@@ -192,8 +200,12 @@ export default function CityLedgerPayment(props: {
         <p className="text-sm text-zinc-400">{translate("Loading account…")}</p>
       ) : step === "done" && result ? (
         <div className="space-y-3 text-sm">
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">{translate("Payment recorded. Account balance is now ")}{fmtMoney(result.balance)}.
-          </p>
+          {result.pending ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">{translate("Recorded for Finance to confirm. It does not change the account until a Finance user confirms it with their PIN.")}</p>
+          ) : (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">{translate("Payment recorded. Account balance is now ")}{fmtMoney(result.balance ?? 0)}.
+            </p>
+          )}
           <ul className="space-y-1">
             {result.applied.map((a) => (
               <li key={a.folio} className="flex justify-between">
@@ -210,7 +222,8 @@ export default function CityLedgerPayment(props: {
       ) : step === "confirm" ? (
         <div className="space-y-4 text-sm">
           <p>{translate("Record ")}<b>{fmtMoney(amt)}</b>{translate(" from ")}<b>{acc.company}</b>{translate(" by ")}{translate(mode)}
-            {reference.trim() ? translate(" (ref {v0})", { v0: String(reference.trim()) }) : ""}.
+            {reference.trim() ? translate(" (ref {v0})", { v0: String(reference.trim()) }) : ""}
+            {receivedOn ? translate(", received {v0}", { v0: receivedOn }) : ""}.
           </p>
           <div className="rounded-lg border border-zinc-200">
             <div className="border-b border-zinc-100 px-4 py-2 text-xs uppercase text-zinc-400">
@@ -234,6 +247,14 @@ export default function CityLedgerPayment(props: {
           ) : null}
           <p className="text-zinc-500">{translate("Balance after: ")}{fmtMoney(r2(acc.balance - amt))}
           </p>
+          {acc.payment_pin_required ? (
+            <label className="block max-w-xs">
+              <span className="mb-1 block text-zinc-500">{translate("Your cashier PIN")}</span>
+              <input type="password" inputMode="numeric" autoComplete="off"
+                className="w-full rounded-lg border border-zinc-300 px-2 py-1.5"
+                value={pin} onChange={(e) => setPin(e.target.value)} />
+            </label>
+          ) : null}
         </div>
       ) : (
         <div className="space-y-5">
@@ -262,7 +283,7 @@ export default function CityLedgerPayment(props: {
             ))}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-4">
             <label className="text-sm">
               <span className="mb-1 block text-zinc-500">{translate("Amount received")}</span>
               <input
@@ -293,6 +314,16 @@ export default function CityLedgerPayment(props: {
                 value={reference}
                 maxLength={120}
                 onChange={(e) => setReference(e.target.value)}
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-zinc-500">{translate("Received on")}</span>
+              <input
+                type="date"
+                className="w-full rounded-lg border border-zinc-300 px-2 py-1.5"
+                value={receivedOn}
+                onChange={(e) => setReceivedOn(e.target.value)}
+                title={translate("Leave blank for today's business date")}
               />
             </label>
           </div>
@@ -377,7 +408,7 @@ export default function CityLedgerPayment(props: {
                 {acc.payments.map((p) => (
                   <li key={p.name} className="flex justify-between">
                     <span>{p.posting_date} · {p.reference || "-"}</span>
-                    <span className="tabular-nums">{fmtMoney(p.credit)}</span>
+                    <span className={`tabular-nums ${p.reverses ? "text-rose-700" : ""}`}>{fmtMoney(p.reverses ? -(p.debit ?? 0) : p.credit)}</span>
                   </li>
                 ))}
               </ul>

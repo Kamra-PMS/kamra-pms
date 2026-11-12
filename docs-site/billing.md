@@ -337,12 +337,36 @@ Activity log.
    balance by age (0-30, 31-60, 61-90, 90+ days) and any unapplied credit.
 2. Press **Record payment** on the company's row.
 3. Enter **Amount received**, the **Mode** and the **Reference (UTR /
-   cheque no.)**. By default the payment clears the oldest bills first;
-   you can type the amount for each bill instead.
+   cheque no.)**. **Received on** is the date the bank received it; leave
+   it blank for today's business date. By default the payment clears the
+   oldest bills first; you can type the amount for each bill instead.
 4. Press **Review payment**, check what it clears, then **Confirm**.
 
 Money left over stays on the account as unapplied credit and pays the
-company's next bill automatically.
+company's next bill automatically. With **Ask for a PIN on every company
+payment** on (Settings → Property → Company credit), the person recording
+it confirms with their own cashier PIN.
+
+**Payments an AI agent records** never post on their own. They show under
+**Payments to confirm** on the company's account. A Finance user (not the
+one behind the agent) checks the amount and the bills it clears and
+presses **Confirm** with their PIN, which posts exactly that, or
+**Reject** with a note.
+
+**Reverse a payment** (a bounced cheque, or money put on the wrong
+account): under **Recent payments**, press **Reverse**, pick the reason
+and add a note. The bills it cleared are owed again with their old due
+dates, any credit it left on the account is taken back, and the reason is
+on the Activity log. A payment can be reversed once, and AI agents can't
+reverse one.
+
+**Disputed bills**: press **Dispute** on an open bill and say what the
+company disputes. The bill stays on the account, in aging and on the
+statement, marked Disputed, but gets no payment reminders and does not
+count towards the overdue credit block. **Clear dispute** ends it.
+
+Aging, reminders and the overdue check count days from the property's
+business date, so they agree with night audit around midnight.
 
 **Send a company its statement** (Finance and Hotel Admin): on the
 company's row in **City ledger aging**, press **Statement** to open it and
