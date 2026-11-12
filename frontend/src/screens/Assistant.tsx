@@ -42,6 +42,7 @@ import {
   type Answers,
   type Choice,
   type FlowId,
+  fitsStep,
   type GuideData,
   type GuideMenu,
   type GuideOutlet,
@@ -315,7 +316,8 @@ export default function Assistant() {
     const q = text.trim()
     const f = flowRef.current
     if (!q || busy || stepping) return
-    if (f && flows()[f.id].steps[f.step]?.text) {
+    const step = f && flows()[f.id].steps[f.step]
+    if (step && fitsStep(step, q)) {
       setInput("")
       return answer(q, q, true)
     }

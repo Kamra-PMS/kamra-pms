@@ -51,13 +51,41 @@ def _folio(property: str, start, end) -> dict:
 		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room', 'Discount', 'Meal Plan', 'Minibar')
 		        AND fc.charge_type NOT IN %(fnb)s AND fc.charge_type NOT IN %(skip)s
 		        THEN fc.amount END), 0) AS other
+		""" + _FOLIO_FROM, {"p": property, "s": start, "e": end, "skip": FOLIO_SKIP,
+		                     "fnb": FNB_TYPES}, as_dict=True)[0]
+	return {k: flt(v) for k, v in row.items()}
+
+
+# outlet bills and banquets are counted from their own records, so the folio
+# lines they post are left out here
+_FOLIO_FROM = """
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE f.property = %(p)s AND fc.posting_date BETWEEN %(s)s AND %(e)s
 		  AND IFNULL(fc.description, '') NOT LIKE '%%(ORD-%%'
 		  AND IFNULL(fc.description, '') NOT LIKE 'EVT-%%'
-		""", {"p": property, "s": start, "e": end, "skip": FOLIO_SKIP, "fnb": FNB_TYPES},
-		as_dict=True)[0]
-	return {k: flt(v) for k, v in row.items()}
+"""
+
+
+def departments(property: str, start, end) -> list[dict]:
+	"""Revenue by operating department for a date range: rooms, each outlet,
+	banquets, then each minor department (laundry, spa, taxi...) on its own
+	line. Same figures as the night audit report, which sums the minor ones
+	as "other"."""
+	p = _period(property, "", start, end, 0)
+	outlets = sum(o["total"] for o in p["outlets"])
+	rows = [("Rooms", p["room_revenue"])]
+	rows += [(o["name"], o["total"]) for o in p["outlets"]]
+	rows += [("Food and beverage on folios", p["food"] + p["beverage"] - outlets),
+	         ("Banquets", p["banquets"]),
+	         ("Meal plans and minibar", p["meal_plan_minibar"])]
+	rows += frappe.db.sql(
+		"""SELECT fc.charge_type, SUM(fc.amount)""" + _FOLIO_FROM + """
+		  AND fc.charge_type NOT IN ('Room', 'Discount', 'Meal Plan', 'Minibar')
+		  AND fc.charge_type NOT IN %(fnb)s AND fc.charge_type NOT IN %(skip)s
+		GROUP BY fc.charge_type ORDER BY fc.charge_type""",
+		{"p": property, "s": start, "e": end, "skip": FOLIO_SKIP, "fnb": FNB_TYPES})
+	return [{"department": frappe._(name), "amount": round(flt(amt), 2)}
+	        for name, amt in rows if name == "Rooms" or round(flt(amt), 2)]
 
 
 def _outlets(property: str, start, end) -> list[dict]:
@@ -74,8 +102,19 @@ def _outlets(property: str, start, end) -> list[dict]:
 		  AND COALESCE(o.business_date, DATE(o.creation)) BETWEEN %(s)s AND %(e)s
 		GROUP BY o.name
 		""", {"p": property, "s": start, "e": end}, as_dict=True)
+	# a bill charged to a room is revenue only while its charge is on a
+	# folio: a void at the desk removes the line (a transfer keeps the order
+	# number in it) but leaves the order Delivered, so it counted as sold
+	to_room = [r.bill for r in rows if not r.paid]
+	on_folio = {o for (o,) in frappe.db.sql(
+		"""SELECT o.name FROM `tabPOS Order` o WHERE o.name IN %(b)s AND EXISTS (
+		       SELECT 1 FROM `tabFolio Charge` c WHERE c.parenttype = 'Folio'
+		         AND c.description LIKE CONCAT('%%(', o.name, ')%%'))""",
+		{"b": tuple(to_room)})} if to_room else set()
 	out: dict[str, dict] = {}
 	for r in rows:
+		if not r.paid and r.bill not in on_folio:
+			continue
 		gross = flt(r.food) + flt(r.bev)
 		keep = 1 - (flt(r.discount_amount) / gross) if gross else 0
 		o = out.setdefault(r.outlet, {"outlet": r.outlet, "bills": 0, "food": 0.0,

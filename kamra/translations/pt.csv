@@ -39,3 +39,27 @@ Discount {0}%,Desconto {0}%
 Discount {0} per night,Desconto {0} por diária
 A discount needs a reason - it goes on the record.,Um desconto precisa de um motivo; ele fica no registro.
 Invoice,Fatura
+Monthly,Mensal
+Shop,Loja
+Revenue by department,Receita por departamento
+Department,Departamento
+"Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.","Quartos, cada ponto de venda, banquetes e cada departamento operacional menor (lavanderia, spa, táxi...), como no relatório de fechamento de dia."
+Food and beverage on folios,Alimentos e bebidas nas contas
+Meal plans and minibar,Planos de refeição e frigobar
+Banquets,Banquetes
+Laundry,Lavanderia
+Spa,Termas
+Taxi,Táxi
+Misc,Diversos
+Early Check-in,Check-in antecipado
+Late Checkout,Check-out tardio
+Early Departure,Saída antecipada
+Cleaning Fee,Taxa de limpeza
+Extra Guests,Hóspedes Adicionais
+Pet Charge,Taxa para animais de estimação
+Rooms,Quartos
+Bills paid,Faturas pagas
+{0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,{0} conta(s) desta estadia ainda não estão na conta do hóspede: {1}. Lance-as no quarto ou acerte-as antes do check-out.
+Bills still open,Contas ainda abertas
+Use Check out to check a guest out: it makes sure every bill is cleared first.,Use Check-out para dar saída ao hóspede: ele confere antes que todas as contas estejam quitadas.
+Check out,Check-out

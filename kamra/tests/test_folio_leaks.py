@@ -329,3 +329,44 @@ class FolioLeaksTestCase(AuditTestCase):
 		_pending, pending_folio = self.advance_stay(500, room=self.room2)
 		patch.execute()
 		self.assertAlmostEqual(_net(pending_folio, "Deposit"), -500, places=2)
+
+	def test_a_no_show_fee_is_paid_from_the_advance(self):
+		res, folio = self.advance_stay(1000)
+		res.reload()
+		fee = folio_mod.post_policy_fee(res, "First Night", "No-show charge (First Night)")
+		self.assertGreater(fee, 0)
+		# the advance paid the fee: nothing still held, and the Guest ledger
+		# agrees with what the folio says is owed (or owed back)
+		self.assertAlmostEqual(_net(folio, "Deposit"), 0, places=2)
+		self.assertAlmostEqual(_net(folio, "Guest"), _balance(folio), places=2)
+
+	def test_policy_fee_patch_moves_a_stranded_no_show_advance(self):
+		res, folio = self.advance_stay(1000)
+		res.reload()
+		folio_mod.post_policy_fee(res, "First Night", "No-show charge (First Night)")
+		frappe.db.set_value("Reservation", res.name, "status", "No Show")
+		frappe.db.delete("Folio Ledger Entry", {
+			"folio": folio, "description": ledger.ADVANCE_APPLIED})
+		self.assertAlmostEqual(_net(folio, "Deposit"), -1000, places=2)
+		from kamra.patches.v47 import move_policy_fee_advances_to_guest_ledger as patch
+		patch.execute()
+		patch.execute()
+		self.assertAlmostEqual(_net(folio, "Deposit"), 0, places=2)
+		self.assertAlmostEqual(_net(folio, "Guest"), _balance(folio), places=2)
+
+	def test_a_status_edit_cannot_check_a_guest_out(self):
+		res = make_reservation(PROP_A, self.rt, d(-1), TODAY,
+		                       status="Checked In", room=self.room)
+		res.reload()
+		res.status = "Checked Out"
+		with self.assertRaisesRegex(frappe.ValidationError, "Use Check out"):
+			res.save(ignore_permissions=True)
+
+	def test_a_tax_free_property_offers_only_zero_tax(self):
+		from kamra.localization import generic
+		frappe.db.set_value("Property", PROP_A, {"gst_rate_low": 0, "gst_rate_high": 0})
+		frappe.clear_document_cache("Property", PROP_A)
+		self.assertEqual(generic.tax_rate_options(PROP_A), [0])
+		frappe.db.set_value("Property", PROP_A, "gst_rate_low", 5)
+		frappe.clear_document_cache("Property", PROP_A)
+		self.assertIn(5, generic.tax_rate_options(PROP_A))

@@ -81,7 +81,7 @@ menu to open it like an app.
 
 Open **Reports → Custom reports**. You build a report from a **dataset**:
 arrivals, departures, in-house, no-shows and cancellations, occupancy by
-day, folio charges, payments, voids, contribution, housekeeping tasks,
+day, folio charges, payments, revenue by department, voids, contribution, housekeeping tasks,
 room status, lost and found, POS orders and kitchen times. You only see the datasets
 your role can open (see [Who sees which report](#who-sees-which-report)).
 
@@ -89,11 +89,12 @@ your role can open (see [Who sees which report](#who-sees-which-report)).
    filters, set the date range (up to 92 days), and press **Preview**.
 2. **Save** to keep the definition under **My reports**. Finance and
    Hotel Admin can **share** a report with the property and set a
-   **Daily** or **Weekly** email schedule (recipients + time), or
-   **After night audit**: sent as soon as the audit closes the day.
+   **Daily**, **Weekly** or **Monthly** email schedule (recipients +
+   time), or **After night audit**: sent as soon as the audit closes the day.
 3. **CSV**, **Print** and **Email** work for new or saved reports.
-   Scheduled sends attach yesterday (or the last 7 days for weekly, or
-   the day just closed for after night audit) as CSV.
+   Scheduled sends attach yesterday (or the last 7 days for weekly, the
+   month before for monthly, sent on the 1st, or the day just closed for
+   after night audit) as CSV.
 
 ### Group and drill down
 
@@ -115,7 +116,7 @@ on one page:
 | **Front Office pack** | Occupancy by day, arrivals by source, in house by room type, no-shows and cancellations |
 | **Housekeeping pack** | Room status now, tasks by type and by attendant with average clean minutes, lost and found |
 | **F&B pack** | Sales and covers by outlet, orders by status, items sold, kitchen turnaround |
-| **Hotel Manager pack** | Occupancy and revenue, revenue by source, collections by mode, charges by type, voids and allowances |
+| **Hotel Manager pack** | Occupancy and revenue, revenue by department (rooms, each outlet, banquets and each minor department such as laundry or spa), revenue by source, collections by mode, charges by type, voids and allowances |
 
 1. Set the **From** and **To** dates.
 2. Press **Open** for a printable page, or **Email now** and type the
@@ -138,8 +139,8 @@ someone a report their role can't open.
 | Role | Fixed reports | Custom report datasets | Packs |
 |---|---|---|---|
 | Front Desk | Manager flash, shift report, SLA, F&B dashboard, wastage, banquet registers | Arrivals, departures, in-house, no-shows, occupancy, housekeeping tasks, room status, lost and found, POS orders | All four |
-| Night Auditor | Manager flash, shift report | Arrivals, departures, in-house, no-shows, occupancy, folio charges, payments | Front Office, Hotel Manager |
-| Finance | Manager flash, shift report, voids, F&B dashboard, wastage, banquet registers | Front office datasets, folio charges, payments, voids, contribution, POS orders | Front Office, F&B, Hotel Manager |
+| Night Auditor | Manager flash, shift report | Arrivals, departures, in-house, no-shows, occupancy, folio charges, payments, revenue by department | Front Office, Hotel Manager |
+| Finance | Manager flash, shift report, voids, F&B dashboard, wastage, banquet registers | Front office datasets, folio charges, payments, revenue by department, voids, contribution, POS orders | Front Office, F&B, Hotel Manager |
 | Housekeeping, Housekeeping Supervisor | None | Housekeeping tasks, room status, lost and found | Housekeeping |
 | F&B Manager | F&B dashboard, wastage | POS orders, POS items, kitchen times | F&B |
 
