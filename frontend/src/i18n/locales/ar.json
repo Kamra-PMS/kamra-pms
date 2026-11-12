@@ -2413,6 +2413,8 @@
   "{room} hasn't been cleaned yet - housekeeping will see the room flip to occupied.": "{room} لم تُنظَّف بعد - سيرى التدبير المنزلي الغرفة تتحول إلى مشغولة.",
   "{room} hasn't been cleaned yet.": "{room} لم تُنظَّف بعد.",
   "{sold} of {total} rooms": "{sold} من {total} غرف",
+  "{occupied} of {available} rooms (in house)": "{occupied} من {available} غرف (مقيمون)",
+  "{occupied} of {available} rooms (posted)": "{occupied} من {available} غرف (مُرحَّلة)",
   "{tax} rate": "نسبة {tax}",
   "{tax} summary": "ملخص {tax}",
   "{tax} {rate}%": "{tax} {rate}%",

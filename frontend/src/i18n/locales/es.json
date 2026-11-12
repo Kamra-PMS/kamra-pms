@@ -5649,6 +5649,8 @@
   "{room} hasn't been cleaned yet - housekeeping will see the room flip to occupied.": "La habitación {room} aún no está limpia. El personal de limpieza verá que pasa a estar ocupada.",
   "{room} hasn't been cleaned yet.": "{room} aún no se ha limpiado.",
   "{sold} of {total} rooms": "{sold} de {total} habitaciones",
+  "{occupied} of {available} rooms (in house)": "{occupied} de {available} habitaciones (alojados)",
+  "{occupied} of {available} rooms (posted)": "{occupied} de {available} habitaciones (registradas)",
   "{sold}/{capacity} sold ({occupancy}%)": "{sold}/{capacity} vendidas ({occupancy}%)",
   "{tax} rate": "Tasa de {tax}",
   "{tax} summary": "Resumen de {tax}",

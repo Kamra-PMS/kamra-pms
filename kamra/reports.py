@@ -13,6 +13,20 @@ from frappe.utils import add_days, getdate, nowdate
 from kamra.authz import require_roles
 
 
+def _out_of_order(property: str, date: str, open_date: bool) -> int:
+	"""Rooms not for sale on date: Out of Order now for the open business
+	date (as dashboards._sellable), else under an Active Maintenance block."""
+	if open_date:
+		return frappe.db.count("Room", {
+			"property": property, "housekeeping_status": "Out of Order"})
+	return int(frappe.db.sql(
+		"""
+		SELECT COUNT(DISTINCT room) FROM `tabRoom Block`
+		WHERE property = %(p)s AND block_status = 'Active'
+		  AND reason = 'Maintenance' AND from_date <= %(d)s AND to_date > %(d)s
+		""", {"p": property, "d": date})[0][0] or 0)
+
+
 def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 	row = frappe.db.sql(
 		"""
@@ -47,11 +61,30 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 		  AND check_in_date <= %(d)s AND check_out_date > %(d)s
 		""",
 		{"p": property, "d": date})[0][0] or 0)
+	# occupancy as OPERA's manager report counts it: rooms occupied over
+	# rooms not out of order. Room nights post at night audit, so until the
+	# audit closes the date the rooms occupied are the rooms in house.
+	from kamra.business_date import get_business_date
+	in_house = getdate(date) >= getdate(get_business_date(property))
+	occupied = sold
+	if in_house:
+		occupied = int(frappe.db.sql(
+			"""
+			SELECT COUNT(DISTINCT COALESCE(NULLIF(room, ''), name))
+			FROM `tabReservation`
+			WHERE property = %(p)s AND status = 'Checked In'
+			  AND check_in_date <= %(d)s
+			""",
+			{"p": property, "d": date})[0][0] or 0)
+	available = max(total_rooms - _out_of_order(property, date, in_house), 0)
 	return {
 		"date": str(date),
 		"rooms_sold": sold,
+		"rooms_occupied": occupied,
+		"available_rooms": available,
+		"occupancy_basis": "in_house" if in_house else "posted",
 		"pax": pax,
-		"occupancy_pct": round(100 * sold / total_rooms, 1) if total_rooms else 0,
+		"occupancy_pct": round(100 * occupied / available, 1) if available else 0,
 		"room_revenue": rev,
 		"fnb_revenue": fnb,
 		"other_revenue": other,
@@ -166,6 +199,7 @@ def manager_flash(property: str, date: str | None = None,
 	start = from_date or date
 	report_range_end(start, date)
 	total_rooms = frappe.db.count("Room", {"property": property}) or 0
+	sellable = max(total_rooms - _out_of_order(property, date, True), 0)
 
 	month = _days(property, getdate(date).replace(day=1), getdate(date), total_rooms)
 	days = _days(property, getdate(start), getdate(date), total_rooms)
@@ -186,12 +220,13 @@ def manager_flash(property: str, date: str | None = None,
 			""", {"p": property, "d": od})[0][0]
 		outlook.append({
 			"date": od, "booked": int(booked),
-			"occupancy_pct": round(100 * booked / total_rooms, 1)
-			if total_rooms else 0,
+			"occupancy_pct": round(100 * booked / sellable, 1)
+			if sellable else 0,
 		})
 
 	return {
 		"date": str(date), "from_date": str(start), "total_rooms": total_rooms,
+		"available_rooms": days[-1]["available_rooms"],
 		"today": days[-1] if len(days) == 1 else _sum_days(days, total_rooms),
 		"mtd": _sum_days(month, total_rooms), "movement": movement,
 		"collections": collections,
@@ -211,11 +246,14 @@ def _days(property: str, d, end, total_rooms: int) -> list[dict]:
 def _sum_days(days: list[dict], total_rooms: int) -> dict:
 	"""Several days' stats as one: totals, with rates over the whole span."""
 	tot = {k: sum(d[k] for d in days) for k in
-	       ("rooms_sold", "pax", "room_revenue", "fnb_revenue", "other_revenue",
-	        "total_revenue")}
+	       ("rooms_sold", "rooms_occupied", "available_rooms", "pax", "room_revenue",
+	        "fnb_revenue", "other_revenue", "total_revenue")}
 	n = total_rooms * len(days)
+	avail = tot["available_rooms"]
 	return {**tot,
-	        "occupancy_pct": round(100 * tot["rooms_sold"] / n, 1) if n else 0,
+	        "occupancy_basis": "in_house" if any(
+	            d["occupancy_basis"] == "in_house" for d in days) else "posted",
+	        "occupancy_pct": round(100 * tot["rooms_occupied"] / avail, 1) if avail else 0,
 	        "adr": round(tot["room_revenue"] / tot["rooms_sold"], 0) if tot["rooms_sold"] else 0,
 	        "revpar": round(tot["room_revenue"] / n, 0) if n else 0,
 	        "revpax": round(tot["total_revenue"] / tot["pax"], 0) if tot["pax"] else 0}

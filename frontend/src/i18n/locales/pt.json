@@ -372,6 +372,8 @@
   "{room} hasn't been cleaned yet.": "{room} ainda não foi limpo.",
   "{rooms} rooms · {booked} in use": "{rooms} quartos · {booked} em uso",
   "{sold} of {total} rooms": "{sold} de {total} quartos",
+  "{occupied} of {available} rooms (in house)": "{occupied} de {available} quartos (hospedados)",
+  "{occupied} of {available} rooms (posted)": "{occupied} de {available} quartos (lançados)",
   "{sold}/{capacity} sold ({occupancy}%)": "{sold}/{capacity} vendido ({occupancy}%)",
   "{t} left": "{t} esquerda",
   "{tax} {rate}%": "{tax} {rate}%",

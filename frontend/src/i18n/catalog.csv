@@ -349,6 +349,8 @@
 {name} module,{name} module,وحدة {name},Módulo {name},screens/settings/SettingsHub.tsx,name,translated
 {name} usually takes {min}+ - check the minimum spend applies.,{name} usually takes {min}+ - check the minimum spend applies.,{name} عادةً يأخذ {min}+ - تحقق من تطبيق الحد الأدنى للإنفاق.,{name} suele requerir al menos {min} personas. Verifique si se aplica el consumo mínimo.,screens/Banquet.tsx,name min,translated
 "{o} outlets, {t} tills","{o} outlets, {t} tills",{o} منافذ، {t} صناديق,"{o} puntos de venta, {t} cajas",screens/Setup.tsx,o t,translated
+{occupied} of {available} rooms (in house),{occupied} of {available} rooms (in house),{occupied} من {available} غرف (مقيمون),{occupied} de {available} habitaciones (alojados),,occupied available,translated
+{occupied} of {available} rooms (posted),{occupied} of {available} rooms (posted),{occupied} من {available} غرف (مُرحَّلة),{occupied} de {available} habitaciones (registradas),,occupied available,translated
 {occupied} of {total} rooms,{occupied} of {total} rooms,{occupied} من {total} غرف,{occupied} de {total} habitaciones,screens/Today.tsx,occupied total,translated
 {pax} pax,{pax} pax,{pax} ضيف,{pax} personas,screens/Banquet.tsx,pax,translated
 {pct}% occupancy,{pct}% occupancy,إشغال {pct}%,{pct}% de ocupación,components/RoomInsights.tsx,pct,translated
@@ -363,7 +365,7 @@
 {room} hasn't been cleaned yet - housekeeping will see the room flip to occupied.,{room} hasn't been cleaned yet - housekeeping will see the room flip to occupied.,{room} لم تُنظَّف بعد - سيرى التدبير المنزلي الغرفة تتحول إلى مشغولة.,La habitación {room} aún no está limpia. El personal de limpieza verá que pasa a estar ocupada.,components/BookingDialog.tsx,room,translated
 {room} hasn't been cleaned yet.,{room} hasn't been cleaned yet.,{room} لم تُنظَّف بعد.,{room} aún no se ha limpiado.,components/RoomChangeDialog.tsx,room,translated
 {rooms} rooms · {booked} in use,{rooms} rooms · {booked} in use,{rooms} غرف · {booked} قيد الاستخدام,Habitaciones: {rooms} · en uso: {booked},screens/TapeChart.tsx,rooms booked,translated
-{sold} of {total} rooms,{sold} of {total} rooms,{sold} من {total} غرف,{sold} de {total} habitaciones,screens/Reports.tsx,sold total,translated
+{sold} of {total} rooms,{sold} of {total} rooms,{sold} من {total} غرف,{sold} de {total} habitaciones,,sold total,translated
 {sold}/{capacity} sold ({occupancy}%),{sold}/{capacity} sold ({occupancy}%),{sold}/{capacity} مباع ({occupancy}%),{sold}/{capacity} vendidas ({occupancy}%),screens/TapeChart.tsx,sold capacity occupancy,translated
 {t} left,{t} left,متبقٍ {t},Quedan {t},screens/Tickets.tsx,t,translated
 {tax} {rate}%,{tax} {rate}%,{tax} {rate}%,{tax} {rate}%,screens/FolioView.tsx,tax rate,translated
