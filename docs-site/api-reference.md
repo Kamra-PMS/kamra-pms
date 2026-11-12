@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **489 endpoints**, generated from the source
+the UI and the AI use. **490 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -582,15 +582,22 @@ Give money back on an open folio - a held security deposit at
 checkout, or an over-collected advance. Stored as a negative ledger
 row so every balance still sums exactly; a reason is mandatory.
 
+payment_row refunds against one payment line: mode defaults to that
+payment's mode (pass Cash to give cash back instead) and amount to what
+is left of it. A retry with the same idempotency_key returns the first
+refund instead of paying out twice.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `folio` | yes |  |
-| `amount` | yes |  |
-| `mode` | yes |  |
-| `reason` | yes |  |
+| `amount` | no | `None` |
+| `mode` | no | `None` |
+| `reason` | no | `''` |
 | `pin` | no | `None` |
 | `reason_code` | no | `None` |
 | `supervisor_pin` | no | `None` |
+| `payment_row` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.set_actual_times`
 
@@ -622,6 +629,30 @@ accountable through the action log. Posts a ledger reversal.
 | `pin` | no | `None` |
 | `reason_code` | no | `None` |
 | `supervisor_pin` | no | `None` |
+
+### `kamra.api.correct_folio_charge`
+
+**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+
+Correct a posted line on an open folio without editing it: a reversal
+of the original and a repost with the right amount, tax rate or charge
+type, both linked to the original (corrects_row). Same roles, PIN and
+Void reason codes as void_folio_charge. A retry with the same
+idempotency_key returns the first correction.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `folio` | yes |  |
+| `charge_row` | yes |  |
+| `reason` | no | `''` |
+| `amount` | no | `None` |
+| `gst_rate` | no | `None` |
+| `charge_type` | no | `None` |
+| `description` | no | `None` |
+| `pin` | no | `None` |
+| `reason_code` | no | `None` |
+| `supervisor_pin` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.post_stay_charge`
 
@@ -738,13 +769,21 @@ charges and no payments - money is never dropped this way.
 
 **GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
 
-Bulk move: several charge lines to another folio of the stay.
+Move charge lines off one open folio, ledger and all. Give one target:
+to_folio (another folio of the same stay or group), to_company=1 (the
+stay's Company folio, opened if needed) or to_reservation (the open Guest
+folio of another in-house stay here; Finance or Hotel Admin, with a
+reason). A retry with the same idempotency_key returns the first move.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `from_folio` | yes |  |
 | `charge_rows` | yes |  |
-| `to_folio` | yes |  |
+| `to_folio` | no | `None` |
+| `to_company` | no | `0` |
+| `to_reservation` | no | `None` |
+| `reason` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.split_folio_charge`
 

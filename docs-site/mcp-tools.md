@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **164 governed tools** on the hosted MCP
+Kamra exposes **166 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -666,12 +666,41 @@ staff first and give the reason.
 Endpoint: `kamra.api.change_stay_company`.
 Mutating - logged to the activity ledger.
 
-### `move_charges(from_folio, charge_rows, to_folio)`
+### `transfer_folio_charge(from_folio, charge_rows, to_folio, to_company, to_reservation, reason, idempotency_key)`
 
-Move charge lines to another folio of the same stay or group.
-charge_rows is a list of charge line names from get_folio.
+Move charge lines (names from get_folio or folio_statement) off an
+open folio, ledger and all. Give ONE target: to_folio (another folio
+of the same stay or group), to_company=true (the stay's Company
+folio, opened if needed; alcohol never moves there) or
+to_reservation (another checked-in stay here: Finance or Hotel Admin
+only, reason required). Lines keep their GL code.
 
 Endpoint: `kamra.api.transfer_folio_charges`.
+Mutating - logged to the activity ledger.
+
+### `refund_payment(folio, payment_row, amount, mode, reason, reason_code, idempotency_key)`
+
+Give money back on an open folio, with a reason (or a Refund
+reason_code). payment_row (a payment line from get_folio) refunds
+that payment: to its own mode by default, or pass mode Cash to give
+cash back; amount defaults to what is left of it. Without
+payment_row give amount and mode. Refuses more than the guest is in
+credit. A security deposit is refunded with refund_deposit. Confirm
+the amount with staff first.
+
+Endpoint: `kamra.api.refund_folio_payment`.
+Mutating - logged to the activity ledger.
+
+### `correct_folio_charge(folio, charge_row, reason, amount, gst_rate, charge_type, description, reason_code, idempotency_key)`
+
+Correct a posted charge on an open folio: the original line stays,
+a reversal of it and a repost with the right amount (pre-tax),
+tax rate, charge type or description are added, both linked to it
+(corrects_row). Give only what changes. Needs a reason (or a Void
+reason_code). Room nights change through the stay's rate, not here;
+settled bills need a credit note.
+
+Endpoint: `kamra.api.correct_folio_charge`.
 Mutating - logged to the activity ledger.
 
 ### `folio_statement(folio)`
