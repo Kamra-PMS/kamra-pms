@@ -623,7 +623,7 @@
         "kamra.api.collect_security_deposit"
        ]
       },
-      "description": "Take a refundable security deposit (villas: the damage deposit). Lands\non the guest folio as a Security Deposit payment and in the Deposit\nledger - a liability held for the guest, never revenue. Cashier PIN and\nopen till as for any payment.",
+      "description": "Take a refundable security deposit (villas: the damage deposit). Lands\non the guest folio as a Security Deposit payment and in the Deposit\nledger - a liability held for the guest, never revenue. Cashier PIN and\nopen till as for any payment.\n\nPass idempotency_key (one per Collect press): a retry with the same key\nreturns the first result instead of posting again.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"amount\": 1000,\n  \"mode\": \"Cash\"\n}",

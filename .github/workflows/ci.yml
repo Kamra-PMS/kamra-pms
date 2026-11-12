@@ -39,6 +39,10 @@ jobs:
         run: npm run phone:check
         working-directory: frontend
 
+      - name: Check booking default room-type picker
+        run: npm run booking-defaults:check
+        working-directory: frontend
+
   evals:
     name: Backend eval harness
     runs-on: ubuntu-latest
@@ -123,7 +127,7 @@ jobs:
       - name: Run the night audit, ledger and scheduled-audit unit tests
         run: |
           cd frappe-bench
-          for m in test_assistant_currency test_nicaragua_pack test_night_audit test_ledger_audit test_folio_leaks test_bill_settlement test_health test_scheduled_jobs test_golive test_credit_control test_webhooks test_pos_interface test_mcp test_seed_history test_rates test_holiday_package; do
+          for m in test_assistant_currency test_nicaragua_pack test_night_audit test_ledger_audit test_folio_leaks test_bill_settlement test_health test_scheduled_jobs test_golive test_credit_control test_webhooks test_pos_interface test_mcp test_seed_history test_rates test_holiday_package test_siu_room_type_sync test_booking_options_order test_payment_idempotency; do
             bench --site test.localhost run-tests --module kamra.tests.$m \
               2>&1 | tee "$m.out"
             # known bugs are pinned as expected failures and a few tests skip

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { Plus, Star, Trash2 } from "lucide-react"
 
-import { call } from "../lib/api"
+import { call, newIdempotencyKey } from "../lib/api"
 import { useRealtime } from "../lib/realtime"
 import { serverError, type Row } from "../lib/resource"
 import LinkedRecords from "./LinkedRecords"
@@ -165,6 +165,8 @@ export default function GroupControl({
   const [cutoff, setCutoff] = useState("")
   const [terms, setTerms] = useState({ attrition_pct: "", deposit_due: "" })
   const [deposit, setDeposit] = useState<{ amount: string; mode: string } | null>(null)
+  // one key per Take deposit press; reused on retry (#550)
+  const [depositKey, setDepositKey] = useState(newIdempotencyKey)
   const [pick, setPick] = useState({ room_type: "", guest_name: "", phone: "" })
   const [settle, setSettle] = useState<{ mode: string; amount: string; cityLedger: boolean } | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
@@ -252,7 +254,10 @@ export default function GroupControl({
   const takeDeposit = (amount: number, mode: string) =>
     act(async () => {
       const { folio } = await call<{ folio: string }>("kamra.api.group_master_folio", { group_booking: name })
-      await call("kamra.api.add_folio_payment", { folio, mode, amount, kind: "Advance" })
+      await call("kamra.api.add_folio_payment", {
+        folio, mode, amount, kind: "Advance", idempotency_key: depositKey,
+      })
+      setDepositKey(newIdempotencyKey())
       setDeposit(null)
       setNotice(translate("Deposit of {v0} received on the group bill.", { v0: inr(amount) }))
     }, true)

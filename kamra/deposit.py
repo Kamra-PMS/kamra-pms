@@ -129,9 +129,22 @@ def record_collected(reservation: str, amount: float, mode: str) -> None:
 
 def collect_deposit(reservation: str, amount: float, *, mode: str = "Cash",
                     reference: str | None = None,
-                    pin: str | None = None) -> dict:
+                    pin: str | None = None,
+                    idempotency_key: str | None = None) -> dict:
 	"""Take the security deposit: a Security Deposit payment on the guest
-	folio (opened early if the guest hasn't arrived), held as a liability."""
+	folio (opened early if the guest hasn't arrived), held as a liability.
+
+	Pass idempotency_key (one per Collect press): a retry with the same key
+	returns the first result instead of posting again."""
+	key = (idempotency_key or "").strip() or None
+	if key:
+		from kamra.api import _paid_with_key
+		folio = _paid_with_key(key, reservation=reservation)
+		if folio:
+			res = _reservation(reservation)
+			state = deposit_state(res)
+			state["idempotent_replay"] = 1
+			return state
 	res = _reservation(reservation)
 	if res.status not in COLLECT_STATUSES:
 		frappe.throw(_("A security deposit can't be taken on a {0} booking.")
@@ -158,7 +171,7 @@ def collect_deposit(reservation: str, amount: float, *, mode: str = "Cash",
 	# record_collected all happen in there
 	add_folio_payment(folio, mode, amt,
 	                  reference=reference or f"security-deposit:{res.name}",
-	                  pin=pin, kind="Security Deposit")
+	                  pin=pin, kind="Security Deposit", idempotency_key=key)
 	from kamra.savings import log_action
 	log_action("collect_security_deposit", "Reservation", res.name,
 	           res.property,

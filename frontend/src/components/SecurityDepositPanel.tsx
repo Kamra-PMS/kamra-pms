@@ -8,7 +8,7 @@
 
 import { useState } from "react"
 import { ShieldCheck } from "lucide-react"
-import { call } from "../lib/api"
+import { call, newIdempotencyKey } from "../lib/api"
 import { useAuth } from "../lib/auth"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
@@ -84,6 +84,8 @@ export default function SecurityDepositPanel(props: {
   const [text, setText] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // one key per Collect press; reused on retry (#550)
+  const [collectKey, setCollectKey] = useState(newIdempotencyKey)
 
   const allowed = (m: Mode) => GATES[m].some((r) => roles.includes(r))
   const nothingYet = d.status === "None" && d.history.length === 0
@@ -112,7 +114,11 @@ export default function SecurityDepositPanel(props: {
       let method = ""
       if (mode === "collect") {
         method = "kamra.api.collect_security_deposit"
-        Object.assign(args, { amount: Number(amount), mode: payMode, reference: text.trim() || undefined })
+        Object.assign(args, {
+          amount: Number(amount), mode: payMode,
+          reference: text.trim() || undefined,
+          idempotency_key: collectKey,
+        })
       } else if (mode === "waive") {
         method = "kamra.api.waive_security_deposit"
         args.reason = text.trim()
@@ -124,6 +130,7 @@ export default function SecurityDepositPanel(props: {
         Object.assign(args, { amount: Number(amount), mode: payMode, note: text.trim() || undefined })
       }
       await call(method, args)
+      if (mode === "collect") setCollectKey(newIdempotencyKey())
       setMode(null)
       props.onChanged()
     } catch (e) {
