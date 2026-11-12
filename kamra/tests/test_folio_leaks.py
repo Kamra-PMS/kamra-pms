@@ -329,3 +329,27 @@ class FolioLeaksTestCase(AuditTestCase):
 		_pending, pending_folio = self.advance_stay(500, room=self.room2)
 		patch.execute()
 		self.assertAlmostEqual(_net(pending_folio, "Deposit"), -500, places=2)
+
+	def test_a_no_show_fee_is_paid_from_the_advance(self):
+		res, folio = self.advance_stay(1000)
+		res.reload()
+		fee = folio_mod.post_policy_fee(res, "First Night", "No-show charge (First Night)")
+		self.assertGreater(fee, 0)
+		# the advance paid the fee: nothing still held, and the Guest ledger
+		# agrees with what the folio says is owed (or owed back)
+		self.assertAlmostEqual(_net(folio, "Deposit"), 0, places=2)
+		self.assertAlmostEqual(_net(folio, "Guest"), _balance(folio), places=2)
+
+	def test_policy_fee_patch_moves_a_stranded_no_show_advance(self):
+		res, folio = self.advance_stay(1000)
+		res.reload()
+		folio_mod.post_policy_fee(res, "First Night", "No-show charge (First Night)")
+		frappe.db.set_value("Reservation", res.name, "status", "No Show")
+		frappe.db.delete("Folio Ledger Entry", {
+			"folio": folio, "description": ledger.ADVANCE_APPLIED})
+		self.assertAlmostEqual(_net(folio, "Deposit"), -1000, places=2)
+		from kamra.patches.v47 import move_policy_fee_advances_to_guest_ledger as patch
+		patch.execute()
+		patch.execute()
+		self.assertAlmostEqual(_net(folio, "Deposit"), 0, places=2)
+		self.assertAlmostEqual(_net(folio, "Guest"), _balance(folio), places=2)

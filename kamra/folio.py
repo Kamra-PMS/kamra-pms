@@ -1054,8 +1054,12 @@ def post_policy_fee(reservation, basis: str, label: str,
 		"auto_posted": 1,
 	})
 	_recalculate(folio)
-	from kamra.ledger import save_folio
+	from kamra.ledger import save_folio, transfer_advances_to_guest
 	save_folio(folio)
+	# the advance now pays the fee: it leaves the Deposit ledger (money held
+	# for an arrival) for the Guest ledger, as at check-in. Left behind, a
+	# no-show's advance showed as still held while its folio read settled.
+	transfer_advances_to_guest(reservation.name, business_date=str(posting_date))
 	return amount
 
 
