@@ -20,7 +20,7 @@ import { pickDefaultRoomType } from "../lib/bookingDefaults"
 import { Button } from "./ui/button"
 import { cur, moneyLocale, useLocale } from "../lib/money"
 import { isPhoneComplete } from "../lib/phone"
-import { parseDate, shiftDate } from "../lib/stay"
+import { nightsBetween, parseDate, shiftDate } from "../lib/stay"
 import PhoneInput from "./PhoneInput"
 import { clampGuests, sleeps } from "../lib/occupancy"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
@@ -195,9 +195,6 @@ export function BookingDialog(props: {
   const [dayUse, setDayUse] = useState(false)
   const [slot, setSlot] = useState({ from: "10:00", to: "18:00" })
   const badSlot = dayUse && (!slot.from || !slot.to || slot.to <= slot.from)
-  const slotArgs = dayUse
-    ? { check_in_time: slot.from, check_out_time: slot.to }
-    : {}
   const [moreOpen, setMoreOpen] = useState(false)
   const [moreRooms, setMoreRooms] = useState<ExtraRoom[]>([])
   const [groupName, setGroupName] = useState("")
@@ -273,6 +270,21 @@ export function BookingDialog(props: {
   const loc = useLocale()
   const { ensureUnlocked, status: pinStatus } = useCashierAuth()
   const [walkIn, setWalkIn] = useState(!!props.initial.walkIn)
+  // Overnight stay: the arrival and departure time. They default to the
+  // property's standard check-in / check-out time until the desk changes them,
+  // and are kept on the reservation as planned times (display only, never price).
+  const [stayTimes, setStayTimes] = useState<{ from: string | null; to: string | null }>({ from: null, to: null })
+  const stayIn = stayTimes.from ?? (options?.property?.checkin_time ?? "").slice(0, 5)
+  const stayOut = stayTimes.to ?? (options?.property?.checkout_time ?? "").slice(0, 5)
+  // what is typed in the check-out box until it is a valid date after check-in;
+  // null once it is (the nights then follow it)
+  const [outDraft, setOutDraft] = useState<string | null>(null)
+  const outError = outDraft !== null && parseDate(outDraft) !== null
+  const slotArgs = dayUse
+    ? { check_in_time: slot.from, check_out_time: slot.to }
+    : !walkIn && stayIn && stayOut
+      ? { check_in_time: stayIn, check_out_time: stayOut }
+      : {}
   // the room clicked on the tape chart; dropped once the desk picks another type
   const pinnedRoom = !!props.initial.room && !walkIn && form.room_type === props.initial.room_type
   const [freeRooms, setFreeRooms] = useState<FreeRoom[] | null>(null)
@@ -1057,11 +1069,15 @@ export function BookingDialog(props: {
                   <dt className="text-xs font-medium text-zinc-400">{t("Check-in")}</dt>
                   <dd className="mt-1 font-semibold text-zinc-900">
                     {form.check_in_date}
+                    {!dayUse && !walkIn && stayIn ? ` · ${stayIn}` : ""}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs font-medium text-zinc-400">{t("Check-out")}</dt>
-                  <dd className="mt-1 font-semibold text-zinc-900">{checkOut}</dd>
+                  <dd className="mt-1 font-semibold text-zinc-900">
+                    {checkOut}
+                    {!dayUse && !walkIn && stayOut ? ` · ${stayOut}` : ""}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs font-medium text-zinc-400">
@@ -1470,7 +1486,7 @@ export function BookingDialog(props: {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className={"grid grid-cols-2 gap-3 " + (dayUse ? "sm:grid-cols-4" : "sm:grid-cols-5")}>
                   <Field label={t("Check-in")}>
                     <input
                       type="date"
@@ -1479,7 +1495,10 @@ export function BookingDialog(props: {
                       value={form.check_in_date}
                       readOnly={walkIn}
                       title={(walkIn ? t("A walk-in arrives today") : undefined)}
-                      onChange={(e) => set("check_in_date", e.target.value)}
+                      onChange={(e) => {
+                        setOutDraft(null)
+                        set("check_in_date", e.target.value)
+                      }}
                     />
                     {pastCheckIn && (
                       <p className="mt-1.5 text-xs text-rose-600">
@@ -1519,17 +1538,44 @@ export function BookingDialog(props: {
                       </Field>
                     </div>
                   ) : (
-                    <Field label={t("Nights")}>
-                      <input
-                        type="number"
-                        min={1}
-                        className={inputCls}
-                        value={form.nights}
-                        onChange={(e) =>
-                          set("nights", Math.max(1, Number(e.target.value)))
-                        }
-                      />
-                    </Field>
+                    <>
+                      <Field label={t("Check-out")}>
+                        <input
+                          type="date"
+                          className={inputCls}
+                          min={shiftDate(form.check_in_date || todayLocal(), 1)}
+                          value={outDraft ?? checkOut}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            // keep a half-typed or too-early date in the box (it
+                            // blocks Confirm); only a date after check-in sets the nights
+                            if (!parseDate(v) || badDate || v <= form.check_in_date) {
+                              setOutDraft(v)
+                              return
+                            }
+                            setOutDraft(null)
+                            set("nights", Math.max(1, nightsBetween(form.check_in_date, v)))
+                          }}
+                        />
+                        {outError && (
+                          <p className="mt-1.5 text-xs text-rose-600">
+                            {t("Check-out must be after check-in.")}
+                          </p>
+                        )}
+                      </Field>
+                      <Field label={t("Nights")}>
+                        <input
+                          type="number"
+                          min={1}
+                          className={inputCls}
+                          value={form.nights}
+                          onChange={(e) => {
+                            setOutDraft(null)
+                            set("nights", Math.max(1, Number(e.target.value)))
+                          }}
+                        />
+                      </Field>
+                    </>
                   )}
                   <Field label={t("Adults")}>
                     <input
@@ -1562,6 +1608,30 @@ export function BookingDialog(props: {
                     />
                   </Field>
                 </div>
+
+                {!dayUse && !walkIn && (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Field label={t("Arrival time")}>
+                      <input
+                        type="time"
+                        className={inputCls}
+                        value={stayIn}
+                        onChange={(e) => setStayTimes((x) => ({ ...x, from: e.target.value }))}
+                      />
+                    </Field>
+                    <Field label={t("Departure time")}>
+                      <input
+                        type="time"
+                        className={inputCls}
+                        value={stayOut}
+                        onChange={(e) => setStayTimes((x) => ({ ...x, to: e.target.value }))}
+                      />
+                    </Field>
+                    <p className="col-span-2 self-end pb-2 text-xs text-zinc-500">
+                      {t("Standard times from the property. Change them for this booking if the guest agreed otherwise.")}
+                    </p>
+                  </div>
+                )}
 
                 {options?.property.pets_allowed ? (
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -2524,7 +2594,7 @@ export function BookingDialog(props: {
                 <>
                 <Button
                   className="w-full justify-center py-2.5 text-base"
-                  disabled={busy || !form.guest_name || !quote || badDate || pastCheckIn || badPhone || badSlot || blacklistBlocked || creditBlocked || extraNeedsReason}
+                  disabled={busy || !form.guest_name || !quote || badDate || pastCheckIn || badPhone || badSlot || outDraft !== null || blacklistBlocked || creditBlocked || extraNeedsReason}
                   onClick={() => submit()}
                 >
                   {busy ? t("Booking…") : t("Confirm booking")}
@@ -2540,7 +2610,7 @@ export function BookingDialog(props: {
                   <Button
                     variant="outline"
                     className="justify-center"
-                    disabled={busy || !form.guest_name || badDate || pastCheckIn || badPhone || badSlot || blacklistBlocked || extraNeedsReason}
+                    disabled={busy || !form.guest_name || badDate || pastCheckIn || badPhone || badSlot || outDraft !== null || blacklistBlocked || extraNeedsReason}
                     onClick={() => submit(true)}
                     title={t("Park this stay with no room; promote when inventory frees")}
                   >

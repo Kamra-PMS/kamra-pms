@@ -409,6 +409,9 @@ export interface BookingOptions {
     pets_allowed: 0 | 1
     pet_charge: number
     pet_charge_basis: "Per stay" | "Per night"
+    /** the property's standard times, HH:MM */
+    checkin_time: string
+    checkout_time: string
   }
 }
 

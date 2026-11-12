@@ -61,6 +61,8 @@ interface Grc {
     actual_check_in?: string | null
     actual_check_out?: string | null
     check_out_date: string
+    planned_check_in_time?: string | null
+    planned_check_out_time?: string | null
     nights: number
     adults: number
     children: number
@@ -702,8 +704,8 @@ export default function RegistrationCard() {
                   </button>
                 )}
               </div>
-              <Row label={t("Check-in")} value={`${r.check_in_date} (${d.property.checkin_time.slice(0, 5)})`} />
-              <Row label={t("Check-out")} value={`${r.check_out_date} (${d.property.checkout_time.slice(0, 5)})`} />
+              <Row label={t("Check-in")} value={`${r.check_in_date} (${(r.planned_check_in_time || d.property.checkin_time).slice(0, 5)})`} />
+              <Row label={t("Check-out")} value={`${r.check_out_date} (${(r.planned_check_out_time || d.property.checkout_time).slice(0, 5)})`} />
               <ActualTimeRow label={t("Actual check-in")} reservation={r.name}
                 field="actual_check_in" value={r.actual_check_in} onSaved={load} />
               <ActualTimeRow label={t("Actual check-out")} reservation={r.name}
