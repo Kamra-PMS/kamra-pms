@@ -13,7 +13,8 @@ right thing the default and the lawful thing one click:
                      the stated purpose) until                      the flag is lifted.
   apply_message_retention
                      storage limitation for conversations: WhatsApp message
-                     text and AI assistant chats older than
+                     text, AI assistant chats, and channel webhook Agent
+                     Action Log rationales older than
                      Property.message_retention_days are cleared nightly;
                      who, when and delivery status stay for audit.
 
@@ -188,20 +189,24 @@ def apply_retention(limit: int = 500) -> dict:
 
 
 CLEARED_CHAT_TITLE = "Chat cleared (retention period ended)"
+CLEARED_CHANNEL_RATIONALE = "Channel log cleared (retention period ended)"
+# Agent Action Log rows written by voice_webhook / messaging_webhook (#566)
+CHANNEL_WEBHOOK_ACTIONS = ("whatsapp.inbound",)
 
 
 def apply_message_retention() -> dict:
-	"""Daily: clear WhatsApp message text and AI assistant chats older than
-	their property's message_retention_days. Rows stay, so delivery status,
-	direction, template and timestamps remain for audit. A chat with no
-	property follows the shortest period set on any property."""
+	"""Daily: clear WhatsApp message text, AI assistant chats, and channel
+	webhook Agent Action Log rationales older than the property's
+	message_retention_days. Rows stay, so delivery status, direction,
+	template and timestamps remain for audit. A chat with no property
+	follows the shortest period set on any property."""
 	days = {p.name: cint(p.message_retention_days)
 	        for p in frappe.get_all("Property", fields=["name", "message_retention_days"])}
 	set_days = [d for d in days.values() if d > 0]
 	if not set_days:
-		return {"messages": 0, "chats": 0}
+		return {"messages": 0, "chats": 0, "channel_logs": 0}
 	now = now_datetime()
-	messages = chats = 0
+	messages = chats = channel_logs = 0
 	for prop, d in days.items():
 		if d <= 0:
 			continue
@@ -212,10 +217,11 @@ def apply_message_retention() -> dict:
 			frappe.db.set_value("WhatsApp Message", name, "content", "", update_modified=False)
 		messages += len(names)
 		chats += _clear_chats({"property": prop, "modified": ("<", cutoff)})
+		channel_logs += _clear_channel_action_logs(prop, cutoff)
 	chats += _clear_chats({"property": ("is", "not set"),
 	                       "modified": ("<", add_days(now, -min(set_days)))})
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- scheduler: persist the nightly clean-up
-	return {"messages": messages, "chats": chats}
+	return {"messages": messages, "chats": chats, "channel_logs": channel_logs}
 
 
 def _clear_chats(filters: dict) -> int:
@@ -227,6 +233,80 @@ def _clear_chats(filters: dict) -> int:
 		frappe.db.set_value("Copilot Conversation", name,
 		                    {"messages": "[]", "title": CLEARED_CHAT_TITLE}, update_modified=False)
 	return len(names)
+
+
+def _is_channel_webhook_action(action_type: str | None) -> bool:
+	a = (action_type or "").strip()
+	return a in CHANNEL_WEBHOOK_ACTIONS or a.startswith("voice.")
+
+
+def _clear_channel_action_logs(property: str, cutoff) -> int:
+	"""Drop raw guest text kept on old voice/WhatsApp webhook log rows."""
+	rows = frappe.get_all(
+		"Agent Action Log",
+		filters={
+			"property": property,
+			"creation": ("<", cutoff),
+			"rationale": ("not in", ("", CLEARED_CHANNEL_RATIONALE)),
+		},
+		fields=["name", "action_type", "rationale"],
+	)
+	cleared = 0
+	for row in rows:
+		if not _is_channel_webhook_action(row.action_type):
+			continue
+		frappe.db.set_value(
+			"Agent Action Log", row.name, "rationale", CLEARED_CHANNEL_RATIONALE,
+			update_modified=False)
+		cleared += 1
+	return cleared
+
+
+def trim_channel_webhook_logs(limit: int = 5000) -> int:
+	"""One-shot / patch: replace raw guest text already stored on channel
+	webhook Agent Action Log rows with a short stub. Safe to rerun."""
+	from kamra.agents_channels import messaging_log_rationale, voice_log_rationale
+
+	rows = frappe.db.sql(
+		"""select name, action_type, rationale from `tabAgent Action Log`
+		   where action_type = 'whatsapp.inbound' or action_type like 'voice.%%'
+		   order by creation desc limit %s""",
+		limit, as_dict=True)
+	trimmed = 0
+	for row in rows:
+		old = row.rationale or ""
+		if old in ("", CLEARED_CHANNEL_RATIONALE):
+			continue
+		if row.action_type == "whatsapp.inbound":
+			# Old form was "WhatsApp inbound: <guest text>"; new form has no colon body.
+			if not old.startswith("WhatsApp inbound:"):
+				continue
+			message_id = ""
+			# keep a message_id if one somehow landed in the old string
+			if "message_id=" in old:
+				message_id = old.split("message_id=", 1)[1].split()[0].strip(" ·")
+			new = messaging_log_rationale({
+				"text": "x",  # presence only — words are not copied into the new rationale
+				"message_id": message_id,
+			})
+		else:
+			# Old form appended transcript after a blank line under the summary.
+			if "\n\n" not in old and "transcript" not in old.lower():
+				continue
+			event = row.action_type.split(".", 1)[-1] or "call_event"
+			summary = old.split("\n\n", 1)[0].strip() or f"Voice · {event}"
+			call_id = ""
+			if "call_id=" in old:
+				call_id = old.split("call_id=", 1)[1].split()[0].strip(" ·")
+			new = voice_log_rationale(
+				{"summary": summary, "call_id": call_id, "transcript": "x"},
+				event)
+		if new == old:
+			continue
+		frappe.db.set_value("Agent Action Log", row.name, "rationale", new,
+		                    update_modified=False)
+		trimmed += 1
+	return trimmed
 
 
 # Marketing consent (DPDP s.6): promotional WhatsApp goes only to guests who
