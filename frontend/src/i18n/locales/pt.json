@@ -1,4 +1,10 @@
 {
+  "Accounts": "Contas",
+  "Credit available": "Crédito disponível",
+  "Billed, unpaid": "Faturado, não pago",
+  "Unbilled, in house": "Não faturado, hospedados",
+  "No invoices yet.": "Ainda não há faturas.",
+  "Open account": "Abrir conta",
   " from ": " de ",
   " Goes live once HeyKoala confirms.": " Vai ao ar assim que HeyKoala confirmar.",
   " governed tools": " ferramentas governadas",

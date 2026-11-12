@@ -74,6 +74,22 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 		self.assertAlmostEqual(st["unapplied_credit"], 200, 2)
 		self.assertAlmostEqual(st["balance"], -200, 2)
 
+	def test_each_payment_lists_the_bills_it_paid(self):
+		self.terms(days=30)
+		_, first = self.bill(500)
+		_, second = self.bill(300, room=self.room2)
+		ledger.city_ledger_settle(self.account, 900, reference="UT-PAID")
+		st = statements.company_statement(self.account)
+		pay = st["payments"][0]
+		self.assertEqual([(a["folio"], a["amount"]) for a in pay["applied"]],
+		                 [(first, 500), (second, 300)])
+		self.assertAlmostEqual(pay["unapplied"], 100, 2)
+		# both bills are paid off, so only the payment still names them
+		self.assertFalse(st["open_items"])
+		html = statements.company_statement(self.account, format="html")["content"]
+		self.assertIn("Bills paid", html)
+		self.assertIn("500.00", html)
+
 	def test_email_statement_defaults_to_the_billing_contact(self):
 		self.bill(500)
 		self.contact(None)

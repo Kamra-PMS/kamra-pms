@@ -1,4 +1,10 @@
 {
+  "Accounts": "الحسابات",
+  "Credit available": "الائتمان المتاح",
+  "Billed, unpaid": "مفوتر، غير مدفوع",
+  "Unbilled, in house": "غير مفوتر، نزلاء حاليون",
+  "No invoices yet.": "لا توجد فواتير بعد.",
+  "Open account": "فتح الحساب",
   " ({n} as past-stay history)": " ({n} كسجل إقامات سابقة)",
   " ({n} short)": " ({n} ناقص)",
   " - add the first item.": " - أضف العنصر الأول.",

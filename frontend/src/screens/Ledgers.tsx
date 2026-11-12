@@ -4,15 +4,10 @@ import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { fmtAmount } from "../lib/money"
-import { useAuth } from "../lib/auth"
-import CityLedgerPayment from "./CityLedgerPayment"
+import { fmtMoney } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
-// recording a company's payment is a Finance action (the server gates it too)
-const CAN_SETTLE = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
-
-const inr = fmtAmount
+const inr = fmtMoney
 
 type Ledger = {
   ledger: string
@@ -33,7 +28,7 @@ type Recon = {
 }
 
 export default function Ledgers() {
-  const language = useUILanguage()
+  useUILanguage()
   const [date, setDate] = useState("")
   const [ledgers, setLedgers] = useState<Ledger[]>([])
   const [inBalance, setInBalance] = useState<boolean | null>(true)
@@ -44,10 +39,6 @@ export default function Ledgers() {
   >([])
   const [aging, setAging] = useState<Record<string, unknown>[]>([])
   const [err, setErr] = useState<string | null>(null)
-  const [paying, setPaying] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
-  const { roles } = useAuth()
-  const canSettle = roles.some((r) => CAN_SETTLE.includes(r))
 
   const load = useCallback(async () => {
     try {
@@ -89,36 +80,6 @@ export default function Ledgers() {
     void load()
   }, [load])
 
-  // the statement is an HTML page: the browser prints it or saves it as PDF
-  const openStatement = async (account: string) => {
-    try {
-      const res = await call<{ content: string }>("kamra.statements.company_statement", {
-        account, format: "html", lang: language,
-      })
-      const w = window.open("", "_blank")
-      if (w) {
-        w.document.write(res.content)
-        w.document.close()
-        w.print()
-      }
-    } catch (e) {
-      setErr(serverError(e))
-    }
-  }
-
-  const emailStatement = async (account: string) => {
-    const to = window.prompt(translate("Send the statement to (comma-separated). Leave blank for the company's billing contact."), "")
-    if (to === null) return
-    try {
-      const res = await call<{ sent_to: string[] }>("kamra.statements.email_company_statement", {
-        account, recipients: to.trim() || undefined, lang: language,
-      })
-      setNotice(translate("Statement sent to {v0}", { v0: res.sent_to.join(", ") }))
-    } catch (e) {
-      setErr(serverError(e))
-    }
-  }
-
   return (
     <div className="w-full space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -138,7 +99,6 @@ export default function Ledgers() {
         </div>
       </div>
       {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
-      {notice ? <p className="text-sm text-emerald-700">{notice}</p> : null}
 
       {/* These are subsidiary ledgers: a charge's revenue side and a
           payment's cash side live in the books the accounting export feeds,
@@ -245,7 +205,7 @@ export default function Ledgers() {
                 <th className="py-2 pr-3">90+</th>
                 <th className="py-2 pr-3">{translate("Overdue")}</th>
                 <th className="py-2 pr-3">{translate("Credit")}</th>
-                {canSettle ? <th className="py-2" /> : null}
+                <th className="py-2" />
               </tr>
             </thead>
             <tbody>
@@ -277,34 +237,25 @@ export default function Ledgers() {
                     <td className="py-2 pr-3 tabular-nums">
                       {Number(a.unapplied_credit || 0) ? inr(a.unapplied_credit) : "-"}
                     </td>
-                    {canSettle ? (
-                      <td className="py-2 text-right">
-                        <div className="flex justify-end gap-1.5">
-                          <Button variant="outline" onClick={() => void openStatement(String(a.name))}>{translate("Statement")}</Button>
-                          <Button variant="outline" onClick={() => void emailStatement(String(a.name))}>{translate("Email statement")}</Button>
-                          <Button variant="outline" onClick={() => setPaying(String(a.name))}>{translate("Record payment")}</Button>
-                        </div>
-                      </td>
-                    ) : null}
+                    <td className="py-2 text-right">
+                      {/* bills, payments, statement: one place, the company's account */}
+                      <Link to={`/receivables/${encodeURIComponent(String(a.name))}`}
+                        className="text-sm font-medium text-emerald-700 hover:underline">
+                        {translate("Open account")}
+                      </Link>
+                    </td>
                   </tr>
                 )
               })}
               {!aging.length ? (
                 <tr>
-                  <td colSpan={canSettle ? 11 : 10} className="py-6 text-center text-zinc-400">{translate("No city ledger accounts yet.")}</td>
+                  <td colSpan={11} className="py-6 text-center text-zinc-400">{translate("No city ledger accounts yet.")}</td>
                 </tr>
               ) : null}
             </tbody>
           </table>
         </CardContent>
       </Card>
-      {paying ? (
-        <CityLedgerPayment
-          account={paying}
-          onClose={() => setPaying(null)}
-          onPosted={() => void load()}
-        />
-      ) : null}
     </div>
   )
 }

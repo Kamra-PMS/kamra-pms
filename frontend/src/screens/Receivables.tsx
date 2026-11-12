@@ -80,7 +80,13 @@ type Account = {
   d61_90: number
   d90p: number
   open_items: OpenItem[]
-  payments: { name: string; posting_date: string; credit: number; reference?: string }[]
+  // every bill on the account, paid ones included (newer servers)
+  bills?: OpenItem[]
+  payments: {
+    name: string; posting_date: string; credit: number; reference?: string
+    applied?: { folio: string; invoice_number?: string; guest_name?: string; amount: number }[]
+    unapplied?: number
+  }[]
 }
 
 const field = "w-full rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
@@ -140,9 +146,9 @@ function AccountList() {
       {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label="Owed to the hotel" value={fmtMoney(total)} />
-        <Stat label="Overdue" value={fmtMoney(overdue)} tone={overdue > 0 ? "text-rose-700" : undefined} />
-        <Stat label="Accounts" value={String(shown.length)} />
+        <Stat label={translate("Owed to the hotel")} value={fmtMoney(total)} />
+        <Stat label={translate("Overdue")} value={fmtMoney(overdue)} tone={overdue > 0 ? "text-rose-700" : undefined} />
+        <Stat label={translate("Accounts")} value={String(shown.length)} />
       </div>
 
       <Card>
@@ -357,21 +363,20 @@ function AccountPage({ account }: { account: string }) {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Balance" value={fmtMoney(acc.balance)} />
-        <Stat label="Open bills" value={fmtMoney(acc.open_balance)} />
-        <Stat label="Overdue" value={fmtMoney(acc.overdue)} tone={acc.overdue > 0 ? "text-rose-700" : undefined} />
-        <Stat
-          label="Credit available"
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <Stat label={translate("Balance")} value={fmtMoney(acc.balance)} />
+        {/* billed: invoices on the account; unbilled: stays in house still running on the company's folio */}
+        <Stat label={translate("Billed, unpaid")} value={fmtMoney(acc.open_balance)} />
+        <Stat label={translate("Unbilled, in house")} value={fmtMoney(acc.in_house)} />
+        <Stat label={translate("Overdue")} value={fmtMoney(acc.overdue)} tone={acc.overdue > 0 ? "text-rose-700" : undefined} />
+        <Stat label={translate("Credit available")}
           value={acc.available_credit == null ? translate("No limit") : fmtMoney(acc.available_credit)}
           tone={acc.available_credit != null && acc.available_credit < 0 ? "text-rose-700" : undefined}
         />
       </div>
-      {acc.in_house > 0 || acc.unapplied_credit > 0 ? (
+      {acc.unapplied_credit > 0 ? (
         <p className="-mt-2 text-xs text-zinc-500">
-          {acc.in_house > 0 ? translate("{v0} more is running on stays in house and counts against the limit.", { v0: fmtMoney(acc.in_house) }) : ""}
-          {acc.in_house > 0 && acc.unapplied_credit > 0 ? " " : ""}
-          {acc.unapplied_credit > 0 ? translate("{v0} paid ahead settles the next bill.", { v0: fmtMoney(acc.unapplied_credit) }) : ""}
+          {translate("{v0} paid ahead settles the next bill.", { v0: fmtMoney(acc.unapplied_credit) })}
         </p>
       ) : null}
 
@@ -392,7 +397,7 @@ function AccountPage({ account }: { account: string }) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{translate("Open bills")}</CardTitle>
+          <CardTitle className="text-base">{translate("Invoices")}</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -409,7 +414,7 @@ function AccountPage({ account }: { account: string }) {
               </tr>
             </thead>
             <tbody>
-              {acc.open_items.map((it) => (
+              {(acc.bills ?? acc.open_items).slice().reverse().map((it) => (
                 <tr key={it.folio} className="border-t border-zinc-100">
                   <td className="py-2 pr-3 font-mono text-xs">{it.invoice_number || it.folio}</td>
                   <td className="py-2 pr-3">
@@ -429,19 +434,23 @@ function AccountPage({ account }: { account: string }) {
                   </td>
                   <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(it.billed)}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{it.paid ? fmtMoney(it.paid) : "-"}</td>
-                  <td className="py-2 pr-3 text-right font-medium tabular-nums">{fmtMoney(it.outstanding)}</td>
+                  <td className="py-2 pr-3 text-right font-medium tabular-nums">
+                    {it.outstanding > 0.005 ? fmtMoney(it.outstanding) : (
+                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">{translate("Paid")}</span>
+                    )}
+                  </td>
                   <td className="py-2 text-right">
                     <div className="flex justify-end gap-1.5">
                       <Button variant="outline" onClick={() => setSheet({ view: it.folio })}>{translate("View")}</Button>
-                      {isFinance ? (
+                      {isFinance && it.outstanding > 0.005 ? (
                         <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
                       ) : null}
                     </div>
                   </td>
                 </tr>
               ))}
-              {!acc.open_items.length ? (
-                <tr><td colSpan={8} className="py-8 text-center text-zinc-400">{translate("Nothing owed on this account.")}</td></tr>
+              {!(acc.bills ?? acc.open_items).length ? (
+                <tr><td colSpan={8} className="py-8 text-center text-zinc-400">{translate("No invoices yet.")}</td></tr>
               ) : null}
             </tbody>
           </table>
@@ -456,9 +465,26 @@ function AccountPage({ account }: { account: string }) {
           <CardContent>
             <ul className="divide-y divide-zinc-100 text-sm">
               {acc.payments.map((p) => (
-                <li key={p.name} className="flex justify-between py-2">
-                  <span>{p.posting_date} · {p.reference || "-"}</span>
-                  <span className="tabular-nums">{fmtMoney(p.credit)}</span>
+                <li key={p.name} className="py-2">
+                  <div className="flex justify-between">
+                    <span>{p.posting_date} · {p.reference || "-"}</span>
+                    <span className="tabular-nums font-medium">{fmtMoney(p.credit)}</span>
+                  </div>
+                  {/* the bills this payment cleared, even once they have left Open bills */}
+                  {(p.applied ?? []).map((a) => (
+                    <div key={a.folio} className="flex justify-between pl-4 text-xs text-zinc-500">
+                      <button type="button" className="hover:underline" onClick={() => setSheet({ view: a.folio })}>
+                        {a.invoice_number || a.folio}{a.guest_name ? ` · ${a.guest_name}` : ""}
+                      </button>
+                      <span className="tabular-nums">{fmtMoney(a.amount)}</span>
+                    </div>
+                  ))}
+                  {(p.unapplied ?? 0) > 0.005 ? (
+                    <div className="flex justify-between pl-4 text-xs text-zinc-500">
+                      <span>{translate("Unapplied credit")}</span>
+                      <span className="tabular-nums">{fmtMoney(p.unapplied ?? 0)}</span>
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -507,7 +533,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: str
   useUILanguage()
   return (
     <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2">
-      <div className="text-xs text-zinc-400">{translate(label)}</div>
+      <div className="text-xs text-zinc-400">{label}</div>
       <div className={`text-lg font-semibold tabular-nums ${tone ?? ""}`}>{value}</div>
     </div>
   )

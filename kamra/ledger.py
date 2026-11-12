@@ -1127,8 +1127,10 @@ def city_ledger_account(account: str):
 	first) and recent payments - what the payment screen needs."""
 	acc = frappe.get_doc("City Ledger Account", account)
 	pos = _account_position(account)
-	open_items = [r for r in pos.pop("open_items") if r["outstanding"] > 0.005]
-	for r in open_items:
+	# every bill on the account, paid ones too, so the account page is the
+	# one list of a company's invoices; the open ones drive the statement
+	bills = pos.pop("open_items")
+	for r in bills:
 		f = frappe.db.get_value("Folio", r["folio"],
 		                        ["guest_name", "reservation", "folio_type"],
 		                        as_dict=True) or {}
@@ -1142,9 +1144,34 @@ def city_ledger_account(account: str):
 		order_by="posting_date desc, creation desc",
 		limit_page_length=10,
 	)
+	# which bills each payment cleared (the AR credits it posted per folio),
+	# so a fully paid bill that has left the open list is still traceable
+	paid_bills: dict[str, list] = {}
+	if payments:
+		for r in frappe.db.sql(
+				"""SELECT e.source_name AS payment, e.folio, f.guest_name,
+				          SUM(e.credit - e.debit) AS amount,
+				          (SELECT MAX(c.invoice_number) FROM `tabCity Ledger Entry` c
+				           WHERE c.account = %(a)s AND c.folio = e.folio
+				             AND c.kind = 'Invoice') AS invoice_number
+				   FROM `tabFolio Ledger Entry` e
+				   LEFT JOIN `tabFolio` f ON f.name = e.folio
+				   WHERE e.source_doctype = 'City Ledger Entry'
+				     AND e.source_name IN %(p)s
+				   GROUP BY e.source_name, e.folio, f.guest_name
+				   HAVING ABS(SUM(e.credit - e.debit)) > 0.005
+				   ORDER BY MIN(e.creation)""",
+				{"a": account, "p": tuple(p.name for p in payments)}, as_dict=True):
+			paid_bills.setdefault(r.payment, []).append({
+				"folio": r.folio, "invoice_number": r.invoice_number,
+				"guest_name": r.guest_name, "amount": round(float(r.amount), 2)})
+	for p in payments:
+		p["applied"] = paid_bills.get(p.name, [])
+		p["unapplied"] = round(float(p.credit) - sum(a["amount"] for a in p["applied"]), 2)
 	today = nowdate()
-	for r in open_items:
-		r["days_overdue"] = max(days_overdue(r, today), 0)
+	for r in bills:
+		r["days_overdue"] = max(days_overdue(r, today), 0) if r["outstanding"] > 0.005 else 0
+	open_items = [r for r in bills if r["outstanding"] > 0.005]
 	# rolling credit: what is owed and what in-house stays will owe use the
 	# limit up, payments free it again (kamra.credit counts the same way)
 	from kamra.credit import in_house_exposure
@@ -1166,6 +1193,7 @@ def city_ledger_account(account: str):
 		"balance": float(acc.balance or 0),
 		**pos,
 		"open_items": open_items,
+		"bills": bills,
 		"payments": payments,
 	}
 
