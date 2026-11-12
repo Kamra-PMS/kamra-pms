@@ -41,6 +41,12 @@ LAST_USED_EVERY_MINUTES = 5
 _ROLE_PREFERENCE = ("Finance", "Front Desk", "Revenue Manager", "Night Auditor",
                     "Housekeeping", "Kamra Agent")
 
+# the hotel's name, logo, address and locale: every read scope opens both, so
+# a paired app can brand its screens and format money without asking for a folio
+PROFILE = "apps.property_profile"
+LOCALE = "api.property_locale"
+
+# The one table of scopes, so what a key can reach is auditable in one place.
 # scope -> label, MCP tool names (their endpoints are callable over REST too)
 # and REST-only endpoints (dotted, without the "kamra." prefix)
 SCOPES: dict[str, dict] = {
@@ -48,7 +54,7 @@ SCOPES: dict[str, dict] = {
 		"label": "Read front desk: today, availability, quotes, bookings",
 		"tools": ("front_desk_today", "availability", "quote", "booking_options",
 		          "find_reservations", "stay_detail"),
-		"rest": (),
+		"rest": (PROFILE, LOCALE),
 	},
 	"reports.read": {
 		"label": "Read reports: manager flash, night audit, report packs, books",
@@ -56,13 +62,20 @@ SCOPES: dict[str, dict] = {
 		          "sla_report", "list_report_packs", "run_report_pack",
 		          "list_report_datasets", "list_custom_reports", "run_custom_report",
 		          "profit_and_loss", "balance_sheet", "cash_forecast"),
-		"rest": (),
+		"rest": (PROFILE, LOCALE),
 	},
 	"cashier.read": {
 		"label": "Read cashier: shifts, folios, city ledger",
 		"tools": ("cashier_shift_report", "get_folio", "stay_folios",
 		          "city_ledger_aging", "ar_accounts", "ar_account_detail"),
-		"rest": ("cashier.list_sessions",),
+		"rest": ("cashier.list_sessions", PROFILE, LOCALE),
+	},
+	"finance.read": {
+		"label": "Read finance: folios and invoices, cashier sessions, receivables",
+		"tools": ("get_folio", "stay_folios", "cashier_shift_report", "city_ledger_aging",
+		          "ar_accounts", "ar_account_detail", "company_monthly_bill"),
+		"rest": ("api.folio_invoice", "cashier.list_sessions", "cashier.session_report",
+		         "receivables.ar_invoice", PROFILE, LOCALE),
 	},
 	"approvals.write": {
 		"label": "Approve: allowances, till variances, booking requests",

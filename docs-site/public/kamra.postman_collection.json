@@ -17790,6 +17790,313 @@
    ]
   },
   {
+   "name": "Connected apps (connect, pair, disconnect, property profile)",
+   "item": [
+    {
+     "name": "preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.preview"
+       ]
+      },
+      "description": "The consent step: what the app is and what it asks for.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"app_url\": \"<app_url>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "connect",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.connect",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.connect"
+       ]
+      },
+      "description": "Approve an app: a service account with exactly these scopes and\nproperties, a registry entry, its redirect address, and a one-time\npairing code (shown once).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"app_url\": \"<app_url>\",\n  \"scopes\": \"<scopes>\",\n  \"properties\": \"<properties>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "new_pairing_code",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.new_pairing_code",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.new_pairing_code"
+       ]
+      },
+      "description": "A fresh code for an app that has not paired yet; the old one stops.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"app_id\": \"<app_id>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "disconnect",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.disconnect",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.disconnect"
+       ]
+      },
+      "description": "Off at once: the service account is revoked, the redirect address and\nthe staff tokens issued through it go, and the tile disappears.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"app_id\": \"<app_id>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "list_apps",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.list_apps",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.list_apps"
+       ]
+      },
+      "description": ""
+     }
+    },
+    {
+     "name": "set_trust",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.set_trust",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.set_trust"
+       ]
+      },
+      "description": "IT: allow unsigned (self-hosted) apps, and/or replace the list of\ntrusted publisher keys (base64 Ed25519 public keys)."
+     }
+    },
+    {
+     "name": "pair",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.pair",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.pair"
+       ]
+      },
+      "description": "The one unauthenticated endpoint: the app trades its one-time code for\nits key and secret. Every attempt that gets past the rate limit is in the\nAgent Action Log. A refused attempt gets HTTP 403 and\n{\"error\": \"invalid_code\"}.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"code\": \"<code>\",\n  \"app_id\": \"<app_id>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "my_apps",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.my_apps",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.my_apps"
+       ]
+      },
+      "description": "Paired apps the signed-in person may see: admins see every one, staff\nthe ones whose manifest names one of their roles."
+     }
+    },
+    {
+     "name": "property_profile",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.apps.property_profile",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.apps.property_profile"
+       ]
+      },
+      "description": "Read-only branding and locale for one property: name, logo, address,\ntax ID, currency, language, time zone, check-in and check-out times.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Public (no auth - booking page, check-in)",
    "item": [
     {
