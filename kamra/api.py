@@ -1712,6 +1712,53 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	return doc.as_dict()
 
 
+MAX_SPLIT_LINES = 20
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Front Desk", "Kamra Agent")
+def add_folio_payments(payments, pin: str | None = None):
+	"""Record several payments in one request: one guest settling a bill
+	part by cash, part by card, part by UPI.
+
+	`payments` is a list of {folio, mode, amount, reference?, kind?,
+	idempotency_key?}. Each row is posted exactly as add_folio_payment
+	posts it (till, ledger, activity log), and all rows share one
+	transaction, so if any row is refused none is kept and the folio is
+	never left half-paid. Returns the folios touched and how many rows
+	were posted."""
+	if isinstance(payments, str):
+		payments = json.loads(payments)
+	if not isinstance(payments, list) or not payments:
+		frappe.throw("Give at least one payment.")
+	if len(payments) > MAX_SPLIT_LINES:
+		frappe.throw(f"At most {MAX_SPLIT_LINES} payments at a time.")
+	for i, row in enumerate(payments, 1):
+		if not isinstance(row, dict) or not row.get("folio") or not row.get("mode"):
+			frappe.throw(f"Payment {i}: a folio and a mode are needed.")
+		if float(row.get("amount") or 0) <= 0:
+			frappe.throw(f"Payment {i}: the amount must be positive.")
+	folios: list[str] = []
+	# a savepoint, so a refused row undoes the rows before it even when the
+	# caller keeps the transaction open (a request would roll back anyway)
+	frappe.db.savepoint("split_payment")
+	try:
+		for row in payments:
+			add_folio_payment(
+				row["folio"], row["mode"], float(row["amount"]),
+				reference=(row.get("reference") or "").strip() or None,
+				pin=pin, kind=row.get("kind") or "Payment",
+				currency=row.get("currency"),
+				idempotency_key=row.get("idempotency_key"),
+			)
+			if row["folio"] not in folios:
+				folios.append(row["folio"])
+	except Exception:
+		frappe.db.rollback(save_point="split_payment")
+		raise
+	return {"posted": len(payments), "folios": folios}
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def refund_folio_payment(folio: str, amount: float, mode: str,
