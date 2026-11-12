@@ -11,7 +11,8 @@
     "i18n:import": "node scripts/i18n-import.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",
     "phone:check": "node scripts/phone-check.mjs",
-    "booking-defaults:check": "node scripts/booking-defaults-check.mjs"
+    "booking-defaults:check": "node scripts/booking-defaults-check.mjs",
+    "key-notice:check": "node scripts/key-notice-check.mjs"
   },
   "dependencies": {
     "libphonenumber-js": "^1.13.15",
