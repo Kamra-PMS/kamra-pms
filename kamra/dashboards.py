@@ -234,6 +234,8 @@ def property_dashboard(property: str, date: str | None = None, with_comparison: 
 		"revpar": today.get("revpar", 0),
 		"adr": today.get("adr", 0),
 		"room_revenue_today": today.get("room_revenue", 0),
+		# credits to guests, apart from the gross departments (reports._day_stats)
+		"allowances_today": today.get("allowances", 0),
 		"collections_today": finance["collections_today"],
 		# statistics (month to date)
 		"statistics": {
