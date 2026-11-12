@@ -31,6 +31,9 @@ from frappe.utils import add_to_date, now_datetime
 from kamra.authz import require_it_admin, restricted_properties
 
 ROLE = "Kamra Service Account"
+# every service account user lives on this domain, so telling one apart
+# costs no query on other users' requests
+DOMAIN = "@service.kamra.local"
 LAST_USED_EVERY_MINUTES = 5
 
 # Who a scoped endpoint is satisfied by, in order of preference. Never an
@@ -138,10 +141,10 @@ def scope_roles(scopes) -> set[str]:
 
 def account_for(user: str | None = None) -> frappe._dict | None:
 	"""The service account behind this user, or None for anyone else. A
-	user with the service account role but no live account comes back as a
-	revoked account, so it can reach nothing."""
+	service account user with no live account comes back as a revoked
+	account, so it can reach nothing."""
 	user = user or frappe.session.user
-	if not user or user in ("Guest", "Administrator") or ROLE not in frappe.get_roles(user):
+	if not user or not user.endswith(DOMAIN):
 		return None
 	# per request (frappe.local.cache is reset by frappe.init): tools/list
 	# asks once per tool
@@ -325,7 +328,7 @@ def create_service_account(account_name: str, scopes: str | list, properties: st
 	roles = scope_roles(scopes)
 	_ensure_role()
 
-	email = f"svc-{frappe.generate_hash(length=10)}@service.kamra.local"
+	email = f"svc-{frappe.generate_hash(length=10)}{DOMAIN}"
 	user = frappe.get_doc({
 		"doctype": "User", "email": email, "first_name": account_name[:60],
 		"last_name": "(service account)", "enabled": 1, "send_welcome_email": 0,
