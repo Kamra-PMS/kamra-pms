@@ -44,10 +44,23 @@ jobs:
 
       - name: Log in to ghcr.io (only matters while the package is private)
         if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | sudo -E docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+        # sudo on hosted runners ignores -E; pass nothing privileged via env here —
+        # the token rides stdin.
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
+      # Hosted runners drop `sudo -E` ("preserving the entire environment is
+      # not supported"), so forward every install var explicitly.
       - name: Install
-        run: sudo -E bash deploy/install.sh
+        run: |
+          sudo env \
+            SITE_NAME="$SITE_NAME" \
+            ADMIN_EMAIL="$ADMIN_EMAIL" \
+            ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+            INSTALL_DIR="$INSTALL_DIR" \
+            KAMRA_TAG="$KAMRA_TAG" \
+            KAMRA_PULL="$KAMRA_PULL" \
+            KAMRA_PULL_FALLBACK="$KAMRA_PULL_FALLBACK" \
+            bash deploy/install.sh
 
       - name: Pinned to a release
         run: |
@@ -67,7 +80,15 @@ jobs:
 
       - name: Update (backup, pull, recreate, migrate)
         run: |
-          sudo -E env -u KAMRA_TAG /opt/kamra/install.sh update
+          # omit KAMRA_TAG so update keeps the pinned release from image.env
+          sudo env \
+            SITE_NAME="$SITE_NAME" \
+            ADMIN_EMAIL="$ADMIN_EMAIL" \
+            ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+            INSTALL_DIR="$INSTALL_DIR" \
+            KAMRA_PULL="$KAMRA_PULL" \
+            KAMRA_PULL_FALLBACK="$KAMRA_PULL_FALLBACK" \
+            /opt/kamra/install.sh update
           sudo docker compose -p kamra exec -T backend bash -c 'ls sites/*/private/backups/ | grep -q files'
 
       - name: Site still answers after update
@@ -100,7 +121,16 @@ jobs:
           df -h /
 
       - name: Install
-        run: sudo -E bash deploy/install.sh
+        run: |
+          sudo env \
+            SITE_NAME="$SITE_NAME" \
+            ADMIN_EMAIL="$ADMIN_EMAIL" \
+            ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+            INSTALL_DIR="$INSTALL_DIR" \
+            KAMRA_BUILD="$KAMRA_BUILD" \
+            KAMRA_GIT_URL="$KAMRA_GIT_URL" \
+            KAMRA_BRANCH="$KAMRA_BRANCH" \
+            bash deploy/install.sh
 
       - name: Site answers
         run: |
@@ -112,10 +142,28 @@ jobs:
           echo "ping never returned 200 (last: $code)"; exit 1
 
       - name: Re-run install is idempotent (keeps DB password)
-        run: sudo -E bash deploy/install.sh
+        run: |
+          sudo env \
+            SITE_NAME="$SITE_NAME" \
+            ADMIN_EMAIL="$ADMIN_EMAIL" \
+            ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+            INSTALL_DIR="$INSTALL_DIR" \
+            KAMRA_BUILD="$KAMRA_BUILD" \
+            KAMRA_GIT_URL="$KAMRA_GIT_URL" \
+            KAMRA_BRANCH="$KAMRA_BRANCH" \
+            bash deploy/install.sh
 
       - name: Update backs up, rebuilds and migrates
-        run: sudo -E /opt/kamra/install.sh update
+        run: |
+          sudo env \
+            SITE_NAME="$SITE_NAME" \
+            ADMIN_EMAIL="$ADMIN_EMAIL" \
+            ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+            INSTALL_DIR="$INSTALL_DIR" \
+            KAMRA_BUILD="$KAMRA_BUILD" \
+            KAMRA_GIT_URL="$KAMRA_GIT_URL" \
+            KAMRA_BRANCH="$KAMRA_BRANCH" \
+            /opt/kamra/install.sh update
 
       - name: Site still answers after update
         run: |

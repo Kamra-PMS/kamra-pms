@@ -60,3 +60,26 @@ Then open `http://<server-ip>:8080/kamra` → `/kamra/setup`.
 Harmless noise from upstream `frappe_docker` when `ERPNEXT_VERSION` is unset.
 Current `install.sh` sets `ERPNEXT_VERSION` in `kamra.env` when using a local
 image tag.
+
+---
+
+## Upgrading cache/queue from Redis 8.x to Valkey
+
+Docker defaults now use `valkey/valkey:8-alpine` for `redis-cache` /
+`redis-queue` (service names and `redis://` bench URLs are unchanged).
+
+**Greenfield installs:** no action.
+
+**Existing installs that already ran `redis:7.4+` / `redis:8.x`:** Valkey
+cannot load Redis CE 7.4+ RDB files. Before recreating those containers:
+
+1. Stop workers / take a short maintenance window
+   (`docker compose -p kamra stop` or equivalent).
+2. Accept that the job queue will rebuild empty — drain or discard
+   `redis-queue-data` (`docker volume rm …_redis-queue-data` after
+   compose down, or remove `/data/dump.rdb` in that volume).
+3. Pull/start with the new compose (or re-run `install.sh update`), which
+   rewrites the upstream redis override to Valkey.
+
+`redis-cache` is ephemeral and needs no migration. App data lives in
+MariaDB, not in the cache/queue volumes.
