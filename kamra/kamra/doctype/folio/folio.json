@@ -20,6 +20,8 @@
   "opened_on",
   "closed_on",
   "invoice_number",
+  "disputed",
+  "dispute_note",
   "sb_charges",
   "charges",
   "sb_payments",
@@ -104,6 +106,18 @@
    "in_list_view": 1,
    "label": "Invoice Number",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "disputed",
+   "fieldtype": "Check",
+   "label": "Disputed",
+   "description": "The company disputes this city-ledger bill. It stays on the aging and is not chased or counted toward the credit block."
+  },
+  {
+   "fieldname": "dispute_note",
+   "fieldtype": "Small Text",
+   "label": "Dispute Note"
   },
   {
    "fieldname": "sb_charges",

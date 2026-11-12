@@ -75,7 +75,8 @@ def statement_html(st: dict, lang: str = "en") -> str:
 			("days_overdue", "Days overdue"), ("billed", "Billed"),
 			("paid", "Paid"), ("outstanding", "Outstanding"))],
 		"rows": [{
-			"invoice": r.get("invoice_number") or r["folio"],
+			"invoice": (r.get("invoice_number") or r["folio"])
+			           + (f" · Disputed: {r.get('dispute_note') or ''}" if r.get("disputed") else ""),
 			"guest": r.get("guest_name") or "",
 			"invoice_date": r["invoice_date"], "due_date": r["due_date"],
 			"days_overdue": r.get("days_overdue") or "",
@@ -88,14 +89,17 @@ def statement_html(st: dict, lang: str = "en") -> str:
 	aging = {
 		"columns": [{"id": i, "label": label} for i, label in (
 			("not_due", "Not due"), ("d1_30", "1 to 30"), ("d31_60", "31 to 60"),
-			("d61_90", "61 to 90"), ("d90p", "90+"), ("overdue", "Overdue"))],
+			("d61_90", "61 to 90"), ("d90p", "90+"), ("overdue", "Overdue"),
+			("disputed", "Disputed"))],
 		"rows": [{k: _money(st[k]) for k in
-		          ("not_due", "d1_30", "d31_60", "d61_90", "d90p", "overdue")}],
+		          ("not_due", "d1_30", "d31_60", "d61_90", "d90p", "overdue",
+		           "disputed")}],
 	}
 	payments = {
 		"columns": [{"id": i, "label": label} for i, label in (
 			("posting_date", "Date"), ("reference", "Reference"), ("amount", "Amount"))],
-		"rows": [{"posting_date": str(p.posting_date), "reference": p.reference or "",
+		"rows": [{"posting_date": str(p.get("received_on") or p.posting_date),
+		          "reference": p.reference or "",
 		          "amount": _money(p.credit)} for p in st["payments"]],
 	}
 	esc = frappe.utils.escape_html
@@ -365,6 +369,8 @@ def send_property_reminders(property: str) -> dict:
 		st = statement(account)
 		due = []
 		for r, amount in _netted(st["open_items"], st["unapplied_credit"]):
+			if r.get("disputed"):
+				continue
 			late = days_overdue(r, today)
 			stage = reminder_stage(late)
 			if stage and not _reminded(r["folio"], stage, st["company"]):

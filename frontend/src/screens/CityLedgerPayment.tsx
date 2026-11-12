@@ -65,6 +65,7 @@ export default function CityLedgerPayment(props: {
   const [amount, setAmount] = useState("")
   const [mode, setMode] = useState("Bank Transfer")
   const [reference, setReference] = useState("")
+  const [receivedOn, setReceivedOn] = useState("")
   const [manual, setManual] = useState(false)
   const [picks, setPicks] = useState<Record<string, string>>({})
   const [step, setStep] = useState<"form" | "confirm" | "done">("form")
@@ -137,6 +138,7 @@ export default function CityLedgerPayment(props: {
         amount: amt,
         mode,
         reference: reference.trim() || undefined,
+        received_on: receivedOn || undefined,
         allocations: manual ? JSON.stringify(plan) : undefined,
       })
       setResult(out)
@@ -205,7 +207,8 @@ export default function CityLedgerPayment(props: {
       ) : step === "confirm" ? (
         <div className="space-y-4 text-sm">
           <p>{translate("Record ")}<b>{fmtMoney(amt)}</b>{translate(" from ")}<b>{acc.company}</b>{translate(" by ")}{translate(mode)}
-            {reference.trim() ? translate(" (ref {v0})", { v0: String(reference.trim()) }) : ""}.
+            {reference.trim() ? translate(" (ref {v0})", { v0: String(reference.trim()) }) : ""}
+            {receivedOn ? translate(", received {v0}", { v0: receivedOn }) : ""}.
           </p>
           <div className="rounded-lg border border-zinc-200">
             <div className="border-b border-zinc-100 px-4 py-2 text-xs uppercase text-zinc-400">
@@ -257,7 +260,7 @@ export default function CityLedgerPayment(props: {
             ))}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className="text-sm">
               <span className="mb-1 block text-zinc-500">{translate("Amount received")}</span>
               <input
@@ -280,6 +283,16 @@ export default function CityLedgerPayment(props: {
               >
                 {modes().map((m) => <option key={m} value={m}>{translate(m)}</option>)}
               </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-zinc-500">{translate("Received on")}</span>
+              <input
+                type="date"
+                className="w-full rounded-lg border border-zinc-300 px-2 py-1.5"
+                value={receivedOn}
+                onChange={(e) => setReceivedOn(e.target.value)}
+              />
+              <span className="mt-1 block text-xs text-zinc-400">{translate("Blank uses the business date.")}</span>
             </label>
             <label className="text-sm">
               <span className="mb-1 block text-zinc-500">{translate("Reference (UTR / cheque no.)")}</span>

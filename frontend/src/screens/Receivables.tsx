@@ -55,6 +55,8 @@ type OpenItem = {
   billed: number
   paid: number
   outstanding: number
+  disputed?: boolean
+  dispute_note?: string
 }
 
 type Account = {
@@ -80,7 +82,8 @@ type Account = {
   d61_90: number
   d90p: number
   open_items: OpenItem[]
-  payments: { name: string; posting_date: string; credit: number; reference?: string }[]
+  payments: { name: string; posting_date: string; received_on?: string | null; credit: number; reference?: string }[]
+  disputed?: number
 }
 
 const field = "w-full rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
@@ -249,6 +252,8 @@ function AccountPage({ account }: { account: string }) {
   const [sheet, setSheet] = useState<
     null | "setup" | "invoice" | "payment" | { view: string } | { transfer: OpenItem }
   >(null)
+  const [disputeFolio, setDisputeFolio] = useState<string | null>(null)
+  const [disputeNote, setDisputeNote] = useState("")
 
   const load = useCallback(() => {
     call<Account>("kamra.ledger.city_ledger_account", { account })
@@ -413,6 +418,11 @@ function AccountPage({ account }: { account: string }) {
                 <tr key={it.folio} className="border-t border-zinc-100">
                   <td className="py-2 pr-3 font-mono text-xs">{it.invoice_number || it.folio}</td>
                   <td className="py-2 pr-3">
+                    {it.disputed ? (
+                      <span className="mt-0.5 block text-xs text-amber-800">
+                        {translate("Disputed")}{it.dispute_note ? ` · ${it.dispute_note}` : ""}
+                      </span>
+                    ) : null}
                     {it.folio_type === "Account" ? (
                       <span className="text-zinc-500">{translate("Direct invoice")}</span>
                     ) : (
@@ -433,6 +443,36 @@ function AccountPage({ account }: { account: string }) {
                   <td className="py-2 text-right">
                     <div className="flex justify-end gap-1.5">
                       <Button variant="outline" onClick={() => setSheet({ view: it.folio })}>{translate("View")}</Button>
+                      {isFinance && !it.disputed ? (
+                        disputeFolio === it.folio ? (
+                          <form
+                            className="flex gap-1"
+                            onSubmit={(e) => {
+                              e.preventDefault()
+                              const note = disputeNote.trim()
+                              if (!note) return
+                              void call("kamra.ledger.set_city_ledger_dispute", {
+                                folio: it.folio, disputed: 1, note,
+                              }).then(() => {
+                                setDisputeFolio(null)
+                                setDisputeNote("")
+                                load()
+                              }).catch((err) => setErr(serverError(err)))
+                            }}
+                          >
+                            <input
+                              className="w-36 rounded border border-zinc-300 px-1.5 py-1 text-xs"
+                              value={disputeNote}
+                              placeholder={translate("Why is it disputed?")}
+                              onChange={(e) => setDisputeNote(e.target.value)}
+                              autoFocus
+                            />
+                            <Button type="submit">{translate("Save")}</Button>
+                          </form>
+                        ) : (
+                          <Button variant="outline" onClick={() => { setDisputeFolio(it.folio); setDisputeNote("") }}>{translate("Dispute")}</Button>
+                        )
+                      ) : null}
                       {isFinance ? (
                         <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
                       ) : null}
@@ -457,7 +497,7 @@ function AccountPage({ account }: { account: string }) {
             <ul className="divide-y divide-zinc-100 text-sm">
               {acc.payments.map((p) => (
                 <li key={p.name} className="flex justify-between py-2">
-                  <span>{p.posting_date} · {p.reference || "-"}</span>
+                  <span>{p.received_on || p.posting_date} · {p.reference || "-"}</span>
                   <span className="tabular-nums">{fmtMoney(p.credit)}</span>
                 </li>
               ))}

@@ -273,17 +273,20 @@ class LedgerAuditTestCase(AuditTestCase):
 	def test_city_ledger_aging_buckets_and_fifo_payments(self):
 		self.charge(500, gst=0)
 		moved = ledger.transfer_to_city_ledger(self.folio, COMPANY)
-		# 45 days later the invoice sits in the 31-60 bucket
-		with patch("kamra.ledger.nowdate", return_value=d(45)):
-			acc = ledger.city_ledger_aging(PROP_A)["accounts"]
+		# 45 business days later the invoice sits in the 31-60 bucket.
+		# The calendar date is irrelevant; night audit owns the clock.
+		frappe.db.set_value("Property", PROP_A, "business_date", d(45),
+		                    update_modified=False)
+		acc = ledger.city_ledger_aging(PROP_A)["accounts"]
 		self.assertEqual(len(acc), 1)
 		self.assertEqual(acc[0]["company"], COMPANY)
 		self.assertAlmostEqual(acc[0]["b30"], 500, places=2)
 		self.assertEqual(acc[0]["current"], 0)
 		# a part payment reduces the oldest invoice first
 		ledger.city_ledger_settle(moved["account"], 200)
-		with patch("kamra.ledger.nowdate", return_value=d(130)):
-			acc = ledger.city_ledger_aging(PROP_A)["accounts"][0]
+		frappe.db.set_value("Property", PROP_A, "business_date", d(130),
+		                    update_modified=False)
+		acc = ledger.city_ledger_aging(PROP_A)["accounts"][0]
 		self.assertAlmostEqual(acc["b90p"], 300, places=2)
 		self.assertAlmostEqual(float(acc["balance"]), 300, places=2)
 

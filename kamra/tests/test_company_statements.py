@@ -29,6 +29,8 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 
 	def on(self, day):
 		"""Pin today for the ledger and the statements."""
+		frappe.db.set_value("Property", PROP_A, "business_date", day,
+		                    update_modified=False)
 		stack = patch("kamra.ledger.nowdate", return_value=day)
 		stack2 = patch("kamra.statements.nowdate", return_value=day)
 		stack.start(), stack2.start()

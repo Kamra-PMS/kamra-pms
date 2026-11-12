@@ -120,8 +120,9 @@ class CreditControlTestCase(AuditTestCase):
 
 	def aging(self, on=None):
 		if on:
-			with patch("kamra.ledger.nowdate", return_value=on):
-				return ledger.city_ledger_aging(PROP_A)["accounts"][0]
+			# Aging follows the business date, not the calendar.
+			frappe.db.set_value("Property", PROP_A, "business_date", on,
+			                    update_modified=False)
 		return ledger.city_ledger_aging(PROP_A)["accounts"][0]
 
 	def logs(self, action):

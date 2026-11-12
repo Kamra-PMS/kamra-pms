@@ -773,7 +773,24 @@ def city_ledger_open_folios(account: str) -> list[dict]:
 			"outstanding": round(float(r.billed) - p, 2),
 		})
 	out.sort(key=lambda r: (r["invoice_date"], r["folio"]))
-	return out
+	return _attach_disputes(out)
+
+
+def _attach_disputes(items: list[dict]) -> list[dict]:
+	"""Mark city-ledger bills the company has disputed. Missing columns
+	(a site that has not migrated) leave every bill undisputed."""
+	folios = [r["folio"] for r in items if r.get("folio")]
+	flags: dict = {}
+	if folios and frappe.db.has_column("Folio", "disputed"):
+		for row in frappe.get_all(
+			"Folio", filters={"name": ("in", folios)},
+			fields=["name", "disputed", "dispute_note"]):
+			flags[row.name] = row
+	for item in items:
+		row = flags.get(item.get("folio"))
+		item["disputed"] = bool(row and row.disputed)
+		item["dispute_note"] = (row.dispute_note or "") if row else ""
+	return items
 
 
 def locked_account_figures(account: str) -> dict:
@@ -846,6 +863,7 @@ def locked_account_figures(account: str) -> dict:
 			"outstanding": round(billed - settled, 2),
 		})
 	out.sort(key=lambda r: (r["invoice_date"], r["folio"]))
+	_attach_disputes(out)
 	outstanding = round(sum(max(r["outstanding"], 0) for r in out), 2)
 	unapplied = round(max(outstanding - ar, 0.0), 2)
 	return {"open_items": out, "unapplied_credit": unapplied, "ar_balance": ar}
@@ -966,12 +984,21 @@ def apply_unapplied_credit(account: str, only_folio: str | None = None,
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "Kamra Agent")
 def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
-                       reference: str | None = None, allocations=None):
+                       reference: str | None = None, allocations=None,
+                       received_on: str | None = None):
 	"""Record a company's payment against its city ledger account and clear
 	the AR it pays. By default it pays the oldest open bills first;
 	`allocations` ([{folio, amount}]) names the folios instead. Any excess
 	stays on the account as unapplied credit and settles the company's next
-	bill."""
+	bill.
+
+	`received_on` is the date the bank received the money. It defaults to
+	the business date. The city-ledger payment and the AR credit are both
+	dated on it, so a receipt that landed before night audit is not forced
+	onto today's business date."""
+	from frappe.utils import getdate
+
+	from kamra.business_date import assert_transaction_date
 	amount = round(float(amount or 0), 2)
 	if amount <= 0:
 		frappe.throw("Amount must be positive.")
@@ -980,12 +1007,17 @@ def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
 		frappe.throw("This city ledger account is disabled.")
 	plan = _allocation_plan(account, amount, allocations)
 	bd = get_business_date(acc.property)
+	received = assert_transaction_date(
+		acc.property, (received_on or "").strip() or None, label="Received on")
+	if getdate(received) > getdate(bd):
+		frappe.throw(f"Received on {received} is after the business date ({bd}).")
 	ref = (reference or "").strip() or mode
 	payment = frappe.get_doc({
 		"doctype": "City Ledger Entry",
 		"account": account,
 		"property": acc.property,
-		"posting_date": bd,
+		"posting_date": received,
+		"received_on": received,
 		"kind": "Payment",
 		"debit": 0,
 		"credit": amount,
@@ -993,7 +1025,8 @@ def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
 		"notes": f"{mode}" + (f" · {reference}" if reference else ""),
 	}).insert(ignore_permissions=True)
 	for a in plan:
-		_post_ar_credit(acc, payment.name, a["folio"], a["amount"], reference=ref)
+		_post_ar_credit(acc, payment.name, a["folio"], a["amount"], reference=ref,
+		                business_date=received)
 	acc.balance = float(acc.balance or 0) - amount
 	acc.save(ignore_permissions=True)
 	applied_total = round(sum(a["amount"] for a in plan), 2)
@@ -1007,8 +1040,30 @@ def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
 		"payment": payment.name,
 		"balance": acc.balance,
 		"applied": plan,
+		"received_on": received,
 		"unapplied": round(amount - applied_total, 2),
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def set_city_ledger_dispute(folio: str, disputed: int = 1, note: str | None = None):
+	"""Flag a city-ledger bill as disputed, with the reason. The amount
+	stays on the aging. Reminders skip it, and it does not count toward
+	the credit block. Clear it with disputed=0."""
+	from frappe.utils import cint
+	note = (note or "").strip()
+	on = cint(disputed)
+	if on and not note:
+		frappe.throw("A disputed bill needs a note.")
+	if not frappe.db.exists("City Ledger Entry", {"folio": folio, "kind": "Invoice"}):
+		frappe.throw(f"{folio} is not a city ledger bill.")
+	frappe.db.set_value("Folio", folio, {
+		"disputed": 1 if on else 0,
+		"dispute_note": note if on else "",
+	}, update_modified=False)
+	return {"folio": folio, "disputed": bool(on),
+	        "dispute_note": note if on else ""}
 
 
 # Aging is by DUE date: a bill is "not due" until invoice date + the
@@ -1049,14 +1104,20 @@ def _due_bucket(overdue: int) -> str:
 	        "d31_60" if overdue <= 60 else "d61_90" if overdue <= 90 else "d90p")
 
 
-def _age_buckets(open_items: list[dict], unapplied: float) -> dict:
+def _age_buckets(open_items: list[dict], unapplied: float, as_of=None) -> dict:
+	"""Age open bills as of the property's business date (`as_of`), not the
+	calendar date. A disputed bill stays in its bucket and is also summed
+	in `disputed` so the amount is visible."""
 	from frappe.utils import date_diff, getdate
 	buckets = dict.fromkeys(DUE_BUCKETS + INVOICE_AGE_BUCKETS, 0.0)
-	today = getdate(nowdate())
+	today = getdate(as_of or nowdate())
 	oldest_due = None
+	disputed = 0.0
 	for r, amt in _netted(open_items, unapplied):
 		late = days_overdue(r, today)
 		buckets[_due_bucket(late)] += amt
+		if r.get("disputed"):
+			disputed += amt
 		if late > 0 and (oldest_due is None or r["due_date"] < oldest_due):
 			oldest_due = r["due_date"]
 		age = date_diff(today, r["invoice_date"])
@@ -1065,6 +1126,7 @@ def _age_buckets(open_items: list[dict], unapplied: float) -> dict:
 		buckets[key] += amt
 	out = {k: round(v, 2) for k, v in buckets.items()}
 	out["overdue"] = round(sum(out[k] for k in DUE_BUCKETS[1:]), 2)
+	out["disputed"] = round(disputed, 2)
 	out["oldest_overdue_due_date"] = oldest_due
 	return out
 
@@ -1076,6 +1138,8 @@ def overdue_past_grace(open_items: list[dict], unapplied: float,
 	total, oldest = 0.0, None
 	today = nowdate()
 	for r, amt in _netted(open_items, unapplied):
+		if r.get("disputed"):
+			continue
 		if days_overdue(r, today) > int(grace_days or 0):
 			total += amt
 			if oldest is None or r["due_date"] < oldest:
@@ -1090,12 +1154,15 @@ def _account_position(account: str) -> dict:
 		   WHERE account = %s""", account)[0][0] or 0)
 	outstanding = round(sum(max(r["outstanding"], 0) for r in open_items), 2)
 	unapplied = round(max(outstanding - balance, 0.0), 2)
+	prop = frappe.db.get_value("City Ledger Account", account, "property")
+	as_of = get_business_date(prop) if prop else nowdate()
 	return {
 		"open_items": open_items,
 		"open_balance": outstanding,
 		"unapplied_credit": unapplied,
 		"credit_days": effective_credit_days(account),
-		**_age_buckets(open_items, unapplied),
+		"as_of": as_of,
+		**_age_buckets(open_items, unapplied, as_of),
 	}
 
 
@@ -1116,7 +1183,7 @@ def city_ledger_aging(property: str):
 		pos.pop("open_items")
 		out.append({**a, **pos})
 	totals = {k: round(sum(a[k] for a in out), 2)
-	          for k in DUE_BUCKETS + ("overdue",)}
+	          for k in DUE_BUCKETS + ("overdue", "disputed")}
 	return {"accounts": out, "totals": totals}
 
 
@@ -1138,13 +1205,13 @@ def city_ledger_account(account: str):
 	payments = frappe.get_all(
 		"City Ledger Entry",
 		filters={"account": account, "kind": "Payment"},
-		fields=["name", "posting_date", "credit", "reference", "notes"],
+		fields=["name", "posting_date", "received_on", "credit", "reference", "notes"],
 		order_by="posting_date desc, creation desc",
 		limit_page_length=10,
 	)
-	today = nowdate()
+	as_of = pos.get("as_of") or get_business_date(acc.property)
 	for r in open_items:
-		r["days_overdue"] = max(days_overdue(r, today), 0)
+		r["days_overdue"] = max(days_overdue(r, as_of), 0)
 	# rolling credit: what is owed and what in-house stays will owe use the
 	# limit up, payments free it again (kamra.credit counts the same way)
 	from kamra.credit import in_house_exposure
