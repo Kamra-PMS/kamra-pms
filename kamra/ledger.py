@@ -11,7 +11,6 @@ from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
 from typing import Any
 
 import frappe
-from frappe import _
 from frappe.utils import now_datetime, nowdate
 
 from kamra.authz import require_roles
@@ -381,7 +380,7 @@ def ledger_detail(property: str, ledger: str, business_date: str | None = None,
 	ledger as of the date (guest, booking, status, company), biggest first.
 	For AR the company the bill is billed to comes with it."""
 	if ledger not in ("Guest", "Deposit", "AR", "Package"):
-		frappe.throw(_("Unknown ledger {0}.").format(ledger))
+		frappe.throw(frappe._("Unknown ledger {0}.").format(ledger))
 	from kamra.authz import assert_property_access
 	assert_property_access(property)
 	date = business_date or get_business_date(property)
