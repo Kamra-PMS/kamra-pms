@@ -1120,6 +1120,58 @@ def city_ledger_aging(property: str):
 	return {"accounts": out, "totals": totals}
 
 
+def payment_bills(account: str, payments: list[str]) -> dict[str, list]:
+	"""{payment: [{folio, invoice_number, guest_name, amount}]}: the bills each
+	company payment cleared (the AR credits it posted per folio), so a bill
+	paid in full and gone from the open list is still traceable."""
+	out: dict[str, list] = {}
+	if not payments:
+		return out
+	for r in frappe.db.sql(
+			"""SELECT e.source_name AS payment, e.folio, f.guest_name,
+			          SUM(e.credit - e.debit) AS amount,
+			          (SELECT MAX(c.invoice_number) FROM `tabCity Ledger Entry` c
+			           WHERE c.account = %(a)s AND c.folio = e.folio
+			             AND c.kind = 'Invoice') AS invoice_number
+			   FROM `tabFolio Ledger Entry` e
+			   LEFT JOIN `tabFolio` f ON f.name = e.folio
+			   WHERE e.source_doctype = 'City Ledger Entry'
+			     AND e.source_name IN %(p)s
+			   GROUP BY e.source_name, e.folio, f.guest_name
+			   HAVING ABS(SUM(e.credit - e.debit)) > 0.005
+			   ORDER BY MIN(e.creation)""",
+			{"a": account, "p": tuple(payments)}, as_dict=True):
+		out.setdefault(r.payment, []).append({
+			"folio": r.folio, "invoice_number": r.invoice_number,
+			"guest_name": r.guest_name, "amount": round(float(r.amount), 2)})
+	return out
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Hotel Admin", "Front Desk", "Kamra Agent")
+def city_ledger_history(account: str):
+	"""Everything that ever moved on one company's account, oldest first, with
+	the running balance: each bill (and the guest it was for), credit note,
+	adjustment and payment (with the bills it cleared)."""
+	from kamra.authz import assert_property_access
+	assert_property_access(frappe.db.get_value("City Ledger Account", account, "property"))
+	rows = frappe.db.sql(
+		"""SELECT c.name, c.posting_date, c.kind, c.folio, c.invoice_number,
+		          c.due_date, c.debit, c.credit, c.reference, c.notes,
+		          f.guest_name, f.reservation
+		   FROM `tabCity Ledger Entry` c LEFT JOIN `tabFolio` f ON f.name = c.folio
+		   WHERE c.account = %s ORDER BY c.posting_date, c.creation""",
+		account, as_dict=True)
+	bills = payment_bills(account, [r.name for r in rows if r.kind == "Payment"])
+	balance, out = 0.0, []
+	for r in rows:
+		balance = round(balance + float(r.debit or 0) - float(r.credit or 0), 2)
+		out.append({**r, "posting_date": str(r.posting_date),
+		            "debit": float(r.debit or 0), "credit": float(r.credit or 0),
+		            "balance": balance, "applied": bills.get(r.name, [])})
+	return {"account": account, "entries": out, "balance": balance}
+
+
 @frappe.whitelist()
 @require_roles("Finance", "Hotel Admin", "Front Desk", "Kamra Agent")
 def city_ledger_account(account: str):
@@ -1144,27 +1196,7 @@ def city_ledger_account(account: str):
 		order_by="posting_date desc, creation desc",
 		limit_page_length=10,
 	)
-	# which bills each payment cleared (the AR credits it posted per folio),
-	# so a fully paid bill that has left the open list is still traceable
-	paid_bills: dict[str, list] = {}
-	if payments:
-		for r in frappe.db.sql(
-				"""SELECT e.source_name AS payment, e.folio, f.guest_name,
-				          SUM(e.credit - e.debit) AS amount,
-				          (SELECT MAX(c.invoice_number) FROM `tabCity Ledger Entry` c
-				           WHERE c.account = %(a)s AND c.folio = e.folio
-				             AND c.kind = 'Invoice') AS invoice_number
-				   FROM `tabFolio Ledger Entry` e
-				   LEFT JOIN `tabFolio` f ON f.name = e.folio
-				   WHERE e.source_doctype = 'City Ledger Entry'
-				     AND e.source_name IN %(p)s
-				   GROUP BY e.source_name, e.folio, f.guest_name
-				   HAVING ABS(SUM(e.credit - e.debit)) > 0.005
-				   ORDER BY MIN(e.creation)""",
-				{"a": account, "p": tuple(p.name for p in payments)}, as_dict=True):
-			paid_bills.setdefault(r.payment, []).append({
-				"folio": r.folio, "invoice_number": r.invoice_number,
-				"guest_name": r.guest_name, "amount": round(float(r.amount), 2)})
+	paid_bills = payment_bills(account, [p.name for p in payments])
 	for p in payments:
 		p["applied"] = paid_bills.get(p.name, [])
 		p["unapplied"] = round(float(p.credit) - sum(a["amount"] for a in p["applied"]), 2)

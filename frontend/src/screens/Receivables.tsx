@@ -41,6 +41,26 @@ type AccountRow = {
   unapplied_credit: number
   restricted: number
   restricted_reason?: string
+  unbilled?: number
+  last_payment_date?: string | null
+  last_payment?: number | null
+}
+
+type HistoryRow = {
+  name: string; posting_date: string; kind: string; folio?: string | null
+  invoice_number?: string | null; guest_name?: string | null; reference?: string | null
+  notes?: string | null; debit: number; credit: number; balance: number
+  applied: { folio: string; invoice_number?: string | null; guest_name?: string | null; amount: number }[]
+}
+
+type GuestOwing = {
+  folio: string; guest_name: string; balance: number; reservation: string
+  status: string; check_in_date: string; check_out_date: string
+}
+
+type Summary = {
+  to_bill: number; billed_pending: number; overdue: number
+  received_this_month: number; deposits_held: number; guests_owing: GuestOwing[]
 }
 
 type OpenItem = {
@@ -104,16 +124,17 @@ function AccountList() {
   const { roles } = useAuth()
   const canEdit = roles.some((r) => FINANCE.includes(r))
   const [rows, setRows] = useState<AccountRow[] | null>(null)
+  const [summary, setSummary] = useState<Summary | null>(null)
   const [q, setQ] = useState("")
   const [owing, setOwing] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [setup, setSetup] = useState(false)
 
   const load = useCallback(() => {
-    call<{ accounts: AccountRow[] }>("kamra.receivables.ar_accounts", {
+    call<{ accounts: AccountRow[]; summary?: Summary }>("kamra.receivables.ar_accounts", {
       property: getCurrentProperty(),
     })
-      .then((r) => setRows(r.accounts))
+      .then((r) => { setRows(r.accounts); setSummary(r.summary ?? null) })
       .catch((e) => setErr(serverError(e)))
   }, [])
   useEffect(load, [load])
@@ -126,8 +147,8 @@ function AccountList() {
         .some((v) => (v ?? "").toLowerCase().includes(s))))
   }, [rows, q, owing])
 
-  const total = shown.reduce((s, r) => s + Number(r.balance || 0), 0)
-  const overdue = shown.reduce((s, r) => s + Number(r.overdue || 0), 0)
+  const owingGuests = summary?.guests_owing ?? []
+  const guestsOwed = owingGuests.reduce((s, g) => s + g.balance, 0)
 
   return (
     <div className="w-full space-y-5">
@@ -145,10 +166,16 @@ function AccountList() {
       </div>
       {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label={translate("Owed to the hotel")} value={fmtMoney(total)} />
-        <Stat label={translate("Overdue")} value={fmtMoney(overdue)} tone={overdue > 0 ? "text-rose-700" : undefined} />
-        <Stat label={translate("Accounts")} value={String(shown.length)} />
+      {/* the finance team's top line, every property-wide figure in one row */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <Stat label={translate("To bill (in house)")} value={fmtMoney(summary?.to_bill ?? 0)} />
+        <Stat label={translate("Billed, pending")} value={fmtMoney(summary?.billed_pending ?? 0)} />
+        <Stat label={translate("Overdue")} value={fmtMoney(summary?.overdue ?? 0)}
+          tone={(summary?.overdue ?? 0) > 0 ? "text-rose-700" : undefined} />
+        <Stat label={translate("Received this month")} value={fmtMoney(summary?.received_this_month ?? 0)} />
+        <Stat label={translate("Guests left owing")} value={fmtMoney(guestsOwed)}
+          tone={guestsOwed > 0 ? "text-amber-700" : undefined} />
+        <Stat label={translate("Advances held")} value={fmtMoney(summary?.deposits_held ?? 0)} />
       </div>
 
       <Card>
@@ -173,8 +200,10 @@ function AccountList() {
                 <th className="py-2 pr-3">{translate("Contact")}</th>
                 <th className="py-2 pr-3">{translate("Terms")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Credit limit")}</th>
+                <th className="py-2 pr-3 text-right">{translate("To bill")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Overdue")}</th>
-                <th className="py-2 text-right">{translate("Balance")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Last payment")}</th>
+                <th className="py-2 text-right">{translate("Pending")}</th>
               </tr>
             </thead>
             <tbody>
@@ -206,26 +235,65 @@ function AccountList() {
                   </td>
                   <td className="py-2 pr-3 text-xs text-zinc-500">{translate("{n} days", { n: r.credit_days ?? 0 })}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{r.credit_limit > 0 ? fmtMoney(r.credit_limit) : "-"}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums">{r.unbilled ? fmtMoney(r.unbilled) : "-"}</td>
                   <td className={`py-2 pr-3 text-right tabular-nums ${r.overdue ? "font-medium text-rose-700" : ""}`}>
                     {r.overdue ? fmtMoney(r.overdue) : "-"}
+                  </td>
+                  <td className="py-2 pr-3 text-right text-xs text-zinc-500">
+                    {r.last_payment_date ? (
+                      <>{fmtMoney(r.last_payment ?? 0)}<span className="block">{r.last_payment_date}</span></>
+                    ) : "-"}
                   </td>
                   <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(r.balance)}</td>
                 </tr>
               ))}
               {rows && !shown.length ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-zinc-400">
+                  <td colSpan={9} className="py-8 text-center text-zinc-400">
                     {rows.length ? translate("No account matches.") : translate("No company accounts yet. Open one, or check out a stay billed to a company on credit.")}
                   </td>
                 </tr>
               ) : null}
               {!rows ? (
-                <tr><td colSpan={7} className="py-8 text-center text-zinc-400">{translate("Loading…")}</td></tr>
+                <tr><td colSpan={9} className="py-8 text-center text-zinc-400">{translate("Loading…")}</td></tr>
               ) : null}
             </tbody>
           </table>
         </CardContent>
       </Card>
+
+      {owingGuests.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{translate("Guests left owing")}</CardTitle>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs uppercase text-zinc-400">
+                <tr>
+                  <th className="py-2 pr-3">{translate("Guest")}</th>
+                  <th className="py-2 pr-3">{translate("Booking")}</th>
+                  <th className="py-2 pr-3">{translate("Stay")}</th>
+                  <th className="py-2 pr-3">{translate("Status")}</th>
+                  <th className="py-2 text-right">{translate("Owed")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {owingGuests.map((g) => (
+                  <tr key={g.folio} className="cursor-pointer border-t border-zinc-100 hover:bg-zinc-50"
+                    onClick={() => navigate(`/billing/${encodeURIComponent(g.folio)}`)}>
+                    <td className="py-2 pr-3 font-medium">{g.guest_name}</td>
+                    <td className="py-2 pr-3 font-mono text-xs">{g.reservation}</td>
+                    <td className="py-2 pr-3 text-xs text-zinc-500">{g.check_in_date} → {g.check_out_date}</td>
+                    <td className="py-2 pr-3 text-xs">{translate(g.status)}</td>
+                    <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(g.balance)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {setup ? (
         <AccountSetup
@@ -256,10 +324,14 @@ function AccountPage({ account }: { account: string }) {
     null | "setup" | "invoice" | "payment" | { view: string } | { transfer: OpenItem }
   >(null)
 
+  const [history, setHistory] = useState<HistoryRow[]>([])
   const load = useCallback(() => {
     call<Account>("kamra.ledger.city_ledger_account", { account })
       .then(setAcc)
       .catch((e) => setErr(serverError(e)))
+    call<{ entries: HistoryRow[] }>("kamra.ledger.city_ledger_history", { account })
+      .then((r) => setHistory(r.entries))
+      .catch(() => setHistory([]))
   }, [account])
   useEffect(load, [load])
 
@@ -457,37 +529,50 @@ function AccountPage({ account }: { account: string }) {
         </CardContent>
       </Card>
 
-      {acc.payments.length ? (
+      {/* every bill, credit note and payment on the account, newest first, with the balance after it */}
+      {history.length ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">{translate("Recent payments")}</CardTitle>
+            <CardTitle className="text-base">{translate("Account history")}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ul className="divide-y divide-zinc-100 text-sm">
-              {acc.payments.map((p) => (
-                <li key={p.name} className="py-2">
-                  <div className="flex justify-between">
-                    <span>{p.posting_date} · {p.reference || "-"}</span>
-                    <span className="tabular-nums font-medium">{fmtMoney(p.credit)}</span>
-                  </div>
-                  {/* the bills this payment cleared, even once they have left Open bills */}
-                  {(p.applied ?? []).map((a) => (
-                    <div key={a.folio} className="flex justify-between pl-4 text-xs text-zinc-500">
-                      <button type="button" className="hover:underline" onClick={() => setSheet({ view: a.folio })}>
-                        {a.invoice_number || a.folio}{a.guest_name ? ` · ${a.guest_name}` : ""}
-                      </button>
-                      <span className="tabular-nums">{fmtMoney(a.amount)}</span>
-                    </div>
-                  ))}
-                  {(p.unapplied ?? 0) > 0.005 ? (
-                    <div className="flex justify-between pl-4 text-xs text-zinc-500">
-                      <span>{translate("Unapplied credit")}</span>
-                      <span className="tabular-nums">{fmtMoney(p.unapplied ?? 0)}</span>
-                    </div>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+          <CardContent className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs uppercase text-zinc-400">
+                <tr>
+                  <th className="py-2 pr-3">{translate("Date")}</th>
+                  <th className="py-2 pr-3">{translate("Entry")}</th>
+                  <th className="py-2 pr-3">{translate("Details")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Billed")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Paid")}</th>
+                  <th className="py-2 text-right">{translate("Balance")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.slice().reverse().map((h) => (
+                  <tr key={h.name} className="border-t border-zinc-100 align-top">
+                    <td className="py-2 pr-3 whitespace-nowrap">{h.posting_date}</td>
+                    <td className="py-2 pr-3">{translate(h.kind)}</td>
+                    <td className="py-2 pr-3">
+                      {h.folio ? (
+                        <button type="button" className="hover:underline" onClick={() => setSheet({ view: h.folio! })}>
+                          {h.invoice_number || h.folio}{h.guest_name ? ` · ${h.guest_name}` : ""}
+                        </button>
+                      ) : (h.reference || h.notes || "-")}
+                      {/* a payment names the bills it cleared */}
+                      {h.applied.map((a) => (
+                        <button key={a.folio} type="button" onClick={() => setSheet({ view: a.folio })}
+                          className="block text-xs text-zinc-500 hover:underline">
+                          {a.invoice_number || a.folio}{a.guest_name ? ` · ${a.guest_name}` : ""} · {fmtMoney(a.amount)}
+                        </button>
+                      ))}
+                    </td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{h.debit ? fmtMoney(h.debit) : ""}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{h.credit ? fmtMoney(h.credit) : ""}</td>
+                    <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(h.balance)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </CardContent>
         </Card>
       ) : null}
