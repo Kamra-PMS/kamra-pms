@@ -4967,7 +4967,7 @@ def reverse_check_in(reservation: str, reason: str, pin: str | None = None):
 		else:
 			frappe.db.set_value("Room", room, {"occupancy_status": "Vacant",
 			                                   "housekeeping_status": "Dirty"})
-	key_result = _revoke_stay_keys(doc)
+	key_result = _revoke_stay_keys(doc, rooms)
 	from kamra.savings import log_action
 	log_action("reverse_check_in", "Reservation", doc.name, doc.property,
 	           rationale=f"{doc.guest_name}: {reason}")
@@ -4975,26 +4975,30 @@ def reverse_check_in(reservation: str, reason: str, pin: str | None = None):
 	        "key_result": key_result}
 
 
-def _revoke_stay_keys(doc) -> dict | None:
-	"""Cancel the stay's keys on a connected lock system (door_lock
-	revoke_keys). The manual adapter has nothing to call: the desk collects
-	the cards. A connector failure is shown, never raised."""
+def _revoke_stay_keys(doc, rooms: list[str]) -> dict | None:
+	"""Cancel the stay's keys for every room it held on a connected lock
+	system (door_lock revoke_keys). The manual adapter has nothing to call:
+	the desk collects the cards. A connector failure is shown, never raised."""
 	from kamra.door_lock import get_adapter
-	adapter = get_adapter(doc.property)
-	if adapter.key == "manual" or not adapter.supports_revoke or not doc.room:
-		return None
+	adapter = None
 	try:
-		result = adapter.revoke_keys(doc.property, doc.name, doc.room)
+		adapter = get_adapter(doc.property)
+		if adapter.key == "manual" or not adapter.supports_revoke or not rooms:
+			return None
+		results = [adapter.revoke_keys(doc.property, doc.name, room) for room in rooms]
 	except Exception:
-		frappe.log_error(title=f"Door lock {adapter.key} revoke_keys failed")
-		return {"ok": False, "adapter": adapter.key, "manual": False,
+		key = adapter.key if adapter else None
+		frappe.log_error(title=f"Door lock {key} revoke_keys failed")
+		return {"ok": False, "adapter": key, "manual": False,
 		        "message": _("The lock system did not answer. Cancel the keys at the encoder.")}
+	ok = all(r.ok for r in results)
+	message = next((r.message for r in results if not r.ok), results[-1].message)
 	from kamra.savings import log_action
 	log_action("revoke_keys", "Reservation", doc.name, doc.property,
-	           rationale=f"check-in reversed, keys via {adapter.key}: "
-	                     f"{'ok' if result.ok else 'failed'}")
-	return {"ok": bool(result.ok), "adapter": result.adapter,
-	        "manual": bool(result.manual), "message": result.message}
+	           rationale=f"check-in reversed, keys for {', '.join(rooms)} via "
+	                     f"{adapter.key}: {'ok' if ok else 'failed'}")
+	return {"ok": ok, "adapter": adapter.key,
+	        "manual": any(r.manual for r in results), "message": message}
 
 
 @frappe.whitelist(methods=["POST"])
