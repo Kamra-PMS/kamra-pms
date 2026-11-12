@@ -245,3 +245,21 @@ Promo code {0},Código promocional {0}
 Discount {0}%,Descuento {0}%
 Discount {0} per night,Descuento {0} por noche
 A discount needs a reason - it goes on the record.,Un descuento necesita un motivo; queda en el registro.
+Monthly,Mensual
+Shop,Tienda
+Revenue by department,Ingresos por departamento
+Department,Departamento
+"Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.","Habitaciones, cada punto de venta, banquetes y cada departamento operativo menor (lavandería, spa, taxi...), como en el informe de auditoría nocturna."
+Food and beverage on folios,Alimentos y bebidas en folios
+Meal plans and minibar,Planes de comidas y minibar
+Banquets,Banquetes
+Laundry,Lavandería
+Spa,Spa
+Taxi,Taxi
+Misc,Varios
+Early Check-in,Entrada anticipada
+Late Checkout,Salida tardía
+Early Departure,Salida anticipada
+Cleaning Fee,Cargo de limpieza
+Extra Guests,Huéspedes adicionales
+Pet Charge,Cargo por mascota

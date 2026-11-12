@@ -878,6 +878,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
                     <option value="Off">{t("Off")}</option>
                     <option value="Daily">{t("Daily")}</option>
                     <option value="Weekly">{t("Weekly")}</option>
+                    <option value="Monthly">{t("Monthly")}</option>
                     <option value="After night audit">{t("After night audit")}</option>
                   </select>
                   {scheduleFrequency !== "Off" && (

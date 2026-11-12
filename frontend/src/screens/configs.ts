@@ -746,7 +746,7 @@ export const outletsConfig: ScreenConfig = {
   ],
   form: [
     { field: "outlet_name", label: "Outlet name", type: "data", required: true },
-    { field: "outlet_type", label: "Type", type: "select", options: ["Restaurant", "Room Service", "Bar", "Spa", "Other"] },
+    { field: "outlet_type", label: "Type", type: "select", options: ["Restaurant", "Room Service", "Bar", "Spa", "Shop", "Other"] },
     { field: "gst_rate", label: "Tax %", type: "float" },
     { field: "disabled", label: "Disabled", type: "check" },
     {

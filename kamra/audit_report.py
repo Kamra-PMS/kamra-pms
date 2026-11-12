@@ -51,13 +51,41 @@ def _folio(property: str, start, end) -> dict:
 		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room', 'Discount', 'Meal Plan', 'Minibar')
 		        AND fc.charge_type NOT IN %(fnb)s AND fc.charge_type NOT IN %(skip)s
 		        THEN fc.amount END), 0) AS other
+		""" + _FOLIO_FROM, {"p": property, "s": start, "e": end, "skip": FOLIO_SKIP,
+		                     "fnb": FNB_TYPES}, as_dict=True)[0]
+	return {k: flt(v) for k, v in row.items()}
+
+
+# outlet bills and banquets are counted from their own records, so the folio
+# lines they post are left out here
+_FOLIO_FROM = """
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE f.property = %(p)s AND fc.posting_date BETWEEN %(s)s AND %(e)s
 		  AND IFNULL(fc.description, '') NOT LIKE '%%(ORD-%%'
 		  AND IFNULL(fc.description, '') NOT LIKE 'EVT-%%'
-		""", {"p": property, "s": start, "e": end, "skip": FOLIO_SKIP, "fnb": FNB_TYPES},
-		as_dict=True)[0]
-	return {k: flt(v) for k, v in row.items()}
+"""
+
+
+def departments(property: str, start, end) -> list[dict]:
+	"""Revenue by operating department for a date range: rooms, each outlet,
+	banquets, then each minor department (laundry, spa, taxi...) on its own
+	line. Same figures as the night audit report, which sums the minor ones
+	as "other"."""
+	p = _period(property, "", start, end, 0)
+	outlets = sum(o["total"] for o in p["outlets"])
+	rows = [("Rooms", p["room_revenue"])]
+	rows += [(o["name"], o["total"]) for o in p["outlets"]]
+	rows += [("Food and beverage on folios", p["food"] + p["beverage"] - outlets),
+	         ("Banquets", p["banquets"]),
+	         ("Meal plans and minibar", p["meal_plan_minibar"])]
+	rows += frappe.db.sql(
+		"""SELECT fc.charge_type, SUM(fc.amount)""" + _FOLIO_FROM + """
+		  AND fc.charge_type NOT IN ('Room', 'Discount', 'Meal Plan', 'Minibar')
+		  AND fc.charge_type NOT IN %(fnb)s AND fc.charge_type NOT IN %(skip)s
+		GROUP BY fc.charge_type ORDER BY fc.charge_type""",
+		{"p": property, "s": start, "e": end, "skip": FOLIO_SKIP, "fnb": FNB_TYPES})
+	return [{"department": frappe._(name), "amount": round(flt(amt), 2)}
+	        for name, amt in rows if name == "Rooms" or round(flt(amt), 2)]
 
 
 def _outlets(property: str, start, end) -> list[dict]:

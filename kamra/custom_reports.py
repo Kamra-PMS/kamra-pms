@@ -231,6 +231,21 @@ DATASETS: dict[str, Dataset] = {
 			_col("share", "Share %", "number"),
 		],
 	},
+	"department_revenue": {
+		"id": "department_revenue",
+		"label": "Revenue by department",
+		"description": "Rooms, each outlet, banquets and each minor department "
+		               "(laundry, spa, taxi...), as on the night audit report.",
+		"module": "finance",
+		"roles": ("Finance", "Revenue Manager", "Hotel Admin", "Night Auditor",
+		          "Kamra Agent"),
+		"date_field": None,
+		"needs_range": True,
+		"columns": [
+			_col("department", "Department"),
+			_col("amount", "Revenue", "number"),
+		],
+	},
 	"hk_tasks": {
 		"id": "hk_tasks",
 		"label": "Housekeeping tasks",
@@ -598,6 +613,7 @@ PACKS: dict[str, dict] = {
 		               "collections by mode, charges by type, voids.",
 		"sections": [
 			{"title": "Occupancy and revenue", "dataset": "occupancy_by_day"},
+			{"title": "Revenue by department", "dataset": "department_revenue"},
 			{"title": "Revenue by source", "dataset": "contribution"},
 			{"title": "Collections by mode", "dataset": "payments",
 			 "columns": ["mode", "amount"], "group_by": ["mode"]},
@@ -789,6 +805,13 @@ def _fetch_payments(property: str, from_date: str, to_date: str,
 		{"p": property, "f": from_date, "t": to_date, "lim": MAX_ROWS},
 		as_dict=True,
 	)
+
+
+def _fetch_department_revenue(property: str, from_date: str, to_date: str,
+                              **_) -> list[dict]:
+	from kamra.audit_report import departments
+
+	return departments(property, from_date, to_date)
 
 
 def _fetch_voids(property: str, from_date: str, to_date: str, **_) -> list[dict]:
@@ -1158,6 +1181,7 @@ FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"payments": _fetch_payments,
 	"voids": _fetch_voids,
 	"contribution": _fetch_contribution,
+	"department_revenue": _fetch_department_revenue,
 	"hk_tasks": _fetch_hk_tasks,
 	"room_status": _fetch_room_status,
 	"lost_found": _fetch_lost_found,
@@ -1774,7 +1798,7 @@ def save_custom_report(
 	srt = _parse_json(sort, [])
 
 	freq = schedule_frequency or "Off"
-	if freq not in ("Off", "Daily", "Weekly", AFTER_AUDIT):
+	if freq not in ("Off", "Daily", "Weekly", "Monthly", AFTER_AUDIT):
 		frappe.throw(_("Invalid schedule frequency."))
 
 	if name:
@@ -2003,14 +2027,15 @@ def _weekday_code(dt: datetime) -> str:
 
 
 def run_scheduled_custom_reports():
-	"""Hourly: send daily/weekly reports whose schedule_time matches now."""
+	"""Hourly: send daily/weekly/monthly reports whose schedule_time matches
+	now. Monthly goes out on the 1st and covers the month before."""
 	now = now_datetime()
 	hhmm = now.strftime("%H:%M")
 	# match within the current hour (scheduler fires hourly)
 	hour_prefix = now.strftime("%H:")
 	rows = frappe.get_all(
 		"Kamra Custom Report",
-		filters={"schedule_frequency": ["in", ["Daily", "Weekly"]]},
+		filters={"schedule_frequency": ["in", ["Daily", "Weekly", "Monthly"]]},
 		fields=[
 			"name", "owner", "property", "title", "dataset", "schedule_frequency",
 			"schedule_time", "schedule_weekday", "recipients", "last_sent_on",
@@ -2026,6 +2051,8 @@ def run_scheduled_custom_reports():
 		if r.schedule_frequency == "Weekly":
 			if _weekday_code(now) != (r.schedule_weekday or "Mon"):
 				continue
+		if r.schedule_frequency == "Monthly" and now.day != 1:
+			continue
 		# skip if already sent today
 		if r.last_sent_on and getdate(r.last_sent_on) == getdate(now):
 			continue
@@ -2036,6 +2063,8 @@ def run_scheduled_custom_reports():
 			from_date = to_date
 			if r.schedule_frequency == "Weekly":
 				from_date = add_days(to_date, -6)
+			if r.schedule_frequency == "Monthly":
+				from_date = str(getdate(to_date).replace(day=1))
 			from kamra.authz import act_as
 
 			# Scheduler has no session roles; send as the report's owner so

@@ -119,6 +119,28 @@ class AuditReportTestCase(AuditTestCase):
 		finally:
 			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore
 
+	def test_departments_list_minor_departments_apart(self):
+		from kamra import api
+		from kamra.tests.audit_fixtures import guest_folio
+		outlet, dosa, _gin = self.outlet()
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		folio_mod.post_remaining_nights(res)
+		folio = guest_folio(res.name)
+		api.add_folio_charge(folio, "Laundry", "UT shirts", 200, gst_rate=0)
+		api.add_folio_charge(folio, "Spa", "UT massage", 300, gst_rate=0)
+		bill = pos.create_order(outlet, [{"menu_item": dosa, "qty": 2}],
+		                        table_no="T1", order_type="Dine In")
+		pos.pay_order(bill["order"], "Cash")
+		rows = {r["department"]: r["amount"]
+		        for r in audit_report.departments(PROP_A, TODAY, TODAY)}
+		self.assertEqual((rows["Laundry"], rows["Spa"]), (200, 300))
+		self.assertGreater(rows["Rooms"], 0)
+		self.assertEqual(len([k for k in rows if k not in ("Rooms", "Laundry", "Spa")]), 1)
+		# the same money as the night audit report's day total
+		day = audit_report.build(PROP_A, TODAY)["periods"][0]
+		self.assertAlmostEqual(sum(rows.values()), day["total_revenue"], 2)
+
 	def test_audit_pack_has_no_money_for_the_desk(self):
 		import json
 

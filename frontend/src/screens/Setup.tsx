@@ -985,7 +985,7 @@ export default function Setup() {
                       onChange={(e) => setOutlets((r) => r.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
                     <select className={cn(inputCls, "w-40 bg-white")} value={o.type}
                       onChange={(e) => setOutlets((r) => r.map((x, j) => (j === i ? { ...x, type: e.target.value } : x)))}>
-                      {["Restaurant", "Room Service", "Bar", "Spa", "Other"].map((x) => <option key={x} value={x}>{translate(x)}</option>)}
+                      {["Restaurant", "Room Service", "Bar", "Spa", "Shop", "Other"].map((x) => <option key={x} value={x}>{translate(x)}</option>)}
                     </select>
                     {outlets.length > 1 && (
                       <Button variant="ghost" aria-label={t("Remove")} onClick={() => setOutlets((r) => r.filter((_, j) => j !== i))}>
