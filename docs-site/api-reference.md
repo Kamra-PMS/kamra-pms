@@ -5461,6 +5461,11 @@ the AR it pays. By default it pays the oldest open bills first;
 stays on the account as unapplied credit and settles the company's next
 bill.
 
+Pass idempotency_key (one per "Record payment" press): a retry with the
+same key returns the first result and posts nothing. Two payments on
+one account at once run one after the other, so they never both clear
+the same bill.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `account` | yes |  |
@@ -5468,6 +5473,7 @@ bill.
 | `mode` | no | `'Bank Transfer'` |
 | `reference` | no | `None` |
 | `allocations` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.ledger.city_ledger_aging`
 
