@@ -4505,7 +4505,8 @@ def t95():
 		frappe.db.set_value("Property", P, "require_cashier_pin", pin_before or 0)
 	assert out["removed"]["amount"] == 400, out
 	doc = frappe.get_doc("Folio", folio)
-	assert not any(c.name == row for c in doc.charges), "line still on the bill"
+	# the line stays on the bill, with a reversal line after it (t392)
+	assert any(c.get("reversal_of") == row for c in doc.charges), "no reversal line"
 	rev = frappe.db.get_value("Folio Ledger Entry", {"reversal_of": orig},
 	                          ["debit", "credit", "description"], as_dict=True)
 	assert rev and float(rev.credit) == frappe.db.get_value(
@@ -4513,6 +4514,28 @@ def t95():
 	assert "posted to the wrong room" in rev.description, rev
 	assert frappe.db.exists("Agent Action Log", {
 		"action_type": "void_charge", "reference_name": folio}), "void not logged"
+
+
+@check("folio void keeps the line and a signed reversal line with reason and user; nets to zero")
+def t392():
+	from kamra import api
+	from kamra.ledger import folio_reconciliation
+	g = _guest("Eval Void Line", "+91 70000 03920")
+	res = _res(g, "2033-05-14", "2033-05-15", ROOM)
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	folio = api.split_folio(res.name, "Extra")["folio"]
+	api.add_folio_charge(folio, "Laundry", "eval voided line", 13000, 0)
+	row = next(c.name for c in frappe.get_doc("Folio", folio).charges
+	           if c.description == "eval voided line")
+	api.void_folio_charge(folio, row, reason="eval wrong room")
+	doc = frappe.get_doc("Folio", folio)
+	assert any(c.name == row for c in doc.charges), "the voided line left the bill"
+	rev = [c for c in doc.charges if c.get("reversal_of") == row]
+	assert len(rev) == 1 and float(rev[0].amount) == -13000, [c.as_dict() for c in doc.charges]
+	assert rev[0].void_reason == "eval wrong room" and rev[0].voided_by, rev[0].as_dict()
+	assert abs(float(doc.balance or 0)) < 0.01, doc.balance
+	assert folio not in {f["folio"] for f in folio_reconciliation(P, limit=500)["folios"]}
 
 
 @check("whole-villa booking: checks in with no room, audits, checks out (rooms occupied then dirty)")
@@ -10697,7 +10720,7 @@ def execute():
 		           t49, t50, t51, t53, t54, t55, t56, t57, t58, t59, t60, t61,
 		           t62, t63, t64, t65, t66, t67, t68, t69, t70, t71, t72, t73,
 		           t74, t75, t76, t81, t82, t82b, t82c, t83, t84, t85, t86, t87,
-		           t90, t91, t92, t93, t94, t95, t96, t97, t98, t100, t101, t102,
+		           t90, t91, t92, t93, t94, t95, t392, t96, t97, t98, t100, t101, t102,
 		           t103, t104, t110, t111, t112, t113, t114, t115, t120, t121, t140, t141,
 		           t142, t143, t150, t151, t152, t153, t170, t171, t172, t173, t174, t176,
 		           t177, t178, t179, t160, t161, t162, t163, t164, t165, t166, t167, t130,
