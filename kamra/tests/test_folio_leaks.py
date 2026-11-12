@@ -353,3 +353,20 @@ class FolioLeaksTestCase(AuditTestCase):
 		patch.execute()
 		self.assertAlmostEqual(_net(folio, "Deposit"), 0, places=2)
 		self.assertAlmostEqual(_net(folio, "Guest"), _balance(folio), places=2)
+
+	def test_a_status_edit_cannot_check_a_guest_out(self):
+		res = make_reservation(PROP_A, self.rt, d(-1), TODAY,
+		                       status="Checked In", room=self.room)
+		res.reload()
+		res.status = "Checked Out"
+		with self.assertRaisesRegex(frappe.ValidationError, "Use Check out"):
+			res.save(ignore_permissions=True)
+
+	def test_a_tax_free_property_offers_only_zero_tax(self):
+		from kamra.localization import generic
+		frappe.db.set_value("Property", PROP_A, {"gst_rate_low": 0, "gst_rate_high": 0})
+		frappe.clear_document_cache("Property", PROP_A)
+		self.assertEqual(generic.tax_rate_options(PROP_A), [0])
+		frappe.db.set_value("Property", PROP_A, "gst_rate_low", 5)
+		frappe.clear_document_cache("Property", PROP_A)
+		self.assertIn(5, generic.tax_rate_options(PROP_A))

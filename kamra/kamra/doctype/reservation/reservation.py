@@ -332,6 +332,7 @@ class Reservation(Document):
 			self.booked_check_out_date = None
 			self.early_departure_reason = None
 		self.validate_dates()
+		self._check_out_only_through_check_out()
 		self.validate_past_check_in()
 		self.nights = date_diff(self.check_out_date, self.check_in_date)
 		self.validate_minimum_nights()
@@ -955,6 +956,16 @@ class Reservation(Document):
 			title=_("Double Booking Blocked"),
 			exc=InventoryRefused,
 		)
+
+	def _check_out_only_through_check_out(self):
+		"""A stay becomes Checked Out only through kamra.api.check_out, which
+		refuses while the bill is unpaid or laundry / a restaurant bill is
+		still open. A status edit (Desk form, REST) would skip all of it."""
+		previous = self.get_doc_before_save()
+		if (previous and previous.status != "Checked Out"
+				and self.status == "Checked Out" and not self.flags.kamra_check_out):
+			frappe.throw(_("Use Check out to check a guest out: it makes sure every "
+			               "bill is cleared first."), title=_("Check out"))
 
 	def on_update(self):
 		lines = self.flags.pop("rate_change_lines", None)

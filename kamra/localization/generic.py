@@ -22,6 +22,12 @@ def fnb_tax_rate(property) -> float:
 
 
 def tax_rate_options(property) -> list:
+	# a property that charges no tax (its rates are 0) offers only 0%, so a
+	# charge added by hand can't pick up a tax by mistake
+	if property:
+		prop = frappe.get_cached_doc("Property", property)
+		if not float(prop.get("gst_rate_low") or 0) and not float(prop.get("gst_rate_high") or 0):
+			return [0]
 	return [0, 5, 10, 12, 15, 20]
 
 

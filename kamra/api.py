@@ -5021,6 +5021,7 @@ def check_out(reservation: str, credit_override_reason: str | None = None,
 	from kamra.deposit import apply_held_to_bill
 	apply_held_to_bill(doc)
 	doc.status = "Checked Out"
+	doc.flags.kamra_check_out = True  # passed the checks above (Reservation.validate)
 	doc.save()
 	_scrub_stay_ids(doc)
 	from kamra.savings import log_action
