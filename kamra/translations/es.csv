@@ -263,3 +263,6 @@ Early Departure,Salida anticipada
 Cleaning Fee,Cargo de limpieza
 Extra Guests,Huéspedes adicionales
 Pet Charge,Cargo por mascota
+Bills paid,Facturas pagadas
+{0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,{0} cuenta(s) de esta estancia aún no están en la cuenta del huésped: {1}. Cárgalas a la habitación o cóbralas antes del check-out.
+Bills still open,Cuentas aún abiertas

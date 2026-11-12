@@ -365,19 +365,6 @@ export default function CityLedgerPayment(props: {
                 (unapplied > 0 ? translate(" · {v0} stays as unapplied credit", { v0: String(fmtMoney(unapplied)) }) : "")}
           </p>
 
-          {acc.payments.length ? (
-            <div>
-              <p className="mb-1 text-xs uppercase text-zinc-400">{translate("Recent payments")}</p>
-              <ul className="space-y-0.5 text-sm text-zinc-600">
-                {acc.payments.map((p) => (
-                  <li key={p.name} className="flex justify-between">
-                    <span>{p.posting_date} · {p.reference || "-"}</span>
-                    <span className="tabular-nums">{fmtMoney(p.credit)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </div>
       )}
     </Sheet>

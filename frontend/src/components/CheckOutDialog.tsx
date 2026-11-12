@@ -1411,7 +1411,7 @@ export default function CheckOutDialog(props: {
                     ))}
                   </ul>
                   <p className="mt-2 text-xs text-amber-800">
-                    {t("You can still check out. These are not on the guest's bill: when they are posted later they land on the departed stay's folio and have to be collected separately. To add them now, go back to the Bill step.")}
+                    {t("Check-out waits for these. Go back to the Bill step and post them to the room, or settle them at the outlet.")}
                   </p>
                 </Section>
               )}

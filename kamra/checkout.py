@@ -207,8 +207,8 @@ def _pending_bills(res, modes: list[str]) -> list[dict]:
 	              (laundry.return_items + deliver_laundry); a pickup that
 	              was only requested has nothing to bill yet
 
-	None of them stops the check-out: a bill left open is billed to the
-	departed stay when it is posted later, which the sheet says plainly."""
+	A billable one stops the check-out (assert_no_open_bills): left open, it
+	was billed to the departed stay later and never collected."""
 	from kamra.laundry import LAUNDRY_ROLES
 	from kamra.pos import POS_ROLES
 	out = []
@@ -277,6 +277,21 @@ def _pending_bills(res, modes: list[str]) -> list[dict]:
 				"hint": hint,
 				"act_roles": ["Front Desk", "Housekeeping"]})
 	return out
+
+
+def _open_bills_message(bills: list[dict]) -> str:
+	return _("{0} bill(s) for this stay are not on the guest's bill yet: {1}. "
+	         "Post them to the room or settle them before check-out.").format(
+		len(bills), ", ".join(f"{_(b['label'])} {b['name']} ({_(b['status'])})"
+		                      for b in bills))
+
+
+def assert_no_open_bills(res) -> None:
+	"""Refuse a check-out while laundry or a restaurant bill for the stay is
+	still open: the one write path, so the desk, the agent and REST all stop."""
+	open_bills = [b for b in _pending_bills(res, []) if b["billable"]]
+	if open_bills:
+		frappe.throw(_open_bills_message(open_bills), title=_("Bills still open"))
 
 
 def _late_checkout(res, prop, folio_rows) -> dict | None:
@@ -574,12 +589,9 @@ def _checkout_context(reservation: str) -> dict:
 			"can_override": credit["can_override"]})
 	open_bills = [b for b in pending if b["billable"]]
 	if open_bills:
-		notices.append({
-			"code": "pending_bills",
-			"message": _("{0} bill(s) for this stay are not on the folio yet. Post "
-			             "them to the room or settle them below. They do not stop "
-			             "the check-out, but anything still open is not on the "
-			             "guest's bill.").format(len(open_bills))})
+		blockers.append({
+			"code": "pending_bills", "step": "review",
+			"message": _open_bills_message(open_bills)})
 
 	owed, refund_due = pos["owed"], pos["refund_due"]
 	settled = owed <= EPS and refund_due <= EPS

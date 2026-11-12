@@ -138,7 +138,10 @@ class POSOrder(Document):
 			target_folio(res, "Food & Beverage", is_alcohol=has_alcohol))
 		if folio.status == "Closed":
 			frappe.throw("Folio is closed — settle the order directly.")
-		gst = frappe.db.get_value("POS Outlet", self.outlet, "gst_rate") or 5
+		# the outlet's own rate, 0 included (the field defaults new outlets to 5;
+		# `or 5` here charged tax at a 0% outlet)
+		gst = frappe.db.get_value("POS Outlet", self.outlet, "gst_rate")
+		gst = 5 if gst is None else gst
 		from kamra.business_date import get_business_date
 		detail = ", ".join(
 			f"{it.item_name} ×{int(it.qty)}" for it in self.items if not it.voided)

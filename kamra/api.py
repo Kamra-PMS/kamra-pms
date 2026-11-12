@@ -5013,6 +5013,8 @@ def check_out(reservation: str, credit_override_reason: str | None = None,
 					doc.guest_name, plan["unused_nights"], plan["booked_check_out"],
 					_(plan["policy"])),
 				title=_("Leaving early"))
+	from kamra.checkout import assert_no_open_bills
+	assert_no_open_bills(doc)
 	credit = _assert_settled(doc, credit_override_reason)
 	# a held security deposit that the settled bill used up is recorded as
 	# applied, so the Deposit ledger doesn't keep a departed guest's money

@@ -62,6 +62,17 @@ def _money(v) -> str:
 	return f"{flt(v):,.2f}"
 
 
+def _bills_paid(p: dict, lang: str) -> str:
+	"""Each bill a payment cleared, plus anything kept as unapplied credit."""
+	from kamra.custom_reports import _tr
+	parts = [f"{a.get('invoice_number') or a['folio']}"
+	         + (f" ({a['guest_name']})" if a.get("guest_name") else "")
+	         + f" {_money(a['amount'])}" for a in p.get("applied") or []]
+	if flt(p.get("unapplied")) > 0.005:
+		parts.append(_tr("Unapplied credit", lang) + f" {_money(p['unapplied'])}")
+	return "; ".join(parts)
+
+
 def statement_html(st: dict, lang: str = "en") -> str:
 	from kamra.custom_reports import _kpi_html, _page_html, _table_html, _tr
 	sym = st.get("currency_symbol") or ""
@@ -94,8 +105,10 @@ def statement_html(st: dict, lang: str = "en") -> str:
 	}
 	payments = {
 		"columns": [{"id": i, "label": label} for i, label in (
-			("posting_date", "Date"), ("reference", "Reference"), ("amount", "Amount"))],
+			("posting_date", "Date"), ("reference", "Reference"),
+			("bills", "Bills paid"), ("amount", "Amount"))],
 		"rows": [{"posting_date": str(p.posting_date), "reference": p.reference or "",
+		          "bills": _bills_paid(p, lang),
 		          "amount": _money(p.credit)} for p in st["payments"]],
 	}
 	esc = frappe.utils.escape_html

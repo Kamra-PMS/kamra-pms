@@ -85,8 +85,60 @@ def ar_accounts(property: str):
 			"restricted_reason": e.get("restricted_reason"),
 			"billing_address": e.get("billing_address"),
 		})
+	from kamra.credit import in_house_exposure
+	last = {r.account: r for r in frappe.db.sql(
+		"""SELECT c.account, c.posting_date, c.credit FROM `tabCity Ledger Entry` c
+		   JOIN (SELECT account, MAX(CONCAT(posting_date, creation)) AS k
+		         FROM `tabCity Ledger Entry` WHERE property = %s AND kind = 'Payment'
+		         GROUP BY account) m
+		     ON m.account = c.account AND CONCAT(c.posting_date, c.creation) = m.k""",
+		property, as_dict=True)}
+	for r in rows:
+		# to bill: what the company's stays in house run up, not yet invoiced
+		r["unbilled"] = in_house_exposure(r["company"], property)
+		lp = last.get(r["name"])
+		r["last_payment_date"] = str(lp.posting_date) if lp else None
+		r["last_payment"] = float(lp.credit) if lp else None
 	rows.sort(key=lambda r: (-float(r.get("balance") or 0), r["company_name"]))
-	return {"accounts": rows}
+	return {"accounts": rows, "summary": _summary(property, rows)}
+
+
+def _summary(property: str, rows: list[dict]) -> dict:
+	"""The finance team's top line: what is still to bill, what is billed and
+	pending (and overdue), what came in this month, what guests who left
+	still owe, and the advances held for guests not yet in."""
+	from frappe.utils import get_first_day
+	bd = get_business_date(property)
+	received = frappe.db.sql(
+		"""SELECT COALESCE(SUM(credit - debit), 0) FROM `tabCity Ledger Entry`
+		   WHERE property = %s AND kind = 'Payment' AND posting_date >= %s""",
+		(property, get_first_day(bd)))[0][0]
+	held = frappe.db.sql(
+		"""SELECT COALESCE(SUM(credit - debit), 0) FROM `tabFolio Ledger Entry`
+		   WHERE property = %s AND ledger = 'Deposit'""", property)[0][0]
+	return {
+		"to_bill": round(sum(r["unbilled"] for r in rows), 2),
+		"billed_pending": round(sum(max(float(r.get("balance") or 0), 0) for r in rows), 2),
+		"overdue": round(sum(float(r.get("overdue") or 0) for r in rows), 2),
+		"received_this_month": round(float(received or 0), 2),
+		"deposits_held": round(float(held or 0), 2),
+		"guests_owing": guests_owing(property),
+	}
+
+
+def guests_owing(property: str) -> list[dict]:
+	"""Guest bills still owed after the stay ended: departed, no-show or
+	cancelled with a balance (a no-show fee, a bill left open)."""
+	rows = frappe.db.sql(
+		"""SELECT f.name AS folio, f.guest_name, f.balance, r.name AS reservation,
+		          r.status, r.check_in_date, r.check_out_date
+		   FROM `tabFolio` f JOIN `tabReservation` r ON r.name = f.reservation
+		   WHERE f.property = %s AND f.folio_type = 'Guest' AND f.balance > 0.005
+		     AND r.status IN ('Checked Out', 'No Show', 'Cancelled')
+		   ORDER BY r.check_in_date""", property, as_dict=True)
+	return [{**r, "balance": round(float(r.balance), 2),
+	         "check_in_date": str(r.check_in_date),
+	         "check_out_date": str(r.check_out_date)} for r in rows]
 
 
 @frappe.whitelist(methods=["POST"])

@@ -38,3 +38,4 @@ kamra.patches.v46.backfill_pos_order_business_date
 kamra.patches.v46.backfill_property_short_code
 kamra.patches.v47.report_duplicate_ota_refs
 kamra.patches.v47.create_floors_from_rooms
+kamra.patches.v47.move_policy_fee_advances_to_guest_ledger
