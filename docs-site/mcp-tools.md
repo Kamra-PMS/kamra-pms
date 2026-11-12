@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **161 governed tools** on the hosted MCP
+Kamra exposes **164 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -382,6 +382,41 @@ A guest's full history: profile, stats, chronological timeline.
 Load this before talking to a returning guest.
 
 Endpoint: `kamra.api.guest_journey`.
+
+### `guest_offers(status, guest, reservation)`
+
+Guest offers (early check-in, late check-out, upgrade, complimentary
+service, discount) with their status: Proposed, Approved, Declined,
+Delivered, Redeemed or Expired. Filter by guest, reservation or
+status. Also returns the property's limits and this month's total.
+
+Endpoint: `kamra.guest_offers.list_offers`.
+
+### `propose_guest_offer(guest, kind, value, valid_to, reservation, experience, room_type, reason, idempotency_key)`
+
+Propose a perk for a repeat or high-value guest (see guest_journey).
+It waits as Proposed until staff approve it on screen; you can
+propose, never approve. kind: Early check-in, Late check-out,
+Upgrade (room_type needed), Complimentary service (experience
+needed, see booking_options) or Discount. value is what it is worth
+in the property's currency; offers over the property's limits are
+refused.
+
+Endpoint: `kamra.guest_offers.propose_offer`.
+Mutating - logged to the activity ledger.
+
+### `redeem_guest_offer(code, reservation, room)`
+
+Use an approved offer on one of the guest's stays, by its code. A
+discount posts as an allowance (the property's allowance approval
+still applies), an upgrade moves the stay to a free room of that
+type at the price the guest pays now (room picks one), a
+complimentary service is added at no charge, an early check-in or
+late check-out is set on the stay. Redeeming a redeemed offer
+changes nothing and returns idempotent_replay.
+
+Endpoint: `kamra.guest_offers.redeem_offer`.
+Mutating - logged to the activity ledger.
 
 ### `update_occupants(reservation, occupants)`
 

@@ -459,6 +459,8 @@ export default function GuestJourney() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-3">
+              <Link to={`/guest-offers?guest=${encodeURIComponent(guest.name)}`}
+                className="text-xs font-medium text-brand-700 hover:underline">{translate("Guest offers")}</Link>
               {canBook && (
                 <div className="flex gap-2">
                   <Button

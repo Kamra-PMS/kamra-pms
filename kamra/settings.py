@@ -194,6 +194,18 @@ MODULES: tuple[Module, ...] = (
 				       "room charge template on the WhatsApp connection. At most one message per bill "
 				       "every 10 minutes; room nights and company bills never send one."),
 			)),
+			Section("guest_offers", "Guest offers",
+			        "Perks for repeat and high-value guests. Anyone at the desk, or an AI agent, may propose "
+			        "one; a Hotel Admin or Finance approves it on Guest offers. An offer over these limits "
+			        "can't be approved.", (
+				S("offer_kinds", "Kinds of offer allowed", "text",
+				  "Early check-in, Late check-out, Upgrade, Complimentary service, Discount",
+				  hint="Separated by commas. Empty allows them all."),
+				S("offer_max_value", "Most one offer may be worth", "number", 0, min=0,
+				  hint="0 means no limit per offer."),
+				S("offer_max_month", "Most all offers approved in a month may be worth", "number", 0, min=0,
+				  hint="Counted from the first of the month. 0 means no monthly limit."),
+			)),
 			Section("holds", "Holds & selling", "", (
 				S("hold_minutes", "Hold unconfirmed bookings for", "number", 120, P, min=5, max=10080, unit="min"),
 				S("sell_message", "Sell message", "textarea", store=P,

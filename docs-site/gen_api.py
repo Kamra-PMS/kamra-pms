@@ -84,6 +84,8 @@ MODULES = [
     ("checkin", "Guided check-in (steps, who did each, room-charges permission)",
      "kamra.api.check_in refuses until every check-in step the property marks required is done. check_in_readiness says what is missing."),
     ("staff", "Staff & access", ""),
+    ("guest_offers", "Guest offers (propose, approve, redeem)",
+     "Agents may propose and redeem, never approve: decide_offer refuses an agent call. Redeeming posts through post_allowance, move_reservation or a stay add-on."),
     ("webhooks", "Outbound webhooks (subscriptions, delivery log)",
      "Hotel Admin / System Manager. Events are signed with HMAC-SHA256 - see the Integrations page."),
     ("pos_interface", "External POS (room charges from a third-party POS)",

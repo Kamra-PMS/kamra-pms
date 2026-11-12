@@ -71,6 +71,8 @@ EVENTS: dict[str, str] = {
 	"ar.payment_recorded": "A company's payment was recorded against its AR account.",
 	"cashier.session_closed": "A cashier counted the drawer and closed the till.",
 	"group.block_released": "A group's cutoff passed and its unpicked rooms went back on sale.",
+	"offer.approved": "A guest offer was approved by staff, ready to deliver to the guest.",
+	"offer.redeemed": "A guest offer was used on a stay (an allowance, a room move or an add-on).",
 }
 # a test event the settings screen sends to one endpoint; not subscribable
 PING = "ping"

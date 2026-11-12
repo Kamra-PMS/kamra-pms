@@ -74,6 +74,7 @@ SCOPED_ARGS = {
 	"reservation": ("Reservation", "POS Table Reservation"),
 	"folio": ("Folio",), "from_folio": ("Folio",), "to_folio": ("Folio",),
 	"folios": ("Folio",), "allowance_request": ("Allowance Request",),
+	"offer": ("Guest Offer",),
 	"group_booking": ("Group Booking",), "group": ("Group Booking",),
 	"order": ("POS Order", "Laundry Order"),
 	"outlet": ("POS Outlet",),

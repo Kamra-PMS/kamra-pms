@@ -788,7 +788,7 @@ Alcohol never rides a company or group folio - it settles separately.,Alcohol ne
 "Alcohol, live counters, taxes","Alcohol, live counters, taxes",المشروبات الكحولية، محطات الطهي المباشر، الضرائب,"Bebidas alcohólicas, estaciones de cocina en vivo e impuestos",screens/BanquetCatalogue.tsx,,translated
 Alerts and sound,Alerts and sound,التنبيهات والصوت,Alertas y sonido,components/AlertSettings.tsx,,translated
 all,all,الكل,todos,,,translated
-All,All,الكل,Todos,components/NotificationBell.tsx; screens/FolioHistory.tsx; screens/Inventory.tsx; screens/Kitchen.tsx; screens/POS.tsx; screens/VoidAllowanceReport.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+All,All,الكل,Todos,components/NotificationBell.tsx; screens/FolioHistory.tsx; screens/GuestOffers.tsx; screens/Inventory.tsx; screens/Kitchen.tsx; screens/POS.tsx; screens/VoidAllowanceReport.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 All ({n}),All ({n}),الكل ({n}),Todos ({n}),screens/POS.tsx,n,translated
 All audits,All audits,كل عمليات التدقيق,Todas las auditorías,screens/Billing.tsx,,translated
 All bills,All bills,كل الفواتير,Todas las facturas,screens/Payables.tsx,,translated
@@ -915,7 +915,7 @@ applies to this browser only,applies to this browser only,ينطبق على هذ
 Apply,Apply,تطبيق,Aplicar,components/GroupControl.tsx; screens/PublicBooking.tsx,,translated
 Apply count · ,Apply count · ,تطبيق العدد · ,Aplicar recuento · ,screens/Inventory.tsx,,translated
 Apply discount,Apply discount,تطبيق الخصم,Aplicar descuento,,,translated
-Approve,Approve,موافقة,Aprobar,components/AllowanceRequests.tsx; screens/CashierBoard.tsx; screens/Payables.tsx,,translated
+Approve,Approve,موافقة,Aprobar,components/AllowanceRequests.tsx; screens/CashierBoard.tsx; screens/GuestOffers.tsx; screens/Payables.tsx,,translated
 Approved,Approved,تمت الموافقة,Aprobada,screens/AllowanceApprovals.tsx; screens/AllowanceVoucher.tsx,,translated
 Approved by,Approved by,وافق عليه,Aprobado por,screens/AllowanceVoucher.tsx,,translated
 approved by {name},approved by {name},بموافقة {name},aprobado por {name},screens/VoidAllowanceReport.tsx; screens/pos/PosSidePanel.tsx,name,translated
@@ -1055,6 +1055,7 @@ Back to property,Back to property,العودة إلى العقار,Volver al alo
 Back to summary,Back to summary,العودة إلى الملخص,Volver al resumen,screens/Reports.tsx,,translated
 Back to the function,Back to the function,العودة إلى المناسبة,Volver al evento,screens/BanquetDocument.tsx,,translated
 Back to the group,Back to the group,,,screens/GroupQuotation.tsx,,needs_translation
+Back to the guest,Back to the guest,العودة إلى الضيف,Volver al huésped,screens/GuestOffers.tsx,,translated
 Back to the hotel default.,Back to the hotel default.,عدت إلى الإعداد الافتراضي للفندق.,Volver al valor predeterminado del hotel.,components/CustomizeToday.tsx,,translated
 Back to till,Back to till,العودة إلى الصندوق,Volver a la caja,screens/pos/OpenBillsPopup.tsx,,translated
 Back to today,Back to today,العودة إلى اليوم,Volver a hoy,screens/InHouse.tsx,,translated
@@ -1305,7 +1306,7 @@ Came from,Came from,جاء من,Vino de,screens/Banquet.tsx; screens/BanquetFunc
 can sell to {limit} (overbooking),can sell to {limit} (overbooking),يمكن البيع حتى {limit} (حجز زائد),venta permitida hasta {limit} (sobreventa),screens/TapeChart.tsx,limit,translated
 Can't reach Kamra right now. Check your connection - we'll reconnect automatically.,Can't reach Kamra right now. Check your connection - we'll reconnect automatically.,تعذّر الوصول إلى Kamra الآن. تحقق من اتصالك، وسنعيد الاتصال تلقائياً.,No se puede conectar con Kamra. Revise su conexión; se reconectará automáticamente.,,,translated
 Canadian,Canadian,كندي,Canadiense,,,translated
-Cancel,Cancel,إلغاء,Cancelar,components/AgentCards.tsx; components/AllowanceRequests.tsx; components/BookingDialog.tsx; components/ChangeCompany.tsx; components/CheckOutDialog.tsx; components/CustomizeToday.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/ReinstatePanel.tsx; components/ResourceScreen.tsx; components/RoomDrawer.tsx; components/SecurityDepositPanel.tsx; screens/AdminRooms.tsx; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/CashierBoard.tsx; screens/CityLedgerPayment.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Payables.tsx; screens/Receivables.tsx; screens/RevenueReports.tsx; screens/TapeChart.tsx; screens/Tickets.tsx; screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx; screens/laundry/GuestLaundryCard.tsx; screens/pos/MoveRoomBill.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Cancel,Cancel,إلغاء,Cancelar,components/AgentCards.tsx; components/AllowanceRequests.tsx; components/BookingDialog.tsx; components/ChangeCompany.tsx; components/CheckOutDialog.tsx; components/CustomizeToday.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/ReinstatePanel.tsx; components/ResourceScreen.tsx; components/RoomDrawer.tsx; components/SecurityDepositPanel.tsx; screens/AdminRooms.tsx; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/CashierBoard.tsx; screens/CityLedgerPayment.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/GuestOffers.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Payables.tsx; screens/Receivables.tsx; screens/RevenueReports.tsx; screens/TapeChart.tsx; screens/Tickets.tsx; screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx; screens/laundry/GuestLaundryCard.tsx; screens/pos/MoveRoomBill.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,إلغاء {invoice}؟ يُسجَّل الرقم في سجل الملغى وتُفتح الفاتورة للتصحيح.,¿Anular la factura {invoice}? El número quedará en el registro de facturas anuladas y el folio se volverá a abrir para corregirlo.,screens/FolioView.tsx,invoice,translated
 Cancel {v0} room(s)? The cancellation policy applies to each room.,Cancel {v0} room(s)? The cancellation policy applies to each room.,,,components/GroupControl.tsx,v0,needs_translation
 Cancel a booking,Cancel a booking,إلغاء حجز,Cancelar una reserva,components/AgentGuide.tsx,,translated
@@ -1710,6 +1711,7 @@ Complimentary (don't bill the guest),Complimentary (don't bill the guest),مجا
 Complimentary (house use),Complimentary (house use),مجاني (استخدام داخلي),De cortesía (uso interno),screens/BanquetFunction.tsx,,translated
 Complimentary (no charge) - who authorized?,Complimentary (no charge) - who authorized?,مجاني (بدون رسوم): من فوّض ذلك؟,De cortesía (sin cargo): ¿quién lo autorizó?,screens/POS.tsx; screens/pos/SettleSheet.tsx,,translated
 Complimentary items worth ,Complimentary items worth ,عناصر مجانية بقيمة ,Se incluyen artículos de cortesía por valor de ,screens/BanquetDocument.tsx,,translated
+Complimentary service,Complimentary service,خدمة مجانية,Servicio de cortesía,,,translated
 "Complimentary, authorized by {who}","Complimentary, authorized by {who}",مجانية، بتفويض من {who},"De cortesía, autorizado por {who}",screens/pos/PosSidePanel.tsx,who,translated
 Concierge,Concierge,الاستقبال الذكي,Conserjería,components/CommandPalette.tsx,,translated
 Condition,Condition,الحالة,Condición,,,translated
@@ -1946,8 +1948,9 @@ Dear ,Dear ,عزيزي ,Estimado/a ,screens/CancellationLetter.tsx,,translated
 "Dear {0},","Dear {0},",السادة {0}،,Estimados {0}:,,0,translated
 Debit,Debit,مدين,Débito,screens/Ledgers.tsx,,translated
 "Decide if the guest can charge the restaurant, laundry and minibar to the room.","Decide if the guest can charge the restaurant, laundry and minibar to the room.",قرر ما إذا كان يمكن للضيف تحميل رسوم المطعم والمغسلة والميني بار على الغرفة.,"Decide si el huésped puede cargar el restaurante, la lavandería y el minibar en la habitación.",components/CheckInDialog.tsx,,translated
+decided by {v0},decided by {v0},قرّره {v0},decidida por {v0},screens/GuestOffers.tsx,v0,translated
 Decides CGST+SGST vs IGST,Decides CGST+SGST vs IGST,يحدد CGST+SGST أو IGST,Determina CGST+SGST o IGST,screens/BanquetFunction.tsx,,translated
-Decline,Decline,رفض,Rechazar,components/BookingRequests.tsx; screens/HkApp.tsx; screens/ReservationDetail.tsx,,translated
+Decline,Decline,رفض,Rechazar,components/BookingRequests.tsx; screens/GuestOffers.tsx; screens/HkApp.tsx; screens/ReservationDetail.tsx,,translated
 Decline request,Decline request,رفض الطلب,Rechazar solicitud,components/BookingRequests.tsx,,translated
 Declined,Declined,مرفوض,Rechazado,,,translated
 Declined {name}.,Declined {name}.,تم رفض {name}.,Rechazado {name}.,components/BookingRequests.tsx,name,translated
@@ -2328,9 +2331,11 @@ Expected pax,Expected pax,عدد الضيوف المتوقع,Número de asistent
 Expected vs counted,Expected vs counted,المتوقع مقابل المعدود,Esperado vs contado,screens/EndOfDayWizard.tsx,,translated
 Expense category,Expense category,فئة المصروف,Categoría de gasto,,,translated
 Expenses,Expenses,المصروفات,Gastos,screens/ManagementBooks.tsx,,translated
-Experience,Experience,تجربة,Experiencia,,,translated
+Experience,Experience,تجربة,Experiencia,screens/GuestOffers.tsx,,translated
+Experience…,Experience…,تجربة…,Experiencia…,screens/GuestOffers.tsx,,translated
 Experiences,Experiences,التجارب,Experiencias,,,translated
 Experiences: +{amount} · added to your bill at the hotel,Experiences: +{amount} · added to your bill at the hotel,التجارب: +{amount} · تضاف إلى فاتورتك في الفندق,Experiencias: +{amount} · se agregarán a tu cuenta en el hotel,screens/PublicBooking.tsx,amount,translated
+Expired,Expired,منتهي الصلاحية,Vencida,,,translated
 Expired {date},Expired {date},منتهية في {date},Caducado {date},components/CheckInDialog.tsx; components/GuestDocuments.tsx,date,translated
 Expires {date},Expires {date},تنتهي في {date},Expira {date},components/CheckInDialog.tsx; components/GuestDocuments.tsx,date,translated
 "explains, doesn't act","explains, doesn't act",يشرح ولا ينفذ,"explica los pasos, sin ejecutar acciones",components/HelpPanel.tsx,,translated
@@ -2512,6 +2517,7 @@ For a bill posted to the wrong room today. It leaves that guest's bill and goes 
 "for foreign nationals, Form C to the immigration authorities","for foreign nationals, Form C to the immigration authorities",للأجانب، النموذج C إلى سلطات الهجرة,"para huéspedes extranjeros, el formulario C dirigido a las autoridades migratorias",,,translated
 "for guests under {age} the hotel records only what registration law requires, usually name and age, and never uses it for marketing.","for guests under {age} the hotel records only what registration law requires, usually name and age, and never uses it for marketing.",للنزلاء دون {age} عامًا يسجّل الفندق فقط ما يتطلبه نظام التسجيل، وعادةً الاسم والعمر، ولا يستخدمه أبدًا للتسويق.,"Para huéspedes menores de {age} años, el hotel registra únicamente los datos exigidos por la ley —por lo general, nombre y edad— y no los utiliza para fines publicitarios.",components/PrivacyNotice.tsx,age,translated
 "For properties that host weddings, conferences or parties.","For properties that host weddings, conferences or parties.",للعقارات التي تستضيف حفلات الزفاف أو المؤتمرات أو الحفلات.,"Para alojamientos que organizan bodas, conferencias o celebraciones.",,,translated
+For stay {v0},For stay {v0},للإقامة {v0},Para la estancia {v0},screens/GuestOffers.tsx,v0,translated
 For the whole stay,For the whole stay,للإقامة كاملة,Para toda la estancia,components/FolioDiscount.tsx,,translated
 for your records. We'd love to host you another time -,for your records. We'd love to host you another time -,لسجلاتك. يسعدنا استضافتك مرة أخرى:,para sus registros. Será un gusto recibirle en otra ocasión:,screens/CancellationLetter.tsx,,translated
 For:,For:,لـ:,Para:,lib/thermal.ts,,translated
@@ -2717,6 +2723,7 @@ Guest name for {v0},Guest name for {v0},,,components/GroupControl.tsx,v0,needs_t
 "Guest name, room or booking number","Guest name, room or booking number",,,components/AgentGuide.tsx,,needs_translation
 Guest names,Guest names,,,components/GroupBookingDialog.tsx,,needs_translation
 Guest of {group},Guest of {group},ضيف {group},Invitado de {group},,group,translated
+Guest offers,Guest offers,عروض الضيوف,Ofertas para huéspedes,screens/GuestJourney.tsx; screens/GuestOffers.tsx; screens/ReservationDetail.tsx,,translated
 Guest only,Guest only,على الضيف فقط,Solo el huésped,components/CheckOutDialog.tsx,,translated
 Guest or customer,Guest or customer,النزيل أو العميل,Huésped o cliente,screens/pos/OrderHistory.tsx,,translated
 Guest or ITN reference,Guest or ITN reference,الضيف أو مرجع ITN,Huésped o referencia ITN,screens/CRS.tsx,,translated
@@ -2752,7 +2759,7 @@ Guest: {v0},Guest: {v0},الضيف: {v0},Huésped: {v0},screens/BanquetFunction.
 Guest's balance,Guest's balance,رصيد الضيف,Saldo del huésped,components/CheckOutDialog.tsx,,translated
 Guest's browser language,Guest's browser language,لغة متصفح الضيف,Idioma del navegador del huésped,screens/BookingEngine.tsx,,translated
 Guest's full name,Guest's full name,,,components/AgentGuide.tsx,,needs_translation
-Guests,Guests,الضيوف,Huéspedes,components/BookingDialog.tsx; components/CommandPalette.tsx; screens/Owner.tsx; screens/POS.tsx; screens/PublicBooking.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx,,translated
+Guests,Guests,الضيوف,Huéspedes,components/BookingDialog.tsx; components/CommandPalette.tsx; screens/GuestOffers.tsx; screens/Owner.tsx; screens/POS.tsx; screens/PublicBooking.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx,,translated
 Guests ({v0}),Guests ({v0}),,,components/GroupControl.tsx,v0,needs_translation
 Guests allowed above capacity,Guests allowed above capacity,الضيوف المسموح بهم فوق السعة,Huéspedes permitidos por encima de la capacidad,,,translated
 Guests arriving soon get their online check-in link each morning.,Guests arriving soon get their online check-in link each morning.,يتلقى الضيوف القادمون قريبا رابط تسجيل الوصول عبر الإنترنت كل صباح.,Cada mañana se envía el enlace de registro en línea a los huéspedes con llegada próxima.,,,translated
@@ -3111,7 +3118,7 @@ Keyboard shortcuts,Keyboard shortcuts,اختصارات لوحة المفاتيح
 Keys,Keys,المفاتيح,Llaves,components/CheckInDialog.tsx; screens/settings/cards.tsx,,translated
 Keys {range} · {all} all,Keys {range} · {all} all,المفاتيح {range} · {all} الكل,Claves {range} · {all} en total,components/CheckOutDialog.tsx,range all,translated
 Keys: between 1 and 10.,Keys: between 1 and 10.,المفاتيح: بين 1 و10.,Llaves: entre 1 y 10.,,,translated
-Kind,Kind,النوع,Tipo,screens/BanquetRegisters.tsx; screens/CashierBoard.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/banquet/Economics.tsx,,translated
+Kind,Kind,النوع,Tipo,screens/BanquetRegisters.tsx; screens/CashierBoard.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/GuestOffers.tsx; screens/banquet/Economics.tsx,,translated
 King,King,كينغ,King,,,translated
 "King bed
 Lake view
@@ -3448,6 +3455,7 @@ More options: group rate,More options: group rate,,,components/GroupBookingDialo
 "More options: group rate, different rooms per night","More options: group rate, different rooms per night",,,components/GroupBookingDialog.tsx,,needs_translation
 More reports,More reports,مزيد من التقارير,Más informes,screens/Owner.tsx,,translated
 Morning,Morning,الصباح,Mañana,,,translated
+Most per offer: {v0},Most per offer: {v0},الحد الأقصى لكل عرض: {v0},Máximo por oferta: {v0},screens/GuestOffers.tsx,v0,translated
 Most used rooms,Most used rooms,الغرف الأكثر استخدامًا,Habitaciones más utilizadas,components/RoomInsights.tsx,,translated
 Move,Move,نقل,Mover,screens/FolioView.tsx,,translated
 Move {n} to new bill,Move {n} to new bill,نقل {n} إلى فاتورة جديدة,Mover {n} a una nueva cuenta,screens/POS.tsx,n,translated
@@ -3696,6 +3704,7 @@ No kitchen printers yet.,No kitchen printers yet.,لا طابعات مطبخ ب�
 No kitchen screen is printing for it right now,No kitchen screen is printing for it right now,لا توجد شاشة مطبخ تطبع عليها حاليا,Ninguna pantalla de cocina está configurada para imprimir en esta impresora,screens/KitchenPrinters.tsx; screens/settings/cards.tsx,,translated
 No laundry out right now.,No laundry out right now.,لا غسيل خارج الآن.,No hay prendas en lavandería en este momento.,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
 No limit,No limit,بلا حد,Sin límite,screens/Receivables.tsx,,translated
+No limit per offer,No limit per offer,بلا حد لكل عرض,Sin límite por oferta,screens/GuestOffers.tsx,,translated
 No line is marked as something to carry yet.,No line is marked as something to carry yet.,لم يُعلَّم أي بند للترحيل بعد.,Aún no hay conceptos marcados para trasladar.,,,translated
 No linked guest profile.,No linked guest profile.,لا يوجد ملف ضيف مرتبط.,Sin perfil de huésped vinculado.,screens/ReservationDetail.tsx,,translated
 no live dishes,no live dishes,لا أطباق متاحة,sin platos activos,screens/Inventory.tsx,,translated
@@ -3891,7 +3900,7 @@ Nothing held,Nothing held,لا حجب,Sin bloqueo,screens/BanquetFunction.tsx,,t
 "Nothing here yet - projectors, LED walls, DJ, podium, stage, decor, bar.","Nothing here yet - projectors, LED walls, DJ, podium, stage, decor, bar.",لا شيء هنا بعد: أجهزة عرض، شاشات LED، منسق موسيقى، منصة خطابة، مسرح، ديكور، بار.,"Aún no hay servicios: proyectores, pantallas LED, DJ, atril, escenario, decoración o bar.",screens/BanquetCatalogue.tsx,,translated
 Nothing here yet - start with a new enquiry.,Nothing here yet - start with a new enquiry.,لا شيء هنا بعد - ابدأ باستفسار جديد.,Aún no hay nada: comience con una nueva consulta.,screens/Banquet.tsx,,translated
 Nothing here yet.,Nothing here yet.,لا يوجد شيء هنا بعد.,No hay nada aquí todavía.,components/ResourceScreen.tsx,,translated
-Nothing here.,Nothing here.,لا شيء هنا.,Sin registros.,components/AllowanceRequests.tsx,,translated
+Nothing here.,Nothing here.,لا شيء هنا.,Sin registros.,components/AllowanceRequests.tsx; screens/GuestOffers.tsx,,translated
 Nothing in the catalogue yet - build it under Banquet Catalogue.,Nothing in the catalogue yet - build it under Banquet Catalogue.,لا شيء في الكتالوج بعد، أنشئه ضمن كتالوج المآدب.,El catálogo está vacío. Agregue conceptos en Catálogo de banquetes.,screens/BanquetFunction.tsx,,translated
 Nothing in this column.,Nothing in this column.,لا شيء في هذا العمود.,Nada en esta columna.,components/CustomizeToday.tsx,,translated
 Nothing in this period.,Nothing in this period.,لا شيء في هذه الفترة.,Sin registros en este periodo.,screens/BanquetRegisters.tsx,,translated
@@ -3966,6 +3975,7 @@ Off = thrown in as standard. It still prints on the event order and the pack lis
 "Off: nobody can connect an AI client to this property, and existing connections stop working.","Off: nobody can connect an AI client to this property, and existing connections stop working.",إيقاف: لا يمكن لأحد ربط عميل ذكاء اصطناعي بهذا العقار، وتتوقف الاتصالات الحالية عن العمل.,Desactivado: nadie puede conectar un cliente de IA a este alojamiento y las conexiones existentes dejan de funcionar.,screens/settings/McpAccessPage.tsx,,translated
 Off: the scheduler never closes this property; staff close the day from End of Day.,Off: the scheduler never closes this property; staff close the day from End of Day.,عند الإيقاف: لا يغلق المجدول هذه المنشأة أبدًا؛ يغلق الموظفون اليوم من نهاية اليوم.,Desactivado: el programador nunca cierra esta propiedad; el personal cierra el día desde Cierre del día.,,,translated
 Offer,Offer,عرض,Oferta,,,translated
+offer|Upgrade,offer|Upgrade,ترقية,Mejora de categoría,,,translated
 Offers on WhatsApp,Offers on WhatsApp,العروض عبر واتساب,Ofertas por WhatsApp,screens/GuestJourney.tsx,,translated
 OG image (share card),OG image (share card),صورة OG (بطاقة المشاركة),Imagen para compartir (OG),screens/BookingEngine.tsx,,translated
 OK,OK,موافق,Correcto,screens/POS.tsx,,translated
@@ -4359,6 +4369,7 @@ Per-item prices the app quotes and bills from. Blank express = 1.5× the normal 
 Per-item prices the housekeeping app quotes and bills from. A blank express price uses the express multiplier above.,Per-item prices the housekeeping app quotes and bills from. A blank express price uses the express multiplier above.,أسعار القطعة التي يعتمدها تطبيق التدبير المنزلي في التسعير والفوترة. إذا تُرك السعر المستعجل فارغاً يُطبّق مُضاعِف الخدمة المستعجلة أعلاه.,"Precios por prenda que la aplicación de Limpieza utiliza para cotizar y facturar. Si el precio exprés está en blanco, se aplica el multiplicador exprés anterior.",screens/settings/cards.tsx,,translated
 Percent,Percent,نسبة مئوية,Porcentaje,,,translated
 Percent (%),Percent (%),نسبة (%),Porcentaje (%),components/FolioDiscount.tsx,,translated
+Perks for repeat and high-value guests. An offer is used only after a manager approves it.,Perks for repeat and high-value guests. An offer is used only after a manager approves it.,مزايا للضيوف الدائمين وذوي القيمة العالية. لا يُستخدم العرض إلا بعد موافقة المدير.,Ventajas para huéspedes habituales y de alto valor. Una oferta solo se usa después de que un gerente la aprueba.,screens/GuestOffers.tsx,,translated
 Permanent Cloud API token - stored encrypted,Permanent Cloud API token - stored encrypted,رمز Cloud API دائم، يُخزَّن مشفّراً,Token permanente de Cloud API; se almacena cifrado,,,translated
 Person,Person,الشخص,Persona,screens/OpsSLA.tsx,,translated
 Pet charge,Pet charge,رسوم الحيوانات الأليفة,Cargo por mascota,screens/PublicBooking.tsx,,translated
@@ -4612,6 +4623,10 @@ property policy,property policy,سياسة المنشأة,política del establec
 Property time,Property time,وقت المنشأة,Hora del alojamiento,screens/EndOfDayWizard.tsx,,translated
 Property-level Amenities (one per line),Property-level Amenities (one per line),مرافق العقار (واحد في كل سطر),Servicios e instalaciones del alojamiento (uno por línea),screens/BookingEngine.tsx,,translated
 "property-specific guidance - upsell priorities, tone","property-specific guidance - upsell priorities, tone",إرشادات خاصة بالعقار: أولويات البيع الإضافي، والأسلوب,Instrucciones del alojamiento: prioridades de venta de servicios adicionales y tono,screens/settings/cards.tsx,,translated
+Propose,Propose,اقتراح,Proponer,screens/GuestOffers.tsx,,translated
+Propose an offer,Propose an offer,اقتراح عرض,Proponer una oferta,screens/GuestOffers.tsx,,translated
+Proposed,Proposed,مقترح,Propuesta,,,translated
+proposed by {v0},proposed by {v0},اقترحه {v0},propuesta por {v0},screens/GuestOffers.tsx,v0,translated
 Provider,Provider,المزوّد,Proveedor,screens/settings/cards.tsx,,translated
 Provider rate ID,Provider rate ID,معرّف السعر لدى المزوّد,ID de tarifa en el proveedor,,,translated
 Provider rate plan ID,Provider rate plan ID,معرّف خطة السعر لدى المزوّد,ID de plan tarifario en el proveedor,,,translated
@@ -4780,6 +4795,7 @@ Recorded as a refund on the function's ledger.,Recorded as a refund on the funct
 Recording…,Recording…,جارٍ التسجيل…,Registrando…,screens/CityLedgerPayment.tsx,,translated
 recount,recount,إعادة العد,volver a contar,screens/Inventory.tsx,,translated
 "Red bills were never sent. Send them, or cancel with a reason.","Red bills were never sent. Send them, or cancel with a reason.",الفواتير الحمراء لم تُرسل أبدًا. أرسلها أو ألغها مع ذكر السبب.,Las cuentas en rojo no se enviaron a cocina. Envíelas o cancélelas indicando un motivo.,screens/POS.tsx,,translated
+Redeemed,Redeemed,مُستخدم,Canjeada,,,translated
 Ref,Ref,مرجع,Ref,screens/BanquetRegisters.tsx; screens/CashierTill.tsx,,translated
 Reference,Reference,المرجع,Referencia,components/BookingDialog.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx,,translated
 "Reference (birthday, complaint #, promo…)","Reference (birthday, complaint #, promo…)",المرجع (عيد ميلاد، رقم شكوى، عرض ترويجي…),"Referencia (cumpleaños, nº de queja, promoción…)",screens/POS.tsx; screens/pos/SettleSheet.tsx,,translated
@@ -5542,6 +5558,7 @@ Status,Status,الحالة,Estado,components/GroupControl.tsx; components/RoomDr
 Status changes ({n}),Status changes ({n}),تغييرات الحالة ({n}),Cambios de estado ({n}),components/RoomDrawer.tsx,n,translated
 Status of each printer. Add or edit under F&B → Printers.,Status of each printer. Add or edit under F&B → Printers.,حالة كل طابعة. أضف أو عدّل من الأطعمة والمشروبات → الطابعات.,Estado de cada impresora. Agregue o edite impresoras en Alimentos y bebidas → Impresoras.,screens/settings/cards.tsx,,translated
 Stay,Stay,إقامة,Estancia,screens/FolioView.tsx; screens/GroupQuotation.tsx; screens/InHouse.tsx; screens/Receivables.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/Today.tsx,,translated
+stay {v0},stay {v0},الإقامة {v0},estancia {v0},screens/GuestOffers.tsx,v0,translated
 Stay actions,Stay actions,إجراءات الإقامة,Acciones de la estancia,screens/TapeChart.tsx,,translated
 Stay info,Stay info,معلومات الإقامة,Información de la estancia,components/CheckInDialog.tsx,,translated
 Stay only,Stay only,الإقامة فقط,Solo alojamiento,components/BillingRulesEditor.tsx,,translated
@@ -5898,6 +5915,8 @@ This is a computer-generated tax invoice under the GST Act.,This is a computer-g
 This kitchen has no dishes on its menu yet.,This kitchen has no dishes on its menu yet.,,,components/AgentGuide.tsx,,needs_translation
 "This module is off, so its apps are hidden for everyone. Settings are kept for when you switch it back on.","This module is off, so its apps are hidden for everyone. Settings are kept for when you switch it back on.",هذه الوحدة متوقفة، لذا تطبيقاتها مخفية عن الجميع. تُحفظ الإعدادات لحين إعادة تفعيلها.,Este módulo está desactivado y sus aplicaciones están ocultas para todos. La configuración se conserva para cuando vuelva a activarlo.,screens/settings/SettingsHub.tsx,,translated
 This month,This month,هذا الشهر,Este mes,screens/BanquetMonth.tsx; screens/ManagementBooks.tsx; screens/pos/OrderHistory.tsx,,translated
+This month: {v0},This month: {v0},هذا الشهر: {v0},Este mes: {v0},screens/GuestOffers.tsx,v0,translated
+This month: {v0} of {v1},This month: {v0} of {v1},هذا الشهر: {v0} من {v1},Este mes: {v0} de {v1},screens/GuestOffers.tsx,v0 v1,translated
 "This package has no dishes attached yet - add them to its courses under Menus & Services, and the customer can start choosing.","This package has no dishes attached yet - add them to its courses under Menus & Services, and the customer can start choosing.",لا توجد أطباق مرتبطة بهذه الباقة بعد. أضفها إلى مراحل التقديم في القوائم والخدمات ليبدأ العميل الاختيار.,Este paquete aún no tiene platos asociados. Agréguelos a sus tiempos en Menús y servicios para que el cliente pueda elegir.,screens/banquet/MenuComposer.tsx,,translated
 This page hit a problem,This page hit a problem,واجهت هذه الصفحة مشكلة,Esta página tuvo un problema,components/ErrorBoundary.tsx,,translated
 This payment,This payment,هذه الدفعة,Este pago,screens/CityLedgerPayment.tsx,,translated
@@ -5961,6 +5980,7 @@ Title,Title,العنوان,Título,screens/Reports.tsx,,translated
 to,to,إلى,a,components/ResourceScreen.tsx; screens/AccountingExport.tsx; screens/ManagementBooks.tsx; screens/PublicBooking.tsx; screens/RevenueReports.tsx; screens/TapeChart.tsx; screens/VoidAllowanceReport.tsx; screens/pos/PosSidePanel.tsx,,translated
 To,To,إلى,A,components/BookingDialog.tsx; components/RoomInsights.tsx; screens/AccountingExport.tsx; screens/Banquet.tsx; screens/BanquetDiary.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CashierShiftReport.tsx; screens/FolioHistory.tsx; screens/PosDashboard.tsx; screens/Reports.tsx; screens/RevenueReports.tsx; screens/VoidAllowanceReport.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
 To ,To ,إلى ,Hasta ,screens/BanquetDocument.tsx,,translated
+to {v0},to {v0},إلى {v0},a {v0},screens/GuestOffers.tsx,v0,translated
 To bill,To bill,للفوترة,Por facturar,screens/Receivables.tsx,,translated
 To bill (in house),To bill (in house),للفوترة (نزلاء حاليون),Por facturar (en casa),screens/Receivables.tsx,,translated
 "To bill this event, attach it to a group in Groups & Blocks - rooms and banquet then land on one folio.","To bill this event, attach it to a group in Groups & Blocks - rooms and banquet then land on one folio.",لفوترة هذه المناسبة، اربطها بمجموعة في المجموعات والحجب، فتُضاف الغرف والمأدبة إلى فاتورة واحدة.,"Para facturar este evento, vincúlelo a un grupo en Grupos y bloqueos. Así, las habitaciones y el banquete se cargarán a un mismo folio.",components/EventLinks.tsx,,translated
@@ -5990,7 +6010,7 @@ Today's and past orders,Today's and past orders,طلبات اليوم والسا
 Today's arrivals,Today's arrivals,وصول اليوم,Llegadas de hoy,,,translated
 Today's exchanges,Today's exchanges,عمليات الصرف اليوم,Cambios de moneda de hoy,screens/CurrencyDesk.tsx,,translated
 "Today's orders, and the bills still open","Today's orders, and the bills still open",طلبات اليوم والفواتير التي ما زالت مفتوحة,Los pedidos de hoy y las cuentas aún abiertas,screens/POS.tsx,,translated
-Told the guest,Told the guest,تم إبلاغ الضيف,Huésped informado,,,translated
+Told the guest,Told the guest,تم إبلاغ الضيف,Huésped informado,screens/GuestOffers.tsx,,translated
 Tomorrow,Tomorrow,غداً,Mañana,components/AgentGuide.tsx; screens/Today.tsx,,translated
 "Too many bills in this range to list them all. Narrow the dates, or export the range.","Too many bills in this range to list them all. Narrow the dates, or export the range.",فواتير هذه الفترة أكثر من أن تُعرض كلها. ضيّق التواريخ أو صدّر الفترة.,Demasiadas cuentas en este rango para enumerarlas todas. Limite las fechas o exporte el rango.,screens/pos/OrderHistory.tsx,,translated
 Too many requests - give it a few seconds and try again.,Too many requests - give it a few seconds and try again.,طلبات كثيرة جدًا. انتظر بضع ثوانٍ وحاول مرة أخرى.,Demasiadas solicitudes. Espere unos segundos y vuelva a intentarlo.,lib/api.ts,,translated
@@ -6115,6 +6135,8 @@ Updating quote,Updating quote,تحديث العرض,Actualizando cotización,com
 Updating…,Updating…,جارٍ التحديث…,Actualizando…,screens/ReservationDetail.tsx,,translated
 Upgrade,Upgrade,ترقية,Mejora de categoría,,,translated
 Upgrade or another type,Upgrade or another type,ترقية أو نوع آخر,Mejora de categoría u otro tipo de habitación,components/CheckInDialog.tsx,,translated
+Upgrade to,Upgrade to,ترقية إلى,Mejorar a,screens/GuestOffers.tsx,,translated
+Upgrade to…,Upgrade to…,ترقية إلى…,Mejorar a…,screens/GuestOffers.tsx,,translated
 UPI,UPI,UPI,UPI,,,translated
 Upload,Upload,رفع,Subir,components/GuestDocuments.tsx; components/ImageField.tsx,,translated
 Upload .csv,Upload .csv,رفع ملف .csv,Subir archivo .csv,screens/MenuImport.tsx; screens/RoomsSetup.tsx,,translated
@@ -6131,6 +6153,7 @@ Uploading…,Uploading…,جارٍ الرفع…,Subiendo…,components/ImageFie
 Urgent,Urgent,عاجلة,Urgente,,,translated
 Use camera,Use camera,استخدام الكاميرا,Usar cámara,components/IdScan.tsx,,translated
 Use F&B setting,Use F&B setting,استخدام إعداد الأطعمة والمشروبات,Usar configuración de Alimentos y bebidas,,,translated
+Use on this stay,Use on this stay,استخدامه في هذه الإقامة,Usar en esta estancia,screens/GuestOffers.tsx,,translated
 Use property default ({n} days),Use property default ({n} days),استخدام الإعداد الافتراضي للعقار ({n} أيام),Usar el plazo predeterminado del alojamiento ({n} días),components/CreditTermsEditor.tsx,n,translated
 Use the {v0} screen for this step.,Use the {v0} screen for this step.,استخدم شاشة {v0} لهذه الخطوة.,Utilice la pantalla {v0} para este paso.,,v0,translated
 Use the hotel default,Use the hotel default,استخدام الإعداد الافتراضي للفندق,Utilice el valor predeterminado del hotel,components/CustomizeToday.tsx,,translated
@@ -6158,7 +6181,8 @@ Valet parking,Valet parking,صف السيارات,Estacionamiento con servicio d
 Valid,Valid,صالح,Válido,screens/FolioView.tsx,,translated
 Valid from,Valid from,صالح من,Válido desde,,,translated
 Valid till,Valid till,صالح حتى,Válido hasta,screens/BanquetDocument.tsx,,translated
-Valid to,Valid to,صالح حتى,Válido hasta,,,translated
+Valid to,Valid to,صالح حتى,Válido hasta,screens/GuestOffers.tsx,,translated
+valid to {v0},valid to {v0},صالح حتى {v0},válida hasta {v0},screens/GuestOffers.tsx,v0,translated
 Valid until,Valid until,صالح حتى,Válido hasta,,,translated
 Value,Value,القيمة,Valor,screens/Banquet.tsx; screens/BanquetRegisters.tsx,,translated
 Value (10 = 10% or {v0}10),Value (10 = 10% or {v0}10),القيمة (10 = 10% أو {v0}10),Valor (10 = 10 % o {v0}10),,v0,translated
@@ -6416,7 +6440,7 @@ Whose stay is changing?,Whose stay is changing?,,,components/AgentGuide.tsx,,nee
 Why,Why,السبب,Motivo,,,translated
 Why (e.g. checked out the wrong room),Why (e.g. checked out the wrong room),السبب (مثلًا: سُجّلت مغادرة الغرفة الخطأ),"Motivo (p. ej., se registró la salida de la habitación equivocada)",components/ReinstatePanel.tsx,,translated
 Why (e.g. guest gave the wrong room number),Why (e.g. guest gave the wrong room number),السبب (مثلًا: أعطى الضيف رقم غرفة خطأ),"Motivo (p. ej., el huésped dio un número de habitación equivocado)",screens/pos/MoveRoomBill.tsx,,translated
-Why (optional),Why (optional),السبب (اختياري),Por qué (opcional),components/CheckInDialog.tsx,,translated
+Why (optional),Why (optional),السبب (اختياري),Por qué (opcional),components/CheckInDialog.tsx; screens/GuestOffers.tsx,,translated
 Why (shown to whoever tries to bill it),Why (shown to whoever tries to bill it),السبب (يظهر لمن يحاول الفوترة عليه),Motivo (se muestra a quien intente facturarle),screens/Receivables.tsx,,translated
 Why business went away,Why business went away,لماذا ذهب العمل,Motivos de pérdida de oportunidades,screens/Banquet.tsx,,translated
 Why is it being reopened?,Why is it being reopened?,لماذا يُعاد فتحها؟,¿Por qué se vuelve a abrir?,screens/Tickets.tsx,,translated
@@ -6441,6 +6465,7 @@ Withhold {amt},Withhold {amt},احتجاز {amt},Retener {amt},components/Securi
 Withhold for damage,Withhold for damage,احتجاز مقابل الأضرار,Retener por daños,components/CheckOutDialog.tsx; components/SecurityDepositPanel.tsx,,translated
 Within,Within,ضمن المهلة,Dentro del plazo,screens/Tickets.tsx,,translated
 "Without the booking page, bookings come from the front desk and your channels.","Without the booking page, bookings come from the front desk and your channels.",بدون صفحة الحجز، تأتي الحجوزات من الاستقبال وقنواتك.,"Sin la página de reservas, las reservas llegan desde la recepción y sus canales.",screens/Setup.tsx,,translated
+Worth,Worth,القيمة,Valor,screens/GuestOffers.tsx,,translated
 Write it off,Write it off,شطبه,Registrar baja,screens/Inventory.tsx,,translated
 Write the reason for the override to continue.,Write the reason for the override to continue.,اكتب سبب التجاوز للمتابعة.,Indique el motivo de la excepción para continuar.,components/CheckOutDialog.tsx,,translated
 Wrong email or password.,Wrong email or password.,البريد الإلكتروني أو كلمة المرور غير صحيحة.,Correo electrónico o contraseña incorrectos.,,,translated

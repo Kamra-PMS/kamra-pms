@@ -456,6 +456,40 @@ The journey shows every stay and event, with:
 
 ![A guest's journey: stay history, totals, notes and preferences, VIP, and profile actions](/img/front-desk/guest-journey.png)
 
+## Give a guest an offer
+
+Reward a repeat or high-value guest with a perk: an early check-in, a late
+check-out, an upgrade, a complimentary service or a discount. Open
+**Guest offers** from the guest's journey, or from the **Guest** card of a
+reservation.
+
+1. Click **Propose an offer**.
+2. Pick the kind. An upgrade needs the room type; a complimentary service
+   needs the experience.
+3. Enter what it is worth and the last day it is valid.
+4. Click **Propose**. The offer waits as **Proposed**.
+
+A Hotel Admin or Finance clicks **Approve** or **Decline**. Kamra checks the
+property's limits again on approval: an offer over them can't be approved.
+An AI agent can propose an offer, never approve one.
+
+When the guest has been told, click **Told the guest**. From a
+reservation, **Use on this stay** redeems it:
+
+- **Discount**: an allowance on the open bill, so the
+  [allowance approval](/billing#correct-a-charge) still applies. The bill
+  must already hold at least what the offer is worth.
+- **Upgrade**: the stay moves to a free room of that type and keeps what the
+  guest pays. Kamra refuses when the upgrade costs more than the offer is
+  worth.
+- **Complimentary service**: the experience is added to the stay at no
+  charge.
+- **Early check-in** or **Late check-out**: set on the stay, with an
+  instruction for the front desk.
+
+Using an offer a second time changes nothing. An offer not used by its last
+day shows as **Expired**.
+
 ## Change the rate of a guest in house
 
 Extending a stay can change its rate: five nights may reach a long-stay
@@ -493,6 +527,7 @@ happens to those nights:
 | Security deposit | Settings → Stay policies → Deposits | 0 | A refundable amount to hold during the stay. When set, check-in has a **Deposit and advance** step. While it is held, the booking warns you before check-out. |
 | Check-in steps | Settings → Front Desk → Check-in steps | See [The steps](#the-steps) | Which check-in steps are required. Required steps cannot be skipped and block the check-in until done. |
 | Early departure charge | Settings → Stay policies → Cancellation & no-show | All Nights | What a guest leaving before the booked date pays for the unused nights: None, One Night or All Nights (room rate). Finance or a Hotel Admin can change it for one stay, with a reason. |
+| Kinds of offer allowed, Most one offer may be worth, Most all offers approved in a month may be worth | Settings → Front Desk → Guest offers | All kinds, no limits | See [Give a guest an offer](#give-a-guest-an-offer). 0 means no limit. |
 | WhatsApp the guest when a charge is posted to the room | Settings → Front Desk → Guest alerts | Off | Sends the room charge template (see [WhatsApp](/whatsapp)) when a restaurant, laundry, minibar or desk charge reaches an in-house guest's bill. |
 | Wi-Fi name, Wi-Fi password, Breakfast times, Emergency number, Anything else for guests | Settings → Front Desk → Guest info at check-in | Empty | Shown in the **Wi-Fi and stay info** step, to tell, print or send on WhatsApp. The password is never written to the activity log. |
 

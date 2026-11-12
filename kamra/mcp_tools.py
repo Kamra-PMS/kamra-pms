@@ -658,6 +658,59 @@ TOOLS: tuple[ToolSpec, ...] = (
 		{"guest": _p("string")},
 		required=("guest",),
 	),
+	# guest offers (#565): list, propose, redeem. There is no approve tool:
+	# staff approve on screen, and guest_offers.decide_offer refuses agents.
+	_t(
+		"guest_offers",
+		"guest_offers.list_offers",
+		"""Guest offers (early check-in, late check-out, upgrade, complimentary
+		service, discount) with their status: Proposed, Approved, Declined,
+		Delivered, Redeemed or Expired. Filter by guest, reservation or
+		status. Also returns the property's limits and this month's total.""",
+		{"status": _p("string"), "guest": _p("string"), "reservation": _p("string")},
+		property=True,
+	),
+	_t(
+		"propose_guest_offer",
+		"guest_offers.propose_offer",
+		"""Propose a perk for a repeat or high-value guest (see guest_journey).
+		It waits as Proposed until staff approve it on screen; you can
+		propose, never approve. kind: Early check-in, Late check-out,
+		Upgrade (room_type needed), Complimentary service (experience
+		needed, see booking_options) or Discount. value is what it is worth
+		in the property's currency; offers over the property's limits are
+		refused.""",
+		{
+			"guest": _p("string"),
+			"kind": _p("string", enum=["Early check-in", "Late check-out", "Upgrade",
+			                           "Complimentary service", "Discount"]),
+			"value": _p("number"),
+			"valid_to": _p("string", format="date"),
+			"reservation": _p("string", description="Optional: the stay it is for."),
+			"experience": _p("string"),
+			"room_type": _p("string"),
+			"reason": _p("string", description="Optional short note for staff."),
+			"idempotency_key": _p("string", description="Optional unique key. Retrying "
+			                      "with the same key returns the first offer."),
+		},
+		required=("guest", "kind", "value", "valid_to"),
+		property=True,
+		mutating=True,
+	),
+	_t(
+		"redeem_guest_offer",
+		"guest_offers.redeem_offer",
+		"""Use an approved offer on one of the guest's stays, by its code. A
+		discount posts as an allowance (the property's allowance approval
+		still applies), an upgrade moves the stay to a free room of that
+		type at the price the guest pays now (room picks one), a
+		complimentary service is added at no charge, an early check-in or
+		late check-out is set on the stay. Redeeming a redeemed offer
+		changes nothing and returns idempotent_replay.""",
+		{"code": _p("string"), "reservation": _p("string"), "room": _p("string")},
+		required=("code", "reservation"),
+		mutating=True,
+	),
 	_t(
 		"create_ticket",
 		"api.create_ticket",

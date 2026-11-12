@@ -70,6 +70,7 @@ const CashForecast = lazy(() => import("./screens/CashForecast"))
 const ManagementBooks = lazy(() => import("./screens/ManagementBooks"))
 const VoidAllowanceReport = lazy(() => import("./screens/VoidAllowanceReport"))
 const AllowanceApprovals = lazy(() => import("./screens/AllowanceApprovals"))
+const GuestOffers = lazy(() => import("./screens/GuestOffers"))
 const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
@@ -342,6 +343,7 @@ export default function App() {
           <Route path="departures" element={<Navigate to="/in-house?tab=departures" replace />} />
           <Route path="voids-allowances" element={<VoidAllowanceReport />} />
           <Route path="allowances" element={<AllowanceApprovals />} />
+          <Route path="guest-offers" element={<GuestOffers />} />
           <Route path="allowance-voucher/:name" element={<AllowanceVoucher />} />
           <Route path="rate-calendar" element={<RateCalendar />} />
           <Route path="revenue-reports" element={<RevenueReports />} />

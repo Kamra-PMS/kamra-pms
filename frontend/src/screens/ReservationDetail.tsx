@@ -556,11 +556,18 @@ export default function ReservationDetail({
           title={translate("Guest")}
           action={
             d.guest ? (
-              <Link
-                to={`/guests/${encodeURIComponent(d.guest.name)}`}
-                onClick={onClose}
-                className="text-xs font-medium text-brand-700 hover:underline"
-              >{translate("Guest journey →")}</Link>
+              <span className="flex gap-3">
+                <Link
+                  to={`/guest-offers?reservation=${encodeURIComponent(d.name)}`}
+                  onClick={onClose}
+                  className="text-xs font-medium text-brand-700 hover:underline"
+                >{translate("Guest offers")}</Link>
+                <Link
+                  to={`/guests/${encodeURIComponent(d.guest.name)}`}
+                  onClick={onClose}
+                  className="text-xs font-medium text-brand-700 hover:underline"
+                >{translate("Guest journey →")}</Link>
+              </span>
             ) : undefined
           }
         >

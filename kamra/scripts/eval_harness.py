@@ -10569,6 +10569,166 @@ def t_safe_deposit_race():
 		frappe.db.rollback(save_point=sp)
 
 
+def _offer_limits(**values):
+	from kamra.settings import clear_cache, write_kv
+	for k, v in values.items():
+		write_kv(P, k, v)
+	clear_cache(P)
+
+
+def _offer_refused(fn, exc=frappe.ValidationError) -> str | None:
+	try:
+		fn()
+	except exc as e:
+		frappe.clear_messages()
+		return str(e)
+	return None
+
+
+@check("guest offers: propose checks the kinds and the per-offer limit, replays a key")
+def t390():
+	from kamra import guest_offers as go
+	_offer_limits(offer_kinds="Discount, Late check-out", offer_max_value=500,
+	              offer_max_month=0)
+	g = _guest("Eval Offer A", "+91 70000 09001")
+	until = add_days(nowdate(), 30)
+	assert "not allowed" in (_offer_refused(lambda: go.propose_offer(
+		P, g, "Upgrade", 100, until, room_type=RT)) or "")
+	assert "at most" in (_offer_refused(lambda: go.propose_offer(
+		P, g, "Discount", 600, until)) or "")
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		o = go.propose_offer(P, g, "Discount", 400, until, idempotency_key="eval-go-1")
+		again = go.propose_offer(P, g, "Discount", 400, until, idempotency_key="eval-go-1")
+	finally:
+		frappe.flags.kamra_agent_call = None
+	assert o["status"] == "Proposed" and o["channel"] == "MCP", o
+	assert again["idempotent_replay"] and again["name"] == o["name"], again
+	assert frappe.db.count("Guest Offer", {"guest": g}) == 1
+
+
+@check("guest offers: an agent can't approve; an offer over the month's limit can't be approved")
+def t391():
+	from unittest.mock import patch
+
+	from kamra import guest_offers as go
+	_offer_limits(offer_kinds="", offer_max_value=0, offer_max_month=700)
+	g = _guest("Eval Offer B", "+91 70000 09002")
+	until = add_days(nowdate(), 30)
+	a = go.propose_offer(P, g, "Late check-out", 400, until)
+	b = go.propose_offer(P, g, "Discount", 400, until)
+	frappe.flags.kamra_agent_call = "MCP"
+	try:
+		assert _offer_refused(lambda: go.decide_offer(a["name"]), frappe.PermissionError)
+		assert not go.list_offers(P, guest=g)["can_approve"]
+	finally:
+		frappe.flags.kamra_agent_call = None
+	assert frappe.db.get_value("Guest Offer", a["name"], "status") == "Proposed"
+	with patch("kamra.webhooks.emit") as emit:
+		assert go.decide_offer(a["name"])["status"] == "Approved"
+		why = _offer_refused(lambda: go.decide_offer(b["name"]))
+	assert why and "over the limit" in why, why
+	assert frappe.db.get_value("Guest Offer", b["name"], "status") == "Proposed"
+	assert [c.args[0] for c in emit.call_args_list
+	        if c.args[0].startswith("offer.")] == ["offer.approved"], emit.call_args_list
+	# lowering the per-offer limit after proposing stops the approval too
+	_offer_limits(offer_max_month=0, offer_max_value=100)
+	assert "at most" in (_offer_refused(lambda: go.decide_offer(b["name"])) or "")
+	assert go.decide_offer(b["name"], approve=0, note="Not this time")["status"] == "Declined"
+	# a direct save can't move an offer along
+	doc = frappe.get_doc("Guest Offer", b["name"])
+	doc.status = "Approved"
+	assert _offer_refused(lambda: doc.save(ignore_permissions=True), frappe.PermissionError)
+
+
+@check("guest offers: redeem posts through allowance, add-on and stay flag once; replay is a no-op")
+def t392():
+	from unittest.mock import patch
+
+	from kamra import api
+	from kamra import guest_offers as go
+	_offer_limits(offer_kinds="", offer_max_value=0, offer_max_month=0)
+	_allowance_approval_off()
+	g = _guest("Eval Offer C", "+91 70000 09003")
+	room = frappe.get_doc({"doctype": "Room", "property": P, "room_number": "E902",
+	                       "room_type": RT}).insert(ignore_permissions=True).name
+	res = _res(g, nowdate(), add_days(nowdate(), 2), room)
+	api.check_in(res.name, room)
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
+	exp = frappe.get_doc({"doctype": "Experience", "property": P,
+	                      "experience_name": "Eval Spa", "price": 1500}).insert(
+		ignore_permissions=True).name
+	until = add_days(nowdate(), 10)
+	disc = go.propose_offer(P, g, "Discount", 300, until, reservation=res.name)
+	spa = go.propose_offer(P, g, "Complimentary service", 1500, until, experience=exp)
+	late = go.propose_offer(P, g, "Late check-out", 200, until)
+	for o in (disc, spa, late):
+		go.decide_offer(o["name"])
+	# a proposed (not approved) offer can't be redeemed
+	other = go.propose_offer(P, g, "Discount", 50, until)
+	assert _offer_refused(lambda: go.redeem_offer(other["code"], res.name))
+	go.mark_offer_delivered(disc["code"])
+	assert "below" in (_offer_refused(lambda: go.redeem_offer(disc["code"], res.name)) or "")
+	api.add_folio_charge(folio, "Misc", "Eval dinner", 1000, gst_rate=0)
+	before = frappe.db.count("Folio Charge", {"parent": folio})
+	with patch("kamra.webhooks.emit") as emit:
+		out = go.redeem_offer(disc["code"], res.name)
+		again = go.redeem_offer(disc["code"], res.name)
+		go.redeem_offer(spa["code"], res.name)
+		go.redeem_offer(late["code"], res.name)
+	assert out["status"] == "Redeemed" and out["redemption"]["path"] == "allowance", out
+	assert out["redemption"]["serial"], out
+	assert again.get("idempotent_replay") and again["redemption"] == out["redemption"]
+	allowances = frappe.get_all("Folio Charge", filters={
+		"parent": folio, "charge_type": "Allowance"}, pluck="amount")
+	assert len(allowances) == 1 and abs(abs(allowances[0]) - 300) < 0.01, allowances
+	spa_rows = frappe.get_all("Folio Charge", filters={
+		"parent": folio, "description": ("like", "Eval Spa%")}, pluck="amount")
+	assert spa_rows == [0], spa_rows
+	assert frappe.db.count("Folio Charge", {"parent": folio}) == before + 2
+	r = frappe.get_doc("Reservation", res.name)
+	assert r.late_checkout and any(late["code"] in (i.instruction or "")
+	                               for i in r.instructions), r.instructions
+	assert [c.args[0] for c in emit.call_args_list
+	        if c.args[0].startswith("offer.")] == ["offer.redeemed"] * 3, emit.call_args_list
+	# an offer can't be used on another guest's stay
+	g2 = _guest("Eval Offer D", "+91 70000 09004")
+	o2 = go.propose_offer(P, g2, "Late check-out", 10, until)
+	go.decide_offer(o2["name"])
+	assert "not this guest" in (_offer_refused(lambda: go.redeem_offer(o2["code"], res.name)) or "")
+	# past valid_to: Expired, not redeemable
+	frappe.db.set_value("Guest Offer", o2["name"], "valid_to", add_days(nowdate(), -1))
+	assert go.list_offers(P, guest=g2)["offers"][0]["status"] == "Expired"
+
+
+@check("guest offers: an upgrade moves the stay and keeps the price, within the offer's value")
+def t393():
+	from kamra import guest_offers as go
+	_offer_limits(offer_kinds="", offer_max_value=0, offer_max_month=0)
+	ste = frappe.get_doc({
+		"doctype": "Room Type", "property": P, "room_type_code": "EVS",
+		"room_type_name": "Eval Suite", "base_price": 6000, "base_occupancy": 2,
+		"adults_capacity": 3, "children_capacity": 2, "tax_percent": 5,
+	}).insert(ignore_permissions=True).name
+	suite = frappe.get_doc({"doctype": "Room", "property": P, "room_number": "E901",
+	                        "room_type": ste}).insert(ignore_permissions=True).name
+	g = _guest("Eval Offer E", "+91 70000 09005")
+	res = _res(g, add_days(nowdate(), 5), add_days(nowdate(), 7), ROOM)
+	paid = float(res.amount_after_tax)
+	until = add_days(nowdate(), 10)
+	small = go.propose_offer(P, g, "Upgrade", 100, until, room_type=ste)
+	go.decide_offer(small["name"])
+	assert "more" in (_offer_refused(lambda: go.redeem_offer(small["code"], res.name)) or "")
+	big = go.propose_offer(P, g, "Upgrade", 10000, until, room_type=ste)
+	go.decide_offer(big["name"])
+	out = go.redeem_offer(big["code"], res.name)
+	r = frappe.get_doc("Reservation", res.name)
+	assert (r.room, r.room_type) == (suite, ste), (r.room, r.room_type)
+	assert abs(float(r.amount_after_tax) - paid) < 0.01, (r.amount_after_tax, paid)
+	assert out["redemption"]["path"] == "room_move" and out["redemption"]["upgrade_worth"] > 0, out
+	assert go.redeem_offer(big["code"], res.name)["idempotent_replay"]
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10609,7 +10769,7 @@ def execute():
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
-		           t_concurrency_guards, t_safe_deposit_race):
+		           t_concurrency_guards, t_safe_deposit_race, t390, t391, t392, t393):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

@@ -108,6 +108,8 @@ its own property.
 | `ar.payment_recorded` | A company's payment is recorded on its account, with what it paid. |
 | `cashier.session_closed` | A cashier counts the drawer and closes the till. |
 | `group.block_released` | A group's cutoff passes and its unpicked rooms go back on sale. |
+| `offer.approved` | Staff approve a guest offer. A messaging provider can deliver it to the guest, then call `kamra.guest_offers.mark_offer_delivered`. |
+| `offer.redeemed` | A guest offer is used on a stay. `redemption` says what posted: `allowance` (with `serial`, or `pending` and `request` when it waits for a manager), `room_move`, `addon` or `stay_flag`. |
 
 Every event is sent once, from the one function that makes the change,
 inside the same transaction. A change that rolls back sends nothing.
@@ -240,6 +242,24 @@ On `approval.requested`, `status` is `Pending` and the decision fields are null.
  "blocks": [{"room_type": "Kamra Demo Palace-DLX", "rooms_released": 4},
             {"room_type": "Kamra Demo Palace-STE", "rooms_released": 2}]}
 ```
+
+`offer.approved`, `offer.redeemed`
+
+```json
+{"offer": "GOF-00012", "code": "GO-3F9A1C07", "status": "Redeemed",
+ "guest": "G-00418", "guest_name": "Asha Rao", "reservation": "RES-2026-00042",
+ "kind": "Discount", "value": 1500.0, "currency": "INR",
+ "experience": null, "room_type": null, "valid_to": "2026-12-31",
+ "proposed_by": "desk@hotel.example", "channel": "MCP",
+ "approved_by": "manager@hotel.example", "approved_on": "2026-11-12 10:04:11",
+ "redeemed_reservation": "RES-2026-00042", "redeemed_on": "2026-11-14 18:20:03",
+ "redemption": {"path": "allowance", "folio": "FOL-2026-00311",
+                "serial": "ALW-2026-00031", "pending": false, "request": null}}
+```
+
+On `offer.approved`, `status` is `Approved` and the redemption fields are null.
+The payload never carries the guest's phone or email: look the guest up with
+your own access.
 
 A payload contains only the record of the subscription's own property.
 Webhooks **never** send guest phone numbers, emails, ID documents or
