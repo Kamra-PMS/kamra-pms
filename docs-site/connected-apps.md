@@ -30,7 +30,7 @@ Each service account has:
 | `finance.read` | Folios and tax invoices (`folio_invoice`), cashier sessions and the session report, city ledger, accounts receivable and invoices on an account, company monthly bills |
 | `approvals.write` | Pending allowances (approve or reject), till variance sign-off, booking requests (accept or decline) |
 
-Every read scope also opens `kamra.apps.property_profile` (see below).
+Every read scope also opens `kamra.apps.property_profile` (see below) and `kamra.api.property_locale` (currency, symbol and number format).
 
 The MCP tools and endpoints behind each scope are listed in one table,
 `SCOPES` in `kamra/service_accounts.py`. An endpoint only an admin may call
