@@ -70,11 +70,12 @@ su rol puede abrir (consulte
    pulse **Vista previa**.
 2. Pulse **Guardar** para conservar la definición en **Mis informes**.
    Finanzas y el Administrador del hotel pueden **compartir** un informe con
-   el alojamiento y programar un envío por correo **Diario** o **Semanal**
-   (destinatarios y hora).
+   el alojamiento y programar un envío por correo **Diario**, **Semanal** o
+   **Mensual** (destinatarios y hora).
 3. **CSV**, **Imprimir** y **Correo electrónico** funcionan con informes
    nuevos o guardados. Los envíos programados adjuntan el día de ayer (o
-   los últimos 7 días si es semanal) en CSV.
+   los últimos 7 días si es semanal, o el mes anterior si es mensual,
+   enviado el día 1) en CSV.
 
 ### Agrupar y ver el detalle
 

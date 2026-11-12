@@ -98,6 +98,8 @@ interface Step {
   key: string
   /** placeholder for a typed answer; no placeholder = tap only */
   text?: string
+  /** the typed answer must contain a number (adults, nights, an amount) */
+  number?: boolean
   /** not asked at all when this says so (e.g. a table number for room service) */
   skip?: (a: Answers) => boolean
   /** a basket: each answer is folded into the last one and the same question
@@ -221,6 +223,7 @@ const stayQuestions = (walkIn: boolean): Step[] => [
   {
     key: "adults",
     text: translate("Number of adults"),
+    number: true,
     load: async () => ({
       ask: translate("How many adults?"),
       // walk-ins are asked this first, so the one-form way out goes here
@@ -230,6 +233,7 @@ const stayQuestions = (walkIn: boolean): Step[] => [
   {
     key: "nights",
     text: translate("Number of nights"),
+    number: true,
     load: async () => ({ ask: translate("How many nights?"), choices: nums([1, 2, 3, 4, 5, 7]) }),
   },
   {
@@ -400,6 +404,7 @@ export function flows(): Record<FlowId, Flow> {
       {
         key: "amount",
         text: translate("Amount"),
+        number: true,
         load: async () => ({ ask: translate("How much?"), choices: [] }),
       },
     ],
@@ -413,6 +418,7 @@ export function flows(): Record<FlowId, Flow> {
       {
         key: "amount",
         text: translate("Amount"),
+        number: true,
         load: async (a, d) => {
           const row = (await d.snapshot()).in_house.find((r) => r.name === a.res.value)
           const due = Number(row?.balance_due) || 0
@@ -605,6 +611,13 @@ const cartText = (cart: CartLine[]) => cart.map((l) => `${l.qty} × ${l.name}`).
 const cartTotal = (cart: CartLine[]) => cart.reduce((s, l) => s + l.qty * l.price, 0)
 
 /** "Options: A | B" on the AI's last line becomes tap buttons. */
+/** Does typed text answer this step? A question, or no number where one is
+ *  asked for, is meant for the agent, not for the step. */
+export function fitsStep(step: Pick<Step, "text" | "number">, q: string): boolean {
+  if (!step.text || /[?؟]\s*$/.test(q)) return false
+  return !step.number || /\d|[٠-٩]/.test(q)
+}
+
 export function splitOptions(content: string): { text: string; options: string[] } {
   const m = content.match(/(^|\n)[ \t]*\**Options:?\**[ \t]*([^\n]*)\s*$/i)
   if (!m || m.index === undefined) return { text: content, options: [] }

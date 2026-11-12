@@ -128,6 +128,11 @@ Rules:
   If currency is unspecified, ask rather than guess.
 - When a tool gives `<field>_text` beside an amount (balance_due_text), write
   that text exactly. Never write a raw amount such as 2940.0.
+- A room id is the property name, a dash and the room number. Write a room
+  as its number and type, e.g. "01 (PSR)", never the full id. Staff may name a
+  room by number or by type; guests usually know only the type.
+- Reply in the language of the staff's latest message (mostly Arabic or
+  English), whatever language earlier messages used.
 - A room's floor is its `floor` field. Without one, say the floor is not
   recorded; never work it out from the room number.
 {extra}"""
@@ -402,6 +407,16 @@ EXTRA_TOOLS = {
 		 "to_date": {"type": "string"}}, True, True),
 }
 
+# hours, not nights: a pool, a day room or any stay that ends the same day
+DAY_USE_PARAMS = {
+	"check_in_time": {
+		"type": "string",
+		"description": "HH:MM. For a booking by the hour (pool, day room, "
+		"any room on an hourly rate): set check_out_date to check_in_date "
+		"and give both times. Never price or book hours as a night."},
+	"check_out_time": {"type": "string", "description": "HH:MM, see check_in_time."},
+}
+
 TOOLS = {
 	**EXTRA_TOOLS,
 	"front_desk_today": (
@@ -425,7 +440,7 @@ TOOLS = {
 		 "check_out_date": {"type": "string"}, "adults": {"type": "integer"},
 		 "children": {"type": "integer"}, "meal_plan": MEAL_PLAN_PARAM,
 		 "rate_plan": RATE_PLAN_PARAM,
-		 "voucher_code": {"type": "string"}}, True, False),
+		 "voucher_code": {"type": "string"}, **DAY_USE_PARAMS}, True, False),
 	"booking_options": (
 		"booking_options",
 		"Room types catalog, meal plans, companies, travel agents, experiences, sell message and policies. Do not use its base_price to quote stays; call `quote` for actual pricing with occupancy and taxes.",
@@ -444,7 +459,7 @@ TOOLS = {
 		 "rate_plan": RATE_PLAN_PARAM,
 		 "company": {"type": "string"},
 		 "booked_by_name": {"type": "string"},
-		 "booked_by_phone": {"type": "string"}}, True, True),
+		 "booked_by_phone": {"type": "string"}, **DAY_USE_PARAMS}, True, True),
 	"find_reservations": (
 		"find_reservations",
 		"Find reservations by guest name, room number, or reference - optionally "
@@ -566,6 +581,32 @@ TOOLS = {
 		{"folio": {"type": "string"}, "reservation": {"type": "string"},
 		 "mode": {"type": "string"},
 		 "amount": {"type": "number"}, "reference": {"type": "string"}}, False, True),
+	"record_advance": (
+		"record_advance",
+		"Record an advance a guest paid BEFORE arrival (bank transfer, cash, "
+		"card) on a booking that is not checked in yet. A booking on hold "
+		"becomes Confirmed. A Bank Transfer needs its transfer number as "
+		"reference: ask staff for it first. Use record_payment once the guest "
+		"is in house.",
+		{"reservation": {"type": "string"}, "amount": {"type": "number"},
+		 "mode": {"type": "string"}, "reference": {"type": "string"}},
+		False, True),
+	"petty_cash_report": (
+		"cashier.petty_cash_report",
+		"Expenses paid in cash from the till (petty cash vouchers), with "
+		"today's and this month's totals.",
+		{"limit": {"type": "integer"}}, True, False),
+	"supplier_bills": (
+		"payables.vendor_bills",
+		"Purchases: supplier bills, most urgent first. status is \"open\" "
+		"(default, not yet paid), \"all\", or one status.",
+		{"status": {"type": "string"}, "vendor": {"type": "string"},
+		 "limit": {"type": "integer"}}, True, False),
+	"outlet_menu": (
+		"pos.pos_menu",
+		"What an outlet sells and the prices: restaurant, bar, shop or any "
+		"other outlet. Get the outlet id from `outlets` first.",
+		{"outlet": {"type": "string"}}, False, False),
 	"cancellation_preview": (
 		"cancellation_preview",
 		"What cancelling would cost right now. Always run before cancelling.",
@@ -928,6 +969,24 @@ def _tool_defs():
 	  if _tool_allowed(name)]
 
 
+EMPTY_REPLY = ("The AI provider sent back an empty answer. Please ask again, "
+               "or say it in fewer words.")
+
+
+def _retry_text(base: str, headers: dict, model: str, convo: list) -> str:
+	"""One more try when the model answers with nothing (some providers do
+	after a long tool round). Touches no DB, so the stream can call it."""
+	try:
+		r = _post_chat(base, headers, chat_payload(model, convo, temperature=0.2))
+		if r.status_code == 200:
+			text = (r.json()["choices"][0]["message"].get("content") or "").strip()
+			if text:
+				return text
+	except Exception:  # a failed retry falls back to the notice
+		pass
+	return EMPTY_REPLY
+
+
 def _post_chat(base: str, headers: dict, body: dict, *, stream: bool = False):
 	"""POST /chat/completions, retrying once if the model rejects the payload.
 
@@ -1124,6 +1183,10 @@ def _run_tool(name: str, args: dict, property: str):
 	_assert_this_property(clean, property)
 	if name == "record_payment":
 		clean = _payment_folio(clean)
+	if (name == "record_advance" and clean.get("mode") == "Bank Transfer"
+	        and not clean.get("reference")):
+		frappe.throw("Ask staff for the bank transfer number, then call "
+		             "record_advance again with it as reference.")
 	if name == "create_booking":
 		# A model-made key reads as "a second identical room on purpose" and
 		# switches the duplicate guard off, so the chat never passes one. The
@@ -1211,6 +1274,8 @@ def ask(property: str, messages, lang: str | None = None):
 		calls = msg.get("tool_calls") or []
 		if not calls:
 			reply = msg.get("content") or ""
+			if not reply.strip():
+				reply = _retry_text(base, headers, model, convo[:-1])
 			return {"reply": reply + _missing_refs(reply), "actions": actions,
 			        "cards": _turn_cards()}
 
@@ -1267,6 +1332,7 @@ def ask_stream(property: str, messages, lang: str | None = None):
 
 	# --- resolve tools synchronously (DB access happens here, before streaming)
 	actions = []
+	first_text = ""
 	frappe.local.kamra_chat_bookings = {}
 	frappe.local.kamra_chat_refs = []
 	frappe.local.kamra_chat_quote = None
@@ -1281,6 +1347,8 @@ def ask_stream(property: str, messages, lang: str | None = None):
 		msg = resp.json()["choices"][0]["message"]
 		calls = msg.get("tool_calls") or []
 		if not calls:
+			# kept in case the streamed answer comes back empty
+			first_text = msg.get("content") or ""
 			break  # data gathered; regenerate the answer streamed (no tools)
 		convo.append(msg)
 		for call in calls:
@@ -1332,6 +1400,9 @@ def ask_stream(property: str, messages, lang: str | None = None):
 						streamed.append(delta["content"])
 						yield sse("token", {"text": delta["content"]})
 				text = "".join(streamed)
+				if not text.strip():
+					text = first_text.strip() or _retry_text(base, headers, model, convo)
+					yield sse("token", {"text": text})
 				missing = [r for r in refs if r not in text][:3]
 				if missing:
 					yield sse("token", {"text": f"\n\nRef: {', '.join(missing)}"})

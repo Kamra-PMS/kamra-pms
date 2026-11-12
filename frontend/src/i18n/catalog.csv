@@ -6366,3 +6366,10 @@ ZATCA: still needed for valid e-invoices - {fields}.,ZATCA: still needed for val
 "Zero balance: use Quick check out above, or Check out on the row.","Zero balance: use Quick check out above, or Check out on the row.",رصيد صفري: استخدم المغادرة السريعة أعلاه، أو تسجيل المغادرة في الصف.,Saldo cero: utilice Salida rápida arriba o Registrar salida en la fila.,,,translated
 Zero-rate and complimentary rooms,Zero-rate and complimentary rooms,غرف بسعر صفر ومجانية,Habitaciones con tarifa cero y de cortesía,screens/AuditPack.tsx,,translated
 Zero-rated on purpose,Zero-rated on purpose,خاضع لنسبة صفرية عمدًا,Tasa cero aplicada intencionalmente,screens/BanquetFunction.tsx,,translated
+Monthly,Monthly,شهري,Mensual,screens/Reports.tsx,,translated
+Shop,Shop,المتجر,Tienda,screens/Setup.tsx; screens/configs.ts,,translated
+Revenue by department,Revenue by department,الإيرادات حسب القسم,Ingresos por departamento,,,translated
+Department,Department,القسم,Departamento,,,translated
+"Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.","Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.",الغرف وكل منفذ والمآدب وكل قسم تشغيلي فرعي (الغسيل والسبا والتاكسي...)، كما في تقرير تدقيق الليل.,"Habitaciones, cada punto de venta, banquetes y cada departamento operativo menor (lavandería, spa, taxi...), como en el informe de auditoría nocturna.",,,translated
+Food and beverage on folios,Food and beverage on folios,الطعام والمشروبات على الفواتير,Alimentos y bebidas en folios,,,translated
+Meal plans and minibar,Meal plans and minibar,خطط الوجبات والميني بار,Planes de comidas y minibar,,,translated

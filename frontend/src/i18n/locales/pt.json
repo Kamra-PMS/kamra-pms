@@ -6342,5 +6342,12 @@
   "Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.": "Desligue em uma propriedade sem bebida alcoólica: todos os campos, caixas e rótulos de bebida alcoólica ficam ocultos, em todos os idiomas. Nada do que já foi lançado muda.",
   "Extend unchecked-out departures one night": "Estender por uma diária as saídas sem check-out",
   "On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.": "Ligado: um hóspede ainda hospedado após a data de saída é estendido por uma diária quando o fechamento roda, e essa diária é lançada como qualquer outra. Uma estadia que não pode ser estendida (o quarto está reservado) fica na lista de verificação.",
-  "Tap again to confirm": "Toque novamente para confirmar"
+  "Tap again to confirm": "Toque novamente para confirmar",
+  "Monthly": "Mensal",
+  "Shop": "Loja",
+  "Revenue by department": "Receita por departamento",
+  "Department": "Departamento",
+  "Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.": "Quartos, cada ponto de venda, banquetes e cada departamento operacional menor (lavanderia, spa, táxi...), como no relatório de fechamento de dia.",
+  "Food and beverage on folios": "Alimentos e bebidas nas contas",
+  "Meal plans and minibar": "Planos de refeição e frigobar"
 }
