@@ -5359,7 +5359,8 @@ def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 def send_precheckin_link(reservation: str, channel: str = "WhatsApp"):
 	"""Send the guest their self check-in link (mints a token if needed). Sends
 	over a connected channel when there is one; otherwise returns the link for
-	the desk to share. Marks when it went out so the arrivals board can show it."""
+	the desk to share. Marks when it went out so the arrivals board can show it;
+	a link nobody was sent is not marked."""
 	res = frappe.db.get_value(
 		"Reservation", reservation,
 		["name", "property", "guest", "guest_name", "precheckin_token"],
@@ -5377,15 +5378,18 @@ def send_precheckin_link(reservation: str, channel: str = "WhatsApp"):
 	if phone:
 		try:
 			from kamra.agents_channels import send_outbound
-			send_outbound(res.property, channel, phone,
-			              f"Hi {res.guest_name}, check in early and skip the "
-			              f"front-desk queue for your stay: {link}")
-			sent = True
+			# send_outbound reports a dropped message ({"sent": False}) rather
+			# than raising, e.g. when no channel is connected
+			out = send_outbound(res.property, channel, phone,
+			                    f"Hi {res.guest_name}, check in early and skip the "
+			                    f"front-desk queue for your stay: {link}")
+			sent = bool(out and out.get("sent"))
 		except Exception:
 			sent = False  # no live channel; fall back to returning the link
 
-	frappe.db.set_value("Reservation", reservation, "precheckin_link_sent",
-	                    frappe.utils.now_datetime())
+	if sent:
+		frappe.db.set_value("Reservation", reservation, "precheckin_link_sent",
+		                    frappe.utils.now_datetime())
 	from kamra.savings import log_action
 	log_action("send_precheckin_link", "Reservation", reservation, res.property,
 	           minutes_saved=2,

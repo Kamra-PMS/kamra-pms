@@ -3,9 +3,10 @@
 For properties that switch on "auto-send check-in links", each day this looks
 at who is arriving in the next couple of days and hasn't started their self
 check-in, and sends them their link - so they reach the desk already
-registered and signed. When no messaging channel is connected the link is
-simply generated and marked, so nothing is sent by surprise. Staff can always
-send the link by hand from the arrivals board too."""
+registered and signed. A property with no WhatsApp line connected is skipped:
+there is nothing to send with, and an arrival is only marked once its link
+has really gone out. Staff can always send the link by hand from the
+arrivals board too."""
 
 import frappe
 
@@ -24,6 +25,9 @@ def run_prearrival_outreach(horizon_days: int | None = None):
 		"Property", filters={"disabled": 0, "auto_send_checkin_links": 1},
 		pluck="name")
 	for prop in props:
+		if not frappe.db.exists("Channel Provider Connection",
+		                        {"property": prop, "channel": "WhatsApp", "active": 1}):
+			continue
 		days = horizon_days if horizon_days is not None else int(
 			get_setting(prop, "prearrival_horizon_days"))
 		horizon = add_days(today, days)
@@ -36,8 +40,8 @@ def run_prearrival_outreach(horizon_days: int | None = None):
 			pluck="name")
 		for r in arrivals:
 			try:
-				send_precheckin_link(r, "WhatsApp")
-				sent += 1
+				if send_precheckin_link(r, "WhatsApp").get("sent"):
+					sent += 1
 			except Exception:
 				frappe.log_error(f"Pre-arrival outreach failed for {r}",
 				                 "Pre-arrival agent")
