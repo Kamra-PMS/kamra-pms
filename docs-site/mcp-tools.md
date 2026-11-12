@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **166 governed tools** on the hosted MCP
+Kamra exposes **167 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -674,6 +674,14 @@ of the same stay or group), to_company=true (the stay's Company
 folio, opened if needed; alcohol never moves there) or
 to_reservation (another checked-in stay here: Finance or Hotel Admin
 only, reason required). Lines keep their GL code.
+
+Endpoint: `kamra.api.transfer_folio_charges`.
+Mutating - logged to the activity ledger.
+
+### `move_charges(from_folio, charge_rows, to_folio, idempotency_key)`
+
+Old name for transfer_folio_charge, kept for existing clients.
+Moves charge lines to another folio of the same stay or group.
 
 Endpoint: `kamra.api.transfer_folio_charges`.
 Mutating - logged to the activity ledger.

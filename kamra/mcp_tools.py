@@ -1015,6 +1015,22 @@ TOOLS: tuple[ToolSpec, ...] = (
 		bools=("to_company",),
 		group="Billing",
 	),
+	# ponytail: old name kept so connected clients keep working; drop in a major release
+	_t(
+		"move_charges",
+		"api.transfer_folio_charges",
+		"""Old name for transfer_folio_charge, kept for existing clients.
+		Moves charge lines to another folio of the same stay or group.""",
+		{
+			"from_folio": _p("string"),
+			"charge_rows": _p("array", items=_p("string")),
+			"to_folio": _p("string"),
+			"idempotency_key": WRITE_KEY_PARAM,
+		},
+		required=("from_folio", "charge_rows"),
+		mutating=True,
+		group="Billing",
+	),
 	_t(
 		"refund_payment",
 		"api.refund_folio_payment",
