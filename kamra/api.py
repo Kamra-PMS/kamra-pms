@@ -3078,6 +3078,25 @@ def folio_invoice(folio: str):
 	and the guest wants a summary by what they bought before they read
 	forty lines. All of that is assembled here so every surface that
 	prints a bill - the folio screen, a PDF, an email - agrees.
+
+	Statement fields (stable for integrations):
+
+	- `lines`: each charge line: row, posting_date, stay_date,
+	  charge_type, description, qty, rate, amount (pre-tax), gst_rate,
+	  gst_amount, total, service_code, transaction_code, gl_code (as
+	  posted), corrects_row (a correction's original line), reservation,
+	  is_alcohol, auto_posted
+	- `payments`: row, posting_date, payment_kind, mode, amount (refunds
+	  negative), reference, currency, fx_amount, exchange_rate,
+	  transaction_code, gl_code, refund_of (the payment a refund is against)
+	- `statement`: lines and payments in date order: date, row, kind
+	  (Charge or the payment kind), charge_type, description, reference,
+	  method, transaction_code, gl_code, charges, credits, tax, balance
+	  (running)
+	- `tax_summary`: per rate, taxable, total_tax and the country's parts
+	- `allocations`: company payments that cleared this bill: payment,
+	  account, posting_date, reference, amount
+	- `folio`, `bill_to`, `guest`, `stay`, `property`, `document`
 	"""
 	from kamra import localization as loc
 
@@ -3127,6 +3146,11 @@ def folio_invoice(folio: str):
 			"total": c.total, "is_alcohol": c.is_alcohol,
 			"auto_posted": c.auto_posted,
 			"service_code": (code or {}).get("value"),
+			"transaction_code": c.get("transaction_code"),
+			"gl_code": c.get("gl_code"),
+			"corrects_row": c.get("corrects_row"),
+			"reservation": c.get("reservation"),
+			"stay_date": str(c.stay_date) if c.get("stay_date") else None,
 		})
 		key = float(c.gst_rate or 0)
 		slot = by_rate.setdefault(key, {"taxable": 0.0, "tax": 0.0})
@@ -3147,9 +3171,21 @@ def folio_invoice(folio: str):
 	# what the tax authority requires ON the bill (ZATCA: QR + Arabic title)
 	statutory = loc.invoice_print_block(
 		pack, "Folio", doc.name, doc.invoice_number) if settled else None
+	payments = [{
+		"row": p.name, "posting_date": str(p.posting_date),
+		"payment_kind": p.payment_kind, "mode": p.mode,
+		"amount": p.amount, "reference": p.reference,
+		"currency": p.currency, "fx_amount": p.get("fx_amount"),
+		"exchange_rate": p.get("exchange_rate"),
+		"transaction_code": p.get("transaction_code"),
+		"gl_code": p.get("gl_code"), "refund_of": p.get("refund_of"),
+	} for p in doc.payments]
 	return {
 		"folio": doc.as_dict(),
 		"lines": lines,
+		"payments": payments,
+		"statement": _folio_statement(lines, payments),
+		"allocations": _folio_allocations(doc.name),
 		"bill_to": bill_to,
 		"statutory": statutory,
 		"document": {
@@ -3221,6 +3257,55 @@ def folio_invoice(folio: str):
 			for rate, v in sorted(by_rate.items())
 		],
 	}
+
+
+def _folio_statement(lines: list, payments: list) -> list[dict]:
+	"""Charges and payments in date order with a running balance: charges
+	(with tax) and refunds in `charges`, payments, allowances and reversals
+	in `credits`."""
+	rows = []
+	for ln in lines:
+		total = round(float(ln["total"] or 0), 2)
+		rows.append((ln["posting_date"], 0, {
+			"date": ln["posting_date"], "row": ln["row"], "kind": "Charge",
+			"charge_type": ln["charge_type"], "description": ln["description"],
+			"reference": ln.get("corrects_row"), "method": None,
+			"transaction_code": ln["transaction_code"], "gl_code": ln["gl_code"],
+			"charges": max(total, 0), "credits": max(-total, 0),
+			"tax": round(float(ln["gst_amount"] or 0), 2)}))
+	for p in payments:
+		amt = round(float(p["amount"] or 0), 2)
+		rows.append((p["posting_date"], 1, {
+			"date": p["posting_date"], "row": p["row"], "kind": p["payment_kind"],
+			"charge_type": None, "description": f"{p['payment_kind']} {p['mode'] or ''}".strip(),
+			"reference": p["reference"], "method": p["mode"],
+			"transaction_code": p["transaction_code"], "gl_code": p["gl_code"],
+			"charges": max(-amt, 0), "credits": max(amt, 0), "tax": 0.0}))
+	balance, out = 0.0, []
+	for _d, _o, r in sorted(rows, key=lambda x: (x[0], x[1])):
+		balance = round(balance + r["charges"] - r["credits"], 2)
+		out.append({**r, "balance": balance})
+	return out
+
+
+def _folio_allocations(folio: str) -> list[dict]:
+	"""Company payments (city ledger) that cleared this bill, and how much
+	of each."""
+	by_payment: dict[str, float] = {}
+	for e in frappe.get_all("Folio Ledger Entry", filters={
+			"folio": folio, "source_doctype": "City Ledger Entry"},
+			fields=["source_name", "credit", "debit"]):
+		by_payment[e.source_name] = by_payment.get(e.source_name, 0.0) + \
+			float(e.credit or 0) - float(e.debit or 0)
+	if not by_payment:
+		return []
+	cle = {c.name: c for c in frappe.get_all(
+		"City Ledger Entry", filters={"name": ("in", list(by_payment)), "kind": "Payment"},
+		fields=["name", "account", "posting_date", "reference"])}
+	return [{"payment": n, "account": cle[n].account,
+	         "posting_date": str(cle[n].posting_date),
+	         "reference": cle[n].reference, "amount": round(a, 2)}
+	        for n, a in by_payment.items() if n in cle and abs(a) > 0.005]
 
 
 def _invoice_guest(res) -> dict:

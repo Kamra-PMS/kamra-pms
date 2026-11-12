@@ -765,7 +765,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 	_t(
 		"get_folio",
 		"api.get_folio",
-		"The guest's bill: charge lines, payments, GST, balance.",
+		"""The guest's bill: charge lines (each with its transaction code and
+		GL code), payments, GST, balance.""",
 		{"reservation": _p("string")},
 		required=("reservation",),
 		group="Billing",
@@ -996,6 +997,18 @@ TOOLS: tuple[ToolSpec, ...] = (
 		},
 		required=("from_folio", "charge_rows", "to_folio"),
 		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"folio_statement",
+		"api.folio_invoice",
+		"""One folio by its id, as the bill prints: lines with date, charge
+		type, transaction code, GL code, tax and corrects_row; payments with
+		mode, kind, GL code and refund_of; a dated statement with charges,
+		credits and running balance; tax summary; company payments that
+		cleared it (allocations). Read-only.""",
+		{"folio": _p("string")},
+		required=("folio",),
 		group="Billing",
 	),
 	_t(
@@ -2161,6 +2174,31 @@ TOOLS: tuple[ToolSpec, ...] = (
 		{"date": _p("string", format="date")},
 		property=True,
 		group="Briefings",
+	),
+	_t(
+		"list_cashier_sessions",
+		"cashier.list_sessions",
+		"""Till sessions, newest first, for a business date (or
+		business_date to to_date), optionally status Open or Closed: cashier,
+		terminal, system totals per method, expected, counted, variance and
+		its review. Read-only.""",
+		{"business_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date"),
+		 "status": _p("string", enum=["Open", "Closed"]),
+		 "limit": _p("integer")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"cashier_session_detail",
+		"cashier.session_report",
+		"""One till session for a reconciliation: system vs counted per
+		method, the note-by-note cash count, every receipt and paid-out in
+		time order, the cashier and the supervisor who approved a variance.
+		Read-only.""",
+		{"session": _p("string")},
+		required=("session",),
+		group="Billing",
 	),
 	_t(
 		"cashier_shift_report",

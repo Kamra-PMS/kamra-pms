@@ -826,6 +826,9 @@ def move_charges(src, dst, charge_rows: list, reservation: str | None = None):
 			"gst_rate": row.gst_rate,
 			"auto_posted": row.auto_posted,
 			"is_alcohol": row.get("is_alcohol"),
+			# the line keeps the codes it was posted with
+			"transaction_code": row.get("transaction_code"),
+			"gl_code": row.get("gl_code"),
 		})
 		moved.append(dst.charges[-1])
 		src.charges.remove(row)
@@ -895,6 +898,8 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 		"gst_rate": row.gst_rate,
 		"auto_posted": row.auto_posted,
 		"is_alcohol": row.get("is_alcohol"),
+		"transaction_code": row.get("transaction_code"),
+		"gl_code": row.get("gl_code"),
 	})
 	part_row = dst.charges[-1]
 	_recalculate(src)

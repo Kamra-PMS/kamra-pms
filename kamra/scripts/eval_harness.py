@@ -10569,6 +10569,87 @@ def t_safe_deposit_race():
 		frappe.db.rollback(save_point=sp)
 
 
+# ── till count, read APIs and GL codes (#533/#532) ──
+
+def _gl(code, gl):
+	frappe.db.set_value("Transaction Code", code, "gl_code", gl)
+
+
+@check("till close: note-by-note count adds up to the counted cash; session read API and MCP tools return the reconciliation")
+def t_cash_count():
+	from kamra import api, cashier
+	from kamra.localization import cash_denominations, pack_for
+	from kamra.mcp_tools import BY_NAME, call_tool
+	notes = cash_denominations(pack_for(P))
+	big, small = (notes[0], notes[-1]) if notes else (500.0, 1.0)
+	_close_my_till()
+	sess = cashier.open_session(P, opening_float=0)["name"]
+	_res, folio = _in_house("Eval Till Count", "+91 70000 05330", "2036-07-07",
+	                       "2036-07-08", _ledger_room("F5330"))
+	api.add_folio_payment(folio, "Cash", big * 2 + small)
+	cashier.post_paid_out(P, small, "eval stamps")
+	_refused(cashier.close_session, sess, counted_cash=big, cash_count={str(big): 2},
+	         contains="adds up")
+	if notes:
+		_refused(cashier.close_session, sess, cash_count={"7.77": 1}, contains="not a note")
+	cashier.close_session(sess, cash_count=[{"value": big, "count": 2}])
+	d = cashier.session_report(sess)
+	assert d["cash_count"] == [{"value": big, "count": 2, "amount": big * 2}], d["cash_count"]
+	assert float(d["counted_cash"]) == big * 2
+	cash = next(m for m in d["by_method"] if m["mode"] == "Cash")
+	assert cash["system"] == big * 2 and cash["counted"] == big * 2 and cash["variance"] == 0, cash
+	assert [r["guest_name"] for r in d["receipts"]] == ["Eval Till Count"], d["receipts"]
+	assert [r["kind"] for r in d["paid_outs"]] == ["Paid Out"], d["paid_outs"]
+	assert d["cashier_user"]["user"] == frappe.session.user
+	via = call_tool(BY_NAME["cashier_session_detail"], {"session": sess}, P)
+	assert via["by_method"] == d["by_method"]
+	listed = call_tool(BY_NAME["list_cashier_sessions"],
+	                   {"business_date": str(d["business_date"]), "status": "Closed"}, P)
+	assert sess in [r["name"] for r in listed["sessions"]], listed
+	with _as_user("hk@kamra.local"):
+		_refused(call_tool, BY_NAME["cashier_session_detail"], {"session": sess}, P,
+		         exc=frappe.PermissionError)
+
+
+@check("GL codes: each posted line and payment keeps the GL code it was posted with; a payment mode can have its own code")
+def t_gl_stamp():
+	from kamra import api
+	old_gl = frappe.db.get_value("Transaction Code", "3000", "gl_code")
+	_gl("3000", "4100")
+	cash = frappe.get_doc({"doctype": "Transaction Code", "code": "EVAL-CASH",
+	                       "description": "Cash on hand", "txn_type": "Payment",
+	                       "payment_mode": "Cash", "gl_code": "1010"}).insert(ignore_permissions=True)
+	try:
+		_res, folio = _in_house("Eval GL Stamp", "+91 70000 05320", "2036-07-09",
+		                       "2036-07-10", _ledger_room("F5320"))
+		first = api.add_folio_charge(folio, "Laundry", "eval gl one", 100)["charges"][-1]["name"]
+		api.add_folio_payment(folio, "Cash", 50)
+		_gl("3000", "4200")  # the books change the code later
+		api.add_folio_charge(folio, "Laundry", "eval gl two", 100)
+		doc = frappe.get_doc("Folio", folio)
+		gl = {c.name: c.gl_code for c in doc.charges}
+		assert gl[first] == "4100" and doc.charges[-1].gl_code == "4200", gl
+		pay = doc.payments[-1]
+		assert (pay.transaction_code, pay.gl_code) == ("EVAL-CASH", "1010"), pay.as_dict()
+		_assert_folio_on_ledger(folio)
+	finally:
+		_gl("3000", old_gl)
+		frappe.delete_doc("Transaction Code", cash.name, force=True, ignore_permissions=True)
+
+
+@check("accounting export: lines split by GL code as well as service code and rate")
+def t_export_gl():
+	from kamra.accounting import _lines_by_code
+	inv = {"lines": [
+		{"service_code": "996311", "gl_code": "4000", "gst_rate": 12, "amount": 100,
+		 "gst_amount": 12, "charge_type": "Room"},
+		{"service_code": "996311", "gl_code": "4010", "gst_rate": 12, "amount": 50,
+		 "gst_amount": 6, "charge_type": "Extra Guests"},
+	]}
+	out = _lines_by_code(inv, ["tax"], {"tax": 1.0})
+	assert sorted(g["gl_code"] for g in out) == ["4000", "4010"], out
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10609,7 +10690,7 @@ def execute():
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
-		           t_concurrency_guards, t_safe_deposit_race):
+		           t_concurrency_guards, t_safe_deposit_race, t_gl_stamp, t_cash_count, t_export_gl):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

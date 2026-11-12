@@ -6366,5 +6366,9 @@
   "Department": "Departamento",
   "Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.": "Quartos, cada ponto de venda, banquetes e cada departamento operacional menor (lavanderia, spa, táxi...), como no relatório de fechamento de dia.",
   "Food and beverage on folios": "Alimentos e bebidas nas contas",
-  "Meal plans and minibar": "Planos de refeição e frigobar"
+  "Meal plans and minibar": "Planos de refeição e frigobar",
+  "GL code": "Conta contábil",
+  "Count by note and coin": "Contar por cédulas e moedas",
+  "Your accounts' ledger code. Each line keeps the GL code it was posted with.": "O código da conta na sua contabilidade. Cada linha mantém a conta contábil com que foi lançada.",
+  "Payment codes only: a payment mode such as Cash, Card or Bank Transfer. Payments in that mode book to this code.": "Somente códigos de pagamento: um modo de pagamento como Dinheiro, Cartão ou Transferência Bancária. Os pagamentos nesse modo são lançados neste código."
 }

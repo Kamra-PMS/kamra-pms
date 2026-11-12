@@ -35,6 +35,8 @@ ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "PAN", "Other"
 ID_TYPE_HINTS = {"Aadhaar": "A masked Aadhaar (last 4 digits showing) is fine."}
 INVOICE_TAX_NOTE = "Amounts are inclusive of GST at the rates shown."
 PAYMENT_MODES = ["Cash", "Card", "UPI", "Bank Transfer"]
+# notes and coins the till counts at close, largest first
+CASH_DENOMINATIONS = (500, 200, 100, 50, 20, 10, 5, 2, 1)
 # settled like a card but counted in its own till bucket
 INSTANT_PAYMENT_MODES = ["UPI"]
 # Indian hotels keep a signed registration card (the hotel register the

@@ -6190,5 +6190,9 @@
   "Department": "القسم",
   "Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.": "الغرف وكل منفذ والمآدب وكل قسم تشغيلي فرعي (الغسيل والسبا والتاكسي...)، كما في تقرير تدقيق الليل.",
   "Food and beverage on folios": "الطعام والمشروبات على الفواتير",
-  "Meal plans and minibar": "خطط الوجبات والميني بار"
+  "Meal plans and minibar": "خطط الوجبات والميني بار",
+  "GL code": "رمز حساب الأستاذ العام",
+  "Count by note and coin": "العدّ حسب الأوراق النقدية والعملات المعدنية",
+  "Your accounts' ledger code. Each line keeps the GL code it was posted with.": "رمز الحساب في دفاتر حساباتك. يحتفظ كل سطر برمز الحساب الذي قُيّد به.",
+  "Payment codes only: a payment mode such as Cash, Card or Bank Transfer. Payments in that mode book to this code.": "لرموز الدفع فقط: طريقة دفع مثل نقداً أو بطاقة أو تحويل بنكي. تُقيَّد المدفوعات بهذه الطريقة على هذا الرمز."
 }

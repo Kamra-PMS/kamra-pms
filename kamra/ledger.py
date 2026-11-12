@@ -96,6 +96,49 @@ def code_for_charge_type(charge_type: str) -> str | None:
 	return code if frappe.db.exists("Transaction Code", code) else None
 
 
+def payment_code_for(kind: str | None, mode: str | None) -> str | None:
+	"""The Transaction Code a payment books to: a Payment code set up for
+	its mode (Cash, Card, ...) when there is one, else the code of its kind."""
+	if mode:
+		code = frappe.db.get_value(
+			"Transaction Code",
+			{"txn_type": "Payment", "payment_mode": mode, "disabled": 0}, "name")
+		if code:
+			return code
+	meta = PAYMENT_CODES.get(kind or "Payment")
+	if not meta:
+		return None
+	if not frappe.db.exists("Transaction Code", meta[0]):
+		ensure_default_transaction_codes()
+	return meta[0] if frappe.db.exists("Transaction Code", meta[0]) else None
+
+
+def gl_code_of(code: str | None) -> str | None:
+	return (frappe.db.get_value("Transaction Code", code, "gl_code") or None) if code else None
+
+
+def stamp_gl_codes(folio_doc) -> None:
+	"""Give each newly posted charge and payment its Transaction Code and
+	that code's GL code (#532). Lines already saved keep what they were
+	posted with, so changing a code's GL later never rewrites history."""
+	old = None if folio_doc.is_new() else folio_doc.get_doc_before_save()
+	posted = {r.name for r in [*old.charges, *old.payments]} if old else set()
+	for c in folio_doc.charges:
+		if c.name in posted:
+			continue
+		if not c.transaction_code:
+			c.transaction_code = code_for_charge_type(c.charge_type or "Misc")
+		if not c.gl_code:
+			c.gl_code = gl_code_of(c.transaction_code)
+	for p in folio_doc.payments:
+		if p.name in posted:
+			continue
+		if not p.transaction_code:
+			p.transaction_code = payment_code_for(p.payment_kind, p.mode)
+		if not p.gl_code:
+			p.gl_code = gl_code_of(p.transaction_code)
+
+
 def write_ledger_entry(
 	*,
 	property: str,
@@ -203,10 +246,12 @@ def record_payment_ledger(folio_doc, payment_row, session: str | None = None,
 	stored as a Refund row on the folio but releases the Deposit ledger
 	(the liability), not the Guest ledger."""
 	kind = payment_row.get("payment_kind") or "Payment"
-	code_meta = PAYMENT_CODES.get(kind)
-	code = code_meta[0] if code_meta else None
-	if code and not frappe.db.exists("Transaction Code", code):
-		ensure_default_transaction_codes()
+	code = payment_row.get("transaction_code")
+	if not code:
+		code_meta = PAYMENT_CODES.get(kind)
+		code = code_meta[0] if code_meta else None
+		if code and not frappe.db.exists("Transaction Code", code):
+			ensure_default_transaction_codes()
 	amt = float(payment_row.get("amount") or 0)
 	ledger = ledger or ("Deposit" if kind in ("Advance", "Security Deposit")
 	                    else "Guest")

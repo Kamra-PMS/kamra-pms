@@ -10,6 +10,8 @@ class Folio(Document):
 	def validate(self):
 		self.guard_closed()
 		self.stamp_payment_currency()
+		from kamra.ledger import stamp_gl_codes
+		stamp_gl_codes(self)
 
 	def stamp_payment_currency(self):
 		"""Every payment row carries the property's currency unless a writer

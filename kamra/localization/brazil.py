@@ -32,6 +32,8 @@ DEFAULT_NATIONALITY = "Brazilian"
 HOME_COUNTRY_ISO3 = "BRA"
 ID_TYPES = ["CPF", "RG", "Passport", "Driving License (CNH)", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+# notes and coins the till counts at close, largest first
+CASH_DENOMINATIONS = (200, 100, 50, 20, 10, 5, 2, 1, 0.5, 0.25, 0.1, 0.05)
 
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:

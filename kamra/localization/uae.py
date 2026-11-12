@@ -37,6 +37,8 @@ HOME_COUNTRY_ISO3 = "ARE"
 PRIVACY_AUTHORITY = "the UAE Data Office"
 ID_TYPES = ["Emirates ID", "Passport", "GCC ID", "Driving License", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+# notes and coins the till counts at close, largest first
+CASH_DENOMINATIONS = (1000, 500, 200, 100, 50, 20, 10, 5, 1, 0.5, 0.25)
 
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:

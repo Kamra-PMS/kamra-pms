@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **488 endpoints**, generated from the source
+the UI and the AI use. **489 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1035,6 +1035,25 @@ named the way the country names it, the total has to appear in words,
 and the guest wants a summary by what they bought before they read
 forty lines. All of that is assembled here so every surface that
 prints a bill - the folio screen, a PDF, an email - agrees.
+
+Statement fields (stable for integrations):
+
+- `lines`: each charge line: row, posting_date, stay_date,
+  charge_type, description, qty, rate, amount (pre-tax), gst_rate,
+  gst_amount, total, service_code, transaction_code, gl_code (as
+  posted), corrects_row (a correction's original line), reservation,
+  is_alcohol, auto_posted
+- `payments`: row, posting_date, payment_kind, mode, amount (refunds
+  negative), reference, currency, fx_amount, exchange_rate,
+  transaction_code, gl_code, refund_of (the payment a refund is against)
+- `statement`: lines and payments in date order: date, row, kind
+  (Charge or the payment kind), charge_type, description, reference,
+  method, transaction_code, gl_code, charges, credits, tax, balance
+  (running)
+- `tax_summary`: per rate, taxable, total_tax and the country's parts
+- `allocations`: company payments that cleared this bill: payment,
+  account, posting_date, reference, amount
+- `folio`, `bill_to`, `guest`, `stay`, `property`, `document`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5480,6 +5499,18 @@ keys (current, b30, b60, b90, b90p) are kept for older callers.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+### `kamra.ledger.city_ledger_history`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+Everything that ever moved on one company's account, oldest first, with
+the running balance: each bill (and the guest it was for), credit note,
+adjustment and payment (with the bills it cleared).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
 
 ### `kamra.ledger.city_ledger_account`
 

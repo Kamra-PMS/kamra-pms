@@ -34,6 +34,8 @@ DEFAULT_NATIONALITY = "Thai"
 HOME_COUNTRY_ISO3 = "THA"
 ID_TYPES = ["Thai ID Card", "Passport", "Driving License", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+# notes and coins the till counts at close, largest first
+CASH_DENOMINATIONS = (1000, 500, 100, 50, 20, 10, 5, 2, 1)
 
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:

@@ -2769,7 +2769,7 @@
         "kamra.api.folio_invoice"
        ]
       },
-      "description": "Everything the bill needs to print itself.\n\nA tax invoice is a legal document, not a screenshot of a table: the\nservice code belongs on each LINE (a room night, a restaurant cover\nand a laundry bag are three different supplies), the tax has to be\nnamed the way the country names it, the total has to appear in words,\nand the guest wants a summary by what they bought before they read\nforty lines. All of that is assembled here so every surface that\nprints a bill - the folio screen, a PDF, an email - agrees.",
+      "description": "Everything the bill needs to print itself.\n\nA tax invoice is a legal document, not a screenshot of a table: the\nservice code belongs on each LINE (a room night, a restaurant cover\nand a laundry bag are three different supplies), the tax has to be\nnamed the way the country names it, the total has to appear in words,\nand the guest wants a summary by what they bought before they read\nforty lines. All of that is assembled here so every surface that\nprints a bill - the folio screen, a PDF, an email - agrees.\n\nStatement fields (stable for integrations):\n\n- `lines`: each charge line: row, posting_date, stay_date,\n  charge_type, description, qty, rate, amount (pre-tax), gst_rate,\n  gst_amount, total, service_code, transaction_code, gl_code (as\n  posted), corrects_row (a correction's original line), reservation,\n  is_alcohol, auto_posted\n- `payments`: row, posting_date, payment_kind, mode, amount (refunds\n  negative), reference, currency, fx_amount, exchange_rate,\n  transaction_code, gl_code, refund_of (the payment a refund is against)\n- `statement`: lines and payments in date order: date, row, kind\n  (Charge or the payment kind), charge_type, description, reference,\n  method, transaction_code, gl_code, charges, credits, tax, balance\n  (running)\n- `tax_summary`: per rate, taxable, total_tax and the country's parts\n- `allocations`: company payments that cleared this bill: payment,\n  account, posting_date, reference, amount\n- `folio`, `bill_to`, `guest`, `stay`, `property`, `document`",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\"\n}",
@@ -13761,6 +13761,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "city_ledger_history",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.city_ledger_history",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.city_ledger_history"
+       ]
+      },
+      "description": "Everything that ever moved on one company's account, oldest first, with\nthe running balance: each bill (and the guest it was for), credit note,\nadjustment and payment (with the bills it cleared).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\"\n}",
        "options": {
         "raw": {
          "language": "json"

@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **161 governed tools** on the hosted MCP
+Kamra exposes **164 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -535,7 +535,8 @@ Mutating - logged to the activity ledger.
 
 ### `get_folio(reservation)`
 
-The guest's bill: charge lines, payments, GST, balance.
+The guest's bill: charge lines (each with its transaction code and
+GL code), payments, GST, balance.
 
 Endpoint: `kamra.api.get_folio`.
 
@@ -672,6 +673,16 @@ charge_rows is a list of charge line names from get_folio.
 
 Endpoint: `kamra.api.transfer_folio_charges`.
 Mutating - logged to the activity ledger.
+
+### `folio_statement(folio)`
+
+One folio by its id, as the bill prints: lines with date, charge
+type, transaction code, GL code, tax and corrects_row; payments with
+mode, kind, GL code and refund_of; a dated statement with charges,
+credits and running balance; tax summary; company payments that
+cleared it (allocations). Read-only.
+
+Endpoint: `kamra.api.folio_invoice`.
 
 ### `close_folio(folio)`
 
@@ -847,6 +858,24 @@ required and goes on the record; refused once money was taken.
 
 Endpoint: `kamra.api.waive_security_deposit`.
 Mutating - logged to the activity ledger.
+
+### `list_cashier_sessions(business_date, to_date, status, limit)`
+
+Till sessions, newest first, for a business date (or
+business_date to to_date), optionally status Open or Closed: cashier,
+terminal, system totals per method, expected, counted, variance and
+its review. Read-only.
+
+Endpoint: `kamra.cashier.list_sessions`.
+
+### `cashier_session_detail(session)`
+
+One till session for a reconciliation: system vs counted per
+method, the note-by-note cash count, every receipt and paid-out in
+time order, the cashier and the supervisor who approved a variance.
+Read-only.
+
+Endpoint: `kamra.cashier.session_report`.
 
 ### `cashier_shift_report(business_date, to_date)`
 
