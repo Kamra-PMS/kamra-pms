@@ -608,9 +608,11 @@ Endpoint: `kamra.ledger.folio_in_currency`.
 
 ### `void_charge(folio, charge_row, reason)`
 
-Remove a WRONG charge line from an open folio (duplicate, wrong
-amount, wrong guest). Pass the folio and the charge line's id (`name`
-from get_folio). For settled/invoiced bills use apply_allowance.
+Void a WRONG charge line on an open folio (duplicate, wrong
+amount, wrong guest): the line stays and a reversal line of the
+opposite sign, with the reason, follows it. Pass the folio and the
+charge line's id (`name` from get_folio). For settled/invoiced bills
+use apply_allowance.
 
 Endpoint: `kamra.api.void_folio_charge`.
 Mutating - logged to the activity ledger.

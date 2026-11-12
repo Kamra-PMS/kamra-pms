@@ -618,8 +618,9 @@ the button was pressed. Early/late charges stay explicit folio lines.
 **GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
 
 Remove a wrong charge line from an open folio (the bill-correction
-path). PIN-guarded like other money actions for humans; agents are
-accountable through the action log. Posts a ledger reversal.
+path): the line stays and a signed reversal line with the reason and
+user follows it (folio.void_charge). PIN-guarded like other money
+actions for humans; agents are accountable through the action log.
 
 | Param | Required | Default |
 | --- | --- | --- |

@@ -21,7 +21,10 @@
   "total",
   "auto_posted",
   "is_alcohol",
-  "reservation"
+  "reservation",
+  "reversal_of",
+  "void_reason",
+  "voided_by"
  ],
  "fields": [
   {
@@ -124,13 +127,36 @@
    "label": "Reservation",
    "options": "Reservation",
    "read_only": 1
+  },
+  {
+   "description": "On a void's reversal line: the line it reverses. Both lines stay on the folio.",
+   "fieldname": "reversal_of",
+   "fieldtype": "Data",
+   "label": "Reverses Line",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "void_reason",
+   "fieldtype": "Small Text",
+   "label": "Void Reason",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "voided_by",
+   "fieldtype": "Link",
+   "label": "Voided By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-30 12:00:00.000000",
+ "modified": "2026-11-13 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio Charge",

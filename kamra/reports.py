@@ -11,13 +11,14 @@ import frappe
 from frappe.utils import add_days, getdate, nowdate
 
 from kamra.authz import require_roles
+from kamra.folio import NOT_VOIDED
 
 
 def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 	row = frappe.db.sql(
 		"""
 		SELECT
-		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room'
+		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' AND """ + NOT_VOIDED + """
 		        THEN COALESCE(fc.reservation, f.reservation) END) AS rooms_sold,
 		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room', 'Rate Adjustment')
 		        THEN fc.amount ELSE 0 END), 0) AS room_revenue,
@@ -228,7 +229,7 @@ def range_stats(property: str, start, end, total_rooms: int) -> dict:
 	row = frappe.db.sql(
 		"""
 		SELECT
-		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' THEN CONCAT(
+		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' AND """ + NOT_VOIDED + """ THEN CONCAT(
 		        COALESCE(fc.reservation, f.reservation), '|', fc.posting_date) END)
 		        AS rooms_sold,
 		  COALESCE(SUM(CASE WHEN fc.charge_type = 'Room'

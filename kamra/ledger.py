@@ -140,7 +140,8 @@ def write_ledger_entry(
 
 
 def record_charge_ledger(folio_doc, charge_row, session: str | None = None,
-                         business_date: str | None = None):
+                         business_date: str | None = None,
+                         reversal_of: str | None = None):
 	code = charge_row.get("transaction_code") or code_for_charge_type(
 		charge_row.get("charge_type") or "Misc")
 	amt = float(charge_row.get("total") or charge_row.get("amount") or 0)
@@ -154,6 +155,7 @@ def record_charge_ledger(folio_doc, charge_row, session: str | None = None,
 		description=charge_row.get("description") or charge_row.get("charge_type"),
 		transaction_code=code,
 		session=session,
+		reversal_of=reversal_of,
 		source_doctype="Folio Charge",
 		source_name=charge_row.get("name"),
 		business_date=business_date,
@@ -1350,9 +1352,11 @@ def force_advance_bill(reservation: str, nights: str = "entire",
 		if getdate(day) >= co:
 			break
 		# Skip if already auto-posted for this date
+		from kamra.folio import voided_rows
+		voided = voided_rows(folio)
 		exists = any(
 			c.charge_type == "Room" and str(c.posting_date) == str(day)
-			and c.auto_posted
+			and c.auto_posted and not c.get("reversal_of") and c.name not in voided
 			for c in folio.charges
 		)
 		if exists:

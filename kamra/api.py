@@ -1920,18 +1920,15 @@ def void_folio_charge(folio: str, charge_row: str, reason: str = "",
                       reason_code: str | None = None,
                       supervisor_pin: str | None = None):
 	"""Remove a wrong charge line from an open folio (the bill-correction
-	path). PIN-guarded like other money actions for humans; agents are
-	accountable through the action log. Posts a ledger reversal."""
+	path): the line stays and a signed reversal line with the reason and
+	user follows it (folio.void_charge). PIN-guarded like other money
+	actions for humans; agents are accountable through the action log."""
 	_pin_guard(folio, pin)
 	prop = frappe.db.get_value("Folio", folio, "property")
-	from kamra.ledger import require_reason, reverse_ledger_for_charge
+	from kamra.ledger import require_reason
 	reason_text = require_reason(
 		"Void", reason_code, reason or "",
 		supervisor_pin=supervisor_pin, property=prop)
-	try:
-		reverse_ledger_for_charge(prop, folio, charge_row, str(reason_text))
-	except Exception:
-		frappe.log_error(title="ledger void reversal failed")
 	from kamra.folio import void_charge
 	return void_charge(folio, charge_row, str(reason_text))
 
@@ -2643,8 +2640,10 @@ def _discount_lines(doc, kind: str, value: float, basis: str) -> list[dict]:
 	reduces). Percent is the same per night or for the stay; an Amount is
 	either for the stay (spread over the rates by value) or per room night."""
 	groups: dict[float, dict] = {}
+	from kamra.folio import voided_rows
+	voided = voided_rows(doc)
 	for c in doc.charges:
-		if c.charge_type != "Room" or flt(c.amount) <= 0:
+		if c.charge_type != "Room" or flt(c.amount) <= 0 or c.name in voided:
 			continue
 		g = groups.setdefault(flt(c.gst_rate), {"base": 0.0, "nights": 0})
 		g["base"] += flt(c.amount)
