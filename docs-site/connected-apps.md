@@ -81,6 +81,10 @@ and when it was last used.
 
 ## Connect an app in one step (for app authors)
 
+Kamra Enterprise, the separate paid program, connects the same way. Its
+card is the last one in the Marketplace: **Contact us for a quote** sends
+an enquiry, and **Connect** takes IT to the app address field below.
+
 Instead of creating a service account by hand, an add-on app can be
 connected from **Marketplace, Connected apps**. IT enters the app's address,
 reads what it asks for, picks the properties and approves. Kamra then:

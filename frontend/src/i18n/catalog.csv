@@ -91,7 +91,7 @@
  folio, folio, فاتورة, folio,components/LinkedRecords.tsx,,translated
  free, free, مجانًا, sin cargo,screens/BanquetFunction.tsx,,translated
  from , from , من , de ,screens/CityLedgerPayment.tsx,,translated
- Goes live once HeyKoala confirms., Goes live once HeyKoala confirms., يُفعّل بعد تأكيد HeyKoala., Se activa cuando HeyKoala confirme.,screens/Marketplace.tsx,,translated
+ Goes live once HeyKoala confirms., Goes live once HeyKoala confirms., يُفعّل بعد تأكيد HeyKoala., Se activa cuando HeyKoala confirme.,,,translated
  governed tools, governed tools, أدوات خاضعة للصلاحيات, herramientas con permisos controlados,screens/Agents.tsx,,translated
  Guest {v0} via {v1} on {v2}., Guest {v0} via {v1} on {v2}., رد الضيف: {v0} عبر {v1} في {v2}.," Respuesta del huésped: {v0}, por {v1}, el {v2}.",screens/BanquetFunction.tsx,v0 v1 v2,translated
  h, h, س, h,screens/OpsSLA.tsx,,translated
@@ -111,7 +111,7 @@
  No ID document on file, No ID document on file, لا توجد وثيقة هوية محفوظة, Sin documento de identidad registrado,screens/ReservationDetail.tsx,,translated
  No-show: {v0} charged., No-show: {v0} charged., عدم حضور: تم احتساب {v0}., No presentado: se cobra {v0}.,components/BookingDialog.tsx,v0,translated
  Not emailed yet., Not emailed yet., لم تُرسل بالبريد بعد., Aún no se ha enviado por correo.,screens/BanquetFunction.tsx,,translated
- number, number, رقم, número,screens/Marketplace.tsx,,translated
+ number, number, رقم, número,,,translated
  OB, OB, الرصيد الافتتاحي, Saldo inicial,screens/TapeChart.tsx,,translated
  of, of, من, de,screens/RevenueReports.tsx,,translated
  of , of , من , de ,screens/BanquetFunction.tsx,,translated
@@ -746,7 +746,7 @@ Advances held,Advances held,العربون المحتجز,Anticipos retenidos,sc
 After,After,بعد,Después,,,translated
 after {v0} credit,after {v0} credit,بعد رصيد {v0},después del crédito de {v0},screens/banquet/Economics.tsx,v0,translated
 After night audit,After night audit,بعد تدقيق الليل,Después de la auditoría nocturna,screens/Reports.tsx,,translated
-"After the desk is live, put an AI concierge on your WhatsApp number - it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.","After the desk is live, put an AI concierge on your WhatsApp number - it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.",بعد تشغيل الاستقبال، ضع مساعد كونسيرج بالذكاء الاصطناعي على رقم WhatsApp الخاص بك، يستخدم أدوات Kamra. تحتسبه HeyKoala حسب الاستخدام، ويبقى نظام PMS مجانيًا.,"Cuando la recepción esté en marcha, conecte un conserje con IA a su número de WhatsApp. Usará las herramientas de Kamra. HeyKoala cobra según el uso; el PMS sigue siendo gratuito.",screens/Setup.tsx,,translated
+"After the desk is live, Kamra Enterprise can answer guests on your WhatsApp number with an AI concierge that uses Kamra's tools. The PMS stays free.","After the desk is live, Kamra Enterprise can answer guests on your WhatsApp number with an AI concierge that uses Kamra's tools. The PMS stays free.",بعد تشغيل الاستقبال، يمكن لـ Kamra Enterprise الرد على ضيوفك على رقم WhatsApp الخاص بك عبر كونسيرج بالذكاء الاصطناعي يستخدم أدوات Kamra. ويبقى نظام PMS مجانيًا.,"Cuando la recepción esté en marcha, Kamra Enterprise puede atender a sus huéspedes en su número de WhatsApp con un conserje con IA que usa las herramientas de Kamra. El PMS sigue siendo gratuito.",screens/Setup.tsx,,translated
 After the function,After the function,بعد المناسبة,Después del evento,,,translated
 "After this date, rooms without a guest name go back on sale.","After this date, rooms without a guest name go back on sale.",,,components/GroupControl.tsx,,needs_translation
 After this the hall is sellable again,After this the hall is sellable again,بعد ذلك تصبح القاعة متاحة للبيع مجددًا,"Después de esta fecha, el salón vuelve a estar disponible para venta",screens/BanquetFunction.tsx,,translated
@@ -1310,7 +1310,7 @@ Came from,Came from,جاء من,Vino de,screens/Banquet.tsx; screens/BanquetFunc
 can sell to {limit} (overbooking),can sell to {limit} (overbooking),يمكن البيع حتى {limit} (حجز زائد),venta permitida hasta {limit} (sobreventa),screens/TapeChart.tsx,limit,translated
 Can't reach Kamra right now. Check your connection - we'll reconnect automatically.,Can't reach Kamra right now. Check your connection - we'll reconnect automatically.,تعذّر الوصول إلى Kamra الآن. تحقق من اتصالك، وسنعيد الاتصال تلقائياً.,No se puede conectar con Kamra. Revise su conexión; se reconectará automáticamente.,,,translated
 Canadian,Canadian,كندي,Canadiense,,,translated
-Cancel,Cancel,إلغاء,Cancelar,components/AgentCards.tsx; components/AllowanceRequests.tsx; components/BookingDialog.tsx; components/ChangeCompany.tsx; components/CheckOutDialog.tsx; components/ConnectApp.tsx; components/CustomizeToday.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/ReinstatePanel.tsx; components/ResourceScreen.tsx; components/RoomDrawer.tsx; components/SecurityDepositPanel.tsx; screens/AdminRooms.tsx; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/CashierBoard.tsx; screens/CityLedgerPayment.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Payables.tsx; screens/Receivables.tsx; screens/RevenueReports.tsx; screens/TapeChart.tsx; screens/Tickets.tsx; screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx; screens/laundry/GuestLaundryCard.tsx; screens/pos/MoveRoomBill.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Cancel,Cancel,إلغاء,Cancelar,components/AgentCards.tsx; components/AllowanceRequests.tsx; components/BookingDialog.tsx; components/ChangeCompany.tsx; components/CheckOutDialog.tsx; components/ConnectApp.tsx; components/CustomizeToday.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/ReinstatePanel.tsx; components/ResourceScreen.tsx; components/RoomDrawer.tsx; components/SecurityDepositPanel.tsx; screens/AdminRooms.tsx; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/CashierBoard.tsx; screens/CityLedgerPayment.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/POS.tsx; screens/Payables.tsx; screens/Receivables.tsx; screens/RevenueReports.tsx; screens/TapeChart.tsx; screens/Tickets.tsx; screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx; screens/laundry/GuestLaundryCard.tsx; screens/pos/MoveRoomBill.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,إلغاء {invoice}؟ يُسجَّل الرقم في سجل الملغى وتُفتح الفاتورة للتصحيح.,¿Anular la factura {invoice}? El número quedará en el registro de facturas anuladas y el folio se volverá a abrir para corregirlo.,screens/FolioView.tsx,invoice,translated
 Cancel {v0} room(s)? The cancellation policy applies to each room.,Cancel {v0} room(s)? The cancellation policy applies to each room.,,,components/GroupControl.tsx,v0,needs_translation
 Cancel a booking,Cancel a booking,إلغاء حجز,Cancelar una reserva,components/AgentGuide.tsx,,translated
@@ -1768,8 +1768,8 @@ Connected ({ms} ms) - {reply},Connected ({ms} ms) - {reply},متصل ({ms} ms): 
 Connected {when},Connected {when},متصل {when},Conectado {when},screens/settings/McpAccessPage.tsx,when,translated
 Connected AI clients,Connected AI clients,عملاء الذكاء الاصطناعي المتصلون,Clientes de IA conectados,screens/settings/McpAccessPage.tsx,,translated
 Connected apps,Connected apps,التطبيقات المتصلة,Aplicaciones conectadas,components/ConnectApp.tsx; screens/AppLauncher.tsx,,translated
-Connected. Paste these into HeyKoala:,Connected. Paste these into HeyKoala:,متصل. الصق هذه في HeyKoala:,Conectado. Pégalos en HeyKoala:,screens/Marketplace.tsx,,translated
-Connecting...,Connecting...,جارٍ الاتصال...,Conectando...,screens/Marketplace.tsx,,translated
+Connected. Paste these into HeyKoala:,Connected. Paste these into HeyKoala:,متصل. الصق هذه في HeyKoala:,Conectado. Pégalos en HeyKoala:,,,translated
+Connecting...,Connecting...,جارٍ الاتصال...,Conectando...,,,translated
 Connection,Connection,الاتصال,Conexión,screens/KitchenPrinters.tsx,,translated
 Connection lost - reconnecting…,Connection lost - reconnecting…,فُقد الاتصال - جارٍ إعادة الاتصال…,Conexión perdida - reconectando...,components/ConnectionBanner.tsx,,translated
 Connections,Connections,الاتصالات,Conexiones,screens/Setup.tsx,,translated
@@ -1779,6 +1779,7 @@ Contact & registration,Contact & registration,الاتصال والتسجيل,Co
 Contact email,Contact email,بريد جهة الاتصال,Correo de contacto,,,translated
 Contact name,Contact name,اسم جهة الاتصال,Nombre de contacto,components/GroupBookingDialog.tsx; screens/BanquetFunction.tsx,,translated
 Contact phone,Contact phone,هاتف جهة الاتصال,Teléfono de contacto,,,translated
+Contact us for a quote,Contact us for a quote,تواصل معنا للحصول على عرض سعر,Solicite una cotización,screens/Marketplace.tsx,,translated
 Continue,Continue,متابعة,Continuar,components/CheckInDialog.tsx; components/StepFlow.tsx; screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx; screens/PublicBooking.tsx; screens/Setup.tsx,,translated
 Continue to check-in,Continue to check-in,تابع إلى تسجيل الوصول,Continuar con el registro de entrada,components/BookingDialog.tsx,,translated
 Continue without deposit,Continue without deposit,المتابعة بدون عربون,Continuar sin depósito de garantía,components/CheckInDialog.tsx,,translated
@@ -1843,6 +1844,7 @@ Country *,Country *,الدولة *,País *,screens/Setup.tsx,,translated
 Country calling code,Country calling code,رمز الاتصال الدولي,Prefijo telefónico internacional,components/PhoneInput.tsx,,translated
 Country name,Country name,اسم الدولة,Nombre del país,screens/Setup.tsx,,translated
 Country name *,Country name *,اسم الدولة *,Nombre del país *,screens/Setup.tsx,,translated
+Country pack guide,Country pack guide,دليل حزم الدول,Guía de country packs,,,translated
 Country selects the tax and invoicing pack.,Country selects the tax and invoicing pack.,تحدد الدولة حزمة الضرائب والفوترة.,El país determina la configuración de impuestos y facturación.,,,translated
 Course,Course,الطبق,Tiempo del menú,screens/BanquetCatalogue.tsx,,translated
 Courses,Courses,الأطباق,Tiempos del menú,screens/BanquetCatalogue.tsx,,translated
@@ -2060,7 +2062,7 @@ Disabled,Disabled,معطّل,Deshabilitado,screens/CashierBoard.tsx; screens/Kit
 Disabled (no new bills),Disabled (no new bills),معطّل (لا فواتير جديدة),Desactivado (sin facturas nuevas),screens/Payables.tsx,,translated
 Disabled (unpublished),Disabled (unpublished),معطّل (غير منشور),Desactivado (sin publicar),,,translated
 Discard,Discard,تجاهل,Descartar,screens/BanquetFunction.tsx; screens/settings/ModulePage.tsx,,translated
-Disconnect,Disconnect,قطع الاتصال,Desconectar,components/ConnectApp.tsx; screens/Agents.tsx; screens/Marketplace.tsx; screens/settings/McpAccessPage.tsx,,translated
+Disconnect,Disconnect,قطع الاتصال,Desconectar,components/ConnectApp.tsx; screens/Agents.tsx; screens/settings/McpAccessPage.tsx,,translated
 Disconnect {name}? Its key stops working at once.,Disconnect {name}? Its key stops working at once.,فصل {name}؟ يتوقف مفتاحه عن العمل فورًا.,¿Desconectar {name}? Su clave deja de funcionar de inmediato.,components/ConnectApp.tsx,name,translated
 Disconnect Claude? It will have to sign in again.,Disconnect Claude? It will have to sign in again.,فصل Claude؟ سيحتاج إلى تسجيل الدخول مجددا.,¿Desconectar Claude? Tendrá que iniciar sesión nuevamente.,,,translated
 Disconnect your AI providers? They will have to sign in again.,Disconnect your AI providers? They will have to sign in again.,هل تريد فصل مزوّدي الذكاء الاصطناعي؟ سيتعيّن عليهم تسجيل الدخول مجدداً.,¿Desconectar sus proveedores de IA? Tendrán que iniciar sesión nuevamente.,screens/Agents.tsx,,translated
@@ -2094,7 +2096,7 @@ Document type,Document type,نوع الوثيقة,Tipo de documento,components/G
 Documents,Documents,المستندات,Documentos,components/GuestDocuments.tsx; screens/RegistrationCard.tsx,,translated
 Don't print here,Don't print here,لا تطبع هنا,No imprimir aquí,screens/Kitchen.tsx,,translated
 done,done,تم,hecho,components/StepFlow.tsx,,translated
-Done,Done,تم,Hecho,components/AgentGuide.tsx; components/BookingDialog.tsx; components/CheckInDialog.tsx; components/GroupBookingDialog.tsx; components/ResourceScreen.tsx; components/RoomStayPanels.tsx; screens/CityLedgerPayment.tsx; screens/EndOfDayWizard.tsx; screens/Guests.tsx; screens/HkApp.tsx; screens/Marketplace.tsx; screens/MenuImport.tsx; screens/PublicBooking.tsx; screens/PublicListing.tsx; screens/RoomsSetup.tsx,,translated
+Done,Done,تم,Hecho,components/AgentGuide.tsx; components/BookingDialog.tsx; components/CheckInDialog.tsx; components/GroupBookingDialog.tsx; components/ResourceScreen.tsx; components/RoomStayPanels.tsx; screens/CityLedgerPayment.tsx; screens/EndOfDayWizard.tsx; screens/Guests.tsx; screens/HkApp.tsx; screens/MenuImport.tsx; screens/PublicBooking.tsx; screens/PublicListing.tsx; screens/RoomsSetup.tsx,,translated
 Done ✓,Done ✓,تم ✓,Hecho ✓,screens/HkApp.tsx,,translated
 Done by ,Done by ,أنجزه ,Completado por ,components/StayInstructions.tsx,,translated
 Done by {who} at {when},Done by {who} at {when},أنجزها {who} في {when},"Completado por {who}, {when}",components/CheckInDialog.tsx,who when,translated
@@ -2799,6 +2801,7 @@ Held for groups,Held for groups,محجوزة للمجموعات,Retenidas para g
 Held late arrivals,Held late arrivals,وصول متأخر محجوز,Reservas mantenidas por llegada tardía,screens/AuditPack.tsx,,translated
 Held on the guest folio as a liability - not revenue.,Held on the guest folio as a liability - not revenue.,محتجز في فاتورة النزيل كالتزام - وليس إيرادًا.,"Se conserva en el folio de huésped como pasivo, no como ingreso.",components/SecurityDepositPanel.tsx,,translated
 Held out of sale (,Held out of sale (,محجوب عن البيع (,Fuera de venta (,screens/BanquetFunction.tsx,,translated
+Help wanted,Help wanted,نرحب بالمساهمة,Se busca ayuda,,,translated
 "Here is {name}'s booking. Tap Check in - it takes the ID and any payment, then the room is theirs.","Here is {name}'s booking. Tap Check in - it takes the ID and any payment, then the room is theirs.",,,components/AgentGuide.tsx,name,needs_translation
 "Here is {name}'s stay. Tap Check out - it shows the bill, takes the payment and frees the room.","Here is {name}'s stay. Tap Check out - it shows the bill, takes the payment and frees the room.",,,components/AgentGuide.tsx,name,needs_translation
 Here's what's happening today.,Here's what's happening today.,إليك ما يحدث اليوم.,Esto es lo que está sucediendo hoy.,screens/Today.tsx,,translated
@@ -3991,6 +3994,7 @@ On booking page,On booking page,في صفحة الحجز,En la página de reserv
 On file,On file,محفوظ,Guardado,components/GuestDocuments.tsx,,translated
 On hand,On hand,المتوفر,En existencia,screens/Inventory.tsx; screens/RecipeManager.tsx; screens/banquet/Economics.tsx,,translated
 On its way,On its way,في الطريق,En camino,screens/CashierBoard.tsx,,translated
+On request,On request,عند الطلب,Bajo pedido,,,translated
 On the books,On the books,محجوز,Reservado,screens/Dashboard.tsx,,translated
 "On the food and the people serving it, not the hall","On the food and the people serving it, not the hall",على الطعام وطاقم الخدمة، لا على القاعة,"Sobre los alimentos y el personal de servicio, sin incluir el salón",screens/BanquetFunction.tsx,,translated
 on the night,on the night,خلال المناسبة,durante el evento,screens/banquet/Economics.tsx,,translated
@@ -4075,6 +4079,7 @@ Open cashiers,Open cashiers,الصناديق المفتوحة,Cajas abiertas,scr
 Open Claude,Open Claude,فتح Claude,Abrir Claude,screens/Agents.tsx,,translated
 Open Claude and connect this hotel over MCP - scoped to your role,Open Claude and connect this hotel over MCP - scoped to your role,افتح Claude واربط هذا الفندق عبر MCP، بحدود دورك,"Abra Claude y conecte este hotel mediante MCP, con los permisos de su rol",,,translated
 Open Companies,Open Companies,فتح الشركات,Abrir Empresas,components/LinkedRecords.tsx,,translated
+Open country pack issues,Open country pack issues,طلبات حزم الدول المفتوحة,Issues abiertos de country packs,,,translated
 Open details,Open details,فتح التفاصيل,Abrir detalles,screens/SystemHealth.tsx,,translated
 Open End of Day,Open End of Day,فتح نهاية اليوم,Abrir cierre del día,screens/Billing.tsx,,translated
 Open Event Bookings,Open Event Bookings,فتح حجوزات المناسبات,Abrir Reservas de eventos,components/LinkedRecords.tsx,,translated
@@ -4104,7 +4109,7 @@ Open help,Open help,فتح المساعدة,Abrir ayuda,components/HelpPanel.tsx
 Open in Google Maps,Open in Google Maps,فتح في خرائط Google,Abrir en Google Maps,screens/PublicBooking.tsx; screens/PublicListing.tsx,,translated
 Open items,Open items,بنود مفتوحة,Conceptos por acordar,screens/BanquetFunction.tsx,,translated
 Open ledgers,Open ledgers,فتح الدفاتر,Abrir libros contables,,,translated
-Open Marketplace → HeyKoala WhatsApp,Open Marketplace → HeyKoala WhatsApp,فتح السوق ← HeyKoala WhatsApp,Abrir catálogo de integraciones → HeyKoala WhatsApp,screens/Setup.tsx,,translated
+Open Marketplace → Kamra Enterprise,Open Marketplace → Kamra Enterprise,فتح السوق ← Kamra Enterprise,Abrir catálogo de integraciones → Kamra Enterprise,screens/Setup.tsx,,translated
 Open menu,Open menu,,,AppShell.tsx,,needs_translation
 Open my till,Open my till,افتح درجي النقدي,Abrir mi caja,components/TillCard.tsx,,translated
 Open My Till,Open My Till,فتح صندوقي,Abrir mi caja,screens/Billing.tsx,,translated
@@ -4167,7 +4172,7 @@ optional,optional,اختياري,opcional,screens/RegistrationCard.tsx,,translat
 Optional,Optional,اختياري,Opcional,components/CheckInDialog.tsx,,translated
 Optional - what they said…,Optional - what they said…,اختياري: ماذا قالوا…,Opcional: qué comunicaron…,screens/BanquetFunction.tsx,,translated
 Optional code,Optional code,رمز اختياري,Código opcional,components/BookingDialog.tsx,,translated
-Optional: connect HeyKoala WhatsApp,Optional: connect HeyKoala WhatsApp,اختياري: ربط HeyKoala WhatsApp,Opcional: conectar HeyKoala WhatsApp,screens/Setup.tsx,,translated
+Optional: guest concierge on WhatsApp,Optional: guest concierge on WhatsApp,اختياري: كونسيرج للضيوف على WhatsApp,Opcional: conserje para huéspedes en WhatsApp,screens/Setup.tsx,,translated
 or,or,أو,o,components/FolioDiscount.tsx,,translated
 or a quick preset:,or a quick preset:,أو إعداد سريع:,o seleccione un color:,screens/BookingEngine.tsx,,translated
 "Or a screen, a feature (cash drop, night audit, BAR rates) or a setting.","Or a screen, a feature (cash drop, night audit, BAR rates) or a setting.",أو شاشة، أو ميزة (إيداع نقدي، تدقيق ليلي، أسعار BAR) أو إعداد.,"O una pantalla, una función (entrega de efectivo, auditoría nocturna, tarifas BAR) o una configuración.",components/CommandPalette.tsx,,translated
@@ -4883,7 +4888,8 @@ Reprint bill,Reprint bill,إعادة طباعة الفاتورة,Reimprimir cuen
 Reprint KOT,Reprint KOT,إعادة طباعة أمر المطبخ,Reimprimir comanda,screens/POS.tsx,,translated
 Reprinting KOT #{v0}.,Reprinting KOT #{v0}.,إعادة طباعة أمر المطبخ رقم {v0}.,Reimprimiendo la comanda n.º {v0}.,screens/POS.tsx,v0,translated
 Reprints,Reprints,إعادات الطباعة,Reimpresiones,screens/FolioHistory.tsx,,translated
-Request implementation,Request implementation,طلب التنفيذ,Solicitar implementación,screens/Marketplace.tsx,,translated
+Request a custom integration,Request a custom integration,طلب تكامل مخصص,Solicitar una integración a medida,screens/Marketplace.tsx,,translated
+Request implementation,Request implementation,طلب التنفيذ,Solicitar implementación,,,translated
 Request pickup,Request pickup,طلب استلام,Solicitar recogida,screens/laundry/GuestLaundryCard.tsx,,translated
 Request sent,Request sent,تم إرسال الطلب,Solicitud enviada,screens/PublicBooking.tsx; screens/PublicListing.tsx,,translated
 Request to book,Request to book,طلب حجز,Solicitar una reserva,screens/PublicBooking.tsx; screens/PublicListing.tsx,,translated
@@ -5228,7 +5234,7 @@ Seated,Seated,تم الإجلاس,En mesa,,,translated
 Seats,Seats,المقاعد,Asientos,,,translated
 Seats (maximum pax),Seats (maximum pax),المقاعد (الحد الأقصى للضيوف),Asientos (máximo de personas),,,translated
 seats {n},seats {n},مقاعد {n},Capacidad: {n} personas,screens/Banquet.tsx,n,translated
-Secret (shown once),Secret (shown once),السر (يُعرض مرة واحدة),Secreto (se muestra una vez),screens/Marketplace.tsx,,translated
+Secret (shown once),Secret (shown once),السر (يُعرض مرة واحدة),Secreto (se muestra una vez),,,translated
 Secured,Secured,مؤمَّن,Anticipo cubierto,components/DepositPanel.tsx,,translated
 Security,Security,الأمان,Seguridad,,,translated
 Security deposit,Security deposit,التأمين,Depósito de garantía,components/SecurityDepositPanel.tsx; screens/PublicBooking.tsx,,translated
@@ -6292,7 +6298,7 @@ Weather / travel disruption,Weather / travel disruption,الطقس / تعطل ا
 Weather or notes,Weather or notes,الطقس أو الملاحظات,Clima o notas,screens/EndOfDayWizard.tsx,,translated
 Webhook,Webhook,Webhook,Webhook,screens/settings/WebhooksPage.tsx,,translated
 Webhook secret,Webhook secret,سر Webhook,Secreto del webhook,,,translated
-Webhook URL,Webhook URL,رابط Webhook,URL de webhook,screens/Marketplace.tsx,,translated
+Webhook URL,Webhook URL,رابط Webhook,URL de webhook,,,translated
 Webhook verify token,Webhook verify token,رمز تحقق Webhook,Token de verificación del webhook,,,translated
 Webhooks,Webhooks,Webhooks,Webhooks,,,translated
 Website,Website,الموقع,Sitio web,screens/BookingEngine.tsx,,translated
