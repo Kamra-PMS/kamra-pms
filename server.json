@@ -8,7 +8,7 @@
     "url": "https://github.com/Kamra-PMS/kamra-pms",
     "source": "github"
   },
-  "version": "2.7.8",
+  "version": "2.7.9",
   "remotes": [
     {
       "type": "streamable-http",
