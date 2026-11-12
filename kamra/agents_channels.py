@@ -59,18 +59,13 @@ def voice_webhook(payload: str | dict | None = None) -> dict:
 	guest, reservation = _resolve_caller(body.get("guest_phone"), connection.property)
 	event = (body.get("event") or "").strip() or "call_event"
 
-	summary = body.get("summary") or f"Voice · {event}"
-	rationale = summary
-	if body.get("transcript"):
-		rationale = (rationale + "\n\n" + (body["transcript"] or ""))[:2000]
-
 	log_name = savings.log_action(
 		action_type=f"voice.{event}",
 		reference_doctype="Reservation" if reservation else ("Guest" if guest else None),
 		reference_name=reservation or guest,
 		property=connection.property,
 		minutes_saved=_estimate_minutes(event, body),
-		rationale=rationale,
+		rationale=voice_log_rationale(body, event),
 		agent_name=(connection.handles_agent or f"Voice Concierge ({connection.provider})"),
 		autonomy="Full",
 		channel="Voice",
@@ -110,8 +105,6 @@ def messaging_webhook(payload: str | dict | None = None) -> dict:
 		return {"ok": False, "reason": "connection_not_found"}
 
 	guest, reservation = _resolve_caller(body.get("guest_phone"), connection.property)
-	text = (body.get("text") or "").strip()
-	rationale = f"WhatsApp inbound: {text[:1500]}" if text else "WhatsApp inbound"
 
 	log_name = savings.log_action(
 		action_type="whatsapp.inbound",
@@ -119,7 +112,7 @@ def messaging_webhook(payload: str | dict | None = None) -> dict:
 		reference_name=reservation or guest,
 		property=connection.property,
 		minutes_saved=2,  # every triage-and-reply is ~2 clerical minutes
-		rationale=rationale,
+		rationale=messaging_log_rationale(body),
 		agent_name=(connection.handles_agent or f"WhatsApp Concierge ({connection.provider})"),
 		autonomy="Full",
 		channel="WhatsApp",
@@ -274,6 +267,38 @@ def send_outbound(
 		minutes_saved=1,
 	)
 	return {"sent": ok, "provider": c["provider"]}
+
+
+# ---------------------------------------------------------------------------
+# Log text (never raw guest content — #566)
+# ---------------------------------------------------------------------------
+
+
+def voice_log_rationale(body: dict, event: str) -> str:
+	"""Short provider summary + call_id. Transcript stays with the provider."""
+	summary = (body.get("summary") or "").strip() or f"Voice · {event}"
+	# keep the summary short; never append transcript even if the provider sent one
+	parts = [summary[:280]]
+	call_id = (body.get("call_id") or "").strip()
+	if call_id:
+		parts.append(f"call_id={call_id}")
+	if (body.get("transcript") or "").strip():
+		parts.append("transcript held by provider")
+	return " · ".join(parts)
+
+
+def messaging_log_rationale(body: dict) -> str:
+	"""Inbound WhatsApp: presence + message_id, never the guest's words."""
+	parts = ["WhatsApp inbound"]
+	if (body.get("text") or "").strip():
+		parts.append("text")
+	media = body.get("media_urls") or []
+	if media:
+		parts.append(f"{len(media)} media")
+	message_id = (body.get("message_id") or "").strip()
+	if message_id:
+		parts.append(f"message_id={message_id}")
+	return " · ".join(parts)
 
 
 # ---------------------------------------------------------------------------

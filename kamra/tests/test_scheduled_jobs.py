@@ -252,7 +252,7 @@ class RetentionTestCase(AuditTestCase):
 		with patch.object(frappe, "get_all", return_value=[]):
 			self.assertEqual(privacy.apply_retention(), {"erased": 0})
 			self.assertEqual(privacy.apply_message_retention(),
-			                 {"messages": 0, "chats": 0})
+			                 {"messages": 0, "chats": 0, "channel_logs": 0})
 
 	# messages ---------------------------------------------------------------
 
