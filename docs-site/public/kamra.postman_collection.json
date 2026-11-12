@@ -13770,43 +13770,6 @@
      }
     },
     {
-     "name": "city_ledger_history",
-     "request": {
-      "method": "POST",
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       },
-       {
-        "key": "Authorization",
-        "value": "token {{api_key}}:{{api_secret}}"
-       }
-      ],
-      "url": {
-       "raw": "{{base_url}}/api/method/kamra.ledger.city_ledger_history",
-       "host": [
-        "{{base_url}}"
-       ],
-       "path": [
-        "api",
-        "method",
-        "kamra.ledger.city_ledger_history"
-       ]
-      },
-      "description": "Everything that ever moved on one company's account, oldest first, with\nthe running balance: each bill (and the guest it was for), credit note,\nadjustment and payment (with the bills it cleared).",
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"account\": \"<account>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      }
-     }
-    },
-    {
      "name": "city_ledger_account",
      "request": {
       "method": "POST",
