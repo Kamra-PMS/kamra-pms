@@ -17,6 +17,7 @@ from kamra import api
 from kamra.door_lock import DoorLockAdapter, KeyResult
 from kamra.tests.audit_fixtures import (
 	PROP_A,
+	PROP_B,
 	TODAY,
 	AuditTestCase,
 	d,
@@ -46,7 +47,7 @@ class _Lock(DoorLockAdapter):
 
 
 class ReverseCheckInTestCase(AuditTestCase):
-	properties = (PROP_A,)
+	properties = (PROP_A, PROP_B)
 
 	def setUp(self):
 		super().setUp()
@@ -124,6 +125,29 @@ class ReverseCheckInTestCase(AuditTestCase):
 			out = api.reverse_check_in(self.res.name, "Wrong guest")
 		self.assertEqual(lock.revoked, [(PROP_A, self.res.name, self.room)])
 		self.assertTrue(out["key_result"]["ok"])
+
+	def test_a_whole_villa_stay_cancels_the_keys_of_every_room(self):
+		# a villa type with no rooms of its own takes the property's rooms
+		make_property(PROP_B, business_date=TODAY)
+		villa = make_room_type(PROP_B, "VIL", base_price=5000, room_category="Villa")
+		bed = make_room_type(PROP_B, "BED", base_price=1000)
+		rooms = [make_room(PROP_B, bed, n) for n in ("201", "202")]
+		res = make_reservation(PROP_B, villa, TODAY, d(2), status="Checked In")
+		frappe.db.set_value("Reservation", res.name, "checked_in_at", f"{TODAY} 10:00:00")
+		lock = _Lock()
+		with patch("kamra.door_lock.get_adapter", return_value=lock):
+			out = api.reverse_check_in(res.name, "Wrong guest")
+		self.assertEqual(sorted(lock.revoked), [(PROP_B, res.name, r) for r in sorted(rooms)])
+		self.assertTrue(out["key_result"]["ok"])
+		for r in rooms:
+			self.assertEqual(frappe.db.get_value("Room", r, "occupancy_status"), "Vacant")
+
+	def test_a_lock_lookup_failure_is_shown_not_raised(self):
+		with patch("kamra.door_lock.get_adapter", side_effect=RuntimeError("UT no config")):
+			out = api.reverse_check_in(self.res.name, "Wrong guest")
+		self.assertEqual(out["status"], "Confirmed")
+		self.assertFalse(out["key_result"]["ok"])
+		self.assertIn("Cancel the keys at the encoder", out["key_result"]["message"])
 
 	def test_manual_keys_are_left_to_the_desk(self):
 		out = api.reverse_check_in(self.res.name, "Wrong guest")
