@@ -146,6 +146,11 @@ export const fmtAmount = (n: unknown) => {
 export const fmtMoney = (n: unknown) => cache.currency_symbol + fmtAmount(n)
 export const taxRates = () => cache.tax_rates
 export const taxLabel = () => cache.tax_label
+/** False where the hotel charges no tax: its only rate is 0% (a country
+ *  without hotel tax). Forms then hide the tax picker; documents hide tax
+ *  whenever none of their lines is taxed. */
+export const chargesTax = () =>
+  !(cache.tax_rates.length === 1 && Number(cache.tax_rates[0]) === 0)
 /** Heading for the till's instant-mode bucket, "" where the country has none. */
 export const instantLabel = () => (cache.instant_payment_modes ?? []).join(" / ")
 

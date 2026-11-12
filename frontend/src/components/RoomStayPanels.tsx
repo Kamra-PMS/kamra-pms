@@ -429,6 +429,8 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
               className={cn(inputCls, "mt-1")}
             />
           </label>
+          {/* no picker where the hotel charges no tax (its only rate is 0%) */}
+          {!(rates.length === 1 && Number(rates[0]) === 0) && (
           <label className="block text-sm text-zinc-600">
             {t("{tax} rate", { tax: loc.tax_label || t("Tax") })}
             <select
@@ -443,6 +445,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
               ))}
             </select>
           </label>
+          )}
         </div>
         {sellsAlcohol() && (
         <label className="flex min-h-11 items-center gap-2 text-sm text-zinc-600">

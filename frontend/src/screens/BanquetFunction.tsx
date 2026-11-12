@@ -43,7 +43,7 @@ import { useAuth } from "../lib/auth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Sheet } from "../components/ui/sheet"
-import { sellsAlcohol, taxLabel } from "../lib/money"
+import { chargesTax, sellsAlcohol, taxLabel } from "../lib/money"
 import {
   daysAway,
   Empty,
@@ -1116,9 +1116,11 @@ function ItemsTab({
                     <th className="w-24 py-2 pr-2 text-right font-medium">{translate("Rack")}</th>
                     <th className="w-28 py-2 pr-2 text-right font-medium">{translate("Agreed")}</th>
                     <th className="w-16 py-2 pr-2 text-center font-medium">{translate("Charge")}</th>
+                    {chargesTax() && (
                     <th className="w-20 py-2 pr-2 text-right font-medium">
                       {taxLabel()} %
                     </th>
+                    )}
                     <th className="w-28 py-2 pr-2 text-right font-medium">{translate("Amount")}</th>
                     <th className="w-8 py-2" />
                   </tr>
@@ -1216,6 +1218,7 @@ function ItemsTab({
                           }
                         />
                       </td>
+                      {chargesTax() && (
                       <td className="py-1.5 pr-2">
                         {l.chargeable ? (
                           <input
@@ -1242,6 +1245,7 @@ function ItemsTab({
                           <span className="block text-right text-zinc-400">-</span>
                         )}
                       </td>
+                      )}
                       <td className="py-1.5 pr-2 text-right tabular-nums">
                         {l.chargeable ? (
                           inr(l.net_amount || l.amount)
@@ -1306,8 +1310,8 @@ function ItemsTab({
                   value={inr(fn.service_charge)}
                 />
               )}
-              <Row label={translate("Taxable")} value={inr(fn.taxable_amount)} />
-              <Row label={translate(taxLabel())} value={inr(fn.tax_amount)} />
+              {Number(fn.tax_amount) !== 0 && <Row label={translate("Taxable")} value={inr(fn.taxable_amount)} />}
+              {Number(fn.tax_amount) !== 0 && <Row label={translate(taxLabel())} value={inr(fn.tax_amount)} />}
               <Row
                 label={translate("Grand total")}
                 value={inr(fn.grand_total)}

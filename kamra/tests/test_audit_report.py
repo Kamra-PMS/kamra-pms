@@ -213,4 +213,7 @@ class AuditReportTestCase(AuditTestCase):
 		line = next(c for c in frappe.get_doc("Folio", guest_folio(res.name)).charges
 		            if f"({order})" in (c.description or ""))
 		self.assertEqual(float(line.gst_rate), 0)
-		self.assertEqual(pos.bill_data(order)["gst_rate"], 0)
+		bill = pos.bill_data(order)
+		self.assertEqual(bill["gst_rate"], 0)
+		# and the printed bill carries no tax lines at all
+		self.assertEqual(bill["tax_parts"], [])
