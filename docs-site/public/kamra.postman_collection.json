@@ -13770,6 +13770,43 @@
      }
     },
     {
+     "name": "city_ledger_history",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.city_ledger_history",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.city_ledger_history"
+       ]
+      },
+      "description": "Everything that ever moved on one company's account, oldest first, with\nthe running balance: each bill (and the guest it was for), credit note,\nadjustment and payment (with the bills it cleared).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "city_ledger_account",
      "request": {
       "method": "POST",
@@ -17570,6 +17607,178 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"ticket_id\": \"<ticket_id>\",\n  \"amount\": 1000,\n  \"description\": \"<description>\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"charge_type\": \"Food & Beverage\",\n  \"is_alcohol\": 0,\n  \"tax_rate\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "Service accounts (scoped keys for connected apps)",
+   "item": [
+    {
+     "name": "list_scopes",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.service_accounts.list_scopes",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.service_accounts.list_scopes"
+       ]
+      },
+      "description": ""
+     }
+    },
+    {
+     "name": "list_service_accounts",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.service_accounts.list_service_accounts",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.service_accounts.list_service_accounts"
+       ]
+      },
+      "description": ""
+     }
+    },
+    {
+     "name": "create_service_account",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.service_accounts.create_service_account",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.service_accounts.create_service_account"
+       ]
+      },
+      "description": "A new service account. The secret is shown once, here.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account_name\": \"<account_name>\",\n  \"scopes\": \"<scopes>\",\n  \"properties\": \"<properties>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "rotate_service_account_key",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.service_accounts.rotate_service_account_key",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.service_accounts.rotate_service_account_key"
+       ]
+      },
+      "description": "A new secret; the old one stops working now. Shown once.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "revoke_service_account",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.service_accounts.revoke_service_account",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.service_accounts.revoke_service_account"
+       ]
+      },
+      "description": "Stop the account at once: its user is disabled and its secret\nreplaced, so the next call with the old key fails to sign in.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\"\n}",
        "options": {
         "raw": {
          "language": "json"

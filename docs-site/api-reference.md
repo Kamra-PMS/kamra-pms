@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **488 endpoints**, generated from the source
+the UI and the AI use. **494 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -5481,6 +5481,18 @@ keys (current, b30, b60, b90, b90p) are kept for older callers.
 | --- | --- | --- |
 | `property` | yes |  |
 
+### `kamra.ledger.city_ledger_history`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+Everything that ever moved on one company's account, oldest first, with
+the running balance: each bill (and the guest it was for), credit note,
+adjustment and payment (with the bills it cleared).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+
 ### `kamra.ledger.city_ledger_account`
 
 **GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
@@ -6886,6 +6898,52 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 | `is_alcohol` | no | `0` |
 | `tax_rate` | no | `0` |
 | `outlet_name` | no | `None` |
+
+
+## Service accounts (scoped keys for connected apps)
+
+> IT only. A key reaches only its scopes and properties; see Connected apps.
+
+### `kamra.service_accounts.list_scopes`
+
+**GET/POST** · roles: `System Manager`, `Administrator`
+
+### `kamra.service_accounts.list_service_accounts`
+
+**GET/POST** · roles: `System Manager`, `Administrator`
+
+### `kamra.service_accounts.create_service_account`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+A new service account. The secret is shown once, here.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account_name` | yes |  |
+| `scopes` | yes |  |
+| `properties` | yes |  |
+
+### `kamra.service_accounts.rotate_service_account_key`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+A new secret; the old one stops working now. Shown once.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+
+### `kamra.service_accounts.revoke_service_account`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+Stop the account at once: its user is disabled and its secret
+replaced, so the next call with the old key fails to sign in.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
 
 
 ## Public (no auth - booking page, check-in)

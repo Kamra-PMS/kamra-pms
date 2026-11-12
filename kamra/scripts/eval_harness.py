@@ -10569,6 +10569,34 @@ def t_safe_deposit_race():
 		frappe.db.rollback(save_point=sp)
 
 
+@check("service account: scoped key reaches only its scope, revoke stops it")
+def t_service_account_scope():
+	from kamra import service_accounts as sa
+	from kamra.mcp_access import property_policy, tool_refusal
+	from kamra.mcp_tools import BY_NAME
+
+	acct = sa.create_service_account("EVAL cashier app", ["cashier.read"], [P])
+	frappe.local.cache.pop("kamra_service_accounts", None)
+	frappe.set_user(acct["user"])  # nosemgrep: frappe-setuser -- acting as the service account under test
+	try:
+		me = sa.account_for()
+		assert sa.refusal(me, "/api/method/kamra.api.get_folio") is None
+		for path in ("/api/method/kamra.api.add_folio_payment",
+		             "/api/method/kamra.reports.manager_flash",
+		             "/api/resource/Folio", "/app"):
+			assert sa.refusal(me, path), f"{path} reachable outside the scope"
+		policy = property_policy(P)
+		assert tool_refusal(BY_NAME["get_folio"], "read", policy) is None
+		assert tool_refusal(BY_NAME["record_payment"], "manage", policy), \
+			"MCP write tool reachable with a read scope"
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+	sa.revoke_service_account(acct["name"])
+	frappe.local.cache.pop("kamra_service_accounts", None)
+	assert sa.refusal(sa.account_for(acct["user"]), "/api/method/kamra.api.get_folio"), \
+		"revoked key still reaches its scope"
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10609,7 +10637,7 @@ def execute():
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
-		           t_concurrency_guards, t_safe_deposit_race):
+		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
