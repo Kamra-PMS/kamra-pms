@@ -112,6 +112,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("REST API basics", "Conceptos básicos de la API REST", "أساسيات REST API"), "api"],
       [L("REST API reference", "Referencia de la API REST", "مرجع REST API"), "api-reference"],
       [L("Connected apps (service accounts)", "Apps conectadas (cuentas de servicio)", "التطبيقات المتصلة (حسابات الخدمة)"), "connected-apps"],
+      [L("Guest channel providers", "Proveedores de canales para huéspedes", "مزودو قنوات الضيوف"), "channel-providers"],
     ],
   },
   {

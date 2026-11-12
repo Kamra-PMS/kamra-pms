@@ -21,6 +21,7 @@
   "sb_auth",
   "webhook_secret",
   "outbound_send_url",
+  "service_account",
   "column_break_auth",
   "credentials",
   "app_secret",
@@ -121,6 +122,13 @@
    "label": "Outbound URL"
   },
   {
+   "description": "The guest concierge service account this provider calls the concierge endpoints with (kamra.service_accounts, scope concierge.guest).",
+   "fieldname": "service_account",
+   "fieldtype": "Link",
+   "label": "Concierge service account",
+   "options": "Kamra Service Account"
+  },
+  {
    "fieldname": "column_break_auth",
    "fieldtype": "Column Break"
   },
@@ -194,7 +202,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 14:00:00.000000",
+ "modified": "2026-11-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Channel Provider Connection",

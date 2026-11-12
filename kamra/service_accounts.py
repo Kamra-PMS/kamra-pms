@@ -34,6 +34,9 @@ ROLE = "Kamra Service Account"
 # every service account user lives on this domain, so telling one apart
 # costs no query on other users' requests
 DOMAIN = "@service.kamra.local"
+# guest-facing channels: the four signed endpoints in agents_channels, no
+# staff endpoint and no MCP tool. Its user has no staff role at all.
+CONCIERGE = "concierge.guest"
 LAST_USED_EVERY_MINUTES = 5
 
 # Who a scoped endpoint is satisfied by, in order of preference. Never an
@@ -69,6 +72,13 @@ SCOPES: dict[str, dict] = {
 		"tools": ("allowance_requests", "booking_requests", "accept_booking_request",
 		          "decline_booking_request"),
 		"rest": ("api.decide_allowance", "cashier.approve_variance"),
+	},
+	CONCIERGE: {
+		"label": "Guest concierge: hotel facts, the caller's own stay, requests "
+		         "and bookings over a signed channel. No staff tools.",
+		"tools": (),
+		"rest": ("agents_channels.concierge_context", "agents_channels.stay_context",
+		         "agents_channels.guest_request", "agents_channels.channel_book"),
 	},
 }
 
@@ -125,7 +135,7 @@ def scope_roles(scopes) -> set[str]:
 	for method in sorted(scope_methods(scopes)):
 		allowed = getattr(_endpoint(method), "_kamra_roles", None)
 		if not allowed:
-			continue  # no role gate on this endpoint
+			continue  # no role gate (the concierge endpoints check the scope)
 		pick = next((r for r in _ROLE_PREFERENCE if r in allowed), None)
 		if not pick:
 			frappe.throw(_("{0} needs an admin and can't be in a scope.").format(method))
@@ -288,6 +298,8 @@ def _check(scopes, properties) -> tuple[list[str], list[str]]:
 	unknown = [s for s in scopes if s not in SCOPES]
 	if unknown:
 		frappe.throw(_("Unknown scope: {0}").format(", ".join(unknown)))
+	if CONCIERGE in scopes and len(scopes) > 1:
+		frappe.throw(_("The guest concierge scope can't be combined with staff scopes."))
 	if not properties:
 		frappe.throw(_("Pick at least one property."))
 	missing = [p for p in properties if not frappe.db.exists("Property", p)]

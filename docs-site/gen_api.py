@@ -88,6 +88,8 @@ MODULES = [
      "Hotel Admin / System Manager. Events are signed with HMAC-SHA256 - see the Integrations page."),
     ("pos_interface", "External POS (room charges from a third-party POS)",
      "For a POS Integrator service user. ticket_id makes every posting idempotent."),
+    ("agents_channels", "Guest channels (voice and messaging webhooks, concierge API)",
+     "Signed with the Channel Provider Connection's webhook secret; the concierge endpoints also need a concierge.guest service account key. See Guest channel providers."),
     ("service_accounts", "Service accounts (scoped keys for connected apps)",
      "IT only. A key reaches only its scopes and properties; see Connected apps."),
     ("public_api", "Public (no auth - booking page, check-in)",

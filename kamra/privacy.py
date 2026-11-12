@@ -14,8 +14,10 @@ right thing the default and the lawful thing one click:
   apply_message_retention
                      storage limitation for conversations: WhatsApp message
                      text and AI assistant chats older than
-                     Property.message_retention_days are cleared nightly;
-                     who, when and delivery status stay for audit.
+                     Property.message_retention_days are cleared nightly,
+                     and so is the text of channel rows in the Agent Action
+                     Log (WhatsApp, voice, SMS); who, when and delivery
+                     status stay for audit.
 
 What is deliberately kept after erasure: amounts, dates, rooms and invoice
 numbers (GST law needs them), an ID masked to its last 4 digits in the stay
@@ -199,9 +201,9 @@ def apply_message_retention() -> dict:
 	        for p in frappe.get_all("Property", fields=["name", "message_retention_days"])}
 	set_days = [d for d in days.values() if d > 0]
 	if not set_days:
-		return {"messages": 0, "chats": 0}
+		return {"messages": 0, "chats": 0, "channel_logs": 0}
 	now = now_datetime()
-	messages = chats = 0
+	messages = chats = channel_logs = 0
 	for prop, d in days.items():
 		if d <= 0:
 			continue
@@ -212,10 +214,31 @@ def apply_message_retention() -> dict:
 			frappe.db.set_value("WhatsApp Message", name, "content", "", update_modified=False)
 		messages += len(names)
 		chats += _clear_chats({"property": prop, "modified": ("<", cutoff)})
+		channel_logs += clear_channel_logs(prop, cutoff)
 	chats += _clear_chats({"property": ("is", "not set"),
 	                       "modified": ("<", add_days(now, -min(set_days)))})
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- scheduler: persist the nightly clean-up
-	return {"messages": messages, "chats": chats}
+	return {"messages": messages, "chats": chats, "channel_logs": channel_logs}
+
+
+# Agent Action Log rows written by guest channels (agents_channels): their
+# text goes with the message retention period, the row stays
+CHANNEL_LOG_PREFIXES = ("whatsapp.", "voice.", "sms.")
+CLEARED_CHANNEL_LOG = "[cleared by message retention]"
+
+
+def clear_channel_logs(property: str, cutoff) -> int:
+	cleared = 0
+	for prefix in CHANNEL_LOG_PREFIXES:
+		names = frappe.get_all("Agent Action Log", pluck="name", filters={
+			"property": property, "creation": ("<", cutoff),
+			"action_type": ("like", prefix + "%"),
+			"rationale": ("not in", ("", CLEARED_CHANNEL_LOG))})
+		for name in names:
+			frappe.db.set_value("Agent Action Log", name, "rationale", CLEARED_CHANNEL_LOG,
+			                    update_modified=False)
+		cleared += len(names)
+	return cleared
 
 
 def _clear_chats(filters: dict) -> int:

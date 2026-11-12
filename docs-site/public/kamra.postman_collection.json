@@ -17618,6 +17618,208 @@
    ]
   },
   {
+   "name": "Guest channels (voice and messaging webhooks, concierge API)",
+   "item": [
+    {
+     "name": "voice_webhook",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_channels.voice_webhook",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_channels.voice_webhook"
+       ]
+      },
+      "description": "HeyKoala / Twilio / etc. call this on call lifecycle events.\n\nExpected payload shape (provider-agnostic):\n    {\n        \"event\": \"call_started\" | \"call_ended\" | \"tool_call\",\n        \"phone_number\": \"+919876543210\",   # the property line\n        \"guest_phone\": \"+919812345678\",   # the caller\n        \"call_id\": \"prov-abc123\",\n        \"transcript\": \"...\",              # on call_ended\n        \"summary\": \"...\"                  # on call_ended\n    }"
+     }
+    },
+    {
+     "name": "messaging_webhook",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_channels.messaging_webhook",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_channels.messaging_webhook"
+       ]
+      },
+      "description": "HeyKoala / Meta Business / Twilio-WA call this per inbound message.\n\nExpected payload:\n    {\n        \"phone_number\": \"+919876543210\",  # the property WhatsApp line\n        \"guest_phone\": \"+919812345678\",   # the sender\n        \"message_id\": \"prov-xyz789\",\n        \"text\": \"Can I check in at 11am?\",\n        \"media_urls\": [ ... ]             # optional\n    }\n\nReturns routing hints. The provider answers through the guest\nconcierge endpoints (concierge_context, stay_context, guest_request,\nchannel_book). The log keeps the provider's optional \"summary\" and the\nmessage_id, not the text."
+     }
+    },
+    {
+     "name": "channel_connections",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_channels.channel_connections",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_channels.channel_connections"
+       ]
+      },
+      "description": "",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "concierge_context",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_channels.concierge_context",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_channels.concierge_context"
+       ]
+      },
+      "description": "Hotel facts the hotel entered, for a guest conversation: FAQs, house\nrules, policies, amenities, published experiences, outlets, directions,\ncheck-in and check-out times. Nothing about any guest."
+     }
+    },
+    {
+     "name": "stay_context",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_channels.stay_context",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_channels.stay_context"
+       ]
+      },
+      "description": "Minimal facts for the caller's own current or next stay here: dates,\nroom type, party, stays count, last stay, VIP and category. No folio,\nno other guests. {\"found\": false} when this phone has no current or\nupcoming stay at the property."
+     }
+    },
+    {
+     "name": "guest_request",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_channels.guest_request",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_channels.guest_request"
+       ]
+      },
+      "description": "Raise a guest's request on their own stay: a stay instruction (early\ncheck-in, late check-out, extra bed, airport transfer, special\noccasion) or a service ticket (housekeeping, room service, maintenance,\nconcierge, other). Needs stay_token or otp; without either, a code is\nsent to the phone on the booking and otp_required comes back."
+     }
+    },
+    {
+     "name": "channel_book",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.agents_channels.channel_book",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.agents_channels.channel_book"
+       ]
+      },
+      "description": "Book for a guest in the conversation. The same booking as the public\nbooking page (public_api), priced by the pricing engine, with the AI\nAgent source and this channel on the booking. idempotency_key is\nrequired, so a retry returns the same booking. A payment link comes\nback when an advance is due and the property has a gateway. Limited per\nconnection (site config kamra_channel_book_limit, per hour), not per\nIP: the booking page's own limit is unchanged."
+     }
+    }
+   ]
+  },
+  {
    "name": "Service accounts (scoped keys for connected apps)",
    "item": [
     {
@@ -18149,7 +18351,7 @@
         "kamra.public_api.book"
        ]
       },
-      "description": "Create a Website booking. Guest identity is the phone number; staff\nverify at check-in. The advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves. A party above what the room sleeps,\nwithin the extra guests it allows, is also Requested: the host confirms\nthe sleeping arrangement and agrees the price for them.",
+      "description": "Create a Website booking from the public booking page (per-IP rate\nlimit above). See _book.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0,\n  \"marketing_consent\": 0\n}",

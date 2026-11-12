@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **494 endpoints**, generated from the source
+the UI and the AI use. **501 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -6900,6 +6900,102 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 | `outlet_name` | no | `None` |
 
 
+## Guest channels (voice and messaging webhooks, concierge API)
+
+> Signed with the Channel Provider Connection's webhook secret; the concierge endpoints also need a concierge.guest service account key. See Guest channel providers.
+
+### `kamra.agents_channels.voice_webhook` <Badge type='tip' text='public' />
+
+**POST**
+
+HeyKoala / Twilio / etc. call this on call lifecycle events.
+
+Expected payload shape (provider-agnostic):
+    {
+        "event": "call_started" | "call_ended" | "tool_call",
+        "phone_number": "+919876543210",   # the property line
+        "guest_phone": "+919812345678",   # the caller
+        "call_id": "prov-abc123",
+        "transcript": "...",              # on call_ended
+        "summary": "..."                  # on call_ended
+    }
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `payload` | no | `None` |
+
+### `kamra.agents_channels.messaging_webhook` <Badge type='tip' text='public' />
+
+**POST**
+
+HeyKoala / Meta Business / Twilio-WA call this per inbound message.
+
+Expected payload:
+    {
+        "phone_number": "+919876543210",  # the property WhatsApp line
+        "guest_phone": "+919812345678",   # the sender
+        "message_id": "prov-xyz789",
+        "text": "Can I check in at 11am?",
+        "media_urls": [ ... ]             # optional
+    }
+
+Returns routing hints. The provider answers through the guest
+concierge endpoints (concierge_context, stay_context, guest_request,
+channel_book). The log keeps the provider's optional "summary" and the
+message_id, not the text.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `payload` | no | `None` |
+
+### `kamra.agents_channels.channel_connections`
+
+**GET/POST** · roles: `Hotel Admin`, `System Manager`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.agents_channels.concierge_context`
+
+**POST**
+
+Hotel facts the hotel entered, for a guest conversation: FAQs, house
+rules, policies, amenities, published experiences, outlets, directions,
+check-in and check-out times. Nothing about any guest.
+
+### `kamra.agents_channels.stay_context`
+
+**POST**
+
+Minimal facts for the caller's own current or next stay here: dates,
+room type, party, stays count, last stay, VIP and category. No folio,
+no other guests. {"found": false} when this phone has no current or
+upcoming stay at the property.
+
+### `kamra.agents_channels.guest_request`
+
+**POST**
+
+Raise a guest's request on their own stay: a stay instruction (early
+check-in, late check-out, extra bed, airport transfer, special
+occasion) or a service ticket (housekeeping, room service, maintenance,
+concierge, other). Needs stay_token or otp; without either, a code is
+sent to the phone on the booking and otp_required comes back.
+
+### `kamra.agents_channels.channel_book`
+
+**POST**
+
+Book for a guest in the conversation. The same booking as the public
+booking page (public_api), priced by the pricing engine, with the AI
+Agent source and this channel on the booking. idempotency_key is
+required, so a retry returns the same booking. A payment link comes
+back when an advance is due and the property has a gateway. Limited per
+connection (site config kamra_channel_book_limit, per hour), not per
+IP: the booking page's own limit is unchanged.
+
+
 ## Service accounts (scoped keys for connected apps)
 
 > IT only. A key reaches only its scopes and properties; see Connected apps.
@@ -7132,15 +7228,8 @@ or the folio; staff count and price the bag at the door (status
 
 **POST**
 
-Create a Website booking. Guest identity is the phone number; staff
-verify at check-in. The advance owed is computed from the property's
-current payment policy and snapshotted onto the booking.
-
-Instant mode (default): Confirmed when nothing is due now, else
-Pending Payment with a hold window. Request to Book: Requested (no
-inventory) until the host approves. A party above what the room sleeps,
-within the extra guests it allows, is also Requested: the host confirms
-the sleeping arrangement and agrees the price for them.
+Create a Website booking from the public booking page (per-IP rate
+limit above). See _book.
 
 | Param | Required | Default |
 | --- | --- | --- |

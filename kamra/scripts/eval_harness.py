@@ -10597,6 +10597,69 @@ def t_service_account_scope():
 		"revoked key still reaches its scope"
 
 
+@check("channel booking: priced by the engine, replays safely, channel as source, own limit")
+def t_channel_book():
+	import hashlib
+	import hmac
+	from unittest.mock import patch
+
+	import time
+
+	from kamra import agents_channels as ch
+	from kamra import service_accounts as sa
+	from kamra.pricing import quote
+
+	acct = sa.create_service_account("EVAL concierge", [sa.CONCIERGE], [P])
+	# one active connection per channel: set aside the one t48 made
+	for name in frappe.get_all("Channel Provider Connection", pluck="name",
+	                           filters={"property": P, "channel": "WhatsApp", "active": 1}):
+		frappe.db.set_value("Channel Provider Connection", name, "active", 0)
+	conn = frappe.get_doc({
+		"doctype": "Channel Provider Connection", "property": P, "channel": "WhatsApp",
+		"provider": "Custom", "active": 1, "phone_number": "+910000000565",
+		"webhook_secret": "eval-concierge", "service_account": acct["name"],
+	}).insert(ignore_permissions=True)
+	frappe.cache.delete(frappe.cache.make_key(f"kamra_channel_book:{conn.name}"))
+
+	def signed(body):
+		body = {"phone_number": "+910000000565", "ts": int(time.time()), **body}
+		sig = hmac.new(b"eval-concierge", json.dumps(body, sort_keys=True, default=str).encode(),
+		               hashlib.sha256).hexdigest()
+		with patch("frappe.get_request_header", return_value=sig):
+			return ch.channel_book(**body)
+
+	booking = {"room_type": RT, "check_in_date": "2031-04-10", "check_out_date": "2031-04-12",
+	           "guest_name": "Chat Guest", "phone": "+919812300565", "adults": 2,
+	           "idempotency_key": "eval-channel-book-1",
+	           # a price from the caller is ignored: there is no such argument
+	           "amount_after_tax": 1}
+	frappe.local.cache.pop("kamra_service_accounts", None)
+	frappe.set_user(acct["user"])  # nosemgrep: frappe-setuser -- acting as the concierge service account under test
+	real_limit = frappe.conf.get("kamra_channel_book_limit")
+	frappe.conf["kamra_channel_book_limit"] = 2
+	try:
+		first = signed(booking)
+		again = signed(booking)
+		assert again["reservation"] == first["reservation"], "replay made a second booking"
+		assert again["idempotent_replay"], again
+		try:
+			signed({**booking, "idempotency_key": "eval-channel-book-2"})
+			raise AssertionError("channel booking limit not enforced")
+		except frappe.RateLimitExceededError:
+			pass
+	finally:
+		frappe.conf["kamra_channel_book_limit"] = real_limit
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+		frappe.cache.delete(frappe.cache.make_key(f"kamra_channel_book:{conn.name}"))
+	res = frappe.db.get_value("Reservation", first["reservation"],
+	                          ["source", "channel", "amount_after_tax", "property"], as_dict=True)
+	priced = quote(P, RT, "2031-04-10", "2031-04-12", 2, 0, None)
+	assert res.property == P
+	assert (res.source, res.channel) == ("AI Agent", "WhatsApp"), res
+	assert abs(float(res.amount_after_tax) - float(priced["amount_after_tax"])) < 0.01, \
+		(res.amount_after_tax, priced["amount_after_tax"])
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10637,7 +10700,8 @@ def execute():
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
-		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope):
+		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
+		           t_channel_book):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

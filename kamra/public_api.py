@@ -919,8 +919,25 @@ def book(property: str, room_type: str, check_in_date: str,
          meal_plan: str = "", special_requests: str = "", addons=None,
          voucher_code: str = "", idempotency_key: str = "", pets: int = 0,
          child_ages=None, marketing_consent: int = 0):
-	"""Create a Website booking. Guest identity is the phone number; staff
-	verify at check-in. The advance owed is computed from the property's
+	"""Create a Website booking from the public booking page (per-IP rate
+	limit above). See _book."""
+	return _book(property, room_type, check_in_date, check_out_date, guest_name,
+	             phone, email=email, adults=adults, children=children,
+	             meal_plan=meal_plan, special_requests=special_requests, addons=addons,
+	             voucher_code=voucher_code, idempotency_key=idempotency_key, pets=pets,
+	             child_ages=child_ages, marketing_consent=marketing_consent)
+
+
+def _book(property: str, room_type: str, check_in_date: str,
+          check_out_date: str, guest_name: str, phone: str,
+          email: str = "", adults: int = 2, children: int = 0,
+          meal_plan: str = "", special_requests: str = "", addons=None,
+          voucher_code: str = "", idempotency_key: str = "", pets: int = 0,
+          child_ages=None, marketing_consent: int = 0,
+          source: str = "Website", channel: str | None = None):
+	"""Create a guest booking: the booking page, or a guest channel
+	(agents_channels.channel_book, source AI Agent and the channel named).
+	Guest identity is the phone number; staff verify at check-in. The advance owed is computed from the property's
 	current payment policy and snapshotted onto the booking.
 
 	Instant mode (default): Confirmed when nothing is due now, else
@@ -1005,7 +1022,7 @@ def book(property: str, room_type: str, check_in_date: str,
 			pets=int(pets or 0),
 			meal_plan=meal_plan or None,
 			voucher_code=voucher_code or None,
-			source="Website",
+			source=source,
 			addons=safe_addons or None,
 			assign_room=assign_room,
 			status=status,
@@ -1024,6 +1041,8 @@ def book(property: str, room_type: str, check_in_date: str,
 		}
 		if special_requests:
 			updates["special_requests"] = special_requests
+		if channel:
+			updates["channel"] = channel
 		# Instant + pay-at-hotel: if pre-insert peek overestimated advance,
 		# promote Pending Payment → Confirmed.
 		if (

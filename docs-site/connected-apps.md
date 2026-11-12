@@ -28,6 +28,7 @@ Each service account has:
 | `reports.read` | Manager flash, night audit report, voids and allowances, SLA, report packs, custom reports, P&L, balance sheet, cash forecast |
 | `cashier.read` | Cashier shifts and sessions, folios, city ledger and accounts receivable |
 | `approvals.write` | Pending allowances (approve or reject), till variance sign-off, booking requests (accept or decline) |
+| `concierge.guest` | Only the four signed guest concierge endpoints. No staff tool, no MCP. Can't be combined with other scopes. See [Guest channel providers](/channel-providers). |
 
 The MCP tools behind each scope are listed in `kamra/service_accounts.py`
 (`SCOPES`). An endpoint only an admin may call can't be put in a scope.
