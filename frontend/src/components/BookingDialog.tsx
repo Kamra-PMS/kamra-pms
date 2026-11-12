@@ -1,5 +1,5 @@
 import { RateOptions } from "./RateOptions"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { htmlToText } from "../lib/utils"
 import { useNavigate } from "react-router-dom"
 import { ChevronDown, Loader2, Megaphone, Plus, ShieldAlert, Star, Trash2, X } from "lucide-react"
@@ -16,6 +16,7 @@ import {
   type GuestHit,
   type Quote,
 } from "../lib/api"
+import { pickDefaultRoomType } from "../lib/bookingDefaults"
 import { Button } from "./ui/button"
 import { cur, moneyLocale, useLocale } from "../lib/money"
 import { isPhoneComplete } from "../lib/phone"
@@ -351,12 +352,15 @@ export function BookingDialog(props: {
     }
   }, [profile?.name, form.phone, options?.property?.country])
 
+  // When the desk did not pass a room type, keep auto-picking the cheapest
+  // type that has rooms for the selected dates until they change it (#549).
+  const autoRoomType = useRef(!props.initial.room_type)
+
   useEffect(() => {
     getBookingOptions().then((o) => {
       setOptions(o)
       setForm((f) => ({
         ...f,
-        room_type: f.room_type || o.room_types[0]?.name || "",
         meal_plan: o.meal_plans.find((m) => m.is_default)?.name ?? "",
       }))
     })
@@ -388,6 +392,33 @@ export function BookingDialog(props: {
     : dayUse
       ? form.check_in_date
       : shiftDate(form.check_in_date, Math.max(1, form.nights))
+
+  useEffect(() => {
+    if (!autoRoomType.current || !options?.room_types.length || badDate) return
+    let live = true
+    const types = options.room_types
+    Promise.all(
+      types.map((rt) =>
+        call<FreeRoom[]>("kamra.api.available_rooms", {
+          property: getCurrentProperty(),
+          room_type: rt.name,
+          check_in_date: form.check_in_date,
+          check_out_date: checkOut,
+          ...(walkIn ? { ready_now: 1 } : {}),
+        })
+          .then((rs) => ({ name: rt.name, n: rs.length }))
+          .catch(() => ({ name: rt.name, n: 0 })),
+      ),
+    ).then((hits) => {
+      if (!live || !autoRoomType.current) return
+      const counts = Object.fromEntries(hits.map((h) => [h.name, h.n]))
+      const pick = pickDefaultRoomType(types, counts)
+      setForm((f) => (f.room_type === pick ? f : { ...f, room_type: pick }))
+    })
+    return () => {
+      live = false
+    }
+  }, [options, form.check_in_date, checkOut, walkIn, badDate])
 
   // a blacklisted guest needs an explicit, reasoned confirmation (Hotel
   // Admin only - the server enforces it); a multi-room group can't override
@@ -1325,6 +1356,7 @@ export function BookingDialog(props: {
                     value={form.room_type}
                     onChange={(e) => {
                       // a smaller room type leaves a party it cannot sleep
+                      autoRoomType.current = false
                       const rt = options?.room_types.find(
                         (x) => x.name === e.target.value,
                       )

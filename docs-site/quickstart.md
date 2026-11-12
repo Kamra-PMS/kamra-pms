@@ -42,8 +42,9 @@ You will be asked for:
 | Admin password | (min 10 characters - **there is no default**) |
 
 The script clones `frappe_docker`, builds a local `kamra:local` image
-(payments + kamra from GitHub), starts MariaDB + Redis + Kamra, creates
-the site, enables the scheduler, and points `/` at `/kamra`.
+(payments + kamra from GitHub), starts MariaDB + Valkey (Redis-compatible
+cache/queue) + Kamra, creates the site, enables the scheduler, and points
+`/` at `/kamra`.
 
 ## Faster: pull the prebuilt image
 
@@ -76,7 +77,7 @@ inside the image.
 ## Try it on your laptop
 
 To look around before you buy a server, a single compose file runs the
-prebuilt image with MariaDB and Redis and creates a site for you (same
+prebuilt image with MariaDB and Valkey and creates a site for you (same
 registry access as above):
 
 ```bash

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Check, ExternalLink, Lightbulb, Loader2, Printer, TriangleAlert } from "lucide-react"
-import { call } from "../lib/api"
+import { call, newIdempotencyKey } from "../lib/api"
 import { checkOutWithCredit } from "./CreditCheckout"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { serverError } from "../lib/resource"
@@ -294,6 +294,8 @@ export default function CheckOutDialog(props: {
   // per-step desk input
   const [payMode, setPayMode] = useState("")
   const [payRef, setPayRef] = useState("")
+  // one key per folio line for Collect; kept across retries until success (#550)
+  const collectKeysRef = useRef<Record<string, string> | null>(null)
   const [refundModes, setRefundModes] = useState<Record<string, string>>({})
   const [refundReason, setRefundReason] = useState("")
   const [discountOn, setDiscountOn] = useState(false)
@@ -479,12 +481,20 @@ export default function CheckOutDialog(props: {
 
   function collect() {
     return run(async () => {
+      if (!collectKeysRef.current) {
+        collectKeysRef.current = Object.fromEntries(
+          (ctx?.collect ?? []).map((c) => [c.folio, newIdempotencyKey()]),
+        )
+      }
+      const keys = collectKeysRef.current
       for (const c of ctx?.collect ?? []) {
         await call("kamra.api.add_folio_payment", {
           folio: c.folio, mode: payMode, amount: c.amount, kind: "Payment",
           reference: payRef.trim() || undefined,
+          idempotency_key: keys[c.folio],
         })
       }
+      collectKeysRef.current = null
       setPayRef("")
     })
   }

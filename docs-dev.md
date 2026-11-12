@@ -22,7 +22,7 @@ agenticpms/
 ## Start everything
 
 ```bash
-# 1. containers (MariaDB, Redis, bench)
+# 1. containers (MariaDB, Valkey/Redis, bench)
 cd frappe_docker
 docker compose -f .devcontainer/docker-compose.yml -p kamra-dev up -d
 

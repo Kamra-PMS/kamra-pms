@@ -236,6 +236,15 @@ checkout_frappe_docker() {
     git -C "$INSTALL_DIR/frappe_docker" checkout -q --force FETCH_HEAD
   fi
   cd "$INSTALL_DIR/frappe_docker"
+  # Prefer Valkey (BSD-3, Linux Foundation) for cache/queue (#392). Keep
+  # redis-* service names and redis:// bench URLs — Frappe speaks RESP.
+  # Idempotent rewrite of upstream compose.redis.yaml image pins.
+  if [ -f overrides/compose.redis.yaml ]; then
+    # -i.bak is portable across GNU and BSD sed.
+    sed -i.bak 's|image: redis:[^[:space:]]*|image: valkey/valkey:8-alpine|g' \
+      overrides/compose.redis.yaml
+    rm -f overrides/compose.redis.yaml.bak
+  fi
 }
 
 write_apps_json() {
