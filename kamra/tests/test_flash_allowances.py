@@ -61,6 +61,12 @@ class FlashAllowancesTestCase(AuditTestCase):
 	def test_dashboard_revenue_today_stays_net(self):
 		from kamra.dashboards import _property_summary, property_dashboard
 		dash = property_dashboard(PROP_A, TODAY)
+		# the split, not just the net: room revenue stays gross and the
+		# allowance is its own figure, so revenue = room + allowances here
+		self.assertEqual(dash["room_revenue_today"], self.room_revenue)
+		self.assertEqual(dash.get("allowances_today"), -20000)
+		self.assertEqual(dash["revenue_today"],
+		                 dash["room_revenue_today"] + dash["allowances_today"])
 		self.assertEqual(dash["revenue_today"], self.room_revenue - 20000)
 		self.assertEqual(dash["statistics"]["mtd_revenue"], self.room_revenue - 20000)
 		self.assertEqual(_property_summary(PROP_A, TODAY)["revenue_today"],
