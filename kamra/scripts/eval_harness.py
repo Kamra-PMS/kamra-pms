@@ -4538,6 +4538,33 @@ def t392():
 	assert folio not in {f["folio"] for f in folio_reconciliation(P, limit=500)["folios"]}
 
 
+@check("a void after the night audit keeps the closed night sold; its reversal is an adjustment on the void date")
+def t394():
+	from kamra import api
+	from kamra.folio import post_room_night
+	from kamra.reports import _day_stats
+	day, nxt = "2033-06-14", "2033-06-15"
+	saved = frappe.db.get_value("Property", P, "business_date")
+	frappe.db.set_value("Property", P, "business_date", day)
+	try:
+		res = _res(_guest("Eval Void After Audit", "+91 70039 40001"), day, "2033-06-16", ROOM)
+		res.status = "Checked In"
+		res.save(ignore_permissions=True)
+		closed0, next0 = _day_stats(P, day, 1), _day_stats(P, nxt, 1)
+		post_room_night(res, day)
+		folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
+		row = next(c for c in frappe.get_doc("Folio", folio).charges if c.charge_type == "Room")
+		frappe.db.set_value("Property", P, "business_date", nxt)
+		api.void_folio_charge(folio, row.name, reason="eval wrong rate")
+		closed, after = _day_stats(P, day, 1), _day_stats(P, nxt, 1)
+		assert closed["rooms_sold"] - closed0["rooms_sold"] == 1, (closed0, closed)
+		assert abs(closed["room_revenue"] - closed0["room_revenue"] - float(row.amount)) < 0.01, closed
+		assert after["rooms_sold"] == next0["rooms_sold"], (next0, after)
+		assert abs(after["room_revenue"] - next0["room_revenue"] + float(row.amount)) < 0.01, after
+	finally:
+		frappe.db.set_value("Property", P, "business_date", saved)
+
+
 @check("whole-villa booking: checks in with no room, audits, checks out (rooms occupied then dirty)")
 def t94():
 	from kamra import api
@@ -10721,6 +10748,7 @@ def execute():
 		           t62, t63, t64, t65, t66, t67, t68, t69, t70, t71, t72, t73,
 		           t74, t75, t76, t81, t82, t82b, t82c, t83, t84, t85, t86, t87,
 		           t90, t91, t92, t93, t94, t95, t392, t96, t97, t98, t100, t101, t102,
+		           t394,
 		           t103, t104, t110, t111, t112, t113, t114, t115, t120, t121, t140, t141,
 		           t142, t143, t150, t151, t152, t153, t170, t171, t172, t173, t174, t176,
 		           t177, t178, t179, t160, t161, t162, t163, t164, t165, t166, t167, t130,
