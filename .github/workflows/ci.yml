@@ -43,6 +43,37 @@ jobs:
         run: npm run booking-defaults:check
         working-directory: frontend
 
+  contract:
+    # Fails a PR that breaks what connected apps rely on (MCP tools, REST
+    # methods, scopes, webhooks). No bench: the contract is read from source.
+    name: Public contract check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Unit tests for the checker
+        run: python3 -m unittest scripts/test_contract_check.py
+      - name: Compare with the base branch
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --depth=1 origin "$BASE_SHA"
+          git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
+          python3 docs-site/gen_contract.py --root "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/base.json"
+          python3 docs-site/gen_contract.py --keep "$RUNNER_TEMP/base.json" --out "$RUNNER_TEMP/head.json"
+          set -o pipefail
+          python3 scripts/contract_check.py "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json" \
+            --deprecations contract-deprecations.json | tee contract.out
+      - name: Summary
+        if: always()
+        run: |
+          [ -f contract.out ] || exit 0
+          { echo '### Public contract'; echo '```'; cat contract.out; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
   evals:
     name: Backend eval harness
     runs-on: ubuntu-latest
@@ -127,7 +158,7 @@ jobs:
       - name: Run the night audit, ledger and scheduled-audit unit tests
         run: |
           cd frappe-bench
-          for m in test_assistant_currency test_nicaragua_pack test_night_audit test_ledger_audit test_folio_leaks test_bill_settlement test_health test_scheduled_jobs test_golive test_credit_control test_webhooks test_pos_interface test_mcp test_seed_history test_rates test_holiday_package test_siu_room_type_sync test_booking_options_order test_payment_idempotency; do
+          for m in test_assistant_currency test_nicaragua_pack test_night_audit test_ledger_audit test_folio_leaks test_bill_settlement test_health test_scheduled_jobs test_golive test_credit_control test_webhooks test_pos_interface test_mcp test_contract_keys test_seed_history test_rates test_holiday_package test_siu_room_type_sync test_booking_options_order test_payment_idempotency; do
             bench --site test.localhost run-tests --module kamra.tests.$m \
               2>&1 | tee "$m.out"
             # known bugs are pinned as expected failures and a few tests skip

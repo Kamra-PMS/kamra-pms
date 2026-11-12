@@ -111,6 +111,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("Shortcuts hub", "Accesos directos", "مركز الاختصارات"), "developers"],
       [L("REST API basics", "Conceptos básicos de la API REST", "أساسيات REST API"), "api"],
       [L("REST API reference", "Referencia de la API REST", "مرجع REST API"), "api-reference"],
+      [L("API stability", "Estabilidad de la API", "استقرار الواجهة البرمجية"), "api-stability"],
     ],
   },
   {
