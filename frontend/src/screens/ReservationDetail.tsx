@@ -33,6 +33,7 @@ import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
 import ReinstatePanel from "../components/ReinstatePanel"
+import ReverseCheckInPanel from "../components/ReverseCheckInPanel"
 import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
 import SecurityDepositPanel from "../components/SecurityDepositPanel"
@@ -743,6 +744,9 @@ export default function ReservationDetail({
         )}
         {d.actions.can_reinstate && (
           <ReinstatePanel reservation={name} onDone={(w) => { setReinstated(w); refresh(); reload() }} />
+        )}
+        {d.actions.can_reverse_check_in && (
+          <ReverseCheckInPanel reservation={name} onDone={() => { refresh(); reload() }} />
         )}
         {reinstated.length > 0 && (
           <div className="w-full space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">

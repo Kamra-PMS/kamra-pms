@@ -1816,6 +1816,8 @@ export interface ReservationDetail {
     can_cancel: boolean
     can_amend: boolean
     can_reinstate: boolean
+    /** same-day check-in with nothing on the bill (api.reverse_check_in) */
+    can_reverse_check_in?: boolean
   }
   /** Things the desk should see but which must never gate an arrival. Kept
    *  apart from `actions` on purpose: a missing ID is a warning, not a

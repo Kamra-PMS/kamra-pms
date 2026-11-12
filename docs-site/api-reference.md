@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **488 endpoints**, generated from the source
+the UI and the AI use. **489 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1485,6 +1485,22 @@ Safe to call again and again: opening the sheet writes nothing.
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
+
+### `kamra.api.reverse_check_in`
+
+**POST** · roles: `Front Desk`
+
+Undo a check-in made by mistake (wrong guest, wrong room), the same
+business day and before anything is posted or paid. The stay goes back
+to Confirmed (arrival) with its room; the room is released and marked
+Dirty so housekeeping inspects it before it is sold again. From there
+the desk checks the guest in again or cancels the booking.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `reason` | yes |  |
+| `pin` | no | `None` |
 
 ### `kamra.api.reinstate_checkout`
 

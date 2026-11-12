@@ -4101,6 +4101,9 @@ def reservation_detail(reservation: str):
 			# undo checkout: same business day only (reinstate_checkout)
 			"can_reinstate": res.status == "Checked Out" and bool(res.get("check_out_business_date"))
 			and str(res.check_out_business_date) == str(get_business_date(res.property)),
+			# undo check-in: same business day, nothing on the bill (reverse_check_in)
+			"can_reverse_check_in": res.status == "Checked In"
+			and not _reverse_check_in_blocker(res),
 		},
 		# Warnings are NOT capabilities, and they live apart on purpose. A
 		# missing ID must never appear in `actions` - the guest is standing
@@ -4904,6 +4907,61 @@ def checkout_context(reservation: str):
 		"next_tip": next_tip(evaluated),
 	}
 	return ctx
+
+
+def _reverse_check_in_blocker(doc) -> str | None:
+	"""Why this stay's check-in can't be reversed now, or None (OPERA's
+	Reverse Check In: checked in today, zero balance, nothing posted)."""
+	from kamra.business_date import get_business_date
+	if doc.status != "Checked In":
+		return _("Only a checked-in stay can have its check-in reversed.")
+	at = doc.get("checked_in_at")
+	if not at or str(getdate(at)) != str(get_business_date(doc.property)):
+		return _("The night audit has run since this check-in, so it can't be "
+		         "reversed. Check the guest out instead.")
+	folios = frappe.get_all("Folio", filters={"reservation": doc.name}, pluck="name")
+	if folios and (frappe.db.exists("Folio Charge", {"parent": ("in", folios)})
+	               or frappe.db.exists("Folio Payment", {"parent": ("in", folios)})):
+		return _("A charge or payment is on the bill: void it, or check the guest out.")
+	return None
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk")
+def reverse_check_in(reservation: str, reason: str, pin: str | None = None):
+	"""Undo a check-in made by mistake (wrong guest, wrong room), the same
+	business day and before anything is posted or paid. The stay goes back
+	to Confirmed (arrival) with its room; the room is released and marked
+	Dirty so housekeeping inspects it before it is sold again. From there
+	the desk checks the guest in again or cancels the booking."""
+	from kamra.authz import require_cashier_pin
+	reason = (reason or "").strip()
+	if not reason:
+		frappe.throw(_("Say why the check-in is being reversed."))
+	doc = frappe.get_doc("Reservation", reservation)
+	blocker = _reverse_check_in_blocker(doc)
+	if blocker:
+		frappe.throw(blocker)
+	require_cashier_pin(doc.property, pin)
+	rooms = doc._occupied_rooms(checking_in=False)
+	doc.status = "Confirmed"
+	frappe.flags.kamra_status_transition = True
+	try:
+		doc.save()
+	finally:
+		frappe.flags.kamra_status_transition = False
+	doc.db_set({"actual_check_in": None, "checked_in_at": None, "checked_in_by": None},
+	           update_modified=False)
+	for room in rooms:
+		if frappe.db.get_value("Room", room, "housekeeping_status") == "Out of Order":
+			frappe.db.set_value("Room", room, "occupancy_status", "Vacant")
+		else:
+			frappe.db.set_value("Room", room, {"occupancy_status": "Vacant",
+			                                   "housekeeping_status": "Dirty"})
+	from kamra.savings import log_action
+	log_action("reverse_check_in", "Reservation", doc.name, doc.property,
+	           rationale=f"{doc.guest_name}: {reason}")
+	return {"ok": True, "reservation": doc.name, "status": doc.status}
 
 
 @frappe.whitelist(methods=["POST"])
