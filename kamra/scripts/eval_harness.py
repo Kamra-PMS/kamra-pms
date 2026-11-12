@@ -7379,6 +7379,41 @@ def t302():
 	assert out["room"] == free, out
 
 
+@check("room move: a room whose guest is still checked in past their departure is not offered as free")
+def t390():
+	from kamra import api
+	rt, (busy, free) = _t300_rooms("T390")
+	# guest A was due out yesterday and is still in the room
+	g = _guest("Eval Overdue", "+91 70039 00001")
+	a = frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": g,
+		"room_type": rt, "room": busy,
+		"check_in_date": add_days(nowdate(), -2),
+		"check_out_date": add_days(nowdate(), -1),
+		"adults": 2, "auto_price": 1,
+	})
+	a.flags.allow_past_check_in = True
+	a.insert(ignore_permissions=True)
+	a.status = "Checked In"
+	a.save(ignore_permissions=True)
+	b = frappe.get_doc({
+		"doctype": "Reservation", "property": P,
+		"guest": _guest("Eval Mover", "+91 70039 00002"),
+		"room_type": rt, "room": free, "check_in_date": nowdate(),
+		"check_out_date": add_days(nowdate(), 2), "adults": 2, "auto_price": 1,
+	}).insert(ignore_permissions=True)
+	with _as_user(FD):
+		movable = {r["name"]: r for r in api.movable_rooms(b.name)}
+		assert not movable[busy]["free"], "an occupied room was offered for a move today"
+		# a move that starts after today is judged by the dates, as before
+		later = {r["name"]: r for r in api.movable_rooms(
+			b.name, add_days(nowdate(), 3), add_days(nowdate(), 4))}
+		assert later[busy]["free"], later[busy]
+		# the overdue guest's own room stays theirs
+		own = {r["name"]: r for r in api.movable_rooms(a.name)}
+		assert own[busy]["free"] and own[busy]["current"], own[busy]
+
+
 @check("quote cancellation terms are judged from today: a closed window never shows a past date")
 def t303():
 	from kamra import api
@@ -10705,7 +10740,7 @@ def execute():
 		           t183, t184, t185, t186, t190, t191, t192, t193, t194,
 		           t200, t201, t202, t203, t204,
 		           t205, t206, t207, t208, t209, t210, t211, t212, t213, t214,
-		           t215, t216, t300, t301, t302, t303, t304, t305, t220, t221, t223, t222, t224,
+		           t215, t216, t300, t301, t302, t390, t303, t304, t305, t220, t221, t223, t222, t224,
 		           t320, t321, t322, t323, t324, t325, t326, t327, t328, t310, t311, t312, t313,
 		           t314, t315, t316, t317, t318, t330, t331, t332, t333, t334, t335, t336,
 		           t225, t226, t227, t228, t229, t230, t340, t341, t342, t343, t344,
