@@ -459,6 +459,27 @@ def financial_activity(property: str, business_date: str | None = None,
 
 # ── City ledger (AR) ─────────────────────────────────────────────────────────
 
+def _lock_account(account: str) -> None:
+	"""Hold this City Ledger Account row to the end of the transaction, so
+	two posts on one account (payments, transfers, reversals) run one after
+	the other. Read the account after this with locking reads
+	(locked_account_figures): a plain read can still return the snapshot
+	from before the wait."""
+	frappe.db.get_value("City Ledger Account", account, "name", for_update=True)
+
+
+def _sync_account_balance(account: str) -> float:
+	"""Set the account's stored balance from its entries, under the lock.
+	Adding to the stored figure loses an update when two posts overlap; the
+	entries are the record."""
+	rows = frappe.db.sql(
+		"""SELECT debit, credit FROM `tabCity Ledger Entry`
+		   WHERE account = %s FOR UPDATE""", account, as_dict=True)
+	balance = round(sum(float(r.debit or 0) - float(r.credit or 0) for r in rows), 2)
+	frappe.db.set_value("City Ledger Account", account, "balance", balance)
+	return balance
+
+
 def _ar_account(property: str, company: str) -> str:
 	name = frappe.db.get_value(
 		"City Ledger Account",
@@ -549,10 +570,16 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 
 	`account` bills that exact City Ledger Account (it must be the
 	company's) instead of the company's first open one."""
+	# one transfer of a bill at a time: a second press waits here and then
+	# reads what the first left (a locking read, not the request's snapshot)
+	locked = float(frappe.db.get_value("Folio", folio, "balance", for_update=True) or 0)
 	doc = frappe.get_doc("Folio", folio)
 	balance = float(doc.balance or 0)
-	if balance <= 0:
+	if locked <= 0:
 		frappe.throw("No balance to transfer to city ledger.")
+	if abs(locked - balance) > 0.005:
+		frappe.throw(frappe._("This bill changed while it was being moved to the "
+		                      "company's account. Try again."))
 	company = _transfer_company(doc, company)
 	if not company:
 		frappe.throw("A company is required for city ledger transfer.")
@@ -572,6 +599,7 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 			doc.property, company):
 		frappe.throw(f"{account} is not {company}'s account at this property.")
 	account = account or _ar_account(doc.property, company)
+	_lock_account(account)
 	bd = get_business_date(doc.property)
 	inv_date = invoice_date or bd
 	# Zero the guest folio with a Company Credit payment
@@ -616,13 +644,11 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 		"credit": 0,
 		"reference": doc.name,
 	}).insert(ignore_permissions=True)
-	acc = frappe.get_doc("City Ledger Account", account)
-	acc.balance = float(acc.balance or 0) + balance
-	acc.save(ignore_permissions=True)
+	account_balance = _sync_account_balance(account)
 	# money the company already paid ahead (an unapplied credit) settles
 	# this new bill straight away
 	applied = apply_unapplied_credit(account, only_folio=doc.name)
-	out = {"account": account, "amount": balance, "balance": acc.balance,
+	out = {"account": account, "amount": balance, "balance": account_balance,
 	       "applied_from_credit": sum(r["amount"] for r in applied)}
 	if credit and not credit.get("ok"):
 		out["credit"] = credit
@@ -634,6 +660,7 @@ def reverse_city_ledger_transfer(folio: str, reason: str) -> float:
 	reinstated: the bill comes back to the stay and leaves the company's
 	account. Refused once the company has paid any of it. Returns the
 	amount brought back (0 when the folio was never billed on)."""
+	frappe.db.get_value("Folio", folio, "name", for_update=True)
 	doc = frappe.get_doc("Folio", folio)
 	out = [p for p in doc.payments if p.mode == "Company Credit"
 	       and (p.reference or "").startswith(("city-ledger:", "city-ledger-back:"))]
@@ -641,15 +668,18 @@ def reverse_city_ledger_transfer(folio: str, reason: str) -> float:
 	if net <= 0.009:
 		return 0
 	account = out[0].reference.split(":", 1)[1]
+	_lock_account(account)
 	# company payments are applied to the bill on its ledger (as in
-	# city_ledger_open_folios); a credit note lowers what is billed
-	paid = frappe.db.sql(
-		"""SELECT COALESCE(SUM(credit - debit), 0) FROM `tabFolio Ledger Entry`
-		   WHERE folio = %s AND source_doctype = 'City Ledger Entry'""", doc.name)[0][0]
-	billed = float(frappe.db.sql(
-		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
-		   WHERE folio = %s AND account = %s AND kind != 'Payment'""",
-		(doc.name, account))[0][0] or 0)
+	# city_ledger_open_folios); a credit note lowers what is billed. Locking
+	# reads: a payment that landed while this waited must count.
+	paid = sum(float(r.credit or 0) - float(r.debit or 0) for r in frappe.db.sql(
+		"""SELECT credit, debit FROM `tabFolio Ledger Entry`
+		   WHERE folio = %s AND source_doctype = 'City Ledger Entry' FOR UPDATE""",
+		doc.name, as_dict=True))
+	billed = sum(float(r.debit or 0) - float(r.credit or 0) for r in frappe.db.sql(
+		"""SELECT debit, credit FROM `tabCity Ledger Entry`
+		   WHERE folio = %s AND account = %s AND kind != 'Payment' FOR UPDATE""",
+		(doc.name, account), as_dict=True))
 	if float(paid or 0) > 0.009:
 		frappe.throw(frappe._("The company has already paid part of this bill (or money it "
 		              "paid ahead was applied), so the checkout can't be undone. Finance "
@@ -678,9 +708,7 @@ def reverse_city_ledger_transfer(folio: str, reason: str) -> float:
 		"folio": doc.name, "debit": 0, "credit": net, "reference": doc.name,
 		"notes": f"Checkout reinstated: {reason}",
 	}).insert(ignore_permissions=True)
-	acc = frappe.get_doc("City Ledger Account", account)
-	acc.balance = float(acc.balance or 0) - net
-	acc.save(ignore_permissions=True)
+	_sync_account_balance(account)
 	return net
 
 
@@ -853,22 +881,29 @@ def locked_account_figures(account: str) -> dict:
 
 def _unapplied_payments(account: str) -> list[dict]:
 	"""Company payments on this account with money not yet applied to a
-	folio, oldest first."""
+	folio, oldest first. Locking reads: callers hold the account."""
 	rows = frappe.db.sql(
 		"""
-		SELECT c.name, c.posting_date, c.reference, c.credit - c.debit AS amount,
-		       COALESCE((SELECT SUM(e.credit - e.debit) FROM `tabFolio Ledger Entry` e
-		                 WHERE e.source_doctype = 'City Ledger Entry'
-		                   AND e.source_name = c.name), 0) AS applied
-		FROM `tabCity Ledger Entry` c
-		WHERE c.account = %s AND c.kind = 'Payment' AND IFNULL(c.folio, '') = ''
-		ORDER BY c.posting_date ASC, c.creation ASC
+		SELECT name, posting_date, reference, credit - debit AS amount
+		FROM `tabCity Ledger Entry`
+		WHERE account = %s AND kind = 'Payment' AND IFNULL(folio, '') = ''
+		ORDER BY posting_date ASC, creation ASC
+		FOR UPDATE
 		""",
 		account, as_dict=True,
 	)
+	applied: dict[str, float] = {}
+	for e in frappe.db.sql(
+			"""SELECT e.source_name, e.credit, e.debit
+			   FROM `tabFolio Ledger Entry` e
+			   JOIN `tabCity Ledger Entry` c ON c.name = e.source_name
+			   WHERE e.source_doctype = 'City Ledger Entry' AND c.account = %s
+			   FOR UPDATE""", account, as_dict=True):
+		applied[e.source_name] = (applied.get(e.source_name, 0.0)
+		                          + float(e.credit or 0) - float(e.debit or 0))
 	out = []
 	for r in rows:
-		remaining = round(float(r.amount or 0) - float(r.applied or 0), 2)
+		remaining = round(float(r.amount or 0) - applied.get(r.name, 0.0), 2)
 		if remaining > 0.005:
 			out.append({"name": r.name, "posting_date": str(r.posting_date),
 			            "reference": r.reference, "remaining": remaining})
@@ -895,8 +930,9 @@ def _post_ar_credit(acc, payment: str, folio: str, amount: float,
 def _allocation_plan(account: str, amount: float, allocations=None) -> list[dict]:
 	"""[{folio, amount}] for a payment: oldest bill first by default, or
 	the caller's explicit folios (each within what that folio still owes,
-	all within the payment). Whatever is left stays unapplied."""
-	open_items = {r["folio"]: r for r in city_ledger_open_folios(account)
+	all within the payment). Whatever is left stays unapplied. The caller
+	holds the account (_lock_account); the bills come from a locking read."""
+	open_items = {r["folio"]: r for r in locked_account_figures(account)["open_items"]
 	              if r["outstanding"] > 0.005}
 	if allocations in (None, "", []):
 		plan, left = [], round(float(amount), 2)
@@ -940,8 +976,9 @@ def apply_unapplied_credit(account: str, only_folio: str | None = None,
 	oldest payment to oldest open bill. `only_folio` limits it to one bill
 	(a fresh transfer); `backdate` dates each AR credit to the later of the
 	payment and the bill (used by the backfill patch)."""
+	_lock_account(account)
 	acc = frappe.get_doc("City Ledger Account", account)
-	items = [r for r in city_ledger_open_folios(account)
+	items = [r for r in locked_account_figures(account)["open_items"]
 	         if r["outstanding"] > 0.005
 	         and (not only_folio or r["folio"] == only_folio)]
 	applied = []
@@ -966,15 +1003,30 @@ def apply_unapplied_credit(account: str, only_folio: str | None = None,
 @frappe.whitelist(methods=["POST"])
 @require_roles("Finance", "Hotel Admin", "Kamra Agent")
 def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
-                       reference: str | None = None, allocations=None):
+                       reference: str | None = None, allocations=None,
+                       idempotency_key: str | None = None):
 	"""Record a company's payment against its city ledger account and clear
 	the AR it pays. By default it pays the oldest open bills first;
 	`allocations` ([{folio, amount}]) names the folios instead. Any excess
 	stays on the account as unapplied credit and settles the company's next
-	bill."""
+	bill.
+
+	Pass idempotency_key (one per "Record payment" press): a retry with the
+	same key returns the first result and posts nothing. Two payments on
+	one account at once run one after the other, so they never both clear
+	the same bill."""
 	amount = round(float(amount or 0), 2)
 	if amount <= 0:
 		frappe.throw("Amount must be positive.")
+	key = (idempotency_key or "").strip()[:140] or None
+	_lock_account(account)
+	if key:
+		first = _settled_with_key(key)
+		if first:
+			if first["account"] != account:
+				frappe.throw(frappe._("This payment was already recorded on {0}.").format(
+					first["account"]))
+			return first
 	acc = frappe.get_doc("City Ledger Account", account)
 	if acc.disabled:
 		frappe.throw("This city ledger account is disabled.")
@@ -991,11 +1043,11 @@ def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
 		"credit": amount,
 		"reference": ref[:140],
 		"notes": f"{mode}" + (f" · {reference}" if reference else ""),
+		"idempotency_key": key,
 	}).insert(ignore_permissions=True)
 	for a in plan:
 		_post_ar_credit(acc, payment.name, a["folio"], a["amount"], reference=ref)
-	acc.balance = float(acc.balance or 0) - amount
-	acc.save(ignore_permissions=True)
+	balance = _sync_account_balance(account)
 	applied_total = round(sum(a["amount"] for a in plan), 2)
 	from kamra.savings import log_action
 	log_action("city_ledger_settle", "City Ledger Account", account,
@@ -1005,9 +1057,38 @@ def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
 	return {
 		"account": account,
 		"payment": payment.name,
-		"balance": acc.balance,
+		"balance": balance,
 		"applied": plan,
 		"unapplied": round(amount - applied_total, 2),
+	}
+
+
+def _settled_with_key(key: str) -> dict | None:
+	"""What city_ledger_settle returned the first time for this key, rebuilt
+	from the books, or None when no payment carries it."""
+	row = frappe.db.sql(
+		"""SELECT name, account, credit - debit AS amount FROM `tabCity Ledger Entry`
+		   WHERE idempotency_key = %s AND kind = 'Payment' LIMIT 1 FOR UPDATE""",
+		key, as_dict=True)
+	if not row:
+		return None
+	row = row[0]
+	per_folio: dict[str, float] = {}
+	for e in frappe.db.sql(
+			"""SELECT folio, credit, debit FROM `tabFolio Ledger Entry`
+			   WHERE source_doctype = 'City Ledger Entry' AND source_name = %s
+			   ORDER BY creation ASC""", row.name, as_dict=True):
+		per_folio[e.folio] = round(per_folio.get(e.folio, 0.0)
+		                           + float(e.credit or 0) - float(e.debit or 0), 2)
+	applied = [{"folio": f, "amount": a} for f, a in per_folio.items()]
+	return {
+		"account": row.account,
+		"payment": row.name,
+		"balance": float(frappe.db.get_value("City Ledger Account", row.account, "balance",
+		                                        for_update=True) or 0),
+		"applied": applied,
+		"unapplied": round(float(row.amount or 0) - sum(a["amount"] for a in applied), 2),
+		"duplicate": True,
 	}
 
 

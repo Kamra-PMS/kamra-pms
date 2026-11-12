@@ -16,7 +16,8 @@
   "debit",
   "credit",
   "reference",
-  "notes"
+  "notes",
+  "idempotency_key"
  ],
  "fields": [
   {
@@ -99,11 +100,21 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "description": "One per payment press: a retry with the same key posts nothing.",
+   "hidden": 1,
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 12:00:00.000000",
+ "modified": "2026-11-11 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "City Ledger Entry",
