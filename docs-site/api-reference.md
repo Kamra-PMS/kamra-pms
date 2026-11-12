@@ -23,6 +23,9 @@ Content-Type: application/json
 - **Try it in Postman:** [download the collection](/kamra.postman_collection.json),
   set `base_url`, `api_key` and `api_secret` collection variables, go.
 - Endpoints marked **public** are `allow_guest` (no token; rate-limited).
+- What we promise not to break, and how a name is retired:
+  [API stability](/api-stability) and the machine-readable
+  [contract.json](/contract.json).
 
 
 ## Core (front desk, folios, guests, rooms)
