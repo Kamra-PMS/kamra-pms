@@ -72,18 +72,21 @@ def notify_room_ready(task):
 
 def _notify_role(property, role, body):
 	"""WhatsApp everyone holding `role` at this property (by their User
-	mobile number). Graceful: send_outbound logs and no-ops without a
-	connected channel, so this never raises into the caller."""
+	mobile number). Staff limited to other properties are left out. Graceful:
+	send_outbound logs and no-ops without a connected channel, so this never
+	raises into the caller."""
 	from kamra.agents_channels import send_outbound
+	from kamra.authz import restricted_properties
 	users = frappe.get_all(
 		"Has Role", filters={"role": role, "parenttype": "User"}, pluck="parent")
 	if not users:
 		return
 	phones = frappe.get_all(
 		"User", filters={"name": ("in", users), "enabled": 1},
-		fields=["mobile_no"])
+		fields=["name", "mobile_no"])
 	for p in phones:
-		if p.mobile_no:
+		allowed = restricted_properties(p.name)  # None: not limited to any
+		if p.mobile_no and (allowed is None or property in allowed):
 			try:
 				send_outbound(property, "WhatsApp", p.mobile_no, body)
 			except Exception:
