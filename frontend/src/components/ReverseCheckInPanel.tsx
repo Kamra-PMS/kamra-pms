@@ -6,6 +6,7 @@
 import { useState } from "react"
 import { Undo2 } from "lucide-react"
 import { call } from "../lib/api"
+import { keyResultMessage } from "../lib/keyNotice"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { useT } from "../lib/i18n"
@@ -13,7 +14,9 @@ import { Button } from "./ui/button"
 
 export default function ReverseCheckInPanel({ reservation, onDone }: {
   reservation: string
-  onDone: () => void
+  /** gets what the lock system said, if anything (the stay is no longer
+   *  checked in, so this panel goes away) */
+  onDone: (keyMessage: string | null) => void
 }) {
   const { t } = useT()
   const { ensureUnlocked } = useCashierAuth()
@@ -27,9 +30,10 @@ export default function ReverseCheckInPanel({ reservation, onDone }: {
     setErr(null)
     try {
       await ensureUnlocked()
-      await call("kamra.api.reverse_check_in", { reservation, reason })
+      const out = await call<{ key_result?: { message?: string | null } | null }>(
+        "kamra.api.reverse_check_in", { reservation, reason })
       setOpen(false)
-      onDone()
+      onDone(keyResultMessage(out))
     } catch (e) {
       setErr(serverError(e))
     } finally {

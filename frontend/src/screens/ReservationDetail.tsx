@@ -195,6 +195,7 @@ export default function ReservationDetail({
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [reinstated, setReinstated] = useState<string[]>([])
+  const [reverseKeys, setReverseKeys] = useState<string | null>(null)
   const [changingRoom, setChangingRoom] = useState(false)
   const [declineReason, setDeclineReason] = useState("")
 
@@ -746,7 +747,12 @@ export default function ReservationDetail({
           <ReinstatePanel reservation={name} onDone={(w) => { setReinstated(w); refresh(); reload() }} />
         )}
         {d.actions.can_reverse_check_in && (
-          <ReverseCheckInPanel reservation={name} onDone={() => { refresh(); reload() }} />
+          <ReverseCheckInPanel reservation={name} onDone={(k) => { setReverseKeys(k); refresh(); reload() }} />
+        )}
+        {reverseKeys && (
+          <div className="w-full rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <p>{translate(reverseKeys)}</p>
+          </div>
         )}
         {reinstated.length > 0 && (
           <div className="w-full space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">

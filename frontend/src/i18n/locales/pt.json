@@ -5590,6 +5590,7 @@
   "Undo NC": "Desfazer NC",
   "Undo checkout": "Desfazer check-out",
   "Undo check-in": "Desfazer check-in",
+  "The lock system did not answer. Cancel the keys at the encoder.": "O sistema de bloqueio não respondeu. Cancele as chaves no codificador.",
   "Why (e.g. checked in the wrong guest)": "Motivo (ex.: check-in do hóspede errado)",
   "Puts the booking back to arrival with its room. The room is released and marked dirty for housekeeping to check. Only today, and only while nothing is on the bill.": "Devolve a reserva para chegada com o seu quarto. O quarto é liberado e marcado como sujo para a governança verificar. Só hoje, e só enquanto não houver nada na conta.",
   "Unit": "Unidade",

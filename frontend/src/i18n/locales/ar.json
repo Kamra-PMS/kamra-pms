@@ -2049,6 +2049,7 @@
   "Undo NC": "تراجع عن المجاني",
   "Undo checkout": "التراجع عن المغادرة",
   "Undo check-in": "التراجع عن تسجيل الوصول",
+  "The lock system did not answer. Cancel the keys at the encoder.": "لم يستجب نظام الأقفال. ألغِ المفاتيح من جهاز الترميز.",
   "Why (e.g. checked in the wrong guest)": "السبب (مثلًا: سُجّل وصول الضيف الخطأ)",
   "Puts the booking back to arrival with its room. The room is released and marked dirty for housekeeping to check. Only today, and only while nothing is on the bill.": "يعيد الحجز إلى حالة الوصول المنتظر مع غرفته. تُحرَّر الغرفة وتُعلَّم غير نظيفة ليتفقدها التدبير المنزلي. اليوم فقط، وما دامت الفاتورة فارغة.",
   "Unit / room numbers per listing, comma-separated.": "أرقام الوحدات / الغرف لكل قائمة، مفصولة بفواصل.",
