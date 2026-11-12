@@ -10310,6 +10310,31 @@ def t387():
 	assert ctx["tax_label"] == "ISS", ctx
 
 
+@check("flash occupancy: rooms in house over rooms not out of order before the audit; revenue stays posted")
+def t388():
+	from kamra.reports import manager_flash
+	fp = "EVAL Flash Occupancy"
+	bed, _villa, rooms = _inv_property(fp, "FOC", rooms=13, with_villa=False)
+	today = nowdate()
+	frappe.db.set_value("Property", fp, "business_date", today)
+	for i, room in enumerate(rooms[:4]):
+		res = frappe.get_doc({
+			"doctype": "Reservation", "property": fp, "room_type": bed,
+			"guest": _guest(f"Eval Flash {i}", f"+91 70000 3880{i}"),
+			"room": room, "check_in_date": today,
+			"check_out_date": add_days(today, 2), "adults": 2, "auto_price": 1,
+		}).insert(ignore_permissions=True)
+		res.status = "Checked In"
+		res.save(ignore_permissions=True)
+	day = manager_flash(fp, today)["today"]
+	assert day["rooms_sold"] == 0 and day["room_revenue"] == 0 and day["adr"] == 0, day
+	assert day.get("rooms_occupied") == 4 and day.get("available_rooms") == 13, day
+	assert day["occupancy_pct"] == 30.8, day
+	frappe.db.set_value("Room", rooms[-1], "housekeeping_status", "Out of Order")
+	day = manager_flash(fp, today)["today"]
+	assert day["available_rooms"] == 12 and day["occupancy_pct"] == 33.3, day
+
+
 @check("Nicaragua pack: IVA, regional defaults and separate manual INTUR levy")
 def t_nicaragua_pack():
 	from kamra.api import _apply_country_defaults
@@ -10713,7 +10738,7 @@ def execute():
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
-		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
+		           t380, t381, t382, t383, t384, t385, t386, t387, t388, t_nicaragua_pack,
 		           t_concurrency_guards, t_safe_deposit_race,
 		           t_ar_settle_idempotent, t_ar_settle_race, t_ar_balance_from_entries):
 			fn()
