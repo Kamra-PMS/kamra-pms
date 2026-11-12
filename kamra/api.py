@@ -3749,6 +3749,7 @@ def _stay_balance(reservation: str) -> dict:
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent", "Finance", "Revenue Manager")
 def front_desk_snapshot(property: str | None = None, date: str | None = None):
 	"""Everything the front desk needs for one day, in one call."""
+	from kamra.business_date import get_business_date
 	date = date or nowdate()
 
 	res_filters = {"check_in_date": date, "status": "Confirmed"}
@@ -3809,6 +3810,8 @@ def front_desk_snapshot(property: str | None = None, date: str | None = None):
 
 	return {
 		"date": date,
+		# an arrival due on or before it can be marked a no-show at the desk
+		"business_date": str(get_business_date(property)) if property else None,
 		"arrivals": arrivals,
 		"departures": departures,
 		"in_house": in_house,
@@ -4093,6 +4096,9 @@ def reservation_detail(reservation: str):
 				bool(res.room) or uses_member_rooms(res.property, res.room_type)),
 			"can_check_out": res.status == "Checked In",
 			"can_cancel": res.status in ("Confirmed", "Checked In"),
+			# an arrival due on or before the business date (eod_mark_no_show)
+			"can_no_show": res.status == "Confirmed"
+			and getdate(res.check_in_date) <= getdate(get_business_date(res.property)),
 			"can_amend": res.status in ("Confirmed", "Checked In"),
 			# undo checkout: same business day only (reinstate_checkout)
 			"can_reinstate": res.status == "Checked Out" and bool(res.get("check_out_business_date"))

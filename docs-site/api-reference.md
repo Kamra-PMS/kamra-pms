@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **488 endpoints**, generated from the source
+the UI and the AI use. **491 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -5481,6 +5481,18 @@ keys (current, b30, b60, b90, b90p) are kept for older callers.
 | --- | --- | --- |
 | `property` | yes |  |
 
+### `kamra.ledger.city_ledger_history`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+Everything that ever moved on one company's account, oldest first, with
+the running balance: each bill (and the guest it was for), credit note,
+adjustment and payment (with the bills it cleared).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+
 ### `kamra.ledger.city_ledger_account`
 
 **GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
@@ -6212,18 +6224,51 @@ Who and when are recorded on the run and in the Activity log.
 | `key` | yes |  |
 | `reason` | yes |  |
 
+### `kamra.night_audit.no_show_preview`
+
+**GET/POST**
+
+What marking this arrival a no-show will do, for the confirm step on
+Today, the reservation and End of Day: the fee the policy posts (pre-tax
+and with tax, the same numbers apply_no_show posts) or why there is none,
+what is already paid, and the credit left for the guest afterwards with
+the property's default for it (refund or keep).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
 ### `kamra.night_audit.eod_mark_no_show`
 
-**POST** · roles: `Front Desk`, `Night Auditor`, `Hotel Admin`, `Kamra Agent`
+**POST**
 
-End of Day: mark an arrival that did not come a No Show now, with the
-property's no-show fee policy applied exactly as the audit applies it
-(fee posted on the business date, or waived for an OTA booking).
+Mark an arrival that did not come a No Show now - from Today, the
+reservation or End of Day - with the property's no-show fee policy
+applied exactly as the audit applies it (fee posted on the business
+date, or waived for an OTA booking). The room is free at once: the
+channels get a push and open desk screens refresh. `credit` is what the
+guest paid beyond the fee; settle it with settle_no_show_credit.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `reason` | no | `None` |
+
+### `kamra.night_audit.settle_no_show_credit`
+
+**POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
+
+A no-show paid more than its fee: refund the rest to the guest (the
+refund writer, so till and ledger move) or keep it as a forfeited
+deposit, with a reason. Same roles as a folio refund.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `action` | yes |  |
+| `reason` | yes |  |
+| `mode` | no | `None` |
+| `pin` | no | `None` |
 
 ### `kamra.night_audit.eod_overview`
 

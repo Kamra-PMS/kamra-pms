@@ -492,6 +492,18 @@ function NoShows({ p }: { p: Pack }) {
         rows={p.held_late_arrivals || []}
         empty={translate("None held.")}
       />
+      <Sub>{t("No-shows still in credit (refund or keep)")}</Sub>
+      <DataTable
+        cols={[
+          { key: "reservation", label: "Confirmation" },
+          { key: "guest_name", label: "Guest" },
+          { key: "check_in_date", label: "Arrival", kind: "date" },
+          { key: "credit", label: "Credit", kind: "money" },
+          { key: "default", label: "Policy default" },
+        ]}
+        rows={p.no_show_credits || []}
+        empty={translate("None in credit.")}
+      />
       <Sub>{t("Cancellations")}</Sub>
       <DataTable
         cols={[
