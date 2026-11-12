@@ -6366,5 +6366,21 @@
   "Department": "Departamento",
   "Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.": "Quartos, cada ponto de venda, banquetes e cada departamento operacional menor (lavanderia, spa, táxi...), como no relatório de fechamento de dia.",
   "Food and beverage on folios": "Alimentos e bebidas nas contas",
-  "Meal plans and minibar": "Planos de refeição e frigobar"
+  "Meal plans and minibar": "Planos de refeição e frigobar",
+  "Add-on apps on their own site. Each gets its own key, limited to the scopes and properties you approve.": "Aplicativos complementares no próprio site. Cada um recebe a própria chave, limitada aos escopos e propriedades que você aprovar.",
+  "Allow unsigned apps (self-hosted apps you run yourself)": "Permitir aplicativos sem assinatura (aplicativos que você mesmo hospeda)",
+  "Already connected. Disconnect it below first.": "Já está conectado. Desconecte-o abaixo primeiro.",
+  "App address": "Endereço do aplicativo",
+  "Approve and connect": "Aprovar e conectar",
+  "Connected apps": "Aplicativos conectados",
+  "Disconnect {name}? Its key stops working at once.": "Desconectar {name}? A chave dele para de funcionar na hora.",
+  "Enter this pairing code in the app. It works once, for 10 minutes.": "Digite este código de pareamento no aplicativo. Ele funciona uma vez, por 10 minutos.",
+  "For these properties": "Para estas propriedades",
+  "It asks to": "Ele solicita",
+  "New pairing code": "Novo código de pareamento",
+  "Not signed. Connect it only if you run this app yourself.": "Sem assinatura. Conecte somente se você mesmo opera este aplicativo.",
+  "Open the app with the code filled in": "Abrir o aplicativo com o código preenchido",
+  "Signed by a trusted publisher.": "Assinado por um editor confiável.",
+  "Staff sign in to it with their own Kamra login, through {uri}.": "A equipe entra nele com o próprio login do Kamra, por {uri}.",
+  "Waiting to pair": "Aguardando pareamento"
 }

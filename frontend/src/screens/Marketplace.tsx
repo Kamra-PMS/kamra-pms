@@ -5,6 +5,8 @@ import { Check, Copy, Store, Terminal } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
+import ConnectApp from "../components/ConnectApp"
+import { useAuth } from "../lib/auth"
 import { useT, t as translate } from "../lib/i18n"
 
 
@@ -83,6 +85,9 @@ export default function Marketplace() {
   const [enquired, setEnquired] = useState<Set<string>>(new Set())
   const navigate = useNavigate()
   const property = getCurrentProperty()
+  // connecting an app creates a service account: IT only, like the server
+  const { roles } = useAuth()
+  const isIT = ["System Manager", "Administrator"].some((r) => roles.includes(r))
 
   const load = useCallback(() => {
     call<Category[]>("kamra.marketplace.registry", { property })
@@ -123,6 +128,8 @@ export default function Marketplace() {
           {translate(error)}
         </div>
       )}
+
+      {isIT && <ConnectApp />}
 
       {cats.map((cat) => (
         <section key={cat.category} className="space-y-3">

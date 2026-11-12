@@ -6191,5 +6191,21 @@
   "Department": "Departamento",
   "Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.": "Habitaciones, cada punto de venta, banquetes y cada departamento operativo menor (lavandería, spa, taxi...), como en el informe de auditoría nocturna.",
   "Food and beverage on folios": "Alimentos y bebidas en folios",
-  "Meal plans and minibar": "Planes de comidas y minibar"
+  "Meal plans and minibar": "Planes de comidas y minibar",
+  "Add-on apps on their own site. Each gets its own key, limited to the scopes and properties you approve.": "Aplicaciones complementarias en su propio sitio. Cada una recibe su propia clave, limitada a los permisos y alojamientos que apruebes.",
+  "Allow unsigned apps (self-hosted apps you run yourself)": "Permitir aplicaciones sin firma (aplicaciones que alojas tú mismo)",
+  "Already connected. Disconnect it below first.": "Ya está conectada. Primero desconéctala abajo.",
+  "App address": "Dirección de la aplicación",
+  "Approve and connect": "Aprobar y conectar",
+  "Connected apps": "Aplicaciones conectadas",
+  "Disconnect {name}? Its key stops working at once.": "¿Desconectar {name}? Su clave deja de funcionar de inmediato.",
+  "Enter this pairing code in the app. It works once, for 10 minutes.": "Introduce este código de vinculación en la aplicación. Funciona una sola vez, durante 10 minutos.",
+  "For these properties": "Para estos alojamientos",
+  "It asks to": "Solicita",
+  "New pairing code": "Nuevo código de vinculación",
+  "Not signed. Connect it only if you run this app yourself.": "Sin firma. Conéctala solo si tú mismo gestionas esta aplicación.",
+  "Open the app with the code filled in": "Abrir la aplicación con el código ya puesto",
+  "Signed by a trusted publisher.": "Firmada por un editor de confianza.",
+  "Staff sign in to it with their own Kamra login, through {uri}.": "El personal inicia sesión con su propio usuario de Kamra, a través de {uri}.",
+  "Waiting to pair": "Esperando vinculación"
 }

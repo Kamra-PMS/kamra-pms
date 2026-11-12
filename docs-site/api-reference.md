@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **494 endpoints**, generated from the source
+the UI and the AI use. **503 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -6944,6 +6944,104 @@ replaced, so the next call with the old key fails to sign in.
 | Param | Required | Default |
 | --- | --- | --- |
 | `account` | yes |  |
+
+
+## Connected apps (connect, pair, disconnect, property profile)
+
+> pair is the one allow_guest endpoint here, rate-limited and logged; see Connected apps.
+
+### `kamra.apps.preview`
+
+**GET/POST** · roles: `System Manager`, `Administrator`
+
+The consent step: what the app is and what it asks for.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `app_url` | yes |  |
+
+### `kamra.apps.connect`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+Approve an app: a service account with exactly these scopes and
+properties, a registry entry, its redirect address, and a one-time
+pairing code (shown once).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `app_url` | yes |  |
+| `scopes` | yes |  |
+| `properties` | yes |  |
+
+### `kamra.apps.new_pairing_code`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+A fresh code for an app that has not paired yet; the old one stops.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `app_id` | yes |  |
+
+### `kamra.apps.disconnect`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+Off at once: the service account is revoked, the redirect address and
+the staff tokens issued through it go, and the tile disappears.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `app_id` | yes |  |
+
+### `kamra.apps.list_apps`
+
+**GET/POST** · roles: `System Manager`, `Administrator`
+
+### `kamra.apps.set_trust`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+IT: allow unsigned (self-hosted) apps, and/or replace the list of
+trusted publisher keys (base64 Ed25519 public keys).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `unsigned` | no | `None` |
+| `keys` | no | `None` |
+
+### `kamra.apps.pair` <Badge type='tip' text='public' />
+
+**POST**
+
+The one unauthenticated endpoint: the app trades its one-time code for
+its key and secret. Every attempt that gets past the rate limit is in the
+Agent Action Log. A refused attempt gets HTTP 403 and
+{"error": "invalid_code"}.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `code` | yes |  |
+| `app_id` | yes |  |
+
+### `kamra.apps.my_apps`
+
+**GET/POST**
+
+Paired apps the signed-in person may see: admins see every one, staff
+the ones whose manifest names one of their roles.
+
+### `kamra.apps.property_profile`
+
+**GET/POST**
+
+Read-only branding and locale for one property: name, logo, address,
+tax ID, currency, language, time zone, check-in and check-out times.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 
 ## Public (no auth - booking page, check-in)
