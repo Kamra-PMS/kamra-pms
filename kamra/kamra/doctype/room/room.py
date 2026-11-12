@@ -20,3 +20,10 @@ class Room(Document):
 			ensure_individual_siu(self.name)
 		except Exception:
 			frappe.log_error(title="Sellable Unit sync on Room insert")
+
+	def on_update(self):
+		# Room.room_type drives the individual Sellable Unit's type (#548).
+		if not self.has_value_changed("room_type"):
+			return
+		from kamra.siu.units import sync_individual_siu_room_type
+		sync_individual_siu_room_type(self.name)

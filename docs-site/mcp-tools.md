@@ -830,12 +830,14 @@ staff at the desk (cashier PIN) - not by an agent.
 
 Endpoint: `kamra.api.security_deposit`.
 
-### `collect_security_deposit(reservation, amount, mode, reference)`
+### `collect_security_deposit(reservation, amount, mode, reference, idempotency_key)`
 
 Record a refundable security deposit the guest has paid (villas:
 the damage deposit). It is held on the guest folio as a liability,
 not revenue, and refunded or withheld at check-out. mode: one of the
 property's payment modes. Confirm the amount with staff first.
+Pass idempotency_key (new UUID per collect) so a retry does not post
+twice.
 
 Endpoint: `kamra.api.collect_security_deposit`.
 Mutating - logged to the activity ledger.

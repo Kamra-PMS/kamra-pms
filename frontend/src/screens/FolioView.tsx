@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from "react"
 import { ArrowLeft, ArrowRightLeft, Printer, Trash2, X } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { call, getCurrentProperty } from "../lib/api"
+import { call, getCurrentProperty, newIdempotencyKey } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import LinkedRecords from "../components/LinkedRecords"
 import AllowanceRequests from "../components/AllowanceRequests"
@@ -290,6 +290,8 @@ export default function FolioView() {
     kind: "Payment",
     currency: "",
   })
+  // one key per Record press; reused on retry (#550)
+  const [paymentKey, setPaymentKey] = useState(newIdempotencyKey)
   // foreign currencies the hotel set a rate for TODAY (the only rate the
   // server converts a payment at); "" = the hotel's own currency
   const [fxRates, setFxRates] = useState<{ currency: string; buy_rate: number }[]>([])
@@ -1768,16 +1770,18 @@ export default function FolioView() {
               <Button
                 disabled={busy || !payment.amount}
                 onClick={() =>
-                  act(() =>
-                    call("kamra.api.add_folio_payment", withPin({
+                  act(async () => {
+                    await call("kamra.api.add_folio_payment", withPin({
                       folio: folio.name,
                       mode: payment.mode,
                       kind: payment.kind,
                       amount: Number(payment.amount),
                       reference: payment.reference || undefined,
                       currency: payment.currency || undefined,
-                    })),
-                  )
+                      idempotency_key: paymentKey,
+                    }))
+                    setPaymentKey(newIdempotencyKey())
+                  })
                 }
               >
                 {t("Record")}

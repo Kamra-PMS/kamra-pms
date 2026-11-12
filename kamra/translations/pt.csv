@@ -61,3 +61,5 @@ Rooms,Quartos
 Bills paid,Faturas pagas
 {0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,{0} conta(s) desta estadia ainda não estão na conta do hóspede: {1}. Lance-as no quarto ou acerte-as antes do check-out.
 Bills still open,Contas ainda abertas
+Use Check out to check a guest out: it makes sure every bill is cleared first.,Use Check-out para dar saída ao hóspede: ele confere antes que todas as contas estejam quitadas.
+Check out,Check-out

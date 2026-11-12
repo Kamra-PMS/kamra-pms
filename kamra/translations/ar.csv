@@ -266,3 +266,5 @@ Pet Charge,رسوم الحيوان الأليف
 Bills paid,الفواتير المدفوعة
 {0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,{0} فاتورة لهذه الإقامة لم تُضف إلى فاتورة النزيل بعد: {1}. انقلها إلى الغرفة أو سدّدها قبل المغادرة.
 Bills still open,فواتير ما زالت مفتوحة
+Use Check out to check a guest out: it makes sure every bill is cleared first.,استخدم «تسجيل المغادرة» لإخراج النزيل: يتأكد أولاً من تسوية كل الفواتير.
+Check out,تسجيل المغادرة

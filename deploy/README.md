@@ -59,11 +59,11 @@ reference).
 ## Try it locally
 
 [`compose/quickstart.yaml`](compose/quickstart.yaml) runs the prebuilt
-image + MariaDB + Redis and creates a site — `docker compose -f
-quickstart.yaml up -d`, then <http://localhost:8080/kamra>. It needs
-`KAMRA_ADMIN_PASSWORD` and `KAMRA_DB_PASSWORD` in the environment (no
-default secrets) and, while the package is private, `docker login
-ghcr.io`. Evaluation only.
+image + MariaDB + Valkey (Redis-compatible cache/queue) and creates a
+site — `docker compose -f quickstart.yaml up -d`, then
+<http://localhost:8080/kamra>. It needs `KAMRA_ADMIN_PASSWORD` and
+`KAMRA_DB_PASSWORD` in the environment (no default secrets) and, while
+the package is private, `docker login ghcr.io`. Evaluation only.
 
 Hit `unauthorized` on GHCR? See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) and
 the copy-paste reply for GitHub reports.
@@ -100,7 +100,7 @@ Overrides:
   kamra.env           # compose secrets (DB password, site header, image), mode 600
   image.env           # build|pull, image, channel, pinned tag (not secret)
   apps.json           # apps + branch baked into the local image (build mode)
-  frappe_docker/      # upstream compose files (MariaDB + Redis + noproxy)
+  frappe_docker/      # upstream compose (MariaDB + Valkey via redis override + noproxy)
 ```
 
 ## One-click clouds

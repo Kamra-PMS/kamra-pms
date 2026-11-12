@@ -10630,6 +10630,111 @@ def t_app_pairing():
 		frappe.db.set_default(apps.UNSIGNED_KEY, before or "")
 
 
+def _ar_bill(label, phone, day, room_code, corp, amount):
+	"""One company bill on the city ledger: an in-house stay with a charge,
+	moved to the company's account. Returns (account, folio, owed)."""
+	from kamra import api
+	from kamra.ledger import transfer_to_city_ledger
+	_, f = _in_house(label, phone, f"2036-09-{day:02d}", f"2036-09-{day + 1:02d}",
+	                 _ledger_room(room_code), company=corp)
+	api.add_folio_charge(f, "Misc", f"eval {label}", amount)
+	moved = transfer_to_city_ledger(f, corp)
+	return moved["account"], f, float(moved["amount"])
+
+
+def _account_entries_sum(account):
+	return round(float(frappe.db.sql(
+		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
+		   WHERE account = %s""", account)[0][0] or 0), 2)
+
+
+@check("city ledger: a retried company payment with the same key posts once (#518)")
+def t_ar_settle_idempotent():
+	from kamra.ledger import city_ledger_settle
+	corp = _credit_corp("EVAL Idem Pay Corp")
+	acct, f, owed = _ar_bill("Eval Idem Pay", "+91 70000 05181", 1, "L5181", corp, 1000)
+	first = city_ledger_settle(acct, owed, "Bank Transfer", "EVAL-IDEM-1",
+	                           idempotency_key="eval-idem-1")
+	again = city_ledger_settle(acct, owed, "Bank Transfer", "EVAL-IDEM-1",
+	                           idempotency_key="eval-idem-1")
+	assert again.get("duplicate") and again["payment"] == first["payment"], (first, again)
+	assert again["applied"] == first["applied"], (first, again)
+	assert frappe.db.count("City Ledger Entry",
+	                       {"account": acct, "kind": "Payment"}) == 1
+	assert abs(float(frappe.db.get_value("City Ledger Account", acct, "balance"))) < 0.01
+	_assert_company_ar(acct)
+	# the same key on another account is a client mistake, not a new payment
+	other = _credit_corp("EVAL Idem Pay Corp 2")
+	acct2, _, owed2 = _ar_bill("Eval Idem Pay 2", "+91 70000 05182", 3, "L5182", other, 500)
+	try:
+		city_ledger_settle(acct2, owed2, idempotency_key="eval-idem-1")
+		raise AssertionError("a key used on one account posted on another")
+	except frappe.ValidationError as e:
+		assert "already recorded" in str(e), e
+	assert frappe.db.count("City Ledger Entry",
+	                       {"account": acct2, "kind": "Payment"}) == 0
+	# no key: two presses are two payments, as before
+	city_ledger_settle(acct2, 100)
+	city_ledger_settle(acct2, 100)
+	assert frappe.db.count("City Ledger Entry",
+	                       {"account": acct2, "kind": "Payment"}) == 2
+
+
+@check("city ledger: two payments at once never clear the same bill twice (#519)")
+def t_ar_settle_race():
+	# A second connection can't see this check's rows, so the overlap is
+	# played in order: the other payment runs right after this one takes the
+	# account lock - where it would land if it committed while this waited.
+	# Allocation has to read the bills after the lock.
+	from unittest.mock import patch
+
+	from kamra import ledger
+	corp = _credit_corp("EVAL Race Pay Corp")
+	acct, f, owed = _ar_bill("Eval Race Pay", "+91 70000 05191", 5, "L5191", corp, 1000)
+	real_lock = ledger._lock_account
+	state = {"done": False}
+
+	def other_payment_lands_first(name):
+		real_lock(name)
+		if not state["done"]:
+			state["done"] = True
+			ledger.city_ledger_settle(acct, owed, "Bank Transfer", "EVAL-RACE-A")
+
+	with patch.object(ledger, "_lock_account", other_payment_lands_first):
+		out = ledger.city_ledger_settle(acct, owed, "Cheque", "EVAL-RACE-B")
+	assert out["applied"] == [], out
+	assert abs(out["unapplied"] - owed) < 0.01, out
+	paid = frappe.db.sql(
+		"""SELECT COALESCE(SUM(credit - debit), 0) FROM `tabFolio Ledger Entry`
+		   WHERE folio = %s AND source_doctype = 'City Ledger Entry'""", f)[0][0]
+	assert abs(float(paid) - owed) < 0.01, f"bill cleared {paid} of {owed}"
+	# the stored balance is the entries' sum: one bill, two payments
+	assert abs(float(out["balance"]) - (-owed)) < 0.01, out
+	assert abs(float(frappe.db.get_value("City Ledger Account", acct, "balance"))
+	           - _account_entries_sum(acct)) < 0.01
+	_assert_company_ar(acct)
+
+
+@check("city ledger: stored account balance follows the entries, not a running sum (#519)")
+def t_ar_balance_from_entries():
+	from kamra.ledger import city_ledger_settle, transfer_to_city_ledger
+	corp = _credit_corp("EVAL Balance Sync Corp")
+	acct, f, owed = _ar_bill("Eval Balance Sync", "+91 70000 05192", 7, "L5192", corp, 800)
+	# a stored figure that drifted (a lost update before this fix)
+	frappe.db.set_value("City Ledger Account", acct, "balance", 99999)
+	out = city_ledger_settle(acct, 300)
+	assert abs(out["balance"] - (owed - 300)) < 0.01, out
+	assert abs(float(frappe.db.get_value("City Ledger Account", acct, "balance"))
+	           - _account_entries_sum(acct)) < 0.01
+	# moving the same bill twice: the second press finds nothing left
+	try:
+		transfer_to_city_ledger(f, corp)
+		raise AssertionError("one bill moved to the company twice")
+	except frappe.ValidationError as e:
+		assert "No balance" in str(e), e
+	_assert_company_ar(acct)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10671,7 +10776,8 @@ def execute():
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
 		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
-		           t_app_pairing):
+		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
+		           t_ar_balance_from_entries):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

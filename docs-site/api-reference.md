@@ -23,6 +23,9 @@ Content-Type: application/json
 - **Try it in Postman:** [download the collection](/kamra.postman_collection.json),
   set `base_url`, `api_key` and `api_secret` collection variables, go.
 - Endpoints marked **public** are `allow_guest` (no token; rate-limited).
+- What we promise not to break, and how a name is retired:
+  [API stability](/api-stability) and the machine-readable
+  [contract.json](/contract.json).
 
 
 ## Core (front desk, folios, guests, rooms)
@@ -246,6 +249,9 @@ on the guest folio as a Security Deposit payment and in the Deposit
 ledger - a liability held for the guest, never revenue. Cashier PIN and
 open till as for any payment.
 
+Pass idempotency_key (one per Collect press): a retry with the same key
+returns the first result instead of posting again.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
@@ -253,6 +259,7 @@ open till as for any payment.
 | `mode` | no | `'Cash'` |
 | `reference` | no | `None` |
 | `pin` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.waive_security_deposit`
 
@@ -5461,6 +5468,11 @@ the AR it pays. By default it pays the oldest open bills first;
 stays on the account as unapplied credit and settles the company's next
 bill.
 
+Pass idempotency_key (one per "Record payment" press): a retry with the
+same key returns the first result and posts nothing. Two payments on
+one account at once run one after the other, so they never both clear
+the same bill.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `account` | yes |  |
@@ -5468,6 +5480,7 @@ bill.
 | `mode` | no | `'Bank Transfer'` |
 | `reference` | no | `None` |
 | `allocations` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.ledger.city_ledger_aging`
 
