@@ -88,7 +88,8 @@ reads what it asks for, picks the properties and approves. Kamra then:
 1. creates a service account with exactly the approved scopes and
    properties;
 2. registers the app in the App Registry, so its tile shows in the app
-   switcher and on the Apps page for the roles it names;
+   switcher and on the Apps page for the roles it names (unless the
+   manifest sets `switcher` to false);
 3. allows the app's OAuth redirect address for staff sign-in;
 4. shows a one-time **pairing code** (for example `K7QD-2MXP-9TRA-VH4C`).
    It works once and expires after 10 minutes. Kamra keeps only its hash.
@@ -122,6 +123,7 @@ redirect:
 | `scopes` | yes | What the app asks for, from the table above. IT may approve fewer. |
 | `icon` | no | An https image for the tile. |
 | `roles` | no | Staff roles that see the tile. Admins always see it; empty means admins only. |
+| `switcher` | no | `false` keeps the app out of the app switcher; it is then reached from Marketplace only. Default `true`. |
 | `redirect_uri` | no | Your OAuth callback for staff sign-in. Exact match, https, same host. |
 | `pair_url` | no | Kamra links here with `?code=&app_id=&site=` so IT does not have to copy the code. Same host. |
 | `signature` | see below | Ed25519 over the canonical manifest. |

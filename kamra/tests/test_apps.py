@@ -171,6 +171,14 @@ class AppPairingTestCase(IntegrationTestCase):
 		frappe.set_user(user)  # nosemgrep: frappe-setuser -- a staff member without the app's role
 		self.assertNotIn("test-reports", [a["app_id"] for a in apps.my_apps()])
 
+	def test_manifest_can_stay_out_of_the_switcher(self):
+		self.manifest = _manifest(switcher=False)
+		self._pair(self._connect()["code"])
+		self.assertEqual(frappe.db.get_value("Kamra App", "test-reports", "show_in_switcher"), 0)
+		# not even admins get a tile; the app is still paired and reachable from Marketplace
+		self.assertNotIn("test-reports", [a["app_id"] for a in apps.my_apps()])
+		self.assertEqual(frappe.db.get_value("Kamra App", "test-reports", "status"), "Paired")
+
 	def test_property_profile(self):
 		frappe.db.set_value("Property", HOME, {"gstin": "TAX-123", "logo_url": "/files/logo.png",
 		                                       "timezone": "Asia/Dubai"})

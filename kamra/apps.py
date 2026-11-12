@@ -180,6 +180,8 @@ def read_manifest(app_url: str) -> frappe._dict:
 		redirect_uri=redirect,
 		pair_url=same_host(m["pair_url"], "pair_url") if m.get("pair_url") else "",
 		scopes=scopes, roles=sorted({str(r) for r in roles if str(r).strip()}),
+		# an app can stay out of the switcher and be reached from Marketplace only
+		switcher=m.get("switcher", True) is not False,
 		raw=m,
 	)
 
@@ -290,7 +292,8 @@ def connect(app_url: str, scopes: str | list, properties: str | list) -> dict:
 	values = {
 		"app_name": m.name, "status": "Pending", "url": m.url, "icon": m.icon,
 		"manifest_url": m.manifest_url, "redirect_uri": m.redirect_uri,
-		"roles": json.dumps(m.roles), "scopes": json.dumps(acct["scopes"]),
+		"roles": json.dumps(m.roles), "show_in_switcher": int(m.switcher),
+		"scopes": json.dumps(acct["scopes"]),
 		"properties": json.dumps(acct["properties"]), "signed": int(m.signed),
 		"service_account": acct["name"], "paired_on": None,
 		"manifest": json.dumps(m.raw, indent=1), **_code_values(code),
@@ -431,11 +434,12 @@ def pair(code: str, app_id: str) -> dict:
 
 @frappe.whitelist()
 def my_apps() -> list[dict]:
-	"""Paired apps the signed-in person may see: admins see every one, staff
-	the ones whose manifest names one of their roles."""
+	"""Paired apps in the switcher for the signed-in person: admins see every
+	one, staff the ones whose manifest names one of their roles. Apps whose
+	manifest sets "switcher": false are left out."""
 	roles = set(frappe.get_roles())
 	admin = bool(roles & set(ADMIN))
-	rows = frappe.get_all("Kamra App", filters={"status": "Paired"},
+	rows = frappe.get_all("Kamra App", filters={"status": "Paired", "show_in_switcher": 1},
 	                      fields=["name", "app_name", "icon", "url", "roles"],
 	                      order_by="app_name asc")
 	return [{"app_id": r.name, "name": r.app_name, "icon": r.icon, "url": r.url}
