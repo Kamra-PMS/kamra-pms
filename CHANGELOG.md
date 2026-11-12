@@ -26,6 +26,14 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.7.9](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.8...v2.7.9) (2026-11-12)
+
+
+### Bug Fixes
+
+* agent books by the hour, takes advances, reads outlets and expenses; monthly department revenue ([#554](https://github.com/Kamra-PMS/kamra-pms/issues/554)) ([108171a](https://github.com/Kamra-PMS/kamra-pms/commit/108171acf298ba663c35b4b4b7dfd801cb90f142))
+* **checkout:** a stay is checked out only through Check out; a tax-free property offers only 0% ([#562](https://github.com/Kamra-PMS/kamra-pms/issues/562)) ([6b6dc4b](https://github.com/Kamra-PMS/kamra-pms/commit/6b6dc4bcd2b6d654eeaf41f00a79bce64d7c00c5))
+
 ## [2.7.8](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.7...v2.7.8) (2026-11-10)
 
 
