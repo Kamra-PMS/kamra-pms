@@ -27,7 +27,7 @@ import frappe
 from frappe.utils import add_days, date_diff, flt, getdate
 
 from kamra.authz import require_roles
-from kamra.folio import NOT_VOIDED
+from kamra.folio import NOT_VOIDED, STANDS_ON_ITS_DATE
 
 FOLIO_SKIP = ("Opening Balance", "Room Levy")
 FNB_TYPES = ("Food & Beverage",)
@@ -38,7 +38,7 @@ def _folio(property: str, start, end) -> dict:
 	row = frappe.db.sql(
 		"""
 		SELECT
-		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' AND """ + NOT_VOIDED + """ THEN
+		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' AND """ + STANDS_ON_ITS_DATE + """ THEN
 		        CONCAT(COALESCE(fc.reservation, f.reservation), fc.posting_date) END)
 		        AS room_nights,
 		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room', 'Discount')

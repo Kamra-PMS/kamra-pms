@@ -276,10 +276,11 @@ def owner_briefing(property: str, date: str | None = None):
 	)
 
 	# yesterday's room revenue + rooms sold from posted folio charges
+	from kamra.folio import STANDS_ON_ITS_DATE
 	rev, rooms_sold = frappe.db.sql(
 		"""
 		SELECT COALESCE(SUM(fc.amount), 0),
-		       COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room'
+		       COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' AND """ + STANDS_ON_ITS_DATE + """
 		                           THEN f.name END)
 		FROM `tabFolio Charge` fc
 		JOIN `tabFolio` f ON fc.parent = f.name
@@ -2737,8 +2738,11 @@ def post_discount(folio: str, value: float = 0, kind: str = "Percent",
 		frappe.throw(_("Pick a percent or an amount, per night or for the stay."))
 	label = ""
 	if (voucher_code or "").strip():
+		from kamra.folio import voided_rows
 		from kamra.pricing import validate_voucher
-		nights = sum(1 for c in doc.charges if c.charge_type == "Room")
+		voided = voided_rows(doc)
+		nights = sum(1 for c in doc.charges if c.charge_type == "Room"
+		             and not c.get("reversal_of") and c.name not in voided)
 		v = validate_voucher(doc.property, voucher_code, max(nights, 1))
 		if any(v.voucher_code in (c.description or "") for c in doc.charges
 		       if c.charge_type == "Allowance") or (

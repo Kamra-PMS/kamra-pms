@@ -20,6 +20,18 @@ NOT_VOIDED = """(IFNULL(fc.reversal_of, '') = '' AND NOT EXISTS (
 	SELECT 1 FROM `tabFolio Charge` v
 	WHERE v.parent = fc.parent AND v.reversal_of = fc.name))"""
 
+# SQL on `tabFolio Charge` fc: a line that stands on its own posting date,
+# for the day's statistics and audit checks. A line voided the same day
+# drops out with its reversal; one voided on a later business date still
+# stands on its own date, and its reversal is an adjustment on the void
+# date (OPERA dates the adjustment of a past revenue date on the current
+# business date: the closed day is not restated). A reversal line is never
+# a room sold. Sums need nothing: each day's lines add up on their own.
+STANDS_ON_ITS_DATE = """(IFNULL(fc.reversal_of, '') = '' AND NOT EXISTS (
+	SELECT 1 FROM `tabFolio Charge` v
+	WHERE v.parent = fc.parent AND v.reversal_of = fc.name
+	  AND v.posting_date = fc.posting_date))"""
+
 
 def _fnb_gst(property):
 	from kamra.localization import pack_for
@@ -1212,10 +1224,12 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 	})
 	_recalculate(folio)
 	folio.save(ignore_permissions=True)
-	# the reversal line's own ledger entry, linked to the original's
+	# the reversal line's own ledger entry, linked to the original's; a line
+	# that never reached the ledger (posted before it existed) takes none,
+	# so the folio and its ledger stay equal
 	first = _original_charge_entry(folio.name, row.name)
-	record_charge_ledger(folio, folio.charges[-1].as_dict(),
-	                     reversal_of=first.name if first else None)
+	if first:
+		record_charge_ledger(folio, folio.charges[-1].as_dict(), reversal_of=first.name)
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("void_charge", "Folio", folio.name, folio.property,
