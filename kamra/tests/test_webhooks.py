@@ -371,8 +371,9 @@ class MoneyEventsTestCase(_WebhookCase):
 
 	def test_every_new_event_is_subscribable_and_documented(self):
 		import os
-		doc = open(os.path.join(frappe.get_app_path("kamra"), "..", "docs-site",
-		                        "integrations.md")).read()
+		with open(os.path.join(frappe.get_app_path("kamra"), "..", "docs-site",
+		                       "integrations.md")) as handle:
+			doc = handle.read()
 		for event in wh.EVENTS:
 			self.assertIn(f"`{event}`", doc, event)
 

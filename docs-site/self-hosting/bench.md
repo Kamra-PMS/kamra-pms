@@ -5,7 +5,7 @@ For teams who prefer a classic Frappe bench over Docker.
 ## Prerequisites
 
 - Python **3.14** (Frappe v16 requirement) · Node **≥ 20** + yarn
-- MariaDB **10.6+ / 11.x** (utf8mb4) · Redis
+- MariaDB **10.6+ / 11.x** (utf8mb4) · Redis or Valkey (RESP-compatible)
 - wkhtmltopdf (invoice PDFs) · nginx + supervisor for production
 
 ## Install

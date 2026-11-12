@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { call } from "../lib/api"
+import { call, newIdempotencyKey } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
@@ -70,6 +70,9 @@ export default function CityLedgerPayment(props: {
   const [step, setStep] = useState<"form" | "confirm" | "done">("form")
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<Result | null>(null)
+  // one key per payment: a retry of the same press sends it again and the
+  // server posts nothing the second time; a new key after it lands
+  const [payKey, setPayKey] = useState(newIdempotencyKey)
 
   useEffect(() => {
     call<Account>("kamra.ledger.city_ledger_account", { account: props.account })
@@ -138,7 +141,9 @@ export default function CityLedgerPayment(props: {
         mode,
         reference: reference.trim() || undefined,
         allocations: manual ? JSON.stringify(plan) : undefined,
+        idempotency_key: payKey,
       })
+      setPayKey(newIdempotencyKey())
       setResult(out)
       setStep("done")
       props.onPosted()

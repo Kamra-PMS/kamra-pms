@@ -1300,12 +1300,15 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"""Record a refundable security deposit the guest has paid (villas:
 		the damage deposit). It is held on the guest folio as a liability,
 		not revenue, and refunded or withheld at check-out. mode: one of the
-		property's payment modes. Confirm the amount with staff first.""",
+		property's payment modes. Confirm the amount with staff first.
+		Pass idempotency_key (new UUID per collect) so a retry does not post
+		twice.""",
 		{
 			"reservation": _p("string"),
 			"amount": _p("number"),
 			"mode": _p("string"),
 			"reference": _p("string"),
+			"idempotency_key": PAYMENT_KEY_PARAM,
 		},
 		required=("reservation", "amount", "mode"),
 		mutating=True,

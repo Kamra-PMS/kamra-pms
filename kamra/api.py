@@ -955,14 +955,18 @@ def security_deposit(reservation: str):
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def collect_security_deposit(reservation: str, amount: float,
                              mode: str = "Cash", reference: str | None = None,
-                             pin: str | None = None):
+                             pin: str | None = None,
+                             idempotency_key: str | None = None):
 	"""Take a refundable security deposit (villas: the damage deposit). Lands
 	on the guest folio as a Security Deposit payment and in the Deposit
 	ledger - a liability held for the guest, never revenue. Cashier PIN and
-	open till as for any payment."""
+	open till as for any payment.
+
+	Pass idempotency_key (one per Collect press): a retry with the same key
+	returns the first result instead of posting again."""
 	from kamra.deposit import collect_deposit
 	return collect_deposit(reservation, amount, mode=mode, reference=reference,
-	                       pin=pin)
+	                       pin=pin, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -5039,6 +5043,7 @@ def check_out(reservation: str, credit_override_reason: str | None = None,
 	from kamra.deposit import apply_held_to_bill
 	apply_held_to_bill(doc)
 	doc.status = "Checked Out"
+	doc.flags.kamra_check_out = True  # passed the checks above (Reservation.validate)
 	doc.save()
 	_scrub_stay_ids(doc)
 	from kamra.savings import log_action
@@ -6094,7 +6099,8 @@ def booking_options(property: str):
 			fields=["name", "room_type_code", "room_type_name", "base_price",
 			        "adults_capacity", "children_capacity", "room_category",
 			        "max_extra_beds"],
-			order_by="base_price asc",
+			# cheapest first; name breaks ties so the dialog default is stable (#549)
+			order_by="base_price asc, room_type_name asc",
 		),
 		"meal_plans": frappe.get_all(
 			"Meal Plan", filters={"property": property, "disabled": 0},
