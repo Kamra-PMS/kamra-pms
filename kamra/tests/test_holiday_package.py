@@ -8,7 +8,6 @@ import frappe
 from frappe.utils import add_days, getdate
 
 from kamra import pricing, rates
-from kamra.kamra.doctype.holiday_package.holiday_package import HolidayPackage
 from kamra.tests.audit_fixtures import PROP_A, TODAY, AuditTestCase, make_property, make_room_type
 
 
@@ -212,7 +211,7 @@ class HolidayPackageTestCase(AuditTestCase):
 
 	def test_active_holiday_package_resolution_and_priority(self):
 		"""Package discovery respects date coverage, room type specificity and priority."""
-		pkg_general = self.make_package(package_name="General House Package", room_type="", priority=10)
+		self.make_package(package_name="General House Package", room_type="", priority=10)
 		pkg_specific = self.make_package(package_name="Room Specific Package", room_type=self.rt, priority=10)
 
 		# Specific room type package wins over general
@@ -315,7 +314,7 @@ class HolidayPackageTestCase(AuditTestCase):
 
 	def test_stay_season_rules_and_rates_explain_night(self):
 		"""Stay rules and explain_night expose package attributes, package_nights, and OTA rate."""
-		pkg = self.make_package()
+		self.make_package()
 
 		rules = pricing.stay_season_rules(PROP_A, self.day0, self.day3, self.rt)
 		self.assertEqual(rules["minimum_nights"], 3)
