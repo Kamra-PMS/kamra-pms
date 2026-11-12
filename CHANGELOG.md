@@ -32,6 +32,7 @@ upgrade-breaking changes (removed doctypes / API contracts).
 ### Bug Fixes
 
 * agent books by the hour, takes advances, reads outlets and expenses; monthly department revenue ([#554](https://github.com/Kamra-PMS/kamra-pms/issues/554)) ([108171a](https://github.com/Kamra-PMS/kamra-pms/commit/108171acf298ba663c35b4b4b7dfd801cb90f142))
+* **receivables:** finance overview (to bill, billed and pending, overdue, received this month, guests left owing, advances held), each company's account history, and the bills each payment paid; a no-show or cancellation fee takes the advance out of the deposit ledger; a room charge voided on the folio is no longer food revenue; an outlet set to 0% tax no longer charges 5%; open laundry or restaurant bills stop the check-out ([#561](https://github.com/Kamra-PMS/kamra-pms/issues/561)) ([660fbb3](https://github.com/Kamra-PMS/kamra-pms/commit/660fbb36e59cfa334c7a748053815e5155237573))
 * **checkout:** a stay is checked out only through Check out; a tax-free property offers only 0% ([#562](https://github.com/Kamra-PMS/kamra-pms/issues/562)) ([6b6dc4b](https://github.com/Kamra-PMS/kamra-pms/commit/6b6dc4bcd2b6d654eeaf41f00a79bce64d7c00c5))
 
 ## [2.7.8](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.7...v2.7.8) (2026-11-10)
