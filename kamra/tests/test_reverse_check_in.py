@@ -9,9 +9,12 @@ there the desk can check the guest in again or cancel the booking.
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import frappe
 
 from kamra import api
+from kamra.door_lock import DoorLockAdapter, KeyResult
 from kamra.tests.audit_fixtures import (
 	PROP_A,
 	TODAY,
@@ -25,6 +28,23 @@ from kamra.tests.audit_fixtures import (
 )
 
 
+class _Lock(DoorLockAdapter):
+	"""A connected lock system that records what it was asked to do."""
+
+	key = "ut-lock"
+	label = "UT lock"
+
+	def __init__(self):
+		self.revoked = []
+
+	def issue_key(self, request):
+		return KeyResult(ok=True, adapter=self.key)
+
+	def revoke_keys(self, property, reservation, room):
+		self.revoked.append((property, reservation, room))
+		return KeyResult(ok=True, adapter=self.key, message="UT keys cancelled")
+
+
 class ReverseCheckInTestCase(AuditTestCase):
 	properties = (PROP_A,)
 
@@ -36,7 +56,8 @@ class ReverseCheckInTestCase(AuditTestCase):
 		self.room = make_room(PROP_A, self.rt, "101")
 		frappe.db.set_value("Room", self.room, "housekeeping_status", "Clean")
 		self.res = make_reservation(PROP_A, self.rt, TODAY, d(2),
-		                            status="Checked In", room=self.room)
+		                            status="Checked In", room=self.room,
+		                            occupants=[{"full_name": "UT Partner"}])
 		# checked in today, on the property's business date
 		frappe.db.set_value("Reservation", self.res.name, "checked_in_at",
 		                    f"{TODAY} 10:00:00")
@@ -96,3 +117,31 @@ class ReverseCheckInTestCase(AuditTestCase):
 		frappe.db.set_value("Property", PROP_A, "business_date", d(1))
 		self.assertFalse(api.reservation_detail(self.res.name)["actions"]
 		                 .get("can_reverse_check_in"))
+
+	def test_a_connected_lock_cancels_the_keys(self):
+		lock = _Lock()
+		with patch("kamra.door_lock.get_adapter", return_value=lock):
+			out = api.reverse_check_in(self.res.name, "Wrong guest")
+		self.assertEqual(lock.revoked, [(PROP_A, self.res.name, self.room)])
+		self.assertTrue(out["key_result"]["ok"])
+
+	def test_manual_keys_are_left_to_the_desk(self):
+		out = api.reverse_check_in(self.res.name, "Wrong guest")
+		self.assertIsNone(out.get("key_result"))
+
+	def test_the_next_check_in_stamps_arrival_afresh(self):
+		occ = lambda: frappe.get_doc("Reservation", self.res.name).occupants[0]  # noqa: E731
+		self.assertTrue(occ().arrived_at)
+		api.reverse_check_in(self.res.name, "Wrong guest")
+		self.assertIsNone(occ().arrived_at)
+		api.check_in(self.res.name)
+		self.assertEqual(occ().arrived_at, frappe.db.get_value(
+			"Reservation", self.res.name, "checked_in_at"))
+
+	def test_refused_while_a_security_deposit_is_held(self):
+		frappe.get_doc({"doctype": "Security Deposit", "reservation": self.res.name,
+		                "property": PROP_A, "status": "Held", "method": "authorization",
+		                "required_amount": 5000}).insert(ignore_permissions=True)
+		with self.assertRaisesRegex(frappe.ValidationError, "security deposit"):
+			api.reverse_check_in(self.res.name, "Wrong guest")
+		self.assertEqual(self.status(), "Checked In")
