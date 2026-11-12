@@ -619,6 +619,13 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 	acc = frappe.get_doc("City Ledger Account", account)
 	acc.balance = float(acc.balance or 0) + balance
 	acc.save(ignore_permissions=True)
+	from kamra.webhooks import emit_ar
+	emit_ar("ar.bill_created", doc.property, {
+		"account": account, "company": company, "folio": doc.name,
+		"folio_type": doc.get("folio_type"), "reservation": doc.get("reservation"),
+		"invoice_date": str(inv_date),
+		"due_date": str(due_date_for(account, inv_date, doc.property)),
+		"amount": round(balance, 2), "account_balance": round(float(acc.balance), 2)})
 	# money the company already paid ahead (an unapplied credit) settles
 	# this new bill straight away
 	applied = apply_unapplied_credit(account, only_folio=doc.name)
@@ -997,6 +1004,15 @@ def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
 	acc.balance = float(acc.balance or 0) - amount
 	acc.save(ignore_permissions=True)
 	applied_total = round(sum(a["amount"] for a in plan), 2)
+	from kamra.webhooks import emit_ar
+	emit_ar("ar.payment_recorded", acc.property, {
+		"account": account, "company": acc.company, "payment": payment.name,
+		"posting_date": str(bd), "mode": mode, "reference": reference or None,
+		"amount": amount,
+		"applied": [{"folio": a["folio"], "amount": round(float(a["amount"]), 2)}
+		            for a in plan],
+		"unapplied": round(amount - applied_total, 2),
+		"account_balance": round(float(acc.balance), 2)})
 	from kamra.savings import log_action
 	log_action("city_ledger_settle", "City Ledger Account", account,
 	           acc.property,

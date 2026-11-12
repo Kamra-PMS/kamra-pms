@@ -207,9 +207,10 @@ def release_expired_blocks() -> list[dict]:
 		frappe.db.savepoint(sp)
 		try:
 			doc = frappe.get_doc("Group Booking", gb.name)
-			parts, total = [], 0
+			parts, total, rows = [], 0, []
 			for row in doc.blocks:
 				n = _unpicked(doc.name, row.room_type)
+				rows.append({"room_type": row.room_type, "rooms_released": n})
 				# the release record: written straight to the rows - a
 				# system stamp, not an edit of the negotiated block
 				frappe.db.set_value("Group Room Block", row.name,
@@ -232,6 +233,8 @@ def release_expired_blocks() -> list[dict]:
 			)
 			released.append({"group_booking": doc.name, "rooms_released": total})
 			if total:
+				from kamra.webhooks import emit_group_block_released
+				emit_group_block_released(doc, rows)
 				from kamra.channel_manager import enqueue_property_push
 				enqueue_property_push(doc.property)
 		except Exception:

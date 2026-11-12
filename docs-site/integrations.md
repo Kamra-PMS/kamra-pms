@@ -96,6 +96,23 @@ its own property.
 | `guest.checked_out` | A stay is checked out. |
 | `folio.posted` | A charge is posted to a guest, company or group folio. This covers desk charges, POS, external POS, laundry, banquet billing and deposit withholds. The night audit's room nights are summed in `night_audit.closed` instead. |
 | `night_audit.closed` | The night audit closes a business date. |
+| `folio.charge_voided` | A charge line is voided off an open folio. Carries the line as it was and the reason. |
+| `folio.discount_applied` | A discount, promo code or allowance posts to a folio. One event per line (a discount over several tax rates posts several lines). An allowance waiting for approval sends `approval.requested` first and this one once it is approved. |
+| `folio.refunded` | Money is refunded on a folio: an over-payment, an advance or a security deposit. |
+| `rate.overridden` | A rate is typed in by hand: a stay's nightly rate on a room move (`scope: "stay"`), or a room type's rate for dates set by a Revenue Manager (`scope: "room_type"`). |
+| `approval.requested` | An allowance or discount above the approval line waits for a manager. |
+| `approval.decided` | A manager approves or rejects it. `status` is `Approved` or `Rejected`. |
+| `deposit.received` | An advance or a security deposit is taken. |
+| `deposit.refunded` | An advance still held for an arrival, or a security deposit, is refunded. `folio.refunded` fires for the same refund too. |
+| `ar.bill_created` | A bill moves to a company's city ledger account: a checkout to the company or a direct AR invoice. |
+| `ar.payment_recorded` | A company's payment is recorded on its account, with what it paid. |
+| `cashier.session_closed` | A cashier counts the drawer and closes the till. |
+| `group.block_released` | A group's cutoff passes and its unpicked rooms go back on sale. |
+
+Every event is sent once, from the one function that makes the change,
+inside the same transaction. A change that rolls back sends nothing.
+Amounts are in the property's currency (`currency`) and always positive;
+the event name says which way the money moved.
 
 ### Payload
 
@@ -120,6 +137,108 @@ its own property.
     "changes": {"status": ["Confirmed", "Checked In"]}
   }
 }
+```
+
+### Sample payloads
+
+Only `data` is shown; the envelope is the same for every event.
+
+`folio.charge_voided`
+
+```json
+{"folio": "FOL-2026-00311", "folio_type": "Guest", "reservation": "RES-2026-00042",
+ "charge": {"row": "a1b2c3d4e5", "posting_date": "2026-10-19", "charge_type": "Minibar",
+            "description": "Minibar", "amount": 450.0, "tax_rate": 18.0},
+ "reason": "Posted to the wrong room", "currency": "INR", "balance": 11800.0}
+```
+
+`folio.discount_applied`
+
+```json
+{"folio": "FOL-2026-00311", "folio_type": "Guest", "reservation": "RES-2026-00042",
+ "amount": 1000.0, "tax_rate": 12.0, "reason": "Discount 10%: repeat guest",
+ "serial": "ALW-2026-00017", "approved_by": "manager@hotel.example",
+ "allowance_request": "ALR-2026-00017", "currency": "INR", "balance": 10680.0}
+```
+
+`folio.refunded`, `deposit.received`, `deposit.refunded`
+
+```json
+{"folio": "FOL-2026-00311", "folio_type": "Guest", "reservation": "RES-2026-00042",
+ "payment": {"row": "f6e5d4c3b2", "kind": "Refund", "mode": "Cash",
+             "posting_date": "2026-10-21", "amount": 2000.0,
+             "reference": "Security deposit refund SD-2026-00008"},
+ "currency": "INR", "balance": 0.0}
+```
+
+For `deposit.received`, `payment.kind` is `Advance` or `Security Deposit`.
+
+`rate.overridden`
+
+```json
+{"scope": "stay", "reservation": "RES-2026-00042", "room_type": "Kamra Demo Palace-STE",
+ "room": "Kamra Demo Palace-301", "rate": 7500.0, "start_date": "2026-10-19",
+ "end_date": "2026-10-21", "previous_amount": 11800.0, "amount_after_tax": 16800.0,
+ "reason": "Upgrade agreed with the guest", "currency": "INR"}
+```
+
+```json
+{"scope": "room_type", "season": "SEAS-00031", "room_type": "Kamra Demo Palace-DLX",
+ "rate": 6200.0, "start_date": "2026-12-24", "end_date": "2026-12-31",
+ "days_of_week": null, "reason": "Holiday demand", "currency": "INR"}
+```
+
+`approval.requested`, `approval.decided`
+
+```json
+{"approval": "ALR-2026-00017", "type": "allowance", "status": "Approved",
+ "folio": "FOL-2026-00311", "reservation": "RES-2026-00042", "amount": 1000.0,
+ "tax_rate": 12.0, "reason": "Service recovery", "reason_code": "SVC",
+ "requested_by": "desk@hotel.example", "channel": "Desk",
+ "decided_by": "manager@hotel.example", "decision_note": null,
+ "serial": "ALW-2026-00017", "currency": "INR"}
+```
+
+On `approval.requested`, `status` is `Pending` and the decision fields are null.
+
+`ar.bill_created`
+
+```json
+{"account": "CLA-00004", "company": "Acme Travel", "folio": "FOL-2026-00311",
+ "folio_type": "Company", "reservation": "RES-2026-00042",
+ "invoice_date": "2026-10-21", "due_date": "2026-11-20", "amount": 11800.0,
+ "account_balance": 45200.0, "currency": "INR"}
+```
+
+`ar.payment_recorded`
+
+```json
+{"account": "CLA-00004", "company": "Acme Travel", "payment": "CLE-2026-00123",
+ "posting_date": "2026-11-05", "mode": "Bank Transfer", "reference": "UTR 88231",
+ "amount": 20000.0,
+ "applied": [{"folio": "FOL-2026-00311", "amount": 11800.0},
+             {"folio": "FOL-2026-00290", "amount": 8200.0}],
+ "unapplied": 0.0, "account_balance": 25200.0, "currency": "INR"}
+```
+
+`cashier.session_closed`
+
+```json
+{"session": "CS-2026-00201", "business_date": "2026-10-21",
+ "user": "desk@hotel.example", "closed_by": "desk@hotel.example",
+ "opened_at": "2026-10-21 07:01:12", "closed_at": "2026-10-21 15:04:40",
+ "opening_float": 5000.0, "expected_cash": 18450.0, "counted_cash": 18400.0,
+ "variance": -50.0, "variance_status": null, "currency": "INR"}
+```
+
+`group.block_released`
+
+```json
+{"group_booking": "GRP-2026-00012", "group_name": "Annual Offsite",
+ "check_in_date": "2026-12-10", "check_out_date": "2026-12-12",
+ "cutoff_date": "2026-11-25", "rooms_released": 6,
+ "blocks": [{"room_type": "Kamra Demo Palace-DLX", "rooms_released": 4},
+            {"room_type": "Kamra Demo Palace-STE", "rooms_released": 2}]}
 ```
 
 A payload contains only the record of the subscription's own property.

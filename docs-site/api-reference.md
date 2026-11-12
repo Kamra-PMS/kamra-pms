@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **488 endpoints**, generated from the source
+the UI and the AI use. **489 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -5480,6 +5480,18 @@ keys (current, b30, b60, b90, b90p) are kept for older callers.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+### `kamra.ledger.city_ledger_history`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+Everything that ever moved on one company's account, oldest first, with
+the running balance: each bill (and the guest it was for), credit note,
+adjustment and payment (with the bills it cleared).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
 
 ### `kamra.ledger.city_ledger_account`
 

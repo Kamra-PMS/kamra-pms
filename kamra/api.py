@@ -245,6 +245,11 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 	               f"Set {room_type.split('-')[-1]} rate "
 	               f"{money_text(property, round(rate))} "
 	               f"for {start_date}→{end_date}"))
+	from kamra.webhooks import emit_rate_overridden
+	emit_rate_overridden(property, {
+		"scope": "room_type", "season": season.name, "room_type": room_type,
+		"rate": rate, "start_date": str(start_date), "end_date": str(end_date),
+		"days_of_week": days_str or None, "reason": (reason or "").strip() or None})
 	return {
 		"season": season.name, "rate": rate,
 		"guardrail_checked": rails_applied[0] if rails_applied else None,
@@ -1686,6 +1691,9 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		record_payment_ledger(doc, pay.as_dict(), session=sess)
 	except Exception:
 		frappe.log_error(title="ledger payment write failed")
+	if kind in ("Advance", "Security Deposit"):
+		from kamra.webhooks import emit_payment
+		emit_payment("deposit.received", doc, pay)
 	if kind == "Advance" and doc.reservation and frappe.db.get_value(
 			"Reservation", doc.reservation, "status") == "Checked In":
 		# an advance taken from a guest already in house pays the stay
@@ -1802,6 +1810,10 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 		record_payment_ledger(doc, pay.as_dict(), session=sess, ledger=ledger)
 	except Exception:
 		frappe.log_error(title="ledger refund write failed")
+	from kamra.webhooks import emit_payment
+	emit_payment("folio.refunded", doc, pay)
+	if ledger == "Deposit":  # a security deposit, or an advance still held
+		emit_payment("deposit.refunded", doc, pay)
 	if release_advance and doc.reservation:
 		paid = float(frappe.db.get_value(
 			"Reservation", doc.reservation, "advance_paid") or 0)
@@ -2612,6 +2624,8 @@ def post_allowance(folio: str, amount: float, reason: str = "",
 				"requested_on": now_datetime(),
 				"channel": agent_channel() or "Desk",
 			}).insert(ignore_permissions=True)
+			from kamra.webhooks import emit_approval
+			emit_approval("approval.requested", req)
 			from kamra.savings import log_action
 			log_action("allowance_requested", "Folio", doc.name, doc.property,
 			           rationale=f"Asked for an allowance of "
@@ -2861,6 +2875,8 @@ def _post_allowance(folio: str, amount: float, text: str, gst_rate,
 		req.insert(ignore_permissions=True)
 	else:
 		req.serial = serial
+	from kamra.webhooks import emit_discount_applied
+	emit_discount_applied(folio, amount, gst_rate, text, serial, approver, req.name)
 	from kamra.savings import log_action
 	from kamra.localization import money_text
 	log_action("allowance", "Folio", folio,
@@ -2927,6 +2943,8 @@ def decide_allowance(allowance_request: str, approve: int = 1,
 	req.decision_note = note
 	req.flags.kamra_decision = True
 	req.save(ignore_permissions=True)
+	from kamra.webhooks import emit_approval
+	emit_approval("approval.decided", req)
 	return {"ok": True, "request": req.name, "status": req.status,
 	        "decided_by": approver, "serial": req.serial}
 
@@ -5732,6 +5750,15 @@ def move_reservation(reservation: str, new_room: str,
 		         f"{float(doc.amount_after_tax or 0):,.2f} (confirmed)")
 	if rate_mode != "destination":
 		note += f" · rate: {rate_mode}"
+	if rate_mode == "custom":
+		from kamra.webhooks import emit_rate_overridden
+		emit_rate_overridden(doc.property, {
+			"scope": "stay", "reservation": doc.name, "room_type": doc.room_type,
+			"room": doc.room, "rate": float(agreed_rate or 0),
+			"start_date": str(doc.check_in_date), "end_date": str(doc.check_out_date),
+			"previous_amount": round(old_amount, 2),
+			"amount_after_tax": round(float(doc.amount_after_tax or 0), 2),
+			"reason": (reason or "").strip() or None})
 	if (reason or "").strip():
 		note += f" · {reason.strip()[:140]}"
 	log_action("room_move", "Reservation", doc.name, doc.property, rationale=note)
