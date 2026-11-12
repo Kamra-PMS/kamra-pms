@@ -91,7 +91,9 @@ async function doFetch(path: string, init?: RequestInit, retried = false): Promi
     // excluded so it doesn't trigger a session re-check.
     if (
       (res.status === 401 || res.status === 403) &&
-      !path.includes("/api/method/login")
+      !path.includes("/api/method/login") &&
+      !path.includes("user.reset_password") &&
+      !path.includes("user.update_password")
     ) {
       window.dispatchEvent(new Event("kamra:auth-error"))
     }
@@ -157,6 +159,34 @@ export async function login(usr: string, pwd: string) {
 
 export async function logout() {
   await doFetch("/api/method/logout", { method: "POST" })
+  announceSessionChange()
+}
+
+/** Ask Frappe to email a reset link. Same reply whether the account exists. */
+export async function requestPasswordReset(user: string) {
+  await doFetch("/api/method/frappe.core.doctype.user.user.reset_password", {
+    method: "POST",
+    body: JSON.stringify({ user }),
+  })
+}
+
+/** Set a new password from a reset email key, or change it while signed in
+ *  (pass the current password). Frappe signs the user in on success. */
+export async function updatePassword(opts: {
+  new_password: string
+  key?: string
+  old_password?: string
+  logout_all_sessions?: boolean
+}) {
+  await doFetch("/api/method/frappe.core.doctype.user.user.update_password", {
+    method: "POST",
+    body: JSON.stringify({
+      new_password: opts.new_password,
+      key: opts.key || undefined,
+      old_password: opts.old_password || undefined,
+      logout_all_sessions: opts.logout_all_sessions ? 1 : 0,
+    }),
+  })
   announceSessionChange()
 }
 
