@@ -2053,7 +2053,7 @@ def bill_data(order: str):
 		"POS Outlet", doc.outlet, ["outlet_name", "gst_rate"], as_dict=True)
 	property_name = frappe.db.get_value(
 		"Property", doc.property, "property_name") or doc.property
-	gst_rate = 0.0 if doc.nc else float(outlet.gst_rate or 5)
+	gst_rate = 0.0 if doc.nc else float(5 if outlet.gst_rate is None else outlet.gst_rate)
 	taxable = float(doc.order_total or 0)
 	gst_amount = round(taxable * gst_rate / 100, 2)
 	# the tax is named and split the country's way (CGST+SGST in India,

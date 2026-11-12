@@ -102,8 +102,19 @@ def _outlets(property: str, start, end) -> list[dict]:
 		  AND COALESCE(o.business_date, DATE(o.creation)) BETWEEN %(s)s AND %(e)s
 		GROUP BY o.name
 		""", {"p": property, "s": start, "e": end}, as_dict=True)
+	# a bill charged to a room is revenue only while its charge is on a
+	# folio: a void at the desk removes the line (a transfer keeps the order
+	# number in it) but leaves the order Delivered, so it counted as sold
+	to_room = [r.bill for r in rows if not r.paid]
+	on_folio = {o for (o,) in frappe.db.sql(
+		"""SELECT o.name FROM `tabPOS Order` o WHERE o.name IN %(b)s AND EXISTS (
+		       SELECT 1 FROM `tabFolio Charge` c WHERE c.parenttype = 'Folio'
+		         AND c.description LIKE CONCAT('%%(', o.name, ')%%'))""",
+		{"b": tuple(to_room)})} if to_room else set()
 	out: dict[str, dict] = {}
 	for r in rows:
+		if not r.paid and r.bill not in on_folio:
+			continue
 		gross = flt(r.food) + flt(r.bev)
 		keep = 1 - (flt(r.discount_amount) / gross) if gross else 0
 		o = out.setdefault(r.outlet, {"outlet": r.outlet, "bills": 0, "food": 0.0,

@@ -183,3 +183,34 @@ class AuditReportTestCase(AuditTestCase):
 		execute()
 		self.assertEqual(str(frappe.db.get_value("POS Order", to_room, "business_date")), TODAY)
 		self.assertEqual(str(frappe.db.get_value("POS Order", paid, "business_date")), "2020-01-05")
+
+	def test_a_restaurant_bill_voided_on_the_folio_is_not_revenue(self):
+		from kamra import folio as fm
+		from kamra.tests.audit_fixtures import guest_folio
+		outlet, dosa, _gin = self.outlet()
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		order = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}],
+		                         room=self.room, order_type="Room Service")["order"]
+		pos.deliver_order(order)
+		before = audit_report.build(PROP_A, TODAY)["periods"][0]["food"]
+		self.assertGreater(before, 0)
+		folio = guest_folio(res.name)
+		row = next(c.name for c in frappe.get_doc("Folio", folio).charges
+		           if f"({order})" in (c.description or ""))
+		fm.void_charge(folio, row, "UT no price agreed")
+		self.assertEqual(audit_report.build(PROP_A, TODAY)["periods"][0]["food"], 0)
+
+	def test_a_zero_tax_outlet_charges_no_tax_to_the_room(self):
+		from kamra.tests.audit_fixtures import guest_folio
+		outlet, dosa, _gin = self.outlet()
+		frappe.db.set_value("POS Outlet", outlet, "gst_rate", 0)
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		order = pos.create_order(outlet, [{"menu_item": dosa, "qty": 1}],
+		                         room=self.room, order_type="Room Service")["order"]
+		pos.deliver_order(order)
+		line = next(c for c in frappe.get_doc("Folio", guest_folio(res.name)).charges
+		            if f"({order})" in (c.description or ""))
+		self.assertEqual(float(line.gst_rate), 0)
+		self.assertEqual(pos.bill_data(order)["gst_rate"], 0)
