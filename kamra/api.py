@@ -3342,8 +3342,8 @@ def guest_search(q: str):
 def guest_alert(guest: str | None = None, phone: str | None = None):
 	"""Is the guest a booking would attach to blacklisted? The desk asks
 	before booking so the warning shows up front, not as a refusal at the
-	end. Resolves exactly like create_booking: the chosen profile, else the
-	profile with this phone number."""
+	end. The chosen profile, else the profile with this phone number (which
+	create_booking reuses only when the typed name matches too)."""
 	from kamra import phone as phone_mod
 	name = guest or (frappe.db.get_value("Guest", {"phone": phone_mod.matching(phone)})
 	                 if phone else None)
@@ -6658,7 +6658,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		if not frappe.db.exists("Guest", guest):
 			frappe.throw(f"Guest profile {guest} not found.")
 	else:
-		guest = _find_or_create_guest(guest_name, phone, property)
+		# a phone already on another profile never replaces the typed name,
+		# but a blacklisted profile's number still meets its blacklist
+		from kamra import phone as phone_mod
+		banned = phone and frappe.db.get_value(
+			"Guest", {"phone": phone_mod.matching(phone, property), "blacklisted": 1})
+		guest = banned or _guest_for_row(guest_name, phone, property)
 	_blacklist_gate(guest, property, blacklist_override_reason)
 	if guest_category:
 		frappe.db.set_value("Guest", guest, "guest_category", guest_category)
@@ -6854,7 +6859,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 				raise
 			# Guest may have been created in the rolled-back transaction
 			if not frappe.db.exists("Guest", guest):
-				guest = _find_or_create_guest(guest_name, phone, property)
+				guest = _guest_for_row(guest_name, phone, property)
 			payload = doc.as_dict()
 			payload.pop("name", None)
 			payload["guest"] = guest
