@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { call } from "../lib/api"
+import { call, newIdempotencyKey } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { fmtMoney, loadLocale, locale, sellsAlcohol, useLocale } from "../lib/money"
 import { useCashierAuth } from "../lib/cashierAuth"
@@ -254,6 +254,8 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
     is_alcohol: false,
   })
   const [pay, setPay] = useState({ folio: "", mode: locale().payment_modes[0] ?? "Cash", amount: "", reference: "" })
+  // one key per Collect press: a retry after a lost response replays (#550)
+  const [payKey, setPayKey] = useState(newIdempotencyKey)
 
   useEffect(() => {
     loadLocale().then((l) => setRates(l.tax_rates))
@@ -540,7 +542,9 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
                 kind: "Payment",
                 amount: Number(pay.amount),
                 reference: pay.reference || undefined,
+                idempotency_key: payKey,
               })
+              setPayKey(newIdempotencyKey())
               setPay({ ...pay, amount: "", reference: "" })
             }, t("Payment recorded."))
           }

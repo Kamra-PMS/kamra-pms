@@ -246,6 +246,9 @@ on the guest folio as a Security Deposit payment and in the Deposit
 ledger - a liability held for the guest, never revenue. Cashier PIN and
 open till as for any payment.
 
+Pass idempotency_key (one per Collect press): a retry with the same key
+returns the first result instead of posting again.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
@@ -253,6 +256,7 @@ open till as for any payment.
 | `mode` | no | `'Cash'` |
 | `reference` | no | `None` |
 | `pin` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.waive_security_deposit`
 

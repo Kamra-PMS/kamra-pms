@@ -39,6 +39,9 @@ def ensure_individual_siu(room_name: str) -> str | None:
 			"unit_kind": "individual",
 			"is_active": 1,
 			"room_type": room.room_type,
+			# Type group on create. Hybrid estate alignment is a separate step
+			# (_align_estate_competition) so a Villa type that sells its own
+			# Room units is not locked by its own whole_property SIU.
 			"competition_group": f"{room.property}::{room.room_type}",
 			"is_auto_assignable": 1,
 			"physical_rooms": [{"room": room.name}],
@@ -49,6 +52,62 @@ def ensure_individual_siu(room_name: str) -> str | None:
 		doc.unit_name = f"{room.room_type.split('-')[-1]} {room.room_number}"
 	doc.insert(ignore_permissions=True)
 	return doc.name
+
+
+def sync_individual_siu_room_type(room_name: str) -> str | None:
+	"""Keep the individual Sellable Unit in step when Room.room_type changes.
+
+	Shared / multi-room units refuse the change. A room that also sits on a
+	whole_property (villa estate) SIU is dropped from that estate list so the
+	individual unit can follow the new type (#548).
+	"""
+	room = frappe.db.get_value(
+		"Room",
+		room_name,
+		["name", "property", "room_number", "room_type"],
+		as_dict=True,
+	)
+	if not room:
+		return None
+
+	parents = frappe.db.sql(
+		"SELECT parent FROM `tabSellable Unit Room` WHERE room = %s",
+		room.name,
+	)
+	if not parents:
+		return ensure_individual_siu(room.name)
+
+	synced = None
+	for (parent,) in parents:
+		unit = frappe.get_doc("Sellable Unit", parent)
+		if unit.unit_kind == "whole_property":
+			# Room left this villa type's inventory; estate list drops it.
+			unit.set(
+				"physical_rooms",
+				[r for r in unit.physical_rooms if r.room != room.name],
+			)
+			unit.save(ignore_permissions=True)
+			continue
+		if unit.unit_kind != "individual" or len(unit.physical_rooms) != 1:
+			frappe.throw(
+				frappe._(
+					"Room {0} is part of sellable unit {1} and cannot change "
+					"room type."
+				).format(room.room_number or room.name, unit.unit_name)
+			)
+		if unit.room_type != room.room_type:
+			unit.room_type = room.room_type
+			# Stay on estate if already hybrid-aligned; else follow the type.
+			if (unit.competition_group or "").endswith("::estate"):
+				unit.competition_group = f"{room.property}::estate"
+			else:
+				unit.competition_group = f"{room.property}::{room.room_type}"
+			unit.save(ignore_permissions=True)
+		synced = unit.name
+
+	if not synced:
+		synced = ensure_individual_siu(room.name)
+	return synced
 
 
 def ensure_whole_property_siu(room_type_name: str) -> str | None:
