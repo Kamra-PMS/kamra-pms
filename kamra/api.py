@@ -4923,6 +4923,11 @@ def _reverse_check_in_blocker(doc) -> str | None:
 	if folios and (frappe.db.exists("Folio Charge", {"parent": ("in", folios)})
 	               or frappe.db.exists("Folio Payment", {"parent": ("in", folios)})):
 		return _("A charge or payment is on the bill: void it, or check the guest out.")
+	# an authorization holds the deposit with no payment on the bill
+	if frappe.db.exists("Security Deposit", {"reservation": doc.name,
+	                                         "status": ("in", ("Collected", "Held"))}):
+		return _("A security deposit is held for this stay: release or refund it "
+		         "first, or check the guest out.")
 	return None
 
 
@@ -4952,16 +4957,44 @@ def reverse_check_in(reservation: str, reason: str, pin: str | None = None):
 		frappe.flags.kamra_status_transition = False
 	doc.db_set({"actual_check_in": None, "checked_in_at": None, "checked_in_by": None},
 	           update_modified=False)
+	# nobody is in house: the next check-in stamps everyone's arrival again
+	for occ in doc.get("occupants") or []:
+		if occ.get("arrived_at"):
+			occ.db_set("arrived_at", None, update_modified=False)
 	for room in rooms:
 		if frappe.db.get_value("Room", room, "housekeeping_status") == "Out of Order":
 			frappe.db.set_value("Room", room, "occupancy_status", "Vacant")
 		else:
 			frappe.db.set_value("Room", room, {"occupancy_status": "Vacant",
 			                                   "housekeeping_status": "Dirty"})
+	key_result = _revoke_stay_keys(doc)
 	from kamra.savings import log_action
 	log_action("reverse_check_in", "Reservation", doc.name, doc.property,
 	           rationale=f"{doc.guest_name}: {reason}")
-	return {"ok": True, "reservation": doc.name, "status": doc.status}
+	return {"ok": True, "reservation": doc.name, "status": doc.status,
+	        "key_result": key_result}
+
+
+def _revoke_stay_keys(doc) -> dict | None:
+	"""Cancel the stay's keys on a connected lock system (door_lock
+	revoke_keys). The manual adapter has nothing to call: the desk collects
+	the cards. A connector failure is shown, never raised."""
+	from kamra.door_lock import get_adapter
+	adapter = get_adapter(doc.property)
+	if adapter.key == "manual" or not adapter.supports_revoke or not doc.room:
+		return None
+	try:
+		result = adapter.revoke_keys(doc.property, doc.name, doc.room)
+	except Exception:
+		frappe.log_error(title=f"Door lock {adapter.key} revoke_keys failed")
+		return {"ok": False, "adapter": adapter.key, "manual": False,
+		        "message": _("The lock system did not answer. Cancel the keys at the encoder.")}
+	from kamra.savings import log_action
+	log_action("revoke_keys", "Reservation", doc.name, doc.property,
+	           rationale=f"check-in reversed, keys via {adapter.key}: "
+	                     f"{'ok' if result.ok else 'failed'}")
+	return {"ok": bool(result.ok), "adapter": result.adapter,
+	        "manual": bool(result.manual), "message": result.message}
 
 
 @frappe.whitelist(methods=["POST"])
