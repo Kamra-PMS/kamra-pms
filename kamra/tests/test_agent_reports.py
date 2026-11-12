@@ -34,14 +34,14 @@ EXPECTED = {
 		{"front_office", "housekeeping", "fnb", "engineering", "laundry"}),
 	"Night Auditor": (
 		{"manager_flash", "cashier_shift_report", *BUILDER},
-		FRONT_DESK | {"folio_charges", "payments"} | FO_EXTRA,
+		FRONT_DESK | {"folio_charges", "payments", "department_revenue"} | FO_EXTRA,
 		{"front_office", "hotel_manager"}),
 	"Finance": (
 		{"manager_flash", "cashier_shift_report", "voids_allowances_report",
 		 "outlets", "outlet_dashboard", "wastage_report", "banquet_register",
 		 *BUILDER},
 		FRONT_DESK | {"folio_charges", "payments", "voids", "contribution",
-		              "overdue_by_company", "dso"}
+		              "overdue_by_company", "dso", "department_revenue"}
 		| FNB | FO_EXTRA | OPS,
 		{"front_office", "fnb", "engineering", "hotel_manager"}),
 	"Housekeeping": (BUILDER, HK | OPS, {"housekeeping", "laundry", "engineering"}),
@@ -82,7 +82,8 @@ class AgentReportAccessTestCase(AuditTestCase):
 		try:
 			pack = run_report_pack(PROP_A, "hotel_manager")
 			self.assertEqual([s["dataset"] for s in pack["sections"]],
-			                 ["occupancy_by_day", "payments", "folio_charges"])
+			                 ["occupancy_by_day", "department_revenue", "payments",
+			                  "folio_charges"])
 			html = run_report_pack(PROP_A, "hotel_manager", format="html")["content"]
 			self.assertIn("Collections by mode", html)
 			self.assertNotIn("Voids and allowances", html)

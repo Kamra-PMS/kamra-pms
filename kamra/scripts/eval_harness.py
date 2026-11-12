@@ -8759,7 +8759,7 @@ def t344():
 	bills = [b for b in s["pending_bills"] if b["kind"] == "pos"]
 	assert [b["name"] for b in bills] == [o["order"]], s["pending_bills"]
 	assert bills[0]["amount"] == 200 and bills[0]["can_post_to_room"], bills
-	assert any(n["code"] == "pending_bills" for n in s["notices"]), s["notices"]
+	assert any(n["code"] == "pending_bills" for n in s["blockers"]), s["blockers"]
 	owed_before = s["totals"]["owed"]
 	pos.deliver_order(o["order"])
 	s = api.checkout_context(res.name)
@@ -10063,7 +10063,7 @@ def t381():
 		_refused(cashier.require_open_session, P, contains="NO_OPEN_SESSION")
 
 
-@check("open bills at check-out: laundry still at the laundry says why, moves to Ready, hands back and bills")
+@check("open bills at check-out: laundry still at the laundry blocks check-out, says why, moves to Ready, hands back and bills")
 def t382():
 	from kamra import api, laundry
 	res, folio = _settle_stay("E372", "+91 70000 03720")
@@ -10078,10 +10078,10 @@ def t382():
 	assert b["kind"] == "laundry" and b["billable"] and b["amount"] == 200, b
 	assert b["can_mark_ready"] and not b["can_post_to_room"], b
 	assert "Still at the laundry" in b["hint"] and b["pieces_missing"] == 2, b
-	n = next(n for n in s["notices"] if n["code"] == "pending_bills")
-	assert "do not stop the check-out" in n["message"], n
-	# open bills never block: they are a warning on the sheet
-	assert not any(x["code"] == "pending_bills" for x in s["blockers"]), s["blockers"]
+	# an open bill blocks: on the sheet (Bill step) and at the server
+	n = next(x for x in s["blockers"] if x["code"] == "pending_bills")
+	assert n["step"] == "review" and o in n["message"], n
+	_refused(api.check_out, res.name, contains=o)
 	# Finance may see the bill but not move the bag
 	with _as_user(_fin_user()):
 		fb = next(x for x in api.checkout_context(res.name)["pending_bills"] if x["name"] == o)

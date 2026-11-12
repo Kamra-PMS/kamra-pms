@@ -59,3 +59,5 @@ Extra Guests,Hóspedes Adicionais
 Pet Charge,Taxa para animais de estimação
 Rooms,Quartos
 Bills paid,Faturas pagas
+{0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,{0} conta(s) desta estadia ainda não estão na conta do hóspede: {1}. Lance-as no quarto ou acerte-as antes do check-out.
+Bills still open,Contas ainda abertas
