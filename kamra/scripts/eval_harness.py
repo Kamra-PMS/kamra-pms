@@ -8758,7 +8758,7 @@ def t344():
 	s = api.checkout_context(res.name)
 	bills = [b for b in s["pending_bills"] if b["kind"] == "pos"]
 	assert [b["name"] for b in bills] == [o["order"]], s["pending_bills"]
-	assert bills[0]["amount"] == 200 and bills[0]["can_post_to_room"], bills
+	assert bills[0]["amount"] == 210 and bills[0]["can_post_to_room"], bills
 	assert any(n["code"] == "pending_bills" for n in s["blockers"]), s["blockers"]
 	owed_before = s["totals"]["owed"]
 	pos.deliver_order(o["order"])
@@ -10674,6 +10674,28 @@ def t_ar_balance_from_entries():
 	_assert_company_ar(acct)
 
 
+@check("POS: the till takes the bill as printed, tax included")
+def t_pos_till_with_tax():
+	from kamra import cashier, pos
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Till Tax",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	dish = frappe.get_doc({
+		"doctype": "Menu Item", "property": P, "outlet": outlet,
+		"item_name": "Eval Till Dosa", "category": "Food", "price": 1000,
+		"is_veg": 1, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+	cashier.open_session(P, 0)
+	o = pos.create_order(outlet, [{"menu_item": dish, "qty": 1}],
+	                     order_type="Takeaway")["order"]
+	printed = pos.bill_data(o)["grand_total"]
+	pos.pay_order(o, "Cash")
+	took = frappe.db.get_value(
+		"Cashier Transaction", {"pos_order": o, "kind": "Payment"}, "amount")
+	assert printed == 1050.0 and float(took or 0) == printed, (printed, took)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -10715,7 +10737,8 @@ def execute():
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
 		           t_concurrency_guards, t_safe_deposit_race,
-		           t_ar_settle_idempotent, t_ar_settle_race, t_ar_balance_from_entries):
+		           t_ar_settle_idempotent, t_ar_settle_race, t_ar_balance_from_entries,
+		           t_pos_till_with_tax):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

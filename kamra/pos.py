@@ -1247,8 +1247,9 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 	doc.status = "Delivered"
 	doc.save()
 	_flag_cleaning_if_freed(doc)
+	# the till takes what the guest paid: the bill with its tax
 	record_cashier_txn(
-		prop, "Payment", mode, float(doc.order_total or 0),
+		prop, "Payment", mode, round(float(doc.order_total or 0) + _bill_tax(doc)[1], 2),
 		pos_order=doc.name, reference=f"POS {doc.name}", session=sess)
 	# a paid outlet bill is a (simplified) tax invoice where the pack says so
 	from kamra import localization as loc
@@ -2043,6 +2044,14 @@ def _outlet_history(outlet: str, order: str | None, g, stay) -> dict:
 	}
 
 
+def _bill_tax(doc) -> tuple[float, float]:
+	"""The outlet's tax rate on this bill and the tax amount, as the bill
+	prints it. The guest pays order_total plus this tax."""
+	rate = frappe.db.get_value("POS Outlet", doc.outlet, "gst_rate")
+	rate = 0.0 if doc.nc else float(5 if rate is None else rate)
+	return rate, round(float(doc.order_total or 0) * rate / 100, 2)
+
+
 @frappe.whitelist()
 @require_roles(*POS_ROLES)
 def bill_data(order: str):
@@ -2050,12 +2059,11 @@ def bill_data(order: str):
 	live lines, the discount, and the CGST/SGST split at the outlet's rate."""
 	doc = frappe.get_doc("POS Order", order)
 	outlet = frappe.db.get_value(
-		"POS Outlet", doc.outlet, ["outlet_name", "gst_rate"], as_dict=True)
+		"POS Outlet", doc.outlet, ["outlet_name"], as_dict=True)
 	property_name = frappe.db.get_value(
 		"Property", doc.property, "property_name") or doc.property
-	gst_rate = 0.0 if doc.nc else float(5 if outlet.gst_rate is None else outlet.gst_rate)
 	taxable = float(doc.order_total or 0)
-	gst_amount = round(taxable * gst_rate / 100, 2)
+	gst_rate, gst_amount = _bill_tax(doc)
 	# the tax is named and split the country's way (CGST+SGST in India,
 	# a single VAT line in the Gulf)
 	from kamra import localization as loc
