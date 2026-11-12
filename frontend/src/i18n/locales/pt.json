@@ -4614,6 +4614,7 @@
   "Room {num} is assigned": "A quarto {num} está atribuída",
   "Room {room}": "Quarto {room}",
   "room {room} · F&B {fnb} · other {other}": "quarto {room} · A&B {fnb} · outros {other}",
+  "room {room} · F&B {fnb} · other {other} · allowances {allowances}": "quarto {room} · A&B {fnb} · outros {other} · abatimentos {allowances}",
   "Room {room} is booked for these dates.": "O quarto {room} está reservado para estas datas.",
   "Room {room} on {date}: out {etd} ({out}) / in {eta} ({in})": "Quarto {room} em {date}: saída {etd} ({out}) / entrada {eta} ({in})",
   "Room {v0}": "Quarto {v0}",

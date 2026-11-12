@@ -2287,6 +2287,7 @@
   "room rev / room": "إيراد الغرفة / غرفة",
   "room revenue": "إيراد الغرفة",
   "room {room} · F&B {fnb} · other {other}": "غرفة {room} · مأكولات {fnb} · أخرى {other}",
+  "room {room} · F&B {fnb} · other {other} · allowances {allowances}": "غرفة {room} · مأكولات {fnb} · أخرى {other} · خصومات ممنوحة {allowances}",
   "seats {n}": "مقاعد {n}",
   "send links & updates to: {pref}": "أرسل الروابط والتحديثات إلى: {pref}",
   "sign the printed card": "وقّع على البطاقة المطبوعة",

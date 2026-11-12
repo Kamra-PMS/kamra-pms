@@ -842,7 +842,7 @@ Allowance,Allowance,خصم تسوية,Bonificación,screens/AllowanceVoucher.tsx
 Allowance reason,Allowance reason,سبب الخصم,Motivo del ajuste,screens/FolioView.tsx,,translated
 Allowance rejected,Allowance rejected,خصم مرفوض,Ajuste rechazado,screens/VoidAllowanceReport.tsx,,translated
 ALLOWANCE VOUCHER,ALLOWANCE VOUCHER,قسيمة خصم تسوية,VALE DE BONIFICACIÓN,screens/AllowanceVoucher.tsx,,translated
-Allowances,Allowances,الخصومات الممنوحة,Bonificaciones,screens/AllowanceVoucher.tsx,,translated
+Allowances,Allowances,الخصومات الممنوحة,Bonificaciones,screens/AllowanceVoucher.tsx; screens/Owner.tsx,,translated
 Allowances need a manager's approval,Allowances need a manager's approval,الخصومات تحتاج موافقة مدير,Los ajustes necesitan aprobación de un gerente,,,translated
 Allowances to approve,Allowances to approve,خصومات بانتظار الموافقة,Ajustes por aprobar,screens/AllowanceApprovals.tsx,,translated
 "Already exist, skipped: {n}","Already exist, skipped: {n}",موجودة مسبقًا وتم تخطيها: {n},"Ya existen, omitidas: {n}",screens/AdminRooms.tsx,n,translated
@@ -1052,6 +1052,7 @@ Back to board,Back to board,العودة إلى اللوحة,Volver al tablero,s
 Back to chat,Back to chat,العودة إلى المحادثة,Volver a la conversación,screens/Agents.tsx,,translated
 Back to Confirmed so the sheet can be corrected,Back to Confirmed so the sheet can be corrected,إعادة إلى مؤكد لتصحيح الورقة,Volver a Confirmado para corregir la ficha,screens/BanquetFunction.tsx,,translated
 Back to property,Back to property,العودة إلى العقار,Volver al alojamiento,screens/PublicListing.tsx,,translated
+Back to sign in,Back to sign in,العودة لتسجيل الدخول,Volver a iniciar sesión,screens/Login.tsx; screens/UpdatePassword.tsx,,translated
 Back to summary,Back to summary,العودة إلى الملخص,Volver al resumen,screens/Reports.tsx,,translated
 Back to the function,Back to the function,العودة إلى المناسبة,Volver al evento,screens/BanquetDocument.tsx,,translated
 Back to the group,Back to the group,,,screens/GroupQuotation.tsx,,needs_translation
@@ -1305,7 +1306,7 @@ Came from,Came from,جاء من,Vino de,screens/Banquet.tsx; screens/BanquetFunc
 can sell to {limit} (overbooking),can sell to {limit} (overbooking),يمكن البيع حتى {limit} (حجز زائد),venta permitida hasta {limit} (sobreventa),screens/TapeChart.tsx,limit,translated
 Can't reach Kamra right now. Check your connection - we'll reconnect automatically.,Can't reach Kamra right now. Check your connection - we'll reconnect automatically.,تعذّر الوصول إلى Kamra الآن. تحقق من اتصالك، وسنعيد الاتصال تلقائياً.,No se puede conectar con Kamra. Revise su conexión; se reconectará automáticamente.,,,translated
 Canadian,Canadian,كندي,Canadiense,,,translated
-Cancel,Cancel,إلغاء,Cancelar,components/AgentCards.tsx; components/AllowanceRequests.tsx; components/BookingDialog.tsx; components/ChangeCompany.tsx; components/CheckOutDialog.tsx; components/CustomizeToday.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/ReinstatePanel.tsx; components/ResourceScreen.tsx; components/RoomDrawer.tsx; components/SecurityDepositPanel.tsx; screens/AdminRooms.tsx; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/CashierBoard.tsx; screens/CityLedgerPayment.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Payables.tsx; screens/Receivables.tsx; screens/RevenueReports.tsx; screens/TapeChart.tsx; screens/Tickets.tsx; screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx; screens/laundry/GuestLaundryCard.tsx; screens/pos/MoveRoomBill.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Cancel,Cancel,إلغاء,Cancelar,components/AgentCards.tsx; components/AllowanceRequests.tsx; components/BookingDialog.tsx; components/ChangeCompany.tsx; components/CheckOutDialog.tsx; components/CustomizeToday.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/ReinstatePanel.tsx; components/ResourceScreen.tsx; components/RoomDrawer.tsx; components/SecurityDepositPanel.tsx; screens/AdminRooms.tsx; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/CashierBoard.tsx; screens/CityLedgerPayment.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/Laundry.tsx; screens/Marketplace.tsx; screens/POS.tsx; screens/Payables.tsx; screens/Receivables.tsx; screens/RevenueReports.tsx; screens/TapeChart.tsx; screens/Tickets.tsx; screens/UpdatePassword.tsx; screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx; screens/laundry/GuestLaundryCard.tsx; screens/pos/MoveRoomBill.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,Cancel {invoice}? The number goes on the cancelled register and the folio reopens for correction.,إلغاء {invoice}؟ يُسجَّل الرقم في سجل الملغى وتُفتح الفاتورة للتصحيح.,¿Anular la factura {invoice}? El número quedará en el registro de facturas anuladas y el folio se volverá a abrir para corregirlo.,screens/FolioView.tsx,invoice,translated
 Cancel {v0} room(s)? The cancellation policy applies to each room.,Cancel {v0} room(s)? The cancellation policy applies to each room.,,,components/GroupControl.tsx,v0,needs_translation
 Cancel a booking,Cancel a booking,إلغاء حجز,Cancelar una reserva,components/AgentGuide.tsx,,translated
@@ -1419,6 +1420,7 @@ Change dates or guests,Change dates or guests,تغيير التواريخ أو �
 Change dates or room (re-prices),Change dates or room (re-prices),تغيير التواريخ أو الغرفة (يعيد التسعير),Cambiar fechas o habitación (recalcula el precio),,,translated
 "Change it in Settings, Finance. Saving rules here replaces the default for this company.","Change it in Settings, Finance. Saving rules here replaces the default for this company.",غيّره من الإعدادات، المالية. حفظ القواعد هنا يستبدل الإعداد الافتراضي لهذه الشركة.,"Puede cambiarla en Configuración, Finanzas. Guardar reglas aquí reemplaza la configuración predeterminada para esta empresa.",components/BillingRulesEditor.tsx,,translated
 Change of plans,Change of plans,تغيير الخطط,Cambio de planes,,,translated
+Change password,Change password,تغيير كلمة المرور,Cambiar contraseña,AppShell.tsx; screens/UpdatePassword.tsx,,translated
 Change room,Change room,تغيير الغرفة,Cambiar de habitación,components/RoomChangeDialog.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx,,translated
 Change room or upgrade,Change room or upgrade,تغيير الغرفة أو الترقية,Cambiar de habitación o mejorar de categoría,components/CheckInDialog.tsx,,translated
 Change the company,Change the company,تغيير الشركة,Cambiar la empresa,components/ChangeCompany.tsx,,translated
@@ -1550,6 +1552,7 @@ choose {v0} · {v1} picked,choose {v0} · {v1} picked,اختر {v0} · تم اخ
 Choose a company…,Choose a company…,اختر شركة…,Elija una empresa…,components/GroupBookingDialog.tsx,,translated
 Choose a housekeeper…,Choose a housekeeper…,اختر موظف التدبير المنزلي…,Seleccione a un miembro del personal de limpieza…,screens/HousekeepingBoard.tsx,,translated
 Choose a listing,Choose a listing,اختر خياراً,Elige una opción,screens/PublicListing.tsx,,translated
+Choose a new password,Choose a new password,اختر كلمة مرور جديدة,Elige una contraseña nueva,screens/UpdatePassword.tsx,,translated
 Choose an outlet…,Choose an outlet…,اختر منفذاً…,Seleccione un punto de venta…,screens/MenuImport.tsx,,translated
 Choose columns and press Preview.,Choose columns and press Preview.,اختر الأعمدة ثم اضغط معاينة.,Elija columnas y pulse Vista previa.,screens/Reports.tsx,,translated
 Choose each child's age; this determines the price.,Choose each child's age; this determines the price.,اختر عمر كل طفل، فهو يحدد السعر.,Indica la edad de cada menor; la tarifa depende de la edad.,components/ChildAges.tsx; screens/PublicBooking.tsx,,translated
@@ -1733,6 +1736,7 @@ Confirm F&B and minibar lines with the guest before collecting.,Confirm F&B and 
 Confirm it is complimentary on purpose; otherwise correct the rate.,Confirm it is complimentary on purpose; otherwise correct the rate.,أكّد أنها مجانية عن قصد، وإلا فصحّح السعر.,"Confirme que la cortesía sea intencional; de lo contrario, corrija la tarifa.",,,translated
 Confirm new dates,Confirm new dates,تأكيد التواريخ الجديدة,Confirmar nuevas fechas,screens/TapeChart.tsx,,translated
 Confirm new dates and price,Confirm new dates and price,تأكيد التواريخ والسعر الجديد,Confirmar nuevas fechas y precio,screens/TapeChart.tsx,,translated
+Confirm new password,Confirm new password,تأكيد كلمة المرور الجديدة,Confirmar contraseña nueva,screens/UpdatePassword.tsx,,translated
 Confirm the function first,Confirm the function first,أكّد المناسبة أولاً,Confirme primero el evento,,,translated
 Confirm the function first.,Confirm the function first.,أكّد المناسبة أولاً.,Confirme primero el evento.,,,translated
 Confirm void,Confirm void,تأكيد الإبطال,Confirmar anulación,screens/FolioView.tsx,,translated
@@ -1879,6 +1883,7 @@ Currency code *,Currency code *,رمز العملة *,Código de moneda *,screen
 Currency Desk,Currency Desk,مكتب العملات,Cambio de moneda,screens/CurrencyDesk.tsx,,translated
 Currency exchange,Currency exchange,صرف العملات,Cambio de moneda,,,translated
 Currency the guest pays in,Currency the guest pays in,العملة التي يدفع بها الضيف,Moneda en la que paga el huésped,screens/FolioView.tsx,,translated
+Current password,Current password,كلمة المرور الحالية,Contraseña actual,screens/UpdatePassword.tsx,,translated
 Custom,Custom,مخصص,Personalizado,,,translated
 Custom Hours,Custom Hours,ساعات مخصصة,Horario personalizado,,,translated
 Custom report builder,Custom report builder,منشئ التقارير المخصصة,Generador de informes personalizados,,,translated
@@ -2233,6 +2238,8 @@ Enquiry,Enquiry,استفسار,Consulta,,,translated
 "Enter 1-99%, or a {cur} amount under the line's {cur}{amount} (before GST).","Enter 1-99%, or a {cur} amount under the line's {cur}{amount} (before GST).",أدخل 1-99٪، أو مبلغاً بـ {cur} أقل من {cur}{amount} للبند (قبل GST).,"Ingrese un porcentaje entre 1 y 99 %, o un importe en {cur} inferior al total de la línea ({cur}{amount}, antes del GST).",,cur amount,translated
 Enter a rate,Enter a rate,إدخال سعر,Introducir una tarifa,components/RoomChangeDialog.tsx,,translated
 Enter the amount received.,Enter the amount received.,أدخل المبلغ المستلم.,Indique el importe recibido.,,,translated
+"Enter the email or username for your Kamra account. If it is registered, we will send a reset link.","Enter the email or username for your Kamra account. If it is registered, we will send a reset link.",أدخل البريد أو اسم المستخدم لحسابك في كامرا. إن كان مسجلاً سنرسل رابط إعادة التعيين.,"Introduce el correo o usuario de tu cuenta Kamra. Si está registrado, te enviaremos un enlace para restablecerla.",screens/Login.tsx,,translated
+"Enter your current password, then the new one twice.","Enter your current password, then the new one twice.",أدخل كلمة المرور الحالية ثم الجديدة مرتين.,Introduce tu contraseña actual y la nueva dos veces.,screens/UpdatePassword.tsx,,translated
 Enter your PIN to continue,Enter your PIN to continue,أدخل رمزك للمتابعة,Ingrese su PIN para continuar,components/PinPad.tsx,,translated
 Enterprise,Enterprise,المؤسسات,Empresarial,,,translated
 Entertainment,Entertainment,الترفيه,Entretenimiento,,,translated
@@ -2517,6 +2524,7 @@ for your records. We'd love to host you another time -,for your records. We'd lo
 For:,For:,لـ:,Para:,lib/thermal.ts,,translated
 Foreign cash,Foreign cash,نقد أجنبي,Efectivo extranjero,screens/CashierTill.tsx,,translated
 Foreign currencies taken,Foreign currencies taken,العملات الأجنبية المقبولة,Monedas extranjeras aceptadas,,,translated
+Forgot password?,Forgot password?,نسيت كلمة المرور؟,¿Olvidaste la contraseña?,screens/Login.tsx,,translated
 Format,Format,الصيغة,Formato,screens/AccountingExport.tsx,,translated
 Found,Found,موجود,Encontrado,,,translated
 Found by,Found by,عثر عليه,Encontrado por,,,translated
@@ -2922,6 +2930,7 @@ If open items land,If open items land,إذا تأكدت البنود المفت�
 If the legal name differs from the contact,If the legal name differs from the contact,إذا كان الاسم القانوني مختلفا عن جهة الاتصال,Si la razón social es distinta del nombre de contacto,screens/BanquetFunction.tsx,,translated
 "If they are arriving late tonight, leave them: late arrivals are protected by the policy.","If they are arriving late tonight, leave them: late arrivals are protected by the policy.",إذا كانوا سيصلون متأخرين الليلة، فاتركهم: الوصول المتأخر محمي بالسياسة.,"Si llegará tarde esta noche, conserve la reserva: la política protege las llegadas tardías.",,,translated
 "If they have not and are not coming, mark them no-show (the policy fee applies as shown).","If they have not and are not coming, mark them no-show (the policy fee applies as shown).",إذا لم يصلوا ولن يأتوا، فسجّلهم كعدم حضور (تُطبق رسوم السياسة كما هو موضح).,"Si no llegó y no se presentará, márquelo como no presentado (se aplica el cargo indicado por la política).",,,translated
+"If this email is registered with us, we have sent password reset instructions to it. Please check your inbox.","If this email is registered with us, we have sent password reset instructions to it. Please check your inbox.",إذا كان هذا البريد مسجلاً لدينا فقد أرسلنا تعليمات إعادة تعيين كلمة المرور. تحقق من صندوق الوارد.,"Si este correo está registrado, te hemos enviado instrucciones para restablecer la contraseña. Revisa tu bandeja de entrada.",screens/Login.tsx,,translated
 "If wrong, move the charge to the right folio.","If wrong, move the charge to the right folio.",إذا كانت خاطئة، انقل الرسوم إلى الفاتورة الصحيحة.,"Si es incorrecta, transfiera el cargo al folio correspondiente.",,,translated
 "If you are not satisfied, you can complain to {authority}.","If you are not satisfied, you can complain to {authority}.",إن لم تكن راضيًا، يمكنك تقديم شكوى إلى {authority}.,"Si no queda conforme, puede presentar una queja ante {authority}.",components/PrivacyNotice.tsx,authority,translated
 If you override:,If you override:,إذا تجاوزت:,Si autoriza la excepción:,screens/EndOfDayWizard.tsx,,translated
@@ -3264,7 +3273,7 @@ Loading the audit pack…,Loading the audit pack…,جارٍ تحميل حزمة
 Loading the day…,Loading the day…,جارٍ تحميل اليوم…,Cargando el día…,screens/PosDashboard.tsx,,translated
 Loading the document…,Loading the document…,جارٍ تحميل المستند…,Cargando el documento…,screens/ReservationDetail.tsx,,translated
 Loading the month…,Loading the month…,جارٍ تحميل الشهر…,Cargando el mes…,screens/BanquetMonth.tsx,,translated
-Loading…,Loading…,جارٍ التحميل…,Cargando…,App.tsx; components/AllowanceRequests.tsx; components/BookingDialog.tsx; components/CalendarView.tsx; components/CheckInDialog.tsx; components/ErrorBoundary.tsx; components/HkMedia.tsx; components/OpenTasksCard.tsx; components/ResourceScreen.tsx; components/RoomChangeDialog.tsx; components/RoomDrawer.tsx; components/RoomInsights.tsx; components/RoomStayPanels.tsx; screens/Agents.tsx; screens/AllowanceVoucher.tsx; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CRS.tsx; screens/CancellationLetter.tsx; screens/CashForecast.tsx; screens/EndOfDay.tsx; screens/FolioView.tsx; screens/GroupQuotation.tsx; screens/GuestJourney.tsx; screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/Inventory.tsx; screens/Owner.tsx; screens/Payables.tsx; screens/PublicBooking.tsx; screens/PublicCheckin.tsx; screens/PublicListing.tsx; screens/Receivables.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/ReservationDetail.tsx; screens/Rooms.tsx; screens/SystemHealth.tsx; screens/Tickets.tsx; screens/TripConfirmation.tsx; screens/VoidAllowanceReport.tsx; screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/VoidApproval.tsx; screens/settings/AccessPages.tsx; screens/settings/McpAccessPage.tsx; screens/settings/SettingsHub.tsx; screens/settings/WebhooksPage.tsx,,translated
+Loading…,Loading…,جارٍ التحميل…,Cargando…,App.tsx; components/AllowanceRequests.tsx; components/BookingDialog.tsx; components/CalendarView.tsx; components/CheckInDialog.tsx; components/ErrorBoundary.tsx; components/HkMedia.tsx; components/OpenTasksCard.tsx; components/ResourceScreen.tsx; components/RoomChangeDialog.tsx; components/RoomDrawer.tsx; components/RoomInsights.tsx; components/RoomStayPanels.tsx; screens/Agents.tsx; screens/AllowanceVoucher.tsx; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CRS.tsx; screens/CancellationLetter.tsx; screens/CashForecast.tsx; screens/EndOfDay.tsx; screens/FolioView.tsx; screens/GroupQuotation.tsx; screens/GuestJourney.tsx; screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/Inventory.tsx; screens/Owner.tsx; screens/Payables.tsx; screens/PublicBooking.tsx; screens/PublicCheckin.tsx; screens/PublicListing.tsx; screens/Receivables.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/ReservationDetail.tsx; screens/Rooms.tsx; screens/SystemHealth.tsx; screens/Tickets.tsx; screens/TripConfirmation.tsx; screens/UpdatePassword.tsx; screens/VoidAllowanceReport.tsx; screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/VoidApproval.tsx; screens/settings/AccessPages.tsx; screens/settings/McpAccessPage.tsx; screens/settings/SettingsHub.tsx; screens/settings/WebhooksPage.tsx,,translated
 Local,Local,العملة المحلية,Moneda local,screens/CurrencyDesk.tsx,,translated
 Local endpoint: chat may stay on your infrastructure when Ollama runs on this server or LAN.,Local endpoint: chat may stay on your infrastructure when Ollama runs on this server or LAN.,نقطة اتصال محلية: قد تبقى المحادثة على بنيتك التحتية عند تشغيل Ollama على هذا الخادم أو الشبكة المحلية.,Dirección local: la conversación puede permanecer en su infraestructura si Ollama se ejecuta en este servidor o en la red local.,,,translated
 Location & Directions,Location & Directions,الموقع والاتجاهات,Ubicación e indicaciones,screens/PublicBooking.tsx,,translated
@@ -3553,6 +3562,7 @@ New laundry order {name},New laundry order {name},طلب غسيل جديد {name
 New menu,New menu,قائمة جديدة,Nuevo menú,screens/BanquetCatalogue.tsx,,translated
 New menu package,New menu package,باقة قائمة جديدة,Nuevo paquete de menú,screens/BanquetCatalogue.tsx,,translated
 New order,New order,طلب جديد,Nuevo pedido,,,translated
+New password,New password,كلمة المرور الجديدة,Contraseña nueva,screens/UpdatePassword.tsx,,translated
 New Property,New Property,عقار جديد,Nuevo alojamiento,,,translated
 New record in {section},New record in {section},سجل جديد في {section},Crear registro en {section},components/ResourceScreen.tsx,section,translated
 New report,New report,تقرير جديد,Informe nuevo,screens/Reports.tsx,,translated
@@ -4296,6 +4306,7 @@ Pass inspection ✓,Pass inspection ✓,اجتياز الفحص ✓,Aprobar insp
 Passed,Passed,ناجح,Aprobado,,,translated
 Passport,Passport,جواز سفر,Pasaporte,,,translated
 Password,Password,كلمة المرور,Contraseña,screens/Login.tsx,,translated
+Password updated. Signing you in…,Password updated. Signing you in…,تم تحديث كلمة المرور. جارٍ تسجيل الدخول…,Contraseña actualizada. Iniciando sesión…,screens/UpdatePassword.tsx,,translated
 Paste an sk-… key,Paste an sk-… key,الصق مفتاح sk-…,Pegue una clave sk-…,,,translated
 Paste from Excel,Paste from Excel,,,components/GroupBookingDialog.tsx; components/GroupControl.tsx,,needs_translation
 "Paste Name and Phone from Excel, one guest per line. They fill the ticked rooms, or every room, in order.","Paste Name and Phone from Excel, one guest per line. They fill the ticked rooms, or every room, in order.",,,components/GroupControl.tsx,,needs_translation
@@ -4399,6 +4410,7 @@ Pick a company…,Pick a company…,اختر شركة…,Elige una empresa…,sc
 Pick a dish to give it a recipe.,Pick a dish to give it a recipe.,اختر طبقاً لتحديد وصفته.,Seleccione un plato para definir su receta.,screens/RecipeManager.tsx,,translated
 Pick a hall.,Pick a hall.,اختر قاعة.,Seleccione un salón.,screens/Banquet.tsx,,translated
 "Pick a listing below to reserve, or scroll the options on the left.","Pick a listing below to reserve, or scroll the options on the left.",اختر قائمة أدناه للحجز، أو تصفّح الخيارات على اليسار.,Elige una opción abajo para reservar o desplázate por las opciones de la izquierda.,screens/PublicListing.tsx,,translated
+Pick a password you have not used on this hotel before.,Pick a password you have not used on this hotel before.,اختر كلمة مرور لم تستخدمها في هذا الفندق من قبل.,Elige una contraseña que no hayas usado antes en este hotel.,screens/UpdatePassword.tsx,,translated
 Pick a property first.,Pick a property first.,اختر عقاراً أولاً.,Seleccione primero un alojamiento.,screens/GoLiveImport.tsx; screens/KitchenPrinters.tsx,,translated
 "Pick a property to see its rooms, prices and availability.","Pick a property to see its rooms, prices and availability.",اختر عقاراً لعرض غرفه وأسعاره وتوفره.,"Elige un alojamiento para ver sus habitaciones, precios y disponibilidad.",screens/PublicBooking.tsx,,translated
 Pick a room,Pick a room,اختر غرفة,Elija una habitación,components/RoomChangeDialog.tsx,,translated
@@ -4895,6 +4907,7 @@ Reserved,Reserved,محجوزة,Reservada,,,translated
 Reset,Reset,إعادة تعيين,Restablecer,,,translated
 Reset {name}'s cashier PIN? They set a new one on their next money action.,Reset {name}'s cashier PIN? They set a new one on their next money action.,إعادة تعيين PIN أمين الصندوق لـ {name}؟ سيضبط رمزاً جديداً في إجرائه المالي التالي.,¿Restablecer el PIN de cajero de {name}? Deberá crear uno nuevo en su próxima operación de cobro o caja.,screens/settings/AccessPages.tsx,name,translated
 Reset cashier PIN,Reset cashier PIN,إعادة تعيين PIN أمين الصندوق,Restablecer PIN de cajero,screens/settings/AccessPages.tsx,,translated
+Reset password,Reset password,إعادة تعيين كلمة المرور,Restablecer contraseña,screens/Login.tsx,,translated
 Reset the hotel default,Reset the hotel default,إعادة ضبط الإعداد الافتراضي للفندق,Restablecer el valor predeterminado del hotel,components/CustomizeToday.tsx,,translated
 Reset to default ({value}),Reset to default ({value}),إعادة التعيين إلى الافتراضي ({value}),Restablecer valores predeterminados ({value}),screens/settings/ModulePage.tsx,value,translated
 Residence Card,Residence Card,بطاقة الإقامة,Cédula de residencia,,,translated
@@ -4979,7 +4992,8 @@ Room {n} cannot take room charges (set at check-in). Take payment here.,Room {n}
 Room {num},Room {num},غرفة {num},Habitación {num},,num,translated
 Room {num} is assigned,Room {num} is assigned,غرفة {num} مخصصة,Habitación {num} asignada,,num,translated
 Room {room},Room {room},غرفة {room},Habitación {room},screens/Today.tsx,room,translated
-room {room} · F&B {fnb} · other {other},room {room} · F&B {fnb} · other {other},غرفة {room} · مأكولات {fnb} · أخرى {other},habitación {room} · A&B {fnb} · otro {other},screens/Reports.tsx,room fnb other,translated
+room {room} · F&B {fnb} · other {other},room {room} · F&B {fnb} · other {other},غرفة {room} · مأكولات {fnb} · أخرى {other},habitación {room} · A&B {fnb} · otro {other},,room fnb other,translated
+room {room} · F&B {fnb} · other {other} · allowances {allowances},room {room} · F&B {fnb} · other {other} · allowances {allowances},غرفة {room} · مأكولات {fnb} · أخرى {other} · خصومات ممنوحة {allowances},habitación {room} · A&B {fnb} · otro {other} · bonificaciones {allowances},screens/Reports.tsx,room fnb other allowances,translated
 Room {room} is booked for these dates.,Room {room} is booked for these dates.,الغرفة {room} محجوزة في هذه التواريخ.,La habitación {room} está reservada para estas fechas.,components/RoomChangeDialog.tsx,room,translated
 Room {room} on {date}: out {etd} ({out}) / in {eta} ({in}),Room {room} on {date}: out {etd} ({out}) / in {eta} ({in}),الغرفة {room} في {date}: مغادرة {etd} ({out}) / وصول {eta} ({in}),"Habitación {room}, {date}: salida {etd} ({out}) / entrada {eta} ({in})",screens/TapeChart.tsx,room date etd out eta in,translated
 Room {v0},Room {v0},الغرفة {v0},Habitación {v0},components/GroupControl.tsx,v0,translated
@@ -5152,6 +5166,7 @@ Save menu,Save menu,حفظ القائمة,Guardar menú,screens/BanquetCatalogue
 Save names ({v0}),Save names ({v0}),,,components/GroupControl.tsx,v0,needs_translation
 Save note,Save note,حفظ الملاحظة,Guardar nota,screens/ReservationDetail.tsx,,translated
 Save notes,Save notes,حفظ الملاحظات,Guardar notas,screens/EndOfDayWizard.tsx; screens/GuestJourney.tsx,,translated
+Save password,Save password,حفظ كلمة المرور,Guardar contraseña,screens/UpdatePassword.tsx,,translated
 Save photos & details,Save photos & details,حفظ الصور والتفاصيل,Guardar fotos y detalles,components/RoomTypeMedia.tsx,,translated
 Save printer,Save printer,حفظ الطابعة,Guardar impresora,screens/KitchenPrinters.tsx,,translated
 Save recipe,Save recipe,حفظ الوصفة,Guardar receta,screens/RecipeManager.tsx,,translated
@@ -5170,7 +5185,7 @@ Saved access for {name}.,Saved access for {name}.,تم حفظ صلاحيات {na
 Saved as the hotel default.,Saved as the hotel default.,تم الحفظ كإعداد افتراضي للفندق.,Guardado como valor predeterminado del hotel.,components/CustomizeToday.tsx,,translated
 Saved.,Saved.,تم الحفظ.,Guardado.,components/CustomizeToday.tsx; components/GroupControl.tsx; screens/settings/McpAccessPage.tsx,,translated
 Saving...,Saving...,جارٍ الحفظ...,Guardando…,screens/RevenueReports.tsx,,translated
-Saving…,Saving…,جارٍ الحفظ…,Guardando…,components/BillingRulesEditor.tsx; components/BookingDialog.tsx; components/ChangeCompany.tsx; components/CheckInDialog.tsx; components/CreditTermsEditor.tsx; components/DepositPanel.tsx; components/GuestDocuments.tsx; components/ResourceScreen.tsx; components/RoomTypeMedia.tsx; components/SecurityDepositPanel.tsx; screens/BookingEngine.tsx; screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx; screens/GuestJourney.tsx; screens/KitchenPrinters.tsx; screens/Payables.tsx; screens/PublicCheckin.tsx; screens/Receivables.tsx; screens/RegistrationCard.tsx; screens/settings/AccessPages.tsx; screens/settings/ModulePage.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Saving…,Saving…,جارٍ الحفظ…,Guardando…,components/BillingRulesEditor.tsx; components/BookingDialog.tsx; components/ChangeCompany.tsx; components/CheckInDialog.tsx; components/CreditTermsEditor.tsx; components/DepositPanel.tsx; components/GuestDocuments.tsx; components/ResourceScreen.tsx; components/RoomTypeMedia.tsx; components/SecurityDepositPanel.tsx; screens/BookingEngine.tsx; screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx; screens/GuestJourney.tsx; screens/KitchenPrinters.tsx; screens/Payables.tsx; screens/PublicCheckin.tsx; screens/Receivables.tsx; screens/RegistrationCard.tsx; screens/UpdatePassword.tsx; screens/settings/AccessPages.tsx; screens/settings/ModulePage.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Scan for in-room dining,Scan for in-room dining,امسح لطلب الطعام داخل الغرفة,Escanee para pedir servicio a la habitación,,,translated
 Scan ID,Scan ID,مسح الهوية,Escanear identificación,components/CheckInGuests.tsx,,translated
 Scan the ID,Scan the ID,امسح الهوية,Escanea la identificación,components/IdScan.tsx,,translated
@@ -5265,6 +5280,7 @@ Send on WhatsApp,Send on WhatsApp,أرسل عبر واتساب,Enviar por WhatsA
 Send payment link,Send payment link,إرسال رابط الدفع,Enviar enlace de pago,components/DepositPanel.tsx,,translated
 Send pre-check-in links automatically,Send pre-check-in links automatically,إرسال روابط تسجيل الوصول المسبق تلقائياً,Enviar automáticamente enlaces de registro previo,,,translated
 Send request,Send request,إرسال الطلب,Enviar solicitud,screens/laundry/GuestLaundryCard.tsx,,translated
+Send reset link,Send reset link,إرسال رابط إعادة التعيين,Enviar enlace,screens/Login.tsx,,translated
 Send round,Send round,إرسال الجولة,Enviar ronda,,,translated
 Send test,Send test,إرسال اختبار,Enviar prueba,screens/settings/WebhooksPage.tsx,,translated
 Send the statement to (comma-separated). Leave blank for the company's billing contact.,Send the statement to (comma-separated). Leave blank for the company's billing contact.,إرسال كشف الحساب إلى (مفصولة بفواصل). اتركه فارغًا لإرساله إلى جهة الفوترة لدى الشركة.,Enviar el estado de cuenta a (separados por comas). Déjelo vacío para el contacto de facturación de la empresa.,,,translated
@@ -5276,6 +5292,7 @@ Send to the company account (they pay later),Send to the company account (they p
 Send to the company's city ledger,Send to the company's city ledger,إرسال إلى حساب الذمم المدينة للشركة,Enviar a la cuenta por cobrar de la empresa,,,translated
 Send to the kitchen,Send to the kitchen,,,components/AgentGuide.tsx,,needs_translation
 Send updates to,Send updates to,إرسال التحديثات إلى,Enviar novedades a,screens/ReservationDetail.tsx,,translated
+Sending…,Sending…,جارٍ الإرسال…,Enviando…,screens/Login.tsx,,translated
 Sent to a manager. It goes on the bill once approved.,Sent to a manager. It goes on the bill once approved.,أُرسل إلى مدير. يُضاف إلى الفاتورة بعد الموافقة.,Enviado a un gerente. Se aplica a la cuenta cuando lo apruebe.,screens/FolioView.tsx,,translated
 "Sent to the kitchen. Order {order}, total {total}.","Sent to the kitchen. Order {order}, total {total}.",,,screens/Assistant.tsx,order total,needs_translation
 SEO,SEO,تحسين محركات البحث,SEO,,,translated
@@ -5821,6 +5838,7 @@ The main room's guest,The main room's guest,ضيف الغرفة الرئيسية
 The menus and services every quote is built from.,The menus and services every quote is built from.,القوائم والخدمات التي يُبنى عليها كل عرض سعر.,Menús y servicios utilizados para preparar las cotizaciones.,screens/BanquetCatalogue.tsx,,translated
 The minimum they pay for - menus bill on this,The minimum they pay for - menus bill on this,الحد الأدنى المدفوع: تُفوتر القوائم على أساسه,Cantidad mínima facturable: los menús se cobran según este número,screens/BanquetFunction.tsx,,translated
 The mismatch stays and may show up as a wrong room status tomorrow.,The mismatch stays and may show up as a wrong room status tomorrow.,يبقى عدم التطابق وقد يظهر كحالة غرفة خاطئة غدًا.,La discrepancia permanece y puede mostrar un estado de habitación incorrecto mañana.,,,translated
+The new passwords do not match.,The new passwords do not match.,كلمتا المرور الجديدتان غير متطابقتين.,Las contraseñas nuevas no coinciden.,screens/UpdatePassword.tsx,,translated
 The night,The night,المناسبة,El evento,,,translated
 "The night audit already closed {d}, but the business date did not move. Advance it without posting again.","The night audit already closed {d}, but the business date did not move. Advance it without posting again.",أغلق التدقيق الليلي {d} بالفعل، لكن تاريخ العمل لم يتقدم. قدّمه دون ترحيل مرة أخرى.,"La auditoría nocturna ya cerró el {d}, pero la fecha operativa no se actualizó. Aváncela sin volver a contabilizar los movimientos.",screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx,d,translated
 The night audit holds this arrival as Due In instead of marking a no-show; the next audit decides.,The night audit holds this arrival as Due In instead of marking a no-show; the next audit decides.,يُبقي التدقيق الليلي هذا الوصول كمتوقع الوصول بدلًا من تسجيله كعدم حضور، ويقرر التدقيق التالي.,La auditoría nocturna mantiene esta llegada como Pendiente de entrada en lugar de marcarla como no presentada; se resuelve en la siguiente auditoría.,screens/ReservationDetail.tsx,,translated
@@ -5973,6 +5991,7 @@ To number,To number,إلى الرقم,Hasta el número,screens/AdminRooms.tsx,,t
 to open,to open,للفتح,para abrir,components/CommandPalette.tsx,,translated
 to pick up a room.,to pick up a room.,لاستلام غرفة.,para asignarse la limpieza de una habitación.,screens/HkApp.tsx,,translated
 to produce,to produce,للتحضير,de preparación,screens/banquet/MenuComposer.tsx,,translated
+"To reset your password, ask for a link from the sign-in screen.","To reset your password, ask for a link from the sign-in screen.",لإعادة تعيين كلمة المرور، اطلب رابطاً من شاشة تسجيل الدخول.,"Para restablecer la contraseña, pide un enlace en la pantalla de inicio de sesión.",screens/UpdatePassword.tsx,,translated
 to start.,to start.,للبدء.,para comenzar.,screens/CashierSessions.tsx,,translated
 to take the deposit,to take the deposit,لاستلام التأمين,para cobrar el depósito de garantía,components/CheckInDialog.tsx,,translated
 to take the payment,to take the payment,لاستلام الدفعة,para aceptar el pago,components/CheckOutDialog.tsx,,translated
@@ -6486,6 +6505,7 @@ Your ID photo is kept with the guest register the hotel is required by law to ma
 your local data protection authority,your local data protection authority,الجهة المختصة بحماية البيانات في بلدك,la autoridad local de protección de datos,,,translated
 your name and contact details to make and manage this booking and reach you about it,your name and contact details to make and manage this booking and reach you about it,اسمك وبيانات التواصل لإجراء هذا الحجز وإدارته والتواصل معك بشأنه,Su nombre y datos de contacto para gestionar esta reserva y comunicarnos con usted sobre ella.,components/PrivacyNotice.tsx,,translated
 Your open tills,Your open tills,صناديقك المفتوحة,Sus cajas abiertas,screens/CashierTill.tsx,,translated
+Your password has expired,Your password has expired,انتهت صلاحية كلمة المرور,Tu contraseña ha caducado,screens/UpdatePassword.tsx,,translated
 Your PIN,Your PIN,رمزك السري,Su PIN,components/AllowanceRequests.tsx; components/FolioDiscount.tsx; screens/FolioView.tsx,,translated
 "Your PIN signs this allowance, like the paper voucher.","Your PIN signs this allowance, like the paper voucher.",رمزك السري هو توقيعك على هذا الخصم، كما في القسيمة الورقية.,"Su PIN firma esta bonificación, como el vale en papel.",screens/FolioView.tsx,,translated
 Your profile is erased {months} months after your last stay. Bills are kept as tax law requires.,Your profile is erased {months} months after your last stay. Bills are kept as tax law requires.,يُحذف ملفك بعد {months} شهرًا من آخر إقامة. وتُحفظ الفواتير وفق ما يتطلبه النظام الضريبي.,Su perfil se elimina {months} meses después de su última estancia. Las facturas se conservan según lo exige la legislación fiscal.,components/PrivacyNotice.tsx,months,translated

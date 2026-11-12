@@ -164,6 +164,7 @@ function ManagerFlash({ p }: { p: Pack }) {
           { key: "room_revenue", label: "Room revenue", kind: "money" },
           { key: "fnb_revenue", label: "F&B revenue", kind: "money" },
           { key: "other_revenue", label: "Other revenue", kind: "money" },
+          { key: "allowances", label: "Allowances", kind: "money" },
           { key: "adr", label: "ADR", kind: "money" },
           { key: "revpar", label: "RevPAR", kind: "money" },
         ]}
@@ -438,6 +439,7 @@ function Occupancy({ p }: { p: Pack }) {
           { key: "room_revenue", label: "Room", kind: "money" },
           { key: "fnb_revenue", label: "F&B", kind: "money" },
           { key: "other_revenue", label: "Other", kind: "money" },
+          { key: "allowances", label: "Allowances", kind: "money" },
           { key: "total_revenue", label: "Total", kind: "money" },
           { key: "pax", label: "Guests", kind: "num" },
           { key: "revpax", label: "RevPAX", kind: "money" },
