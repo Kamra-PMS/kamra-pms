@@ -8575,6 +8575,26 @@ def t230():
 	assert row["unapplied_credit"] == 100 and float(row["balance"]) == 300, row
 
 
+@check("manager flash: an allowance is its own figure, not other revenue; total stays net")
+def t391():
+	from kamra.folio import post_allowance, post_room_night
+	from kamra.reports import _day_stats
+	fp = "EVAL Flash Allowance"
+	bed, _villa, rooms = _inv_property(fp, "FAL", rooms=1, with_villa=False)
+	today = nowdate()
+	res = _stay(fp, bed, today, add_days(today, 2), room=rooms[0], name="Eval Flash Allowance")
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	post_room_night(res, today)
+	room = _day_stats(fp, today, 1)["room_revenue"]
+	assert room > 0, room
+	post_allowance(frappe.db.get_value("Folio", {"reservation": res.name,
+	                                             "folio_type": "Guest"}), 1000, "eval goodwill")
+	day = _day_stats(fp, today, 1)
+	assert day["room_revenue"] == room and day["other_revenue"] == 0, day
+	assert day.get("allowances") == -1000 and day["total_revenue"] == room - 1000, day
+
+
 @check("budget vs actual: occupancy over nights elapsed; unposted in-house nights are counted and explained")
 def t336():
 	from frappe.utils import date_diff
@@ -10703,7 +10723,7 @@ def execute():
 		           t177, t178, t179, t160, t161, t162, t163, t164, t165, t166, t167, t130,
 		           t131, t132, t133, t134, t135, t136, t137, t138, t139, t180, t181, t182,
 		           t183, t184, t185, t186, t190, t191, t192, t193, t194,
-		           t200, t201, t202, t203, t204,
+		           t200, t201, t202, t203, t204, t391,
 		           t205, t206, t207, t208, t209, t210, t211, t212, t213, t214,
 		           t215, t216, t300, t301, t302, t303, t304, t305, t220, t221, t223, t222, t224,
 		           t320, t321, t322, t323, t324, t325, t326, t327, t328, t310, t311, t312, t313,
