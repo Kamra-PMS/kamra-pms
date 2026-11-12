@@ -6555,7 +6555,9 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    marketing_consent: int = 0,
                    market_segment: str | None = None):
 	"""One-call booking: attach to an existing guest profile when given,
-	else dedup by phone / create one. Optional auto room assignment,
+	else reuse a profile whose phone and full name both match (a
+	blacklisted phone always resolves to its profile) / create one.
+	Optional auto room assignment,
 	voucher applied, price computed by the engine.
 
 	waitlist=1 parks the stay with no room and status Waitlist - for dates
