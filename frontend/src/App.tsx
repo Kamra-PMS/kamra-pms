@@ -10,6 +10,7 @@ import {
 } from "react-router-dom"
 import AppShell, { type ShellContext } from "./AppShell"
 const Login = lazy(() => import("./screens/Login"))
+const UpdatePassword = lazy(() => import("./screens/UpdatePassword"))
 import { useAuth } from "./lib/auth"
 import { visibleApps } from "./lib/apps"
 import { t, useT, t as translate, useUILanguage } from "./lib/i18n"
@@ -203,6 +204,9 @@ export default function App() {
         <Route path="hk" element={<HkApp />} />
         {/* dedicated login route so signing out changes the URL */}
         <Route path="login" element={<LoginPage />} />
+        {/* password reset email lands on /update-password?key=… (redirected
+            into /kamra); signed-in change-password uses the same screen */}
+        <Route path="update-password" element={<UpdatePassword />} />
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
           <Route index element={<Home />} />

@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Globe,
   IndianRupee,
+  KeyRound,
   LayoutGrid,
   LogOut,
   Menu,
@@ -216,6 +217,15 @@ function AccountMenu({
           >
             <SettingsIcon className="size-4 shrink-0 text-zinc-500" aria-hidden />
             {t("Settings")}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={itemCls}
+            onClick={() => go("/update-password")}
+          >
+            <KeyRound className="size-4 shrink-0 text-zinc-500" aria-hidden />
+            {t("Change password")}
           </button>
           <div className="my-1 border-t border-zinc-100" />
           <button

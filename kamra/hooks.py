@@ -128,6 +128,13 @@ website_redirects = [
 	{"source": r"/stay/(.*)", "target": r"/kamra/stay/\1"},
 	{"source": r"/hk$", "target": "/kamra/hk"},
 	{"source": r"/checkin/(.*)", "target": r"/kamra/checkin/\1"},
+	# Frappe password-reset emails land on /update-password?key=… — keep the key
+	# and show Kamra's own set-password screen instead of Desk's HTML form.
+	{
+		"source": r"/update-password$",
+		"target": "/kamra/update-password",
+		"forward_query_parameters": True,
+	},
 ]
 
 # Each item in the list will be shown as an app in the apps page

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 
-import { login } from "../lib/api"
+import { login, requestPasswordReset, serverError } from "../lib/api"
 import { asset } from "../lib/asset"
 import { Button } from "../components/ui/button"
 import { getSiteInfo, versionLabel } from "../lib/siteInfo"
@@ -28,6 +28,8 @@ export default function Login(props: { onSuccess: () => void }) {
   const [pwd, setPwd] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [mode, setMode] = useState<"sign-in" | "forgot">("sign-in")
+  const [resetSent, setResetSent] = useState(false)
   // Demo accounts only exist on the seeded demo site; hide them elsewhere.
   const [demoMode, setDemoMode] = useState(false)
   const [version, setVersion] = useState<string | null>(null)
@@ -60,6 +62,20 @@ export default function Login(props: { onSuccess: () => void }) {
     }
   }
 
+  async function sendReset() {
+    if (!usr.trim()) return
+    setBusy(true)
+    setError(null)
+    try {
+      await requestPasswordReset(usr.trim())
+      setResetSent(true)
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const sessionEnded = sessionStorage.getItem("kamra_session_ended") === "1"
 
   return (
@@ -69,7 +85,7 @@ export default function Login(props: { onSuccess: () => void }) {
     >
       <div className="fixed inset-x-0 top-0 h-[5px] bg-[#1C3F38]" aria-hidden />
       <div className="w-full max-w-sm">
-        {sessionEnded && (
+        {sessionEnded && mode === "sign-in" && (
           <p className="mb-4 rounded border border-[#fde68a] bg-[#fffbeb] px-4 py-2.5 text-center text-sm text-[#92400e]">
             {t("Your session ended. Sign in to pick up where you left off.")}
           </p>
@@ -106,6 +122,7 @@ export default function Login(props: { onSuccess: () => void }) {
           </label>
         </div>
 
+        {mode === "sign-in" ? (
         <form
           className="space-y-3 rounded border border-[#E2E8F0] bg-[#ffffff] p-6"
           onSubmit={(e) => {
@@ -130,8 +147,19 @@ export default function Login(props: { onSuccess: () => void }) {
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-[#3f4941]">
-              {t("Password")}
+            <span className="mb-1 flex items-center justify-between text-xs font-medium text-[#3f4941]">
+              <span>{t("Password")}</span>
+              <button
+                type="button"
+                className="font-medium text-[#1E7B4F] hover:underline"
+                onClick={() => {
+                  setMode("forgot")
+                  setError(null)
+                  setResetSent(false)
+                }}
+              >
+                {t("Forgot password?")}
+              </button>
             </span>
             <input
               className={inputCls}
@@ -156,8 +184,69 @@ export default function Login(props: { onSuccess: () => void }) {
             {busy ? t("Signing in...") : t("Sign in")}
           </Button>
         </form>
+        ) : (
+        <form
+          className="space-y-3 rounded border border-[#E2E8F0] bg-[#ffffff] p-6"
+          onSubmit={(e) => {
+            e.preventDefault()
+            sendReset()
+          }}
+        >
+          <h1 className="text-base font-semibold text-[#1C3F38]">{t("Reset password")}</h1>
+          <p className="text-sm text-[#6f7a71]">
+            {t("Enter the email or username for your Kamra account. If it is registered, we will send a reset link.")}
+          </p>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-[#3f4941]">
+              {t("Email or username")}
+            </span>
+            <input
+              className={inputCls}
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              value={usr}
+              onChange={(e) => setUsr(e.target.value)}
+              placeholder={t("Administrator or you@hotel.com")}
+              required
+            />
+          </label>
 
-        {demoMode && (
+          {error && (
+            <div className="rounded border border-[#ffdad6] bg-[#fff8f7] px-3 py-2 text-sm text-[#93000a]">
+              {translate(error)}
+            </div>
+          )}
+          {resetSent && (
+            <div className="rounded border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-2 text-sm text-[#166534]">
+              {t("If this email is registered with us, we have sent password reset instructions to it. Please check your inbox.")}
+            </div>
+          )}
+
+          <Button
+            className="w-full justify-center rounded bg-[#1E7B4F] py-2 text-white hover:bg-[#00613a]"
+            disabled={busy || !usr.trim() || resetSent}
+            type="submit"
+          >
+            {busy ? t("Sending…") : t("Send reset link")}
+          </Button>
+          <button
+            type="button"
+            className="w-full text-center text-sm text-[#6f7a71] hover:text-[#1E7B4F]"
+            onClick={() => {
+              setMode("sign-in")
+              setError(null)
+              setResetSent(false)
+            }}
+          >
+            {t("Back to sign in")}
+          </button>
+        </form>
+        )}
+
+        {demoMode && mode === "sign-in" && (
         <div className="mt-4 rounded border border-dashed border-[#bec9bf] p-4">
           <p className="mb-3 rounded bg-[#fffbeb] px-3 py-2 text-center text-xs leading-relaxed text-[#92400e]">
             {t("Shared playground, not a live hotel. Play data is wiped every night and the sample hotel is seeded again. Don't put real guests, payments or API keys here.")}
