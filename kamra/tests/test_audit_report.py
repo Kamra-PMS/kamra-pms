@@ -214,3 +214,20 @@ class AuditReportTestCase(AuditTestCase):
 		            if f"({order})" in (c.description or ""))
 		self.assertEqual(float(line.gst_rate), 0)
 		self.assertEqual(pos.bill_data(order)["gst_rate"], 0)
+
+	def test_a_discount_is_not_other_income(self):
+		from kamra import api
+		from kamra.tests.audit_fixtures import guest_folio
+		res = make_reservation(PROP_A, self.rt, TODAY, d(2), status="Checked In",
+		                       room=self.room)
+		folio = guest_folio(res.name)
+		api.add_folio_charge(folio, "Laundry", "UT shirts", 200, gst_rate=0)
+		folio_mod.post_allowance(folio, 500, "UT discount", gst_rate=0)
+		day = audit_report.build(PROP_A, TODAY)["periods"][0]
+		self.assertEqual(day["other"], 200)
+		self.assertEqual(day["allowances"], -500)
+		self.assertEqual(day["total_revenue"],
+		                 day["room_revenue"] + day["food"] + day["beverage"] + day["banquets"]
+		                 + day["meal_plan_minibar"] + day["other"] + day["allowances"])
+		depts = {r["department"]: r["amount"] for r in audit_report.departments(PROP_A, TODAY, TODAY)}
+		self.assertEqual(depts["Discounts and allowances"], -500)

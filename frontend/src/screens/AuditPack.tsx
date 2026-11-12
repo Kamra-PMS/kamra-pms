@@ -601,6 +601,8 @@ function AuditReport({ p }: { p: Pack }) {
           col("room_revenue", "Rooms (net of discounts)"), col("adr", "ADR"), col("revpar", "RevPAR"),
           col("food", "Food"), col("beverage", "Beverage"), col("banquets", "Banquets"),
           col("meal_plan_minibar", "Meal plan & minibar"), col("other", "Other"),
+          // a pack saved before this column existed has none: hide it there
+          ...(periods.some((p) => p.allowances != null) ? [col("allowances", "Discounts & allowances")] : []),
           col("total_revenue", "Total"),
         ]}
         rows={periods.map((per) => ({ ...per, label: t(per.label) }))}

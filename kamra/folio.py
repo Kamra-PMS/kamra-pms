@@ -1110,6 +1110,11 @@ def close_folio(folio_name: str) -> str:
 	return folio.invoice_number
 
 
+def _business_date(property: str) -> str:
+	from kamra.business_date import get_business_date
+	return str(get_business_date(property))
+
+
 def post_allowance(folio_name: str, amount: float, reason: str,
                    gst_rate: float = 0, approver: str | None = None,
                    requested_by: str | None = None,
@@ -1128,7 +1133,9 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 	if not (reason or "").strip():
 		frappe.throw("An allowance needs a reason - it goes on the record.")
 	folio.append("charges", {
-		"posting_date": frappe.utils.nowdate(),
+		# the business date, like every other folio line: the calendar runs a
+		# day ahead between midnight and the audit
+		"posting_date": _business_date(folio.property),
 		"charge_type": "Allowance",
 		"description": reason.strip(),
 		"allowance_serial": serial,
