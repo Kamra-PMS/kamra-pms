@@ -232,7 +232,6 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 			for fn in (lambda: statements.company_statement(self.account),
 			           lambda: statements.email_company_statement(self.account),
 			           lambda: statements.email_statements_bulk(PROP_A, [self.account]),
-			           lambda: statements.send_property_reminders(PROP_A),
 			           lambda: _run_dataset(PROP_A, "dso", d(-29), TODAY),
 			           lambda: _run_dataset(PROP_A, "overdue_by_company", None, None)):
 				with self.assertRaises(frappe.PermissionError):

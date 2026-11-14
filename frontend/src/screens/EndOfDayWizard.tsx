@@ -486,7 +486,7 @@ export default function EndOfDayWizard() {
     .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3))
   const counted_ = state.checks.filter((c) => c.severity !== "info")
   const clearN = counted_.length - needs.length
-  const clear = state.checks.filter((c) => c.count === 0)
+  const clear = counted_.filter((c) => c.count === 0)
   const fyi = state.checks.filter((c) => c.count > 0 && (c.severity === "info" || acked.has(c.key)))
   const ahead = state.business_date > state.server_date
   const canClose = !state.ran && !ahead && !state.stuck_date && blockers.length === 0

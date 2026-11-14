@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **490 endpoints**, generated from the source
+the UI and the AI use. **513 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -23,6 +23,9 @@ Content-Type: application/json
 - **Try it in Postman:** [download the collection](/kamra.postman_collection.json),
   set `base_url`, `api_key` and `api_secret` collection variables, go.
 - Endpoints marked **public** are `allow_guest` (no token; rate-limited).
+- What we promise not to break, and how a name is retired:
+  [API stability](/api-stability) and the machine-readable
+  [contract.json](/contract.json).
 
 
 ## Core (front desk, folios, guests, rooms)
@@ -246,6 +249,9 @@ on the guest folio as a Security Deposit payment and in the Deposit
 ledger - a liability held for the guest, never revenue. Cashier PIN and
 open till as for any payment.
 
+Pass idempotency_key (one per Collect press): a retry with the same key
+returns the first result instead of posting again.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
@@ -253,6 +259,7 @@ open till as for any payment.
 | `mode` | no | `'Cash'` |
 | `reference` | no | `None` |
 | `pin` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.waive_security_deposit`
 
@@ -1174,8 +1181,8 @@ Typeahead for attaching a booking to an existing profile.
 
 Is the guest a booking would attach to blacklisted? The desk asks
 before booking so the warning shows up front, not as a refusal at the
-end. Resolves exactly like create_booking: the chosen profile, else the
-profile with this phone number.
+end. The chosen profile, else the profile with this phone number (which
+create_booking reuses only when the typed name matches too).
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1557,6 +1564,22 @@ Safe to call again and again: opening the sheet writes nothing.
 | --- | --- | --- |
 | `reservation` | yes |  |
 
+### `kamra.api.reverse_check_in`
+
+**POST** · roles: `Front Desk`
+
+Undo a check-in made by mistake (wrong guest, wrong room), the same
+business day and before anything is posted or paid. The stay goes back
+to Confirmed (arrival) with its room; the room is released and marked
+Dirty so housekeeping inspects it before it is sold again. From there
+the desk checks the guest in again or cancels the booking.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `reason` | yes |  |
+| `pin` | no | `None` |
+
 ### `kamra.api.reinstate_checkout`
 
 **POST** · roles: `Front Desk`, `Finance`
@@ -1674,7 +1697,8 @@ Rooms × dates grid with reservation bars - the front desk's home.
 
 Send the guest their self check-in link (mints a token if needed). Sends
 over a connected channel when there is one; otherwise returns the link for
-the desk to share. Marks when it went out so the arrivals board can show it.
+the desk to share. Marks when it went out so the arrivals board can show it;
+a link nobody was sent is not marked.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1960,7 +1984,9 @@ check_in_time / check_out_time price an hourly or block day-use plan.
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
 One-call booking: attach to an existing guest profile when given,
-else dedup by phone / create one. Optional auto room assignment,
+else reuse a profile whose phone and full name both match (a
+blacklisted phone always resolves to its profile) / create one.
+Optional auto room assignment,
 voucher applied, price computed by the engine.
 
 waitlist=1 parks the stay with no room and status Waitlist - for dates
@@ -5494,14 +5520,34 @@ Four-ledger trial balance for a property (optionally as-of a date).
 | `property` | yes |  |
 | `business_date` | no | `None` |
 
+### `kamra.ledger.ledger_detail`
+
+**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+
+The drill-down under a ledger card: every folio with a balance in that
+ledger as of the date (guest, booking, status, company), biggest first.
+For AR the company the bill is billed to comes with it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `ledger` | yes |  |
+| `business_date` | no | `None` |
+| `limit` | no | `200` |
+
 ### `kamra.ledger.journal_by_transaction_code`
 
 **GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+
+Ledger postings summed by transaction code: for one business date, or
+from_date to to_date (both inclusive) when a range is given.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
 | `business_date` | no | `None` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
 
 ### `kamra.ledger.financial_activity`
 
@@ -5537,7 +5583,18 @@ Record a company's payment against its city ledger account and clear
 the AR it pays. By default it pays the oldest open bills first;
 `allocations` ([{folio, amount}]) names the folios instead. Any excess
 stays on the account as unapplied credit and settles the company's next
-bill.
+bill. `received_on` is the date the money arrived (the business date
+when left out, never later).
+
+An AI agent's payment is not posted: it waits as a Company Payment
+Request ({"pending": True, ...}) until Finance confirms it with a PIN
+(decide_city_ledger_payment). With the property's "PIN on company
+payments" setting on, a desk payment asks for the user's PIN too.
+
+Pass idempotency_key (one per "Record payment" press): a retry with the
+same key returns the first result and posts nothing. Two payments on
+one account at once run one after the other, so they never both clear
+the same bill.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5546,6 +5603,59 @@ bill.
 | `mode` | no | `'Bank Transfer'` |
 | `reference` | no | `None` |
 | `allocations` | no | `None` |
+| `idempotency_key` | no | `None` |
+| `received_on` | no | `None` |
+| `pin` | no | `None` |
+
+### `kamra.ledger.decide_city_ledger_payment`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Confirm or reject a company payment an agent recorded. Confirming
+needs the Finance user's own PIN every time and posts exactly what was
+proposed: the amount, mode, reference, received date and the bills it
+clears. If one of those bills was paid since, it is refused; reject it
+and record the payment again. A rejection needs a note. AI agents never
+decide.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `request` | yes |  |
+| `approve` | no | `1` |
+| `note` | no | `''` |
+| `pin` | no | `None` |
+
+### `kamra.ledger.reverse_city_ledger_payment`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Undo a company payment: a bounced cheque, or money put on the wrong
+account. Posts the opposite AR leg for every bill the payment cleared
+(those bills are owed again, with their old due dates), takes back any
+credit it left unapplied, and logs the reason. A payment is reversed
+once; AI agents can't reverse.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `payment` | yes |  |
+| `reason` | no | `None` |
+| `reason_code` | no | `None` |
+| `pin` | no | `None` |
+
+### `kamra.ledger.set_city_ledger_dispute`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Mark a company bill as disputed (or clear it). A disputed bill gets no
+payment reminders and does not count towards the overdue credit block;
+it stays on the account, in aging and on statements, flagged.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `folio` | yes |  |
+| `disputed` | no | `1` |
+| `note` | no | `None` |
 
 ### `kamra.ledger.city_ledger_aging`
 
@@ -5877,6 +5987,24 @@ it goes to the company's billing contact email.
 | `recipients` | no | `None` |
 | `lang` | no | `'en'` |
 
+### `kamra.statements.email_statements_bulk`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Email several companies at once: their statement (kind=statement) or
+their month-end bill for `month` (kind=monthly). Each goes to the
+company's billing contact through the single-account functions, so the
+same checks and Activity log apply. Accounts with no billing email are
+skipped and named; the sending runs in the background.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `accounts` | yes |  |
+| `kind` | no | `'statement'` |
+| `month` | no | `None` |
+| `lang` | no | `'en'` |
+
 ### `kamra.statements.company_monthly_bill`
 
 **GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
@@ -5933,18 +6061,23 @@ The account number is the company's reference on statements and must
 be unique at the property. Opening an account puts the company on
 credit (Corporate Account.credit_allowed), since that is what it is for.
 
+On an edit, a field left out (None) keeps its value; an empty string
+clears it. A create retried with the same `idempotency_key` returns the
+account it opened instead of failing.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
-| `company` | yes |  |
+| `company` | no | `None` |
 | `account_number` | no | `None` |
-| `credit_limit` | no | `0` |
-| `use_default_credit_days` | no | `1` |
-| `credit_days` | no | `0` |
+| `credit_limit` | no | `None` |
+| `use_default_credit_days` | no | `None` |
+| `credit_days` | no | `None` |
 | `billing_address` | no | `None` |
-| `restricted` | no | `0` |
+| `restricted` | no | `None` |
 | `restricted_reason` | no | `None` |
 | `account` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.receivables.create_ar_invoice`
 
@@ -6239,13 +6372,16 @@ current date but the roll did not stick. Never re-posts room nights.
 
 **GET/POST**
 
-Recent Night Audit Runs of a property, newest first, with whether
-each has a saved audit pack.
+Night Audit Runs of a property, newest first, with whether each has a
+saved audit pack. from_date/to_date narrow it to business dates in that
+range (a year of nights fits under the cap).
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
 | `limit` | no | `20` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
 
 ### `kamra.night_audit.night_audit_schedule`
 
@@ -6302,18 +6438,51 @@ Who and when are recorded on the run and in the Activity log.
 | `key` | yes |  |
 | `reason` | yes |  |
 
+### `kamra.night_audit.no_show_preview`
+
+**GET/POST**
+
+What marking this arrival a no-show will do, for the confirm step on
+Today, the reservation and End of Day: the fee the policy posts (pre-tax
+and with tax, the same numbers apply_no_show posts) or why there is none,
+what is already paid, and the credit left for the guest afterwards with
+the property's default for it (refund or keep).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
 ### `kamra.night_audit.eod_mark_no_show`
 
-**POST** · roles: `Front Desk`, `Night Auditor`, `Hotel Admin`, `Kamra Agent`
+**POST**
 
-End of Day: mark an arrival that did not come a No Show now, with the
-property's no-show fee policy applied exactly as the audit applies it
-(fee posted on the business date, or waived for an OTA booking).
+Mark an arrival that did not come a No Show now - from Today, the
+reservation or End of Day - with the property's no-show fee policy
+applied exactly as the audit applies it (fee posted on the business
+date, or waived for an OTA booking). The room is free at once: the
+channels get a push and open desk screens refresh. `credit` is what the
+guest paid beyond the fee; settle it with settle_no_show_credit.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `reason` | no | `None` |
+
+### `kamra.night_audit.settle_no_show_credit`
+
+**POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
+
+A no-show paid more than its fee: refund the rest to the guest (the
+refund writer, so till and ledger move) or keep it as a forfeited
+deposit, with a reason. Same roles as a folio refund.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `action` | yes |  |
+| `reason` | yes |  |
+| `mode` | no | `None` |
+| `pin` | no | `None` |
 
 ### `kamra.night_audit.eod_overview`
 
@@ -6978,6 +7147,151 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 | `outlet_name` | no | `None` |
 
 
+## Service accounts (scoped keys for connected apps)
+
+> IT only. A key reaches only its scopes and properties; see Connected apps.
+
+### `kamra.service_accounts.list_scopes`
+
+**GET/POST** · roles: `System Manager`, `Administrator`
+
+### `kamra.service_accounts.list_service_accounts`
+
+**GET/POST** · roles: `System Manager`, `Administrator`
+
+### `kamra.service_accounts.create_service_account`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+A new service account. The secret is shown once, here.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account_name` | yes |  |
+| `scopes` | yes |  |
+| `properties` | yes |  |
+
+### `kamra.service_accounts.rotate_service_account_key`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+A new secret; the old one stops working now. Shown once.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+
+### `kamra.service_accounts.revoke_service_account`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+Stop the account at once: its user is disabled and its secret
+replaced, so the next call with the old key fails to sign in.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+
+
+## Connected apps (connect, pair, disconnect, property profile)
+
+> pair is the one allow_guest endpoint here, rate-limited and logged; see Connected apps.
+
+### `kamra.apps.preview`
+
+**GET/POST** · roles: `System Manager`, `Administrator`
+
+The consent step: what the app is and what it asks for.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `app_url` | yes |  |
+
+### `kamra.apps.connect`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+Approve an app: a service account with exactly these scopes and
+properties, a registry entry, its redirect address, and a one-time
+pairing code (shown once).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `app_url` | yes |  |
+| `scopes` | yes |  |
+| `properties` | yes |  |
+
+### `kamra.apps.new_pairing_code`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+A fresh code for an app that has not paired yet; the old one stops.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `app_id` | yes |  |
+
+### `kamra.apps.disconnect`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+Off at once: the service account is revoked, the redirect address and
+the staff tokens issued through it go, and the tile disappears.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `app_id` | yes |  |
+
+### `kamra.apps.list_apps`
+
+**GET/POST** · roles: `System Manager`, `Administrator`
+
+### `kamra.apps.set_trust`
+
+**POST** · roles: `System Manager`, `Administrator`
+
+IT: allow unsigned (self-hosted) apps, and/or replace the list of
+trusted publisher keys (base64 Ed25519 public keys).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `unsigned` | no | `None` |
+| `keys` | no | `None` |
+
+### `kamra.apps.pair` <Badge type='tip' text='public' />
+
+**POST**
+
+The one unauthenticated endpoint: the app trades its one-time code for
+its key and secret. Every attempt that gets past the rate limit is in the
+Agent Action Log. A refused attempt gets HTTP 403 and
+{"error": "invalid_code"}.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `code` | yes |  |
+| `app_id` | yes |  |
+
+### `kamra.apps.my_apps`
+
+**GET/POST**
+
+Paired apps in the switcher for the signed-in person: admins see every
+one, staff the ones whose manifest names one of their roles. Apps whose
+manifest sets "switcher": false are left out.
+
+### `kamra.apps.property_profile`
+
+**GET/POST**
+
+Read-only branding and locale for one property: name, logo, address,
+tax ID, currency, language, time zone, check-in and check-out times.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+
 ## Public (no auth - booking page, check-in)
 
 > These are allow_guest endpoints: no token needed, rate-limited.
@@ -7164,8 +7478,9 @@ or the folio; staff count and price the bag at the door (status
 
 **POST**
 
-Create a Website booking. Guest identity is the phone number; staff
-verify at check-in. The advance owed is computed from the property's
+Create a Website booking. An existing guest profile is reused when
+both the phone and the full name match; staff verify at check-in.
+The advance owed is computed from the property's
 current payment policy and snapshotted onto the booking.
 
 Instant mode (default): Confirmed when nothing is due now, else
@@ -7238,49 +7553,3 @@ Leads are System Manager-only and purged after
 | `message` | no | `''` |
 | `country` | no | `''` |
 | `interest` | no | `''` |
-
-### `kamra.night_audit.no_show_preview`
-
-**GET/POST**
-
-What marking this arrival a no-show will do, for the confirm step on
-Today, the reservation and End of Day: the fee the policy posts (pre-tax
-and with tax, the same numbers apply_no_show posts) or why there is none,
-what is already paid, and the credit left for the guest afterwards with
-the property's default for it (refund or keep).
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `reservation` | yes |  |
-
-### `kamra.night_audit.settle_no_show_credit`
-
-**POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
-
-A no-show paid more than its fee: refund the rest to the guest (the
-refund writer, so till and ledger move) or keep it as a forfeited
-deposit, with a reason. Same roles as a folio refund.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `reservation` | yes |  |
-| `action` | yes |  |
-| `reason` | yes |  |
-| `mode` | no | `None` |
-| `pin` | no | `None` |
-
-### `kamra.api.reverse_check_in`
-
-**POST** · roles: `Front Desk`
-
-Undo a check-in made by mistake (wrong guest, wrong room), the same
-business day and before anything is posted or paid. The stay goes back
-to Confirmed (arrival) with its room; the room is released and marked
-Dirty so housekeeping inspects it before it is sold again. From there
-the desk checks the guest in again or cancels the booking.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `reservation` | yes |  |
-| `reason` | yes |  |
-| `pin` | no | `None` |
