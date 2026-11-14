@@ -1001,6 +1001,101 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"refund_payment",
+		"api.refund_folio_payment",
+		"""Give money back on an open folio, with a reason (or a Refund
+		reason_code). payment_row (a payment line from get_folio) refunds
+		that payment: to its own mode by default, or pass mode Cash to give
+		cash back; amount defaults to what is left of it. Without
+		payment_row give amount and mode. Refuses more than the guest is in
+		credit. A security deposit is refunded with refund_deposit. Confirm
+		the amount with staff first.""",
+		{
+			"folio": _p("string"),
+			"payment_row": _p("string"),
+			"amount": _p("number"),
+			"mode": _p("string"),
+			"reason": _p("string"),
+			"reason_code": _p("string", description="Optional Refund reason code"),
+			"idempotency_key": WRITE_KEY_PARAM,
+		},
+		required=("folio",),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"correct_folio_charge",
+		"api.correct_folio_charge",
+		"""Correct a posted charge on an open folio: the original line stays,
+		a reversal of it and a repost with the right amount (pre-tax),
+		tax rate, charge type or description are added, both linked to it
+		(corrects_row). Give only what changes. Needs a reason (or a Void
+		reason_code). Room nights change through the stay's rate, not here;
+		settled bills need a credit note.""",
+		{
+			"folio": _p("string"),
+			"charge_row": _p("string"),
+			"reason": _p("string"),
+			"amount": _p("number"),
+			"gst_rate": _p("number"),
+			"charge_type": _p("string"),
+			"description": _p("string"),
+			"reason_code": _p("string", description="Optional Void reason code"),
+			"idempotency_key": WRITE_KEY_PARAM,
+		},
+		required=("folio", "charge_row"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
+		"transfer_folio_charge",
+		"api.transfer_folio_charges",
+		"""Move charge lines (names from get_folio or folio_statement) off an
+		open folio, ledger and all. Give ONE target: to_folio (another folio
+		of the same stay or group), to_company=true (the stay's Company
+		folio, opened if needed; alcohol never moves there) or
+		to_reservation (another checked-in stay here: Finance or Hotel Admin
+		only, reason required). Lines keep their GL code.""",
+		{
+			"from_folio": _p("string"),
+			"charge_rows": _p("array", items=_p("string")),
+			"to_folio": _p("string"),
+			"to_company": _p("boolean"),
+			"to_reservation": _p("string"),
+			"reason": _p("string"),
+			"idempotency_key": WRITE_KEY_PARAM,
+		},
+		required=("from_folio", "charge_rows"),
+		mutating=True,
+		bools=("to_company",),
+		group="Billing",
+	),
+	_t(
+		"list_cashier_sessions",
+		"cashier.list_sessions",
+		"""Till sessions, newest first, for a business date (or
+		business_date to to_date), optionally status Open or Closed: cashier,
+		terminal, system totals per method, expected, counted, variance and
+		its review. Read-only.""",
+		{"business_date": _p("string", format="date"),
+		 "to_date": _p("string", format="date"),
+		 "status": _p("string", enum=["Open", "Closed"]),
+		 "limit": _p("integer")},
+		property=True,
+		group="Billing",
+	),
+	_t(
+		"cashier_session_detail",
+		"cashier.session_report",
+		"""One till session for a reconciliation: system vs counted per
+		method, the note-by-note cash count, every receipt and paid-out in
+		time order, the cashier and the supervisor who approved a variance.
+		Read-only.""",
+		{"session": _p("string")},
+		required=("session",),
+		group="Billing",
+	),
+	_t(
 		"close_folio",
 		"api.close_folio",
 		"""Close / settle an open folio and issue the invoice number. Balance

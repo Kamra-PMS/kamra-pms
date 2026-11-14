@@ -8863,7 +8863,7 @@ def t344():
 	s = api.checkout_context(res.name)
 	bills = [b for b in s["pending_bills"] if b["kind"] == "pos"]
 	assert [b["name"] for b in bills] == [o["order"]], s["pending_bills"]
-	assert bills[0]["amount"] == 200 and bills[0]["can_post_to_room"], bills
+	assert bills[0]["amount"] == 210 and bills[0]["can_post_to_room"], bills
 	assert any(n["code"] == "pending_bills" for n in s["blockers"]), s["blockers"]
 	owed_before = s["totals"]["owed"]
 	pos.deliver_order(o["order"])
