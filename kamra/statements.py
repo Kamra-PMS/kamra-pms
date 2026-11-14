@@ -233,7 +233,7 @@ def _send_bulk(property: str, accounts: list[str], kind: str, month: str | None,
 				email_monthly_bill(account, month, lang=lang)
 			else:
 				email_company_statement(account, lang=lang)
-			frappe.db.commit()
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- background job: each company is kept once sent, so a later failure does not undo it
 			sent.append(account)
 		except Exception:
 			# one company's failure must not stop the rest; it is in the error log
