@@ -6281,6 +6281,10 @@ def movable_rooms(reservation: str, check_in_date: str | None = None,
 	free = set()
 	for rt in types:
 		free |= {r.name for r in _available_rooms_raw(res.property, rt, ci, co)}
+	if getdate(ci) <= getdate(nowdate()):
+		# a guest still checked in holds the room until they check out,
+		# whatever their departure date says (as available_rooms ready_now)
+		free -= in_house_rooms(res.property)
 	type_name = {
 		t: (frappe.db.get_value("Room Type", t, "room_type_name") or t)
 		for t in types
