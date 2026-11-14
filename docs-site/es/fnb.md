@@ -110,7 +110,7 @@ aún están decidiendo. Queda en **Cuentas abiertas → Abierto, no enviado a
 la cocina**, con el tiempo que lleva esperando. Después de 15 minutos
 (puede cambiarlo en **Configuración → Alimentos y bebidas**), la cuenta
 se pone roja en la caja y aparece un punto rojo en **Pedidos**, para que
-un pedido olvidado se envíe o se cancele. El Cierre del día la muestra
+un pedido olvidado se envíe o se cancele. La auditoría nocturna la muestra
 como *abierta, no enviada a la cocina*.
 
 ## El plano de mesas

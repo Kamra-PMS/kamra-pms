@@ -251,6 +251,13 @@ class LedgerAuditTestCase(AuditTestCase):
 		# default date is the property's business date
 		self.assertEqual(ledger.journal_by_transaction_code(PROP_A)["business_date"],
 		                 d(-1))
+		# a range adds up both days
+		both = {r["transaction_code"]: r for r in ledger.journal_by_transaction_code(
+			PROP_A, d(-1), from_date=d(-2), to_date=d(-1))["rows"]}
+		self.assertAlmostEqual(float(both["3000"]["debit"]), 300, places=2)
+		self.assertEqual(both["3000"]["entries"], 2)
+		with self.assertRaises(frappe.ValidationError):
+			ledger.journal_by_transaction_code(PROP_A, from_date=d(-1), to_date=d(-2))
 
 	def test_financial_activity_lists_the_days_postings_by_user(self):
 		self.charge(100)

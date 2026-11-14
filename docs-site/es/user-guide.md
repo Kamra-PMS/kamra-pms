@@ -22,7 +22,7 @@ muestra las pantallas con imágenes y vídeos cortos.
 
 | Necesita… | Guía |
 | --- | --- |
-| Ejecutar el Cierre del día y resolver lo que lo bloquea | [Auditoría nocturna](/es/night-audit) |
+| Cerrar el día y resolver lo que lo bloquea | [Auditoría nocturna](/es/night-audit) |
 | Cerrar las cajas y revisar los totales del cajero | [Facturación → Cajero](/es/billing) |
 | Imprimir o descargar el paquete de auditoría del día | [Auditoría nocturna](/es/night-audit) |
 

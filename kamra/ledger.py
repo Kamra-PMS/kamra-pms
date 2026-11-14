@@ -11,7 +11,7 @@ from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
 from typing import Any
 
 import frappe
-from frappe.utils import now_datetime, nowdate
+from frappe.utils import getdate, now_datetime, nowdate
 
 from kamra.authz import require_roles
 from kamra.business_date import get_business_date
@@ -422,7 +422,7 @@ def ledger_balances(property: str, business_date: str | None = None):
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Hotel Admin", "Night Auditor", "Kamra Agent")
 def ledger_detail(property: str, ledger: str, business_date: str | None = None,
-                  limit: int = 200):
+                  limit: int = 2000):
 	"""The drill-down under a ledger card: every folio with a balance in that
 	ledger as of the date (guest, booking, status, company), biggest first.
 	For AR the company the bill is billed to comes with it."""
@@ -431,6 +431,7 @@ def ledger_detail(property: str, ledger: str, business_date: str | None = None,
 	from kamra.authz import assert_property_access
 	assert_property_access(property)
 	date = business_date or get_business_date(property)
+	limit = max(1, min(int(limit or 2000), 2000))
 	rows = frappe.db.sql(
 		"""
 		SELECT e.folio, SUM(e.debit) AS debit, SUM(e.credit) AS credit,
@@ -445,8 +446,10 @@ def ledger_detail(property: str, ledger: str, business_date: str | None = None,
 		HAVING ABS(SUM(e.debit - e.credit)) >= 0.01
 		ORDER BY ABS(SUM(e.debit - e.credit)) DESC
 		LIMIT %(n)s
-		""", {"p": property, "l": ledger, "d": date, "n": int(limit)}, as_dict=True)
-	return {"ledger": ledger, "business_date": str(date), "rows": [{
+		""", {"p": property, "l": ledger, "d": date, "n": limit + 1}, as_dict=True)
+	truncated = len(rows) > limit
+	rows = rows[:limit]
+	return {"ledger": ledger, "business_date": str(date), "truncated": truncated, "rows": [{
 		**r, "debit": round(float(r.debit), 2), "credit": round(float(r.credit), 2),
 		"balance": round(float(r.balance), 2), "last_date": str(r.last_date)}
 		for r in rows]}
@@ -497,8 +500,15 @@ def folio_reconciliation(property: str, limit: int = 20) -> dict:
 
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Hotel Admin", "Night Auditor", "Kamra Agent")
-def journal_by_transaction_code(property: str, business_date: str | None = None):
+def journal_by_transaction_code(property: str, business_date: str | None = None,
+                                from_date: str | None = None, to_date: str | None = None):
+	"""Ledger postings summed by transaction code: for one business date, or
+	from_date to to_date (both inclusive) when a range is given."""
 	date = business_date or get_business_date(property)
+	start = getdate(from_date) if from_date else getdate(date)
+	end = getdate(to_date) if to_date else getdate(date)
+	if start > end:
+		frappe.throw(frappe._("The start date is after the end date."))
 	rows = frappe.db.sql(
 		"""
 		SELECT COALESCE(transaction_code, '—') AS transaction_code,
@@ -506,16 +516,16 @@ def journal_by_transaction_code(property: str, business_date: str | None = None)
 		       COALESCE(SUM(credit), 0) AS credit,
 		       COUNT(*) AS entries
 		FROM `tabFolio Ledger Entry`
-		WHERE property = %(property)s AND business_date = %(date)s
+		WHERE property = %(property)s AND business_date BETWEEN %(start)s AND %(end)s
 		GROUP BY transaction_code
 		ORDER BY transaction_code
 		""",
-		{"property": property, "date": date}, as_dict=True,
+		{"property": property, "start": start, "end": end}, as_dict=True,
 	)
 	for r in rows:
 		r["description"] = frappe.db.get_value(
 			"Transaction Code", r.transaction_code, "description") or ""
-	return {"business_date": date, "rows": rows}
+	return {"business_date": date, "from_date": str(start), "to_date": str(end), "rows": rows}
 
 
 @frappe.whitelist()

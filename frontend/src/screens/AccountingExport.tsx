@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
+import { downloadCsv } from "../lib/csv"
 
 type Row = Record<string, unknown>
 type Line = Record<string, unknown>
@@ -147,22 +148,14 @@ export default function AccountingExport() {
   }, [property, from, to])
   useEffect(load, [load])
 
-  const esc = (t: string) =>
-    /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
-
   function download() {
     if (!data) return
     const cols = columnsFor(format, data)
-    const csv = [
-      cols.map((c) => esc(c.header)).join(","),
-      ...rowsFor(format, data).map((r) => cols.map((c) => esc(c.pick(r, data))).join(",")),
-    ].join("\n")
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" })
-    const a = document.createElement("a")
-    a.href = URL.createObjectURL(blob)
-    a.download = `invoices-${format}-${from}-to-${to}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
+    downloadCsv(
+      `invoices-${format}-${from}-to-${to}`,
+      cols.map((c) => c.header),
+      rowsFor(format, data).map((r) => cols.map((c) => c.pick(r, data))),
+    )
   }
 
   const cols = data ? columnsFor(format, data) : []

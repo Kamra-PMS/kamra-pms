@@ -46,7 +46,7 @@ come from after that close. Kamra starts billing from its own business
 date. Every night before it belongs to the old system.
 
 Check Kamra's business date: it must be the first day Kamra runs.
-**End of Day** shows it.
+**Night Audit** shows it.
 
 ### 2. Export
 
@@ -159,7 +159,7 @@ again.
   connections in the same hour. See the [channel manager
   guide](/channel-manager).
 - Keep the old system read-only for reference.
-- The desk works in Kamra from now on. Run the first **End of Day**
+- The desk works in Kamra from now on. Run the first **Night Audit**
   on Kamra tonight. It bills tonight's room nights for the in-house
   guests you carried over.
 

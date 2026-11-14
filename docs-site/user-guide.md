@@ -22,7 +22,7 @@ screens with pictures and short clips.
 
 | You need to… | Guide |
 | --- | --- |
-| Run the End of Day and deal with what blocks it | [Night audit](/night-audit) |
+| Close the day and deal with what blocks it | [Night audit](/night-audit) |
 | Close tills and check the cashier totals | [Billing → Cashier](/billing) |
 | Print or download the day's audit pack | [Night audit](/night-audit) |
 

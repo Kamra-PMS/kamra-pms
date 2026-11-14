@@ -40,7 +40,7 @@ desde la reserva.
 huésped, factura o folio, filtre por estado, o indique **Cerrado desde** y
 **A** para ver las cuentas cerradas en un rango de fechas.
 
-![La pantalla de Facturación: accesos directos a Cierre del día y Mi caja, y la lista de folios con sus saldos](/img/billing/billing-list.png)
+![La pantalla de Facturación: accesos directos a Auditoría nocturna y Mi caja, la lista de huéspedes que se fueron debiendo, y la lista de folios con sus saldos](/img/billing/billing-list.png)
 
 El folio se abre solo al registrar la entrada. Hasta que se liquida, es una
 **Cuenta provisional** sin número de factura.
@@ -249,7 +249,28 @@ pasa solo a su cuenta de **cuentas por cobrar a empresas**, si la empresa
 tiene crédito permitido.
 
 **Cuentas por cobrar** (Finanzas → Cuentas por cobrar) reúne todas las cuentas de
-empresa: quién debe qué, con cuánto retraso y cuánto crédito le queda.
+empresa: quién debe qué, con cuánto retraso y cuánto crédito le queda. Los
+recuadros de arriba son filtros: **Todas las cuentas**, **Vencido**, **Excede el límite de crédito**, **Alojados, sin facturar** y **Pagado por adelantado**,
+cada uno con su número y su importe. La lista muestra el saldo de cada cuenta por
+antigüedad (por vencer, de 1 a 30 días de retraso, de 31 a 60, de 61 a 90, más de
+90). **Columnas** añade el contacto, el límite de crédito y más; **Exportar CSV**
+descarga lo que se muestra.
+
+![Cuentas por cobrar: los cinco filtros con su número e importe, y cada empresa con sus condiciones, su saldo por antigüedad, su saldo y su último pago](/img/billing/receivables.png)
+
+**Trabajar con varias empresas a la vez** (Finanzas y Administrador del hotel):
+márquelas (o **Seleccionar todo**) y luego **Enviar estados de cuenta**, **Enviar
+facturas de fin de mes** para el mes que elija, o **Exportar selección**. Cada
+correo va al contacto de facturación de la empresa y queda en el Registro de
+actividad; una empresa sin correo de facturación se nombra y se omite.
+
+En la página de una empresa, **Nueva factura** y **Registrar pago** están arriba;
+**Estado de cuenta**, **Factura de fin de mes** y **Configuración de la cuenta**
+están en **Más**. Debajo de los totales, una barra muestra la antigüedad de lo que
+debe la empresa, y las pestañas **Cuentas abiertas**, **Todas las facturas**,
+**Pagos** e **Historial de la cuenta** reúnen todo lo de la cuenta.
+
+![La cuenta de una empresa: Nueva factura, Registrar pago y Más arriba, los totales, la antigüedad de lo que se debe y las cuentas abiertas](/img/billing/receivables-account.png)
 
 - **Abrir una cuenta** (Finanzas y Administrador del hotel): pulse **Nueva
   cuenta**, elija la empresa y fije el **Número de cuenta**, el **Límite de
@@ -271,10 +292,10 @@ empresa: quién debe qué, con cuánto retraso y cuánto crédito le queda.
 - **Transferir una factura** a otra empresa (paga la empresa matriz o la
   agencia): pulse **Transferencia** en la factura. Pasa lo que aún se debe; lo
   pagado se queda. La factura conserva su número y su fecha.
-- **Factura de fin de mes** para empresas que pagan mensualmente: elija el mes
-  junto a **Factura de fin de mes** (por defecto el mes pasado) y púlselo para
-  imprimirla, o **Correo electrónico** para enviarla al contacto de facturación.
-  Muestra cada factura del mes con su número, base imponible e impuesto, los
+- **Factura de fin de mes** para empresas que pagan mensualmente: **Más →
+  Factura de fin de mes** abre una vista previa de un mes (por defecto el mes
+  pasado). Pulse **Imprimir o guardar PDF**, o **Enviar al contacto de
+  facturación**. Muestra cada factura del mes con su número, base imponible e impuesto, los
   pagos de la empresa y el saldo anterior y el saldo final. Cada estancia
   conserva su propia factura fiscal; la factura de fin de mes es el resumen
   contra el que paga la empresa, con el número `SOA-<cuenta>-<AAAAMM>`.
@@ -302,22 +323,46 @@ qué queda en el Registro de actividad.
 
 **Registrar el pago de una empresa** (Finanzas y Administrador del hotel):
 
-1. Abra **Finanzas → Cuentas por cobrar** y la empresa (o **Finanzas → Libros contables**). **Antigüedad de cuentas por cobrar a empresas** muestra el saldo de cada empresa
-   por antigüedad (0-30, 31-60, 61-90, más de 90 días) y el saldo a favor sin aplicar.
-2. Pulse **Registrar pago** en la fila de la empresa.
+1. Abra **Finanzas → Cuentas por cobrar** y la empresa.
+2. Pulse **Registrar pago**.
 3. Indique el **Importe recibido**, el **Modo** y la **Referencia (UTR /
-   n.º de cheque)**. Por defecto, el pago salda primero las facturas más antiguas;
-   también puede escribir el importe de cada factura.
+   n.º de cheque)**. **Recibido el** es la fecha en que lo recibió el banco;
+   déjelo en blanco para la fecha operativa de hoy. Por defecto, el pago salda
+   primero las facturas más antiguas; también puede escribir el importe de cada
+   factura.
 4. Pulse **Revisar pago**, compruebe lo que salda y luego pulse **Confirmar**.
 
 El dinero sobrante queda en la cuenta como saldo a favor sin aplicar y paga la
-siguiente factura de la empresa de forma automática.
+siguiente factura de la empresa de forma automática. Con **Pedir un PIN en cada
+pago de empresa** activado (Configuración → Alojamiento → Crédito de empresas),
+quien lo registra lo confirma con su propio PIN de cajero.
+
+**Los pagos que registra un agente de IA** nunca se registran solos. Aparecen en
+**Pagos por confirmar** en la cuenta de la empresa. Un usuario de Finanzas (no el
+que está detrás del agente) revisa el importe y las facturas que salda y pulsa
+**Confirmar** con su PIN, que registra exactamente eso, o **Rechazar** con una
+nota.
+
+**Revertir un pago** (un cheque devuelto, o dinero puesto en la cuenta equivocada):
+en la pestaña **Pagos**, pulse **Revertir**, elija el motivo y añada una nota. Las
+facturas que saldaba vuelven a deberse con sus vencimientos originales, se retira
+el saldo a favor que dejó en la cuenta y el motivo queda en el Registro de
+actividad. Un pago solo se puede revertir una vez, y los agentes de IA no pueden revertirlo.
+
+**Facturas en disputa**: pulse **Marcar en disputa** en una factura abierta e indique qué
+disputa la empresa. La factura sigue en la cuenta, en la antigüedad y en el estado
+de cuenta, marcada como En disputa, pero no recibe recordatorios de pago y no
+cuenta para el bloqueo de crédito por vencidos. **Retirar disputa** la termina.
+
+La antigüedad, los recordatorios y la comprobación de vencidos cuentan los días
+desde la fecha operativa del alojamiento, así que coinciden con la auditoría
+nocturna en torno a la medianoche.
 
 **Enviar a una empresa su estado de cuenta** (Finanzas y Administrador del hotel):
-en la fila de la empresa en **Antigüedad de cuentas por cobrar a empresas**, pulse
-**Estado de cuenta** para abrirlo e imprimirlo o guardarlo en PDF, o **Enviar
-estado de cuenta** para enviarlo por correo (deje la dirección en blanco para usar
-el correo de facturación de la empresa). El estado de cuenta muestra cada factura
+en la página de la empresa, **Más → Estado de cuenta** abre una vista previa.
+Pulse **Imprimir o guardar PDF**, o **Enviar al contacto de facturación** (el
+correo de contacto de la empresa). Para enviar muchos a la vez, márquelos en la
+lista de Cuentas por cobrar. El estado de cuenta muestra cada factura
 abierta con su fecha, su vencimiento, los días de retraso, lo facturado y lo
 pagado, el saldo a favor sin aplicar, el saldo pendiente y la antigüedad por días
 de retraso.
@@ -472,7 +517,7 @@ el cajón, con las transacciones recientes de la sesión debajo.
 2. Pulse **Cerrar sesión**.
 
 Finanzas y el auditor nocturno también pueden cerrar la caja de otra persona, en el
-paso **Cierre de caja** del [Cierre del día](/es/night-audit). **Finanzas →
+la comprobación de cajas abiertas de la [Auditoría nocturna](/es/night-audit). **Finanzas →
 Sesiones** muestra todas las sesiones con su fondo, el efectivo esperado y el contado,
 y la variación.
 
@@ -591,21 +636,34 @@ monedas con tipo para hoy. Al elegir una se añade una línea como
 huésped: la factura fiscal, sus totales y su importe en letras siguen en su
 moneda.
 
-## Revisar los libros contables
+## Revisar los libros
 
-**Finanzas → Libros contables** muestra los cuatro libros de folios de una fecha: **Huésped**
-(lo que deben los huéspedes alojados), **Anticipo de reserva** (anticipos y depósitos de garantía
-retenidos), **AR** (lo que deben las empresas, cuentas por cobrar) y **Paquete**. Debajo están el
-diario por código de transacción y la antigüedad de cuentas por cobrar a empresas.
+**Finanzas → Cuadre contable** muestra los cuatro libros de folios: **Huésped**
+(lo que deben los huéspedes alojados), **Anticipo de reserva** (anticipos y
+depósitos de garantía retenidos), **AR** (lo que deben las empresas, cuentas por
+cobrar) y **Paquete**. Elija **De** y **A** arriba: los saldos de los libros son
+a la fecha **A**, y el diario por código de transacción cubre todo el periodo
+(este mes por defecto).
 
-![La pantalla Libros contables: el aviso verde que indica que los libros coinciden con los folios, los cuatro libros, el diario por código de transacción y la antigüedad de cuentas por cobrar a empresas](/img/billing/ledgers.png)
+Una línea arriba responde si los libros están bien, para la fecha operativa
+actual:
 
-El aviso de arriba compara los libros con los folios de la
-fecha operativa actual. **Los libros coinciden con los folios** significa que los libros de Huésped y de
-Anticipo de reserva suman lo que tienen los folios. Los débitos superan a los
-créditos en lo que deben los huéspedes; es lo esperado. Si un folio no coincide,
-el aviso se pone ámbar y lo muestra (consulte
-[Solución de problemas](#solucion-de-problemas)). Para cualquier otra fecha solo muestra los totales.
+- **Los folios y los libros contables cuadran.** Los libros de Huésped y de Anticipo de
+  reserva suman lo que tienen los folios. Los débitos superan a los créditos en lo
+  que deben los huéspedes; es lo esperado.
+- **Folios que no cuadran con el libro contable: N**, con la diferencia y un enlace a cada
+  folio. Ábralo para encontrar el registro que llegó a un lado y no al otro
+  (consulte [Solución de problemas](#solucion-de-problemas)).
+
+Para una fecha **A** anterior solo muestra los saldos.
+
+![Cuadre contable: la línea que indica que los folios y los libros contables cuadran, los cuatro libros y el diario por código de transacción de las fechas elegidas](/img/billing/books-check.png)
+
+Pulse **Quién compone el saldo** en un libro para ver cada folio con saldo en él, de
+mayor a menor. La (i) de cada libro explica qué contiene y cómo se corrige un
+error. La lista y el diario se pueden ordenar, elegir columnas y **Exportar CSV**.
+Lo que debe cada empresa, y con cuánto retraso, está en
+[Cuentas por cobrar](#facturar-a-una-empresa).
 
 Cada cargo, pago, anulación, traslado y bonificación genera un asiento en el libro.
 Una anulación o un traslado no borra el historial: registra un asiento inverso.
