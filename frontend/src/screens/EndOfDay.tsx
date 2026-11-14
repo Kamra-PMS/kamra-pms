@@ -63,10 +63,15 @@ export default function EndOfDay() {
     loadOverview()
   }, [loadOverview])
 
+  const limit = from || to ? 400 : 60
   const loadHistory = useCallback(() => {
     if (!histProp) return
-    auditHistory(histProp, from || to ? 400 : 60, from, to).then(setHistory).catch(() => setHistory([]))
-  }, [histProp, from, to])
+    let stale = false
+    auditHistory(histProp, limit, from, to)
+      .then((r) => { if (!stale) setHistory(r) })
+      .catch(() => { if (!stale) setHistory([]) })
+    return () => { stale = true }
+  }, [histProp, from, to, limit])
   useEffect(loadHistory, [loadHistory])
 
   async function recover(property: string) {
@@ -97,13 +102,12 @@ export default function EndOfDay() {
     }
   }
 
-  const filtered = history
 
   const exportHistory = () =>
     downloadCsv(
       `night-audits-${histProp}${from ? `-from-${from}` : ""}${to ? `-to-${to}` : ""}`,
       [t("Business date"), t("Status"), t("Trigger"), t("Room nights"), t("Posted {cur}", { cur: cur() }), t("No-shows"), t("Exceptions")],
-      filtered.map((r) => [r.business_date, r.status, r.run_trigger || "Manual", r.room_charges_posted,
+      history.map((r) => [r.business_date, r.status, r.run_trigger || "Manual", r.room_charges_posted,
         r.amount_posted, r.no_shows_flagged, r.exceptions || 0]),
     )
 
@@ -181,7 +185,6 @@ export default function EndOfDay() {
                     ? t("Last closed {d}", { d: fmtDay(r.last_run.business_date) })
                     : t("No audit run yet")}
                   {r.last_run?.run_trigger ? ` · ${t(r.last_run.run_trigger)}` : ""}
-
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {r.stuck_date && (
@@ -239,7 +242,7 @@ export default function EndOfDay() {
               <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
                 className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm" />
             </label>
-            <Button variant="outline" disabled={!filtered.length} onClick={exportHistory}>
+            <Button variant="outline" disabled={!history.length} onClick={exportHistory}>
               <Download className="size-4" aria-hidden />
               {t("Export CSV")}
             </Button>
@@ -261,7 +264,7 @@ export default function EndOfDay() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {filtered.map((r) => (
+                {history.map((r) => (
                   <tr key={r.name}>
                     <td className="py-2 pe-3 font-medium">{fmtDay(r.business_date)}</td>
                     <td className="py-2 pe-3">
@@ -294,7 +297,7 @@ export default function EndOfDay() {
                     </td>
                   </tr>
                 ))}
-                {filtered.length === 0 && (
+                {history.length === 0 && (
                   <tr>
                     <td colSpan={8} className="py-6 text-center text-zinc-400">
                       {t("No audits found.")}
@@ -304,6 +307,11 @@ export default function EndOfDay() {
               </tbody>
             </table>
           </div>
+          {history.length >= limit && (
+            <p className="mt-2 text-xs text-zinc-500">
+              {t("Showing the latest {n}. Pick From and To dates to see others.", { n: limit })}
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

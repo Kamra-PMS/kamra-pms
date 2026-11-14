@@ -989,6 +989,8 @@ def night_audit_history(property: str, limit: int = 20, from_date: str | None = 
 	from kamra.crs import assert_property_access
 	assert_property_access(property)
 	limit = max(1, min(cint(limit) or 20, 400))
+	if from_date and to_date and getdate(from_date) > getdate(to_date):
+		frappe.throw(frappe._("The start date is after the end date."))
 	args = {"p": property, "n": limit,
 	        "f": getdate(from_date) if from_date else None,
 	        "t": getdate(to_date) if to_date else None}

@@ -93,8 +93,11 @@ export function DataTable<R>({ id, columns, rows, rowKey, onRowClick, exportName
     setHidden(next)
     save(id, next)
   }
-  const exportCsv = () =>
-    downloadCsv(exportName || id, shown.map((c) => c.label), sorted.map((r) => shown.map((c) => raw(c, r))))
+  const exportCsv = () => {
+    // a column with no header (a checkbox, the row's buttons) is not data
+    const cols = shown.filter((c) => c.label)
+    downloadCsv(exportName || id, cols.map((c) => c.label), sorted.map((r) => cols.map((c) => raw(c, r))))
+  }
   const alignCls = (c: Column<R>) =>
     c.align === "right" ? "text-right tabular-nums" : c.align === "center" ? "text-center" : "text-left"
 

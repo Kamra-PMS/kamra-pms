@@ -9,7 +9,7 @@ const NUMBER = /^-?\d+(\.\d+)?$/
 
 export function csvCell(v: Cell): string {
   let s = v == null ? "" : String(v)
-  if (typeof v === "string" && /^[=+\-@\t\r]/.test(s) && !NUMBER.test(s)) s = `'${s}`
+  if (typeof v === "string" && /^[=+\-@\t\r\n＝＋－＠]/.test(s.trimStart()) && !NUMBER.test(s.trim())) s = `'${s}`
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 

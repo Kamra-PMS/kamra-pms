@@ -133,7 +133,7 @@ function StepTable({
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {shown.map((r, i) => (
-              <tr key={String(r.reservation ?? r.folio ?? r.session ?? r.order ?? r.room_id ?? r.account ?? i)}>
+              <tr key={`${String(r.order ?? r.session ?? r.folio ?? r.reservation ?? r.room_id ?? r.account ?? "")}-${i}`}>
                 {cols.map((c) => (
                   <td key={c.key} className={cn("px-2 py-1.5 align-top", right(c))}>{cell(c, r)}</td>
                 ))}
@@ -399,6 +399,9 @@ function CheckBlock({
 
 const SEVERITY_ORDER: Record<string, number> = { block: 0, warn: 1, info: 2 }
 
+/** Counted cash as typed: a comma decimal works, anything else is NaN. */
+const cash = (v?: string) => (v && v.trim() ? Number(v.trim().replace(/\s/g, "").replace(",", ".")) : NaN)
+
 export default function EndOfDayWizard() {
   const { t } = useT()
   const navigate = useNavigate()
@@ -439,10 +442,11 @@ export default function EndOfDayWizard() {
     setErr(null)
     try {
       await fn()
-      await load()
     } catch (e) {
       setErr(serverError(e))
     } finally {
+      // reload either way: a loop that stopped half way still changed things
+      await load()
       setBusy(null)
     }
   }
@@ -709,14 +713,14 @@ export default function EndOfDayWizard() {
                     className="h-7 w-28 rounded-md border border-zinc-300 px-2 text-xs"
                   />
                   <Button variant="outline" className="h-7 px-2 text-xs"
-                    disabled={!!busy || !counted[String(r.session)]}
+                    disabled={!!busy || !Number.isFinite(cash(counted[String(r.session)]))}
                     onClick={() =>
                       act("close", () =>
                         withPin((pin) =>
                           call("kamra.cashier.close_session", {
                             session: r.session,
-                            counted_cash: Number(counted[String(r.session)] || 0),
-                            notes: "Closed at End of Day",
+                            counted_cash: cash(counted[String(r.session)]),
+                            notes: "Closed at Night Audit",
                             pin,
                           }),
                         ),

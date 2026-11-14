@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
@@ -79,6 +79,9 @@ export default function Ledgers() {
   const [help, setHelp] = useState<string | null>(null)
   const [open, setOpen] = useState<string | null>(null)
   const [detail, setDetail] = useState<DetailRow[] | null>(null)
+  const [capped, setCapped] = useState(false)
+  // the newest request wins: typing a date fires one per keystroke
+  const seq = useRef(0)
   const [inBalance, setInBalance] = useState<boolean | null>(true)
   const [recon, setRecon] = useState<Recon | null>(null)
   const [journal, setJournal] = useState<JournalRow[]>([])
@@ -86,14 +89,18 @@ export default function Ledgers() {
 
   useEffect(() => {
     if (!open) { setDetail(null); return }
+    let stale = false
     setDetail(null)
-    call<{ rows: DetailRow[] }>("kamra.ledger.ledger_detail", {
+    call<{ rows: DetailRow[]; truncated?: boolean }>("kamra.ledger.ledger_detail", {
       property: getCurrentProperty(), ledger: open, business_date: date || undefined,
-    }).then((r) => setDetail(r.rows)).catch(() => setDetail([]))
+    }).then((r) => { if (!stale) { setDetail(r.rows); setCapped(!!r.truncated) } })
+      .catch(() => { if (!stale) setDetail([]) })
+    return () => { stale = true }
   }, [open, date])
 
   // balances as of `date`; the journal covers `from` to `date`
   const load = useCallback(async () => {
+    const mine = ++seq.current
     try {
       const bal = await call<{
         business_date: string
@@ -104,6 +111,7 @@ export default function Ledgers() {
         property: getCurrentProperty(),
         business_date: date || undefined,
       })
+      if (mine !== seq.current) return
       setLedgers(bal.ledgers)
       setInBalance(bal.in_balance)
       setRecon(bal.reconciliation)
@@ -115,6 +123,7 @@ export default function Ledgers() {
       const j = await call<{ rows: JournalRow[] }>("kamra.ledger.journal_by_transaction_code", {
         property: getCurrentProperty(), business_date: date, from_date: from || date, to_date: date,
       })
+      if (mine !== seq.current) return
       setJournal(j.rows)
       setErr(null)
     } catch (e) {
@@ -127,6 +136,7 @@ export default function Ledgers() {
   }, [load])
 
   const dateInput = "rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+  const helpCard = help ? helpFor()[help] : undefined
 
   return (
     <div className="w-full space-y-5">
@@ -209,7 +219,7 @@ export default function Ledgers() {
         ))}
       </div>
 
-      {help && helpFor()[help] ? (
+      {helpCard ? (
         <Card className="border-emerald-200 bg-emerald-50/40">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">{translate(help)}{translate(" ledger")}</CardTitle>
@@ -218,11 +228,11 @@ export default function Ledgers() {
           <CardContent>
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
               {([
-                [translate("What it is"), helpFor()[help].what],
-                [translate("Where to see it"), helpFor()[help].where],
-                [translate("How entries get here"), helpFor()[help].changes],
-                [translate("Correcting a mistake"), helpFor()[help].fix],
-                [translate("Drill down"), helpFor()[help].drill],
+                [translate("What it is"), helpCard.what],
+                [translate("Where to see it"), helpCard.where],
+                [translate("How entries get here"), helpCard.changes],
+                [translate("Correcting a mistake"), helpCard.fix],
+                [translate("Drill down"), helpCard.drill],
               ] as const).map(([k, v]) => (
                 <div key={k}>
                   <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{k}</dt>
@@ -230,9 +240,9 @@ export default function Ledgers() {
                 </div>
               ))}
             </dl>
-            {helpFor()[help].link ? (
+            {helpCard.link ? (
               <Link className="mt-3 inline-block text-sm font-medium text-brand-700 hover:underline"
-                to={helpFor()[help].link![0]}>{helpFor()[help].link![1]}</Link>
+                to={helpCard.link[0]}>{helpCard.link[1]}</Link>
             ) : null}
           </CardContent>
         </Card>
@@ -248,6 +258,12 @@ export default function Ledgers() {
           </CardHeader>
           <CardContent>
             {!detail ? <p className="py-6 text-center text-sm text-zinc-400">{translate("Loading…")}</p> : (
+              <>
+              {capped ? (
+                <p className="mb-2 text-xs text-amber-800">
+                  {translate("Showing the {n} biggest balances. The ledger total above includes every folio.", { n: detail.length })}
+                </p>
+              ) : null}
               <DataTable<DetailRow>
                 id={`ledgers.detail.${open}`} exportName={`${open.toLowerCase()}-ledger-${date}`}
                 rows={detail} rowKey={(r) => r.folio} empty={translate("Nothing on this ledger.")}
@@ -266,6 +282,7 @@ export default function Ledgers() {
                   { key: "balance", label: translate("Balance"), align: "right", render: (r) => <span className="font-medium">{inr(r.balance)}</span> },
                 ]}
               />
+              </>
             )}
           </CardContent>
         </Card>

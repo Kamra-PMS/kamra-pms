@@ -137,6 +137,8 @@ def _summary(property: str, rows: list[dict]) -> dict:
 	}
 
 
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Hotel Admin", "Night Auditor", "Kamra Agent")
 def guests_owing(property: str) -> list[dict]:
 	"""Guest bills still owed after the stay ended: departed, no-show or
 	cancelled with a balance (a no-show fee, a bill left open)."""

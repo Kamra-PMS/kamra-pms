@@ -198,8 +198,8 @@
 {0}: reminder sent for {1} ({2}),{0}: reminder sent for {1} ({2}),{0}: تم إرسال تذكير لـ {1} ({2}),{0}: recordatorio enviado para {1} ({2}),,0 1 2,translated
 "{a} adults, {c} children","{a} adults, {c} children",{a} بالغين، {c} أطفال,"{a} adultos, {c} niños",components/RoomDrawer.tsx,a c,translated
 {a} new · {b} updated · {c} skipped,{a} new · {b} updated · {c} skipped,{a} جديدة · {b} محدّثة · {c} متخطاة,{a} nuevas · {b} actualizadas · {c} omitidas,screens/RoomsSetup.tsx,a b c,translated
-{a} of {b} checks clear,{a} of {b} checks clear,,,screens/EndOfDayWizard.tsx,a b,needs_translation
-{a} to {b},{a} to {b},,,screens/Ledgers.tsx,a b,needs_translation
+{a} of {b} checks clear,{a} of {b} checks clear,{a} من {b} فحوصات سليمة,{a} de {b} comprobaciones correctas,screens/EndOfDayWizard.tsx,a b,translated
+{a} to {b},{a} to {b},{a} إلى {b},{a} a {b},screens/Ledgers.tsx,a b,translated
 {a}-{b} of {n},{a}-{b} of {n},{a}-{b} من {n},{a}-{b} de {n},components/ui/data-table.tsx,a b n,translated
 "{added} added, {updated} updated","{added} added, {updated} updated",تمت إضافة {added}، وتحديث {updated},Agregados: {added}; actualizados: {updated},screens/settings/cards.tsx,added updated,translated
 "{adults} adults, {children} children on the booking","{adults} adults, {children} children on the booking",{adults} بالغين، {children} أطفال في الحجز,"{adults} adultos, {children} niños en la reserva",components/CheckInGuests.tsx,adults children,translated
@@ -223,7 +223,7 @@
 {cur}/adult/night,{cur}/adult/night,{cur}/بالغ/ليلة,{cur}/adulto/noche,screens/Setup.tsx,cur,translated
 {cur}/night,{cur}/night,{cur}/ليلة,{cur}/noche,screens/Setup.tsx,cur,translated
 {customer} on {date},{customer} on {date},{customer} في {date},"{customer}, el {date}",screens/BanquetDiary.tsx,customer date,translated
-{d} closed,{d} closed,,,screens/EndOfDayWizard.tsx,d,needs_translation
+{d} closed,{d} closed,تم إغلاق {d},{d} cerrado,screens/EndOfDayWizard.tsx,d,translated
 "{date}: {booked} booked, {held} held for groups, of {total} rooms ({pct}%, {pctHolds}% with holds)","{date}: {booked} booked, {held} held for groups, of {total} rooms ({pct}%, {pctHolds}% with holds)",{date}: {booked} محجوزة، {held} محجوزة للمجموعات، من {total} غرف ({pct}%، {pctHolds}% مع الحجوزات المؤقتة),"{date}: {booked} reservadas, {held} retenidas para grupos, de {total} habitaciones ({pct}%, {pctHolds}% con retenciones)",screens/Today.tsx,date booked held total pct pctHolds,translated
 {date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} of {total} rooms booked ({pct}%),{date}: {booked} من {total} غرف محجوزة ({pct}%),{date}: {booked} de {total} habitaciones reservadas ({pct}%),,date booked total pct,translated
 {diners} guests,{diners} guests,{diners} ضيوف,Comensales: {diners},screens/Kitchen.tsx,diners,translated
@@ -242,7 +242,7 @@
 "{label}: {amount} off {n} room nights ({base}), before tax","{label}: {amount} off {n} room nights ({base}), before tax",{label}: خصم {amount} من {n} ليالٍ ({base})، قبل الضريبة,"{label}: {amount} de descuento sobre {n} noches ({base}), antes de impuestos",components/FolioDiscount.tsx,label amount n base,translated
 {label}: all,{label}: all,{label}: الكل,{label}: todos,components/ResourceScreen.tsx,label,translated
 {lock} makes the keys when you check the guest in.,{lock} makes the keys when you check the guest in.,يجهز {lock} المفاتيح عند تسجيل وصول الضيف.,{lock} genera las llaves al registrar la entrada del huésped.,components/CheckInDialog.tsx,lock,translated
-{m} bills,{m} bills,,,screens/Receivables.tsx,m,needs_translation
+{m} bills,{m} bills,فواتير {m},las facturas de {m},screens/Receivables.tsx,m,translated
 {m} did not fit - no more free rooms of that type on these dates.,{m} did not fit - no more free rooms of that type on these dates.,,,components/GroupBookingDialog.tsx,m,needs_translation
 {n} A4 pages,{n} A4 pages,{n} صفحات A4,Páginas A4: {n},,n,translated
 {n} ad,{n} ad,{n} بالغ,{n} ad.,components/BookingRequests.tsx; screens/InHouse.tsx; screens/Today.tsx,n,translated
@@ -264,7 +264,7 @@
 {n} day{s} before arrival.,{n} day{s} before arrival.,{n} يوم{s} قبل الوصول.,{n} día{s} antes de la llegada.,components/CancelPanel.tsx,n s,translated
 {n} days,{n} days,{n} أيام,{n} días,screens/Payables.tsx; screens/RateCalendar.tsx; screens/Receivables.tsx; screens/Today.tsx,n,translated
 {n} days {pct}%,{n} days {pct}%,{n} أيام {pct}%,{n} días {pct}%,screens/Today.tsx,n pct,translated
-{n} days late,{n} days late,,,screens/Receivables.tsx,n,needs_translation
+{n} days late,{n} days late,متأخرة {n} يومًا,{n} días de retraso,screens/Receivables.tsx,n,translated
 {n} dish,{n} dish,{n} طبق,{n} plato,screens/BanquetCatalogue.tsx,n,translated
 {n} dish re-costed.,{n} dish re-costed.,أُعيد حساب تكلفة {n} طبق.,Se recalculó el costo de {n} plato.,screens/BanquetCatalogue.tsx,n,translated
 {n} dishes,{n} dishes,{n} أطباق,{n} platos,screens/BanquetCatalogue.tsx,n,translated
@@ -336,14 +336,14 @@
 {n} row(s) skipped,{n} row(s) skipped,تم تخطي {n} صف,{n} fila(s) omitida(s),screens/RoomsSetup.tsx,n,translated
 {n} rows,{n} rows,{n} صف,{n} filas,,n,translated
 {n} seats,{n} seats,{n} مقاعد,Asientos: {n},screens/POS.tsx,n,translated
-{n} selected · {v0} owed,{n} selected · {v0} owed,,,screens/Receivables.tsx,n v0,needs_translation
+{n} selected · {v0} owed,{n} selected · {v0} owed,{n} محددة · {v0} مستحق,{n} seleccionadas · {v0} por cobrar,screens/Receivables.tsx,n v0,translated
 {n} staying,{n} staying,{n} مقيم,Huéspedes alojados: {n},screens/Today.tsx,n,translated
 {n} still need IDs or other steps: use Finish on each room.,{n} still need IDs or other steps: use Finish on each room.,{n} ما زالت تحتاج هويات أو خطوات أخرى: استخدم إنهاء في كل غرفة.,{n} aún necesitan identificaciones u otros pasos: usa Terminar en cada habitación.,,n,translated
 {n} task{s} for you - arrivals first,{n} task{s} for you - arrivals first,{n} مهمة{s} لك - الوصول أولاً,{n} tarea{s} para usted: llegadas primero,screens/HkApp.tsx,n s,translated
 {n} this session,{n} this session,{n} في هذه الجلسة,En esta sesión: {n},screens/CashierTill.tsx,n,translated
 {n} ticked line(s) are shared.,{n} ticked line(s) are shared.,ستتم مشاركة {n} من البنود المحددة.,Se comparten {n} línea(s) marcada(s).,screens/FolioView.tsx,n,translated
 {n} tickets,{n} tickets,{n} تذاكر,Comandas: {n},screens/Kitchen.tsx,n,translated
-{n} to look at,{n} to look at,,,screens/EndOfDayWizard.tsx,n,needs_translation
+{n} to look at,{n} to look at,{n} للمراجعة,{n} por revisar,screens/EndOfDayWizard.tsx,n,translated
 {n} unassigned - take one to add it to your list,{n} unassigned - take one to add it to your list,{n} غير مخصص - خذ واحداً لإضافته لقائمتك,{n} sin asignar. Tome una tarea para agregarla a su lista,screens/HkApp.tsx,n,translated
 {n} unsaved changes,{n} unsaved changes,{n} تغييرات غير محفوظة,{n} cambios no guardados,screens/settings/ModulePage.tsx,n,translated
 {n} waiting,{n} waiting,{n} في الانتظار,En espera: {n},screens/KitchenPrinters.tsx; screens/settings/cards.tsx,n,translated
@@ -399,7 +399,7 @@
 {v0} {v1},{v0} {v1},,,components/GroupControl.tsx,v0 v1,needs_translation
 {v0} / adult / night,{v0} / adult / night,{v0} / بالغ / ليلة,{v0} / adulto / noche,,v0,translated
 {v0} / child / night,{v0} / child / night,{v0} / طفل / ليلة,{v0} / menor / noche,,v0,translated
-{v0} advances held,{v0} advances held,,,screens/Receivables.tsx,v0,needs_translation
+{v0} advances held,{v0} advances held,{v0} عربون محتجز,{v0} en anticipos retenidos,screens/Receivables.tsx,v0,translated
 {v0} arrivals for {v1} are not checked in. List them and tell me which look like no-shows versus late arrivals. Do not change anything yet.,{v0} arrivals for {v1} are not checked in. List them and tell me which look like no-shows versus late arrivals. Do not change anything yet.,{v0} من الوصول ليوم {v1} لم يسجلوا الوصول. اعرضهم وأخبرني أيهم يبدو عدم حضور وأيهم وصول متأخر. لا تغيّر أي شيء بعد.,Hay {v0} llegadas del {v1} sin registrar. Enumérelas y distinga posibles no presentados y llegadas tardías. No cambie nada todavía.,,v0 v1,translated
 "{v0} bill(s) for this stay are not on the folio yet. Post them to the room or settle them below. They do not stop the check-out, but anything still open is not on the guest's bill.","{v0} bill(s) for this stay are not on the folio yet. Post them to the room or settle them below. They do not stop the check-out, but anything still open is not on the guest's bill.",{v0} فاتورة لهذه الإقامة لم تُضف إلى الفاتورة بعد. رحّلها إلى الغرفة أو سوِّها أدناه. لا تمنع تسجيل المغادرة، لكن أي فاتورة لا تزال مفتوحة لن تظهر في فاتورة الضيف.,"Hay {v0} cuentas de esta estancia sin cargar al folio. Cárguelas a la habitación o liquídelas abajo. No impiden la salida, pero las que sigan abiertas no se incluyen en la cuenta del huésped.",,v0,translated
 {v0} bill{v1} settled,{v0} bill{v1} settled,{v0} فاتورة{v1} مسوّاة,{v0} cuenta{v1} liquidada{v1},screens/PosDashboard.tsx,v0 v1,translated
@@ -419,7 +419,7 @@
 {v0} days,{v0} days,{v0} يومًا,{v0} días,screens/CashForecast.tsx,v0,translated
 {v0} departed stays still have a balance on {v1}. List them with the amount and whether a company can be billed.,{v0} departed stays still have a balance on {v1}. List them with the amount and whether a company can be billed.,{v0} إقامات مغادرة لا يزال عليها رصيد في {v1}. اعرضها مع المبلغ وما إذا كان يمكن فوترة شركة.,Hay {v0} estancias finalizadas con saldo pendiente el {v1}. Indique importes y si puede facturarse a una empresa.,,v0 v1,translated
 {v0} departures for {v1} are still in house. Check out the ones with a zero balance and list the rest with what each owes.,{v0} departures for {v1} are still in house. Check out the ones with a zero balance and list the rest with what each owes.,{v0} من المغادرين ليوم {v1} لا يزالون مقيمين. سجّل مغادرة من رصيده صفر واعرض البقية مع المستحق على كل منهم.,Hay {v0} salidas del {v1} aún alojadas. Registre la salida de las que tengan saldo cero y enumere el saldo pendiente de las demás.,,v0 v1,translated
-{v0} folio(s) do not match the ledger · {v1} apart,{v0} folio(s) do not match the ledger · {v1} apart,,,screens/Ledgers.tsx,v0 v1,needs_translation
+{v0} folio(s) do not match the ledger · {v1} apart,{v0} folio(s) do not match the ledger · {v1} apart,{v0} فاتورة لا تطابق الدفتر · الفرق {v1},Folios que no cuadran con el libro contable: {v0} · diferencia de {v1},screens/Ledgers.tsx,v0 v1,translated
 {v0} guest(s) owe on their own bill.,{v0} guest(s) owe on their own bill.,,,components/GroupControl.tsx,v0,needs_translation
 {v0} has collected the room. Extras are paid by the guest.,{v0} has collected the room. Extras are paid by the guest.,حصّل {v0} قيمة الغرفة. الإضافات يدفعها الضيف.,{v0} ya cobró el alojamiento. Los extras los paga el huésped.,,v0,translated
 {v0} in · {v1} due,{v0} in · {v1} due,{v0} مستلم · {v1} مستحق,Recibido: {v0} · pendiente: {v1},screens/banquet/Steps.tsx,v0 v1,translated
@@ -458,7 +458,7 @@
 {v0} piece(s) short - why? (required),{v0} piece(s) short - why? (required),ينقص {v0} قطعة، لماذا؟ (مطلوب),Faltan {v0} prendas. ¿Por qué? (obligatorio),screens/HkLaundry.tsx,v0,translated
 {v0} rate %,{v0} rate %,نسبة {v0} %,Tasa de {v0} %,screens/Payables.tsx,v0,translated
 {v0} receipt{v1},{v0} receipt{v1},{v0} إيصال{v1},{v0} recibo{v1},screens/BanquetFunction.tsx,v0 v1,translated
-{v0} received this month,{v0} received this month,,,screens/Receivables.tsx,v0,needs_translation
+{v0} received this month,{v0} received this month,تم استلام {v0} هذا الشهر,{v0} cobrado este mes,screens/Receivables.tsx,v0,translated
 "{v0} restaurant bills are open for {v1}. Show each one with its table or room and total, and say which ones I can safely settle or charge to a room.","{v0} restaurant bills are open for {v1}. Show each one with its table or room and total, and say which ones I can safely settle or charge to a room.",{v0} فواتير مطعم مفتوحة ليوم {v1}. اعرض كل فاتورة مع طاولتها أو غرفتها وإجماليها، وحدد أيها يمكنني تسويته أو تحميله على غرفة بأمان.,"Hay {v0} cuentas de restaurante abiertas del {v1}. Muestre cada una con su mesa o habitación y total, e indique cuáles se pueden liquidar o cargar a una habitación.",,v0 v1,translated
 "{v0} room nights for {v1} differ from the booked rate. List them with the reason, manual or not.","{v0} room nights for {v1} differ from the booked rate. List them with the reason, manual or not.",{v0} ليالي غرف ليوم {v1} تختلف عن السعر المحجوز. اعرضها مع السبب، يدويًا كان أم لا.,"Hay {v0} noches del {v1} con tarifa distinta de la reservada. Enumérelas e indique el motivo, sea manual o no.",,v0 v1,translated
 {v0} room(s) are kept free for the group until {v1}.,{v0} room(s) are kept free for the group until {v1}.,,,components/GroupControl.tsx,v0 v1,needs_translation
@@ -524,7 +524,7 @@
 1 property,1 property,عقار واحد,1 alojamiento,screens/settings/AccessPages.tsx,,translated
 1 Star,1 Star,نجمة واحدة,1 estrella,,,translated
 1 to 30,1 to 30,1 إلى 30,De 1 a 30,,,translated
-1 to 30 late,1 to 30 late,,,screens/Receivables.tsx,,needs_translation
+1 to 30 late,1 to 30 late,متأخر 1 إلى 30 يومًا,1 a 30 días de retraso,screens/Receivables.tsx,,translated
 1 to 30 overdue,1 to 30 overdue,متأخر 1 إلى 30,Vencido de 1 a 30 días,,,translated
 1 unsaved change,1 unsaved change,تغيير واحد غير محفوظ,1 cambio no guardado,screens/settings/ModulePage.tsx,,translated
 1-30 days,1-30 days,1-30 يومًا,De 1 a 30 días,,,translated
@@ -564,7 +564,7 @@ A company,A company,شركة,Una empresa,components/GroupBookingDialog.tsx,,tran
 "A cost here updates the ingredient's cost, which is what wastage gets valued at. Indicative only - it doesn't tie to the books.","A cost here updates the ingredient's cost, which is what wastage gets valued at. Indicative only - it doesn't tie to the books.",التكلفة هنا تحدّث تكلفة المكوّن، وهي التي يُقيَّم بها الهدر. استرشادية فقط ولا ترتبط بالدفاتر.,El costo indicado actualiza el del ingrediente y se usa para valorar las mermas. Es orientativo y no se vincula con la contabilidad.,screens/Inventory.tsx,,translated
 A different customer,A different customer,عميل آخر,Un cliente diferente,screens/pos/PosSidePanel.tsx,,translated
 "A dish costs the sum of its recipe: for each ingredient,","A dish costs the sum of its recipe: for each ingredient,",تكلفة الطبق هي مجموع وصفته: لكل مكوّن،,"El costo de un plato es la suma de su receta: para cada ingrediente,",screens/BanquetCatalogue.tsx,,translated
-A disputed bill stays on the account and in aging. It gets no payment reminders and does not count towards the overdue credit block.,A disputed bill stays on the account and in aging. It gets no payment reminders and does not count towards the overdue credit block.,,,screens/Receivables.tsx,,needs_translation
+A disputed bill stays on the account and in aging. It gets no payment reminders and does not count towards the overdue credit block.,A disputed bill stays on the account and in aging. It gets no payment reminders and does not count towards the overdue credit block.,تبقى الفاتورة المتنازع عليها في الحساب وفي أعمار الذمم. لا تُرسل لها تذكيرات دفع ولا تُحتسب ضمن حظر الائتمان بسبب التأخر.,Una factura en disputa sigue en la cuenta y en la antigüedad de saldos. No recibe recordatorios de pago ni cuenta para el bloqueo de crédito por facturas vencidas.,screens/Receivables.tsx,,translated
 A dot means a season or busy-house rule moved it. Select a night to see which.,A dot means a season or busy-house rule moved it. Select a night to see which.,النقطة تعني أن موسمًا أو قاعدة إشغال مرتفع غيّرت السعر. اختر ليلة لمعرفة أيهما.,Un punto indica que una temporada o una regla de alta ocupación modificó la tarifa. Seleccione una noche para ver cuál se aplicó.,screens/RateCalendar.tsx,,translated
 "A guest checking out before the booked date: the stay is shortened and the unused nights are charged at none, one or all of them. Finance or a Hotel Admin can change it for one stay, with a reason.","A guest checking out before the booked date: the stay is shortened and the unused nights are charged at none, one or all of them. Finance or a Hotel Admin can change it for one stay, with a reason.",نزيل يغادر قبل التاريخ المحجوز: تُقصَّر الإقامة وتُحتسب من الليالي غير المستخدمة لا شيء أو ليلة واحدة أو جميعها. يمكن للمالية أو مدير الفندق تغيير ذلك لإقامة واحدة مع ذكر السبب.,"Un huésped que sale antes de la fecha reservada: la estancia se acorta y se cobran ninguna, una o todas las noches no usadas. Finanzas o un administrador del hotel pueden cambiarlo para una estancia, con un motivo.",,,translated
 A guest is at the desk with no booking,A guest is at the desk with no booking,,,components/AgentGuide.tsx,,needs_translation
@@ -623,7 +623,7 @@ Accommodation,Accommodation,الإقامة,Alojamiento,,,translated
 Accompaniments,Accompaniments,الأطباق الجانبية,Guarniciones,,,translated
 According to the property policy,According to the property policy,وفق سياسة العقار,Según las políticas del alojamiento,screens/PublicBooking.tsx,,translated
 Account,Account,الحساب,Cuenta,screens/Receivables.tsx,,translated
-Account activity,Account activity,,,screens/Receivables.tsx,,needs_translation
+Account activity,Account activity,نشاط الحساب,Actividad de la cuenta,screens/Receivables.tsx,,translated
 Account balance,Account balance,رصيد الحساب,Saldo de cuenta,screens/GoLiveImport.tsx,,translated
 Account history,Account history,سجل الحساب,Historial de la cuenta,screens/Receivables.tsx,,translated
 Account menu,Account menu,,,AppShell.tsx,,needs_translation
@@ -777,7 +777,7 @@ After the function,After the function,بعد المناسبة,Después del event
 After this the hall is sellable again,After this the hall is sellable again,بعد ذلك تصبح القاعة متاحة للبيع مجددًا,"Después de esta fecha, el salón vuelve a estar disponible para venta",screens/BanquetFunction.tsx,,translated
 Afternoon,Afternoon,بعد الظهر,Tarde,,,translated
 Age,Age,العمر,Edad,components/CheckInGuests.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/Tickets.tsx,,translated
-Age of what is owed,Age of what is owed,,,screens/Receivables.tsx,,needs_translation
+Age of what is owed,Age of what is owed,أعمار المبالغ المستحقة,Antigüedad de lo adeudado,screens/Receivables.tsx,,translated
 Age…,Age…,العمر…,Edad…,components/ChildAges.tsx,,translated
 Agent,Agent,الوكيل,Agente,,,translated
 Agent access (MCP),Agent access (MCP),وصول الوكيل (MCP),Acceso de agentes (MCP),,,translated
@@ -817,11 +817,12 @@ Alerts and sound,Alerts and sound,التنبيهات والصوت,Alertas y soni
 all,all,الكل,todos,,,translated
 All,All,الكل,Todos,components/NotificationBell.tsx; screens/FolioHistory.tsx; screens/Inventory.tsx; screens/Kitchen.tsx; screens/POS.tsx; screens/VoidAllowanceReport.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 All ({n}),All ({n}),الكل ({n}),Todos ({n}),screens/POS.tsx,n,translated
+All accounts,All accounts,كل الحسابات,Todas las cuentas,,,translated
 All audits,All audits,كل عمليات التدقيق,Todas las auditorías,screens/Billing.tsx,,translated
 All bills,All bills,كل الفواتير,Todas las facturas,screens/Payables.tsx; screens/Receivables.tsx,,translated
 All bookings. Create new ones with the New booking button above.,All bookings. Create new ones with the New booking button above.,كل الحجوزات. أنشئ حجوزات جديدة بزر حجز جديد في الأعلى.,Todas las reservas. Cree nuevas reservas con el botón Nueva reserva de arriba.,,,translated
 All categories,All categories,كل الفئات,Todas las categorías,screens/Tickets.tsx,,translated
-All clear · {n},All clear · {n},,,screens/EndOfDayWizard.tsx,n,needs_translation
+All clear · {n},All clear · {n},سليمة · {n},Todo correcto · {n},screens/EndOfDayWizard.tsx,n,translated
 All companies,All companies,جميع الشركات,Todas las empresas,,,translated
 All Day,All Day,طوال اليوم,Todo el día,,,translated
 All done - every guest has checked out and the group bill is settled.,All done - every guest has checked out and the group bill is settled.,,,components/GroupControl.tsx,,needs_translation
@@ -1101,7 +1102,7 @@ Balance due: {0},Balance due: {0},الرصيد المستحق: {0},Saldo pendien
 "Balance due: collect it from the row's Check out, or move the balance to a company or city ledger.","Balance due: collect it from the row's Check out, or move the balance to a company or city ledger.",الرصيد المستحق: حصّله من زر تسجيل المغادرة في الصف، أو انقل الرصيد إلى حساب شركة أو دفتر المدينة.,Saldo pendiente: cóbrelo desde Registrar salida en la fila o transfiéralo a una cuenta de empresa.,,,translated
 Balance payable at the hotel: {amount},Balance payable at the hotel: {amount},الرصيد المستحق الدفع في الفندق: {amount},Saldo a pagar en el hotel: {amount},,amount,translated
 Balance sheet,Balance sheet,الميزانية العمومية,Balance general,screens/ManagementBooks.tsx,,translated
-Balances as of {v0}. The check against folios runs for the current business date only.,Balances as of {v0}. The check against folios runs for the current business date only.,,,screens/Ledgers.tsx,v0,needs_translation
+Balances as of {v0}. The check against folios runs for the current business date only.,Balances as of {v0}. The check against folios runs for the current business date only.,الأرصدة حتى {v0}. تتم المطابقة مع الفواتير لتاريخ العمل الحالي فقط.,Saldos al {v0}. El cuadre con los folios solo se hace para la fecha operativa actual.,screens/Ledgers.tsx,v0,translated
 Balances as of now,Balances as of now,الأرصدة حتى الآن,Saldos a este momento,screens/Owner.tsx,,translated
 Balances brought and carried forward,Balances brought and carried forward,الأرصدة المرحّلة من السابق وإلى التالي,Saldos anteriores y a trasladar,screens/AuditPack.tsx,,translated
 Balances on departed stays,Balances on departed stays,أرصدة على إقامات مغادرة,Saldos pendientes de estancias finalizadas,,,translated
@@ -1157,7 +1158,7 @@ Bill cancelled.,Bill cancelled.,تم إلغاء الفاتورة.,Factura cancel
 Bill date,Bill date,تاريخ الفاتورة,Fecha de la factura,,,translated
 Bill each guest,Bill each guest,فاتورة لكل ضيف,Cuenta por huésped,screens/FolioView.tsx,,translated
 "Bill for a guest who left or a mistake: cancel it, or mark it complimentary (NC) with who authorised it.","Bill for a guest who left or a mistake: cancel it, or mark it complimentary (NC) with who authorised it.",فاتورة لضيف غادر أو خطأ: ألغها، أو اجعلها مجانية (NC) مع ذكر من فوّضها.,"Si corresponde a un huésped que salió o es un error, cancele la cuenta o márquela como cortesía (NC), indicando quién la autorizó.",,,translated
-Bill marked as disputed. Reminders pause for it.,Bill marked as disputed. Reminders pause for it.,,,screens/Receivables.tsx,,needs_translation
+Bill marked as disputed. Reminders pause for it.,Bill marked as disputed. Reminders pause for it.,تم تعليم الفاتورة كمتنازع عليها. تتوقف تذكيراتها.,Factura marcada en disputa. Se pausan sus recordatorios.,screens/Receivables.tsx,,translated
 Bill moved to {v0}.,Bill moved to {v0}.,نُقلت الفاتورة إلى {v0}.,Factura movida a {v0}.,screens/Receivables.tsx,v0,translated
 Bill no,Bill no,رقم الفاتورة,N.º de cuenta,,,translated
 bill printer,bill printer,طابعة الفواتير,impresora de cuentas,,,translated
@@ -1180,7 +1181,7 @@ Billed to guest,Billed to guest,مفوتر إلى الضيف,Facturado al huésp
 Billing,Billing,الفوترة,Facturación,screens/AllowanceApprovals.tsx; screens/FolioHistory.tsx; screens/FolioView.tsx; screens/Laundry.tsx; screens/ReservationDetail.tsx,,translated
 Billing & ,Billing & ,الفوترة و ,Facturación e ,screens/BanquetFunction.tsx,,translated
 Billing address,Billing address,عنوان الفوترة,Dirección de facturación,screens/BanquetFunction.tsx; screens/Receivables.tsx,,translated
-Billing and each guest's folio; departed guests who still owe are under Guests left owing in Billing.,Billing and each guest's folio; departed guests who still owe are under Guests left owing in Billing.,,,screens/Ledgers.tsx,,needs_translation
+Billing and each guest's folio; departed guests who still owe are under Guests left owing in Billing.,Billing and each guest's folio; departed guests who still owe are under Guests left owing in Billing.,الفوترة وفاتورة كل نزيل؛ النزلاء الذين غادروا وما زالت عليهم مبالغ تجدهم في «نزلاء غادروا وعليهم مبالغ» ضمن الفوترة.,"Facturación y el folio de cada huésped; los huéspedes que se fueron con saldo pendiente están en Huéspedes que se fueron debiendo, en Facturación.",screens/Ledgers.tsx,,translated
 Billing and each guest's folio; departed guests who still owe are under Guests left owing in Receivables.,Billing and each guest's folio; departed guests who still owe are under Guests left owing in Receivables.,في الفوترة وفي فاتورة كل نزيل؛ والنزلاء الذين غادروا وعليهم مبالغ تجدهم تحت «نزلاء غادروا وعليهم مبالغ» في الذمم المدينة.,"En Facturación y en la cuenta de cada huésped; los que se fueron debiendo están en Huéspedes que se fueron debiendo, en Cuentas por cobrar.",,,translated
 Billing on,Billing on,الفوترة على أساس,Cantidad a facturar,screens/BanquetFunction.tsx,,translated
 Billing rules,Billing rules,قواعد الفوترة,Reglas de facturación,components/BillingRulesEditor.tsx,,translated
@@ -1266,7 +1267,7 @@ Bookings,Bookings,الحجوزات,Reservas,screens/RevenueReports.tsx,,translat
 Bookings in this period,Bookings in this period,الحجوزات في هذه الفترة,Reservas en este periodo,components/RoomDrawer.tsx,,translated
 "Bookings, check-in and out, folios, the tape chart.","Bookings, check-in and out, folios, the tape chart.",الحجوزات وتسجيل الوصول والمغادرة والفواتير ومخطط الغرف.,"Reservas, llegadas, salidas, folios y calendario de ocupación.",,,translated
 Books,Books,الدفاتر,Contabilidad,screens/CashForecast.tsx; screens/Ledgers.tsx; screens/ManagementBooks.tsx; screens/Payables.tsx; screens/Receivables.tsx,,translated
-Books check,Books check,,,screens/Ledgers.tsx,,needs_translation
+Books check,Books check,مطابقة الدفاتر,Cuadre contable,screens/Ledgers.tsx,,translated
 Books for your accounting software.,Books for your accounting software.,الدفاتر لبرنامج المحاسبة لديك.,Libros para su software contable.,,,translated
 Both,Both,كلاهما,Ambos,components/BookingDialog.tsx,,translated
 Boxed,Boxed,معبأ في علب,En caja individual,,,translated
@@ -1634,13 +1635,13 @@ Cleaning proof - room ,Cleaning proof - room ,إثبات التنظيف: غرف�
 Cleans and inspections. Completing a task updates the room's live status.,Cleans and inspections. Completing a task updates the room's live status.,التنظيف والفحوصات. إكمال المهمة يحدّث حالة الغرفة مباشرة.,Limpiezas e inspecciones. Completar una tarea actualiza el estado de la habitación.,,,translated
 Clear,Clear,مسح,Borrar,components/ResourceScreen.tsx; components/SignaturePad.tsx; screens/FolioView.tsx,,translated
 Clear all,Clear all,مسح الكل,Borrar todo,,,translated
-Clear dispute,Clear dispute,,,screens/Receivables.tsx,,needs_translation
+Clear dispute,Clear dispute,إلغاء النزاع,Retirar disputa,screens/Receivables.tsx,,translated
 Clear message text after,Clear message text after,مسح نص الرسائل بعد,Eliminar texto de mensajes después de,,,translated
 Clear new,Clear new,مسح الجديد,Borrar novedades,screens/POS.tsx,,translated
-Clear selection,Clear selection,,,screens/Receivables.tsx,,needs_translation
-Clear the dispute,Clear the dispute,,,screens/Receivables.tsx,,needs_translation
+Clear selection,Clear selection,مسح التحديد,Borrar selección,screens/Receivables.tsx,,translated
+Clear the dispute,Clear the dispute,إلغاء النزاع,Retirar la disputa,screens/Receivables.tsx,,translated
 Clear the order,Clear the order,,,components/AgentGuide.tsx,,needs_translation
-"Clear what is open, post room and tax, roll the business date and print the audit pack. Runs automatically every night at the time set in Settings.","Clear what is open, post room and tax, roll the business date and print the audit pack. Runs automatically every night at the time set in Settings.",,,screens/Billing.tsx,,needs_translation
+"Clear what is open, post room and tax, roll the business date and print the audit pack. Runs automatically every night at the time set in Settings.","Clear what is open, post room and tax, roll the business date and print the audit pack. Runs automatically every night at the time set in Settings.",أنهِ ما هو مفتوح، ورحّل الغرفة والضريبة، وانقل تاريخ العمل، واطبع حزمة التدقيق. يعمل تلقائيًا كل ليلة في الوقت المحدد في الإعدادات.,"Resuelva lo pendiente, cargue alojamiento e impuestos, avance la fecha operativa e imprima el paquete de auditoría. Se ejecuta automáticamente cada noche a la hora fijada en Configuración.",screens/Billing.tsx,,translated
 Cleared by,Cleared by,تُخلى بحلول,Desocupado antes de,screens/BanquetFunction.tsx,,translated
 Click a bar to move rooms or change dates.,Click a bar to move rooms or change dates.,انقر شريطاً لنقل الغرف أو تغيير التواريخ.,Haga clic en una barra para cambiar de habitación o modificar las fechas.,,,translated
 "Click a bar to move the room, change dates, check in or check out.","Click a bar to move the room, change dates, check in or check out.",انقر شريطاً لنقل الغرفة أو تغيير التواريخ أو تسجيل الوصول أو المغادرة.,"Haga clic en una barra para cambiar la habitación, modificar las fechas o registrar la entrada o la salida.",screens/TapeChart.tsx,,translated
@@ -1655,12 +1656,12 @@ Click the card: every bill still open on a company's account. Each company's ful
 "Click the card: every folio with a balance, biggest first. Open a folio to see each line.","Click the card: every folio with a balance, biggest first. Open a folio to see each line.",انقر على البطاقة: كل فاتورة نزيل عليها رصيد، الأكبر أولاً. افتح الفاتورة لترى كل بند.,"Haz clic en la tarjeta: cada cuenta con saldo, de mayor a menor. Abre una cuenta para ver cada línea.",screens/Ledgers.tsx,,translated
 Client,Client,العميل,Cliente,screens/BanquetFunction.tsx,,translated
 Close,Close,إغلاق,Cerrar,AppShell.tsx; components/BookingDialog.tsx; components/CameraCapture.tsx; components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/HkMedia.tsx; components/IdScan.tsx; components/NoShowDialog.tsx; components/PinPad.tsx; components/RoomChangeDialog.tsx; components/ui/sheet.tsx; screens/BanquetFunction.tsx; screens/CRS.tsx; screens/Inventory.tsx; screens/Ledgers.tsx; screens/POS.tsx; screens/Payables.tsx; screens/PublicBooking.tsx; screens/Receivables.tsx; screens/RecipeManager.tsx; screens/TapeChart.tsx; screens/Today.tsx; screens/pos/MoveRoomBill.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/SettleSheet.tsx,,translated
-Close {d},Close {d},,,screens/EndOfDayWizard.tsx,d,needs_translation
+Close {d},Close {d},إغلاق {d},Cerrar {d},screens/EndOfDayWizard.tsx,d,translated
 Close & generate invoice,Close & generate invoice,إغلاق وإنشاء فاتورة,Cerrar y generar factura,screens/FolioView.tsx,,translated
 Close and generate invoice,Close and generate invoice,إغلاق وإصدار الفاتورة,Cerrar y generar factura,components/CheckOutDialog.tsx,,translated
 Close complimentary bill,Close complimentary bill,إغلاق الفاتورة المجانية,Cerrar cuenta de cortesía,screens/pos/SettleSheet.tsx,,translated
 "Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.","Close each property's business date: work through the checklist, post room and tax, roll the date and print the audit pack. The 3 AM job runs the same steps on its own.",أغلق تاريخ العمل لكل منشأة: راجع قائمة الفحص، رحّل الغرفة والضريبة، انقل التاريخ واطبع حزمة التدقيق. مهمة الساعة 3 صباحًا تنفّذ الخطوات نفسها تلقائيًا.,"Cierre la fecha operativa de cada alojamiento: complete las comprobaciones, registre los cargos de habitación e impuestos, avance la fecha e imprima el paquete de auditoría. El proceso de las 3 a. m. realiza estos pasos automáticamente.",,,translated
-"Close each property's business date. The automatic audit does the same at the time set in Settings, Front Desk.","Close each property's business date. The automatic audit does the same at the time set in Settings, Front Desk.",,,screens/EndOfDay.tsx,,needs_translation
+"Close each property's business date. The automatic audit does the same at the time set in Settings, Front Desk.","Close each property's business date. The automatic audit does the same at the time set in Settings, Front Desk.",أغلق تاريخ العمل لكل منشأة. يقوم التدقيق التلقائي بالشيء نفسه في الوقت المحدد في الإعدادات، الاستقبال.,"Cierre la fecha operativa de cada alojamiento. La auditoría automática hace lo mismo a la hora fijada en Configuración, Recepción.",screens/EndOfDay.tsx,,translated
 Close it again,Close it again,إغلاقها مرة أخرى,Cerrar nuevamente,screens/BanquetFunction.tsx,,translated
 Close it out,Close it out,إقفال المناسبة,Cerrar evento,screens/BanquetFunction.tsx,,translated
 Close out,Close out,إقفال المناسبة,Cerrar evento,screens/BanquetFunction.tsx,,translated
@@ -1783,7 +1784,7 @@ Confirm it is complimentary on purpose; otherwise correct the rate.,Confirm it i
 Confirm new dates,Confirm new dates,تأكيد التواريخ الجديدة,Confirmar nuevas fechas,screens/TapeChart.tsx,,translated
 Confirm new dates and price,Confirm new dates and price,تأكيد التواريخ والسعر الجديد,Confirmar nuevas fechas y precio,screens/TapeChart.tsx,,translated
 Confirm new password,Confirm new password,تأكيد كلمة المرور الجديدة,Confirmar contraseña nueva,screens/UpdatePassword.tsx,,translated
-Confirm payment,Confirm payment,,,screens/Receivables.tsx,,needs_translation
+Confirm payment,Confirm payment,تأكيد الدفعة,Confirmar pago,screens/Receivables.tsx,,translated
 Confirm the function first,Confirm the function first,أكّد المناسبة أولاً,Confirme primero el evento,,,translated
 Confirm the function first.,Confirm the function first.,أكّد المناسبة أولاً.,Confirme primero el evento.,,,translated
 Confirm void,Confirm void,تأكيد الإبطال,Confirmar anulación,screens/FolioView.tsx,,translated
@@ -1873,7 +1874,7 @@ Couldn't open that conversation.,Couldn't open that conversation.,تعذّر ف�
 Couldn't reach the help assistant - check the AI key in Settings.,Couldn't reach the help assistant - check the AI key in Settings.,تعذّر الوصول إلى مساعد المساعدة، تحقق من مفتاح الذكاء الاصطناعي في الإعدادات.,No se pudo contactar al asistente de ayuda. Revise la clave de IA en Configuración.,components/HelpPanel.tsx,,translated
 Couldn't read that photo. Please try again.,Couldn't read that photo. Please try again.,تعذّرت قراءة هذه الصورة. حاول مرة أخرى.,No se pudo leer esa foto. Vuelva a intentarlo.,,,translated
 Couldn't save - please check the details and try again.,Couldn't save - please check the details and try again.,تعذّر الحفظ - يرجى التحقق من البيانات والمحاولة مرة أخرى.,No se pudo guardar. Revisa los datos e inténtalo de nuevo.,screens/PublicCheckin.tsx,,translated
-Count and close,Count and close,,,screens/EndOfDayWizard.tsx,,needs_translation
+Count and close,Count and close,عُدّ وأغلق,Contar y cerrar,screens/EndOfDayWizard.tsx,,translated
 Count by note and coin,Count by note and coin,العدّ حسب الأوراق النقدية والعملات المعدنية,Contar por billetes y monedas,screens/CashierTill.tsx,,translated
 count cash,count cash,عدّ النقد,contar efectivo,,,translated
 Count the bag,Count the bag,عدّ الحقيبة,Contar las prendas de la bolsa,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
@@ -2045,7 +2046,7 @@ Demo accounts - one tap to try each role,Demo accounts - one tap to try each rol
 Dep,Dep,مغادرة,Sal.,screens/Dashboard.tsx; screens/Rooms.tsx,,translated
 Dep = leaving today,Dep = leaving today,مغادرة = يغادر اليوم,Sal. = salida prevista para hoy,screens/Rooms.tsx,,translated
 Depart,Depart,المغادرة,Salida,,,translated
-Departed stays with a balance. Open the folio to take the payment or move it to a company.,Departed stays with a balance. Open the folio to take the payment or move it to a company.,,,screens/Billing.tsx,,needs_translation
+Departed stays with a balance. Open the folio to take the payment or move it to a company.,Departed stays with a balance. Open the folio to take the payment or move it to a company.,إقامات منتهية عليها رصيد. افتح الفاتورة لتحصيل الدفعة أو نقلها إلى شركة.,Estancias finalizadas con saldo. Abra el folio para cobrar o pasarlo a una empresa.,screens/Billing.tsx,,translated
 Departing today,Departing today,يغادر اليوم,Salidas de hoy,components/RoomDrawer.tsx; screens/Rooms.tsx,,translated
 Department,Department,القسم,Departamento,,,translated
 Department checklist,Department checklist,قائمة مهام القسم,Lista de tareas por departamento,screens/BanquetFunction.tsx,,translated
@@ -2139,9 +2140,9 @@ Disk space,Disk space,مساحة القرص,Espacio en disco,,,translated
 Dismiss,Dismiss,إغلاق,Descartar,components/NotificationHost.tsx; components/UpdateNag.tsx; screens/HkApp.tsx; screens/POS.tsx; screens/settings/ModulePage.tsx,,translated
 Displayed rates include tax,Displayed rates include tax,الأسعار المعروضة شاملة الضريبة,Las tarifas mostradas incluyen impuestos,,,translated
 Disposed,Disposed,تم التخلص منه,Desechado,,,translated
-Dispute,Dispute,,,screens/Receivables.tsx,,needs_translation
-Dispute cleared.,Dispute cleared.,,,screens/Receivables.tsx,,needs_translation
-Dispute this bill,Dispute this bill,,,screens/Receivables.tsx,,needs_translation
+Dispute,Dispute,تسجيل نزاع,Marcar en disputa,screens/Receivables.tsx,,translated
+Dispute cleared.,Dispute cleared.,تم إلغاء النزاع.,Disputa retirada.,screens/Receivables.tsx,,translated
+Dispute this bill,Dispute this bill,تسجيل نزاع على هذه الفاتورة,Marcar esta factura en disputa,screens/Receivables.tsx,,translated
 District,District,الحي,Distrito,,,translated
 Do it,Do it,نفّذ,Hazlo,screens/FinishSetup.tsx,,translated
 Do not take money for the room. Extras are paid by the guest.,Do not take money for the room. Extras are paid by the guest.,لا تأخذ مالا مقابل الغرفة. الإضافات يدفعها الضيف.,No aceptes dinero por la habitación. Los extras los paga el huésped.,components/CheckInDialog.tsx,,translated
@@ -2257,7 +2258,7 @@ EGS serial (Phase 2),EGS serial (Phase 2),الرقم التسلسلي لـ EGS (
 elapsed,elapsed,منقضي,transcurrido,screens/Kitchen.tsx,,translated
 Email,Email,البريد الإلكتروني,Correo electrónico,components/CheckInDialog.tsx; screens/Banquet.tsx; screens/BanquetFunction.tsx; screens/BookingEngine.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/ReservationDetail.tsx; screens/settings/AccessPages.tsx,,translated
 Email (optional),Email (optional),البريد الإلكتروني (اختياري),Correo electrónico (opcional),screens/PublicBooking.tsx; screens/PublicListing.tsx,,translated
-Email {what} to {n} companies?,Email {what} to {n} companies?,,,screens/Receivables.tsx,what n,needs_translation
+Email {what} to {n} companies?,Email {what} to {n} companies?,إرسال {what} بالبريد الإلكتروني إلى {n} شركة؟,¿Enviar {what} por correo a {n} empresas?,screens/Receivables.tsx,what n,translated
 Email addresses (comma-separated),Email addresses (comma-separated),عناوين البريد (مفصولة بفواصل),Direcciones de correo (separadas por comas),screens/Reports.tsx,,translated
 Email every Monday,Email every Monday,أرسل كل يوم اثنين,Enviar cada lunes,screens/Reports.tsx,,translated
 Email now,Email now,أرسل الآن,Enviar ahora,screens/Reports.tsx,,translated
@@ -2266,13 +2267,13 @@ Email or username,Email or username,البريد الإلكتروني أو اس�
 Email payment reminders,Email payment reminders,إرسال تذكيرات الدفع بالبريد الإلكتروني,Enviar recordatorios de pago por correo,,,translated
 Email schedule,Email schedule,جدولة البريد,Programación de correo,screens/Reports.tsx,,translated
 Email statement,Email statement,إرسال كشف الحساب,Enviar estado de cuenta,,,translated
-Email statements,Email statements,,,screens/Receivables.tsx,,needs_translation
+Email statements,Email statements,إرسال كشوف الحساب,Enviar estados de cuenta,screens/Receivables.tsx,,translated
 Email the quote to the guest,Email the quote to the guest,أرسل عرض السعر إلى الضيف بالبريد,Envíe la cotización al huésped por correo,,,translated
 Email the stamped quotation to the guest,Email the stamped quotation to the guest,إرسال عرض السعر المعتمد إلى الضيف بالبريد,Enviar al huésped la cotización emitida por correo,screens/BanquetFunction.tsx,,translated
 Email them a link to set a password,Email them a link to set a password,أرسل لهم رابطا لتعيين كلمة المرور,Envíeles por correo electrónico un enlace para establecer una contraseña,screens/settings/AccessPages.tsx,,translated
 Email this pack every Monday at 07:00 to (comma-separated),Email this pack every Monday at 07:00 to (comma-separated),أرسل هذه الحزمة كل يوم اثنين الساعة 07:00 إلى (مفصولة بفواصل),Enviar este paquete cada lunes a las 07:00 a (separados por comas),screens/Reports.tsx,,translated
 Email to guest,Email to guest,إرسال بريد إلى الضيف,Enviar correo al huésped,screens/BanquetFunction.tsx,,translated
-Email to the billing contact,Email to the billing contact,,,screens/Receivables.tsx,,needs_translation
+Email to the billing contact,Email to the billing contact,إرسال بالبريد إلى جهة الفوترة,Enviar al contacto de facturación,screens/Receivables.tsx,,translated
 Embedded Location Map,Embedded Location Map,خريطة الموقع المضمنة,Mapa de ubicación integrado,screens/BookingEngine.tsx,,translated
 Emerald,Emerald,زمردي,Esmeralda,,,translated
 Emergency number,Emergency number,رقم الطوارئ,Número de emergencia,components/CheckInDialog.tsx,,translated
@@ -2378,7 +2379,7 @@ Everything came back,Everything came back,عاد كل شيء,Todo volvió,screen
 "Everything else starts at sensible defaults. You will land on a Finish setup list: rooms and rates, the booking page, outlets, tills and your team.","Everything else starts at sensible defaults. You will land on a Finish setup list: rooms and rates, the booking page, outlets, tills and your team.",كل الإعدادات الأخرى تبدأ بقيم افتراضية مناسبة. ستصل إلى قائمة إكمال الإعداد: الغرف والأسعار، وصفحة الحجز، والمنافذ، والصناديق، وفريقك.,"El resto comienza con valores predeterminados razonables. Después verá una lista de configuración pendiente: habitaciones y tarifas, la página de reservas, puntos de venta, cajas y su equipo.",screens/Setup.tsx,,translated
 Everything except liquor,Everything except liquor,كل شيء عدا الكحول,Todo excepto bebidas alcohólicas,,,translated
 "Everything held about this guest, for a data-access request.","Everything held about this guest, for a data-access request.",كل البيانات المحفوظة عن هذا الضيف، لطلب الاطلاع على البيانات.,"Toda la información del huésped, para una solicitud de acceso a datos.",screens/GuestJourney.tsx,,translated
-Everything is clear. Closing posts room and tax for every in-house guest and rolls the date. It cannot be undone.,Everything is clear. Closing posts room and tax for every in-house guest and rolls the date. It cannot be undone.,,,screens/EndOfDayWizard.tsx,,needs_translation
+Everything is clear. Closing posts room and tax for every in-house guest and rolls the date. It cannot be undone.,Everything is clear. Closing posts room and tax for every in-house guest and rolls the date. It cannot be undone.,كل شيء سليم. يرحّل الإغلاق الغرفة والضريبة لكل نزيل مقيم وينقل التاريخ. لا يمكن التراجع عنه.,Todo está correcto. Al cerrar se cargan alojamiento e impuestos a cada huésped alojado y se avanza la fecha. No se puede deshacer.,screens/EndOfDayWizard.tsx,,translated
 "Everything Kamra does, one room at a time. Pick where you want to work.","Everything Kamra does, one room at a time. Pick where you want to work.",كل ما تفعله كامرا، غرفة بغرفة. اختر أين تريد العمل.,"Todo lo que hace Kamra, una habitación a la vez. Elija dónde quiere trabajar.",screens/AppLauncher.tsx,,translated
 Everything required is done. Check the guest in.,Everything required is done. Check the guest in.,تم كل ما هو مطلوب. سجل وصول الضيف.,Todo lo necesario está hecho. Registre la entrada del huésped.,,,translated
 "Everything that happened on the property, by people and by AI.","Everything that happened on the property, by people and by AI.",كل ما حدث في العقار، من الموظفين ومن الذكاء الاصطناعي.,"Todas las acciones realizadas en el alojamiento, por personas y por IA.",screens/Activity.tsx,,translated
@@ -2415,7 +2416,7 @@ Export,Export,تصدير,Exportar,components/ResourceScreen.tsx; screens/Guests.
 Export as CSV,Export as CSV,تصدير كـ CSV,Exportar como CSV,components/ResourceScreen.tsx,,translated
 Export CSV,Export CSV,تصدير CSV,Exportar CSV,components/ui/data-table.tsx; screens/AuditPack.tsx; screens/EndOfDay.tsx; screens/pos/OrderHistory.tsx; screens/settings/cards.tsx,,translated
 Export guest data,Export guest data,تصدير بيانات الضيف,Exportar datos del huésped,screens/GuestJourney.tsx,,translated
-Export selected,Export selected,,,screens/Receivables.tsx,,needs_translation
+Export selected,Export selected,تصدير المحدد,Exportar selección,screens/Receivables.tsx,,translated
 Exposure,Exposure,المكشوف,Exposición crediticia,,,translated
 express,express,مستعجل,expreso,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
 Express,Express,مستعجل,Expreso,screens/Laundry.tsx; screens/settings/cards.tsx,,translated
@@ -2536,7 +2537,8 @@ First stay,First stay,الإقامة الأولى,Primera estancia,,,translated
 First visit here.,First visit here.,أول زيارة هنا.,Primera visita aquí.,screens/pos/PosSidePanel.tsx,,translated
 Fish,Fish,سمك,Pescado,../../kamra/settings.py,,translated
 Fix End of Day blockers,Fix End of Day blockers,حل عوائق نهاية اليوم,Resolver impedimentos del cierre del día,,,translated
-Fix or override {n} blocking check(s) to close the day.,Fix or override {n} blocking check(s) to close the day.,,,screens/EndOfDayWizard.tsx,n,needs_translation
+Fix Night Audit blockers,Fix Night Audit blockers,حل عوائق التدقيق الليلي,Resolver bloqueos de la auditoría nocturna,,,translated
+Fix or override {n} blocking check(s) to close the day.,Fix or override {n} blocking check(s) to close the day.,أصلح أو تجاوز {n} من الفحوصات المانعة لإغلاق اليوم.,Resuelva o autorice una excepción en {n} comprobación(es) bloqueante(s) para cerrar el día.,screens/EndOfDayWizard.tsx,n,translated
 Fix the issue below to see a price.,Fix the issue below to see a price.,أصلح المشكلة أدناه لرؤية السعر.,Solucione el problema a continuación para ver un precio.,components/BookingDialog.tsx,,translated
 "Fix what is listed below, import again (already-posted rows are skipped), then reconcile again.","Fix what is listed below, import again (already-posted rows are skipped), then reconcile again.",أصلح ما هو مدرج أدناه، ثم استورد مجددا (يتم تخطي الصفوف المرحّلة)، ثم طابق مجددا.,"Corrija los elementos indicados abajo e importe de nuevo. Las filas ya registradas se omitirán; después, vuelva a conciliar.",screens/GoLiveImport.tsx,,translated
 "Fix whichever side is wrong: check the guest in or out, or update the room's status.","Fix whichever side is wrong: check the guest in or out, or update the room's status.",أصلح الجانب الخاطئ: سجّل وصول الضيف أو مغادرته، أو حدّث حالة الغرفة.,"Corrija el dato incorrecto: registre la llegada o salida del huésped, o actualice el estado de la habitación.",,,translated
@@ -2566,7 +2568,7 @@ Folio history,Folio history,سجل الفواتير,Historial de folios,,,transl
 Folio History,Folio History,سجل الفواتير,Historial del folio,screens/FolioHistory.tsx,,translated
 Folio View shows what is posted today. Check-out uses the full stay once remaining nights are posted.,Folio View shows what is posted today. Check-out uses the full stay once remaining nights are posted.,عرض الفاتورة يظهر ما رُحّل اليوم. تسجيل المغادرة يستخدم الإقامة كاملة بعد ترحيل الليالي المتبقية.,"La vista del folio muestra lo registrado hoy. Al registrar la salida, se toma en cuenta la estancia completa una vez que se hayan cargado las noches restantes.",components/CheckOutDialog.tsx,,translated
 Folios,Folios,الفواتير,Folios,components/RoomStayPanels.tsx; screens/Billing.tsx; screens/CashierTill.tsx,,translated
-Folios and ledgers agree.,Folios and ledgers agree.,,,screens/Ledgers.tsx,,needs_translation
+Folios and ledgers agree.,Folios and ledgers agree.,الفواتير والدفاتر متطابقة.,Los folios y los libros contables cuadran.,screens/Ledgers.tsx,,translated
 Folios for a stay,Folios for a stay,فواتير الإقامة,Folios de una estancia,,,translated
 Follow up an enquiry after,Follow up an enquiry after,متابعة الاستفسار بعد,Hacer seguimiento de una consulta después de,,,translated
 Food,Food,الطعام,Alimentos,screens/banquet/Economics.tsx,,translated
@@ -2591,7 +2593,7 @@ For a bill posted to the wrong room today. It leaves that guest's bill and goes 
 "For example: 7:00 to 10:30, ground floor restaurant.","For example: 7:00 to 10:30, ground floor restaurant.",مثلا: من 7:00 إلى 10:30، مطعم الطابق الأرضي.,"Por ejemplo: de 7:00 a 10:30, restaurante de la planta baja.",,,translated
 "for foreign nationals, Form C to the immigration authorities","for foreign nationals, Form C to the immigration authorities",للأجانب، النموذج C إلى سلطات الهجرة,"para huéspedes extranjeros, el formulario C dirigido a las autoridades migratorias",,,translated
 "for guests under {age} the hotel records only what registration law requires, usually name and age, and never uses it for marketing.","for guests under {age} the hotel records only what registration law requires, usually name and age, and never uses it for marketing.",للنزلاء دون {age} عامًا يسجّل الفندق فقط ما يتطلبه نظام التسجيل، وعادةً الاسم والعمر، ولا يستخدمه أبدًا للتسويق.,"Para huéspedes menores de {age} años, el hotel registra únicamente los datos exigidos por la ley —por lo general, nombre y edad— y no los utiliza para fines publicitarios.",components/PrivacyNotice.tsx,age,translated
-For information · {n},For information · {n},,,screens/EndOfDayWizard.tsx,n,needs_translation
+For information · {n},For information · {n},للعلم · {n},Informativas · {n},screens/EndOfDayWizard.tsx,n,translated
 "For properties that host weddings, conferences or parties.","For properties that host weddings, conferences or parties.",للعقارات التي تستضيف حفلات الزفاف أو المؤتمرات أو الحفلات.,"Para alojamientos que organizan bodas, conferencias o celebraciones.",,,translated
 For the whole stay,For the whole stay,للإقامة كاملة,Para toda la estancia,components/FolioDiscount.tsx,,translated
 For these properties,For these properties,لهذه العقارات,Para estos alojamientos,components/ConnectApp.tsx,,translated
@@ -2833,7 +2835,7 @@ Guest signs here,Guest signs here,يوقع الضيف هنا,El huésped firma a
 Guest told by {via}.,Guest told by {via}.,تم إبلاغ الضيف عبر {via}.,Se informó al huésped por {via}.,components/BookingRequests.tsx,via,translated
 Guest told their ID is read by our verification partner,Guest told their ID is read by our verification partner,تم إبلاغ الضيف بأن شريك التحقق لدينا يقرأ هويته,Se informó al huésped que nuestro socio de verificación leerá su documento de identidad,screens/RegistrationCard.tsx,,translated
 "Guest, city ledger, deposit and AR aging.","Guest, city ledger, deposit and AR aging.",النزلاء ودفتر المدينة والتأمينات وأعمار الذمم.,"Huésped, cuentas por cobrar, depósitos y antigüedad de saldos.",,,translated
-"Guest, deposit, company and package ledgers against every folio","Guest, deposit, company and package ledgers against every folio",,,screens/Ledgers.tsx,,needs_translation
+"Guest, deposit, company and package ledgers against every folio","Guest, deposit, company and package ledgers against every folio",دفاتر النزلاء والودائع والشركات والباقات مقابل كل فاتورة,"Libros de huéspedes, depósitos, empresas y paquetes frente a cada folio",screens/Ledgers.tsx,,translated
 Guest: {v0},Guest: {v0},الضيف: {v0},Huésped: {v0},screens/BanquetFunction.tsx,v0,translated
 Guest's balance,Guest's balance,رصيد الضيف,Saldo del huésped,components/CheckOutDialog.tsx,,translated
 Guest's browser language,Guest's browser language,لغة متصفح الضيف,Idioma del navegador del huésped,screens/BookingEngine.tsx,,translated
@@ -2888,7 +2890,7 @@ Hide deactivated staff,Hide deactivated staff,إخفاء الموظفين الم
 Hide for a week,Hide for a week,إخفاء لمدة أسبوع,Ocultar por una semana,components/SetupNag.tsx,,translated
 Hide payload,Hide payload,إخفاء الحمولة,Ocultar carga útil,screens/settings/WebhooksPage.tsx,,translated
 Hide prices,Hide prices,إخفاء الأسعار,Ocultar precios,screens/laundry/GuestLaundryCard.tsx,,translated
-Hide who makes it up,Hide who makes it up,,,screens/Ledgers.tsx,,needs_translation
+Hide who makes it up,Hide who makes it up,إخفاء من يكوّن الرصيد,Ocultar quién compone el saldo,screens/Ledgers.tsx,,translated
 High,High,عالية,Alta,,,translated
 High balances in house,High balances in house,أرصدة مرتفعة للمقيمين,Saldos elevados de huéspedes alojados,,,translated
 History,History,السجل,Historial,components/RoomDrawer.tsx; screens/ReservationDetail.tsx,,translated
@@ -3042,7 +3044,7 @@ in house,in house,مقيم,alojado,components/RoomDrawer.tsx,,translated
 In house,In house,داخل الفندق,Huéspedes alojados,screens/Dashboard.tsx; screens/Owner.tsx,,translated
 In House,In House,المقيمون,Alojados,screens/InHouse.tsx,,translated
 In house by room type,In house by room type,النزلاء المقيمون حسب نوع الغرفة,Alojados por tipo de habitación,,,translated
-"In house, not billed","In house, not billed",,,screens/Receivables.tsx,,needs_translation
+"In house, not billed","In house, not billed",مقيم ولم تصدر فاتورته,"Alojados, sin facturar",screens/Receivables.tsx,,translated
 "in house, room {n}","in house, room {n}",مقيم، غرفة {n},"alojado, habitación {n}",screens/pos/PosSidePanel.tsx,n,translated
 In Kamra,In Kamra,في Kamra,En Kamra,screens/GoLiveImport.tsx,,translated
 In kitchen,In kitchen,في المطبخ,En la cocina,screens/POS.tsx; screens/pos/OpenBillsPopup.tsx; screens/pos/PosSidePanel.tsx,,translated
@@ -3268,7 +3270,7 @@ Last entry,Last entry,آخر قيد,Último asiento,screens/Ledgers.tsx,,transla
 "Last known cost, used to value wastage. Indicative only - not FIFO and not on the books.","Last known cost, used to value wastage. Indicative only - not FIFO and not on the books.",آخر تكلفة معروفة، تُستخدم لتقييم الهدر. إرشادية فقط، ليست FIFO ولا تُسجل في الحسابات.,"Último costo conocido, utilizado para valorar las mermas. Es orientativo; no aplica FIFO ni se registra en la contabilidad.",,,translated
 Last MCP action: ,Last MCP action: ,آخر إجراء MCP: ,Última acción MCP: ,screens/Agents.tsx,,translated
 Last month,Last month,الشهر الماضي,Mes pasado,screens/ManagementBooks.tsx,,translated
-Last paid,Last paid,,,screens/Receivables.tsx,,needs_translation
+Last paid,Last paid,آخر دفعة,Último pago,screens/Receivables.tsx,,translated
 Last payment,Last payment,آخر دفعة,Último pago,,,translated
 Last printed {at},Last printed {at},آخر طباعة {at},Última impresión {at},screens/KitchenPrinters.tsx,at,translated
 Last printed {n} ticket(s) at {time},Last printed {n} ticket(s) at {time},آخر طباعة {n} تذكرة في {time},Última impresión: {n} comandas a las {time},screens/Kitchen.tsx,n time,translated
@@ -3612,7 +3614,7 @@ needs attention,needs attention,يحتاج إلى متابعة,necesita atenció
 Needs attention,Needs attention,يحتاج انتباهًا,Requiere atención,,,translated
 Needs attention · ,Needs attention · ,تحتاج إلى انتباه · ,Requieren atención · ,screens/Inventory.tsx,,translated
 Needs chasing{urgent},Needs chasing{urgent},يحتاج متابعة{urgent},Requiere seguimiento{urgent},screens/Banquet.tsx,urgent,translated
-Needs you,Needs you,,,screens/EndOfDayWizard.tsx,,needs_translation
+Needs you,Needs you,تحتاج إليك,Requiere su atención,screens/EndOfDayWizard.tsx,,translated
 NEGATIVE,NEGATIVE,سالب,NEGATIVO,,,translated
 Negotiated rate plan,Negotiated rate plan,خطة سعر متفاوض عليها,Plan tarifario negociado,,,translated
 Net,Net,الصافي,Neto,screens/CashForecast.tsx,,translated
@@ -3833,13 +3835,13 @@ No outlet bills were posted to rooms today.,No outlet bills were posted to rooms
 No pack,No pack,لا حزمة,Sin paquete,screens/Billing.tsx,,translated
 "No payment today, pay at the property","No payment today, pay at the property",لا دفع اليوم، ادفع في مكان الإقامة,"Sin pago hoy, pague en el alojamiento",screens/PublicBooking.tsx,,translated
 No payment yet - take a deposit below to secure the booking.,No payment yet - take a deposit below to secure the booking.,لا دفعات بعد، حصّل عربونا أدناه لتأكيد الحجز.,Aún no hay pagos. Cobre un anticipo abajo para garantizar la reserva.,screens/ReservationDetail.tsx,,translated
-No payments yet.,No payments yet.,,,screens/Receivables.tsx,,needs_translation
+No payments yet.,No payments yet.,لا توجد دفعات بعد.,Aún no hay pagos.,screens/Receivables.tsx,,translated
 No petty cash vouchers for this property yet. Post one above - other hotels keep their own lists.,No petty cash vouchers for this property yet. Post one above - other hotels keep their own lists.,لا قسائم نثرية لهذا العقار بعد. سجّل واحدة أعلاه، فلكل فندق قائمته الخاصة.,Este alojamiento aún no tiene vales de caja chica. Registre uno en la sección anterior; cada hotel mantiene su propia lista.,screens/PettyCash.tsx,,translated
 No photo (optional),No photo (optional),لا توجد صورة (اختياري),Sin foto (opcional),components/GuestDocuments.tsx,,translated
 No photos of this room type yet.,No photos of this room type yet.,لا توجد صور لهذا النوع من الغرف بعد.,Aún no hay fotos de este tipo de habitación.,components/RoomDrawer.tsx,,translated
 No photos or videos yet.,No photos or videos yet.,لا صور أو مقاطع فيديو بعد.,Aún no hay fotos ni videos.,,,translated
 No pickups waiting.,No pickups waiting.,لا استلامات بانتظار.,No hay recogidas en espera.,screens/Laundry.tsx,,translated
-No postings in these dates.,No postings in these dates.,,,screens/Ledgers.tsx,,needs_translation
+No postings in these dates.,No postings in these dates.,لا توجد قيود في هذه التواريخ.,No hay movimientos en estas fechas.,screens/Ledgers.tsx,,translated
 No postings on this business date.,No postings on this business date.,لا ترحيلات في تاريخ العمل هذا.,No hay cargos registrados en esta fecha operativa.,screens/AuditPack.tsx,,translated
 No proof photos were uploaded for this task.,No proof photos were uploaded for this task.,لم تُرفع صور إثبات لهذه المهمة.,No se subieron fotos de comprobación para esta tarea.,components/HkMedia.tsx,,translated
 No quote issued yet.,No quote issued yet.,لم يصدر عرض سعر بعد.,Aún no se ha emitido una cotización.,screens/BanquetFunction.tsx,,translated
@@ -3974,7 +3976,8 @@ Not sent,Not sent,لم يُرسل,No enviado,screens/POS.tsx; screens/pos/OpenBi
 Not sent for {mins} min,Not sent for {mins} min,لم يُرسل منذ {mins} دقيقة,Sin enviar desde hace {mins} min,,mins,translated
 Not sent to the kitchen for {mins} min,Not sent to the kitchen for {mins} min,لم يُرسل إلى المطبخ منذ {mins} دقيقة,No enviado a la cocina durante {mins} min,screens/POS.tsx,mins,translated
 "Not sent, no billing contact email: {0}","Not sent, no billing contact email: {0}",لم يُرسل، لا يوجد بريد إلكتروني لجهة الفوترة: {0},"No enviado, sin correo de contacto de facturación: {0}",,0,translated
-"Not sent, no billing email: {v0}","Not sent, no billing email: {v0}",,,screens/Receivables.tsx,v0,needs_translation
+"Not sent, no billing email: {v0}","Not sent, no billing email: {v0}",لم يُرسل، لا يوجد بريد إلكتروني للفوترة: {v0},"No enviado, sin correo de facturación: {v0}",screens/Receivables.tsx,v0,translated
+Not sent. The reason is on the page behind this one.,Not sent. The reason is on the page behind this one.,لم يُرسل. السبب ظاهر في الصفحة خلف هذه النافذة.,No se envió. El motivo aparece en la página de detrás.,screens/Receivables.tsx,,translated
 Not set up,Not set up,غير مُعد,Sin configurar,screens/Assistant.tsx,,translated
 Not signed. Connect it only if you run this app yourself.,Not signed. Connect it only if you run this app yourself.,غير موقع. اربطه فقط إذا كنت تشغّل هذا التطبيق بنفسك.,Sin firma. Conéctala solo si tú mismo gestionas esta aplicación.,components/ConnectApp.tsx,,translated
 Not Started,Not Started,لم يبدأ,Sin iniciar,,,translated
@@ -4023,7 +4026,7 @@ Nothing moves to the company's account.,Nothing moves to the company's account.,
 Nothing needed,Nothing needed,لا حاجة لشيء,No se requiere nada,,,translated
 Nothing new on the ID · {amt},Nothing new on the ID · {amt},لا جديد في الهوية · {amt},No se encontraron datos nuevos en el documento · {amt},screens/RegistrationCard.tsx,amt,translated
 Nothing new.,Nothing new.,,,components/NotificationBell.tsx,,needs_translation
-Nothing on the account yet.,Nothing on the account yet.,,,screens/Receivables.tsx,,needs_translation
+Nothing on the account yet.,Nothing on the account yet.,لا شيء في الحساب بعد.,Aún no hay nada en la cuenta.,screens/Receivables.tsx,,translated
 Nothing on the quote yet - add the menu and the extras.,Nothing on the quote yet - add the menu and the extras.,لا شيء في عرض السعر بعد، أضف القائمة والإضافات.,La cotización aún no tiene conceptos. Agregue el menú y los servicios adicionales.,screens/BanquetFunction.tsx,,translated
 Nothing on this ledger.,Nothing on this ledger.,لا شيء في هذا الحساب.,Nada en este libro.,screens/Ledgers.tsx,,translated
 Nothing outstanding.,Nothing outstanding.,لا شيء مستحق.,No hay conceptos pendientes.,screens/BanquetFunction.tsx,,translated
@@ -4170,7 +4173,7 @@ Open - start an enquiry,Open - start an enquiry,متاح: ابدأ استفسا�
 open {t},open {t},مفتوح {t},abierto {t},screens/Tickets.tsx,t,translated
 Open {v0},Open {v0},فتح {v0},Abrir {v0},screens/GuestJourney.tsx,v0,translated
 Open / close till,Open / close till,فتح / إغلاق الصندوق,Abrir / cerrar caja,screens/CashierSessions.tsx,,translated
-Open a folio to find the posting that reached one side and not the other.,Open a folio to find the posting that reached one side and not the other.,,,screens/Ledgers.tsx,,needs_translation
+Open a folio to find the posting that reached one side and not the other.,Open a folio to find the posting that reached one side and not the other.,افتح فاتورة لتجد القيد الذي وصل إلى جانب دون الآخر.,Abra un folio para encontrar el movimiento que llegó a un lado y no al otro.,screens/Ledgers.tsx,,translated
 "Open a session for your shift (that is the till). Guest payments and POS bills post here automatically while the till is open - take them on Front Desk or Restaurant, not on this page. Use Paid out and Cash drop for cash leaving the drawer, then count and close.","Open a session for your shift (that is the till). Guest payments and POS bills post here automatically while the till is open - take them on Front Desk or Restaurant, not on this page. Use Paid out and Cash drop for cash leaving the drawer, then count and close.",افتح جلسة لورديتك (وهي الصندوق). تُرحَّل دفعات الضيوف وفواتير POS هنا تلقائيا ما دام الصندوق مفتوحا، فحصّلها من الاستقبال أو المطعم لا من هذه الصفحة. استخدم مدفوع للخارج والإيداع النقدي للنقد الخارج من الدرج، ثم اعدّ النقد وأغلق.,"Abra una sesión de caja para su turno. Mientras esté abierta, los pagos de huéspedes y las cuentas del punto de venta se registran aquí automáticamente; cobre desde Recepción o Restaurante. Use «Egreso de caja» y «Entrega de efectivo a caja central» para registrar las salidas del cajón; después cuente el efectivo y cierre la sesión.",screens/CashierTill.tsx,,translated
 Open a till,Open a till,افتح صندوقا,Abra una caja,screens/CashierSessions.tsx,,translated
 Open account,Open account,فتح الحساب,Abrir cuenta,,,translated
@@ -4182,7 +4185,7 @@ Open bill,Open bill,فتح الفاتورة,Abrir cuenta,components/BookingDialo
 Open billing,Open billing,فتح الفوترة,Abrir facturación,,,translated
 Open Billing,Open Billing,فتح الفوترة,Abrir Facturación,screens/Ledgers.tsx,,translated
 Open bills,Open bills,فواتير مفتوحة,Cuentas abiertas,screens/CityLedgerPayment.tsx; screens/POS.tsx; screens/PosDashboard.tsx; screens/pos/OpenBillsPopup.tsx,,translated
-Open bills · {n},Open bills · {n},,,screens/Receivables.tsx,n,needs_translation
+Open bills · {n},Open bills · {n},فواتير مفتوحة · {n},Cuentas abiertas · {n},screens/Receivables.tsx,n,translated
 Open bills (,Open bills (,فواتير مفتوحة (,Cuentas abiertas (,screens/PosDashboard.tsx,,translated
 Open cashier tills,Open cashier tills,صناديق صرافين مفتوحة,Cajas de cajeros abiertas,,,translated
 Open cashiers,Open cashiers,الصناديق المفتوحة,Cajas abiertas,screens/EndOfDay.tsx,,translated
@@ -4224,7 +4227,7 @@ Open Marketplace → Kamra Enterprise,Open Marketplace → Kamra Enterprise,فت
 Open menu,Open menu,,,AppShell.tsx,,needs_translation
 Open my till,Open my till,افتح درجي النقدي,Abrir mi caja,components/TillCard.tsx,,translated
 Open My Till,Open My Till,فتح صندوقي,Abrir mi caja,screens/Billing.tsx,,translated
-Open Night Audit,Open Night Audit,,,screens/Billing.tsx,,needs_translation
+Open Night Audit,Open Night Audit,فتح التدقيق الليلي,Abrir Auditoría nocturna,screens/Billing.tsx,,translated
 Open now (all time),Open now (all time),المفتوح الآن (كل الفترات),Abiertas ahora (todo el historial),,,translated
 Open on the till,Open on the till,فتح على نقطة البيع,Abierto en la caja,screens/pos/PosSidePanel.tsx,,translated
 Open on till,Open on till,افتح على الصندوق,Abierto en caja,screens/pos/OrderHistory.tsx,,translated
@@ -4354,6 +4357,7 @@ Outsourced,Outsourced,مُسند لجهة خارجية,Proveedor externo,,,trans
 Outstanding,Outstanding,مستحق,Saldo pendiente,screens/Banquet.tsx; screens/Dashboard.tsx; screens/Owner.tsx; screens/Today.tsx,,translated
 over,over,فوق,por encima,screens/BanquetFunction.tsx,,translated
 Over by,Over by,التجاوز,Exceso de,,,translated
+Over credit limit,Over credit limit,تجاوز حد الائتمان,Excede el límite de crédito,,,translated
 Over limit,Over limit,تجاوز الحد,Supera el límite,screens/Receivables.tsx,,translated
 "Over the credit limit by {v0}{v1} (limit {v0}{v2}, owed and billed with this {v0}{v3}).","Over the credit limit by {v0}{v1} (limit {v0}{v2}, owed and billed with this {v0}{v3}).",تجاوز حد الائتمان بمقدار {v0}{v1} (الحد {v0}{v2}، المستحق والمفوتر مع هذا {v0}{v3}).,El límite de crédito se supera en {v0}{v1} (límite: {v0}{v2}; deuda y cargos incluidos en esta operación: {v0}{v3}).,,v0 v1 v2 v3,translated
 Overbooking,Overbooking,الحجز الزائد,Sobreventa,,,translated
@@ -4367,6 +4371,7 @@ Overdue grace period,Overdue grace period,مهلة السماح للتأخر,Per
 Overdue now,Overdue now,متأخر الآن,Fuera de plazo ahora,screens/OpsSLA.tsx,,translated
 Overnight,Overnight,مبيت,Durante la noche,components/BookingDialog.tsx,,translated
 overnight stay,overnight stay,إقامة ليلية,pernoctación,screens/TapeChart.tsx,,translated
+Overridden check,Overridden check,الفحص الذي تم تجاوزه,Comprobación con excepción autorizada,,,translated
 Override credit control - say why (it is logged),Override credit control - say why (it is logged),تجاوز ضبط الائتمان: اذكر السبب (يُسجَّل),Saltar el control de crédito: indica el motivo (queda registrado),screens/Receivables.tsx,,translated
 Override with reason,Override with reason,تجاوز مع ذكر السبب,Autorizar excepción con un motivo,screens/EndOfDayWizard.tsx,,translated
 Overview,Overview,نظرة عامة,Descripción general,screens/SystemHealth.tsx,,translated
@@ -4400,6 +4405,7 @@ Paid {amount},Paid {amount},المدفوع {amount},Pagado {amount},screens/CRS.
 Paid {cur},Paid {cur},مدفوع {cur},Pagado {cur},screens/Billing.tsx,cur,translated
 Paid {paid}. It goes against the fee.,Paid {paid}. It goes against the fee.,المدفوع {paid}. يُخصم من الرسوم.,Pagado {paid}. Se aplica al cargo.,components/NoShowDialog.tsx,paid,translated
 "Paid {paid}. The fee comes out of it; {left} stays as credit, to refund or keep next.","Paid {paid}. The fee comes out of it; {left} stays as credit, to refund or keep next.",المدفوع {paid}. تُخصم الرسوم منه، ويبقى {left} رصيدًا دائنًا تقرر رده أو الاحتفاظ به بعد ذلك.,"Pagado {paid}. El cargo se descuenta de ahí; {left} queda como saldo a favor, para reembolsar o retener a continuación.",components/NoShowDialog.tsx,paid left,translated
+Paid ahead,Paid ahead,مدفوع مقدمًا,Pagado por adelantado,,,translated
 Paid by,Paid by,طريقة الدفع,Pagado por,screens/pos/OrderHistory.tsx,,translated
 Paid by {mode},Paid by {mode},مدفوعة عبر {mode},Pagado por {mode},screens/pos/PosSidePanel.tsx,mode,translated
 Paid in full.,Paid in full.,مدفوع بالكامل.,Pagado en su totalidad.,components/BookingDialog.tsx,,translated
@@ -4448,7 +4454,7 @@ Payee,Payee,المستفيد,Beneficiario,screens/PettyCash.tsx,,translated
 Payload,Payload,الحمولة,Carga útil,screens/settings/WebhooksPage.tsx,,translated
 Payment,Payment,الدفع,Pago,components/BookingDialog.tsx; components/CheckOutDialog.tsx; screens/PublicBooking.tsx,,translated
 "Payment codes only: a payment mode such as Cash, Card or Bank Transfer. Payments in that mode book to this code.","Payment codes only: a payment mode such as Cash, Card or Bank Transfer. Payments in that mode book to this code.",لرموز الدفع فقط: طريقة دفع مثل نقداً أو بطاقة أو تحويل بنكي. تُقيَّد المدفوعات بهذه الطريقة على هذا الرمز.,"Solo para códigos de pago: un medio de pago como Efectivo, Tarjeta o Transferencia bancaria. Los pagos con ese medio se registran en este código.",,,translated
-Payment confirmed and posted.,Payment confirmed and posted.,,,screens/Receivables.tsx,,needs_translation
+Payment confirmed and posted.,Payment confirmed and posted.,تم تأكيد الدفعة وترحيلها.,Pago confirmado y registrado.,screens/Receivables.tsx,,translated
 Payment failed,Payment failed,فشل الدفع,Pago fallido,,,translated
 Payment gateway,Payment gateway,بوابة الدفع,Pasarela de pago,screens/settings/cards.tsx,,translated
 Payment Gateway Settings,Payment Gateway Settings,إعدادات بوابة الدفع,Configuración de la pasarela de pago,,,translated
@@ -4458,10 +4464,10 @@ Payment links for advances and folio settlement. Money goes straight to this pro
 Payment mode,Payment mode,طريقة الدفع,Medio de pago,components/BookingDialog.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/GroupControl.tsx; components/SecurityDepositPanel.tsx; screens/CRS.tsx; screens/pos/OrderHistory.tsx,,translated
 Payment recorded.,Payment recorded.,تم تسجيل الدفعة.,Pago registrado.,components/RoomStayPanels.tsx; screens/Payables.tsx,,translated
 Payment recorded. Account balance is now ,Payment recorded. Account balance is now ,تم تسجيل الدفع. رصيد الحساب الآن ,Pago registrado. El saldo de la cuenta es ahora ,screens/CityLedgerPayment.tsx,,translated
-Payment rejected.,Payment rejected.,,,screens/Receivables.tsx,,needs_translation
+Payment rejected.,Payment rejected.,تم رفض الدفعة.,Pago rechazado.,screens/Receivables.tsx,,translated
 Payment reminder from {0},Payment reminder from {0},تذكير بالدفع من {0},Recordatorio de pago de {0},,0,translated
 Payment reminders at {0},Payment reminders at {0},تذكيرات الدفع في {0},Recordatorios de pago en {0},,0,translated
-Payment reversed. Account balance is now {v0}.,Payment reversed. Account balance is now {v0}.,,,screens/Receivables.tsx,v0,needs_translation
+Payment reversed. Account balance is now {v0}.,Payment reversed. Account balance is now {v0}.,تم عكس الدفعة. رصيد الحساب الآن {v0}.,Pago revertido. El saldo de la cuenta es ahora {v0}.,screens/Receivables.tsx,v0,translated
 Payment schedule,Payment schedule,جدول الدفعات,Calendario de pagos,screens/BanquetDocument.tsx,,translated
 Payment terms,Payment terms,شروط الدفع,Condiciones de pago,components/CreditTermsEditor.tsx; screens/BanquetFunction.tsx,,translated
 Payment terms and credit control for companies billed on the city ledger. The check runs when a stay is booked on company billing and when a bill moves to the city ledger at check-out. Set each company's credit limit and credit days on its corporate account.,Payment terms and credit control for companies billed on the city ledger. The check runs when a stay is booked on company billing and when a bill moves to the city ledger at check-out. Set each company's credit limit and credit days on its corporate account.,شروط الدفع ومراقبة الائتمان للشركات المفوترة على دفتر المدينة. يجري الفحص عند حجز إقامة بفوترة الشركة وعند نقل فاتورة إلى دفتر المدينة عند المغادرة. حدّد حد الائتمان وأيام الائتمان لكل شركة في حسابها المؤسسي.,Condiciones de pago y control de crédito de cuentas por cobrar a empresas. Se revisan al reservar con facturación a empresa y al transferir una cuenta al registrar la salida. Configure el límite y plazo de crédito en la cuenta de cada empresa.,,,translated
@@ -4469,7 +4475,7 @@ Payment terms: {0} days,Payment terms: {0} days,شروط الدفع: {0} يوم�
 Payments,Payments,المدفوعات,Pagos,screens/FolioView.tsx; screens/Receivables.tsx; screens/settings/cards.tsx,,translated
 Payments and statements keep working while it is restricted.,Payments and statements keep working while it is restricted.,تستمر الدفعات وكشوف الحساب في العمل أثناء التقييد.,Los pagos y los estados de cuenta siguen funcionando mientras está restringida.,screens/Receivables.tsx,,translated
 Payments are handled by the hotel's payment gateway; the hotel does not see your card.,Payments are handled by the hotel's payment gateway; the hotel does not see your card.,تتم المدفوعات عبر بوابة الدفع الخاصة بالفندق؛ ولا يطّلع الفندق على بطاقتك.,La pasarela de pago del hotel procesa los pagos; el hotel no puede ver los datos de su tarjeta.,components/PrivacyNotice.tsx,,translated
-Payments to confirm,Payments to confirm,,,screens/Receivables.tsx,,needs_translation
+Payments to confirm,Payments to confirm,دفعات بانتظار التأكيد,Pagos por confirmar,screens/Receivables.tsx,,translated
 "Payments, invoices, allowances and settlements re-confirm who is acting. Agents are exempt.","Payments, invoices, allowances and settlements re-confirm who is acting. Agents are exempt.",تتطلب المدفوعات والفواتير وخصومات التسوية والتسويات إعادة تأكيد هوية المنفّذ. الوكلاء معفون.,"Los pagos, facturas, bonificaciones y liquidaciones verifican nuevamente al responsable. Los agentes están exentos.",,,translated
 Payouts,Payouts,المصروفات النقدية,Salidas de efectivo,,,translated
 Pays own charges,Pays own charges,يدفع رسومه بنفسه,Paga sus propios cargos,,,translated
@@ -4659,7 +4665,7 @@ Prepare End of Day,Prepare End of Day,التحضير لنهاية اليوم,Pre
 Prepared,Prepared,جاهز,Preparado,screens/pos/OpenBillsPopup.tsx,,translated
 Preparing,Preparing,قيد التحضير,Preparando,,,translated
 Preparing End of Day…,Preparing End of Day…,جارٍ التحضير لنهاية اليوم…,Preparando el cierre del día…,,,translated
-Preparing the night audit…,Preparing the night audit…,,,screens/EndOfDayWizard.tsx,,needs_translation
+Preparing the night audit…,Preparing the night audit…,جارٍ تحضير التدقيق الليلي…,Preparando la auditoría nocturna…,screens/EndOfDayWizard.tsx,,translated
 Preparing…,Preparing…,جارٍ التحضير…,Preparando...,screens/pos/OrderHistory.tsx,,translated
 Press {key} to tick,Press {key} to tick,اضغط {key} للتأشير,Presione {key} para marcar,components/CheckOutDialog.tsx,key,translated
 Prev,Prev,السابق,Anterior,components/ResourceScreen.tsx; screens/Agents.tsx,,translated
@@ -4702,7 +4708,7 @@ Print GRC,Print GRC,طباعة بطاقة التسجيل,Imprimir ficha de regis
 Print invoice,Print invoice,طباعة الفاتورة,Imprimir factura,screens/FolioView.tsx; screens/Receivables.tsx,,translated
 "Print it, or send the PDF straight from the print dialog.","Print it, or send the PDF straight from the print dialog.",اطبعه، أو أرسل ملف PDF مباشرة من نافذة الطباعة.,Imprímalo o envíe el PDF desde el diálogo de impresión.,screens/BanquetFunction.tsx,,translated
 Print KOT,Print KOT,طباعة أمر المطبخ,Imprimir comandas,,,translated
-Print or save PDF,Print or save PDF,,,screens/Receivables.tsx,,needs_translation
+Print or save PDF,Print or save PDF,طباعة أو حفظ PDF,Imprimir o guardar PDF,screens/Receivables.tsx,,translated
 Print pack,Print pack,طباعة الحزمة,Imprimir paquete,screens/EndOfDay.tsx,,translated
 Print quotation,Print quotation,,,components/GroupControl.tsx,,needs_translation
 Print registration card,Print registration card,اطبع بطاقة التسجيل,Imprimir ficha de registro,components/CheckInDialog.tsx,,translated
@@ -4755,7 +4761,7 @@ Property name *,Property name *,اسم العقار *,Nombre del alojamiento *,s
 property policy,property policy,سياسة المنشأة,política del establecimiento,components/CheckOutDialog.tsx,,translated
 "Property setup, inventory, users, audit and the Marketplace.","Property setup, inventory, users, audit and the Marketplace.",إعداد العقار والمخزون والمستخدمين والتدقيق والسوق.,"Configuración del alojamiento, inventario, usuarios, auditoría y catálogo de integraciones.",,,translated
 Property time,Property time,وقت المنشأة,Hora del alojamiento,,,translated
-property time {now},property time {now},,,screens/EndOfDayWizard.tsx,now,needs_translation
+property time {now},property time {now},وقت المنشأة {now},hora del alojamiento: {now},screens/EndOfDayWizard.tsx,now,translated
 Property-level Amenities (one per line),Property-level Amenities (one per line),مرافق العقار (واحد في كل سطر),Servicios e instalaciones del alojamiento (uno por línea),screens/BookingEngine.tsx,,translated
 "property-specific guidance - upsell priorities, tone","property-specific guidance - upsell priorities, tone",إرشادات خاصة بالعقار: أولويات البيع الإضافي، والأسلوب,Instrucciones del alojamiento: prioridades de venta de servicios adicionales y tono,screens/settings/cards.tsx,,translated
 Provider,Provider,المزوّد,Proveedor,screens/settings/cards.tsx,,translated
@@ -4896,8 +4902,8 @@ Receive,Receive,استلام,Recibir,components/GroupControl.tsx; screens/Invent
 Receive ,Receive ,استلام ,Recibir ,screens/Inventory.tsx,,translated
 Receive stock,Receive stock,استلام المخزون,Recibir existencias,screens/Inventory.tsx,,translated
 Received,Received,المستلم,Recibido,components/DepositPanel.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/CashierBoard.tsx,,translated
-received {v0},received {v0},,,screens/Receivables.tsx,v0,needs_translation
-"Received {v0}, recorded by {v1}","Received {v0}, recorded by {v1}",,,screens/Receivables.tsx,v0 v1,needs_translation
+received {v0},received {v0},مستلمة في {v0},recibido el {v0},screens/Receivables.tsx,v0,translated
+"Received {v0}, recorded by {v1}","Received {v0}, recorded by {v1}",استُلمت في {v0}، سجّلها {v1},"Recibido el {v0}, registrado por {v1}",screens/Receivables.tsx,v0 v1,translated
 Received by,Received by,استلمه,Recibido por,,,translated
 Received on,Received on,,,screens/CityLedgerPayment.tsx,,needs_translation
 Received this month,Received this month,المستلم هذا الشهر,Cobrado este mes,,,translated
@@ -4928,7 +4934,7 @@ Record payment,Record payment,تسجيل دفعة,Registrar pago,components/Depo
 Record wastage,Record wastage,تسجيل الهدر,Registrar merma,screens/Inventory.tsx,,translated
 Recorded a payment,Recorded a payment,تم تسجيل دفعة,Pago registrado,,,translated
 Recorded as a refund on the function's ledger.,Recorded as a refund on the function's ledger.,يُسجَّل كاسترداد في دفتر حساب المناسبة.,Se registra como reembolso en el libro contable del evento.,screens/BanquetFunction.tsx,,translated
-Recorded by an AI agent. They change nothing on the account until Finance confirms them with a PIN.,Recorded by an AI agent. They change nothing on the account until Finance confirms them with a PIN.,,,screens/Receivables.tsx,,needs_translation
+Recorded by an AI agent. They change nothing on the account until Finance confirms them with a PIN.,Recorded by an AI agent. They change nothing on the account until Finance confirms them with a PIN.,سجّلها وكيل ذكاء اصطناعي. لا تغيّر شيئًا في الحساب حتى تؤكدها المالية برمز PIN.,Registrados por un agente de IA. No cambian nada en la cuenta hasta que Finanzas los confirme con un PIN.,screens/Receivables.tsx,,translated
 Recorded for Finance to confirm. It does not change the account until a Finance user confirms it with their PIN.,Recorded for Finance to confirm. It does not change the account until a Finance user confirms it with their PIN.,,,screens/CityLedgerPayment.tsx,,needs_translation
 Recording…,Recording…,جارٍ التسجيل…,Registrando…,screens/CityLedgerPayment.tsx,,translated
 recount,recount,إعادة العد,volver a contar,screens/Inventory.tsx,,translated
@@ -4972,7 +4978,7 @@ Registration fee,Registration fee,رسوم التسجيل,Cargo de registro,scre
 Registration fee (,Registration fee (,رسوم التسجيل (,Cargo de registro (,screens/BookingEngine.tsx,,translated
 Reissue event order,Reissue event order,إعادة إصدار أمر المناسبة,Volver a emitir la orden del evento,screens/BanquetFunction.tsx,,translated
 Reject,Reject,رفض,Rechazar,components/AllowanceRequests.tsx; screens/Receivables.tsx,,translated
-Reject payment,Reject payment,,,screens/Receivables.tsx,,needs_translation
+Reject payment,Reject payment,رفض الدفعة,Rechazar pago,screens/Receivables.tsx,,translated
 Rejected,Rejected,مرفوض,Rechazado,screens/AllowanceApprovals.tsx,,translated
 Rejected by {who}: {why},Rejected by {who}: {why},رفضه {who}: {why},Rechazado por {who}: {why},components/AllowanceRequests.tsx,who why,translated
 Relation,Relation,صلة القرابة,Relación con el huésped,components/BookingDialog.tsx; screens/ReservationDetail.tsx,,translated
@@ -5111,11 +5117,11 @@ Revenue Manager,Revenue Manager,مدير الإيرادات,Responsable de ingre
 Revenue reports,Revenue reports,تقارير الإيرادات,Informes de ingresos,,,translated
 Revenue Reports,Revenue Reports,تقارير الإيرادات,Informes de ingresos,screens/Reports.tsx; screens/RevenueReports.tsx,,translated
 Revenue today,Revenue today,إيرادات اليوم,Ingresos de hoy,,,translated
-Reverse,Reverse,,,screens/Receivables.tsx,,needs_translation
-Reverse payment,Reverse payment,,,screens/Receivables.tsx,,needs_translation
-Reversed,Reversed,,,screens/Receivables.tsx,,needs_translation
+Reverse,Reverse,عكس,Revertir,screens/Receivables.tsx,,translated
+Reverse payment,Reverse payment,عكس الدفعة,Revertir pago,screens/Receivables.tsx,,translated
+Reversed,Reversed,معكوسة,Revertido,screens/Receivables.tsx,,translated
 Review,Review,مراجعة,Revisar,screens/TapeChart.tsx,,translated
-Review and close,Review and close,,,screens/EndOfDay.tsx,,needs_translation
+Review and close,Review and close,مراجعة وإغلاق,Revisar y cerrar,screens/EndOfDay.tsx,,translated
 Review payment,Review payment,مراجعة الدفعة,Revisar pago,screens/CityLedgerPayment.tsx,,translated
 Review the bill,Review the bill,مراجعة الفاتورة,Revisar la cuenta,,,translated
 Revision,Revision,المراجعة,Revisión,screens/BanquetDocument.tsx,,translated
@@ -5402,11 +5408,11 @@ See prices,See prices,عرض الأسعار,Ver precios,screens/laundry/GuestLau
 See rooms and prices,See rooms and prices,عرض الغرف والأسعار,Ver habitaciones y precios,screens/PublicBooking.tsx,,translated
 See what is left,See what is left,عرض ما تبقى,Ver lo que queda,components/SetupNag.tsx,,translated
 Select,Select,اختر,Seleccionar,components/BookingDialog.tsx; components/PhoneInput.tsx; screens/FolioView.tsx; screens/PublicBooking.tsx; screens/Setup.tsx,,translated
-Select {v0},Select {v0},,,screens/Receivables.tsx,v0,needs_translation
+Select {v0},Select {v0},تحديد {v0},Seleccionar {v0},screens/Receivables.tsx,v0,translated
 Select a bill on the left to see every line.,Select a bill on the left to see every line.,اختر فاتورة على اليسار لعرض كل البنود.,Seleccione una cuenta a la izquierda para ver cada línea.,screens/pos/OpenBillsPopup.tsx,,translated
 Select a calling code.,Select a calling code.,اختر رمز الاتصال الدولي.,Seleccione un prefijo telefónico.,components/PhoneInput.tsx,,translated
 Select a room and rate to see your total here.,Select a room and rate to see your total here.,اختر غرفة وسعرًا لترى المجموع هنا.,Seleccione una habitación y una tarifa para ver aquí el total.,screens/PublicBooking.tsx,,translated
-Select all {n},Select all {n},,,screens/Receivables.tsx,n,needs_translation
+Select all {n},Select all {n},تحديد الكل ({n}),Seleccionar las {n},screens/Receivables.tsx,n,translated
 Select charge,Select charge,اختر الرسوم,Seleccionar cargo,screens/FolioView.tsx,,translated
 Select items from the menu,Select items from the menu,اختر أصنافاً من القائمة,Seleccione artículos del menú,screens/POS.tsx,,translated
 Select…,Select…,اختر…,Seleccionar…,,,translated
@@ -5430,7 +5436,7 @@ Send links & updates to,Send links & updates to,إرسال الروابط وال
 send links & updates to: {pref},send links & updates to: {pref},أرسل الروابط والتحديثات إلى: {pref},envíe enlaces y actualizaciones a: {pref},screens/Today.tsx,pref,translated
 Send links this far ahead,Send links this far ahead,إرسال الروابط قبل هذه المدة,Días de anticipación para enviar enlaces,,,translated
 Send me offers on WhatsApp. Reply STOP at any time to opt out.,Send me offers on WhatsApp. Reply STOP at any time to opt out.,أرسلوا لي العروض عبر واتساب. أرسل توقف في أي وقت لإلغاء الاشتراك.,Envíenme ofertas por WhatsApp. Responda BAJA en cualquier momento para darse de baja.,screens/PublicBooking.tsx; screens/PublicListing.tsx,,translated
-Send month-end bills,Send month-end bills,,,screens/Receivables.tsx,,needs_translation
+Send month-end bills,Send month-end bills,إرسال فواتير نهاية الشهر,Enviar facturas de fin de mes,screens/Receivables.tsx,,translated
 Send on WhatsApp,Send on WhatsApp,أرسل عبر واتساب,Enviar por WhatsApp,components/CheckInDialog.tsx,,translated
 Send payment link,Send payment link,إرسال رابط الدفع,Enviar enlace de pago,components/DepositPanel.tsx,,translated
 Send pre-check-in links automatically,Send pre-check-in links automatically,إرسال روابط تسجيل الوصول المسبق تلقائياً,Enviar automáticamente enlaces de registro previo,,,translated
@@ -5447,7 +5453,7 @@ Send to the company account (they pay later),Send to the company account (they p
 Send to the company's city ledger,Send to the company's city ledger,إرسال إلى حساب الذمم المدينة للشركة,Enviar a la cuenta por cobrar de la empresa,,,translated
 Send to the kitchen,Send to the kitchen,,,components/AgentGuide.tsx,,needs_translation
 Send updates to,Send updates to,إرسال التحديثات إلى,Enviar novedades a,screens/ReservationDetail.tsx,,translated
-Sending {what} to {n} companies. Each one is in the Activity log.,Sending {what} to {n} companies. Each one is in the Activity log.,,,screens/Receivables.tsx,what n,needs_translation
+Sending {what} to {n} companies. Each one is in the Activity log.,Sending {what} to {n} companies. Each one is in the Activity log.,جارٍ إرسال {what} إلى {n} شركة. كل إرسال مسجّل في سجل النشاط.,Enviando {what} a {n} empresas. Cada envío queda en el registro de actividad.,screens/Receivables.tsx,what n,translated
 Sending…,Sending…,جارٍ الإرسال…,Enviando…,screens/Login.tsx; screens/Receivables.tsx,,translated
 Sent to a manager. It goes on the bill once approved.,Sent to a manager. It goes on the bill once approved.,أُرسل إلى مدير. يُضاف إلى الفاتورة بعد الموافقة.,Enviado a un gerente. Se aplica a la cuenta cuando lo apruebe.,screens/FolioView.tsx,,translated
 "Sent to the kitchen. Order {order}, total {total}.","Sent to the kitchen. Order {order}, total {total}.",,,screens/Assistant.tsx,order total,needs_translation
@@ -5550,7 +5556,7 @@ Shortage: ,Shortage: ,العجز: ,Faltante: ,screens/HkLaundry.tsx,,translated
 Shorten the stay,Shorten the stay,تقصير الإقامة,Acortar la estancia,components/CheckOutDialog.tsx,,translated
 Shorten the stay above to continue.,Shorten the stay above to continue.,قصّر الإقامة أعلاه للمتابعة.,Acorta la estancia arriba para continuar.,components/CheckOutDialog.tsx,,translated
 Shortest stay allowed on these dates. 0 = no minimum,Shortest stay allowed on these dates. 0 = no minimum,أقصر إقامة مسموحة في هذه التواريخ. 0 = بلا حد أدنى,Estancia mínima permitida en estas fechas. 0 = sin mínimo,,,translated
-Show,Show,,,screens/Receivables.tsx,,needs_translation
+Show,Show,عرض,Mostrar,screens/Receivables.tsx,,translated
 Show {n} deactivated,Show {n} deactivated,عرض {n} معطّلين,Mostrar personal desactivado: {n},screens/settings/AccessPages.tsx,n,translated
 Show a reservation from,Show a reservation from,عرض حجز من,Mostrar una reserva desde,,,translated
 Show closed,Show closed,إظهار المغلق,Mostrar cerrados,,,translated
@@ -5566,7 +5572,9 @@ Show the app menu (Esc),Show the app menu (Esc),إظهار قائمة التطب
 Showing {n},Showing {n},عرض {n},Mostrando {n},screens/pos/PosSidePanel.tsx,n,translated
 Showing {n} of {total} bills,Showing {n} of {total} bills,عرض {n} من {total} فاتورة,Mostrando {n} de {total} cuentas,screens/pos/OrderHistory.tsx,n total,translated
 Showing 12 of ,Showing 12 of ,عرض 12 من ,Mostrando 12 de ,screens/AccountingExport.tsx,,translated
+Showing the {n} biggest balances. The ledger total above includes every folio.,Showing the {n} biggest balances. The ledger total above includes every folio.,يُعرض أكبر {n} رصيد. إجمالي الدفتر أعلاه يشمل كل الفواتير.,Se muestran los {n} saldos más altos. El total del libro de arriba incluye todos los folios.,screens/Ledgers.tsx,n,translated
 Showing the first {n} rows.,Showing the first {n} rows.,عرض أول {n} صفوف.,Mostrando las primeras {n} filas.,screens/Reports.tsx,n,translated
+Showing the latest {n}. Pick From and To dates to see others.,Showing the latest {n}. Pick From and To dates to see others.,يُعرض أحدث {n}. اختر تاريخَي من وإلى لرؤية غيرها.,Se muestran las {n} más recientes. Elija las fechas Desde y Hasta para ver otras.,screens/EndOfDay.tsx,n,translated
 Shown,Shown,معروض,Mostrado,components/CustomizeToday.tsx,,translated
 Shown in the booking dialog and used by the AI agent as its upsell prompt.,Shown in the booking dialog and used by the AI agent as its upsell prompt.,يظهر في نافذة الحجز ويستخدمه وكيل الذكاء الاصطناعي كتوجيه للبيع الإضافي.,Se muestra al reservar y orienta las sugerencias de venta adicional del agente de IA.,,,translated
 "Shown on the public listing page. Uploads save automatically - images 1600×900px (16:9) JPG/WebP, or a walkthrough video (MP4, up to ~10 MB).","Shown on the public listing page. Uploads save automatically - images 1600×900px (16:9) JPG/WebP, or a walkthrough video (MP4, up to ~10 MB).",يظهر في صفحة القائمة العامة. تُحفظ الملفات تلقائياً: صور 1600×900px (16:9) بصيغة JPG/WebP، أو فيديو جولة (MP4، حتى ~10 MB).,"Se muestra en la página pública del alojamiento. Los archivos se guardan automáticamente: imágenes JPG/WebP de 1600 × 900 px (16:9) o un video del alojamiento (MP4, hasta unos 10 MB).",components/RoomTypeMedia.tsx,,translated
@@ -5712,7 +5720,7 @@ Statement,Statement,كشف الحساب,Estado de cuenta,screens/Receivables.tsx
 Statement of account,Statement of account,كشف حساب,Estado de cuenta,,,translated
 Statement of account from {0},Statement of account from {0},كشف حساب من {0},Estado de cuenta de {0},,0,translated
 Statement sent to {v0},Statement sent to {v0},تم إرسال كشف الحساب إلى {v0},Estado de cuenta enviado a {v0},screens/Receivables.tsx,v0,translated
-statements,statements,,,screens/Receivables.tsx,,needs_translation
+statements,statements,كشوف الحساب,los estados de cuenta,screens/Receivables.tsx,,translated
 Station,Station,المحطة,Estación,screens/MenuImport.tsx,,translated
 Stationery,Stationery,القرطاسية,Papelería,,,translated
 Statistics (month to date),Statistics (month to date),إحصاءات (من بداية الشهر),Estadísticas (acumulado del mes),screens/Dashboard.tsx,,translated
@@ -5939,7 +5947,7 @@ The balance stays on the departed folio.,The balance stays on the departed folio
 The bill against what's already been received.,The bill against what's already been received.,الفاتورة مقابل ما تم استلامه.,"La cuenta, considerando los pagos ya recibidos.",,,translated
 "The bill stays open into the next business date. Its sale is dated tomorrow, not today.","The bill stays open into the next business date. Its sale is dated tomorrow, not today.",تبقى الفاتورة مفتوحة حتى تاريخ العمل التالي. تُسجل مبيعاتها بتاريخ الغد لا اليوم.,La cuenta sigue abierta para la siguiente fecha operativa. La venta se registrará mañana.,,,translated
 The bills stay where they are posted.,The bills stay where they are posted.,تبقى الفواتير حيث رُحّلت.,Las cuentas permanecen en los folios donde se registraron.,,,translated
-"The bills this payment cleared are owed again, and any credit it left on the account is taken back.","The bills this payment cleared are owed again, and any credit it left on the account is taken back.",,,screens/Receivables.tsx,,needs_translation
+"The bills this payment cleared are owed again, and any credit it left on the account is taken back.","The bills this payment cleared are owed again, and any credit it left on the account is taken back.",تعود الفواتير التي سددتها هذه الدفعة مستحقة من جديد، ويُسحب أي رصيد دائن تركته في الحساب.,"Las facturas que saldó este pago vuelven a quedar pendientes, y se retira cualquier saldo a favor que dejó en la cuenta.",screens/Receivables.tsx,,translated
 The booking ended without a stay - nothing is owed.,The booking ended without a stay - nothing is owed.,انتهى الحجز دون إقامة، ولا يوجد مبلغ مستحق.,La reserva terminó sin estancia y no hay saldo pendiente.,screens/ReservationDetail.tsx,,translated
 The browser could not open the print view.,The browser could not open the print view.,تعذّر على المتصفح فتح عرض الطباعة.,El navegador no pudo abrir la vista de impresión.,,,translated
 The business date is ahead of the server date. The audit for it can run once that day has started.,The business date is ahead of the server date. The audit for it can run once that day has started.,تاريخ العمل يسبق تاريخ الخادم. يمكن تشغيل التدقيق له عندما يبدأ ذلك اليوم.,La fecha operativa es posterior a la fecha del servidor. La auditoría puede ejecutarse cuando comience esa fecha.,screens/EndOfDayWizard.tsx,,translated
@@ -6026,7 +6034,7 @@ The room is still occupied. Check the current guest out first.,The room is still
 "The running sheet the banquet, kitchen and AV teams work from.","The running sheet the banquet, kitchen and AV teams work from.",ورقة التشغيل التي تعمل بها فرق المآدب والمطبخ والصوت والصورة.,"Hoja de trabajo para los equipos de banquetes, cocina y audiovisuales.",,,translated
 the Saudi Data & AI Authority (SDAIA),the Saudi Data & AI Authority (SDAIA),الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا),la Autoridad Saudí de Datos e Inteligencia Artificial (SDAIA),,,translated
 "The scheduled audit held the date. Clear the blockers and run End of Day, then print the pack.","The scheduled audit held the date. Clear the blockers and run End of Day, then print the pack.",أوقف التدقيق المجدول التاريخ. عالج العوائق وشغّل نهاية اليوم، ثم اطبع الحزمة.,La auditoría programada retuvo la fecha. Resuelva los bloqueos y ejecute el cierre del día; luego imprima el paquete.,,,translated
-"The scheduled audit held the date. Clear the blockers, then close the day.","The scheduled audit held the date. Clear the blockers, then close the day.",,,screens/EndOfDay.tsx,,needs_translation
+"The scheduled audit held the date. Clear the blockers, then close the day.","The scheduled audit held the date. Clear the blockers, then close the day.",أوقف التدقيق المجدول التاريخ. عالج العوائق ثم أغلق اليوم.,La auditoría programada retuvo la fecha. Resuelva los bloqueos y luego cierre el día.,screens/EndOfDay.tsx,,translated
 The security deposit of {v0}{v1} still held counts toward the bill; check-out records it as applied.,The security deposit of {v0}{v1} still held counts toward the bill; check-out records it as applied.,يُحتسب مبلغ التأمين المحتجز {v0}{v1} ضمن الفاتورة، ويسجّله تسجيل المغادرة كمطبّق.,El depósito de garantía retenido de {v0}{v1} se aplica a la cuenta al registrar la salida.,,v0 v1,translated
 The slot must end after it starts.,The slot must end after it starts.,يجب أن تنتهي الفترة بعد بدايتها.,La franja horaria debe terminar después de su hora de inicio.,components/BookingDialog.tsx,,translated
 The stay is left in house past its departure and tonight is not charged for it. Use only if someone will fix it first thing.,The stay is left in house past its departure and tonight is not charged for it. Use only if someone will fix it first thing.,تبقى الإقامة داخل الفندق بعد موعد مغادرتها ولا تُحتسب الليلة. استخدمه فقط إذا سيتم تصحيحها أول الصباح.,La estancia permanece ocupada después de su salida prevista y no se cobra esta noche. Úselo solo si se corregirá a primera hora.,,,translated
@@ -6130,7 +6138,7 @@ Till detail,Till detail,تفاصيل الصندوق,Detalle de caja,screens/Cash
 Till name,Till name,اسم الصندوق,Nombre de caja,screens/Setup.tsx,,translated
 Till variance that needs a manager,Till variance that needs a manager,فارق صندوق يحتاج إلى مدير,Diferencia de caja que requiere un gerente,,,translated
 Tills,Tills,الصناديق,Cajas,../../kamra/onboarding.py; screens/Setup.tsx,,translated
-Tills on this date: expected and counted,Tills on this date: expected and counted,,,screens/EndOfDayWizard.tsx,,needs_translation
+Tills on this date: expected and counted,Tills on this date: expected and counted,الصناديق في هذا التاريخ: المتوقع والمعدود,Cajas en esta fecha: esperado y contado,screens/EndOfDayWizard.tsx,,translated
 Tills to review,Tills to review,صناديق للمراجعة,Cajas para revisar,screens/CashierBoard.tsx,,translated
 "Tills, ledgers, night audit, reports and accounting export.","Tills, ledgers, night audit, reports and accounting export.",الصناديق والدفاتر والتدقيق الليلي والتقارير وتصدير المحاسبة.,"Cajas, libros contables, auditoría nocturna, informes y exportación contable.",,,translated
 Time,Time,الوقت,Hora,screens/pos/PosSidePanel.tsx,,translated
@@ -6257,7 +6265,7 @@ unassigned,unassigned,غير مُسند,no asignado,screens/Tickets.tsx,,transla
 Unassigned,Unassigned,غير مخصص,Sin asignar,components/BookingDialog.tsx; screens/HousekeepingBoard.tsx; screens/InHouse.tsx; screens/OpsSLA.tsx; screens/RegistrationCard.tsx; screens/Tickets.tsx; screens/Today.tsx,,translated
 Unassigned floor,Unassigned floor,طابق غير محدد,Piso no asignado,screens/Today.tsx,,translated
 Unavailable,Unavailable,غير متاح,No disponible,screens/SystemHealth.tsx,,translated
-"Unbilled, in house","Unbilled, in house",غير مفوتر، نزلاء حاليون,"Sin facturar, en casa",screens/Receivables.tsx,,translated
+"Unbilled, in house","Unbilled, in house",غير مفوتر، نزلاء حاليون,"Sin facturar, en casa",,,translated
 unchanged,unchanged,بدون تغيير,sin cambios,screens/settings/cards.tsx,,translated
 Under ,Under ,أقل من ,Menores de ,screens/RegistrationCard.tsx,,translated
 Under 1,Under 1,أقل من سنة,Menos de 1 año,components/ChildAges.tsx,,translated
@@ -6454,7 +6462,7 @@ warn,warn,تحذير,advertir,,,translated
 Warn,Warn,تحذير,Advertir,,,translated
 Warning,Warning,تحذير,Advertencia,,,translated
 Warnings,Warnings,التحذيرات,Advertencias,,,translated
-Warnings do not stop the close. Look them over first.,Warnings do not stop the close. Look them over first.,,,screens/EndOfDayWizard.tsx,,needs_translation
+Warnings do not stop the close. Look them over first.,Warnings do not stop the close. Look them over first.,التحذيرات لا توقف الإغلاق. راجعها أولًا.,Las advertencias no impiden el cierre. Revíselas antes.,screens/EndOfDayWizard.tsx,,translated
 Wash & Iron,Wash & Iron,غسيل وكي,Lavado y planchado,,,translated
 Wastage,Wastage,الهدر,Mermas,screens/Inventory.tsx,,translated
 We already have this from your last visit - we'll use it. Add a photo below only to replace it with a newer one.,We already have this from your last visit - we'll use it. Add a photo below only to replace it with a newer one.,لدينا هذا من زيارتك السابقة وسنستخدمه. أضف صورة أدناه فقط لاستبداله بنسخة أحدث.,Ya tenemos este documento de tu última visita y lo usaremos. Agrega una foto abajo solo si quieres reemplazarlo por una versión más reciente.,screens/PublicCheckin.tsx,,translated
@@ -6463,7 +6471,7 @@ We couldn't find that property,We couldn't find that property,لم نعثر عل
 We've saved your number; the front desk will reach out with payment details and before arrival.,We've saved your number; the front desk will reach out with payment details and before arrival.,حفظنا رقمك، وسيتواصل معك الاستقبال بتفاصيل الدفع وقبل وصولك.,Guardamos tu número; recepción se comunicará contigo con los detalles del pago y antes de tu llegada.,screens/PublicBooking.tsx,,translated
 Weather / travel disruption,Weather / travel disruption,الطقس / تعطل السفر,Problemas meteorológicos o de transporte,,,translated
 Weather or notes,Weather or notes,الطقس أو الملاحظات,Clima o notas,,,translated
-"Weather, incidents, hand-over. They print on the audit pack.","Weather, incidents, hand-over. They print on the audit pack.",,,screens/EndOfDayWizard.tsx,,needs_translation
+"Weather, incidents, hand-over. They print on the audit pack.","Weather, incidents, hand-over. They print on the audit pack.",الطقس والحوادث والتسليم. تُطبع في حزمة التدقيق.,"Clima, incidencias, entrega de turno. Se imprimen en el paquete de auditoría.",screens/EndOfDayWizard.tsx,,translated
 Webhook,Webhook,Webhook,Webhook,screens/settings/WebhooksPage.tsx,,translated
 Webhook secret,Webhook secret,سر Webhook,Secreto del webhook,,,translated
 Webhook URL,Webhook URL,رابط Webhook,URL de webhook,,,translated
@@ -6489,7 +6497,7 @@ What do they need? Tap one or type it.,What do they need? Tap one or type it.,,,
 What do you want to change?,What do you want to change?,,,components/AgentGuide.tsx,,needs_translation
 What does the guest need?,What does the guest need?,ماذا يحتاج الضيف؟,¿Qué necesita el huésped?,components/RoomStayPanels.tsx; screens/Tickets.tsx,,translated
 "What does today look like - arrivals, departures, occupancy?","What does today look like - arrivals, departures, occupancy?",كيف يبدو اليوم: الوصول والمغادرة والإشغال؟,"¿Cómo está el día de hoy: llegadas, salidas y ocupación?",components/AgentGuide.tsx,,translated
-"What each company owes, and how late, is in Receivables.","What each company owes, and how late, is in Receivables.",,,screens/Ledgers.tsx,,needs_translation
+"What each company owes, and how late, is in Receivables.","What each company owes, and how late, is in Receivables.",ما على كل شركة، ومدى تأخرها، تجده في الذمم المدينة.,"Lo que debe cada empresa, y con cuánto retraso, está en Cuentas por cobrar.",screens/Ledgers.tsx,,translated
 What each dish takes off its outlet's stock when the kitchen fires it.,What each dish takes off its outlet's stock when the kitchen fires it.,ما يخصمه كل طبق من مخزون منفذه عند إرساله للمطبخ.,Ingredientes que se descuentan del inventario del punto de venta al iniciar la preparación de cada plato.,screens/RecipeManager.tsx,,translated
 "What each room costs per night, and what moved it.","What each room costs per night, and what moved it.",سعر كل غرفة لليلة الواحدة، وما الذي غيّره.,La tarifa de cada habitación por noche y los ajustes que se le aplicaron.,screens/RateCalendar.tsx,,translated
 "What each till took, by payment mode.","What each till took, by payment mode.",ما حصّله كل صندوق حسب طريقة الدفع.,"Lo que cobró cada caja, por forma de pago.",,,translated
@@ -6603,7 +6611,7 @@ Who is checking out? People leaving today are at the top.,Who is checking out? P
 Who is leaving today and what does each still owe?,Who is leaving today and what does each still owe?,من سيغادر اليوم وكم يدين كل منهم؟,¿Quién se va hoy y cuánto debe cada uno?,,,translated
 Who is paying?,Who is paying?,,,components/AgentGuide.tsx,,needs_translation
 Who is this bill for?,Who is this bill for?,لمن هذه الفاتورة؟,¿Para quién es esta cuenta?,screens/pos/PosSidePanel.tsx,,translated
-Who makes it up,Who makes it up,,,screens/Ledgers.tsx,,needs_translation
+Who makes it up,Who makes it up,من يكوّن الرصيد,Quién compone el saldo,screens/Ledgers.tsx,,translated
 Who pays,Who pays,من يدفع,Quién paga,components/CheckInDialog.tsx; components/CheckOutDialog.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; screens/settings/cards.tsx,,translated
 "Who pays what on a credit company's stay when that company has no billing rules of its own. A company's own rules always win, and liquor never bills to a company.","Who pays what on a credit company's stay when that company has no billing rules of its own. A company's own rules always win, and liquor never bills to a company.",من يدفع ماذا في إقامة شركة ائتمان عندما لا تملك الشركة قواعد فوترة خاصة. قواعد الشركة الخاصة لها الأولوية دائمًا، والكحول لا يُفوتر على الشركة أبدًا.,Distribución de cargos en estancias a crédito cuando la empresa no tiene reglas propias. Las reglas de la empresa tienen prioridad y las bebidas alcohólicas nunca se facturan a la empresa.,,,translated
 "Who signed in to and out of Kamra, newest first.","Who signed in to and out of Kamra, newest first.",من سجل الدخول إلى كمرة والخروج منها، الأحدث أولا.,"Inicios y cierres de sesión en Kamra, del más reciente al más antiguo.",screens/Agents.tsx,,translated
@@ -6677,7 +6685,7 @@ Your AI provider acts as you at ,Your AI provider acts as you at ,يعمل مز�
 "Your AI, acting as you","Your AI, acting as you",ذكاؤك الاصطناعي، يعمل باسمك,"Su IA, actuando con su identidad",,,translated
 "Your API key, the REST surface, and how to connect AI agents. Every call runs with your roles and lands in the audit log.","Your API key, the REST surface, and how to connect AI agents. Every call runs with your roles and lands in the audit log.",مفتاح API الخاص بك، وواجهة REST، وكيفية ربط وكلاء الذكاء الاصطناعي. كل استدعاء يعمل بصلاحياتك ويُسجَّل في سجل التدقيق.,"Su clave de API, los servicios REST y la conexión de agentes de IA. Cada solicitud usa sus permisos y queda en el registro de auditoría.",screens/Developers.tsx,,translated
 Your apps,Your apps,تطبيقاتك,Tus aplicaciones,screens/AppLauncher.tsx,,translated
-Your cashier PIN,Your cashier PIN,,,screens/CityLedgerPayment.tsx; screens/Receivables.tsx,,needs_translation
+Your cashier PIN,Your cashier PIN,رمز PIN الخاص بك للصندوق,Su PIN de cajero,screens/CityLedgerPayment.tsx; screens/Receivables.tsx,,translated
 Your chats will show up here.,Your chats will show up here.,ستظهر محادثاتك هنا.,Sus conversaciones aparecerán aquí.,screens/Assistant.tsx,,translated
 Your configured endpoint processes chat messages and tool results under that provider's terms and region.,Your configured endpoint processes chat messages and tool results under that provider's terms and region.,تعالج نقطة النهاية التي ضبطتها رسائل المحادثة ونتائج الأدوات وفق شروط ذلك المزوّد ومنطقته.,El servicio configurado procesa los mensajes y resultados de herramientas según las condiciones y región de ese proveedor.,,,translated
 Your details,Your details,بياناتك,Sus datos,screens/PublicBooking.tsx,,translated

@@ -124,10 +124,12 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 		self.assertEqual(out, {"queued": 1, "skipped": []})
 		job = enqueue.call_args.kwargs
 		self.assertEqual(job["accounts"], [self.account])
-		with patch("frappe.sendmail") as mail:
-			statements._send_bulk(job["accounts"], job["kind"], job["month"], job["lang"], job["user"])
+		with patch("frappe.sendmail") as mail, patch("kamra.night_audit.alert_staff") as alert:
+			out = statements._send_bulk(job["property"], job["accounts"], job["kind"],
+			                            job["month"], job["lang"])
 		self.assertEqual(mail.call_args.kwargs["recipients"], [EMAIL])
-		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore after the job
+		self.assertEqual(out, {"sent": [self.account], "failed": []})
+		alert.assert_called_once()
 
 		self.contact(None)
 		with patch("frappe.enqueue") as enqueue:
@@ -139,6 +141,8 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 			statements.email_statements_bulk(PROP_A, [self.account], kind="monthly")
 		with self.assertRaises(frappe.ValidationError):
 			statements.email_statements_bulk(PROP_A, ["no-such-account"])
+		with self.assertRaises(frappe.ValidationError):
+			statements.email_statements_bulk(PROP_A, '"not a list"')
 
 	# reminders -------------------------------------------------------------
 

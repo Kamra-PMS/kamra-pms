@@ -422,7 +422,7 @@ def ledger_balances(property: str, business_date: str | None = None):
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Hotel Admin", "Night Auditor", "Kamra Agent")
 def ledger_detail(property: str, ledger: str, business_date: str | None = None,
-                  limit: int = 200):
+                  limit: int = 2000):
 	"""The drill-down under a ledger card: every folio with a balance in that
 	ledger as of the date (guest, booking, status, company), biggest first.
 	For AR the company the bill is billed to comes with it."""
@@ -431,6 +431,7 @@ def ledger_detail(property: str, ledger: str, business_date: str | None = None,
 	from kamra.authz import assert_property_access
 	assert_property_access(property)
 	date = business_date or get_business_date(property)
+	limit = max(1, min(int(limit or 2000), 2000))
 	rows = frappe.db.sql(
 		"""
 		SELECT e.folio, SUM(e.debit) AS debit, SUM(e.credit) AS credit,
@@ -445,8 +446,10 @@ def ledger_detail(property: str, ledger: str, business_date: str | None = None,
 		HAVING ABS(SUM(e.debit - e.credit)) >= 0.01
 		ORDER BY ABS(SUM(e.debit - e.credit)) DESC
 		LIMIT %(n)s
-		""", {"p": property, "l": ledger, "d": date, "n": int(limit)}, as_dict=True)
-	return {"ledger": ledger, "business_date": str(date), "rows": [{
+		""", {"p": property, "l": ledger, "d": date, "n": limit + 1}, as_dict=True)
+	truncated = len(rows) > limit
+	rows = rows[:limit]
+	return {"ledger": ledger, "business_date": str(date), "truncated": truncated, "rows": [{
 		**r, "debit": round(float(r.debit), 2), "credit": round(float(r.credit), 2),
 		"balance": round(float(r.balance), 2), "last_date": str(r.last_date)}
 		for r in rows]}

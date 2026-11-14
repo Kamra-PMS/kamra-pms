@@ -90,7 +90,12 @@ export function DataTable({
         </div>
       )}
       {/* table-fixed squeezes every column to a sliver on a phone; scroll instead */}
-      <table className={cn("w-full min-w-[32rem] table-fixed text-sm print:min-w-0", dense && "text-xs")}>
+      {/* about 7rem a column on screen, so a wide report scrolls instead of
+          numbers running into each other; print fits the page */}
+      <table
+        style={{ ["--table-min" as string]: `${Math.max(32, cols.length * 7 + 3)}rem` }}
+        className={cn("w-full min-w-[var(--table-min)] table-fixed text-sm print:min-w-0", dense && "text-xs")}
+      >
         <thead>
           <tr className="border-b border-zinc-200 text-start text-[11px] font-medium uppercase tracking-wider text-zinc-500">
             {cols.map((c, i) => (
@@ -99,7 +104,7 @@ export function DataTable({
                 className={cn(
                   "px-2 py-1.5 text-start",
                   right(c),
-                  i === 0 && "w-[24%]",
+                  i === 0 && (cols.length > 6 ? "w-40" : "w-[24%]"),
                 )}
               >
                 {t(c.label)}

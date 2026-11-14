@@ -58,9 +58,8 @@ export default function Billing() {
       orderBy: "modified desc",
     }).then(setFolios)
     // departed guests who still owe: the desk chases these, not credit control
-    call<{ summary?: { guests_owing: GuestOwing[] } }>("kamra.receivables.ar_accounts", {
-      property: getCurrentProperty(),
-    }).then((r) => setOwing(r.summary?.guests_owing ?? [])).catch(() => setOwing([]))
+    call<GuestOwing[]>("kamra.receivables.guests_owing", { property: getCurrentProperty() })
+      .then(setOwing).catch(() => setOwing([]))
     auditHistory(getCurrentProperty(), 8)
       .then(setAuditRuns)
       .catch(() => setAuditRuns([]))

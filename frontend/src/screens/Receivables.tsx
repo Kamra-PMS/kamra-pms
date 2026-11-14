@@ -55,11 +55,17 @@ type AccountRow = {
 const QUEUES = {
   all: { label: "All accounts", test: (_r: AccountRow) => true },
   overdue: { label: "Overdue", test: (r: AccountRow) => r.overdue > 0.005 },
-  over_limit: { label: "Over credit limit", test: (r: AccountRow) => r.credit_limit > 0 && r.balance > r.credit_limit },
+  over_limit: { label: "Over credit limit", test: (r: AccountRow) => overLimit(r) },
   unbilled: { label: "In house, not billed", test: (r: AccountRow) => (r.unbilled ?? 0) > 0.005 },
   ahead: { label: "Paid ahead", test: (r: AccountRow) => r.unapplied_credit > 0.005 },
 } as const
 type Queue = keyof typeof QUEUES
+
+/** Over the limit the way the night audit counts it: what the company owes
+ *  plus what its stays in house are running up. */
+function overLimit(r: AccountRow) {
+  return r.credit_limit > 0 && r.balance + (r.unbilled ?? 0) > r.credit_limit
+}
 
 type HistoryRow = {
   name: string; posting_date: string; kind: string; folio?: string | null
@@ -217,7 +223,9 @@ function AccountList() {
     else next.add(name)
     return next
   })
-  const chosen = (rows ?? []).filter((r) => picked.has(r.name))
+  // only what is on screen: a search narrows the selection too
+  const chosen = shown.filter((r) => picked.has(r.name))
+  const allShown = shown.length > 0 && chosen.length === shown.length
 
   const sendBulk = async (kind: "statement" | "monthly") => {
     const what = kind === "monthly" ? translate("{m} bills", { m: month }) : translate("statements")
@@ -292,8 +300,8 @@ function AccountList() {
             onChange={(e) => setQ(e.target.value)}
           />
           {canEdit && shown.length ? (
-            <Button variant="ghost" onClick={() => setPicked(picked.size === shown.length ? new Set() : new Set(shown.map((r) => r.name)))}>
-              {picked.size === shown.length ? translate("Clear selection") : translate("Select all {n}", { n: shown.length })}
+            <Button variant="ghost" onClick={() => setPicked(allShown ? new Set() : new Set(shown.map((r) => r.name)))}>
+              {allShown ? translate("Clear selection") : translate("Select all {n}", { n: shown.length })}
             </Button>
           ) : null}
         </CardHeader>
@@ -331,7 +339,7 @@ function AccountList() {
                 <Link className="font-medium hover:underline" to={`/receivables/${encodeURIComponent(r.name)}`}
                   onClick={(e) => e.stopPropagation()}>{r.company_name}</Link>
                 {r.restricted ? <span className="ms-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">{translate("Restricted")}</span> : null}
-                {r.credit_limit > 0 && r.balance > r.credit_limit ? <span className="ms-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">{translate("Over limit")}</span> : null}
+                {overLimit(r) ? <span className="ms-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">{translate("Over limit")}</span> : null}
                 <span className="block font-mono text-[11px] text-zinc-400">{[r.account_number, r.contact_name].filter(Boolean).join(" · ")}</span>
               </div>) },
               { key: "account_number", label: translate("Account"), hidden: true },
@@ -403,25 +411,29 @@ function AccountPage({ account }: { account: string }) {
     load()
   }
 
-  const emailMonthly = async () => {
+  const emailMonthly = async (): Promise<boolean> => {
     try {
       const res = await call<{ sent_to: string[]; number: string }>("kamra.statements.email_monthly_bill", {
         account, month, lang: language,
       })
       setNotice(translate("{v0} sent to {v1}", { v0: res.number, v1: res.sent_to.join(", ") }))
+      return true
     } catch (e) {
       setErr(serverError(e))
+      return false
     }
   }
 
-  const emailStatement = async () => {
+  const emailStatement = async (): Promise<boolean> => {
     try {
       const res = await call<{ sent_to: string[] }>("kamra.statements.email_company_statement", {
         account, lang: language,
       })
       setNotice(translate("Statement sent to {v0}", { v0: res.sent_to.join(", ") }))
+      return true
     } catch (e) {
       setErr(serverError(e))
+      return false
     }
   }
 
@@ -491,7 +503,7 @@ function AccountPage({ account }: { account: string }) {
         <Stat label={translate("Balance")} value={fmtMoney(acc.balance)} />
         {/* billed: invoices on the account; unbilled: stays in house still running on the company's folio */}
         <Stat label={translate("Billed, unpaid")} value={fmtMoney(acc.open_balance)} />
-        <Stat label={translate("Unbilled, in house")} value={fmtMoney(acc.in_house)} />
+        <Stat label={translate("In house, not billed")} value={fmtMoney(acc.in_house)} />
         <Stat label={translate("Overdue")} value={fmtMoney(acc.overdue)} tone={acc.overdue > 0 ? "text-rose-700" : undefined} />
         <Stat label={translate("Credit available")}
           value={acc.available_credit == null ? translate("No limit") : fmtMoney(acc.available_credit)}
@@ -857,7 +869,7 @@ function AgingBar({ acc }: { acc: Account }) {
  *  then print (or Save as PDF from the print dialog) or email. */
 function DocumentPreview(props: {
   kind: "statement" | "monthly"; account: string; company: string; lang: string
-  month: string; onMonth: (m: string) => void; onClose: () => void; onEmail: () => Promise<void>
+  month: string; onMonth: (m: string) => void; onClose: () => void; onEmail: () => Promise<boolean>
 }) {
   useUILanguage()
   const [html, setHtml] = useState<string | null>(null)
@@ -865,13 +877,15 @@ function DocumentPreview(props: {
   const [busy, setBusy] = useState(false)
   const frame = useRef<HTMLIFrameElement>(null)
   useEffect(() => {
+    let stale = false
     setHtml(null)
     setErr(null)
     if (props.kind === "monthly" && !props.month) return
     call<{ content: string }>(
       props.kind === "monthly" ? "kamra.statements.company_monthly_bill" : "kamra.statements.company_statement",
       { account: props.account, format: "html", lang: props.lang, ...(props.kind === "monthly" ? { month: props.month } : {}) },
-    ).then((r) => setHtml(r.content)).catch((e) => setErr(serverError(e)))
+    ).then((r) => { if (!stale) setHtml(r.content) }).catch((e) => { if (!stale) setErr(serverError(e)) })
+    return () => { stale = true }
   }, [props.kind, props.account, props.lang, props.month])
 
   return (
@@ -887,7 +901,10 @@ function DocumentPreview(props: {
           </Button>
           <Button disabled={!html || busy} onClick={async () => {
             setBusy(true)
-            try { await props.onEmail(); props.onClose() } finally { setBusy(false) }
+            try {
+              if (await props.onEmail()) props.onClose()
+              else setErr(translate("Not sent. The reason is on the page behind this one."))
+            } finally { setBusy(false) }
           }}>
             {busy ? translate("Sending…") : translate("Email to the billing contact")}
           </Button>
@@ -905,7 +922,8 @@ function DocumentPreview(props: {
         {err ? <p className="text-rose-600">{translate(err)}</p> : null}
         {!html && !err ? <p className="text-zinc-400">{translate("Loading…")}</p> : null}
         {html ? (
-          // sandboxed: the page is ours, but it has no business running scripts here
+          // sandboxed: no scripts run. Never add allow-scripts while
+          // allow-same-origin is set: together they let the page reach the desk
           <iframe ref={frame} title={translate("Preview")} srcDoc={html} sandbox="allow-modals allow-same-origin"
             className="h-[65vh] w-full rounded-lg border border-zinc-200 bg-white" />
         ) : null}
