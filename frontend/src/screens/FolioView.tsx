@@ -40,6 +40,10 @@ interface InvoiceData {
       charge_type: string
       description: string
       allowance_serial?: string | null
+      /** on a void's reversal line: the line it reverses (both stay on the bill) */
+      reversal_of?: string | null
+      void_reason?: string | null
+      voided_by?: string | null
       amount: number
       gst_rate: number
       gst_amount: number
@@ -374,6 +378,8 @@ export default function FolioView() {
   useEffect(() => {
     loadLocale().then((l) => setRates(l.tax_rates))
   }, [])
+  // a hotel that charges no tax (its only rate is 0%) gets no tax pickers
+  const noTax = rates.length === 1 && Number(rates[0]) === 0
   // the rate the server will put on this charge when it is food & beverage
   // (same words and rate as kamra.api._resolve_charge_gst); null = the
   // picked rate applies
@@ -1110,12 +1116,15 @@ export default function FolioView() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
-                    {folio.charges.map((c, i) => (
+                    {folio.charges.map((c, i) => {
+                      // a voided line and its reversal stay on the bill; neither is voided or moved again
+                      const voided = !!c.reversal_of || folio.charges.some((r) => r.reversal_of === c.name)
+                      return (
                       <Fragment key={c.name ?? i}>
-                        <tr>
+                        <tr className={voided ? "text-zinc-400" : undefined}>
                           {open && (
                             <td className="py-2 pr-2 print:hidden">
-                              <input
+                              {!voided && <input
                                 type="checkbox"
                                 className="size-3.5 accent-brand-600"
                                 aria-label={t("Select charge")}
@@ -1128,7 +1137,7 @@ export default function FolioView() {
                                     return next
                                   })
                                 }
-                              />
+                              />}
                             </td>
                           )}
                           <td className="py-2 pr-3 text-zinc-500">{c.posting_date}</td>
@@ -1137,6 +1146,9 @@ export default function FolioView() {
                             <span className="font-medium">{translate(c.charge_type === "Allowance" ? "Discount" : c.charge_type)}</span>
                             {c.description && (
                               <span className="text-zinc-500"> - {c.description}</span>
+                            )}
+                            {voided && (
+                              <span className="ml-1 rounded bg-zinc-100 px-1 text-xs text-zinc-500">{t("Voided")}</span>
                             )}
                             {c.allowance_serial && (
                               <Link to={`/allowance-voucher/${encodeURIComponent(c.allowance_serial)}`}
@@ -1155,7 +1167,7 @@ export default function FolioView() {
                           <td className="py-2 text-right font-medium">{inr(c.total)}</td>
                           {editable && (
                             <td className="relative whitespace-nowrap py-2 pl-3 text-right print:hidden">
-                              {c.charge_type !== "Allowance" &&
+                              {c.charge_type !== "Allowance" && !voided &&
                                 (voidFor === c.name ? (
                                   <span className="mr-1.5 inline-flex items-center gap-1">
                                     <input
@@ -1205,7 +1217,7 @@ export default function FolioView() {
                                     {t("Void")}
                                   </button>
                                 ))}
-                              {open && !selected.has(c.name) && (
+                              {open && !voided && !selected.has(c.name) && (
                                 <button
                                   aria-label={t("Move or split this charge")}
                                   className="inline-flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:border-brand-400 hover:text-zinc-800"
@@ -1221,7 +1233,8 @@ export default function FolioView() {
                           )}
                         </tr>
                       </Fragment>
-                    ))}
+                      )
+                    })}
                   </tbody>
                 </table>
               </>
@@ -1480,7 +1493,7 @@ export default function FolioView() {
                 value={charge.amount}
                 onChange={(e) => setCharge({ ...charge, amount: e.target.value })}
               />
-              {fixedRate !== null ? (
+              {noTax ? null : fixedRate !== null ? (
                 /* the server taxes food & beverage at the pack's F&B rate
                    whatever is picked (_resolve_charge_gst) - show that rate
                    rather than offer a choice that would be ignored */
@@ -1561,6 +1574,7 @@ export default function FolioView() {
                       setAllowance({ ...allowance, amount: e.target.value })
                     }
                   />
+                  {!noTax && (
                   <select
                     className={inputCls}
                     value={allowance.gst_rate}
@@ -1574,6 +1588,7 @@ export default function FolioView() {
                       </option>
                     ))}
                   </select>
+                  )}
                   {adjustCodes.length > 0 && (
                     <select
                       className={inputCls}

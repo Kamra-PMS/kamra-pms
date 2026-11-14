@@ -6,8 +6,51 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { fmtMoney } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
+import { Info } from "lucide-react"
 
 const inr = fmtMoney
+
+/** What each ledger card means, where to see it, how entries get there and
+ *  how a mistake is put right, for the (i) on the card. */
+const helpFor = (): Record<string, { what: string; where: string; changes: string; fix: string; drill: string; link?: [string, string] }> => ({
+  Guest: {
+    what: translate("What guests owe on their bills right now: every charge posted to a guest's folio (room nights, restaurant and laundry charged to the room, extras) less what they paid, advances applied at check-in, and bills moved to a company. Positive means guests owe the hotel."),
+    where: translate("Billing and each guest's folio; departed guests who still owe are under Guests left owing in Receivables."),
+    changes: translate("Added automatically: the night audit posts room nights, the restaurant and laundry post their bills, the desk adds charges and takes payments, check-out moves company bills to the city ledger."),
+    fix: translate("Entries are never edited or deleted. Void a wrong charge on the open folio, post a discount (allowance), refund an overpayment, or cancel a closed invoice and reissue it. Each one adds a correcting entry."),
+    drill: translate("Click the card: every folio with a balance, biggest first. Open a folio to see each line."),
+    link: ["/billing", translate("Open Billing")],
+  },
+  Deposit: {
+    what: translate("Advances held for guests who have not arrived yet. Negative means the hotel holds that money for them. An advance leaves this ledger when the guest checks in (it pays the stay) or when a no-show or cancellation fee uses it."),
+    where: translate("Each booking's folio; the total is Advances held in Receivables, and the night audit pack lists every booking holding one."),
+    changes: translate("Added when an advance or security deposit is taken on a booking; moved out at check-in, by a no-show or cancellation fee, or by a refund."),
+    fix: translate("Refund the advance from the booking's folio, or cancel the payment the same day. Nothing is edited in place."),
+    drill: translate("Click the card: every booking still holding an advance, with its status. A Cancelled or No Show one needs a refund or a fee."),
+  },
+  AR: {
+    what: translate("What companies and travel agents owe (the city ledger). A company's guest bill lands here at check-out; the company's payments take it off."),
+    where: translate("Receivables: each company's page shows every invoice, every payment and the bills it paid, with the running balance."),
+    changes: translate("Added at check-out when a bill goes to a company, or by a direct company invoice. Reduced by a recorded company payment or a credit note."),
+    fix: translate("Issue a credit note against the invoice, move a bill to another company (Transfer), or cancel and reissue the invoice. Each adds an entry; nothing is deleted."),
+    drill: translate("Click the card: every bill still open on a company's account. Each company's full history is in Receivables."),
+    link: ["/receivables", translate("Open Receivables")],
+  },
+  Package: {
+    what: translate("Meant for prepaid packages held until they are used (for example a meal plan sold with the room). Kamra does not post to it yet, so it stays at 0."),
+    where: translate("Nothing to see while it is 0."),
+    changes: translate("No screen posts to it today; package revenue goes to the Guest ledger with the room."),
+    fix: translate("Nothing to correct."),
+    drill: translate("Nothing to drill into while it is 0."),
+  },
+})
+
+type DetailRow = {
+  folio: string; guest_name?: string | null; folio_type?: string | null
+  folio_status?: string | null; invoice_number?: string | null
+  reservation?: string | null; stay_status?: string | null; company?: string | null
+  debit: number; credit: number; balance: number; last_date: string
+}
 
 type Ledger = {
   ledger: string
@@ -31,6 +74,16 @@ export default function Ledgers() {
   useUILanguage()
   const [date, setDate] = useState("")
   const [ledgers, setLedgers] = useState<Ledger[]>([])
+  const [help, setHelp] = useState<string | null>(null)
+  const [open, setOpen] = useState<string | null>(null)
+  const [detail, setDetail] = useState<DetailRow[] | null>(null)
+  useEffect(() => {
+    if (!open) { setDetail(null); return }
+    setDetail(null)
+    call<{ rows: DetailRow[] }>("kamra.ledger.ledger_detail", {
+      property: getCurrentProperty(), ledger: open, business_date: date || undefined,
+    }).then((r) => setDetail(r.rows)).catch(() => setDetail([]))
+  }, [open, date])
   const [inBalance, setInBalance] = useState<boolean | null>(true)
   const [recon, setRecon] = useState<Recon | null>(null)
   const [totals, setTotals] = useState({ debit: 0, credit: 0 })
@@ -138,10 +191,17 @@ export default function Ledgers() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {ledgers.map((l) => (
-          <Card key={l.ledger}>
-            <CardHeader className="pb-2">
+          <Card key={l.ledger}
+            className={`cursor-pointer transition hover:border-zinc-300 ${open === l.ledger ? "ring-2 ring-emerald-600/40" : ""}`}
+            onClick={() => setOpen(open === l.ledger ? null : l.ledger)}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-zinc-500">
                 {l.ledger}{translate(" ledger")}</CardTitle>
+              <button type="button" aria-label={translate("What is this ledger?")}
+                className={`rounded-full p-1 hover:bg-zinc-100 ${help === l.ledger ? "text-emerald-700" : "text-zinc-400"}`}
+                onClick={(e) => { e.stopPropagation(); setHelp(help === l.ledger ? null : l.ledger) }}>
+                <Info className="size-4" />
+              </button>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold tabular-nums">
@@ -153,6 +213,84 @@ export default function Ledgers() {
           </Card>
         ))}
       </div>
+
+      {help && helpFor()[help] ? (
+        <Card className="border-emerald-200 bg-emerald-50/40">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base">{translate(help)}{translate(" ledger")}</CardTitle>
+            <Button variant="ghost" onClick={() => setHelp(null)}>{translate("Close")}</Button>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              {([
+                [translate("What it is"), helpFor()[help].what],
+                [translate("Where to see it"), helpFor()[help].where],
+                [translate("How entries get here"), helpFor()[help].changes],
+                [translate("Correcting a mistake"), helpFor()[help].fix],
+                [translate("Drill down"), helpFor()[help].drill],
+              ] as const).map(([k, v]) => (
+                <div key={k}>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{k}</dt>
+                  <dd className="mt-0.5 text-zinc-700">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            {helpFor()[help].link ? (
+              <Link className="mt-3 inline-block text-sm font-medium text-emerald-700 hover:underline"
+                to={helpFor()[help].link![0]}>{helpFor()[help].link![1]}</Link>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {open ? (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">{translate(open)}{translate(" ledger")}{translate(": who makes up the balance")}</CardTitle>
+            <Button variant="ghost" onClick={() => setOpen(null)}>{translate("Close")}</Button>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs uppercase text-zinc-400">
+                <tr>
+                  <th className="py-2 pr-3">{translate("Folio")}</th>
+                  <th className="py-2 pr-3">{translate("Guest")}</th>
+                  <th className="py-2 pr-3">{translate("Booking")}</th>
+                  <th className="py-2 pr-3">{translate("Status")}</th>
+                  <th className="py-2 pr-3">{translate("Last entry")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Debit")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Credit")}</th>
+                  <th className="py-2 text-right">{translate("Balance")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(detail ?? []).map((r) => (
+                  <tr key={r.folio} className="border-t border-zinc-100">
+                    <td className="py-2 pr-3 font-mono text-xs">
+                      <Link className="hover:underline" to={`/billing/${encodeURIComponent(r.folio)}`}>
+                        {r.invoice_number || r.folio}</Link>
+                    </td>
+                    <td className="py-2 pr-3">{r.guest_name || "-"}
+                      {r.company ? <span className="block text-xs text-zinc-400">{r.company}</span> : null}</td>
+                    <td className="py-2 pr-3 font-mono text-xs">{r.reservation || "-"}</td>
+                    <td className="py-2 pr-3 text-xs">{translate(r.stay_status || r.folio_status || "-")}</td>
+                    <td className="py-2 pr-3 text-xs text-zinc-500">{r.last_date}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{inr(r.debit)}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{inr(r.credit)}</td>
+                    <td className="py-2 text-right font-medium tabular-nums">{inr(r.balance)}</td>
+                  </tr>
+                ))}
+                {detail && !detail.length ? (
+                  <tr><td colSpan={8} className="py-6 text-center text-zinc-400">{translate("Nothing on this ledger.")}</td></tr>
+                ) : null}
+                {!detail ? (
+                  <tr><td colSpan={8} className="py-6 text-center text-zinc-400">{translate("Loading…")}</td></tr>
+                ) : null}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

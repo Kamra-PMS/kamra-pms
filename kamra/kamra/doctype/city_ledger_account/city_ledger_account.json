@@ -15,7 +15,8 @@
   "balance",
   "disabled",
   "restricted",
-  "restricted_reason"
+  "restricted_reason",
+  "idempotency_key"
  ],
  "fields": [
   {
@@ -97,11 +98,21 @@
    "fieldtype": "Data",
    "label": "Restricted Reason",
    "depends_on": "restricted"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "hidden": 1,
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1,
+   "description": "The key the account was opened with: a retried open returns it."
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-29 21:00:00.000000",
+ "modified": "2026-11-12 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "City Ledger Account",

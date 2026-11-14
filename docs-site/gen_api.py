@@ -88,6 +88,10 @@ MODULES = [
      "Hotel Admin / System Manager. Events are signed with HMAC-SHA256 - see the Integrations page."),
     ("pos_interface", "External POS (room charges from a third-party POS)",
      "For a POS Integrator service user. ticket_id makes every posting idempotent."),
+    ("service_accounts", "Service accounts (scoped keys for connected apps)",
+     "IT only. A key reaches only its scopes and properties; see Connected apps."),
+    ("apps", "Connected apps (connect, pair, disconnect, property profile)",
+     "pair is the one allow_guest endpoint here, rate-limited and logged; see Connected apps."),
     ("public_api", "Public (no auth - booking page, check-in)",
      "These are allow_guest endpoints: no token needed, rate-limited."),
 ]

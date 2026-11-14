@@ -436,7 +436,8 @@ lock on the tape chart. Set **Status** to Released to put it back on sale.
   new total and asks before it saves.
 - Every booking, change, move and cancellation is written to the activity
   log with who did it.
-- No-shows are marked by the night audit; see [Night audit](/night-audit).
+- No-shows are marked by the night audit, or at the desk with **Mark no-show**
+  on Today or the reservation; see [Night audit](/night-audit).
 
 ## Troubleshooting
 

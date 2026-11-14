@@ -227,21 +227,20 @@ def property_dashboard(property: str, date: str | None = None, with_comparison: 
 		"departures": move.get("departures", 0),
 		"in_house": move.get("in_house", 0),
 		"no_shows": move.get("no_shows", 0),
-		"revenue_today": round(
-			today.get("room_revenue", 0) + today.get("fnb_revenue", 0)
-			+ today.get("other_revenue", 0), 0),
+		# net of allowances (reports._day_stats)
+		"revenue_today": round(today.get("total_revenue", 0), 0),
 		# Room revenue ÷ rooms available today — same day as revenue_today.
 		# (MTD RevPAR lives under statistics.revpar for the flash report.)
 		"revpar": today.get("revpar", 0),
 		"adr": today.get("adr", 0),
 		"room_revenue_today": today.get("room_revenue", 0),
+		# credits to guests, apart from the gross departments (reports._day_stats)
+		"allowances_today": today.get("allowances", 0),
 		"collections_today": finance["collections_today"],
 		# statistics (month to date)
 		"statistics": {
 			"mtd_occupancy_pct": mtd.get("occupancy_pct", 0),
-			"mtd_revenue": round(mtd.get("room_revenue", 0)
-			                     + mtd.get("fnb_revenue", 0)
-			                     + mtd.get("other_revenue", 0), 0),
+			"mtd_revenue": round(mtd.get("total_revenue", 0), 0),
 			"adr": mtd.get("adr", 0),
 			"revpar": mtd.get("revpar", 0),
 			"rooms_sold_mtd": mtd.get("rooms_sold", 0),
@@ -292,8 +291,7 @@ def _property_summary(property: str, date: str):
 			"status": ("in", ["Checked In", "Checked Out"])}),
 		"in_house": frappe.db.count("Reservation", {
 			"property": property, "status": "Checked In"}),
-		"revenue_today": _whole(s.get("room_revenue", 0) + s.get("fnb_revenue", 0)
-		                        + s.get("other_revenue", 0)),
+		"revenue_today": _whole(s.get("total_revenue", 0)),
 		"collections_today": _whole(finance["collections_today"]),
 		"outstanding": _whole(finance["outstanding"]),
 	}

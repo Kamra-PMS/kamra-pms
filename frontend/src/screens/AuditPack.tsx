@@ -164,6 +164,7 @@ function ManagerFlash({ p }: { p: Pack }) {
           { key: "room_revenue", label: "Room revenue", kind: "money" },
           { key: "fnb_revenue", label: "F&B revenue", kind: "money" },
           { key: "other_revenue", label: "Other revenue", kind: "money" },
+          { key: "allowances", label: "Allowances", kind: "money" },
           { key: "adr", label: "ADR", kind: "money" },
           { key: "revpar", label: "RevPAR", kind: "money" },
         ]}
@@ -438,6 +439,7 @@ function Occupancy({ p }: { p: Pack }) {
           { key: "room_revenue", label: "Room", kind: "money" },
           { key: "fnb_revenue", label: "F&B", kind: "money" },
           { key: "other_revenue", label: "Other", kind: "money" },
+          { key: "allowances", label: "Allowances", kind: "money" },
           { key: "total_revenue", label: "Total", kind: "money" },
           { key: "pax", label: "Guests", kind: "num" },
           { key: "revpax", label: "RevPAX", kind: "money" },
@@ -491,6 +493,18 @@ function NoShows({ p }: { p: Pack }) {
         ]}
         rows={p.held_late_arrivals || []}
         empty={translate("None held.")}
+      />
+      <Sub>{t("No-shows still in credit (refund or keep)")}</Sub>
+      <DataTable
+        cols={[
+          { key: "reservation", label: "Confirmation" },
+          { key: "guest_name", label: "Guest" },
+          { key: "check_in_date", label: "Arrival", kind: "date" },
+          { key: "credit", label: "Credit", kind: "money" },
+          { key: "default", label: "Policy default" },
+        ]}
+        rows={p.no_show_credits || []}
+        empty={translate("None in credit.")}
       />
       <Sub>{t("Cancellations")}</Sub>
       <DataTable
@@ -601,6 +615,8 @@ function AuditReport({ p }: { p: Pack }) {
           col("room_revenue", "Rooms (net of discounts)"), col("adr", "ADR"), col("revpar", "RevPAR"),
           col("food", "Food"), col("beverage", "Beverage"), col("banquets", "Banquets"),
           col("meal_plan_minibar", "Meal plan & minibar"), col("other", "Other"),
+          // a pack saved before this column existed has none: hide it there
+          ...(periods.some((p) => p.allowances != null) ? [col("allowances", "Discounts & allowances")] : []),
           col("total_revenue", "Total"),
         ]}
         rows={periods.map((per) => ({ ...per, label: t(per.label) }))}

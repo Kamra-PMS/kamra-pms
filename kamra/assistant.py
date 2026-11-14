@@ -212,8 +212,9 @@ EXTRA_TOOLS = {
 		False, True),
 	"void_charge": (
 		"void_folio_charge",
-		"Remove a WRONG charge line from an open folio (duplicate, wrong "
-		"amount, wrong guest). Pass the folio and the charge line's id (the "
+		"Void a WRONG charge line on an open folio (duplicate, wrong amount, "
+		"wrong guest): the line stays and a reversal line with the reason "
+		"follows it. Pass the folio and the charge line's id (the "
 		"`name` field of the charge row from get_folio). For a settled/invoiced "
 		"folio use apply_allowance instead.",
 		{"folio": {"type": "string"}, "charge_row": {"type": "string"},

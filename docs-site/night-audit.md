@@ -68,6 +68,30 @@ becomes a No Show and the fee is posted on the business date, or waived
 for an OTA booking. Only a Confirmed arrival due on or before the
 business date can be marked.
 
+The same **Mark no-show** button is on the Arrivals card on **Today** (for
+an arrival due on or before the business date) and on the reservation
+page, for Front Desk and Night Auditor. Before anything posts, a confirm
+step shows the fee the policy will post with tax (or why there is none),
+what the guest already paid, and what is left over. After you confirm,
+the room is free for a walk-in at once: the channels get the new
+availability and other open desk screens refresh.
+
+### When the guest paid more than the fee
+
+If the advance is larger than the no-show fee, the rest is credit on the
+folio. The confirm step then offers:
+
+- **Refund it to the guest**: pick how, give a reason. It goes through the
+  normal refund (open till, cashier PIN) and leaves the deposit ledger.
+- **Keep it as a forfeited deposit**: give a reason. Kamra posts a
+  **Forfeited advance (no-show)** line at the room's tax rate so the folio
+  settles at zero.
+
+**Settings → Front Desk → Night audit & no-shows → When a no-show paid
+more than the fee** decides which one is picked first. **Decide later**
+leaves the credit on the folio; the audit pack lists every no-show still
+in credit under **No-shows still in credit** for the morning.
+
 ## Clear or acknowledge a blocker
 
 Three checks block the audit by default: open tills, open restaurant
@@ -253,6 +277,7 @@ that is actually due.
 | Mark no-shows | Settings → Front Desk → Night audit & no-shows | At audit for arrival date | **One day later** keeps the arrival Due In until the next day's audit. |
 | Hold late arrivals until the next audit | Settings → Front Desk → Night audit & no-shows | On | An arrival due on the day being closed stays Due In if it is flagged **Late arrival** or its ETA is later than the moment the audit runs. An ETA before 06:00 counts as after midnight. |
 | No no-show fee on OTA bookings | Settings → Front Desk → Night audit & no-shows | On | OTA bookings are still marked No Show, but no fee is posted. |
+| When a no-show paid more than the fee | Settings → Front Desk → Night audit & no-shows | Refund | **Refund** or **Keep as forfeited deposit**: the choice offered first for the rest of the advance. |
 | Release non-guaranteed arrivals at | Settings → Front Desk → Night audit & no-shows | Blank (off) | At this time, today's arrivals with no advance, payment or deposit, and not from an OTA or a company, are cancelled with no fee. |
 | No-show charge | Settings → Stay policies → Cancellation & no-show | First Night | **None**, **First Night** or **Full Stay**. |
 

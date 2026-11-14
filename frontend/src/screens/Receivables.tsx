@@ -5,6 +5,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { listResource, serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { DataTable } from "../components/ui/data-table"
 import { Sheet } from "../components/ui/sheet"
 import { fmtMoney, loadLocale, taxLabel, useLocale } from "../lib/money"
 import { useAuth } from "../lib/auth"
@@ -27,6 +28,8 @@ const BILLABLE = [
 ]
 
 type AccountRow = {
+  total_debit?: number
+  total_credit?: number
   name: string
   company: string
   company_name: string
@@ -75,9 +78,43 @@ type OpenItem = {
   billed: number
   paid: number
   outstanding: number
+  disputed?: number
+  dispute_note?: string | null
 }
 
+type Payment = {
+  name: string
+  posting_date: string
+  received_on?: string | null
+  credit: number
+  debit: number
+  reference?: string
+  notes?: string
+  reverses?: string | null
+  reversed?: boolean
+}
+
+type PendingPayment = {
+  name: string
+  amount: number
+  mode?: string
+  reference?: string
+  received_on?: string
+  allocations?: string
+  requested_by: string
+  requested_on: string
+  channel?: string
+}
+
+// a Finance step on the account that needs a note, a reason or a PIN
+type Action =
+  | { kind: "dispute"; item: OpenItem }
+  | { kind: "reverse"; payment: Payment }
+  | { kind: "confirm" | "reject"; request: PendingPayment }
+
 type Account = {
+  total_debit?: number
+  total_credit?: number
   account: string
   company: string
   account_number?: string
@@ -99,14 +136,17 @@ type Account = {
   d31_60: number
   d61_90: number
   d90p: number
+  disputed?: number
   open_items: OpenItem[]
   // every bill on the account, paid ones included (newer servers)
   bills?: OpenItem[]
-  payments: {
-    name: string; posting_date: string; credit: number; reference?: string
+  payments: (Payment & {
     applied?: { folio: string; invoice_number?: string; guest_name?: string; amount: number }[]
     unapplied?: number
-  }[]
+  })[]
+  pending_payments: PendingPayment[]
+  cashier_pin_required: boolean
+  payment_pin_required?: boolean
 }
 
 const field = "w-full rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
@@ -191,74 +231,35 @@ function AccountList() {
             {translate("Only accounts that owe")}
           </label>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase text-zinc-400">
-              <tr>
-                <th className="py-2 pr-3">{translate("Account")}</th>
-                <th className="py-2 pr-3">{translate("Company")}</th>
-                <th className="py-2 pr-3">{translate("Contact")}</th>
-                <th className="py-2 pr-3">{translate("Terms")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Credit limit")}</th>
-                <th className="py-2 pr-3 text-right">{translate("To bill")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Overdue")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Last payment")}</th>
-                <th className="py-2 text-right">{translate("Pending")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((r) => (
-                <tr
-                  key={r.name}
-                  className="cursor-pointer border-t border-zinc-100 hover:bg-zinc-50"
-                  onClick={() => navigate(`/receivables/${encodeURIComponent(r.name)}`)}
-                >
-                  <td className="py-2 pr-3 font-mono text-xs">{r.account_number || "-"}</td>
-                  <td className="py-2 pr-3">
-                    <Link
-                      className="font-medium hover:underline"
-                      to={`/receivables/${encodeURIComponent(r.name)}`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {r.company_name}
-                    </Link>
-                    {r.restricted ? (
-                      <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">{translate("Restricted")}</span>
-                    ) : null}
-                    {r.credit_limit > 0 && r.balance > r.credit_limit ? (
-                      <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">{translate("Over limit")}</span>
-                    ) : null}
-                  </td>
-                  <td className="py-2 pr-3 text-zinc-600">
-                    {r.contact_name || "-"}
-                    {r.contact_email ? <span className="block text-xs text-zinc-400">{r.contact_email}</span> : null}
-                  </td>
-                  <td className="py-2 pr-3 text-xs text-zinc-500">{translate("{n} days", { n: r.credit_days ?? 0 })}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{r.credit_limit > 0 ? fmtMoney(r.credit_limit) : "-"}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{r.unbilled ? fmtMoney(r.unbilled) : "-"}</td>
-                  <td className={`py-2 pr-3 text-right tabular-nums ${r.overdue ? "font-medium text-rose-700" : ""}`}>
-                    {r.overdue ? fmtMoney(r.overdue) : "-"}
-                  </td>
-                  <td className="py-2 pr-3 text-right text-xs text-zinc-500">
-                    {r.last_payment_date ? (
-                      <>{fmtMoney(r.last_payment ?? 0)}<span className="block">{r.last_payment_date}</span></>
-                    ) : "-"}
-                  </td>
-                  <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(r.balance)}</td>
-                </tr>
-              ))}
-              {rows && !shown.length ? (
-                <tr>
-                  <td colSpan={9} className="py-8 text-center text-zinc-400">
-                    {rows.length ? translate("No account matches.") : translate("No company accounts yet. Open one, or check out a stay billed to a company on credit.")}
-                  </td>
-                </tr>
-              ) : null}
-              {!rows ? (
-                <tr><td colSpan={9} className="py-8 text-center text-zinc-400">{translate("Loading…")}</td></tr>
-              ) : null}
-            </tbody>
-          </table>
+        <CardContent>
+          {!rows ? <p className="py-8 text-center text-sm text-zinc-400">{translate("Loading…")}</p> : (
+          <DataTable<AccountRow>
+            id="receivables.accounts" exportName="receivables" rows={shown} rowKey={(r) => r.name}
+            onRowClick={(r) => navigate(`/receivables/${encodeURIComponent(r.name)}`)}
+            empty={rows.length ? translate("No account matches.") : translate("No company accounts yet. Open one, or check out a stay billed to a company on credit.")}
+            columns={[
+              { key: "account_number", label: translate("Account"), render: (r) => <span className="font-mono text-xs">{r.account_number || "-"}</span> },
+              { key: "company_name", label: translate("Company"), render: (r) => (<>
+                <Link className="font-medium hover:underline" to={`/receivables/${encodeURIComponent(r.name)}`}
+                  onClick={(e) => e.stopPropagation()}>{r.company_name}</Link>
+                {r.restricted ? <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">{translate("Restricted")}</span> : null}
+                {r.credit_limit > 0 && r.balance > r.credit_limit ? <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">{translate("Over limit")}</span> : null}
+              </>) },
+              { key: "contact_name", label: translate("Contact"), render: (r) => (<span className="text-zinc-600">
+                {r.contact_name || "-"}{r.contact_email ? <span className="block text-xs text-zinc-400">{r.contact_email}</span> : null}</span>) },
+              { key: "credit_days", label: translate("Terms"), render: (r) => <span className="text-xs text-zinc-500">{translate("{n} days", { n: r.credit_days ?? 0 })}</span> },
+              { key: "credit_limit", label: translate("Credit limit"), align: "right", render: (r) => r.credit_limit > 0 ? fmtMoney(r.credit_limit) : "-" },
+              { key: "unbilled", label: translate("To bill"), align: "right", render: (r) => r.unbilled ? fmtMoney(r.unbilled) : "-" },
+              { key: "overdue", label: translate("Overdue"), align: "right", render: (r) =>
+                <span className={r.overdue ? "font-medium text-rose-700" : ""}>{r.overdue ? fmtMoney(r.overdue) : "-"}</span> },
+              { key: "last_payment_date", label: translate("Last payment"), align: "right", render: (r) => r.last_payment_date ? (
+                <span className="text-xs text-zinc-500">{fmtMoney(r.last_payment ?? 0)}<span className="block">{r.last_payment_date}</span></span>) : "-" },
+              { key: "total_debit", label: translate("Debit"), align: "right", render: (r) => r.total_debit ? fmtMoney(r.total_debit) : "-" },
+              { key: "total_credit", label: translate("Credit"), align: "right", render: (r) => r.total_credit ? fmtMoney(r.total_credit) : "-" },
+              { key: "balance", label: translate("Total Balance"), align: "right", render: (r) => <span className="font-medium">{fmtMoney(r.balance)}</span> },
+            ]}
+          />
+          )}
         </CardContent>
       </Card>
 
@@ -267,30 +268,18 @@ function AccountList() {
           <CardHeader>
             <CardTitle className="text-base">{translate("Guests left owing")}</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase text-zinc-400">
-                <tr>
-                  <th className="py-2 pr-3">{translate("Guest")}</th>
-                  <th className="py-2 pr-3">{translate("Booking")}</th>
-                  <th className="py-2 pr-3">{translate("Stay")}</th>
-                  <th className="py-2 pr-3">{translate("Status")}</th>
-                  <th className="py-2 text-right">{translate("Owed")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {owingGuests.map((g) => (
-                  <tr key={g.folio} className="cursor-pointer border-t border-zinc-100 hover:bg-zinc-50"
-                    onClick={() => navigate(`/billing/${encodeURIComponent(g.folio)}`)}>
-                    <td className="py-2 pr-3 font-medium">{g.guest_name}</td>
-                    <td className="py-2 pr-3 font-mono text-xs">{g.reservation}</td>
-                    <td className="py-2 pr-3 text-xs text-zinc-500">{g.check_in_date} → {g.check_out_date}</td>
-                    <td className="py-2 pr-3 text-xs">{translate(g.status)}</td>
-                    <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(g.balance)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <CardContent>
+            <DataTable<GuestOwing>
+              id="receivables.guests_owing" exportName="guests-left-owing" rows={owingGuests} rowKey={(g) => g.folio}
+              onRowClick={(g) => navigate(`/billing/${encodeURIComponent(g.folio)}`)}
+              columns={[
+                { key: "guest_name", label: translate("Guest"), render: (g) => <span className="font-medium">{g.guest_name}</span> },
+                { key: "reservation", label: translate("Booking"), render: (g) => <span className="font-mono text-xs">{g.reservation}</span> },
+                { key: "check_in_date", label: translate("Stay"), render: (g) => <span className="text-xs text-zinc-500">{g.check_in_date} → {g.check_out_date}</span> },
+                { key: "status", label: translate("Status"), render: (g) => <span className="text-xs">{translate(g.status)}</span> },
+                { key: "balance", label: translate("Owed"), align: "right", render: (g) => <span className="font-medium">{fmtMoney(g.balance)}</span> },
+              ]}
+            />
           </CardContent>
         </Card>
       ) : null}
@@ -321,7 +310,7 @@ function AccountPage({ account }: { account: string }) {
     return d.toLocaleDateString("en-CA").slice(0, 7)
   })
   const [sheet, setSheet] = useState<
-    null | "setup" | "invoice" | "payment" | { view: string } | { transfer: OpenItem }
+    null | "setup" | "invoice" | "payment" | { view: string } | { transfer: OpenItem } | { action: Action }
   >(null)
 
   const [history, setHistory] = useState<HistoryRow[]>([])
@@ -471,63 +460,107 @@ function AccountPage({ account }: { account: string }) {
         <CardHeader>
           <CardTitle className="text-base">{translate("Invoices")}</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase text-zinc-400">
-              <tr>
-                <th className="py-2 pr-3">{translate("Invoice")}</th>
-                <th className="py-2 pr-3">{translate("For")}</th>
-                <th className="py-2 pr-3">{translate("Billed on")}</th>
-                <th className="py-2 pr-3">{translate("Due")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Billed")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Paid")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Owed")}</th>
-                <th className="py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {(acc.bills ?? acc.open_items).slice().reverse().map((it) => (
-                <tr key={it.folio} className="border-t border-zinc-100">
-                  <td className="py-2 pr-3 font-mono text-xs">{it.invoice_number || it.folio}</td>
-                  <td className="py-2 pr-3">
-                    {it.folio_type === "Account" ? (
-                      <span className="text-zinc-500">{translate("Direct invoice")}</span>
-                    ) : (
-                      <>
-                        {it.guest_name || "-"}
-                        {it.reservation ? <span className="block font-mono text-[11px] text-zinc-400">{it.reservation}</span> : null}
-                      </>
-                    )}
-                  </td>
-                  <td className="py-2 pr-3">{it.invoice_date}</td>
-                  <td className={`py-2 pr-3 ${it.days_overdue ? "text-rose-700" : ""}`}>
-                    {it.due_date || "-"}
-                    {it.days_overdue ? <span className="ml-1 text-xs">({translate("{n}d late", { n: it.days_overdue })})</span> : null}
-                  </td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(it.billed)}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{it.paid ? fmtMoney(it.paid) : "-"}</td>
-                  <td className="py-2 pr-3 text-right font-medium tabular-nums">
-                    {it.outstanding > 0.005 ? fmtMoney(it.outstanding) : (
-                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">{translate("Paid")}</span>
-                    )}
-                  </td>
-                  <td className="py-2 text-right">
-                    <div className="flex justify-end gap-1.5">
-                      <Button variant="outline" onClick={() => setSheet({ view: it.folio })}>{translate("View")}</Button>
-                      {isFinance && it.outstanding > 0.005 ? (
+        <CardContent>
+          <DataTable<OpenItem>
+            id="receivables.invoices" exportName={`invoices-${acc.company}`}
+            rows={(acc.bills ?? acc.open_items).slice().reverse()} rowKey={(it) => it.folio}
+            onRowClick={(it) => setSheet({ view: it.folio })}
+            empty={translate("No invoices yet.")}
+            columns={[
+              { key: "invoice_number", label: translate("Invoice"), value: (it) => it.invoice_number || it.folio,
+                render: (it) => <span className="font-mono text-xs">{it.invoice_number || it.folio}</span> },
+              { key: "guest_name", label: translate("For"), render: (it) => it.folio_type === "Account"
+                ? <span className="text-zinc-500">{translate("Direct invoice")}</span>
+                : <>{it.guest_name || "-"}{it.reservation ? <span className="block font-mono text-[11px] text-zinc-400">{it.reservation}</span> : null}</> },
+              { key: "invoice_date", label: translate("Billed on") },
+              { key: "due_date", label: translate("Due"), render: (it) => (
+                <span className={it.days_overdue ? "text-rose-700" : ""}>{it.due_date || "-"}
+                  {it.days_overdue ? <span className="ml-1 text-xs">({translate("{n}d late", { n: it.days_overdue })})</span> : null}</span>) },
+              { key: "billed", label: translate("Debit"), align: "right", render: (it) => fmtMoney(it.billed) },
+              { key: "paid", label: translate("Credit"), align: "right", render: (it) => it.paid ? fmtMoney(it.paid) : "-" },
+              { key: "outstanding", label: translate("Total Balance"), align: "right", render: (it) => it.outstanding > 0.005
+                ? <span className="font-medium">{fmtMoney(it.outstanding)}</span>
+                : <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">{translate("Paid")}</span> },
+              { key: "actions", label: "", noSort: true, align: "right", render: (it) => (
+                <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <Button variant="outline" onClick={() => setSheet({ view: it.folio })}>{translate("View")}</Button>
+                  {isFinance ? (
+                    <>
+                      {it.outstanding > 0.005 ? (
                         <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
                       ) : null}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {!(acc.bills ?? acc.open_items).length ? (
-                <tr><td colSpan={8} className="py-8 text-center text-zinc-400">{translate("No invoices yet.")}</td></tr>
-              ) : null}
-            </tbody>
-          </table>
+                      <Button variant="outline" onClick={() => setSheet({ action: { kind: "dispute", item: it } })}>
+                        {it.disputed ? translate("Clear dispute") : translate("Dispute")}
+                      </Button>
+                    </>
+                  ) : null}
+                </div>) },
+            ]}
+          />
         </CardContent>
       </Card>
+
+      {acc.pending_payments?.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{translate("Payments to confirm")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-2 text-xs text-zinc-500">{translate("Recorded by an AI agent. They change nothing on the account until Finance confirms them with a PIN.")}</p>
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {acc.pending_payments.map((r) => (
+                <li key={r.name} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span>
+                    <b className="tabular-nums">{fmtMoney(r.amount)}</b> · {translate(r.mode || "Bank Transfer")}
+                    {r.reference ? ` · ${r.reference}` : ""}
+                    <span className="block text-xs text-zinc-500">
+                      {translate("Received {v0}, recorded by {v1}", { v0: r.received_on || "-", v1: r.requested_by })}
+                      {r.channel ? ` (${r.channel})` : ""}
+                    </span>
+                  </span>
+                  {isFinance ? (
+                    <span className="flex gap-1.5">
+                      <Button variant="outline" onClick={() => setSheet({ action: { kind: "reject", request: r } })}>{translate("Reject")}</Button>
+                      <Button onClick={() => setSheet({ action: { kind: "confirm", request: r } })}>{translate("Confirm")}</Button>
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {acc.payments?.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{translate("Recent payments")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {acc.payments.map((p) => (
+                <li key={p.name} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span>
+                    {p.posting_date} · {p.reference || "-"}
+                    {p.received_on && p.received_on !== p.posting_date
+                      ? <span className="ml-1 text-xs text-zinc-500">({translate("received {v0}", { v0: p.received_on })})</span>
+                      : null}
+                    {p.reversed ? <span className="ml-2 rounded bg-zinc-100 px-1.5 text-[11px] text-zinc-600">{translate("Reversed")}</span> : null}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className={`tabular-nums ${p.reverses ? "text-rose-700" : ""}`}>
+                      {fmtMoney(p.reverses ? -(p.debit ?? 0) : p.credit)}
+                    </span>
+                    {isFinance && !p.reverses && !p.reversed && p.credit > 0 ? (
+                      <Button variant="outline" onClick={() => setSheet({ action: { kind: "reverse", payment: p } })}>{translate("Reverse")}</Button>
+                    ) : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* every bill, credit note and payment on the account, newest first, with the balance after it */}
       {history.length ? (
@@ -535,44 +568,35 @@ function AccountPage({ account }: { account: string }) {
           <CardHeader>
             <CardTitle className="text-base">{translate("Account history")}</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase text-zinc-400">
-                <tr>
-                  <th className="py-2 pr-3">{translate("Date")}</th>
-                  <th className="py-2 pr-3">{translate("Entry")}</th>
-                  <th className="py-2 pr-3">{translate("Details")}</th>
-                  <th className="py-2 pr-3 text-right">{translate("Billed")}</th>
-                  <th className="py-2 pr-3 text-right">{translate("Paid")}</th>
-                  <th className="py-2 text-right">{translate("Balance")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.slice().reverse().map((h) => (
-                  <tr key={h.name} className="border-t border-zinc-100 align-top">
-                    <td className="py-2 pr-3 whitespace-nowrap">{h.posting_date}</td>
-                    <td className="py-2 pr-3">{translate(h.kind)}</td>
-                    <td className="py-2 pr-3">
-                      {h.folio ? (
-                        <button type="button" className="hover:underline" onClick={() => setSheet({ view: h.folio! })}>
-                          {h.invoice_number || h.folio}{h.guest_name ? ` · ${h.guest_name}` : ""}
-                        </button>
-                      ) : (h.reference || h.notes || "-")}
-                      {/* a payment names the bills it cleared */}
-                      {h.applied.map((a) => (
-                        <button key={a.folio} type="button" onClick={() => setSheet({ view: a.folio })}
-                          className="block text-xs text-zinc-500 hover:underline">
-                          {a.invoice_number || a.folio}{a.guest_name ? ` · ${a.guest_name}` : ""} · {fmtMoney(a.amount)}
-                        </button>
-                      ))}
-                    </td>
-                    <td className="py-2 pr-3 text-right tabular-nums">{h.debit ? fmtMoney(h.debit) : ""}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums">{h.credit ? fmtMoney(h.credit) : ""}</td>
-                    <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(h.balance)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <CardContent>
+            <DataTable<HistoryRow>
+              id="receivables.history" exportName={`account-history-${acc.company}`}
+              rows={history.slice().reverse()} rowKey={(h) => h.name}
+              columns={[
+                { key: "posting_date", label: translate("Date"), render: (h) => <span className="whitespace-nowrap">{h.posting_date}</span> },
+                { key: "kind", label: translate("Entry"), value: (h) => translate(h.kind), render: (h) => translate(h.kind) },
+                { key: "details", label: translate("Details"),
+                  value: (h) => [h.invoice_number || h.folio || h.reference || h.notes || "",
+                    ...h.applied.map((a) => `${a.invoice_number || a.folio} ${a.amount}`)].join("; "),
+                  render: (h) => (<>
+                    {h.folio ? (
+                      <button type="button" className="hover:underline" onClick={() => setSheet({ view: h.folio! })}>
+                        {h.invoice_number || h.folio}{h.guest_name ? ` · ${h.guest_name}` : ""}
+                      </button>
+                    ) : (h.reference || h.notes || "-")}
+                    {/* a payment names the bills it cleared */}
+                    {h.applied.map((a) => (
+                      <button key={a.folio} type="button" onClick={() => setSheet({ view: a.folio })}
+                        className="block text-xs text-zinc-500 hover:underline">
+                        {a.invoice_number || a.folio}{a.guest_name ? ` · ${a.guest_name}` : ""} · {fmtMoney(a.amount)}
+                      </button>
+                    ))}
+                  </>) },
+                { key: "debit", label: translate("Debit"), align: "right", render: (h) => h.debit ? fmtMoney(h.debit) : "" },
+                { key: "credit", label: translate("Credit"), align: "right", render: (h) => h.credit ? fmtMoney(h.credit) : "" },
+                { key: "balance", label: translate("Total Balance"), align: "right", render: (h) => <span className="font-medium">{fmtMoney(h.balance)}</span> },
+              ]}
+            />
           </CardContent>
         </Card>
       ) : null}
@@ -601,7 +625,129 @@ function AccountPage({ account }: { account: string }) {
           onDone={(to) => done(translate("Bill moved to {v0}.", { v0: to }))}
         />
       ) : null}
+      {sheet && typeof sheet === "object" && "action" in sheet ? (
+        <AccountAction acc={acc} action={sheet.action} onClose={() => setSheet(null)} onDone={done} />
+      ) : null}
     </div>
+  )
+}
+
+// dispute a bill, reverse a payment, confirm or reject an agent's payment
+function AccountAction(props: { acc: Account; action: Action; onClose: () => void; onDone: (msg: string) => void }) {
+  useUILanguage()
+  const a = props.action
+  const [note, setNote] = useState(a.kind === "dispute" ? a.item.dispute_note || "" : "")
+  const [code, setCode] = useState("REV-BOUNCE")
+  const [codes, setCodes] = useState<{ name: string; description: string }[]>([])
+  const [pin, setPin] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const clearing = a.kind === "dispute" && !!a.item.disputed
+  const askPin = a.kind === "confirm" || (a.kind === "reverse" && props.acc.cashier_pin_required)
+
+  useEffect(() => {
+    if (a.kind !== "reverse") return
+    call<{ name: string; description: string }[]>("kamra.ledger.list_reason_codes", { category: "Payment Reversal" })
+      .then(setCodes)
+      .catch(() => setCodes([]))
+  }, [a.kind])
+
+  const title = a.kind === "dispute" ? (clearing ? translate("Clear the dispute") : translate("Dispute this bill"))
+    : a.kind === "reverse" ? translate("Reverse payment")
+      : a.kind === "confirm" ? translate("Confirm payment") : translate("Reject payment")
+
+  const summary = a.kind === "dispute" ? `${a.item.invoice_number || a.item.folio} · ${fmtMoney(a.item.outstanding)}`
+    : a.kind === "reverse" ? `${a.payment.reference || a.payment.name} · ${fmtMoney(a.payment.credit)}`
+      : `${fmtMoney(a.request.amount)} · ${translate(a.request.mode || "Bank Transfer")}${a.request.reference ? ` · ${a.request.reference}` : ""}`
+
+  const plan: { folio: string; amount: number }[] =
+    a.kind === "confirm" || a.kind === "reject" ? JSON.parse(a.request.allocations || "[]") : []
+
+  const needsNote = (a.kind === "dispute" && !clearing) || a.kind === "reject"
+  const ready = !busy && (!needsNote || note.trim()) && (!askPin || pin) && (a.kind !== "reverse" || code)
+
+  const submit = async () => {
+    setBusy(true)
+    setErr(null)
+    try {
+      if (a.kind === "dispute") {
+        await call("kamra.ledger.set_city_ledger_dispute", {
+          account: props.acc.account, folio: a.item.folio, disputed: clearing ? 0 : 1, note: note.trim(),
+        })
+        props.onDone(clearing ? translate("Dispute cleared.") : translate("Bill marked as disputed. Reminders pause for it."))
+      } else if (a.kind === "reverse") {
+        const out = await call<{ balance: number }>("kamra.ledger.reverse_city_ledger_payment", {
+          payment: a.payment.name, reason_code: code, reason: note.trim() || undefined, pin: pin || undefined,
+        })
+        props.onDone(translate("Payment reversed. Account balance is now {v0}.", { v0: fmtMoney(out.balance) }))
+      } else {
+        await call("kamra.ledger.decide_city_ledger_payment", {
+          request: a.request.name, approve: a.kind === "confirm" ? 1 : 0, note: note.trim(), pin: pin || undefined,
+        })
+        props.onDone(a.kind === "confirm" ? translate("Payment confirmed and posted.") : translate("Payment rejected."))
+      }
+    } catch (e) {
+      setErr(serverError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet
+      title={title}
+      description={summary}
+      onClose={props.onClose}
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={props.onClose}>{translate("Cancel")}</Button>
+          <Button disabled={!ready} onClick={() => void submit()}>{busy ? translate("Saving…") : title}</Button>
+        </div>
+      }
+    >
+      <div className="space-y-3 text-sm">
+        {err ? <p className="text-rose-600">{translate(err)}</p> : null}
+        {a.kind === "reverse" ? (
+          <p className="text-zinc-600">{translate("The bills this payment cleared are owed again, and any credit it left on the account is taken back.")}</p>
+        ) : null}
+        {a.kind === "dispute" && !clearing ? (
+          <p className="text-zinc-600">{translate("A disputed bill stays on the account and in aging. It gets no payment reminders and does not count towards the overdue credit block.")}</p>
+        ) : null}
+        {plan.length ? (
+          <ul className="rounded-lg border border-zinc-200 px-3 py-2">
+            {plan.map((row) => (
+              <li key={row.folio} className="flex justify-between">
+                <span className="font-mono text-xs">{row.folio}</span>
+                <span className="tabular-nums">{fmtMoney(row.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {a.kind === "reverse" ? (
+          <label className="block">
+            <span className="mb-1 block text-zinc-500">{translate("Reason")}</span>
+            <select className={field} value={code} onChange={(e) => setCode(e.target.value)}>
+              {(codes.length ? codes : [{ name: "REV-BOUNCE", description: "Cheque bounced" }]).map((c) => (
+                <option key={c.name} value={c.name}>{translate(c.description)}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {a.kind !== "confirm" && !clearing ? (
+          <label className="block">
+            <span className="mb-1 block text-zinc-500">{needsNote ? translate("Note") : translate("Note (optional)")}</span>
+            <textarea className={field} rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
+          </label>
+        ) : null}
+        {askPin ? (
+          <label className="block">
+            <span className="mb-1 block text-zinc-500">{translate("Your cashier PIN")}</span>
+            <input type="password" inputMode="numeric" autoComplete="off" className={field}
+              value={pin} onChange={(e) => setPin(e.target.value)} />
+          </label>
+        ) : null}
+      </div>
+    </Sheet>
   )
 }
 

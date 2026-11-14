@@ -11,7 +11,6 @@ import { CashierAuthProvider } from "./lib/cashierAuth"
 import { ROUTER_BASENAME } from "./lib/routing"
 
 initTheme()
-initLang()
 
 // Favicons, base-aware (see index.html note).
 function setIcon(rel: string, href: string, type?: string) {
@@ -25,14 +24,20 @@ setIcon("icon", "kamra-mark.svg", "image/svg+xml")
 setIcon("icon", "favicon-32.png", "image/png")
 setIcon("apple-touch-icon", "apple-touch-180.png")
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserRouter basename={ROUTER_BASENAME}>
-      <AuthProvider>
-        <CashierAuthProvider>
-          <App />
-        </CashierAuthProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </StrictMode>,
-)
+function mount() {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <BrowserRouter basename={ROUTER_BASENAME}>
+        <AuthProvider>
+          <CashierAuthProvider>
+            <App />
+          </CashierAuthProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </StrictMode>,
+  )
+}
+
+// Wait for the active locale chunk so the first paint is already
+// translated; English skips the network round-trip.
+void initLang().then(mount)

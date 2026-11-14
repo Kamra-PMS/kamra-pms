@@ -120,7 +120,7 @@ class CreditControlTestCase(AuditTestCase):
 
 	def aging(self, on=None):
 		if on:
-			with patch("kamra.ledger.nowdate", return_value=on):
+			with patch("kamra.ledger.aging_date", return_value=on):
 				return ledger.city_ledger_aging(PROP_A)["accounts"][0]
 		return ledger.city_ledger_aging(PROP_A)["accounts"][0]
 
@@ -252,7 +252,7 @@ class CreditControlTestCase(AuditTestCase):
 		self.assertEqual(len(res["reasons"]), 1)
 		# the account name works as well as the company
 		self.assertTrue(credit.check_company_credit(self.account, PROP_A, 200)["ok"])
-		with patch("kamra.ledger.nowdate", return_value=d(31)):
+		with patch("kamra.ledger.aging_date", return_value=d(31)):
 			res = credit.check_company_credit(self.company, PROP_A, 0)
 		self.assertAlmostEqual(res["overdue_amount"], 800, places=2)
 		self.assertFalse(res["ok"])
@@ -266,9 +266,9 @@ class CreditControlTestCase(AuditTestCase):
 		self.terms(days=30)
 		self.bill(500)
 		set_setting(PROP_A, "credit_overdue_grace_days", 10)
-		with patch("kamra.ledger.nowdate", return_value=d(38)):
+		with patch("kamra.ledger.aging_date", return_value=d(38)):
 			self.assertTrue(credit.check_company_credit(self.company, PROP_A)["ok"])
-		with patch("kamra.ledger.nowdate", return_value=d(41)):
+		with patch("kamra.ledger.aging_date", return_value=d(41)):
 			res = credit.check_company_credit(self.company, PROP_A)
 		self.assertFalse(res["ok"])
 		self.assertAlmostEqual(res["overdue_amount"], 500, places=2)

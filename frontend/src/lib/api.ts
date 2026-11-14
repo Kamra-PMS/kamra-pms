@@ -364,6 +364,7 @@ export interface RoomRow {
 
 export interface Snapshot {
   date: string
+  business_date?: string | null
   arrivals: ReservationRow[]
   departures: ReservationRow[]
   in_house: ReservationRow[]
@@ -439,6 +440,9 @@ export interface BookingOptions {
     pets_allowed: 0 | 1
     pet_charge: number
     pet_charge_basis: "Per stay" | "Per night"
+    /** the property's standard times, HH:MM */
+    checkin_time: string
+    checkout_time: string
   }
 }
 
@@ -1814,8 +1818,11 @@ export interface ReservationDetail {
     can_check_in: boolean
     can_check_out: boolean
     can_cancel: boolean
+    can_no_show?: boolean
     can_amend: boolean
     can_reinstate: boolean
+    /** same-day check-in with nothing on the bill (api.reverse_check_in) */
+    can_reverse_check_in?: boolean
   }
   /** Things the desk should see but which must never gate an arrival. Kept
    *  apart from `actions` on purpose: a missing ID is a warning, not a

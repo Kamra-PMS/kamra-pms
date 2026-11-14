@@ -5,7 +5,7 @@ import { Link, useParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import { Button } from "../components/ui/button"
-import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
+import { chargesTax, cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
@@ -61,6 +61,8 @@ interface Grc {
     actual_check_in?: string | null
     actual_check_out?: string | null
     check_out_date: string
+    planned_check_in_time?: string | null
+    planned_check_out_time?: string | null
     nights: number
     adults: number
     children: number
@@ -702,8 +704,8 @@ export default function RegistrationCard() {
                   </button>
                 )}
               </div>
-              <Row label={t("Check-in")} value={`${r.check_in_date} (${d.property.checkin_time.slice(0, 5)})`} />
-              <Row label={t("Check-out")} value={`${r.check_out_date} (${d.property.checkout_time.slice(0, 5)})`} />
+              <Row label={t("Check-in")} value={`${r.check_in_date} (${(r.planned_check_in_time || d.property.checkin_time).slice(0, 5)})`} />
+              <Row label={t("Check-out")} value={`${r.check_out_date} (${(r.planned_check_out_time || d.property.checkout_time).slice(0, 5)})`} />
               <ActualTimeRow label={t("Actual check-in")} reservation={r.name}
                 field="actual_check_in" value={r.actual_check_in} onSaved={load} />
               <ActualTimeRow label={t("Actual check-out")} reservation={r.name}
@@ -718,7 +720,8 @@ export default function RegistrationCard() {
               />
               <Row
                 label={t("Stay total")}
-                value={`${cur()}${inr(r.rate_total)} (${t("incl. {tax}", { tax: d.tax_label ?? taxLabel() })})`}
+                value={`${cur()}${inr(r.rate_total)}` +
+                  (chargesTax() ? ` (${t("incl. {tax}", { tax: d.tax_label ?? taxLabel() })})` : "")}
               />
               <Row label={t("Advance paid")} value={`${cur()}${inr(r.advance_paid)}`} />
               <Row label={t("Source")} value={r.source} />

@@ -177,8 +177,10 @@ def check_company_credit(account_or_company: str, property: str,
 			ar = round(flt(frappe.db.sql(
 				"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
 				   WHERE account = %s""", account)[0][0]), 2)
+		from kamra.ledger import aging_date
 		overdue, oldest = overdue_past_grace(
-			pos["open_items"], pos["unapplied_credit"], out["grace_days"])
+			pos["open_items"], pos["unapplied_credit"], out["grace_days"],
+			aging_date(property))
 		out["overdue_amount"], out["oldest_due_date"] = overdue, oldest
 	in_house = in_house_exposure(company, property, exclude_folios,
 	                             for_update=lock)
@@ -235,8 +237,8 @@ def enforce_company_credit(company: str, property: str, amount: float,
 	                           lock=True)
 	if res["ok"]:
 		return res
-	from kamra.savings import log_action
 	from kamra.api import agent_channel
+	from kamra.savings import log_action
 	channel = agent_channel() or "Desk"
 	what = f" ({context})" if context else ""
 	summary = " ".join(res["reasons"])

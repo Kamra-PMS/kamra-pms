@@ -23,7 +23,7 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, nowdate
+from frappe.utils import cint, flt
 
 from kamra.authz import assert_property_access, require_roles
 
@@ -44,7 +44,7 @@ def reminder_stage(days_overdue: int) -> str | None:
 
 def statement(account: str) -> dict:
 	from kamra.credit import _symbol
-	from kamra.ledger import city_ledger_account
+	from kamra.ledger import aging_date, city_ledger_account
 	st = city_ledger_account(account)
 	prop = frappe.db.get_value("City Ledger Account", account, "property")
 	st.update({
@@ -52,7 +52,7 @@ def statement(account: str) -> dict:
 		"property_name": frappe.db.get_value("Property", prop, "property_name") or prop,
 		"contact_email": frappe.db.get_value("Corporate Account", st["company"],
 		                                     "contact_email"),
-		"as_of": nowdate(),
+		"as_of": aging_date(prop),
 		"currency_symbol": _symbol(prop),
 	})
 	return st
@@ -369,15 +369,17 @@ def send_property_reminders(property: str) -> dict:
 	"""Email each company with a bill that reached a reminder stage today
 	and has not had that stage yet. Returns what was sent and the companies
 	skipped for want of a billing email."""
-	from kamra.ledger import _netted, days_overdue
+	from kamra.ledger import _netted, aging_date, days_overdue
 	from kamra.savings import log_action
-	today = nowdate()
+	today = aging_date(property)
 	sent, no_email = [], []
 	for account in frappe.get_all("City Ledger Account", pluck="name",
 	                              filters={"property": property, "disabled": 0}):
 		st = statement(account)
 		due = []
 		for r, amount in _netted(st["open_items"], st["unapplied_credit"]):
+			if r.get("disputed"):  # paused until the dispute is settled
+				continue
 			late = days_overdue(r, today)
 			stage = reminder_stage(late)
 			if stage and not _reminded(r["folio"], stage, st["company"]):

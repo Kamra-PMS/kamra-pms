@@ -10,6 +10,8 @@
   "column_break_a",
   "txn_type",
   "revenue_group",
+  "gl_code",
+  "payment_mode",
   "subgroup",
   "default_tax_rate",
   "is_alcohol",
@@ -87,11 +89,24 @@
    "fieldtype": "Check",
    "label": "Disabled",
    "default": "0"
+  },
+  {
+   "fieldname": "gl_code",
+   "fieldtype": "Data",
+   "label": "GL Code",
+   "in_list_view": 1,
+   "description": "The general ledger account this code books to. Copied onto each line when it is posted; changing it later does not rewrite posted lines."
+  },
+  {
+   "fieldname": "payment_mode",
+   "fieldtype": "Data",
+   "label": "Payment Mode",
+   "description": "Payment codes only: the payment mode this code books (Cash, Card, UPI, Bank Transfer). A payment in that mode takes this code and its GL code."
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 12:00:00.000000",
+ "modified": "2026-11-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Transaction Code",

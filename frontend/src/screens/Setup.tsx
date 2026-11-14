@@ -1114,18 +1114,18 @@ export default function Setup() {
               </div>
               <div className="rounded-lg border border-brand-200 bg-brand-50/60 px-4 py-3 text-sm text-zinc-800">
                 <p className="font-semibold text-brand-800">
-                  {t("Optional: connect HeyKoala WhatsApp")}
+                  {t("Optional: guest concierge on WhatsApp")}
                 </p>
                 <p className="mt-1 text-zinc-600">
                   {t(
-                    "After the desk is live, put an AI concierge on your WhatsApp number - it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.",
+                    "After the desk is live, Kamra Enterprise can answer guests on your WhatsApp number with an AI concierge that uses Kamra's tools. The PMS stays free.",
                   )}
                 </p>
                 <a
                   href="/kamra/marketplace"
                   className="mt-2 inline-block text-sm font-medium text-brand-700 hover:underline"
                 >
-                  {t("Open Marketplace → HeyKoala WhatsApp")}
+                  {t("Open Marketplace → Kamra Enterprise")}
                 </a>
               </div>
               <GoLiveImport property={createdProperty} embedded />
