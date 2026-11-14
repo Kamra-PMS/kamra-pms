@@ -1,5 +1,0 @@
-# Vite copies frontend/index.html verbatim. On Windows the checkout is CRLF,
-# so the built shell would land in the repository as CRLF while CI builds it as
-# LF; git then treats the file as binary and every build shows a binary diff.
-# Pin this one file to LF; the PNG/MP3 assets next to it stay binary.
-kamra/public/frontend/index.html text eol=lf
