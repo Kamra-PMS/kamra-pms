@@ -1182,9 +1182,13 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 		                          reason or "")
 	except Exception:
 		frappe.log_error(title="ledger void reversal failed")
+	line = {**removed, "row": row.name, "posting_date": row.posting_date,
+	        "gst_rate": row.gst_rate, "reservation": row.get("reservation")}
 	folio.remove(row)
 	_recalculate(folio)
 	folio.save(ignore_permissions=True)
+	from kamra.webhooks import emit_charge_voided
+	emit_charge_voided(folio, line, reason or "")
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("void_charge", "Folio", folio.name, folio.property,

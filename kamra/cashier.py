@@ -456,6 +456,8 @@ def close_session(session: str, counted_cash: float | None = None,
 		# never block a cash count; flag it for a manager instead
 		doc.variance_status = "Needs Review"
 	doc.save(ignore_permissions=True)
+	from kamra.webhooks import emit_session_closed
+	emit_session_closed(doc)
 
 	# Derive a Shift Handover row so ops history stays consistent.
 	try:

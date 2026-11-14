@@ -692,6 +692,13 @@ def transfer_to_city_ledger(folio: str, company: str | None = None,
 		"reference": doc.name,
 	}).insert(ignore_permissions=True)
 	account_balance = _sync_account_balance(account)
+	from kamra.webhooks import emit_ar
+	emit_ar("ar.bill_created", doc.property, {
+		"account": account, "company": company, "folio": doc.name,
+		"folio_type": doc.get("folio_type"), "reservation": doc.get("reservation"),
+		"invoice_date": str(inv_date),
+		"due_date": str(due_date_for(account, inv_date, doc.property)),
+		"amount": round(balance, 2), "account_balance": round(float(account_balance), 2)})
 	# money the company already paid ahead (an unapplied credit) settles
 	# this new bill straight away
 	applied = apply_unapplied_credit(account, only_folio=doc.name)
@@ -1142,6 +1149,15 @@ def _post_company_payment(acc, amount: float, mode: str, reference: str | None,
 		_post_ar_credit(acc, payment.name, a["folio"], a["amount"], reference=ref)
 	balance = _sync_account_balance(acc.name)
 	applied_total = round(sum(a["amount"] for a in plan), 2)
+	from kamra.webhooks import emit_ar
+	emit_ar("ar.payment_recorded", acc.property, {
+		"account": account, "company": acc.company, "payment": payment.name,
+		"posting_date": str(bd), "mode": mode, "reference": reference or None,
+		"amount": amount,
+		"applied": [{"folio": a["folio"], "amount": round(float(a["amount"]), 2)}
+		            for a in plan],
+		"unapplied": round(amount - applied_total, 2),
+		"account_balance": round(float(acc.balance), 2)})
 	from kamra.savings import log_action
 	log_action("city_ledger_settle", "City Ledger Account", acc.name,
 	           acc.property,
