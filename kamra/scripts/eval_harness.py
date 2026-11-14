@@ -7100,7 +7100,8 @@ def t214():
 	           api.check_in, api.check_out,
 	           ledger.quick_checkout, cashier.close_session, api.get_folio,
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund, t_mcp_transfer,
-		           t_no_show_credit):
+		           t_no_show_credit,
+		           t_pos_till_with_tax):
 		assert "Night Auditor" in fn._kamra_roles, fn.__name__
 	assert frappe.db.exists("Role", "Night Auditor")
 	spec = BY_NAME["night_audit_precheck"]
@@ -11131,6 +11132,27 @@ def t_no_show_credit():
 		frappe.db.set_value("Property", P, {
 			"business_date": saved.business_date,
 			"no_show_charge": saved.no_show_charge})
+
+@check("POS: the till takes the bill as printed, tax included")
+def t_pos_till_with_tax():
+	from kamra import cashier, pos
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Till Tax",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	dish = frappe.get_doc({
+		"doctype": "Menu Item", "property": P, "outlet": outlet,
+		"item_name": "Eval Till Dosa", "category": "Food", "price": 1000,
+		"is_veg": 1, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+	cashier.open_session(P, 0)
+	o = pos.create_order(outlet, [{"menu_item": dish, "qty": 1}],
+	                     order_type="Takeaway")["order"]
+	printed = pos.bill_data(o)["grand_total"]
+	pos.pay_order(o, "Cash")
+	took = frappe.db.get_value(
+		"Cashier Transaction", {"pos_order": o, "kind": "Payment"}, "amount")
+	assert printed == 1050.0 and float(took or 0) == printed, (printed, took)
 
 def execute():
 	global RT, ROOM
