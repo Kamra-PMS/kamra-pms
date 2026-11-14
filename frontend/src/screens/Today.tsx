@@ -529,8 +529,25 @@ export default function Today() {
 
   useEffect(() => {
     refresh()
-    const t = setInterval(refresh, 30_000)
-    return () => clearInterval(t)
+    // 60s when the tab is visible; pause entirely when hidden so hotel
+    // Wi‑Fi is not burned by background polls (was 30s always-on).
+    let id: ReturnType<typeof setInterval> | null = null
+    const arm = () => {
+      if (id) clearInterval(id)
+      id = null
+      if (document.visibilityState === "hidden") return
+      id = setInterval(refresh, 60_000)
+    }
+    const onVis = () => {
+      arm()
+      if (document.visibilityState === "visible") void refresh()
+    }
+    arm()
+    document.addEventListener("visibilitychange", onVis)
+    return () => {
+      if (id) clearInterval(id)
+      document.removeEventListener("visibilitychange", onVis)
+    }
   }, [refresh, refreshKey])
 
   // other screens (tape chart, command palette, a group companion) open

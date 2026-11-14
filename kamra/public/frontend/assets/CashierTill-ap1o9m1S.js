@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/CashierTill-ap1o9m1S.js
 import{r as l,j as e,L as n}from"./vendor-B7XwBC7W.js";import{f as ne,u as ce,h as ie,F as de,g as f,j as c,s as $,aK as oe,b4 as me,t as d,am as xe,B as y,b6 as pe,W as he,m as ue}from"./index-B6agi90Z.js";import{C as o,a as m,b as x,c as p}from"./card-CEzYxFPd.js";import{L as be}from"./lock-open-9VvmadUA.js";/**
+========
+import{r as l,j as e,L as n}from"./vendor-D6bHyl-8.js";import{b as ne,u as ce,d as ie,z as de,g as f,f as c,s as $,aH as oe,b1 as me,t as d,aj as xe,B as y,b3 as pe,W as he,m as ue}from"./index-B1snwK7e.js";import{C as o,a as m,b as x,c as p}from"./card-B3ojwr1L.js";import{L as be}from"./lock-open-ChxBjvoX.js";/**
+>>>>>>>> origin/pr-509:kamra/public/frontend/assets/CashierTill-CkPbw0jA.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

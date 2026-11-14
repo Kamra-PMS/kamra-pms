@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/CameraCapture-Dao7FL3D.js
 import{r as i,j as e}from"./vendor-B7XwBC7W.js";import{f as k,u as y,t as h,X as N,B as u,a4 as z,V as C}from"./index-B6agi90Z.js";/**
+========
+import{r as i,j as e}from"./vendor-D6bHyl-8.js";import{b as k,u as y,t as h,X as N,B as u,a2 as z,Q as C}from"./index-B1snwK7e.js";/**
+>>>>>>>> origin/pr-509:kamra/public/frontend/assets/CameraCapture-wq-SDBkX.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/arrow-left-DHX-iThj.js
 import{f as o}from"./index-B6agi90Z.js";/**
+========
+import{b as o}from"./index-B1snwK7e.js";/**
+>>>>>>>> origin/pr-509:kamra/public/frontend/assets/arrow-left-B088OCP1.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

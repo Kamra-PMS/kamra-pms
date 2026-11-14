@@ -30,6 +30,25 @@ Do not add a second writer (raw SQL updates that skip the API, a
 client-trusted amount on a public endpoint, an MCP tool that computes
 its own price).
 
+## Ops rule: no backup, no update
+
+Every production (or customer-trial) **update** — Docker
+`install.sh update`, bare-metal `git pull` + `migrate`, image pin /
+downgrade, or any one-off `bench migrate` on a live site — must take a
+full backup first:
+
+```bash
+bench --site <site> backup --with-files
+# or, for every site on the bench:
+bench --site all backup --with-files
+```
+
+If the backup fails, **stop**. Do not pull, recreate containers, or
+migrate. Docker `deploy/install.sh update` already enforces this (aborts
+on backup failure). Manual / multi-tenant hosting must follow the same
+order. Prefer copying the new archive off-site before you continue.
+Never tell an operator to upgrade without the backup step.
+
 ## Repo map
 
 | Path | What |
