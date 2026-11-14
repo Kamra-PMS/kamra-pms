@@ -15,7 +15,7 @@ const inr = fmtMoney
 const helpFor = (): Record<string, { what: string; where: string; changes: string; fix: string; drill: string; link?: [string, string] }> => ({
   Guest: {
     what: translate("What guests owe on their bills right now: every charge posted to a guest's folio (room nights, restaurant and laundry charged to the room, extras) less what they paid, advances applied at check-in, and bills moved to a company. Positive means guests owe the hotel."),
-    where: translate("Billing and each guest's folio; departed guests who still owe are under Guests left owing in Receivables."),
+    where: translate("Billing and each guest's folio; departed guests who still owe are under Guests left owing in Billing."),
     changes: translate("Added automatically: the night audit posts room nights, the restaurant and laundry post their bills, the desk adds charges and takes payments, check-out moves company bills to the city ledger."),
     fix: translate("Entries are never edited or deleted. Void a wrong charge on the open folio, post a discount (allowance), refund an overpayment, or cancel a closed invoice and reissue it. Each one adds a correcting entry."),
     drill: translate("Click the card: every folio with a balance, biggest first. Open a folio to see each line."),

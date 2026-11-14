@@ -116,6 +116,30 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 		self.assertEqual(kw["recipients"], [EMAIL])
 		self.assertTrue(kw["attachments"][0]["fname"].endswith(".html"))
 
+	def test_bulk_email_sends_each_and_names_the_ones_without_email(self):
+		self.bill(500)
+		self.contact(EMAIL)
+		with patch("frappe.enqueue") as enqueue:
+			out = statements.email_statements_bulk(PROP_A, frappe.as_json([self.account]))
+		self.assertEqual(out, {"queued": 1, "skipped": []})
+		job = enqueue.call_args.kwargs
+		self.assertEqual(job["accounts"], [self.account])
+		with patch("frappe.sendmail") as mail:
+			statements._send_bulk(job["accounts"], job["kind"], job["month"], job["lang"], job["user"])
+		self.assertEqual(mail.call_args.kwargs["recipients"], [EMAIL])
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- restore after the job
+
+		self.contact(None)
+		with patch("frappe.enqueue") as enqueue:
+			out = statements.email_statements_bulk(PROP_A, [self.account], kind="monthly",
+			                                       month=TODAY[:7])
+		self.assertEqual(out, {"queued": 0, "skipped": [cc.COMPANY]})
+		enqueue.assert_not_called()
+		with self.assertRaises(frappe.ValidationError):
+			statements.email_statements_bulk(PROP_A, [self.account], kind="monthly")
+		with self.assertRaises(frappe.ValidationError):
+			statements.email_statements_bulk(PROP_A, ["no-such-account"])
+
 	# reminders -------------------------------------------------------------
 
 	def test_reminder_stage(self):
@@ -207,6 +231,8 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 		try:
 			for fn in (lambda: statements.company_statement(self.account),
 			           lambda: statements.email_company_statement(self.account),
+			           lambda: statements.email_statements_bulk(PROP_A, [self.account]),
+			           lambda: statements.send_property_reminders(PROP_A),
 			           lambda: _run_dataset(PROP_A, "dso", d(-29), TODAY),
 			           lambda: _run_dataset(PROP_A, "overdue_by_company", None, None)):
 				with self.assertRaises(frappe.PermissionError):

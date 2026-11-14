@@ -184,6 +184,55 @@ def email_company_statement(account: str, recipients: str | None = None,
 	return {"ok": True, "sent_to": emails}
 
 
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def email_statements_bulk(property: str, accounts, kind: str = "statement",
+                          month: str | None = None, lang: str = "en"):
+	"""Email several companies at once: their statement (kind=statement) or
+	their month-end bill for `month` (kind=monthly). Each goes to the
+	company's billing contact through the single-account functions, so the
+	same checks and Activity log apply. Accounts with no billing email are
+	skipped and named; the sending runs in the background."""
+	assert_property_access(property)
+	if kind not in ("statement", "monthly"):
+		frappe.throw(_("Pick statement or monthly."))
+	if kind == "monthly" and not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", str(month or "")):
+		frappe.throw(_("Pick a month as YYYY-MM, like 2026-10."))
+	names = frappe.parse_json(accounts) if isinstance(accounts, str) else list(accounts or [])
+	if not names:
+		frappe.throw(_("Pick at least one account."))
+	rows = frappe.get_all("City Ledger Account", fields=["name", "company"],
+	                      filters={"name": ("in", names), "property": property})
+	if len(rows) != len(set(names)):
+		frappe.throw(_("Some accounts are not on this property."))
+	emails = dict(frappe.get_all("Corporate Account", fields=["name", "contact_email"],
+	                             filters={"name": ("in", [r.company for r in rows])},
+	                             as_list=True))
+	ready = [r.name for r in rows if (emails.get(r.company) or "").strip()]
+	skipped = [r.company for r in rows if not (emails.get(r.company) or "").strip()]
+	if ready:
+		frappe.enqueue("kamra.statements._send_bulk", queue="short",
+		               accounts=ready, kind=kind, month=month, lang=lang or "en",
+		               user=frappe.session.user, enqueue_after_commit=True)
+	return {"queued": len(ready), "skipped": skipped}
+
+
+def _send_bulk(accounts: list[str], kind: str, month: str | None, lang: str, user: str):
+	"""The background half of email_statements_bulk, as the user who asked."""
+	frappe.set_user(user)  # nosemgrep: frappe-setuser -- the job acts as the user who asked, so role gates and the log still apply
+	for account in accounts:
+		try:
+			if kind == "monthly":
+				email_monthly_bill(account, month, lang=lang)
+			else:
+				email_company_statement(account, lang=lang)
+			frappe.db.commit()
+		except Exception:
+			# one company's failure must not stop the rest; it is in the error log
+			frappe.db.rollback()
+			frappe.log_error(title=f"Bulk {kind} email failed for {account}")
+
+
 # --- month-end bill ----------------------------------------------------------
 # One page per company per month: what was billed that month (each stay's
 # tax invoice, with its taxable value and tax), what the company paid, and
