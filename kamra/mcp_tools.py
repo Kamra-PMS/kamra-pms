@@ -1048,6 +1048,18 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"folio_statement",
+		"api.folio_invoice",
+		"""One folio by its id, as the bill prints: lines with date, charge
+		type, transaction code, GL code, tax and corrects_row; payments with
+		mode, kind, GL code and refund_of; a dated statement with charges,
+		credits and running balance; tax summary; company payments that
+		cleared it (allocations). Read-only.""",
+		{"folio": _p("string")},
+		required=("folio",),
+		group="Billing",
+	),
+	_t(
 		"transfer_folio_charge",
 		"api.transfer_folio_charges",
 		"""Move charge lines (names from get_folio or folio_statement) off an
