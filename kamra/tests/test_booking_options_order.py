@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import frappe
-
 from kamra.api import available_rooms, booking_options
 from kamra.tests.audit_fixtures import (
 	PROP_A, TODAY, AuditTestCase, d, make_property, make_room, make_room_type,
