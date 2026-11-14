@@ -9121,6 +9121,42 @@ def t355():
 	assert frappe.db.get_value("Reservation", res.name, "room_charges_allowed") == 1
 
 
+@check("walk-in and booking keep the typed guest name: a phone already on another guest reuses that profile only when the name matches too")
+def t389():
+	from kamra.api import create_booking, walk_in
+
+	phone = "+91 70038 90001"
+	known = _guest("Eval Walkin Guest", phone)
+	with _as_user(FD):
+		# a different name typed with a phone that is already on a profile
+		out = walk_in(P, RT, _ci_room("G389A"), add_days(nowdate(), 1),
+		              "Eval Codex Audit Guest", phone=phone)
+		res = frappe.get_doc("Reservation", out["reservation"])
+		assert res.guest != known, f"walk-in attached {known} (Eval Walkin Guest)"
+		assert res.guest_name == "Eval Codex Audit Guest", res.guest_name
+		typed = res.guest
+		booked = create_booking(P, RT, add_days(nowdate(), 30), add_days(nowdate(), 31),
+		                        "Eval Advance Audit Two", phone=phone)
+		guest_name = frappe.db.get_value("Reservation", booked["reservation"], "guest_name")
+		assert booked["guest"] not in (known, typed), booked
+		assert guest_name == "Eval Advance Audit Two", guest_name
+		# same phone and same name: the existing profile is reused
+		again = create_booking(P, RT, add_days(nowdate(), 40), add_days(nowdate(), 41),
+		                       "Eval Walkin Guest", phone=phone)
+		assert again["guest"] == known, again
+		# a profile the desk picked is used as is
+		picked = create_booking(P, RT, add_days(nowdate(), 50), add_days(nowdate(), 51),
+		                        "Someone Else", phone=phone, guest=known)
+		assert picked["guest"] == known, picked
+	# a number on a blacklisted profile still meets the blacklist, whatever name is typed
+	banned = "+91 70038 90002"
+	listed = _guest("Eval Banned Guest", banned)
+	frappe.db.set_value("Guest", listed, {"blacklisted": 1, "blacklist_reason": "Eval"})
+	with _as_user(FD):
+		_refused(create_booking, P, RT, add_days(nowdate(), 60), add_days(nowdate(), 61),
+		         "Eval Other Name", phone=banned, contains="blacklisted")
+
+
 
 # --- Rooms screen + Today layout (#rooms-and-widgets) -------------------------
 
@@ -11225,7 +11261,7 @@ def execute():
 		           t320, t321, t322, t323, t324, t325, t326, t327, t328, t310, t311, t312, t313,
 		           t314, t315, t316, t317, t318, t330, t331, t332, t333, t334, t335, t336,
 		           t225, t226, t227, t228, t229, t230, t340, t341, t342, t343, t344,
-		           t350, t351, t352, t353, t354, t355, t356,
+		           t350, t351, t352, t353, t354, t355, t389, t356,
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
