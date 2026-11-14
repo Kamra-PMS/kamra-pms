@@ -7101,7 +7101,8 @@ def t214():
 	           ledger.quick_checkout, cashier.close_session, api.get_folio,
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund, t_mcp_transfer,
 		           t_no_show_credit,
-		           t_pos_till_with_tax):
+		           t_pos_till_with_tax,
+		           t_capacity_rooms_out_of_sale):
 		assert "Night Auditor" in fn._kamra_roles, fn.__name__
 	assert frappe.db.exists("Role", "Night Auditor")
 	spec = BY_NAME["night_audit_precheck"]
@@ -11153,6 +11154,41 @@ def t_pos_till_with_tax():
 	took = frappe.db.get_value(
 		"Cashier Transaction", {"pos_order": o, "kind": "Payment"}, "amount")
 	assert printed == 1050.0 and float(took or 0) == printed, (printed, took)
+
+@check("type capacity: out of order and blocked rooms are not sold to an unassigned stay")
+def t_capacity_rooms_out_of_sale():
+	from kamra.kamra.doctype.reservation.reservation import InventoryRefused
+	RP = "EVAL Inv Out Of Sale"
+	bed, _v, rooms = _inv_property(RP, "IOS", rooms=3, with_villa=False)
+	ci, co = add_days(nowdate(), 70), add_days(nowdate(), 71)
+	frappe.db.set_value("Room", rooms[0], "housekeeping_status", "Out of Order")
+	frappe.get_doc({"doctype": "Room Block", "property": RP, "room": rooms[1],
+	                "from_date": ci, "to_date": co, "reason": "House Use",
+	                "block_status": "Active"}).insert(ignore_permissions=True)
+	_stay(RP, bed, ci, co)  # the one room left
+	frappe.db.savepoint("eval_out_of_sale")
+	try:
+		_stay(RP, bed, ci, co, name="Over Sold")
+		raise AssertionError("sold a room that is out of order or blocked")
+	except InventoryRefused as e:
+		assert "out of order or blocked" in str(e), e
+	frappe.db.rollback(save_point="eval_out_of_sale")
+	# after the block only the out-of-order room is off sale: 2 rooms to sell
+	n2, n3 = add_days(co, 1), add_days(co, 2)
+	long_stay = _stay(RP, bed, co, n3, name="Two Nights")
+	short_stay = _stay(RP, bed, co, n2, name="One Night")
+	# another room goes out of order on that full night: stays already sold
+	# there can still be edited, shortened and extended onto a free night
+	frappe.db.set_value("Room", rooms[2], "housekeeping_status", "Out of Order")
+	short_stay.reload()
+	short_stay.adults = 1
+	short_stay.save(ignore_permissions=True)
+	long_stay.reload()
+	long_stay.check_out_date = n2
+	long_stay.save(ignore_permissions=True)
+	short_stay.reload()
+	short_stay.check_out_date = n3
+	short_stay.save(ignore_permissions=True)
 
 def execute():
 	global RT, ROOM
