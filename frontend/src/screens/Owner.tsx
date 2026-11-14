@@ -24,6 +24,7 @@ interface Day {
   room_revenue: number
   fnb_revenue: number
   other_revenue: number
+  allowances: number
   total_revenue: number
 }
 
@@ -144,6 +145,7 @@ export default function Owner() {
         [t("Rooms"), d.room_revenue],
         [t("Food and beverage"), d.fnb_revenue],
         [t("Other"), d.other_revenue],
+        [t("Allowances"), d.allowances],
       ] as [string, number][]
     : []
   const top = Math.max(1, ...depts.map(([, v]) => v))

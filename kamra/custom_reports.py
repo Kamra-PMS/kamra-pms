@@ -143,7 +143,7 @@ DATASETS: dict[str, Dataset] = {
 		# the desk runs this for occupancy; the money columns are for
 		# kamra.dashboards.FIGURE_ROLES only
 		"money_columns": ("adr", "revpar", "revpax", "room_revenue", "fnb_revenue",
-		                  "other_revenue", "total_revenue"),
+		                  "other_revenue", "allowances", "total_revenue"),
 		"date_field": "date",
 		"needs_range": True,
 		"columns": [
@@ -156,6 +156,7 @@ DATASETS: dict[str, Dataset] = {
 			_col("room_revenue", "Room revenue", "number"),
 			_col("fnb_revenue", "F&B revenue", "number"),
 			_col("other_revenue", "Other revenue", "number"),
+			_col("allowances", "Allowances", "number"),
 			_col("total_revenue", "Total revenue", "number"),
 			_col("pax", "Pax", "number"),
 		],

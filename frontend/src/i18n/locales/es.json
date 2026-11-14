@@ -5465,6 +5465,7 @@
   "room revenue": "ingresos por habitaciones",
   "room service": "servicio a la habitación",
   "room {room} · F&B {fnb} · other {other}": "habitación {room} · A&B {fnb} · otro {other}",
+  "room {room} · F&B {fnb} · other {other} · allowances {allowances}": "habitación {room} · A&B {fnb} · otro {other} · bonificaciones {allowances}",
   "row {n} ({error})": "fila {n} ({error})",
   "s": "s",
   "s aren't": "s aún no están",

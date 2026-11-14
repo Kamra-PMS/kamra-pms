@@ -40,8 +40,11 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 		        AS fnb_revenue,
 		  COALESCE(SUM(CASE WHEN fc.charge_type NOT IN ('Room', 'Rate Adjustment',
 		        'Food & Beverage', 'Meal Plan', 'Minibar', 'Discount',
-		        'Opening Balance')
-		        THEN fc.amount ELSE 0 END), 0) AS other_revenue
+		        'Opening Balance', 'Allowance')
+		        THEN fc.amount ELSE 0 END), 0) AS other_revenue,
+		  -- a credit to the guest, not a revenue stream: its own figure
+		  COALESCE(SUM(CASE WHEN fc.charge_type = 'Allowance'
+		        THEN fc.amount ELSE 0 END), 0) AS allowances
 		FROM `tabFolio Charge` fc
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE f.property = %(p)s AND fc.posting_date = %(d)s
@@ -51,7 +54,8 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 	rev = float(row.room_revenue or 0)
 	fnb = float(row.fnb_revenue or 0)
 	other = float(row.other_revenue or 0)
-	total_rev = rev + fnb + other
+	allowances = float(row.allowances or 0)
+	total_rev = rev + fnb + other + allowances
 	# guests (pax) in-house that night — the denominator for RevPAX
 	pax = int(frappe.db.sql(
 		"""
@@ -88,6 +92,7 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 		"room_revenue": rev,
 		"fnb_revenue": fnb,
 		"other_revenue": other,
+		"allowances": allowances,
 		"total_revenue": total_rev,
 		"adr": round(rev / sold, 0) if sold else 0,
 		"revpar": round(rev / total_rooms, 0) if total_rooms else 0,
@@ -256,7 +261,8 @@ def _sum_days(days: list[dict], total_rooms: int) -> dict:
 	        "occupancy_pct": round(100 * tot["rooms_occupied"] / avail, 1) if avail else 0,
 	        "adr": round(tot["room_revenue"] / tot["rooms_sold"], 0) if tot["rooms_sold"] else 0,
 	        "revpar": round(tot["room_revenue"] / n, 0) if n else 0,
-	        "revpax": round(tot["total_revenue"] / tot["pax"], 0) if tot["pax"] else 0}
+	        "revpax": round(tot["total_revenue"] / tot["pax"], 0) if tot["pax"] else 0,
+	        "allowances": sum(d["allowances"] for d in days)}
 
 
 def range_stats(property: str, start, end, total_rooms: int) -> dict:
