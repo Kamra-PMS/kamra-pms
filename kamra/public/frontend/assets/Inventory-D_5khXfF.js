@@ -1,8 +1,12 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-D_5khXfF.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/Inventory-CBZO2PlD.js
 import{r as a,j as e}from"./vendor-B7XwBC7W.js";import{f as B,n as z,a as G,j as _,g as S,t,a3 as D,B as y,ax as F,a4 as H,i as w,aK as P,e as $,X as K}from"./index-B6agi90Z.js";import{T as Q}from"./trash-2-BhqpfmgC.js";import{T as W}from"./triangle-alert-Bm1qTKWf.js";import{B as U}from"./ban-CNyJq-ec.js";/**
 ========
 import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{b as B,j as z,A as G,f as _,g as S,t,a1 as H,B as y,at as D,a2 as F,e as w,aH as P,a as $,X as Q}from"./index-B1snwK7e.js";import{T as U}from"./trash-2-3fue_sVK.js";import{T as W}from"./triangle-alert-CkKgaP37.js";import{B as K}from"./ban-D5kYXQYf.js";/**
 >>>>>>>> origin/pr-509:kamra/public/frontend/assets/Inventory-DkODz9eo.js
+========
+import{r as a,j as e}from"./vendor-D6bHyl-8.js";import{b as B,j as z,A as G,f as _,g as S,t,a1 as H,B as y,at as D,a2 as F,e as w,aH as P,a as $,X as Q}from"./index-D-1AJmlh.js";import{T as U}from"./trash-2-B2SvVo1N.js";import{T as W}from"./triangle-alert-D6db1mMW.js";import{B as K}from"./ban-CtPv-q9b.js";/**
+>>>>>>>> origin/pr-568:kamra/public/frontend/assets/Inventory-BJm1qzJ_.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

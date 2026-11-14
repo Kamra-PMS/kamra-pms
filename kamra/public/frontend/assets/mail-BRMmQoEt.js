@@ -1,8 +1,12 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/mail-BRMmQoEt.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/mail-Dr2nJWbG.js
 import{f as e}from"./index-B6agi90Z.js";/**
 ========
 import{b as e}from"./index-B1snwK7e.js";/**
 >>>>>>>> origin/pr-509:kamra/public/frontend/assets/mail-DcOV0KPp.js
+========
+import{b as e}from"./index-D-1AJmlh.js";/**
+>>>>>>>> origin/pr-568:kamra/public/frontend/assets/mail-D0feUK9M.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

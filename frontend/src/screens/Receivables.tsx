@@ -75,6 +75,32 @@ type OpenItem = {
   billed: number
   paid: number
   outstanding: number
+  disputed?: number
+  dispute_note?: string | null
+}
+
+type Payment = {
+  name: string
+  posting_date: string
+  received_on?: string | null
+  credit: number
+  debit: number
+  reference?: string
+  notes?: string
+  reverses?: string | null
+  reversed?: boolean
+}
+
+type PendingPayment = {
+  name: string
+  amount: number
+  mode?: string
+  reference?: string
+  received_on?: string
+  allocations?: string
+  requested_by: string
+  requested_on: string
+  channel?: string
 }
 
 type Account = {
@@ -99,15 +125,24 @@ type Account = {
   d31_60: number
   d61_90: number
   d90p: number
+  disputed: number
   open_items: OpenItem[]
   // every bill on the account, paid ones included (newer servers)
   bills?: OpenItem[]
-  payments: {
-    name: string; posting_date: string; credit: number; reference?: string
+  payments: (Payment & {
     applied?: { folio: string; invoice_number?: string; guest_name?: string; amount: number }[]
     unapplied?: number
-  }[]
+  })[]
+  pending_payments: PendingPayment[]
+  cashier_pin_required: boolean
+  payment_pin_required?: boolean
 }
+
+// a Finance step on the account that needs a note, a reason or a PIN
+type Action =
+  | { kind: "dispute"; item: OpenItem }
+  | { kind: "reverse"; payment: Payment }
+  | { kind: "confirm" | "reject"; request: PendingPayment }
 
 const field = "w-full rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
 
@@ -321,7 +356,7 @@ function AccountPage({ account }: { account: string }) {
     return d.toLocaleDateString("en-CA").slice(0, 7)
   })
   const [sheet, setSheet] = useState<
-    null | "setup" | "invoice" | "payment" | { view: string } | { transfer: OpenItem }
+    null | "setup" | "invoice" | "payment" | { view: string } | { transfer: OpenItem } | { action: Action }
   >(null)
 
   const [history, setHistory] = useState<HistoryRow[]>([])
@@ -488,7 +523,15 @@ function AccountPage({ account }: { account: string }) {
             <tbody>
               {(acc.bills ?? acc.open_items).slice().reverse().map((it) => (
                 <tr key={it.folio} className="border-t border-zinc-100">
-                  <td className="py-2 pr-3 font-mono text-xs">{it.invoice_number || it.folio}</td>
+                  <td className="py-2 pr-3 font-mono text-xs">
+                    {it.invoice_number || it.folio}
+                    {it.disputed ? (
+                      <span title={it.dispute_note || undefined}
+                        className="mt-0.5 block w-fit rounded bg-amber-100 px-1.5 font-sans text-[11px] text-amber-900">
+                        {translate("Disputed")}{it.dispute_note ? `: ${it.dispute_note}` : ""}
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="py-2 pr-3">
                     {it.folio_type === "Account" ? (
                       <span className="text-zinc-500">{translate("Direct invoice")}</span>
@@ -514,8 +557,15 @@ function AccountPage({ account }: { account: string }) {
                   <td className="py-2 text-right">
                     <div className="flex justify-end gap-1.5">
                       <Button variant="outline" onClick={() => setSheet({ view: it.folio })}>{translate("View")}</Button>
-                      {isFinance && it.outstanding > 0.005 ? (
-                        <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
+                      {isFinance ? (
+                        <>
+                          {it.outstanding > 0.005 ? (
+                            <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
+                          ) : null}
+                          <Button variant="outline" onClick={() => setSheet({ action: { kind: "dispute", item: it } })}>
+                            {it.disputed ? translate("Clear dispute") : translate("Dispute")}
+                          </Button>
+                        </>
                       ) : null}
                     </div>
                   </td>
@@ -528,6 +578,69 @@ function AccountPage({ account }: { account: string }) {
           </table>
         </CardContent>
       </Card>
+
+      {acc.pending_payments?.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{translate("Payments to confirm")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-2 text-xs text-zinc-500">{translate("Recorded by an AI agent. They change nothing on the account until Finance confirms them with a PIN.")}</p>
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {acc.pending_payments.map((r) => (
+                <li key={r.name} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span>
+                    <b className="tabular-nums">{fmtMoney(r.amount)}</b> · {translate(r.mode || "Bank Transfer")}
+                    {r.reference ? ` · ${r.reference}` : ""}
+                    <span className="block text-xs text-zinc-500">
+                      {translate("Received {v0}, recorded by {v1}", { v0: r.received_on || "-", v1: r.requested_by })}
+                      {r.channel ? ` (${r.channel})` : ""}
+                    </span>
+                  </span>
+                  {isFinance ? (
+                    <span className="flex gap-1.5">
+                      <Button variant="outline" onClick={() => setSheet({ action: { kind: "reject", request: r } })}>{translate("Reject")}</Button>
+                      <Button onClick={() => setSheet({ action: { kind: "confirm", request: r } })}>{translate("Confirm")}</Button>
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {acc.payments.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{translate("Recent payments")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y divide-zinc-100 text-sm">
+              {acc.payments.map((p) => (
+                <li key={p.name} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span>
+                    {p.posting_date} · {p.reference || "-"}
+                    {p.received_on && p.received_on !== p.posting_date
+                      ? <span className="ml-1 text-xs text-zinc-500">({translate("received {v0}", { v0: p.received_on })})</span>
+                      : null}
+                    {p.reversed ? <span className="ml-2 rounded bg-zinc-100 px-1.5 text-[11px] text-zinc-600">{translate("Reversed")}</span> : null}
+                    {p.reverses ? <span className="block text-xs text-zinc-500">{p.notes}</span> : null}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className={`tabular-nums ${p.reverses ? "text-rose-700" : ""}`}>
+                      {fmtMoney(p.reverses ? -p.debit : p.credit)}
+                    </span>
+                    {isFinance && !p.reverses && !p.reversed && p.credit > 0 ? (
+                      <Button variant="outline" onClick={() => setSheet({ action: { kind: "reverse", payment: p } })}>{translate("Reverse")}</Button>
+                    ) : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* every bill, credit note and payment on the account, newest first, with the balance after it */}
       {history.length ? (
@@ -558,7 +671,6 @@ function AccountPage({ account }: { account: string }) {
                           {h.invoice_number || h.folio}{h.guest_name ? ` · ${h.guest_name}` : ""}
                         </button>
                       ) : (h.reference || h.notes || "-")}
-                      {/* a payment names the bills it cleared */}
                       {h.applied.map((a) => (
                         <button key={a.folio} type="button" onClick={() => setSheet({ view: a.folio })}
                           className="block text-xs text-zinc-500 hover:underline">
@@ -593,6 +705,14 @@ function AccountPage({ account }: { account: string }) {
       {sheet && typeof sheet === "object" && "view" in sheet ? (
         <InvoiceView folio={sheet.view} company={acc.company} onClose={() => setSheet(null)} />
       ) : null}
+      {sheet && typeof sheet === "object" && "action" in sheet ? (
+        <AccountAction
+          acc={acc}
+          action={sheet.action}
+          onClose={() => setSheet(null)}
+          onDone={(msg) => done(msg)}
+        />
+      ) : null}
       {sheet && typeof sheet === "object" && "transfer" in sheet ? (
         <TransferInvoice
           acc={acc}
@@ -602,6 +722,125 @@ function AccountPage({ account }: { account: string }) {
         />
       ) : null}
     </div>
+  )
+}
+
+// dispute a bill, reverse a payment, confirm or reject an agent's payment
+function AccountAction(props: { acc: Account; action: Action; onClose: () => void; onDone: (msg: string) => void }) {
+  useUILanguage()
+  const a = props.action
+  const [note, setNote] = useState(a.kind === "dispute" ? a.item.dispute_note || "" : "")
+  const [code, setCode] = useState("REV-BOUNCE")
+  const [codes, setCodes] = useState<{ name: string; description: string }[]>([])
+  const [pin, setPin] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const clearing = a.kind === "dispute" && !!a.item.disputed
+  const askPin = a.kind === "confirm" || (a.kind === "reverse" && props.acc.cashier_pin_required)
+
+  useEffect(() => {
+    if (a.kind !== "reverse") return
+    call<{ name: string; description: string }[]>("kamra.ledger.list_reason_codes", { category: "Payment Reversal" })
+      .then(setCodes)
+      .catch(() => setCodes([]))
+  }, [a.kind])
+
+  const title = a.kind === "dispute" ? (clearing ? translate("Clear the dispute") : translate("Dispute this bill"))
+    : a.kind === "reverse" ? translate("Reverse payment")
+      : a.kind === "confirm" ? translate("Confirm payment") : translate("Reject payment")
+
+  const summary = a.kind === "dispute" ? `${a.item.invoice_number || a.item.folio} · ${fmtMoney(a.item.outstanding)}`
+    : a.kind === "reverse" ? `${a.payment.reference || a.payment.name} · ${fmtMoney(a.payment.credit)}`
+      : `${fmtMoney(a.request.amount)} · ${translate(a.request.mode || "Bank Transfer")}${a.request.reference ? ` · ${a.request.reference}` : ""}`
+
+  const plan: { folio: string; amount: number }[] =
+    a.kind === "confirm" || a.kind === "reject" ? JSON.parse(a.request.allocations || "[]") : []
+
+  const needsNote = (a.kind === "dispute" && !clearing) || a.kind === "reject"
+  const ready = !busy && (!needsNote || note.trim()) && (!askPin || pin) && (a.kind !== "reverse" || code)
+
+  const submit = async () => {
+    setBusy(true)
+    setErr(null)
+    try {
+      if (a.kind === "dispute") {
+        await call("kamra.ledger.set_city_ledger_dispute", {
+          account: props.acc.account, folio: a.item.folio, disputed: clearing ? 0 : 1, note: note.trim(),
+        })
+        props.onDone(clearing ? translate("Dispute cleared.") : translate("Bill marked as disputed. Reminders pause for it."))
+      } else if (a.kind === "reverse") {
+        const out = await call<{ balance: number }>("kamra.ledger.reverse_city_ledger_payment", {
+          payment: a.payment.name, reason_code: code, reason: note.trim() || undefined, pin: pin || undefined,
+        })
+        props.onDone(translate("Payment reversed. Account balance is now {v0}.", { v0: fmtMoney(out.balance) }))
+      } else {
+        await call("kamra.ledger.decide_city_ledger_payment", {
+          request: a.request.name, approve: a.kind === "confirm" ? 1 : 0, note: note.trim(), pin: pin || undefined,
+        })
+        props.onDone(a.kind === "confirm" ? translate("Payment confirmed and posted.") : translate("Payment rejected."))
+      }
+    } catch (e) {
+      setErr(serverError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet
+      title={title}
+      description={summary}
+      onClose={props.onClose}
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={props.onClose}>{translate("Cancel")}</Button>
+          <Button disabled={!ready} onClick={() => void submit()}>{busy ? translate("Saving…") : title}</Button>
+        </div>
+      }
+    >
+      <div className="space-y-3 text-sm">
+        {err ? <p className="text-rose-600">{translate(err)}</p> : null}
+        {a.kind === "reverse" ? (
+          <p className="text-zinc-600">{translate("The bills this payment cleared are owed again, and any credit it left on the account is taken back.")}</p>
+        ) : null}
+        {a.kind === "dispute" && !clearing ? (
+          <p className="text-zinc-600">{translate("A disputed bill stays on the account and in aging. It gets no payment reminders and does not count towards the overdue credit block.")}</p>
+        ) : null}
+        {plan.length ? (
+          <ul className="rounded-lg border border-zinc-200 px-3 py-2">
+            {plan.map((p) => (
+              <li key={p.folio} className="flex justify-between">
+                <span className="font-mono text-xs">{p.folio}</span>
+                <span className="tabular-nums">{fmtMoney(p.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {a.kind === "reverse" ? (
+          <label className="block">
+            <span className="mb-1 block text-zinc-500">{translate("Reason")}</span>
+            <select className={field} value={code} onChange={(e) => setCode(e.target.value)}>
+              {(codes.length ? codes : [{ name: "REV-BOUNCE", description: "Cheque bounced" }]).map((c) => (
+                <option key={c.name} value={c.name}>{translate(c.description)}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {a.kind !== "confirm" && !clearing ? (
+          <label className="block">
+            <span className="mb-1 block text-zinc-500">{needsNote ? translate("Note") : translate("Note (optional)")}</span>
+            <textarea className={field} rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
+          </label>
+        ) : null}
+        {askPin ? (
+          <label className="block">
+            <span className="mb-1 block text-zinc-500">{translate("Your cashier PIN")}</span>
+            <input type="password" inputMode="numeric" autoComplete="off" className={field}
+              value={pin} onChange={(e) => setPin(e.target.value)} />
+          </label>
+        ) : null}
+      </div>
+    </Sheet>
   )
 }
 
@@ -659,13 +898,14 @@ function AccountSetup(props: { acc?: Account; onClose: () => void; onSaved: (acc
         property: getCurrentProperty(),
         company,
         account: a?.account,
-        account_number: number.trim() || undefined,
+        // strings, not undefined: on an edit a field left out keeps its value
+        account_number: number.trim(),
         credit_limit: Number(limit) || 0,
         use_default_credit_days: useDefault ? 1 : 0,
         credit_days: Number(days) || 0,
-        billing_address: address.trim() || undefined,
+        billing_address: address.trim(),
         restricted: restricted ? 1 : 0,
-        restricted_reason: restricted ? reason.trim() : undefined,
+        restricted_reason: restricted ? reason.trim() : "",
       })
       props.onSaved(out.account)
     } catch (e) {

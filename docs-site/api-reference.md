@@ -5466,7 +5466,18 @@ Record a company's payment against its city ledger account and clear
 the AR it pays. By default it pays the oldest open bills first;
 `allocations` ([{folio, amount}]) names the folios instead. Any excess
 stays on the account as unapplied credit and settles the company's next
-bill.
+bill. `received_on` is the date the money arrived (the business date
+when left out, never later).
+
+An AI agent's payment is not posted: it waits as a Company Payment
+Request ({"pending": True, ...}) until Finance confirms it with a PIN
+(decide_city_ledger_payment). With the property's "PIN on company
+payments" setting on, a desk payment asks for the user's PIN too.
+
+Pass idempotency_key (one per "Record payment" press): a retry with the
+same key returns the first result and posts nothing. Two payments on
+one account at once run one after the other, so they never both clear
+the same bill.
 
 Pass idempotency_key (one per "Record payment" press): a retry with the
 same key returns the first result and posts nothing. Two payments on
@@ -5481,6 +5492,59 @@ the same bill.
 | `reference` | no | `None` |
 | `allocations` | no | `None` |
 | `idempotency_key` | no | `None` |
+| `received_on` | no | `None` |
+| `pin` | no | `None` |
+
+### `kamra.ledger.decide_city_ledger_payment`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Confirm or reject a company payment an agent recorded. Confirming
+needs the Finance user's own PIN every time and posts exactly what was
+proposed: the amount, mode, reference, received date and the bills it
+clears. If one of those bills was paid since, it is refused; reject it
+and record the payment again. A rejection needs a note. AI agents never
+decide.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `request` | yes |  |
+| `approve` | no | `1` |
+| `note` | no | `''` |
+| `pin` | no | `None` |
+
+### `kamra.ledger.reverse_city_ledger_payment`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Undo a company payment: a bounced cheque, or money put on the wrong
+account. Posts the opposite AR leg for every bill the payment cleared
+(those bills are owed again, with their old due dates), takes back any
+credit it left unapplied, and logs the reason. A payment is reversed
+once; AI agents can't reverse.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `payment` | yes |  |
+| `reason` | no | `None` |
+| `reason_code` | no | `None` |
+| `pin` | no | `None` |
+
+### `kamra.ledger.set_city_ledger_dispute`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Mark a company bill as disputed (or clear it). A disputed bill gets no
+payment reminders and does not count towards the overdue credit block;
+it stays on the account, in aging and on statements, flagged.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `folio` | yes |  |
+| `disputed` | no | `1` |
+| `note` | no | `None` |
+
 
 ### `kamra.ledger.city_ledger_aging`
 
@@ -5868,18 +5932,23 @@ The account number is the company's reference on statements and must
 be unique at the property. Opening an account puts the company on
 credit (Corporate Account.credit_allowed), since that is what it is for.
 
+On an edit, a field left out (None) keeps its value; an empty string
+clears it. A create retried with the same `idempotency_key` returns the
+account it opened instead of failing.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
-| `company` | yes |  |
+| `company` | no | `None` |
 | `account_number` | no | `None` |
-| `credit_limit` | no | `0` |
-| `use_default_credit_days` | no | `1` |
-| `credit_days` | no | `0` |
+| `credit_limit` | no | `None` |
+| `use_default_credit_days` | no | `None` |
+| `credit_days` | no | `None` |
 | `billing_address` | no | `None` |
-| `restricted` | no | `0` |
+| `restricted` | no | `None` |
 | `restricted_reason` | no | `None` |
 | `account` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.receivables.create_ar_invoice`
 

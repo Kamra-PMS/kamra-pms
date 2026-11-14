@@ -1,8 +1,12 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/chevron-left-Cax27sNk.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/chevron-left-amY8DbI2.js
 import{f as e}from"./index-B6agi90Z.js";/**
 ========
 import{b as e}from"./index-B1snwK7e.js";/**
 >>>>>>>> origin/pr-509:kamra/public/frontend/assets/chevron-left-IkLvh-uO.js
+========
+import{b as e}from"./index-D-1AJmlh.js";/**
+>>>>>>>> origin/pr-568:kamra/public/frontend/assets/chevron-left-lv0CAYSh.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

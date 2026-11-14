@@ -1,8 +1,12 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/OpsSLA-CKrd9KGi.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/OpsSLA-CavjY0aK.js
 import{r as l,j as e,L as N}from"./vendor-B7XwBC7W.js";import{f as z,u as w,j as S,g as C,s as O,t as s}from"./index-B6agi90Z.js";import{C as n,c as d,a as x,b as h}from"./card-CEzYxFPd.js";import{B as T}from"./badge-Bm2T5EIZ.js";/**
 ========
 import{r as l,j as e,L as N}from"./vendor-D6bHyl-8.js";import{b as z,u as w,f as S,g as C,s as O,t as s}from"./index-B1snwK7e.js";import{C as n,c as d,a as x,b as h}from"./card-B3ojwr1L.js";import{B as T}from"./badge-D2JLSMCM.js";/**
 >>>>>>>> origin/pr-509:kamra/public/frontend/assets/OpsSLA-BWUiYRlD.js
+========
+import{r as l,j as e,L as N}from"./vendor-D6bHyl-8.js";import{b as z,u as w,f as S,g as C,s as O,t as s}from"./index-D-1AJmlh.js";import{C as n,c as d,a as x,b as h}from"./card-aKse1LcU.js";import{B as T}from"./badge-CcW6H9Cd.js";/**
+>>>>>>>> origin/pr-568:kamra/public/frontend/assets/OpsSLA-C1_AF7vT.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

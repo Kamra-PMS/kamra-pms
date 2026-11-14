@@ -1,8 +1,12 @@
+<<<<<<<< HEAD:kamra/public/frontend/assets/phone-CpWyBOlU.js
 <<<<<<<< HEAD:kamra/public/frontend/assets/phone-BLCKFSzw.js
 import{f as a}from"./index-B6agi90Z.js";/**
 ========
 import{b as a}from"./index-B1snwK7e.js";/**
 >>>>>>>> origin/pr-509:kamra/public/frontend/assets/phone-DUQpE1-y.js
+========
+import{b as a}from"./index-D-1AJmlh.js";/**
+>>>>>>>> origin/pr-568:kamra/public/frontend/assets/phone-DpnORd4L.js
  * @license lucide-react v0.525.0 - ISC
  *
  * This source code is licensed under the ISC license.

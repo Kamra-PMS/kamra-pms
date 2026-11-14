@@ -1199,6 +1199,78 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 	),
 	_t(
+		"create_ar_account",
+		"receivables.save_ar_account",
+		"""Open a company account (AR) at this property, so the company can
+		be billed on credit at check-out. `company` is the Corporate Account
+		id. Payment terms: the property default unless
+		use_default_credit_days is false, then credit_days. credit_limit 0
+		means no limit. A restricted account needs restricted_reason and
+		takes no new bills. One account per company per property. Needs a
+		Finance or Hotel Admin user.""",
+		{"company": _p("string"),
+		 "account_number": _p("string"),
+		 "credit_limit": _p("number"),
+		 "use_default_credit_days": _p("boolean"),
+		 "credit_days": _p("integer"),
+		 "billing_address": _p("string"),
+		 "restricted": _p("boolean"),
+		 "restricted_reason": _p("string"),
+		 "idempotency_key": _p("string", description="Optional unique key for "
+		                       "this account. Retrying with the same key returns "
+		                       "the account it opened (idempotent_replay).")},
+		required=("company",),
+		property=True,
+		mutating=True,
+		bools=("use_default_credit_days", "restricted"),
+		group="Billing",
+	),
+	_t(
+		"update_ar_account",
+		"receivables.save_ar_account",
+		"""Edit a company account (see ar_accounts): account number, credit
+		limit, payment terms, billing address, or restrict it (with
+		restricted_reason) and lift the restriction. Only the fields you pass
+		change. Needs a Finance or Hotel Admin user.""",
+		{"account": _p("string"),
+		 "account_number": _p("string"),
+		 "credit_limit": _p("number"),
+		 "use_default_credit_days": _p("boolean"),
+		 "credit_days": _p("integer"),
+		 "billing_address": _p("string"),
+		 "restricted": _p("boolean"),
+		 "restricted_reason": _p("string"),
+		 "idempotency_key": _p("string", description="Optional. An edit sets "
+		                       "values, so repeating it changes nothing more.")},
+		required=("account",),
+		property=True,
+		mutating=True,
+		bools=("use_default_credit_days", "restricted"),
+		group="Billing",
+	),
+	_t(
+		"record_ar_payment",
+		"ledger.city_ledger_settle",
+		"""Record a payment a company made on its account (bank transfer,
+		cheque). From an agent it does not post: it waits for a Finance user
+		to confirm it with their PIN, and the result says pending with the
+		request id and the bills it would clear (oldest first unless
+		`allocations` [{folio, amount}] names them). received_on
+		(YYYY-MM-DD) is the date the bank received it, the business date if
+		left out. Confirm the amount and reference with the user first.
+		An agent can't reverse a payment; Finance does that on the account.""",
+		{"account": _p("string"),
+		 "amount": _p("number"),
+		 "mode": _p("string", description="Bank Transfer (default), Cheque, Card, Cash or Other."),
+		 "reference": _p("string", description="UTR or cheque number."),
+		 "allocations": _p("array", items=_p("object")),
+		 "received_on": _p("string"),
+		 "idempotency_key": PAYMENT_KEY_PARAM},
+		required=("account", "amount"),
+		mutating=True,
+		group="Billing",
+	),
+	_t(
 		"payables_aging",
 		"payables.payables_aging",
 		"""What the hotel owes each supplier (accounts payable), aged by due
@@ -2373,6 +2445,7 @@ IDEMPOTENT = frozenset({
 	"create_booking", "create_itinerary", "add_to_waitlist", "pickup_group_room", "set_late_arrival",
 	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
 	"assign_rooms_apply", "open_guest_bills",
+	"create_ar_account", "update_ar_account", "record_ar_payment",
 })
 # Tools that reach someone outside Kamra (a message to the guest)
 OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link"})

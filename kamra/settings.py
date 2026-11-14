@@ -444,6 +444,10 @@ MODULES: tuple[Module, ...] = (
 				  hint="Each morning, email a company's billing contact 3 days before a bill is due, on the "
 				       "due date and 15 days after, with its statement attached. Each reminder goes once per "
 				       "bill, and Finance gets a notice of what was sent."),
+				S("city_ledger_payment_pin", "Ask for a PIN on every company payment", "check", 0,
+				  hint="On: the person recording a company payment confirms it with their own cashier PIN. "
+				       "A payment an AI agent records always waits for a Finance user to confirm it with "
+				       "their PIN, whatever this is set to."),
 			)),
 			Section("cashier", "Cashier controls", "", (
 				S("use_cashier_tills", "Take money through cashier tills", "check", 1,

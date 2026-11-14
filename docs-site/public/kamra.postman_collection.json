@@ -13720,10 +13720,121 @@
         "kamra.ledger.city_ledger_settle"
        ]
       },
-      "description": "Record a company's payment against its city ledger account and clear\nthe AR it pays. By default it pays the oldest open bills first;\n`allocations` ([{folio, amount}]) names the folios instead. Any excess\nstays on the account as unapplied credit and settles the company's next\nbill.\n\nPass idempotency_key (one per \"Record payment\" press): a retry with the\nsame key returns the first result and posts nothing. Two payments on\none account at once run one after the other, so they never both clear\nthe same bill.",
+      "description": "Record a company's payment against its city ledger account and clear\nthe AR it pays. By default it pays the oldest open bills first;\n`allocations` ([{folio, amount}]) names the folios instead. Any excess\nstays on the account as unapplied credit and settles the company's next\nbill. `received_on` is the date the money arrived (the business date\nwhen left out, never later).\n\nAn AI agent's payment is not posted: it waits as a Company Payment\nRequest ({\"pending\": True, ...}) until Finance confirms it with a PIN\n(decide_city_ledger_payment). With the property's \"PIN on company\npayments\" setting on, a desk payment asks for the user's PIN too.\n\nPass idempotency_key (one per \"Record payment\" press): a retry with the\nsame key returns the first result and posts nothing. Two payments on\none account at once run one after the other, so they never both clear\nthe same bill.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"account\": \"<account>\",\n  \"amount\": 1000,\n  \"mode\": \"Bank Transfer\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "decide_city_ledger_payment",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.decide_city_ledger_payment",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.decide_city_ledger_payment"
+       ]
+      },
+      "description": "Confirm or reject a company payment an agent recorded. Confirming\nneeds the Finance user's own PIN every time and posts exactly what was\nproposed: the amount, mode, reference, received date and the bills it\nclears. If one of those bills was paid since, it is refused; reject it\nand record the payment again. A rejection needs a note. AI agents never\ndecide.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"request\": \"<request>\",\n  \"approve\": 1,\n  \"note\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "reverse_city_ledger_payment",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.reverse_city_ledger_payment",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.reverse_city_ledger_payment"
+       ]
+      },
+      "description": "Undo a company payment: a bounced cheque, or money put on the wrong\naccount. Posts the opposite AR leg for every bill the payment cleared\n(those bills are owed again, with their old due dates), takes back any\ncredit it left unapplied, and logs the reason. A payment is reversed\nonce; AI agents can't reverse.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"payment\": \"<payment>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "set_city_ledger_dispute",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.ledger.set_city_ledger_dispute",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.ledger.set_city_ledger_dispute"
+       ]
+      },
+      "description": "Mark a company bill as disputed (or clear it). A disputed bill gets no\npayment reminders and does not count towards the overdue credit block;\nit stays on the account, in aging and on statements, flagged.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"folio\": \"FOLIO-2026-00001\",\n  \"disputed\": 1\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -14836,10 +14947,10 @@
         "kamra.receivables.save_ar_account"
        ]
       },
-      "description": "Open a company's AR account at a property, or edit it (`account`).\nOne open account per company per property - checkout bills into it.\nThe account number is the company's reference on statements and must\nbe unique at the property. Opening an account puts the company on\ncredit (Corporate Account.credit_allowed), since that is what it is for.",
+      "description": "Open a company's AR account at a property, or edit it (`account`).\nOne open account per company per property - checkout bills into it.\nThe account number is the company's reference on statements and must\nbe unique at the property. Opening an account puts the company on\ncredit (Corporate Account.credit_allowed), since that is what it is for.\n\nOn an edit, a field left out (None) keeps its value; an empty string\nclears it. A create retried with the same `idempotency_key` returns the\naccount it opened instead of failing.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"company\": \"<company>\",\n  \"credit_limit\": 0,\n  \"use_default_credit_days\": 1,\n  \"credit_days\": 0,\n  \"restricted\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
        "options": {
         "raw": {
          "language": "json"

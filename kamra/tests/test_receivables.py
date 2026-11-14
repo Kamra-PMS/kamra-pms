@@ -55,6 +55,35 @@ class ReceivablesTestCase(cc.CreditControlTestCase):
 		with self.assertRaises(frappe.ValidationError):  # restricted needs a why
 			receivables.save_ar_account(PROP_A, co, account=out["account"], restricted=1)
 
+	def test_edit_keeps_what_it_leaves_out_and_a_keyed_open_replays(self):
+		co = self.other_company()
+		out = receivables.save_ar_account(PROP_A, co, account_number="UT-KEY",
+		                                  credit_limit=7000, billing_address="2 Main St",
+		                                  idempotency_key="ut-open-1")
+		again = receivables.save_ar_account(PROP_A, co, idempotency_key="ut-open-1")
+		self.assertEqual((again["account"], again.get("idempotent_replay")),
+		                 (out["account"], True))
+		# the MCP update tool sends only what changes
+		receivables.save_ar_account(PROP_A, account=out["account"], credit_days=15,
+		                            use_default_credit_days=0)
+		acc = frappe.get_doc("City Ledger Account", out["account"])
+		self.assertEqual((acc.account_number, acc.credit_limit, acc.billing_address,
+		                  acc.credit_days, acc.use_default_credit_days),
+		                 ("UT-KEY", 7000, "2 Main St", 15, 0))
+		# an empty string clears a field
+		receivables.save_ar_account(PROP_A, account=out["account"], billing_address="")
+		self.assertIsNone(frappe.db.get_value("City Ledger Account", out["account"],
+		                                      "billing_address"))
+
+	def test_account_and_payment_tools_call_the_screen_functions(self):
+		from kamra.mcp_tools import BY_NAME
+		self.assertEqual(BY_NAME["create_ar_account"].dotted, "receivables.save_ar_account")
+		self.assertEqual(BY_NAME["update_ar_account"].dotted, "receivables.save_ar_account")
+		self.assertEqual(BY_NAME["record_ar_payment"].dotted, "ledger.city_ledger_settle")
+		for name in ("create_ar_account", "update_ar_account", "record_ar_payment"):
+			self.assertIn("idempotency_key", BY_NAME[name].parameters, name)
+			self.assertTrue(BY_NAME[name].mutating, name)
+
 	# invoices raised on the account -----------------------------------------
 
 	def test_invoice_on_the_account_is_billed_taxed_and_numbered(self):
