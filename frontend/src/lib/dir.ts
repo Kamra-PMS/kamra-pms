@@ -33,15 +33,23 @@ export function langDef(code: string): LangDef {
   return LANGS.find((l) => l.code === code) ?? LANGS[0]
 }
 
+/** Traditional Chinese tags must not fall back to the Simplified dictionary;
+ *  only zh, zh-CN, zh-SG and the zh-Hans* forms are Simplified. */
+const ZH_SIMPLIFIED = /^zh(?:-cn|-sg|-hans(?:-.+)?)?$/
+
 /** Map a browser tag or stored setting onto a shipped UI language. Exact
  * tag first ("zh-CN"), then the base language, so plain "zh" and the
  * script/region forms ("zh-Hans", "zh-Hans-CN", "pt-BR") resolve too.
- * Returns null when the tag names a language we do not ship. */
+ * Returns null when the tag names a language we do not ship - a Traditional
+ * Chinese tag ("zh-TW", "zh-HK", "zh-Hant") is one of those, so it stays
+ * English instead of showing Simplified text. */
 export function matchLang(tag?: string | null): Lang | null {
   const raw = (tag || "").trim().toLowerCase()
   if (!raw) return null
   const exact = LANGS.find((l) => l.code.toLowerCase() === raw)
   if (exact) return exact.code
+  // The base match below would otherwise map zh-TW and zh-HK onto zh-CN.
+  if (/^zh(?:-|$)/.test(raw) && !ZH_SIMPLIFIED.test(raw)) return null
   const base = raw.split("-")[0]
   return LANGS.find((l) => l.code.toLowerCase().split("-")[0] === base)?.code ?? null
 }
