@@ -684,6 +684,12 @@ def registration_card(reservation: str):
 			"room_type": res.room_type.split("-")[-1],
 			"check_in_date": str(res.check_in_date),
 			"check_out_date": str(res.check_out_date),
+			# the times agreed for this booking; the card falls back to the
+			# property's standard times when none were set
+			"planned_check_in_time": str(res.planned_check_in_time)[:5]
+			                         if res.get("planned_check_in_time") else None,
+			"planned_check_out_time": str(res.planned_check_out_time)[:5]
+			                          if res.get("planned_check_out_time") else None,
 			"nights": res.nights, "adults": res.adults,
 			"children": res.children, "is_day_use": res.get("is_day_use"),
 			"rate_total": float(res.amount_after_tax or 0),
@@ -6517,9 +6523,13 @@ def _booking_property_policy(property: str) -> dict:
 		"Property", property,
 		["sell_message", "free_cancel_days", "cancellation_fee",
 		 "no_show_charge", "deposit_pct", "country", "pets_allowed",
-		 "pet_charge", "pet_charge_basis"],
+		 "pet_charge", "pet_charge_basis", "checkin_time", "checkout_time"],
 		as_dict=True,
 	) or {}
+	# the property's standard times: the booking dialog offers them as the
+	# arrival and departure time of an overnight stay
+	prop["checkin_time"] = str(prop.get("checkin_time") or "14:00")[:5]
+	prop["checkout_time"] = str(prop.get("checkout_time") or "11:00")[:5]
 	prop["pets_allowed"] = int(prop.get("pets_allowed") or 0)
 	prop["pet_charge"] = float(prop.get("pet_charge") or 0)
 	prop["pet_charge_basis"] = prop.get("pet_charge_basis") or "Per stay"
