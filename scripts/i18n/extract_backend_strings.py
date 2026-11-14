@@ -11,8 +11,8 @@ cannot be translated from a catalogue. They are reported separately on stdout
 so they can be fixed by hand or accepted as-is.
 
 Usage:
-    python docs/i18n/extract_backend_strings.py            # write the CSV
-    python docs/i18n/extract_backend_strings.py --list     # print every string
+    python scripts/i18n/extract_backend_strings.py            # write the CSV
+    python scripts/i18n/extract_backend_strings.py --list     # print every string
 """
 
 from __future__ import annotations

@@ -12,7 +12,7 @@ Fails when a catalogue row cannot work at runtime:
 * a row exists for a string the code no longer asks for (orphan).
 
 Usage:
-    python docs/i18n/check_backend_translations.py
+    python scripts/i18n/check_backend_translations.py
 """
 
 from __future__ import annotations
