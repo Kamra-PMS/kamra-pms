@@ -11,7 +11,7 @@ from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
 from typing import Any
 
 import frappe
-from frappe.utils import now_datetime, nowdate
+from frappe.utils import getdate, now_datetime, nowdate
 
 from kamra.authz import require_roles
 from kamra.business_date import get_business_date
@@ -497,8 +497,15 @@ def folio_reconciliation(property: str, limit: int = 20) -> dict:
 
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Hotel Admin", "Night Auditor", "Kamra Agent")
-def journal_by_transaction_code(property: str, business_date: str | None = None):
+def journal_by_transaction_code(property: str, business_date: str | None = None,
+                                from_date: str | None = None, to_date: str | None = None):
+	"""Ledger postings summed by transaction code: for one business date, or
+	from_date to to_date (both inclusive) when a range is given."""
 	date = business_date or get_business_date(property)
+	start = getdate(from_date) if from_date else getdate(date)
+	end = getdate(to_date) if to_date else getdate(date)
+	if start > end:
+		frappe.throw(frappe._("The start date is after the end date."))
 	rows = frappe.db.sql(
 		"""
 		SELECT COALESCE(transaction_code, '—') AS transaction_code,
@@ -506,16 +513,16 @@ def journal_by_transaction_code(property: str, business_date: str | None = None)
 		       COALESCE(SUM(credit), 0) AS credit,
 		       COUNT(*) AS entries
 		FROM `tabFolio Ledger Entry`
-		WHERE property = %(property)s AND business_date = %(date)s
+		WHERE property = %(property)s AND business_date BETWEEN %(start)s AND %(end)s
 		GROUP BY transaction_code
 		ORDER BY transaction_code
 		""",
-		{"property": property, "date": date}, as_dict=True,
+		{"property": property, "start": start, "end": end}, as_dict=True,
 	)
 	for r in rows:
 		r["description"] = frappe.db.get_value(
 			"Transaction Code", r.transaction_code, "description") or ""
-	return {"business_date": date, "rows": rows}
+	return {"business_date": date, "from_date": str(start), "to_date": str(end), "rows": rows}
 
 
 @frappe.whitelist()
