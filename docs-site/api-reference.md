@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **503 endpoints**, generated from the source
+the UI and the AI use. **490 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -23,9 +23,6 @@ Content-Type: application/json
 - **Try it in Postman:** [download the collection](/kamra.postman_collection.json),
   set `base_url`, `api_key` and `api_secret` collection variables, go.
 - Endpoints marked **public** are `allow_guest` (no token; rate-limited).
-- What we promise not to break, and how a name is retired:
-  [API stability](/api-stability) and the machine-readable
-  [contract.json](/contract.json).
 
 
 ## Core (front desk, folios, guests, rooms)
@@ -249,9 +246,6 @@ on the guest folio as a Security Deposit payment and in the Deposit
 ledger - a liability held for the guest, never revenue. Cashier PIN and
 open till as for any payment.
 
-Pass idempotency_key (one per Collect press): a retry with the same key
-returns the first result instead of posting again.
-
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
@@ -259,7 +253,6 @@ returns the first result instead of posting again.
 | `mode` | no | `'Cash'` |
 | `reference` | no | `None` |
 | `pin` | no | `None` |
-| `idempotency_key` | no | `None` |
 
 ### `kamra.api.waive_security_deposit`
 
@@ -589,15 +582,22 @@ Give money back on an open folio - a held security deposit at
 checkout, or an over-collected advance. Stored as a negative ledger
 row so every balance still sums exactly; a reason is mandatory.
 
+payment_row refunds against one payment line: mode defaults to that
+payment's mode (pass Cash to give cash back instead) and amount to what
+is left of it. A retry with the same idempotency_key returns the first
+refund instead of paying out twice.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `folio` | yes |  |
-| `amount` | yes |  |
-| `mode` | yes |  |
-| `reason` | yes |  |
+| `amount` | no | `None` |
+| `mode` | no | `None` |
+| `reason` | no | `''` |
 | `pin` | no | `None` |
 | `reason_code` | no | `None` |
 | `supervisor_pin` | no | `None` |
+| `payment_row` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.set_actual_times`
 
@@ -629,6 +629,30 @@ accountable through the action log. Posts a ledger reversal.
 | `pin` | no | `None` |
 | `reason_code` | no | `None` |
 | `supervisor_pin` | no | `None` |
+
+### `kamra.api.correct_folio_charge`
+
+**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+
+Correct a posted line on an open folio without editing it: a reversal
+of the original and a repost with the right amount, tax rate or charge
+type, both linked to the original (corrects_row). Same roles, PIN and
+Void reason codes as void_folio_charge. A retry with the same
+idempotency_key returns the first correction.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `folio` | yes |  |
+| `charge_row` | yes |  |
+| `reason` | no | `''` |
+| `amount` | no | `None` |
+| `gst_rate` | no | `None` |
+| `charge_type` | no | `None` |
+| `description` | no | `None` |
+| `pin` | no | `None` |
+| `reason_code` | no | `None` |
+| `supervisor_pin` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.post_stay_charge`
 
@@ -745,13 +769,21 @@ charges and no payments - money is never dropped this way.
 
 **GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
 
-Bulk move: several charge lines to another folio of the stay.
+Move charge lines off one open folio, ledger and all. Give one target:
+to_folio (another folio of the same stay or group), to_company=1 (the
+stay's Company folio, opened if needed) or to_reservation (the open Guest
+folio of another in-house stay here; Finance or Hotel Admin, with a
+reason). A retry with the same idempotency_key returns the first move.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `from_folio` | yes |  |
 | `charge_rows` | yes |  |
-| `to_folio` | yes |  |
+| `to_folio` | no | `None` |
+| `to_company` | no | `0` |
+| `to_reservation` | no | `None` |
+| `reason` | no | `None` |
+| `idempotency_key` | no | `None` |
 
 ### `kamra.api.split_folio_charge`
 
@@ -1042,6 +1074,25 @@ named the way the country names it, the total has to appear in words,
 and the guest wants a summary by what they bought before they read
 forty lines. All of that is assembled here so every surface that
 prints a bill - the folio screen, a PDF, an email - agrees.
+
+Statement fields (stable for integrations):
+
+- `lines`: each charge line: row, posting_date, stay_date,
+  charge_type, description, qty, rate, amount (pre-tax), gst_rate,
+  gst_amount, total, service_code, transaction_code, gl_code (as
+  posted), corrects_row (a correction's original line), reservation,
+  is_alcohol, auto_posted
+- `payments`: row, posting_date, payment_kind, mode, amount (refunds
+  negative), reference, currency, fx_amount, exchange_rate,
+  transaction_code, gl_code, refund_of (the payment a refund is against)
+- `statement`: lines and payments in date order: date, row, kind
+  (Charge or the payment kind), charge_type, description, reference,
+  method, transaction_code, gl_code, charges, credits, tax, balance
+  (running)
+- `tax_summary`: per rate, taxable, total_tax and the country's parts
+- `allocations`: company payments that cleared this bill: payment,
+  account, posting_date, reference, amount
+- `folio`, `bill_to`, `guest`, `stay`, `property`, `document`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5466,23 +5517,7 @@ Record a company's payment against its city ledger account and clear
 the AR it pays. By default it pays the oldest open bills first;
 `allocations` ([{folio, amount}]) names the folios instead. Any excess
 stays on the account as unapplied credit and settles the company's next
-bill. `received_on` is the date the money arrived (the business date
-when left out, never later).
-
-An AI agent's payment is not posted: it waits as a Company Payment
-Request ({"pending": True, ...}) until Finance confirms it with a PIN
-(decide_city_ledger_payment). With the property's "PIN on company
-payments" setting on, a desk payment asks for the user's PIN too.
-
-Pass idempotency_key (one per "Record payment" press): a retry with the
-same key returns the first result and posts nothing. Two payments on
-one account at once run one after the other, so they never both clear
-the same bill.
-
-Pass idempotency_key (one per "Record payment" press): a retry with the
-same key returns the first result and posts nothing. Two payments on
-one account at once run one after the other, so they never both clear
-the same bill.
+bill.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5491,60 +5526,6 @@ the same bill.
 | `mode` | no | `'Bank Transfer'` |
 | `reference` | no | `None` |
 | `allocations` | no | `None` |
-| `idempotency_key` | no | `None` |
-| `received_on` | no | `None` |
-| `pin` | no | `None` |
-
-### `kamra.ledger.decide_city_ledger_payment`
-
-**POST** · roles: `Finance`, `Hotel Admin`
-
-Confirm or reject a company payment an agent recorded. Confirming
-needs the Finance user's own PIN every time and posts exactly what was
-proposed: the amount, mode, reference, received date and the bills it
-clears. If one of those bills was paid since, it is refused; reject it
-and record the payment again. A rejection needs a note. AI agents never
-decide.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `request` | yes |  |
-| `approve` | no | `1` |
-| `note` | no | `''` |
-| `pin` | no | `None` |
-
-### `kamra.ledger.reverse_city_ledger_payment`
-
-**POST** · roles: `Finance`, `Hotel Admin`
-
-Undo a company payment: a bounced cheque, or money put on the wrong
-account. Posts the opposite AR leg for every bill the payment cleared
-(those bills are owed again, with their old due dates), takes back any
-credit it left unapplied, and logs the reason. A payment is reversed
-once; AI agents can't reverse.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `payment` | yes |  |
-| `reason` | no | `None` |
-| `reason_code` | no | `None` |
-| `pin` | no | `None` |
-
-### `kamra.ledger.set_city_ledger_dispute`
-
-**POST** · roles: `Finance`, `Hotel Admin`
-
-Mark a company bill as disputed (or clear it). A disputed bill gets no
-payment reminders and does not count towards the overdue credit block;
-it stays on the account, in aging and on statements, flagged.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `account` | yes |  |
-| `folio` | yes |  |
-| `disputed` | no | `1` |
-| `note` | no | `None` |
-
 
 ### `kamra.ledger.city_ledger_aging`
 
@@ -5932,23 +5913,18 @@ The account number is the company's reference on statements and must
 be unique at the property. Opening an account puts the company on
 credit (Corporate Account.credit_allowed), since that is what it is for.
 
-On an edit, a field left out (None) keeps its value; an empty string
-clears it. A create retried with the same `idempotency_key` returns the
-account it opened instead of failing.
-
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
-| `company` | no | `None` |
+| `company` | yes |  |
 | `account_number` | no | `None` |
-| `credit_limit` | no | `None` |
-| `use_default_credit_days` | no | `None` |
-| `credit_days` | no | `None` |
+| `credit_limit` | no | `0` |
+| `use_default_credit_days` | no | `1` |
+| `credit_days` | no | `0` |
 | `billing_address` | no | `None` |
-| `restricted` | no | `None` |
+| `restricted` | no | `0` |
 | `restricted_reason` | no | `None` |
 | `account` | no | `None` |
-| `idempotency_key` | no | `None` |
 
 ### `kamra.receivables.create_ar_invoice`
 
@@ -6980,150 +6956,6 @@ company's. Tax is the hotel's rule for the charge type, not the POS's.
 | `is_alcohol` | no | `0` |
 | `tax_rate` | no | `0` |
 | `outlet_name` | no | `None` |
-
-
-## Service accounts (scoped keys for connected apps)
-
-> IT only. A key reaches only its scopes and properties; see Connected apps.
-
-### `kamra.service_accounts.list_scopes`
-
-**GET/POST** · roles: `System Manager`, `Administrator`
-
-### `kamra.service_accounts.list_service_accounts`
-
-**GET/POST** · roles: `System Manager`, `Administrator`
-
-### `kamra.service_accounts.create_service_account`
-
-**POST** · roles: `System Manager`, `Administrator`
-
-A new service account. The secret is shown once, here.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `account_name` | yes |  |
-| `scopes` | yes |  |
-| `properties` | yes |  |
-
-### `kamra.service_accounts.rotate_service_account_key`
-
-**POST** · roles: `System Manager`, `Administrator`
-
-A new secret; the old one stops working now. Shown once.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `account` | yes |  |
-
-### `kamra.service_accounts.revoke_service_account`
-
-**POST** · roles: `System Manager`, `Administrator`
-
-Stop the account at once: its user is disabled and its secret
-replaced, so the next call with the old key fails to sign in.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `account` | yes |  |
-
-
-## Connected apps (connect, pair, disconnect, property profile)
-
-> pair is the one allow_guest endpoint here, rate-limited and logged; see Connected apps.
-
-### `kamra.apps.preview`
-
-**GET/POST** · roles: `System Manager`, `Administrator`
-
-The consent step: what the app is and what it asks for.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `app_url` | yes |  |
-
-### `kamra.apps.connect`
-
-**POST** · roles: `System Manager`, `Administrator`
-
-Approve an app: a service account with exactly these scopes and
-properties, a registry entry, its redirect address, and a one-time
-pairing code (shown once).
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `app_url` | yes |  |
-| `scopes` | yes |  |
-| `properties` | yes |  |
-
-### `kamra.apps.new_pairing_code`
-
-**POST** · roles: `System Manager`, `Administrator`
-
-A fresh code for an app that has not paired yet; the old one stops.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `app_id` | yes |  |
-
-### `kamra.apps.disconnect`
-
-**POST** · roles: `System Manager`, `Administrator`
-
-Off at once: the service account is revoked, the redirect address and
-the staff tokens issued through it go, and the tile disappears.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `app_id` | yes |  |
-
-### `kamra.apps.list_apps`
-
-**GET/POST** · roles: `System Manager`, `Administrator`
-
-### `kamra.apps.set_trust`
-
-**POST** · roles: `System Manager`, `Administrator`
-
-IT: allow unsigned (self-hosted) apps, and/or replace the list of
-trusted publisher keys (base64 Ed25519 public keys).
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `unsigned` | no | `None` |
-| `keys` | no | `None` |
-
-### `kamra.apps.pair` <Badge type='tip' text='public' />
-
-**POST**
-
-The one unauthenticated endpoint: the app trades its one-time code for
-its key and secret. Every attempt that gets past the rate limit is in the
-Agent Action Log. A refused attempt gets HTTP 403 and
-{"error": "invalid_code"}.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `code` | yes |  |
-| `app_id` | yes |  |
-
-### `kamra.apps.my_apps`
-
-**GET/POST**
-
-Paired apps the signed-in person may see: admins see every one, staff
-the ones whose manifest names one of their roles.
-
-### `kamra.apps.property_profile`
-
-**GET/POST**
-
-Read-only branding and locale for one property: name, logo, address,
-tax ID, currency, language, time zone, check-in and check-out times.
-
-| Param | Required | Default |
-| --- | --- | --- |
-| `property` | yes |  |
 
 
 ## Public (no auth - booking page, check-in)

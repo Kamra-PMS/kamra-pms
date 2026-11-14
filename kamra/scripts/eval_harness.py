@@ -7098,7 +7098,8 @@ def t214():
 	           night_audit.night_audit_pack, night_audit.rebuild_audit_pack,
 	           night_audit.recover_stuck_business_date,
 	           api.check_in, api.check_out,
-	           ledger.quick_checkout, cashier.close_session, api.get_folio):
+	           ledger.quick_checkout, cashier.close_session, api.get_folio,
+		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund, t_mcp_transfer):
 		assert "Night Auditor" in fn._kamra_roles, fn.__name__
 	assert frappe.db.exists("Role", "Night Auditor")
 	spec = BY_NAME["night_audit_precheck"]
@@ -10917,6 +10918,189 @@ def t_ar_received_dispute_aging():
 	_assert_company_ar(acct)
 
 
+
+def _gl(code, gl):
+	frappe.db.set_value("Transaction Code", code, "gl_code", gl)
+
+@check("till close: note-by-note count adds up to the counted cash; session read API and MCP tools return the reconciliation")
+def t_cash_count():
+	from kamra import api, cashier
+	from kamra.localization import cash_denominations, pack_for
+	from kamra.mcp_tools import BY_NAME, call_tool
+	notes = cash_denominations(pack_for(P))
+	big, small = (notes[0], notes[-1]) if notes else (500.0, 1.0)
+	_close_my_till()
+	sess = cashier.open_session(P, opening_float=0)["name"]
+	_res, folio = _in_house("Eval Till Count", "+91 70000 05330", "2036-07-07",
+	                       "2036-07-08", _ledger_room("F5330"))
+	api.add_folio_payment(folio, "Cash", big * 2 + small)
+	cashier.post_paid_out(P, small, "eval stamps")
+	_refused(cashier.close_session, sess, counted_cash=big, cash_count={str(big): 2},
+	         contains="adds up")
+	if notes:
+		_refused(cashier.close_session, sess, cash_count={"7.77": 1}, contains="not a note")
+	cashier.close_session(sess, cash_count=[{"value": big, "count": 2}])
+	d = cashier.session_report(sess)
+	assert d["cash_count"] == [{"value": big, "count": 2, "amount": big * 2}], d["cash_count"]
+	assert float(d["counted_cash"]) == big * 2
+	cash = next(m for m in d["by_method"] if m["mode"] == "Cash")
+	assert cash["system"] == big * 2 and cash["counted"] == big * 2 and cash["variance"] == 0, cash
+	assert [r["guest_name"] for r in d["receipts"]] == ["Eval Till Count"], d["receipts"]
+	assert [r["kind"] for r in d["paid_outs"]] == ["Paid Out"], d["paid_outs"]
+	assert d["cashier_user"]["user"] == frappe.session.user
+	via = call_tool(BY_NAME["cashier_session_detail"], {"session": sess}, P)
+	assert via["by_method"] == d["by_method"]
+	listed = call_tool(BY_NAME["list_cashier_sessions"],
+	                   {"business_date": str(d["business_date"]), "status": "Closed"}, P)
+	assert sess in [r["name"] for r in listed["sessions"]], listed
+	with _as_user("hk@kamra.local"):
+		_refused(call_tool, BY_NAME["cashier_session_detail"], {"session": sess}, P,
+		         exc=frappe.PermissionError)
+
+@check("accounting export: lines split by GL code as well as service code and rate")
+def t_export_gl():
+	from kamra.accounting import _lines_by_code
+	inv = {"lines": [
+		{"service_code": "996311", "gl_code": "4000", "gst_rate": 12, "amount": 100,
+		 "gst_amount": 12, "charge_type": "Room"},
+		{"service_code": "996311", "gl_code": "4010", "gst_rate": 12, "amount": 50,
+		 "gst_amount": 6, "charge_type": "Extra Guests"},
+	]}
+	out = _lines_by_code(inv, ["tax"], {"tax": 1.0})
+	assert sorted(g["gl_code"] for g in out) == ["4000", "4010"], out
+
+@check("GL codes: each posted line and payment keeps the GL code it was posted with; a payment mode can have its own code")
+def t_gl_stamp():
+	from kamra import api
+	old_gl = frappe.db.get_value("Transaction Code", "3000", "gl_code")
+	_gl("3000", "4100")
+	cash = frappe.get_doc({"doctype": "Transaction Code", "code": "EVAL-CASH",
+	                       "description": "Cash on hand", "txn_type": "Payment",
+	                       "payment_mode": "Cash", "gl_code": "1010"}).insert(ignore_permissions=True)
+	try:
+		_res, folio = _in_house("Eval GL Stamp", "+91 70000 05320", "2036-07-09",
+		                       "2036-07-10", _ledger_room("F5320"))
+		first = api.add_folio_charge(folio, "Laundry", "eval gl one", 100)["charges"][-1]["name"]
+		api.add_folio_payment(folio, "Cash", 50)
+		_gl("3000", "4200")  # the books change the code later
+		api.add_folio_charge(folio, "Laundry", "eval gl two", 100)
+		doc = frappe.get_doc("Folio", folio)
+		gl = {c.name: c.gl_code for c in doc.charges}
+		assert gl[first] == "4100" and doc.charges[-1].gl_code == "4200", gl
+		pay = doc.payments[-1]
+		assert (pay.transaction_code, pay.gl_code) == ("EVAL-CASH", "1010"), pay.as_dict()
+		_assert_folio_on_ledger(folio)
+	finally:
+		_gl("3000", old_gl)
+		frappe.delete_doc("Transaction Code", cash.name, force=True, ignore_permissions=True)
+
+@check("MCP correct_folio_charge: reverses and reposts linked to the original, keeps posted GL codes, replays, refuses roles and room nights")
+def t_mcp_correct():
+	from kamra import api
+	from kamra.mcp_tools import BY_NAME, call_tool
+	old_gl = frappe.db.get_value("Transaction Code", "3000", "gl_code")
+	_gl("3000", "4100")
+	try:
+		_res, folio = _in_house("Eval MCP Correct", "+91 70000 05632", "2036-07-03",
+		                       "2036-07-04", _ledger_room("F5632"))
+		row = api.add_folio_charge(folio, "Laundry", "eval laundry bag", 500,
+		                           gst_rate=18)["charges"][-1]
+		assert row["gl_code"] == "4100", row
+		_gl("3000", "4200")  # the books change the code later
+		spec = BY_NAME["correct_folio_charge"]
+		args = {"folio": folio, "charge_row": row["name"], "amount": 400,
+		        "reason": "eval wrong weight", "idempotency_key": "eval-correct-1"}
+		with _as_user("hk@kamra.local"):
+			_refused(call_tool, spec, dict(args), P, exc=frappe.PermissionError)
+		one = call_tool(spec, dict(args), P)
+		two = call_tool(spec, dict(args), P)
+		assert two.get("idempotent_replay") and two["repost"] == one["repost"], (one, two)
+		lines = {c.name: c for c in frappe.get_doc("Folio", folio).charges}
+		orig, rev, rep = lines[row["name"]], lines[one["reversal"]], lines[one["repost"]]
+		assert float(orig.amount) == 500 and orig.gl_code == "4100", orig.as_dict()
+		assert float(rev.amount) == -500 and rev.corrects_row == orig.name and rev.gl_code == "4100"
+		assert float(rep.amount) == 400 and rep.corrects_row == orig.name and rep.gl_code == "4200"
+		_assert_folio_on_ledger(folio)
+		_refused(call_tool, spec, dict(args, idempotency_key="eval-correct-2"), P,
+		         contains="already corrected")
+		room = next((c for c in lines.values() if c.charge_type == "Room"), None)
+		if room:
+			_refused(call_tool, spec, {"folio": folio, "charge_row": room.name,
+			                           "amount": 1, "reason": "eval"}, P,
+			         contains="stay's rate")
+		# the statement shows all three, dated, with codes and a running balance
+		st = call_tool(BY_NAME["folio_statement"], {"folio": folio}, P)
+		assert {ln["row"] for ln in st["lines"]} >= {orig.name, rev.name, rep.name}
+		assert abs(st["statement"][-1]["balance"] - float(
+			frappe.db.get_value("Folio", folio, "balance"))) < 0.01, st["statement"][-1]
+		assert any(r["gl_code"] == "4200" for r in st["statement"]), st["statement"]
+	finally:
+		_gl("3000", old_gl)
+
+@check("MCP refund_payment: refunds a payment to its mode, replays on its key, refuses a role without refunds")
+def t_mcp_refund():
+	from kamra import api
+	from kamra.mcp_tools import BY_NAME, call_tool
+	_res, folio = _in_house("Eval MCP Refund", "+91 70000 05631", "2036-07-01",
+	                       "2036-07-02", _ledger_room("F5631"))
+	api.add_folio_payment(folio, "Cash", 1000, kind="Payment")
+	pay = frappe.get_doc("Folio", folio).payments[-1].name
+	spec = BY_NAME["refund_payment"]
+	args = {"folio": folio, "payment_row": pay, "amount": 300,
+	        "reason": "eval over-collected", "idempotency_key": "eval-refund-1"}
+	with _as_user("hk@kamra.local"):
+		_refused(call_tool, spec, dict(args), P, exc=frappe.PermissionError)
+	one = call_tool(spec, dict(args), P)
+	two = call_tool(spec, dict(args), P)  # the model retried
+	assert not one.get("idempotent_replay") and two.get("idempotent_replay"), (one, two)
+	doc = frappe.get_doc("Folio", folio)
+	refunds = [p for p in doc.payments if p.payment_kind == "Refund"]
+	assert len(refunds) == 1 and refunds[0].refund_of == pay, refunds
+	assert refunds[0].mode == "Cash" and float(refunds[0].amount) == -300
+	assert abs(float(doc.balance) + 700) < 0.01, doc.balance
+	# the rest of the payment, amount left out
+	call_tool(spec, {"folio": folio, "payment_row": pay, "reason": "eval rest"}, P)
+	_refused(call_tool, spec, {"folio": folio, "payment_row": pay,
+	                           "reason": "eval again"}, P, contains="refunded in full")
+	_assert_folio_on_ledger(folio)
+	assert frappe.get_all("Agent Action Log", filters={
+		"action_type": "mcp_refund_payment", "action_channel": "MCP"})
+
+@check("MCP transfer_folio_charge: same stay, company folio and another stay (Finance only), lines keep their codes, replays")
+def t_mcp_transfer():
+	from kamra import api
+	from kamra.folio import split_folio
+	from kamra.mcp_tools import BY_NAME, call_tool
+	spec = BY_NAME["transfer_folio_charge"]
+	a, fa = _in_house("Eval MCP Move A", "+91 70000 05633", "2036-07-05",
+	                  "2036-07-06", _ledger_room("F5633"), company=_credit_corp("Eval Move Co"))
+	b, fb = _in_house("Eval MCP Move B", "+91 70000 05634", "2036-07-05",
+	                  "2036-07-06", _ledger_room("F5634"))
+	c1 = api.add_folio_charge(fa, "Laundry", "eval move one", 200)["charges"][-1]["name"]
+	c2 = api.add_folio_charge(fa, "Laundry", "eval move two", 300)["charges"][-1]["name"]
+	c3 = api.add_folio_charge(fa, "Laundry", "eval move three", 100)["charges"][-1]["name"]
+	extra = split_folio(a.name, "Extra")
+	args = {"from_folio": fa, "charge_rows": [c1], "to_folio": extra,
+	        "idempotency_key": "eval-move-1"}
+	with _as_user("hk@kamra.local"):
+		_refused(call_tool, spec, dict(args), P, exc=frappe.PermissionError)
+	one = call_tool(spec, dict(args), P)
+	two = call_tool(spec, dict(args), P)
+	assert one["to_folio"] == extra and two.get("idempotent_replay"), (one, two)
+	assert len(frappe.get_doc("Folio", extra).charges) == 1
+	co = call_tool(spec, {"from_folio": fa, "charge_rows": [c2], "to_company": True}, P)
+	assert frappe.db.get_value("Folio", co["to_folio"], "folio_type") == "Company", co
+	other = {"from_folio": fa, "charge_rows": [c3], "to_reservation": b.name,
+	         "reason": "eval posted to the wrong room"}
+	with _as_user(FD):
+		_refused(call_tool, spec, dict(other), P, exc=frappe.PermissionError)
+	_refused(call_tool, spec, dict(other, reason=""), P, contains="reason")
+	out = call_tool(spec, dict(other), P)
+	moved = frappe.get_doc("Folio", out["to_folio"]).charges[-1]
+	assert out["to_folio"] == fb and moved.reservation == b.name, (out, moved.as_dict())
+	assert moved.transaction_code == "3000", moved.as_dict()
+	for f in (fa, fb, extra, co["to_folio"]):
+		_assert_folio_on_ledger(f)
 
 def execute():
 	global RT, ROOM

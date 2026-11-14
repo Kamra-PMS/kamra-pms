@@ -1585,10 +1585,10 @@
         "kamra.api.refund_folio_payment"
        ]
       },
-      "description": "Give money back on an open folio - a held security deposit at\ncheckout, or an over-collected advance. Stored as a negative ledger\nrow so every balance still sums exactly; a reason is mandatory.",
+      "description": "Give money back on an open folio - a held security deposit at\ncheckout, or an over-collected advance. Stored as a negative ledger\nrow so every balance still sums exactly; a reason is mandatory.\n\npayment_row refunds against one payment line: mode defaults to that\npayment's mode (pass Cash to give cash back instead) and amount to what\nis left of it. A retry with the same idempotency_key returns the first\nrefund instead of paying out twice.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"mode\": \"<mode>\",\n  \"reason\": \"<reason>\"\n}",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -1663,6 +1663,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"charge_row\": \"<charge_row>\",\n  \"reason\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "correct_folio_charge",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.correct_folio_charge",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.correct_folio_charge"
+       ]
+      },
+      "description": "Correct a posted line on an open folio without editing it: a reversal\nof the original and a repost with the right amount, tax rate or charge\ntype, both linked to the original (corrects_row). Same roles, PIN and\nVoid reason codes as void_folio_charge. A retry with the same\nidempotency_key returns the first correction.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"charge_row\": \"<charge_row>\",\n  \"reason\": \"\",\n  \"amount\": 1000\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -2029,10 +2066,10 @@
         "kamra.api.transfer_folio_charges"
        ]
       },
-      "description": "Bulk move: several charge lines to another folio of the stay.",
+      "description": "Move charge lines off one open folio, ledger and all. Give one target:\nto_folio (another folio of the same stay or group), to_company=1 (the\nstay's Company folio, opened if needed) or to_reservation (the open Guest\nfolio of another in-house stay here; Finance or Hotel Admin, with a\nreason). A retry with the same idempotency_key returns the first move.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"from_folio\": \"<from_folio>\",\n  \"charge_rows\": \"<charge_rows>\",\n  \"to_folio\": \"<to_folio>\"\n}",
+       "raw": "{\n  \"from_folio\": \"<from_folio>\",\n  \"charge_rows\": \"<charge_rows>\",\n  \"to_company\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -2769,7 +2806,7 @@
         "kamra.api.folio_invoice"
        ]
       },
-      "description": "Everything the bill needs to print itself.\n\nA tax invoice is a legal document, not a screenshot of a table: the\nservice code belongs on each LINE (a room night, a restaurant cover\nand a laundry bag are three different supplies), the tax has to be\nnamed the way the country names it, the total has to appear in words,\nand the guest wants a summary by what they bought before they read\nforty lines. All of that is assembled here so every surface that\nprints a bill - the folio screen, a PDF, an email - agrees.",
+      "description": "Everything the bill needs to print itself.\n\nA tax invoice is a legal document, not a screenshot of a table: the\nservice code belongs on each LINE (a room night, a restaurant cover\nand a laundry bag are three different supplies), the tax has to be\nnamed the way the country names it, the total has to appear in words,\nand the guest wants a summary by what they bought before they read\nforty lines. All of that is assembled here so every surface that\nprints a bill - the folio screen, a PDF, an email - agrees.\n\nStatement fields (stable for integrations):\n\n- `lines`: each charge line: row, posting_date, stay_date,\n  charge_type, description, qty, rate, amount (pre-tax), gst_rate,\n  gst_amount, total, service_code, transaction_code, gl_code (as\n  posted), corrects_row (a correction's original line), reservation,\n  is_alcohol, auto_posted\n- `payments`: row, posting_date, payment_kind, mode, amount (refunds\n  negative), reference, currency, fx_amount, exchange_rate,\n  transaction_code, gl_code, refund_of (the payment a refund is against)\n- `statement`: lines and payments in date order: date, row, kind\n  (Charge or the payment kind), charge_type, description, reference,\n  method, transaction_code, gl_code, charges, credits, tax, balance\n  (running)\n- `tax_summary`: per rate, taxable, total_tax and the country's parts\n- `allocations`: company payments that cleared this bill: payment,\n  account, posting_date, reference, amount\n- `folio`, `bill_to`, `guest`, `stay`, `property`, `document`",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\"\n}",

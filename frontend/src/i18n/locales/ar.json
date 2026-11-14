@@ -6231,4 +6231,12 @@
   "The new passwords do not match.": "كلمتا المرور الجديدتان غير متطابقتين.",
   "Save password": "حفظ كلمة المرور",
   "Password updated. Signing you in…": "تم تحديث كلمة المرور. جارٍ تسجيل الدخول…",
-  "To reset your password, ask for a link from the sign-in screen.": "لإعادة تعيين كلمة المرور، اطلب رابطاً من شاشة تسجيل الدخول."}
+  "To reset your password, ask for a link from the sign-in screen.": "لإعادة تعيين كلمة المرور، اطلب رابطاً من شاشة تسجيل الدخول.",
+  "After the desk is live, put an AI concierge on your WhatsApp number - it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.": "بعد تشغيل الاستقبال، ضع مساعد كونسيرج بالذكاء الاصطناعي على رقم WhatsApp الخاص بك، يستخدم أدوات Kamra. تحتسبه HeyKoala حسب الاستخدام، ويبقى نظام PMS مجانيًا.",
+  "Open Marketplace → HeyKoala WhatsApp": "فتح السوق ← HeyKoala WhatsApp",
+  "Optional: connect HeyKoala WhatsApp": "اختياري: ربط HeyKoala WhatsApp",
+  "GL code": "رمز حساب الأستاذ العام",
+  "Count by note and coin": "العدّ حسب الأوراق النقدية والعملات المعدنية",
+  "Your accounts' ledger code. Each line keeps the GL code it was posted with.": "رمز الحساب في دفاتر حساباتك. يحتفظ كل سطر برمز الحساب الذي قُيّد به.",
+  "Payment codes only: a payment mode such as Cash, Card or Bank Transfer. Payments in that mode book to this code.": "لرموز الدفع فقط: طريقة دفع مثل نقداً أو بطاقة أو تحويل بنكي. تُقيَّد المدفوعات بهذه الطريقة على هذا الرمز."
+}

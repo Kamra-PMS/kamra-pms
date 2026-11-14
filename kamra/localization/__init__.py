@@ -189,6 +189,12 @@ def payment_modes(pack) -> list[str]:
 	return [m for m in modes if m in allowed]
 
 
+def cash_denominations(pack) -> list[float]:
+	"""The notes and coins a till counts at close (CASH_DENOMINATIONS),
+	largest first. Empty where the pack names none: any value is counted."""
+	return [float(v) for v in getattr(pack, "CASH_DENOMINATIONS", None) or ()]
+
+
 def outlet_payment_modes(pack) -> list[str]:
 	"""What a bill is settled with at an outlet (POS): cash, card and the
 	pack's instant modes."""

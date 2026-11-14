@@ -33,6 +33,8 @@ DEFAULT_NATIONALITY = "Malaysian"
 HOME_COUNTRY_ISO3 = "MYS"
 ID_TYPES = ["MyKad", "Passport", "Driving License", "Other"]
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+# notes and coins the till counts at close, largest first
+CASH_DENOMINATIONS = (100, 50, 20, 10, 5, 1, 0.5, 0.2, 0.1, 0.05)
 
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:

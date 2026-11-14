@@ -1826,6 +1826,7 @@ Couldn't open that conversation.,Couldn't open that conversation.,تعذّر ف�
 Couldn't reach the help assistant - check the AI key in Settings.,Couldn't reach the help assistant - check the AI key in Settings.,تعذّر الوصول إلى مساعد المساعدة، تحقق من مفتاح الذكاء الاصطناعي في الإعدادات.,No se pudo contactar al asistente de ayuda. Revise la clave de IA en Configuración.,components/HelpPanel.tsx,,translated
 Couldn't read that photo. Please try again.,Couldn't read that photo. Please try again.,تعذّرت قراءة هذه الصورة. حاول مرة أخرى.,No se pudo leer esa foto. Vuelva a intentarlo.,,,translated
 Couldn't save - please check the details and try again.,Couldn't save - please check the details and try again.,تعذّر الحفظ - يرجى التحقق من البيانات والمحاولة مرة أخرى.,No se pudo guardar. Revisa los datos e inténtalo de nuevo.,screens/PublicCheckin.tsx,,translated
+Count by note and coin,Count by note and coin,العدّ حسب الأوراق النقدية والعملات المعدنية,Contar por billetes y monedas,screens/CashierTill.tsx,,translated
 count cash,count cash,عدّ النقد,contar efectivo,,,translated
 Count the bag,Count the bag,عدّ الحقيبة,Contar las prendas de la bolsa,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
 Count the drawer and close the session on its row below (it asks for the counted cash).,Count the drawer and close the session on its row below (it asks for the counted cash).,اعدد درج النقد وأغلق الجلسة من صفها أدناه (سيُطلب منك النقد المعدود).,"Cuente el efectivo y cierre la sesión en su fila, indicando el importe contado.",,,translated
@@ -2631,6 +2632,7 @@ Give a reason for acknowledging this check.,Give a reason for acknowledging this
 Give discount,Give discount,منح الخصم,Dar descuento,components/FolioDiscount.tsx,,translated
 Give room numbers ({v0}),Give room numbers ({v0}),,,components/GroupControl.tsx,v0,needs_translation
 Give the guest the cancellation number.,Give the guest the cancellation number.,أعطِ الضيف رقم الإلغاء.,Proporciona al huésped el número de cancelación.,components/CancelPanel.tsx,,translated
+GL code,GL code,رمز حساب الأستاذ العام,Cuenta contable,,,translated
 Gluten,Gluten,جلوتين,Gluten,../../kamra/settings.py,,translated
 Go to step,Go to step,اذهب إلى الخطوة,Vaya al paso,components/CheckInDialog.tsx,,translated
 Go to Today,Go to Today,الانتقال إلى اليوم,Ir a Hoy,components/ErrorBoundary.tsx,,translated
@@ -4330,6 +4332,7 @@ Payables,Payables,الذمم الدائنة,Cuentas por pagar,screens/Payables.t
 Payee,Payee,المستفيد,Beneficiario,screens/PettyCash.tsx,,translated
 Payload,Payload,الحمولة,Carga útil,screens/settings/WebhooksPage.tsx,,translated
 Payment,Payment,الدفع,Pago,components/BookingDialog.tsx; components/CheckOutDialog.tsx; screens/PublicBooking.tsx,,translated
+"Payment codes only: a payment mode such as Cash, Card or Bank Transfer. Payments in that mode book to this code.","Payment codes only: a payment mode such as Cash, Card or Bank Transfer. Payments in that mode book to this code.",لرموز الدفع فقط: طريقة دفع مثل نقداً أو بطاقة أو تحويل بنكي. تُقيَّد المدفوعات بهذه الطريقة على هذا الرمز.,"Solo para códigos de pago: un medio de pago como Efectivo, Tarjeta o Transferencia bancaria. Los pagos con ese medio se registran en este código.",,,translated
 Payment failed,Payment failed,فشل الدفع,Pago fallido,,,translated
 Payment gateway,Payment gateway,بوابة الدفع,Pasarela de pago,screens/settings/cards.tsx,,translated
 Payment Gateway Settings,Payment Gateway Settings,إعدادات بوابة الدفع,Configuración de la pasarela de pago,,,translated
@@ -6492,6 +6495,7 @@ You don't have an API key yet. Generate one to call the REST API or connect an a
 You seem to be offline. Check your connection and try again.,You seem to be offline. Check your connection and try again.,يبدو أنك غير متصل. تحقق من اتصالك وحاول مرة أخرى.,Parece que no tiene conexión. Revise su conexión e inténtelo de nuevo.,,,translated
 You're checked in online,You're checked in online,تم تسجيل وصولك عبر الإنترنت,Ya completaste el registro de entrada en línea,screens/PublicCheckin.tsx,,translated
 You're offline,You're offline,أنت غير متصل,Sin conexión,components/ErrorBoundary.tsx,,translated
+Your accounts' ledger code. Each line keeps the GL code it was posted with.,Your accounts' ledger code. Each line keeps the GL code it was posted with.,رمز الحساب في دفاتر حساباتك. يحتفظ كل سطر برمز الحساب الذي قُيّد به.,El código de cuenta de su contabilidad. Cada línea conserva la cuenta contable con la que se registró.,,,translated
 Your AI provider acts as you at ,Your AI provider acts as you at ,يعمل مزوّد الذكاء الاصطناعي باسمك في ,Su proveedor de IA actúa con su identidad en ,screens/Agents.tsx,,translated
 "Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.","Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.",سيعمل مزوّد الذكاء الاصطناعي باسم {0} وضمن صلاحيات دورك. تبقى الأسعار والضرائب والتوافر في Kamra. يُسجّل كل إجراء باسمك في سجل النشاط.,"Su proveedor de IA actuará como {0}, con los permisos de su rol. Los precios, los impuestos y la disponibilidad se gestionan en Kamra. Cada acción se registra con su nombre en el registro de Actividad.",,0,translated
 "Your AI, acting as you","Your AI, acting as you",ذكاؤك الاصطناعي، يعمل باسمك,"Su IA, actuando con su identidad",,,translated

@@ -6232,4 +6232,12 @@
   "The new passwords do not match.": "Las contraseñas nuevas no coinciden.",
   "Save password": "Guardar contraseña",
   "Password updated. Signing you in…": "Contraseña actualizada. Iniciando sesión…",
-  "To reset your password, ask for a link from the sign-in screen.": "Para restablecer la contraseña, pide un enlace en la pantalla de inicio de sesión."}
+  "To reset your password, ask for a link from the sign-in screen.": "Para restablecer la contraseña, pide un enlace en la pantalla de inicio de sesión.",
+  "After the desk is live, put an AI concierge on your WhatsApp number - it uses Kamra's tools. Metered by HeyKoala; the PMS stays free.": "Cuando la recepción esté en marcha, conecte un conserje con IA a su número de WhatsApp. Usará las herramientas de Kamra. HeyKoala cobra según el uso; el PMS sigue siendo gratuito.",
+  "Open Marketplace → HeyKoala WhatsApp": "Abrir catálogo de integraciones → HeyKoala WhatsApp",
+  "Optional: connect HeyKoala WhatsApp": "Opcional: conectar HeyKoala WhatsApp",
+  "GL code": "Cuenta contable",
+  "Count by note and coin": "Contar por billetes y monedas",
+  "Your accounts' ledger code. Each line keeps the GL code it was posted with.": "El código de cuenta de su contabilidad. Cada línea conserva la cuenta contable con la que se registró.",
+  "Payment codes only: a payment mode such as Cash, Card or Bank Transfer. Payments in that mode book to this code.": "Solo para códigos de pago: un medio de pago como Efectivo, Tarjeta o Transferencia bancaria. Los pagos con ese medio se registran en este código."
+}

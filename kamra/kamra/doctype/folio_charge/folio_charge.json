@@ -11,6 +11,9 @@
   "stay_date",
   "charge_type",
   "transaction_code",
+  "gl_code",
+  "corrects_row",
+  "idempotency_key",
   "description",
   "allowance_serial",
   "qty",
@@ -124,13 +127,37 @@
    "label": "Reservation",
    "options": "Reservation",
    "read_only": 1
+  },
+  {
+   "fieldname": "gl_code",
+   "fieldtype": "Data",
+   "label": "GL Code",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "corrects_row",
+   "fieldtype": "Data",
+   "label": "Corrects Line",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "The line this reversal or repost corrects."
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "hidden": 1,
+   "search_index": 1,
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-30 12:00:00.000000",
+ "modified": "2026-11-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Folio Charge",

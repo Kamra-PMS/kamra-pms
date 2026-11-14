@@ -40,6 +40,8 @@ MINOR_IDS = "all"
 ID_TYPES = ["National ID", "Iqama", "Passport", "GCC ID", "Other"]
 # mada is a card scheme - it books as Card so the till still balances
 PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+# notes and coins the till counts at close, largest first
+CASH_DENOMINATIONS = (500, 200, 100, 50, 10, 5, 2, 1, 0.5, 0.25)
 
 
 def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:

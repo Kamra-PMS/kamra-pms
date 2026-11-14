@@ -25,6 +25,7 @@
   "petty_cash",
   "expected_cash",
   "counted_cash",
+  "cash_count",
   "variance",
   "variance_status",
   "variance_approved_by",
@@ -222,11 +223,18 @@
    "label": "Variance Approved By",
    "options": "User",
    "read_only": 1
+  },
+  {
+   "fieldname": "cash_count",
+   "fieldtype": "JSON",
+   "label": "Cash Count",
+   "read_only": 1,
+   "description": "The drawer counted note by note at close: value, count and amount per denomination."
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-20 12:00:00.000000",
+ "modified": "2026-11-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Cashier Session",
