@@ -6,7 +6,7 @@ import { listResource, serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Sheet } from "../components/ui/sheet"
-import { fmtMoney, loadLocale, taxLabel, useLocale } from "../lib/money"
+import { chargesTax, fmtMoney, loadLocale, taxLabel, useLocale } from "../lib/money"
 import { useAuth } from "../lib/auth"
 import CityLedgerPayment from "./CityLedgerPayment"
 import { t as translate, useUILanguage } from "../lib/i18n"
@@ -993,6 +993,7 @@ type Line = { charge_type: string; description: string; amount: string; qty: str
 function NewInvoice(props: { acc: Account; onClose: () => void; onCreated: (invoice: string) => void }) {
   useUILanguage()
   const loc = useLocale()
+  const showTax = chargesTax()
   const [codes, setCodes] = useState<Record<string, string>>({})
   const [lines, setLines] = useState<Line[]>([])
   const [reference, setReference] = useState("")
@@ -1102,7 +1103,7 @@ function NewInvoice(props: { acc: Account; onClose: () => void; onCreated: (invo
                 <th className="py-2 pr-2">{translate("Description")}</th>
                 <th className="w-28 py-2 pr-2 text-right">{translate("Price")}</th>
                 <th className="w-16 py-2 pr-2 text-right">{translate("Qty")}</th>
-                <th className="w-24 py-2 pr-2">{taxLabel()}</th>
+                {showTax ? <th className="w-24 py-2 pr-2">{taxLabel()}</th> : null}
                 <th className="w-28 py-2 pr-2 text-right">{translate("Total")}</th>
                 <th className="w-8 py-2" />
               </tr>
@@ -1129,14 +1130,14 @@ function NewInvoice(props: { acc: Account; onClose: () => void; onCreated: (invo
                       <input className={`${field} text-right`} type="number" min="1" step="1"
                         value={l.qty} onChange={(e) => set(i, { qty: e.target.value })} />
                     </td>
-                    <td className="py-2 pr-2">
+                    {showTax ? <td className="py-2 pr-2">
                       <select className={field} value={fnb ?? l.gst_rate} disabled={fnb != null}
                         title={fnb != null ? translate("Food & beverage is taxed at the hotel's F&B rate") : undefined}
                         onChange={(e) => set(i, { gst_rate: Number(e.target.value) })}>
                         {Array.from(new Set([...loc.tax_rates, ...(fnb != null ? [fnb] : [])])).map((r) =>
                           <option key={r} value={r}>{r}%</option>)}
                       </select>
-                    </td>
+                    </td> : null}
                     <td className="py-2 pr-2 pt-3.5 text-right tabular-nums">
                       {fmtMoney(net(l) + Math.round(net(l) * rateOf(l)) / 100)}
                     </td>
@@ -1157,7 +1158,7 @@ function NewInvoice(props: { acc: Account; onClose: () => void; onCreated: (invo
 
         <dl className="ml-auto max-w-xs space-y-1">
           <div className="flex justify-between"><dt className="text-zinc-500">{translate("Subtotal")}</dt><dd className="tabular-nums">{fmtMoney(subtotal)}</dd></div>
-          <div className="flex justify-between"><dt className="text-zinc-500">{taxLabel()}</dt><dd className="tabular-nums">{fmtMoney(tax)}</dd></div>
+          {showTax ? <div className="flex justify-between"><dt className="text-zinc-500">{taxLabel()}</dt><dd className="tabular-nums">{fmtMoney(tax)}</dd></div> : null}
           <div className="flex justify-between border-t border-zinc-200 pt-1 font-semibold"><dt>{translate("Invoice total")}</dt><dd className="tabular-nums">{fmtMoney(subtotal + tax)}</dd></div>
         </dl>
       </div>
@@ -1183,6 +1184,8 @@ type Invoice = {
 function InvoiceView(props: { folio: string; company: string; onClose: () => void }) {
   useUILanguage()
   const [inv, setInv] = useState<Invoice | null>(null)
+  // a bill with no tax on any line shows no tax column or total
+  const taxed = Number(inv?.tax_total ?? 0) !== 0
   const [err, setErr] = useState<string | null>(null)
   useEffect(() => {
     call<Invoice>("kamra.receivables.ar_invoice", { folio: props.folio })
@@ -1227,7 +1230,7 @@ function InvoiceView(props: { folio: string; company: string; onClose: () => voi
                 <th className="py-2 pr-3">{translate("Description")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Qty")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Amount")}</th>
-                <th className="py-2 pr-3 text-right">{taxLabel()}</th>
+                {taxed ? <th className="py-2 pr-3 text-right">{taxLabel()}</th> : null}
                 <th className="py-2 text-right">{translate("Total")}</th>
               </tr>
             </thead>
@@ -1241,7 +1244,7 @@ function InvoiceView(props: { folio: string; company: string; onClose: () => voi
                   </td>
                   <td className="py-2 pr-3 text-right tabular-nums">{l.qty}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(l.amount)}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{l.gst_rate}%</td>
+                  {taxed ? <td className="py-2 pr-3 text-right tabular-nums">{l.gst_rate}%</td> : null}
                   <td className="py-2 text-right tabular-nums">{fmtMoney(l.total)}</td>
                 </tr>
               ))}
@@ -1249,7 +1252,7 @@ function InvoiceView(props: { folio: string; company: string; onClose: () => voi
           </table>
           <dl className="ml-auto max-w-xs space-y-1">
             <div className="flex justify-between"><dt className="text-zinc-500">{translate("Subtotal")}</dt><dd className="tabular-nums">{fmtMoney(inv.charges_total)}</dd></div>
-            <div className="flex justify-between"><dt className="text-zinc-500">{taxLabel()}</dt><dd className="tabular-nums">{fmtMoney(inv.tax_total)}</dd></div>
+            {taxed ? <div className="flex justify-between"><dt className="text-zinc-500">{taxLabel()}</dt><dd className="tabular-nums">{fmtMoney(inv.tax_total)}</dd></div> : null}
             <div className="flex justify-between border-t border-zinc-200 pt-1 font-semibold"><dt>{translate("Total")}</dt><dd className="tabular-nums">{fmtMoney(inv.grand_total)}</dd></div>
           </dl>
         </div>

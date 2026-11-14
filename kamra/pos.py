@@ -2065,10 +2065,12 @@ def bill_data(order: str):
 	split = loc.tax_split(pack, prop_doc, None)
 	return {
 		"tax_label": tax_label,
+		# no tax lines on a bill that carries no tax (a 0% outlet, a hotel in
+		# a country without hotel tax); both printers print what is here
 		"tax_parts": [
 			{"label": label.upper(), "rate": round(gst_rate * float(share), 4),
 			 "amount": round(gst_amount * float(share), 2)}
-			for label, share in split],
+			for label, share in split] if gst_amount else [],
 		"statutory": loc.invoice_print_block(pack, "POS Order", doc.name)
 		             if doc.paid else None,
 		"order": doc.name, "kot_no": doc.kot_no, "status": doc.status,

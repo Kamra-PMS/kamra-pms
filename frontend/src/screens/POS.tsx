@@ -1674,7 +1674,7 @@ export default function POS() {
           <div className="border-t border-zinc-200 bg-white px-3 py-2">
             <div className="mb-2 flex items-end justify-between gap-2">
               <div className="min-w-0 text-[11px] leading-snug text-zinc-500">
-                <div>{t("Subtotal")} {cur()}{inr2(taxable)} · {loc.tax_label} {cur()}{inr2(gstAmt)}</div>
+                <div>{t("Subtotal")} {cur()}{inr2(taxable)}{gstAmt ? <> · {loc.tax_label} {cur()}{inr2(gstAmt)}</> : null}</div>
                 {discOpen ? (
                   <span className="mt-1 flex items-center gap-1">
                     <input autoFocus className={inputCls + " !w-24 !py-0.5 text-xs"} placeholder={translate(`${cur()}`)} inputMode="numeric"

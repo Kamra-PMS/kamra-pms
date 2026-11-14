@@ -520,6 +520,8 @@ function Lines({ doc, showsMoney }: { doc: Doc; showsMoney: boolean }) {
   useUILanguage()
   const all = [...doc.lines, ...doc.complimentary]
   if (all.length === 0) return null
+  // no tax column on a document none of whose lines is taxed
+  const taxed = Number(doc.totals.tax) !== 0
   return (
     <Section title={(showsMoney ? translate("Charges") : translate("What's included"))}>
       <table className="w-full">
@@ -535,7 +537,7 @@ function Lines({ doc, showsMoney }: { doc: Doc; showsMoney: boolean }) {
             {showsMoney && (
               <>
                 <th className="py-1.5 text-right font-medium">{translate("Rate")}</th>
-                <th className="py-1.5 text-right font-medium">{taxLabel()}</th>
+                {taxed && <th className="py-1.5 text-right font-medium">{taxLabel()}</th>}
                 <th className="py-1.5 text-right font-medium">{translate("Amount")}</th>
               </>
             )}
@@ -572,9 +574,11 @@ function Lines({ doc, showsMoney }: { doc: Doc; showsMoney: boolean }) {
                   <td className="py-1.5 text-right tabular-nums">
                     {l.chargeable ? inrExact(l.rate) : "-"}
                   </td>
+                  {taxed && (
                   <td className="py-1.5 text-right tabular-nums text-zinc-500">
                     {l.chargeable ? `${l.gst_rate}%` : "-"}
                   </td>
+                  )}
                   <td className="py-1.5 text-right tabular-nums">
                     {l.chargeable ? inrExact(l.net_amount) : "-"}
                   </td>
@@ -693,7 +697,7 @@ function PackList({ doc }: { doc: Doc }) {
 function TaxBreakup({ doc }: { doc: Doc }) {
   const { lang, t } = useT()
   const rows = doc.tax_breakup ?? []
-  if (!rows.length) return null
+  if (!rows.length || Number(doc.totals.tax) === 0) return null
   const label = doc.header.tax_label ?? "GST"
   return (
     <Section title={translate("{v0} breakup", { v0: String(label) })}>
@@ -742,8 +746,8 @@ function Totals({ doc }: { doc: Doc }) {
       <div className="w-72 space-y-1">
         <Amt k="Subtotal" v={t.subtotal} />
         {t.discount > 0 && <Amt k="Discount" v={-t.discount} />}
-        <Amt k="Taxable" v={t.taxable} />
-        {t.tax_summary.map((s) => (
+        {Number(t.tax) !== 0 && <Amt k="Taxable" v={t.taxable} />}
+        {Number(t.tax) !== 0 && t.tax_summary.map((s) => (
           <Amt
             key={s.gst_rate}
             k={`${taxLabel()} @ ${s.gst_rate}%`}

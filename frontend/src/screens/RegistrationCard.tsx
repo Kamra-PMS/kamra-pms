@@ -5,7 +5,7 @@ import { Link, useParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import { Button } from "../components/ui/button"
-import { cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
+import { chargesTax, cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
@@ -718,7 +718,8 @@ export default function RegistrationCard() {
               />
               <Row
                 label={t("Stay total")}
-                value={`${cur()}${inr(r.rate_total)} (${t("incl. {tax}", { tax: d.tax_label ?? taxLabel() })})`}
+                value={`${cur()}${inr(r.rate_total)}` +
+                  (chargesTax() ? ` (${t("incl. {tax}", { tax: d.tax_label ?? taxLabel() })})` : "")}
               />
               <Row label={t("Advance paid")} value={`${cur()}${inr(r.advance_paid)}`} />
               <Row label={t("Source")} value={r.source} />

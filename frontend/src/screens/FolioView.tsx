@@ -374,6 +374,8 @@ export default function FolioView() {
   useEffect(() => {
     loadLocale().then((l) => setRates(l.tax_rates))
   }, [])
+  // a hotel that charges no tax (its only rate is 0%) gets no tax pickers
+  const noTax = rates.length === 1 && Number(rates[0]) === 0
   // the rate the server will put on this charge when it is food & beverage
   // (same words and rate as kamra.api._resolve_charge_gst); null = the
   // picked rate applies
@@ -1480,7 +1482,7 @@ export default function FolioView() {
                 value={charge.amount}
                 onChange={(e) => setCharge({ ...charge, amount: e.target.value })}
               />
-              {fixedRate !== null ? (
+              {noTax ? null : fixedRate !== null ? (
                 /* the server taxes food & beverage at the pack's F&B rate
                    whatever is picked (_resolve_charge_gst) - show that rate
                    rather than offer a choice that would be ignored */
@@ -1561,6 +1563,7 @@ export default function FolioView() {
                       setAllowance({ ...allowance, amount: e.target.value })
                     }
                   />
+                  {!noTax && (
                   <select
                     className={inputCls}
                     value={allowance.gst_rate}
@@ -1574,6 +1577,7 @@ export default function FolioView() {
                       </option>
                     ))}
                   </select>
+                  )}
                   {adjustCodes.length > 0 && (
                     <select
                       className={inputCls}
