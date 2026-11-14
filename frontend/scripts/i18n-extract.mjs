@@ -62,7 +62,9 @@ function add(key, source) {
   if (!key || !/[A-Za-z]/.test(key)) return
   if (key.includes("${")) return
   if (!keys.has(key)) keys.set(key, new Set())
-  keys.get(key).add(path.relative(src, source))
+  // POSIX separators: the catalog is committed, so a Windows build must not
+  // rewrite every row's sources with backslashes.
+  keys.get(key).add(path.relative(src, source).split(path.sep).join("/"))
 }
 
 for (const file of walk(src)) {
