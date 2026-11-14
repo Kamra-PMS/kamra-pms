@@ -194,6 +194,13 @@ MODULES: tuple[Module, ...] = (
 				       "room charge template on the WhatsApp connection. At most one message per bill "
 				       "every 10 minutes; room nights and company bills never send one."),
 			)),
+			Section("room_at_booking", "Room at booking",
+			        "Whether a new reservation takes a specific room straight away.", (
+				S("assign_room_on_booking", "Allow assigning room while making the reservation", "check", 1,
+				  hint="On: a room is assigned when the reservation is made. Off: the reservation holds a "
+				       "room type only, and the room is chosen at check-in. Walk-ins keep their room. "
+				       "Availability still counts the stay against the room type."),
+			)),
 			Section("holds", "Holds & selling", "", (
 				S("hold_minutes", "Hold unconfirmed bookings for", "number", 120, P, min=5, max=10080, unit="min"),
 				S("sell_message", "Sell message", "textarea", store=P,

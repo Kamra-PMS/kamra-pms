@@ -7006,6 +7006,12 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			date_diff(check_out_date, check_in_date),
 		).name
 
+	# a property can turn room assignment at booking off (Settings > Front Desk);
+	# a room the caller named (a walk-in) is still honoured
+	from kamra.settings import get_setting
+	if not get_setting(property, "assign_room_on_booking"):
+		assign_room = 0
+
 	if not room and int(assign_room) and not int(waitlist or 0):
 		# Serialize hybrid / SIU capacity before reading free rooms (ADR-007).
 		lock_sius_for_booking(property, room_type)
