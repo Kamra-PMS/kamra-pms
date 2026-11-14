@@ -31,8 +31,8 @@ upgrade-breaking changes (removed doctypes / API contracts).
 
 ### Upgrade notes
 
-* Run `bench migrate` (every update does): City Ledger Entry gains fields
-  for dated, confirmed and disputed company payments.
+* Run `bench migrate` (every update does): City Ledger Entry gains an
+  idempotency key, so a company payment posts once even if sent twice.
 * The night audit screen is now one page and the Ledgers screen is called
   Books check (same address, `/kamra/ledgers`). Nothing to set up.
 
