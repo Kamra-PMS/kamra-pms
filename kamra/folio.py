@@ -13,6 +13,25 @@ from frappe.utils import add_days, getdate, now_datetime, nowdate
 
 FNB_GST = 5.0  # F&B / meal-plan GST rate (India default; kept for imports)
 
+# SQL on `tabFolio Charge` fc: a line that is neither voided nor a void's
+# reversal. Both stay on the folio (void_charge) and net to zero, so sums
+# need nothing; counts of rooms sold and "already posted" checks do.
+NOT_VOIDED = """(IFNULL(fc.reversal_of, '') = '' AND NOT EXISTS (
+	SELECT 1 FROM `tabFolio Charge` v
+	WHERE v.parent = fc.parent AND v.reversal_of = fc.name))"""
+
+# SQL on `tabFolio Charge` fc: a line that stands on its own posting date,
+# for the day's statistics and audit checks. A line voided the same day
+# drops out with its reversal; one voided on a later business date still
+# stands on its own date, and its reversal is an adjustment on the void
+# date (OPERA dates the adjustment of a past revenue date on the current
+# business date: the closed day is not restated). A reversal line is never
+# a room sold. Sums need nothing: each day's lines add up on their own.
+STANDS_ON_ITS_DATE = """(IFNULL(fc.reversal_of, '') = '' AND NOT EXISTS (
+	SELECT 1 FROM `tabFolio Charge` v
+	WHERE v.parent = fc.parent AND v.reversal_of = fc.name
+	  AND v.posting_date = fc.posting_date))"""
+
 
 def _fnb_gst(property):
 	from kamra.localization import pack_for
@@ -329,7 +348,7 @@ def _charge_posted(reservation_name: str, charge_type: str, date: str) -> bool:
 		SELECT 1 FROM `tabFolio Charge` fc
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE fc.charge_type = %(ct)s AND fc.posting_date = %(date)s
-		  AND fc.auto_posted = 1
+		  AND fc.auto_posted = 1 AND """ + NOT_VOIDED + """
 		  AND (fc.reservation = %(res)s
 		       OR (IFNULL(fc.reservation, '') = '' AND f.reservation = %(res)s))
 		LIMIT 1
@@ -643,6 +662,7 @@ def charged_nights(reservation_name: str) -> dict:
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE (fc.reservation = %(res)s
 		       OR (IFNULL(fc.reservation, '') = '' AND f.reservation = %(res)s))
+		  AND """ + NOT_VOIDED + """
 		  AND (fc.charge_type IN ('Room', 'Room Levy')
 		       OR (fc.charge_type = %(adj)s AND fc.stay_date IS NOT NULL))
 		ORDER BY fc.charge_type = 'Room' DESC, fc.amount DESC
@@ -809,10 +829,13 @@ def move_charges(src, dst, charge_rows: list, reservation: str | None = None,
 		frappe.throw("Both folios must be open to transfer charges.")
 	from kamra.ledger import ledger_charges, reverse_ledger_for_charge
 	moved = []
+	voided = voided_rows(src)
 	for charge_row in charge_rows:
 		row = next((c for c in src.charges if c.name == charge_row), None)
 		if not row:
 			frappe.throw(f"Charge {charge_row} not found on {src.name}.")
+		if row.get("reversal_of") or voided.get(row.name):
+			frappe.throw("A voided line and its reversal stay on the folio they were posted to.")
 		if row.get("is_alcohol") and dst.folio_type in ("Company", "Group"):
 			frappe.throw("Alcohol cannot be billed to a company folio.")
 		dst.append("charges", {
@@ -865,6 +888,8 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	row = next((c for c in src.charges if c.name == charge_row), None)
 	if not row:
 		frappe.throw(f"Charge {charge_row} not found on {from_folio}.")
+	if row.get("reversal_of") or voided_rows(src).get(row.name):
+		frappe.throw("A voided line and its reversal can't be split.")
 	base = Decimal(str(row.amount or 0))
 	sign = -1 if credit else 1
 	base *= sign  # work on the line's size; the sign goes back on below
@@ -1167,10 +1192,13 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 
 
 def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
-	"""Remove a wrong charge line from an OPEN folio - the correction path for
-	a mis-posted bill (wrong amount, duplicate, wrong guest). The folio must
-	still be open; once it is invoiced, use an allowance instead so the ledger
-	stays honest. Every void is logged with who and why."""
+	"""Void a wrong charge line on an OPEN folio - the correction path for
+	a mis-posted bill (wrong amount, duplicate, wrong guest). The line stays
+	on the folio and a line of the opposite sign follows it (same charge
+	type and transaction code, the reason and who voided it), posted to the
+	ledger like any other line, so the pair nets to zero and the bill keeps
+	its trail (OPERA's adjustment). Once the folio is invoiced, use an
+	allowance instead. Every void is logged with who and why."""
 	folio = frappe.get_doc("Folio", folio_name)
 	if folio.status == "Closed":
 		frappe.throw("This folio is settled - post an allowance to reverse a "
@@ -1180,6 +1208,11 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 	row = next((c for c in folio.charges if c.name == charge_row), None)
 	if not row:
 		frappe.throw("That charge line is not on this folio.")
+	if row.get("reversal_of"):
+		frappe.throw("This line reverses a void and can't be voided. Post the "
+		             "charge again if it was right.")
+	if voided_rows(folio).get(row.name):
+		frappe.throw("This line is already voided.")
 	removed = {"charge_type": row.charge_type, "description": row.description,
 	           "amount": row.amount}
 	# no-op when the caller (api.void_folio_charge) already reversed it
@@ -1196,14 +1229,49 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 	folio.save(ignore_permissions=True)
 	from kamra.webhooks import emit_charge_voided
 	emit_charge_voided(folio, line, reason or "")
+	from kamra.business_date import get_business_date
+	from kamra.ledger import _original_charge_entry, code_for_charge_type, record_charge_ledger
+	folio.append("charges", {
+		"posting_date": get_business_date(folio.property),
+		"stay_date": row.get("stay_date"),
+		"charge_type": row.charge_type,
+		"transaction_code": row.get("transaction_code")
+		or code_for_charge_type(row.charge_type),
+		"reservation": row.get("reservation"),
+		"description": f"VOID: {row.description or row.charge_type} - {reason.strip()}"[:140],
+		"allowance_serial": row.get("allowance_serial"),
+		"qty": row.qty,
+		"rate": -float(row.rate or 0),
+		"amount": -float(row.amount or 0),
+		"gst_rate": row.gst_rate,
+		"auto_posted": row.auto_posted,
+		"is_alcohol": row.get("is_alcohol"),
+		"reversal_of": row.name,
+		"void_reason": reason.strip(),
+		"voided_by": frappe.session.user,
+	})
+	_recalculate(folio)
+	folio.save(ignore_permissions=True)
+	# the reversal line's own ledger entry, linked to the original's; a line
+	# that never reached the ledger (posted before it existed) takes none,
+	# so the folio and its ledger stay equal
+	first = _original_charge_entry(folio.name, row.name)
+	if first:
+		record_charge_ledger(folio, folio.charges[-1].as_dict(), reversal_of=first.name)
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("void_charge", "Folio", folio.name, folio.property,
-	           rationale=f"Removed {removed['charge_type']} "
+	           rationale=f"Voided {removed['charge_type']} "
 	                     f"{removed['description']} "
 	                     f"{money_text(folio.property, removed['amount'])}"
 	                     + (f" - {reason}" if reason else ""))
-	return {"folio": folio.name, "removed": removed, "balance": folio.balance}
+	return {"folio": folio.name, "removed": removed, "reversal": folio.charges[-1].name,
+	        "balance": folio.balance}
+
+
+def voided_rows(folio) -> dict:
+	"""{voided line: its reversal line} on a loaded folio."""
+	return {c.reversal_of: c.name for c in folio.charges if c.get("reversal_of")}
 
 
 def part_settle(folio_name: str) -> dict:

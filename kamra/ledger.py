@@ -1745,9 +1745,11 @@ def force_advance_bill(reservation: str, nights: str = "entire",
 		if getdate(day) >= co:
 			break
 		# Skip if already auto-posted for this date
+		from kamra.folio import voided_rows
+		voided = voided_rows(folio)
 		exists = any(
 			c.charge_type == "Room" and str(c.posting_date) == str(day)
-			and c.auto_posted
+			and c.auto_posted and not c.get("reversal_of") and c.name not in voided
 			for c in folio.charges
 		)
 		if exists:

@@ -356,6 +356,7 @@ def _expected_night(res, bd: str) -> tuple[float | None, str]:
 
 
 def check_rate_variance(property: str, bd: str) -> dict:
+	from kamra.folio import STANDS_ON_ITS_DATE
 	tol = flt(_setting(property, "na_rate_variance_tolerance"))
 	rows = frappe.db.sql(
 		"""
@@ -366,6 +367,7 @@ def check_rate_variance(property: str, bd: str) -> dict:
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE f.property = %(p)s AND fc.posting_date = %(d)s
 		  AND fc.charge_type = 'Room'
+		  AND """ + STANDS_ON_ITS_DATE + """
 		GROUP BY COALESCE(NULLIF(fc.reservation, ''), f.reservation)
 		""", {"p": property, "d": bd}, as_dict=True)
 	items = []
@@ -395,6 +397,7 @@ def check_rate_variance(property: str, bd: str) -> dict:
 
 
 def check_pos_room_postings(property: str, bd: str) -> dict:
+	from kamra.folio import STANDS_ON_ITS_DATE
 	rows = frappe.db.sql(
 		"""
 		SELECT fc.name AS row_name, fc.parent AS folio, fc.description,
@@ -405,6 +408,7 @@ def check_pos_room_postings(property: str, bd: str) -> dict:
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE f.property = %(p)s AND fc.posting_date = %(d)s
 		  AND fc.charge_type = 'Food & Beverage' AND fc.description LIKE '%%(%%)'
+		  AND """ + STANDS_ON_ITS_DATE + """
 		ORDER BY fc.creation
 		""", {"p": property, "d": bd}, as_dict=True)
 	refs = {}

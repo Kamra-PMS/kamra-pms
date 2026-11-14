@@ -6299,7 +6299,7 @@ Void item,Void item,إبطال الصنف,Anular artículo,screens/POS.tsx,,tran
 Void line,Void line,إبطال البند,Anular línea,,,translated
 Void reason,Void reason,سبب الإبطال,Motivo de anulación,screens/pos/VoidApproval.tsx,,translated
 Void this charge,Void this charge,إبطال هذه الرسوم,Anular este cargo,screens/FolioView.tsx,,translated
-Voided,Voided,مُبطل,Anulado,screens/pos/PosSidePanel.tsx,,translated
+Voided,Voided,مُبطل,Anulado,screens/FolioView.tsx; screens/pos/PosSidePanel.tsx,,translated
 Voided after the kitchen had it,Voided after the kitchen had it,أُبطل بعد وصوله إلى المطبخ,Anulado después de enviarse a cocina,screens/pos/PosSidePanel.tsx,,translated
 Voided lines (,Voided lines (,البنود الملغاة (,Líneas anuladas (,screens/PosDashboard.tsx,,translated
 Voids & allowances,Voids & allowances,الإلغاءات والخصومات,Anulaciones y bonificaciones,,,translated

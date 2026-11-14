@@ -1696,7 +1696,7 @@
         "kamra.api.void_folio_charge"
        ]
       },
-      "description": "Remove a wrong charge line from an open folio (the bill-correction\npath). PIN-guarded like other money actions for humans; agents are\naccountable through the action log. Posts a ledger reversal.",
+      "description": "Remove a wrong charge line from an open folio (the bill-correction\npath): the line stays and a signed reversal line with the reason and\nuser follows it (folio.void_charge). PIN-guarded like other money\nactions for humans; agents are accountable through the action log.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"folio\": \"FOLIO-2026-00001\",\n  \"charge_row\": \"<charge_row>\",\n  \"reason\": \"\"\n}",

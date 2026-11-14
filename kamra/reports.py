@@ -11,6 +11,7 @@ import frappe
 from frappe.utils import add_days, getdate, nowdate
 
 from kamra.authz import require_roles
+from kamra.folio import STANDS_ON_ITS_DATE
 
 
 def _out_of_order(property: str, date: str, open_date: bool) -> int:
@@ -31,7 +32,7 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 	row = frappe.db.sql(
 		"""
 		SELECT
-		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room'
+		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' AND """ + STANDS_ON_ITS_DATE + """
 		        THEN COALESCE(fc.reservation, f.reservation) END) AS rooms_sold,
 		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room', 'Rate Adjustment')
 		        THEN fc.amount ELSE 0 END), 0) AS room_revenue,
@@ -272,7 +273,7 @@ def range_stats(property: str, start, end, total_rooms: int) -> dict:
 	row = frappe.db.sql(
 		"""
 		SELECT
-		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' THEN CONCAT(
+		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' AND """ + STANDS_ON_ITS_DATE + """ THEN CONCAT(
 		        COALESCE(fc.reservation, f.reservation), '|', fc.posting_date) END)
 		        AS rooms_sold,
 		  COALESCE(SUM(CASE WHEN fc.charge_type = 'Room'
@@ -338,11 +339,12 @@ def budget_vs_actual(property: str, period: str | None = None):
 	agg = frappe.db.sql(
 		"""
 		SELECT
-		  COUNT(DISTINCT CASE WHEN fc.charge_type='Room'
+		  COUNT(DISTINCT CASE WHEN fc.charge_type='Room' AND """ + STANDS_ON_ITS_DATE + """
 		        THEN CONCAT(COALESCE(fc.reservation,f.reservation),'|',fc.posting_date) END) AS rooms_sold,
 		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room','Rate Adjustment')
 		                    THEN fc.amount ELSE 0 END),0) AS room_revenue,
-		  MAX(CASE WHEN fc.charge_type='Room' THEN fc.posting_date END) AS posted_through
+		  MAX(CASE WHEN fc.charge_type='Room' AND """ + STANDS_ON_ITS_DATE + """
+		      THEN fc.posting_date END) AS posted_through
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent=f.name
 		WHERE f.property=%(p)s AND fc.posting_date>=%(s)s AND fc.posting_date<%(n)s
 		""",
@@ -370,6 +372,7 @@ def budget_vs_actual(property: str, period: str | None = None):
 		       COUNT(DISTINCT fc.posting_date)
 		FROM `tabFolio Charge` fc JOIN `tabFolio` f ON fc.parent=f.name
 		WHERE f.property=%(p)s AND fc.charge_type='Room'
+		  AND """ + STANDS_ON_ITS_DATE + """
 		  AND fc.posting_date>=%(s)s AND fc.posting_date<%(e)s
 		GROUP BY res
 		""",

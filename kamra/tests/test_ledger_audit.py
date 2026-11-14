@@ -131,9 +131,9 @@ class LedgerAuditTestCase(AuditTestCase):
 		self.assertAlmostEqual(by["Guest"]["debit"], 590, places=2)
 		self.assertAlmostEqual(by["Guest"]["credit"], 590, places=2)
 		self.assert_ledger_matches_folio()
-		# a second reversal of the same line is refused
-		self.assertIsNone(ledger.reverse_ledger_for_charge(
-			PROP_A, self.folio, row, "again"))
+		# a second void of the same line is refused
+		with self.assertRaisesRegex(frappe.ValidationError, "already voided"):
+			api.void_folio_charge(self.folio, row, reason="UT again")
 
 	def test_refund_of_an_over_collected_advance(self):
 		self.charge(500)

@@ -27,6 +27,7 @@ import frappe
 from frappe.utils import add_days, date_diff, flt, getdate
 
 from kamra.authz import require_roles
+from kamra.folio import NOT_VOIDED, STANDS_ON_ITS_DATE
 
 FOLIO_SKIP = ("Opening Balance", "Room Levy")
 FNB_TYPES = ("Food & Beverage",)
@@ -37,7 +38,7 @@ def _folio(property: str, start, end) -> dict:
 	row = frappe.db.sql(
 		"""
 		SELECT
-		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' THEN
+		  COUNT(DISTINCT CASE WHEN fc.charge_type = 'Room' AND """ + STANDS_ON_ITS_DATE + """ THEN
 		        CONCAT(COALESCE(fc.reservation, f.reservation), fc.posting_date) END)
 		        AS room_nights,
 		  COALESCE(SUM(CASE WHEN fc.charge_type IN ('Room', 'Discount')
@@ -105,14 +106,15 @@ def _outlets(property: str, start, end) -> list[dict]:
 		  AND COALESCE(o.business_date, DATE(o.creation)) BETWEEN %(s)s AND %(e)s
 		GROUP BY o.name
 		""", {"p": property, "s": start, "e": end}, as_dict=True)
-	# a bill charged to a room is revenue only while its charge is on a
-	# folio: a void at the desk removes the line (a transfer keeps the order
+	# a bill charged to a room is revenue only while its charge stands on a
+	# folio: a void at the desk reverses the line (a transfer keeps the order
 	# number in it) but leaves the order Delivered, so it counted as sold
 	to_room = [r.bill for r in rows if not r.paid]
 	on_folio = {o for (o,) in frappe.db.sql(
 		"""SELECT o.name FROM `tabPOS Order` o WHERE o.name IN %(b)s AND EXISTS (
-		       SELECT 1 FROM `tabFolio Charge` c WHERE c.parenttype = 'Folio'
-		         AND c.description LIKE CONCAT('%%(', o.name, ')%%'))""",
+		       SELECT 1 FROM `tabFolio Charge` fc WHERE fc.parenttype = 'Folio'
+		         AND fc.description LIKE CONCAT('%%(', o.name, ')%%')
+		         AND """ + NOT_VOIDED + """)""",
 		{"b": tuple(to_room)})} if to_room else set()
 	out: dict[str, dict] = {}
 	for r in rows:
