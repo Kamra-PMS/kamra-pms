@@ -29,6 +29,13 @@ upgrade-breaking changes (removed doctypes / API contracts).
 ## [2.7.10](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.9...v2.7.10) (2026-11-14)
 
 
+### Upgrade notes
+
+* Run `bench migrate` (every update does): City Ledger Entry gains fields
+  for dated, confirmed and disputed company payments.
+* The night audit screen is now one page and the Ledgers screen is called
+  Books check (same address, `/kamra/ledgers`). Nothing to set up.
+
 ### Features
 
 * **apps:** a manifest can keep its app out of the switcher ([4e07d68](https://github.com/Kamra-PMS/kamra-pms/commit/4e07d6827e0fcec35d45b64fc2d506e29efd6e2e))
