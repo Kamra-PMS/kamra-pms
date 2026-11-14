@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Columns3, Download } from "lucide-react"
 import { Button } from "./button"
 import { t as translate, useUILanguage } from "../../lib/i18n"
+import { downloadCsv } from "../../lib/csv"
 
 export type Column<R> = {
   key: string
@@ -56,11 +57,6 @@ function raw<R>(c: Column<R>, row: R): string | number | null | undefined {
   return typeof v === "number" || typeof v === "string" ? v : v == null ? null : String(v)
 }
 
-function csvCell(v: string | number | null | undefined): string {
-  const s = v == null ? "" : String(v)
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-}
-
 /** A table every list in Kamra can share: centred headers, click a header
  *  to sort, choose the columns, export what is shown to CSV, and page
  *  through long lists. */
@@ -97,16 +93,8 @@ export function DataTable<R>({ id, columns, rows, rowKey, onRowClick, exportName
     setHidden(next)
     save(id, next)
   }
-  const exportCsv = () => {
-    const lines = [shown.map((c) => csvCell(c.label)).join(",")]
-    for (const r of sorted) lines.push(shown.map((c) => csvCell(raw(c, r))).join(","))
-    const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" })
-    const a = document.createElement("a")
-    a.href = URL.createObjectURL(blob)
-    a.download = `${exportName || id}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
+  const exportCsv = () =>
+    downloadCsv(exportName || id, shown.map((c) => c.label), sorted.map((r) => shown.map((c) => raw(c, r))))
   const alignCls = (c: Column<R>) =>
     c.align === "right" ? "text-right tabular-nums" : c.align === "center" ? "text-center" : "text-left"
 

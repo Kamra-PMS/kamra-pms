@@ -26,6 +26,7 @@ import ImageField from "./ImageField"
 import { fmtAmount } from "../lib/money"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
+import { downloadCsv } from "../lib/csv"
 
 const BACKDATE_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
 
@@ -588,20 +589,11 @@ export function ResourceScreen({
       limit: 2000,
     })
     const cols = visibleCols
-    const esc = (v: unknown) => {
-      const t = String(v ?? "")
-      return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
-    }
-    const csv = [
-      cols.map((c) => esc(c.label)).join(","),
-      ...all.map((r) => cols.map((c) => esc(r[c.field])).join(",")),
-    ].join("\n")
-    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" })
-    const a = document.createElement("a")
-    a.href = URL.createObjectURL(blob)
-    a.download = `${config.doctype.toLowerCase().replace(/ /g, "-")}-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
+    downloadCsv(
+      `${config.doctype.toLowerCase().replace(/ /g, "-")}-${new Date().toISOString().slice(0, 10)}`,
+      cols.map((c) => c.label),
+      all.map((r) => cols.map((c) => r[c.field] as string | number | null)),
+    )
   }
 
   // load link options and menu master lists once per screen

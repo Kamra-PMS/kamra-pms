@@ -3,7 +3,7 @@
     exactly what was printed that night. One report at a time with Print /
     Download PDF (the browser's Save as PDF), or Print all as one A4 run. */
 
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowLeft, Download, Printer } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { auditPack, rebuildAuditPack, type Pack, type PackResponse } from "../lib/eod"
@@ -14,6 +14,7 @@ import { Badge } from "../components/ui/badge"
 import { cur, instantLabel, moneyLocale } from "../lib/money"
 import { useT, t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
+import { downloadCsv } from "../lib/csv"
 
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -33,6 +34,10 @@ export const fmtDay = (d: unknown) =>
       })
     : "-"
 
+/** Inside an audit pack report every table offers CSV, named after the
+ *  report and its business date. */
+const PackExport = createContext<string | null>(null)
+
 export interface Col {
   key: string
   label: string
@@ -46,14 +51,19 @@ export function DataTable({
   empty,
   total,
   dense,
+  exportName,
 }: {
   cols: Col[]
   rows: any[]
   empty?: string
   total?: Record<string, ReactNode>
   dense?: boolean
+  /** Shows an Export CSV button; the file gets this name. */
+  exportName?: string
 }) {
   const { t } = useT()
+  const packName = useContext(PackExport)
+  exportName = exportName ?? packName ?? undefined
   const cell = (c: Col, r: any) => {
     if (c.render) return c.render(r)
     const v = r?.[c.key]
@@ -63,8 +73,22 @@ export function DataTable({
     return String(v)
   }
   const right = (c: Col) => (c.kind === "money" || c.kind === "num" ? "text-end tabular-nums" : "")
+  // the file carries the raw figures, not the formatted cells
+  const exportCsv = () =>
+    downloadCsv(exportName!, cols.map((c) => t(c.label)), rows.map((r) => cols.map((c) => {
+      const v = r?.[c.key]
+      return typeof v === "number" || typeof v === "string" ? v : v == null ? null : String(v)
+    })))
   return (
     <div className="overflow-x-auto print:overflow-visible">
+      {exportName && rows.length > 0 && (
+        <div className="mb-1 flex justify-end print:hidden">
+          <Button variant="ghost" className="h-7 px-2 text-xs" onClick={exportCsv}>
+            <Download className="size-3.5" aria-hidden />
+            {t("Export CSV")}
+          </Button>
+        </div>
+      )}
       {/* table-fixed squeezes every column to a sliver on a phone; scroll instead */}
       <table className={cn("w-full min-w-[32rem] table-fixed text-sm print:min-w-0", dense && "text-xs")}>
         <thead>
@@ -684,7 +708,9 @@ function ReportSheet({ p, report, first }: { p: Pack; report: (typeof REPORTS)[n
           <div>{t("Printed from the audit pack of {when}", { when: String(p.generated_at || "").slice(0, 16) })}</div>
         </div>
       </div>
-      <Body p={p} />
+      <PackExport.Provider value={`${report.key}-${String(p.business_date || "").slice(0, 10)}`}>
+        <Body p={p} />
+      </PackExport.Provider>
     </section>
   )
 }
