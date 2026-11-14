@@ -9351,6 +9351,31 @@ def t361():
 	assert len(room_availability(room, days=90)["cells"]) == 31  # capped
 
 
+@check("reverse check-in: same business day, nothing on the bill - back to arrival, room Dirty; a charge or the audit refuses")
+def t393():
+	from kamra import api
+	today = nowdate()
+	saved = frappe.db.get_value("Property", P, "business_date")
+	frappe.db.set_value("Property", P, "business_date", today)
+	try:
+		room = _ci_room("R393")
+		res = _res(_guest("Eval Reverse CI", "+91 70039 30001"), today,
+		           add_days(today, 2), room=room)
+		api.check_in(res.name)
+		out = api.reverse_check_in(res.name, "eval wrong guest")
+		assert out["status"] == "Confirmed", out
+		assert frappe.db.get_value("Room", room, ["occupancy_status", "housekeeping_status"]) \
+			== ("Vacant", "Dirty"), frappe.db.get_value("Room", room, ["occupancy_status", "housekeeping_status"])
+		# in again, then a charge on the bill refuses it
+		api.check_in(res.name)
+		folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
+		api.add_folio_charge(folio, "Laundry", "eval laundry", 300)
+		_refused(api.reverse_check_in, res.name, "eval again", contains="on the bill")
+		assert frappe.db.get_value("Reservation", res.name, "status") == "Checked In"
+	finally:
+		frappe.db.set_value("Property", P, "business_date", saved)
+
+
 @check("room history: who stayed (revenue), who cleaned and inspected it, tickets, status changes and moves in")
 def t362():
 	from kamra import api
@@ -11357,7 +11382,7 @@ def execute():
 		           t90, t91, t92, t93, t94, t95, t392, t96, t97, t98, t100, t101, t102,
 		           t394,
 		           t103, t104, t110, t111, t112, t113, t114, t115, t120, t121, t140, t141,
-		           t142, t143, t150, t151, t152, t153, t170, t171, t172, t173, t174, t176,
+		           t142, t143, t150, t151, t152, t153, t170, t171, t172, t173, t174, t176, t393,
 		           t177, t178, t179, t160, t161, t162, t163, t164, t165, t166, t167, t130,
 		           t131, t132, t133, t134, t135, t136, t137, t138, t139, t180, t181, t182,
 		           t183, t184, t185, t186, t190, t191, t192, t193, t194,
