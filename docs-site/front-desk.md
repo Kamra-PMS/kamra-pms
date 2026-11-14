@@ -100,7 +100,7 @@ Today looks the way it always has (Open tasks starts hidden).
 Check-in is a short list of steps, one screen each, in the order your
 property set. The same steps open from every **Check in** button: the
 arrival on **Today**, the booking under **Reservations**, a stay on the
-**Tape Chart**, an arrival in **End of Day**, and a walk-in.
+**Tape Chart**, an arrival in **Night Audit**, and a walk-in.
 
 1. On **Today**, find the guest under **Arrivals** and click **Check in**.
 2. Work through the steps at the top of the panel. Each step says what to

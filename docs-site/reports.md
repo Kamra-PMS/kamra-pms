@@ -166,7 +166,7 @@ don't change.
 - **Next 7 days**: occupancy on the books for the coming week.
 
 Press **Print** for a paper copy. **Cashier shift report** and
-**Ledgers** at the top open the cashier and ledger screens (see
+**Books check** at the top open the cashier and ledger screens (see
 [Billing](/billing#count-the-drawer-and-close-the-till)). Finance and Hotel
 Admin users also get **Voids & Allowances**, the list of every void,
 allowance and cancelled invoice (see
@@ -182,12 +182,12 @@ month to date with your targets: **Room Revenue**, **Occupancy %**, **ADR
 / ARR** and **RevPAR**, each with the variance and how much of the target
 you have reached.
 
-"Actual" counts room nights posted to folios, and End of Day posts each
+"Actual" counts room nights posted to folios, and the night audit posts each
 night, so tonight counts after tonight's audit. Occupancy and RevPAR are
 worked out over the days of the month that have passed up to the business
 date, not the whole month, so they compare fairly with a monthly target.
 The note under the table says how many room nights are posted and over
-how many days. If sold nights are still waiting for End of Day, it says
+how many days. If sold nights are still waiting for the night audit, it says
 how many, in amber.
 
 ![Budget vs Actual for the month: actual month to date, target, variance and attainment for room revenue, occupancy, ADR and RevPAR, with the note on posted and not-yet-posted room nights below](/img/reports/budget-vs-actual.png)

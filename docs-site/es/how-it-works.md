@@ -136,8 +136,8 @@ sequenceDiagram
 5. **Alojados**: cargos a la habitación desde el punto de venta, lavandería,
    solicitudes, cambio de habitación, cargos por llegada anticipada o salida
    tardía como políticas en el código.
-6. **Auditoría nocturna**: Cierre del día (asistente manual o programado a
-   las 03:00): registra las noches de habitación, las no presentaciones y
+6. **Auditoría nocturna**: una sola página a mano, o programada a
+   las 03:00: registra las noches de habitación, las no presentaciones y
    las retenciones por llegada tardía, avanza la fecha operativa y guarda
    el paquete de auditoría.
 7. **Salida**: todas las cuentas liquidadas (o reglas de liquidación
@@ -154,7 +154,7 @@ tanto la interfaz como las herramientas MCP visibles:
 | Recepción | Hoy, entrada/salida, calendario, sin reserva previa, ficha de registro | [Recepción](/es/front-desk) |
 | Reservas | Reservas, grupos, bloqueos, lista de espera, central de reservas | [Reservas](/es/reservations) |
 | Facturación | Folios, pagos, cuentas por cobrar, cajero, facturas | [Facturación](/es/billing) |
-| Auditoría nocturna | Cierre del día, fecha operativa, no presentación | [Auditoría nocturna](/es/night-audit) |
+| Auditoría nocturna | Auditoría nocturna, fecha operativa, no presentación | [Auditoría nocturna](/es/night-audit) |
 | Limpieza | Panel de habitaciones, aplicación `/hk`, lavandería, objetos perdidos | [Limpieza](/es/housekeeping) |
 | Operaciones | Solicitudes de huéspedes / solicitudes con SLA | [Solicitudes de huéspedes](/es/operations) |
 | Alimentos y bebidas | Punto de venta, comandas (KOT), pantalla de cocina | [Alimentos y bebidas](/es/fnb) |

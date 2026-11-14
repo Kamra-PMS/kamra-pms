@@ -13723,7 +13723,7 @@
       "description": "The drill-down under a ledger card: every folio with a balance in that\nledger as of the date (guest, booking, status, company), biggest first.\nFor AR the company the bill is billed to comes with it.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"ledger\": \"<ledger>\",\n  \"business_date\": \"2026-08-01\",\n  \"limit\": 200\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"ledger\": \"<ledger>\",\n  \"business_date\": \"2026-08-01\",\n  \"limit\": 2000\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -15096,6 +15096,43 @@
        ]
       },
       "description": "Every AR account at the property with its contact and position - the\nreceivables list. Aging and balance come from city_ledger_aging so the\ntwo screens always agree.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "guests_owing",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.guests_owing",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.guests_owing"
+       ]
+      },
+      "description": "Guest bills still owed after the stay ended: departed, no-show or\ncancelled with a balance (a no-show fee, a bill left open).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **513 endpoints**, generated from the source
+the UI and the AI use. **514 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -5533,7 +5533,7 @@ For AR the company the bill is billed to comes with it.
 | `property` | yes |  |
 | `ledger` | yes |  |
 | `business_date` | no | `None` |
-| `limit` | no | `200` |
+| `limit` | no | `2000` |
 
 ### `kamra.ledger.journal_by_transaction_code`
 
@@ -6046,6 +6046,17 @@ recipients it goes to the company's billing contact email.
 Every AR account at the property with its contact and position - the
 receivables list. Aging and balance come from city_ledger_aging so the
 two screens always agree.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.receivables.guests_owing`
+
+**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+
+Guest bills still owed after the stay ended: departed, no-show or
+cancelled with a balance (a no-show fee, a bill left open).
 
 | Param | Required | Default |
 | --- | --- | --- |

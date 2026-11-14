@@ -89,7 +89,7 @@ Only the new lines go to the kitchen.
 deciding. It stays in **Open bills → Open, not sent to kitchen**, with how
 long it has waited. After 15 minutes (change it in **Settings → F&B**) the
 bill turns red on the till and a red dot shows on **Orders**, so a
-forgotten order gets sent or cancelled. End of Day lists it as *open, not
+forgotten order gets sent or cancelled. Night Audit lists it as *open, not
 sent to kitchen*.
 
 ## The table map

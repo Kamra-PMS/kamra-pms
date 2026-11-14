@@ -51,13 +51,14 @@ necesitan un motivo.
 
 ## Auditoría nocturna
 
-El asistente de **Cierre del día** revisa las llegadas, las salidas, las
-cuentas abiertas del restaurante y las cajas, le permite confirmar o
-corregir cada una, y después registra las noches, aplica la política de no
-presentación y guarda un paquete de auditoría con los informes del día.
-También se ejecuta solo a las 03:00.
+La **Auditoría nocturna** es una sola página: muestra solo lo que le
+necesita (salidas que siguen alojadas, cuentas abiertas del restaurante,
+cajas abiertas y lo demás), le permite corregir cada punto o autorizar una
+excepción, y después registra las noches, aplica la política de no
+presentación y guarda un paquete de auditoría con los informes del día,
+cada tabla exportable a CSV. También se ejecuta sola a las 03:00.
 
-![El asistente de Cierre del día](/img/night-audit/wizard.png)
+![Cierre del día: la fecha y el botón Cerrar arriba, cuántas comprobaciones están listas y lo que le necesita](/img/night-audit/close-day.png)
 
 [Guía de auditoría nocturna →](/es/night-audit)
 

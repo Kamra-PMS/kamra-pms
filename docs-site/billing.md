@@ -39,7 +39,7 @@ from the reservation.
 guest, invoice or folio, filter by status, or set **Closed from** and
 **To** to see the bills closed in a date range.
 
-![The Billing screen: the Night audit card with its recent runs and Open End of Day, the Cashier till card, and the list of folios with their balances](/img/billing/billing-list.png)
+![The Billing screen: the Night Audit card with its recent runs and Open Night Audit, the Guests left owing list, the Cashier till card, and the list of folios with their balances](/img/billing/billing-list.png)
 
 A folio opens by itself at check-in. Until it is settled it is a
 **Provisional Bill** with no invoice number.
@@ -537,7 +537,7 @@ the drawer, with the session's recent transactions below.
 2. Press **Close session**.
 
 Finance and the night auditor can also close someone else's till, in the
-**Cashier closure** step of [End of Day](/night-audit). **Finance →
+open tills check of [Night Audit](/night-audit). **Finance →
 Sessions** lists every session with its float, expected and counted cash
 and variance.
 
@@ -766,7 +766,7 @@ it says no gateway is configured, set one up under **Settings → Payments**.
 **"Alcohol cannot be billed to a company folio."** Post or move the drink
 to the guest's own folio.
 
-**The Ledgers banner says "Ledger differs from folios".** The banner
+**Books check says "folios do not match the ledger".** The line
 checks that the Guest and Deposit ledgers agree with every folio's
 balance, for the current business date. When they don't, it lists each
 folio that differs, with the folio balance and the ledger balance: a
@@ -791,4 +791,4 @@ The REST endpoints live in `kamra.api` (folios, payments, deposits),
 **Voids & Allowances** screen reads `kamra.reports.void_allowance_report`
 (Finance, Hotel Admin). See the
 [API reference](/api-reference#core-front-desk-folios-guests-rooms) and
-[Ledgers](/api-reference#ledgers-trial-balance-city-ledger-ar-fx-desk).
+[Books check](/api-reference#ledgers-trial-balance-city-ledger-ar-fx-desk).

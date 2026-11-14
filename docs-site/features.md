@@ -45,12 +45,13 @@ allowances always need a reason.
 
 ## Night audit
 
-The **End of Day** wizard checks arrivals, departures, open restaurant
-bills and tills, lets you acknowledge or fix each one, then posts the
-nights, applies the no-show policy and saves an audit pack of the day's
-reports. It also runs by itself at 03:00.
+**Night Audit** is one page: it shows only what needs you (departures still
+in house, open restaurant bills, open tills and the rest), lets you fix or
+override each one, then posts the nights, applies the no-show policy and
+saves an audit pack of the day's reports, every table exportable to CSV.
+It also runs by itself at 03:00.
 
-![The End of Day wizard](/img/night-audit/wizard.png)
+![Closing the day: the date and the Close button at the top, how many checks are clear, and what needs you](/img/night-audit/close-day.png)
 
 [Night audit guide →](/night-audit)
 
