@@ -1,9 +1,9 @@
-/*  Manage End of Day: one card per property the user can reach, with the
+/*  Night Audit: one card per property the user can reach, with the
     business date, the property's clock and what is still open, then the
-    history of past audits (searchable by date) with their audit packs. */
+    history of past audits (a date range, exportable) with their packs. */
 
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { CheckCircle2, FileText, MoonStar, Search, TriangleAlert } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { CheckCircle2, Download, FileText, MoonStar, TriangleAlert } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { getCurrentProperty } from "../lib/api"
 import {
@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { fmtDay } from "./AuditPack"
+import { downloadCsv } from "../lib/csv"
 
 
 const amount = (n: unknown) =>
@@ -45,7 +46,8 @@ export default function EndOfDay() {
   const [err, setErr] = useState<string | null>(null)
   const [histProp, setHistProp] = useState(getCurrentProperty())
   const [history, setHistory] = useState<RunRow[]>([])
-  const [q, setQ] = useState("")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
   const [busy, setBusy] = useState<string | null>(null)
 
   const loadOverview = useCallback(() => {
@@ -63,8 +65,8 @@ export default function EndOfDay() {
 
   const loadHistory = useCallback(() => {
     if (!histProp) return
-    auditHistory(histProp).then(setHistory).catch(() => setHistory([]))
-  }, [histProp])
+    auditHistory(histProp, from || to ? 400 : 60, from, to).then(setHistory).catch(() => setHistory([]))
+  }, [histProp, from, to])
   useEffect(loadHistory, [loadHistory])
 
   async function recover(property: string) {
@@ -95,20 +97,22 @@ export default function EndOfDay() {
     }
   }
 
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    if (!s) return history
-    return history.filter((r) =>
-      `${r.business_date} ${fmtDay(r.business_date)} ${r.status} ${r.name}`.toLowerCase().includes(s),
+  const filtered = history
+
+  const exportHistory = () =>
+    downloadCsv(
+      `night-audits-${histProp}${from ? `-from-${from}` : ""}${to ? `-to-${to}` : ""}`,
+      [t("Business date"), t("Status"), t("Trigger"), t("Room nights"), t("Posted {cur}", { cur: cur() }), t("No-shows"), t("Exceptions")],
+      filtered.map((r) => [r.business_date, r.status, r.run_trigger || "Manual", r.room_charges_posted,
+        r.amount_posted, r.no_shows_flagged, r.exceptions || 0]),
     )
-  }, [history, q])
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-zinc-900">{t("Manage Night Audit")}</h1>
+        <h1 className="text-lg font-semibold text-zinc-900">{t("Night Audit")}</h1>
         <p className="text-sm text-zinc-500">
-          {t("End of Day is the night audit. Close each property's business date, then print the audit pack. The automatic audit runs the same steps at each property's set time (Settings, Front Desk); find every run and its pack under Audit history.")}
+          {t("Close each property's business date. The automatic audit does the same at the time set in Settings, Front Desk.")}
         </p>
       </div>
       {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>}
@@ -162,7 +166,7 @@ export default function EndOfDay() {
               )}
               {r.held && !r.stuck_date && (
                 <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                  {t("The scheduled audit held the date. Clear the blockers and run End of Day, then print the pack.")}
+                  {t("The scheduled audit held the date. Clear the blockers, then close the day.")}
                 </p>
               )}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -177,7 +181,7 @@ export default function EndOfDay() {
                     ? t("Last closed {d}", { d: fmtDay(r.last_run.business_date) })
                     : t("No audit run yet")}
                   {r.last_run?.run_trigger ? ` · ${t(r.last_run.run_trigger)}` : ""}
-                  {r.draft_step ? ` · ${t("in progress at step {n}", { n: r.draft_step })}` : ""}
+
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {r.stuck_date && (
@@ -200,7 +204,7 @@ export default function EndOfDay() {
                   )}
                   <Button onClick={() => navigate(`/end-of-day/${encodeURIComponent(r.property)}`)}>
                     <MoonStar className="size-4" aria-hidden />
-                    {r.draft_step ? t("Continue") : r.held ? t("Run End of Day") : t("Manage")}
+                    {r.blockers || r.held ? t("Review and close") : t("Close the day")}
                   </Button>
                 </div>
               </div>
@@ -225,15 +229,20 @@ export default function EndOfDay() {
                 ))}
               </select>
             )}
-            <label className="relative">
-              <Search className="pointer-events-none absolute start-2 top-2 size-4 text-zinc-400" aria-hidden />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={t("Search by date")}
-                className="w-48 rounded-lg border border-zinc-300 bg-white py-1.5 ps-8 pe-2 text-sm"
-              />
+            <label className="flex items-center gap-1 text-sm text-zinc-500">
+              {t("From")}
+              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
+                className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm" />
             </label>
+            <label className="flex items-center gap-1 text-sm text-zinc-500">
+              {t("To")}
+              <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
+                className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm" />
+            </label>
+            <Button variant="outline" disabled={!filtered.length} onClick={exportHistory}>
+              <Download className="size-4" aria-hidden />
+              {t("Export CSV")}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="pt-2">

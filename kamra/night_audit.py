@@ -981,12 +981,17 @@ def recover_stuck_business_date(property: str):
 
 @frappe.whitelist()
 @require_roles(*AUDIT_ROLES)
-def night_audit_history(property: str, limit: int = 20):
-	"""Recent Night Audit Runs of a property, newest first, with whether
-	each has a saved audit pack."""
+def night_audit_history(property: str, limit: int = 20, from_date: str | None = None,
+                        to_date: str | None = None):
+	"""Night Audit Runs of a property, newest first, with whether each has a
+	saved audit pack. from_date/to_date narrow it to business dates in that
+	range (a year of nights fits under the cap)."""
 	from kamra.crs import assert_property_access
 	assert_property_access(property)
-	limit = max(1, min(cint(limit) or 20, 100))
+	limit = max(1, min(cint(limit) or 20, 400))
+	args = {"p": property, "n": limit,
+	        "f": getdate(from_date) if from_date else None,
+	        "t": getdate(to_date) if to_date else None}
 	rows = frappe.db.sql(
 		"""
 		SELECT name, business_date, status, room_charges_posted, amount_posted,
@@ -995,9 +1000,11 @@ def night_audit_history(property: str, limit: int = 20):
 		       (IFNULL(report_pack, '') != '') AS has_pack
 		FROM `tabNight Audit Run`
 		WHERE property = %(p)s AND status != 'Draft'
+		  AND (%(f)s IS NULL OR business_date >= %(f)s)
+		  AND (%(t)s IS NULL OR business_date <= %(t)s)
 		ORDER BY business_date DESC, creation DESC
 		LIMIT %(n)s
-		""", {"p": property, "n": limit}, as_dict=True)
+		""", args, as_dict=True)
 	for r in rows:
 		r["business_date"] = _iso(r.business_date)
 		r["creation"] = _iso(r.creation)

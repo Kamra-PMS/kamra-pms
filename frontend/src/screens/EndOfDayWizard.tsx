@@ -1,24 +1,19 @@
-/*  End of Day - <property> - <business date>.
+/*  Night Audit - <property> - <business date>.
 
-    The night auditor's wizard, in Opera's order: steps on the left with a
-    status each, the active step's panel on the right (a message, the
-    actions, and the step's list as a searchable, sortable table). Blocking
-    steps cannot be passed without resolving them or acknowledging them with
-    a reason; warning steps have Continue. Progress lives on the draft Night
-    Audit Run, so reopening resumes where the auditor left off. Step 10 runs
-    the same audit the scheduler runs; 11 prints the saved audit pack. */
+    One page: what needs the auditor first (blocking checks, then warnings),
+    each with its list and the buttons that clear it; information-only and
+    clear checks folded away; notes; and one Close button. The close runs
+    the same audit the scheduler runs, and the saved audit pack opens on the
+    same page. Acknowledgements live on the draft Night Audit Run, so
+    reopening keeps them. */
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   ArrowLeft,
-  ArrowRight,
-  Ban,
   CheckCircle2,
-  Circle,
   Loader2,
   MoonStar,
   Search,
-  SkipForward,
   Sparkles,
   TriangleAlert,
 } from "lucide-react"
@@ -36,8 +31,6 @@ import {
   type Check,
   type CheckItem,
   type EodState,
-  type Step,
-  type StepStatus,
 } from "../lib/eod"
 import { serverError } from "../lib/resource"
 import { useCashierAuth } from "../lib/cashierAuth"
@@ -272,14 +265,6 @@ const POSTING_COLS: Column[] = [
 
 /* --- small pieces ----------------------------------------------------------- */
 
-const ICON: Record<StepStatus, ReactNode> = {
-  pending: <Circle className="size-4 text-zinc-300" aria-hidden />,
-  running: <Loader2 className="size-4 animate-spin text-brand-600" aria-hidden />,
-  done: <CheckCircle2 className="size-4 text-emerald-600" aria-hidden />,
-  blocked: <Ban className="size-4 text-rose-600" aria-hidden />,
-  skipped: <SkipForward className="size-4 text-zinc-400" aria-hidden />,
-}
-
 function Message({ tone, children }: { tone: "info" | "warn" | "block" | "ok"; children: ReactNode }) {
   const cls = {
     info: "border-zinc-200 bg-zinc-50 text-zinc-700",
@@ -410,17 +395,9 @@ function CheckBlock({
   )
 }
 
-/* --- the wizard -------------------------------------------------------------- */
+/* --- the page ---------------------------------------------------------------- */
 
-const MESSAGES: Record<string, string> = {
-  arrivals: "Arrivals not checked in exist. Review them or Continue - the no-show policy applies as shown.",
-  departures: "Departures not checked out exist. Check them out or extend the stay.",
-  folios: "In-house folios over the high-balance threshold and balances left on departed stays.",
-  outlets: "Open outlet bills block the audit. Eyeball every bill posted to a room for a wrong-room posting.",
-  rates: "Room nights posted off the booked rate, and rooms at zero rate.",
-  rooms: "Rooms where the front office and the room board disagree.",
-  cashiers: "Every till for the business date should be counted and closed.",
-}
+const SEVERITY_ORDER: Record<string, number> = { block: 0, warn: 1, info: 2 }
 
 export default function EndOfDayWizard() {
   const { t } = useT()
@@ -432,50 +409,37 @@ export default function EndOfDayWizard() {
   const { withPin } = useCashierAuth()
 
   const [state, setState] = useState<EodState | null>(null)
-  const [active, setActive] = useState(1)
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [notes, setNotes] = useState("")
   const [counted, setCounted] = useState<Record<string, string>>({})
   const [runOut, setRunOut] = useState<Record<string, unknown> | null>(null)
 
-  const load = useCallback(
-    async (jump?: number) => {
-      try {
-        const s = await eodSession(property, audit)
-        setState(s)
-        setNotes(s.notes ?? "")
-        setActive((cur) => jump ?? (cur > 1 && !s.ran ? cur : s.current_step || 1))
-        setErr(null)
-      } catch (e) {
-        setErr(serverError(e))
-      }
-    },
-    [property, audit],
-  )
+  const load = useCallback(async () => {
+    try {
+      const s = await eodSession(property, audit)
+      setState(s)
+      setNotes(s.notes ?? "")
+      setErr(null)
+    } catch (e) {
+      setErr(serverError(e))
+    }
+  }, [property, audit])
   useEffect(() => {
-    void load(undefined)
+    void load()
   }, [load])
-
-  const checks = useMemo(() => {
-    const m: Record<string, Check> = {}
-    for (const c of state?.checks ?? []) m[c.key] = c
-    return m
-  }, [state])
-
-  const step: Step | undefined = state?.steps.find((s) => s.index === active)
 
   // check-out opens the guided check-out sheet (settle, credit, invoice)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [markingNoShow, setMarkingNoShow] = useState<string | null>(null)
 
-  async function act(label: string, fn: () => Promise<unknown>, reload = true) {
+  async function act(label: string, fn: () => Promise<unknown>) {
     setBusy(label)
     setErr(null)
     try {
       await fn()
-      if (reload) await load(active)
+      await load()
     } catch (e) {
       setErr(serverError(e))
     } finally {
@@ -486,24 +450,9 @@ export default function EndOfDayWizard() {
   const ack = (key: string, reason: string) =>
     act("ack", () => eodAcknowledge(property, key, reason))
 
-  async function go(to: number, markDone = true) {
-    if (!state || !step) return
-    if (state.ran) {
-      setActive(to)
-      return
-    }
-    await act(
-      "next",
-      async () => {
-        await eodProgress(property, {
-          step: Math.min(to, 10),
-          ...(markDone && to > active && step.index <= 9 ? { key: step.key, status: "done" } : {}),
-          ...(step.key === "notes" ? { notes } : {}),
-        })
-      },
-      true,
-    )
-    setActive(to)
+  const saveNotes = () => {
+    if (!state || state.ran || notes === (state.notes ?? "")) return
+    void eodProgress(property, { notes }).catch((e) => setErr(serverError(e)))
   }
 
   async function runAudit() {
@@ -515,13 +464,11 @@ export default function EndOfDayWizard() {
       setRunOut(out as Record<string, unknown>)
       if (out.audit) {
         setParams({ audit: out.audit })
-        const s = await eodSession(property, out.audit)
-        setState(s)
-        setActive(11)
+        setState(await eodSession(property, out.audit))
       }
     } catch (e) {
       setErr(serverError(e))
-      await load(10)
+      await load()
     } finally {
       setBusy(null)
     }
@@ -529,150 +476,114 @@ export default function EndOfDayWizard() {
 
   if (err && !state)
     return <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(err)}</p>
-  if (!state || !step) return <p className="text-sm text-zinc-400">{t("Preparing End of Day…")}</p>
+  if (!state) return <p className="text-sm text-zinc-400">{t("Preparing the night audit…")}</p>
 
-  const blockedSteps = state.steps.filter((s) => s.index < 10 && s.status === "blocked")
-  const stepStatus = (s: Step): StepStatus =>
-    busy === "run" && s.key === "run" ? "running" : s.status
+  const acked = new Set(state.acknowledgements.map((a) => a.key))
+  const open = (c: Check) => c.count > 0 && c.severity !== "info" && !acked.has(c.key)
+  const blockers = state.checks.filter((c) => c.severity === "block" && c.count > 0 && !acked.has(c.key))
+  const needs = state.checks
+    .filter(open)
+    .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3))
+  const counted_ = state.checks.filter((c) => c.severity !== "info")
+  const clearN = counted_.length - needs.length
+  const clear = state.checks.filter((c) => c.count === 0)
+  const fyi = state.checks.filter((c) => c.count > 0 && (c.severity === "info" || acked.has(c.key)))
+  const ahead = state.business_date > state.server_date
+  const canClose = !state.ran && !ahead && !state.stuck_date && blockers.length === 0
 
-  /* the active step's panel */
-  let panel: ReactNode = null
-  const k = step.key
-  if (k === "prepare") {
-    const bd = state.business_date
-    const ahead = bd > state.server_date
-    panel = (
-      <div className="space-y-4">
-        <Message tone={ahead ? "block" : "info"}>
-          {ahead
-            ? t("The business date is ahead of the server date. The audit for it can run once that day has started.")
-            : t("The pre-checks are loaded. Work through the steps, then post room and tax to close the business date.")}
-        </Message>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <div className="rounded-lg border border-zinc-200 px-3 py-2">
-            <div className="text-[11px] uppercase tracking-wider text-zinc-500">{t("Business date")}</div>
-            <div className="mt-0.5 text-lg font-semibold">{fmtDay(bd)}</div>
-          </div>
-          <div className="rounded-lg border border-zinc-200 px-3 py-2">
-            <div className="text-[11px] uppercase tracking-wider text-zinc-500">{t("Server date")}</div>
-            <div className="mt-0.5 text-lg font-semibold">{fmtDay(state.server_date)}</div>
-            <div className="text-xs text-zinc-500">{state.server_time.slice(11)}</div>
-          </div>
-          <div className="rounded-lg border border-zinc-200 px-3 py-2">
-            <div className="text-[11px] uppercase tracking-wider text-zinc-500">{t("Property time")}</div>
-            <div className="mt-0.5 text-lg font-semibold">{state.property_now.slice(11)}</div>
-            <div className="text-xs text-zinc-500">{fmtDay(state.property_now)}</div>
-          </div>
-        </div>
-        <DataTable
-          cols={[
-            { key: "title", label: "Check", render: (c) => t(c.title) },
-            { key: "severity", label: "Severity", render: (c) => t(c.severity) },
-            { key: "count", label: "Items", kind: "num" },
-          ]}
-          rows={state.checks}
-        />
-        <p className="text-xs text-zinc-500">
-          {t("Scheduled audit when checks block: {mode}", { mode: t(state.auto_audit_with_blockers) })}
-        </p>
-      </div>
-    )
-  } else if (k === "arrivals") {
-    const c = checks.arrivals_pending
-    panel = (
-      <CheckBlock check={c} state={state} onAck={ack}>
-        <StepTable
-          cols={[
-            ...ARRIVAL_COLS,
-            { key: "eta", label: "ETA" },
-            {
-              key: "policy",
-              label: "No-show policy",
-              render: (r) => (
-                <span className={r.outcome === "no_show" ? "text-rose-700" : "text-amber-700"}>
-                  {t(String(r.policy))}
-                  {Number(r.fee_amount) > 0 ? ` · ${cur()}${money(r.fee_amount)}` : ""}
-                </span>
-              ),
-            },
-          ]}
-          rows={c?.items ?? []}
-          empty={translate("Every arrival is checked in.")}
-          actions={(r) =>
-            state.ran ? null : (
-              <div className="flex flex-col items-stretch gap-1">
-                <Button variant="outline" className="h-7 px-2 text-xs"
-                  onClick={() => setCheckingIn(String(r.reservation))}>
-                  {t("Check in")}
-                </Button>
-                <Button variant="ghost" className="h-7 px-2 text-xs text-rose-700" disabled={!!busy}
-                  onClick={() => setMarkingNoShow(String(r.reservation))}>
-                  {t("Mark no-show")}
+  /* each check's list and its buttons, under the check's heading */
+  const body = (c: Check): ReactNode => {
+    const items = c.items ?? []
+    switch (c.key) {
+      case "arrivals_pending":
+        return (
+          <StepTable
+            cols={[
+              ...ARRIVAL_COLS,
+              { key: "eta", label: "ETA" },
+              {
+                key: "policy",
+                label: "No-show policy",
+                render: (r) => (
+                  <span className={r.outcome === "no_show" ? "text-rose-700" : "text-amber-700"}>
+                    {t(String(r.policy))}
+                    {Number(r.fee_amount) > 0 ? ` · ${cur()}${money(r.fee_amount)}` : ""}
+                  </span>
+                ),
+              },
+            ]}
+            rows={items}
+            empty={translate("Every arrival is checked in.")}
+            actions={(r) =>
+              state.ran ? null : (
+                <div className="flex flex-col items-stretch gap-1">
+                  <Button variant="outline" className="h-7 px-2 text-xs"
+                    onClick={() => setCheckingIn(String(r.reservation))}>
+                    {t("Check in")}
+                  </Button>
+                  <Button variant="ghost" className="h-7 px-2 text-xs text-rose-700" disabled={!!busy}
+                    onClick={() => setMarkingNoShow(String(r.reservation))}>
+                    {t("Mark no-show")}
+                  </Button>
+                </div>
+              )
+            }
+          />
+        )
+      case "departures_due": {
+        const zero = items.filter((r) => Math.abs(Number(r.balance ?? 0)) < 0.01)
+        return (
+          <>
+            {!state.ran && zero.length > 0 && (
+              <div className="flex justify-end">
+                <Button variant="outline" disabled={!!busy}
+                  onClick={() =>
+                    act("bulk", () =>
+                      withPin(async (pin) => {
+                        for (const r of zero)
+                          await call("kamra.ledger.quick_checkout", { reservation: r.reservation, pin })
+                      }),
+                    )
+                  }>
+                  {t("Quick check out {n} zero-balance departures", { n: zero.length })}
                 </Button>
               </div>
-            )
-          }
-        />
-      </CheckBlock>
-    )
-  } else if (k === "departures") {
-    const c = checks.departures_due
-    const zero = (c?.items ?? []).filter((r) => Math.abs(Number(r.balance ?? 0)) < 0.01)
-    panel = (
-      <CheckBlock check={c} state={state} onAck={ack}>
-        {!state.ran && zero.length > 0 && (
-          <div className="flex justify-end">
-            <Button variant="outline" disabled={!!busy}
-              onClick={() =>
-                act("bulk", async () => {
-                  await withPin(async (pin) => {
-                    for (const r of zero)
-                      await call("kamra.ledger.quick_checkout", { reservation: r.reservation, pin })
-                  })
-                })
-              }>
-              {t("Quick check out {n} zero-balance departures", { n: zero.length })}
-            </Button>
-          </div>
-        )}
-        <StepTable
-          cols={STAY_COLS}
-          rows={c?.items ?? []}
-          empty={translate("Every departure is checked out.")}
-          actions={(r) =>
-            state.ran ? null : (
-              <div className="flex justify-end gap-1">
-                <Button variant="outline" className="h-7 px-2 text-xs" disabled={!!busy}
-                  onClick={() => setCheckingOut(String(r.reservation))}>
-                  {t("Check out")}
-                </Button>
-                <Button variant="ghost" className="h-7 px-2 text-xs"
-                  onClick={() => navigate(`/reservations?q=${encodeURIComponent(String(r.reservation))}`)}>
-                  {t("Extend stay")}
-                </Button>
-              </div>
-            )
-          }
-        />
-      </CheckBlock>
-    )
-  } else if (k === "folios") {
-    const hb = checks.high_balance
-    panel = (
-      <div className="space-y-6">
-        <CheckBlock check={hb} state={state} onAck={ack}>
-          {hb && !hb.enabled && <p className="text-xs text-zinc-500">{t("The high-balance check is off (threshold 0).")}</p>}
-          {hb?.enabled && (
-            <p className="text-xs text-zinc-500">
-              {t("Threshold {cur}{n}", { cur: cur(), n: money(hb.threshold) })}
-            </p>
-          )}
-          <StepTable cols={FOLIO_COLS} rows={hb?.items ?? []} empty={translate("No in-house folio is over the threshold.")} />
-        </CheckBlock>
-        <CheckBlock check={checks.departed_balances} state={state} onAck={ack}>
-          <StepTable cols={FOLIO_COLS} rows={checks.departed_balances?.items ?? []} empty={translate("No balances on departed stays.")} />
-        </CheckBlock>
-        <CheckBlock check={checks.credit_limit} state={state} onAck={ack}>
+            )}
+            <StepTable
+              cols={STAY_COLS}
+              rows={items}
+              empty={translate("Every departure is checked out.")}
+              actions={(r) =>
+                state.ran ? null : (
+                  <div className="flex justify-end gap-1">
+                    <Button variant="outline" className="h-7 px-2 text-xs" disabled={!!busy}
+                      onClick={() => setCheckingOut(String(r.reservation))}>
+                      {t("Check out")}
+                    </Button>
+                    <Button variant="ghost" className="h-7 px-2 text-xs"
+                      onClick={() => navigate(`/reservations?q=${encodeURIComponent(String(r.reservation))}`)}>
+                      {t("Extend stay")}
+                    </Button>
+                  </div>
+                )
+              }
+            />
+          </>
+        )
+      }
+      case "high_balance":
+        return (
+          <>
+            {c.enabled && (
+              <p className="text-xs text-zinc-500">{t("Threshold {cur}{n}", { cur: cur(), n: money(c.threshold) })}</p>
+            )}
+            <StepTable cols={FOLIO_COLS} rows={items} empty={translate("No in-house folio is over the threshold.")} />
+          </>
+        )
+      case "departed_balances":
+        return <StepTable cols={FOLIO_COLS} rows={items} empty={translate("No balances on departed stays.")} />
+      case "credit_limit":
+        return (
           <StepTable
             cols={[
               { key: "company", label: "Company" },
@@ -682,11 +593,12 @@ export default function EndOfDayWizard() {
               { key: "exposure", label: "Exposure", kind: "money" },
               { key: "over_by", label: "Over by", kind: "money" },
             ]}
-            rows={checks.credit_limit?.items ?? []}
+            rows={items}
             empty={translate("No company is over its credit limit.")}
           />
-        </CheckBlock>
-        <CheckBlock check={checks.overdue_ar} state={state} onAck={ack}>
+        )
+      case "overdue_ar":
+        return (
           <StepTable
             cols={[
               { key: "company", label: "Company" },
@@ -698,42 +610,34 @@ export default function EndOfDayWizard() {
               { key: "d90p", label: "90+", kind: "money" },
               { key: "overdue", label: "Overdue", kind: "money" },
             ]}
-            rows={checks.overdue_ar?.items ?? []}
+            rows={items}
             empty={translate("No company has an overdue bill.")}
           />
-        </CheckBlock>
-      </div>
-    )
-  } else if (k === "outlets") {
-    const pr = checks.pos_room_postings
-    panel = (
-      <div className="space-y-6">
-        <CheckBlock check={checks.open_pos_bills} state={state} onAck={ack}>
-          <StepTable cols={POS_COLS} rows={checks.open_pos_bills?.items ?? []} empty={translate("Every outlet bill is settled.")} />
-        </CheckBlock>
-        <CheckBlock check={pr} state={state} onAck={ack}>
-          {(pr?.mismatches ?? 0) > 0 && (
-            <Message tone="warn">{t("{n} bill(s) were taken for a different room than the folio they posted to.", { n: pr!.mismatches! })}</Message>
-          )}
-          <StepTable
-            cols={[
-              ...POSTING_COLS,
-              {
-                key: "room_mismatch",
-                label: "Check",
-                render: (r) => (r.room_mismatch ? <Badge tone="rose">{t("Wrong room?")}</Badge> : ""),
-              },
-            ]}
-            rows={pr?.items ?? []}
-            empty={translate("No outlet bills were posted to rooms today.")}
-          />
-        </CheckBlock>
-      </div>
-    )
-  } else if (k === "rates") {
-    panel = (
-      <div className="space-y-6">
-        <CheckBlock check={checks.rate_variance} state={state} onAck={ack}>
+        )
+      case "open_pos_bills":
+        return <StepTable cols={POS_COLS} rows={items} empty={translate("Every outlet bill is settled.")} />
+      case "pos_room_postings":
+        return (
+          <>
+            {(c.mismatches ?? 0) > 0 && (
+              <Message tone="warn">{t("{n} bill(s) were taken for a different room than the folio they posted to.", { n: c.mismatches! })}</Message>
+            )}
+            <StepTable
+              cols={[
+                ...POSTING_COLS,
+                {
+                  key: "room_mismatch",
+                  label: "Check",
+                  render: (r) => (r.room_mismatch ? <Badge tone="rose">{t("Wrong room?")}</Badge> : ""),
+                },
+              ]}
+              rows={items}
+              empty={translate("No outlet bills were posted to rooms today.")}
+            />
+          </>
+        )
+      case "rate_variance":
+        return (
           <StepTable
             cols={[
               { key: "room", label: "Room" },
@@ -745,19 +649,14 @@ export default function EndOfDayWizard() {
               { key: "manual", label: "Manual", render: (r) => (r.manual ? t("Yes") : t("No")) },
               { key: "folio", label: "Folio", render: folioLink },
             ]}
-            rows={checks.rate_variance?.items ?? []}
+            rows={items}
             empty={translate("Every room night posted so far matches its booked rate.")}
           />
-        </CheckBlock>
-        <CheckBlock check={checks.zero_rate} state={state} onAck={ack}>
-          <StepTable cols={STAY_COLS} rows={checks.zero_rate?.items ?? []} empty={translate("No zero-rate rooms tonight.")} />
-        </CheckBlock>
-      </div>
-    )
-  } else if (k === "rooms") {
-    panel = (
-      <div className="space-y-6">
-        <CheckBlock check={checks.room_status} state={state} onAck={ack}>
+        )
+      case "zero_rate":
+        return <StepTable cols={STAY_COLS} rows={items} empty={translate("No zero-rate rooms tonight.")} />
+      case "room_status":
+        return (
           <StepTable
             cols={[
               { key: "room", label: "Room" },
@@ -767,11 +666,12 @@ export default function EndOfDayWizard() {
               { key: "guest_name", label: "Guest" },
               { key: "issue", label: "Issue", render: (r) => t(String(r.issue)) },
             ]}
-            rows={checks.room_status?.items ?? []}
+            rows={items}
             empty={translate("Front office and the room board agree.")}
           />
-        </CheckBlock>
-        <CheckBlock check={checks.vacant_rooms} state={state} onAck={ack}>
+        )
+      case "vacant_rooms":
+        return (
           <StepTable
             cols={[
               { key: "room", label: "Room" },
@@ -779,18 +679,13 @@ export default function EndOfDayWizard() {
               { key: "housekeeping_status", label: "Housekeeping" },
               { key: "room_board", label: "Room board" },
             ]}
-            rows={checks.vacant_rooms?.items ?? []}
+            rows={items}
             empty={translate("No vacant rooms.")}
           />
-        </CheckBlock>
-      </div>
-    )
-  } else if (k === "cashiers") {
-    const c = checks.open_tills
-    const blind = !!state.blind_count
-    panel = (
-      <div className="space-y-6">
-        <CheckBlock check={c} state={state} onAck={ack}>
+        )
+      case "open_tills": {
+        const blind = !!state.blind_count
+        return (
           <StepTable
             cols={[
               { key: "cashier_id", label: "Cashier", render: (r) => String(r.cashier_id || r.user_name || r.user) },
@@ -800,20 +695,21 @@ export default function EndOfDayWizard() {
               { key: "transactions", label: "Transactions", kind: "num" },
               ...(blind ? [] : [{ key: "cash_taken", label: "Cash taken", kind: "money" as const }]),
             ]}
-            rows={c?.items ?? []}
+            rows={items}
             empty={translate("Every till is closed.")}
             actions={(r) =>
               state.ran ? null : (
                 <div className="flex items-center justify-end gap-1">
                   <input
                     inputMode="decimal"
+                    aria-label={t("Counted cash")}
                     placeholder={t("Counted cash")}
                     value={counted[String(r.session)] ?? ""}
                     onChange={(e) => setCounted((m) => ({ ...m, [String(r.session)]: e.target.value }))}
                     className="h-7 w-28 rounded-md border border-zinc-300 px-2 text-xs"
                   />
                   <Button variant="outline" className="h-7 px-2 text-xs"
-                    disabled={!!busy || counted[String(r.session)] === undefined || counted[String(r.session)] === ""}
+                    disabled={!!busy || !counted[String(r.session)]}
                     onClick={() =>
                       act("close", () =>
                         withPin((pin) =>
@@ -826,125 +722,48 @@ export default function EndOfDayWizard() {
                         ),
                       )
                     }>
-                    {t("Close session")}
+                    {t("Count and close")}
                   </Button>
                 </div>
               )
             }
           />
-        </CheckBlock>
-        <div>
-          <h3 className="mb-2 text-sm font-semibold text-zinc-800">{t("Expected vs counted")}</h3>
-          <DataTable
-            dense
-            cols={blind ? sessionCols().filter((x) => x.key !== "expected_cash" && x.key !== "variance") : sessionCols()}
-            rows={state.sessions}
-            empty={translate("No cashier sessions on this business date.")}
-          />
-        </div>
-      </div>
-    )
-  } else if (k === "notes") {
-    panel = (
-      <div className="space-y-2">
-        <Message tone="info">{t("Notes for the manager - weather, incidents, hand-over. They print on the audit pack.")}</Message>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={8}
-          disabled={state.ran}
-          className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm"
-          placeholder={t("Weather or notes")}
-        />
-        {!state.ran && (
-          <div className="flex justify-end">
-            <Button variant="outline" disabled={!!busy} onClick={() => act("notes", () => eodProgress(property, { notes }))}>
-              {t("Save notes")}
-            </Button>
-          </div>
-        )}
-      </div>
-    )
-  } else if (k === "run") {
-    panel = (
-      <div className="space-y-4">
-        {state.ran ? (
-          <Message tone="ok">{t("Room and tax were posted and the business date rolled.")}</Message>
-        ) : blockedSteps.length ? (
-          <Message tone="block">
-            {t("Blocked: {steps}. Resolve or acknowledge them before posting room and tax.", {
-              steps: blockedSteps.map((s) => t(s.title)).join(", "),
-            })}
-          </Message>
-        ) : (
-          <Message tone="info">
-            {t("This posts tonight's room and tax for every in-house guest, applies the no-show policy, saves the audit pack and rolls the business date from {bd}. It cannot be undone.", {
-              bd: fmtDay(state.business_date),
-            })}
-          </Message>
-        )}
-        {state.acknowledgements.length > 0 && (
-          <DataTable
-            dense
-            cols={[
-              { key: "title", label: "Acknowledged check", render: (a) => t(a.title) },
-              { key: "count", label: "Items", kind: "num" },
-              { key: "by_name", label: "By", render: (a) => a.by_name || a.by },
-              { key: "at", label: "When", render: (a) => String(a.at).slice(0, 16) },
-              { key: "note", label: "Reason" },
-            ]}
-            rows={state.acknowledgements}
-          />
-        )}
-        {!state.ran && (
-          <Button disabled={!!busy || blockedSteps.length > 0} onClick={runAudit}>
-            {busy === "run" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <MoonStar className="size-4" aria-hidden />}
-            {busy === "run" ? t("Posting…") : t("Post room and tax and roll the business date")}
-          </Button>
-        )}
-      </div>
-    )
-  } else if (k === "reports") {
-    panel = state.ran ? <AuditPackView audit={state.audit} embedded /> : (
-      <Message tone="info">{t("The final reports are printed after room and tax are posted.")}</Message>
-    )
-  } else if (k === "finalize") {
-    const r = runOut
-    panel = state.ran ? (
-      <div className="space-y-3">
-        <Message tone="ok">
-          {t("End of Day for {bd} is complete.", { bd: fmtDay(state.business_date) })}
-        </Message>
-        {r && (
-          <p className="text-sm text-zinc-600">
-            {t("Posted {n} room nights ({amount}), {ns} no-shows. The business date is now {next}.", {
-              n: Number(r.room_charges_posted ?? 0),
-              amount: `${cur()}${money(r.amount_posted)}`,
-              ns: Number(r.no_shows_flagged ?? 0),
-              next: fmtDay(r.next_business_date),
-            })}
-          </p>
-        )}
-        <Button onClick={() => navigate("/end-of-day")}>{t("Done")}</Button>
-      </div>
-    ) : (
-      <Message tone="info">{t("Finish the steps above first.")}</Message>
-    )
+        )
+      }
+      default:
+        return items.length ? (
+          <StepTable cols={Object.keys(items[0]).slice(0, 6).map((key) => ({ key, label: key }))} rows={items} />
+        ) : null
+    }
   }
 
-  const canNext =
-    k !== "run" && k !== "finalize" && (state.ran ? active >= 11 : step.status !== "blocked")
-  const message = MESSAGES[k]
+  const checkCard = (c: Check) => (
+    <Card key={c.key} className="p-4">
+      <CheckBlock check={c} state={state} onAck={ack}>
+        {body(c)}
+      </CheckBlock>
+    </Card>
+  )
+
+  const tillsTable = state.sessions.length > 0 && (
+    <DataTable
+      dense
+      exportName={`tills-${state.business_date}`}
+      cols={state.blind_count ? sessionCols().filter((x) => x.key !== "expected_cash" && x.key !== "variance") : sessionCols()}
+      rows={state.sessions}
+      empty={translate("No cashier sessions on this business date.")}
+    />
+  )
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-6xl space-y-4">
       {markingNoShow && (
         <NoShowDialog
           reservation={markingNoShow}
           onClose={() => setMarkingNoShow(null)}
           onDone={() => {
             setMarkingNoShow(null)
-            void load(active)
+            void load()
           }}
         />
       )}
@@ -954,7 +773,7 @@ export default function EndOfDayWizard() {
           onClose={() => setCheckingIn(null)}
           onDone={() => {
             setCheckingIn(null)
-            void load(active)
+            void load()
           }}
         />
       )}
@@ -964,35 +783,54 @@ export default function EndOfDayWizard() {
           onClose={() => setCheckingOut(null)}
           onDone={() => {
             setCheckingOut(null)
-            void load(active)
+            void load()
           }}
           onOpenReservation={(name) => setCheckingOut(name)}
         />
       )}
-      <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
+
+      <div className="flex flex-wrap items-end justify-between gap-3 print:hidden">
         <div>
           <Link to="/end-of-day" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800">
             <ArrowLeft className="size-3.5" aria-hidden />
-            {t("Manage Night Audit")}
+            {t("Night Audit")}
           </Link>
-          <h1 className="text-lg font-semibold text-zinc-900">
-            {t("Night Audit")} - {state.property_name} - {fmtDay(state.business_date)}
+          <h1 className="text-xl font-semibold text-zinc-900">
+            {state.ran
+              ? t("{d} closed", { d: fmtDay(state.business_date) })
+              : t("Close {d}", { d: fmtDay(state.business_date) })}
           </h1>
+          <p className="text-sm text-zinc-500">
+            {state.property_name} · {t("property time {now}", { now: state.property_now.slice(11, 16) })}
+          </p>
         </div>
-        <Badge
-          tone={
-            state.stuck_date ? "rose" : state.ran ? "green" : blockedSteps.length ? "rose" : "brand"
-          }
-        >
-          {state.stuck_date
-            ? t("Date stuck")
-            : state.ran
-              ? t("Closed")
-              : blockedSteps.length
-                ? t("{n} blocker(s)", { n: blockedSteps.length })
-                : t("Ready")}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge tone={state.stuck_date ? "rose" : state.ran ? "green" : blockers.length ? "rose" : needs.length ? "amber" : "green"}>
+            {state.stuck_date ? (
+              t("Date stuck")
+            ) : state.ran ? (
+              t("Closed")
+            ) : needs.length ? (
+              <>
+                <TriangleAlert className="me-1 size-3" aria-hidden />
+                {t("{n} to look at", { n: needs.length })}
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="me-1 size-3" aria-hidden />
+                {t("Ready")}
+              </>
+            )}
+          </Badge>
+          {!state.ran && (
+            <Button disabled={!!busy || !canClose} onClick={runAudit}>
+              {busy === "run" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <MoonStar className="size-4" aria-hidden />}
+              {busy === "run" ? t("Posting…") : t("Close {d}", { d: fmtDay(state.business_date) })}
+            </Button>
+          )}
+        </div>
       </div>
+
       {state.stuck_date && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 print:hidden">
           <p>
@@ -1014,67 +852,114 @@ export default function EndOfDayWizard() {
           </Button>
         </div>
       )}
-      {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 print:hidden">{err}</p>}
-      <div className="grid gap-4 lg:grid-cols-[280px_1fr] print:block">
-        <Card className="h-fit p-2 print:hidden">
-          <ol>
-            {state.steps.map((s) => {
-              const reachable = state.ran || s.index <= 10
-              return (
-                <li key={s.key}>
-                  <button
-                    type="button"
-                    disabled={!reachable}
-                    onClick={() => setActive(s.index)}
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-start text-sm hover:bg-zinc-100 disabled:opacity-50",
-                      active === s.index && "bg-brand-50 font-medium text-brand-800",
-                    )}
-                  >
-                    {ICON[stepStatus(s)]}
-                    <span className="w-5 text-xs tabular-nums text-zinc-400">{s.index}</span>
-                    <span className="flex-1">{t(s.title)}</span>
-                    {s.count > 0 && s.index < 10 && (
-                      <span className={cn("text-xs tabular-nums", s.status === "blocked" ? "text-rose-600" : "text-zinc-400")}>
-                        {s.count}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              )
-            })}
-          </ol>
-        </Card>
-        <Card className="min-w-0 p-5 print:border-0 print:p-0 print:shadow-none">
-          <div className="mb-4 flex items-center gap-2 print:hidden">
-            {ICON[stepStatus(step)]}
-            <h2 className="text-base font-semibold text-zinc-900">
-              {step.index}. {t(step.title)}
-            </h2>
-          </div>
-          {message && step.count > 0 && (
-            <div className="mb-4 print:hidden">
-              <Message tone={step.status === "blocked" ? "block" : "warn"}>
-                {step.status === "blocked" && <TriangleAlert className="me-1 inline size-4" aria-hidden />}
-                {t(message)}
-              </Message>
+      {err && <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 print:hidden">{translate(err)}</p>}
+
+      {state.ran ? (
+        <>
+          <Message tone="ok">
+            {runOut
+              ? t("Posted {n} room nights ({amount}), {ns} no-shows. The business date is now {next}.", {
+                  n: Number(runOut.room_charges_posted ?? 0),
+                  amount: `${cur()}${money(runOut.amount_posted)}`,
+                  ns: Number(runOut.no_shows_flagged ?? 0),
+                  next: fmtDay(runOut.next_business_date),
+                })
+              : t("Room and tax were posted and the business date rolled.")}
+          </Message>
+          <AuditPackView audit={state.audit} embedded />
+        </>
+      ) : (
+        <>
+          <Card className="p-4 print:hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="font-medium text-zinc-800">
+                {t("{a} of {b} checks clear", { a: clearN, b: counted_.length })}
+              </span>
+              <span className="text-zinc-500">
+                {ahead
+                  ? t("The business date is ahead of the server date. The audit for it can run once that day has started.")
+                  : blockers.length
+                    ? t("Fix or override {n} blocking check(s) to close the day.", { n: blockers.length })
+                    : needs.length
+                      ? t("Warnings do not stop the close. Look them over first.")
+                      : t("Everything is clear. Closing posts room and tax for every in-house guest and rolls the date. It cannot be undone.")}
+              </span>
             </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100" aria-hidden>
+              <div className="h-2 bg-brand-600" style={{ width: `${counted_.length ? (clearN / counted_.length) * 100 : 100}%` }} />
+            </div>
+          </Card>
+
+          {needs.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-zinc-800">{t("Needs you")}</h2>
+              {needs.map(checkCard)}
+            </section>
           )}
-          {panel}
-          <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-4 print:hidden">
-            <Button variant="outline" disabled={active <= 1 || !!busy} onClick={() => setActive(active - 1)}>
-              <ArrowLeft className="size-4" aria-hidden />
-              {t("Back")}
-            </Button>
-            {canNext && (
-              <Button disabled={!!busy} onClick={() => go(active + 1)}>
-                {active === 1 ? t("Start") : t("Continue")}
-                <ArrowRight className="size-4" aria-hidden />
-              </Button>
+
+          {fyi.length > 0 && (
+            <details className="rounded-xl border border-zinc-200 bg-white p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-zinc-800">
+                {t("For information · {n}", { n: fyi.length })}
+              </summary>
+              <div className="mt-3 space-y-3">{fyi.map(checkCard)}</div>
+            </details>
+          )}
+
+          {clear.length > 0 && (
+            <details className="rounded-xl border border-zinc-200 bg-white p-4">
+              <summary className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-emerald-700">
+                <CheckCircle2 className="size-4" aria-hidden />
+                {t("All clear · {n}", { n: clear.length })}
+              </summary>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {clear.map((c) => (
+                  <li key={c.key} className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-800">{t(c.title)}</li>
+                ))}
+              </ul>
+            </details>
+          )}
+
+          {tillsTable && (
+            <details className="rounded-xl border border-zinc-200 bg-white p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-zinc-800">{t("Tills on this date: expected and counted")}</summary>
+              <div className="mt-3">{tillsTable}</div>
+            </details>
+          )}
+
+          <Card className="p-4">
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium text-zinc-800">{t("Notes for the manager")}</span>
+              <span className="mb-2 block text-xs text-zinc-500">{t("Weather, incidents, hand-over. They print on the audit pack.")}</span>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                onBlur={saveNotes}
+                rows={3}
+                className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm"
+              />
+            </label>
+            {state.acknowledgements.length > 0 && (
+              <div className="mt-3">
+                <DataTable
+                  dense
+                  cols={[
+                    { key: "title", label: "Overridden check", render: (a) => t(a.title) },
+                    { key: "count", label: "Items", kind: "num" },
+                    { key: "by_name", label: "By", render: (a) => a.by_name || a.by },
+                    { key: "at", label: "When", render: (a) => String(a.at).slice(0, 16) },
+                    { key: "note", label: "Reason" },
+                  ]}
+                  rows={state.acknowledgements}
+                />
+              </div>
             )}
-          </div>
-        </Card>
-      </div>
+            <p className="mt-3 text-xs text-zinc-500">
+              {t("Scheduled audit when checks block: {mode}", { mode: t(state.auto_audit_with_blockers) })}
+            </p>
+          </Card>
+        </>
+      )}
     </div>
   )
 }

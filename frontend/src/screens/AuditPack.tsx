@@ -836,7 +836,7 @@ export default function AuditPackScreen() {
       <div className="flex items-center justify-between print:hidden">
         <Link to="/end-of-day" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-800">
           <ArrowLeft className="size-4" aria-hidden />
-          {t("End of Day")}
+          {t("Night Audit")}
         </Link>
         <span className="text-xs text-zinc-400">{audit}</span>
       </div>
