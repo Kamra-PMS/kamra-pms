@@ -289,6 +289,8 @@ amount. The list shows each account's balance by age (not due, 1 to 30
 days late, 31 to 60, 61 to 90, 90+). **Columns** adds the contact, credit
 limit and more; **Export CSV** downloads what is shown.
 
+![Receivables: the five filters with their counts and amounts, and each company with its terms, balance by age, balance and last payment](/img/billing/receivables.png)
+
 **Work on several companies at once** (Finance and Hotel Admin): tick
 them (or **Select all**), then **Email statements**, **Send month-end
 bills** for the month you pick, or **Export selected**. Each email goes to
@@ -300,6 +302,8 @@ top; **Statement**, **Month-end bill** and **Account setup** are under
 **More**. Below the totals, a bar shows how old what the company owes is,
 and the tabs **Open bills**, **All bills**, **Payments** and **Account
 history** hold everything on the account.
+
+![A company's account: New invoice, Record payment and More at the top, the totals, the age of what is owed, and the open bills](/img/billing/receivables-account.png)
 
 - **Open an account** (Finance and Hotel Admin): press **New account**,
   pick the company, and set the **Account number**, **Credit limit**
@@ -671,6 +675,8 @@ business date:
   the other (see [Troubleshooting](#troubleshooting)).
 
 For an earlier **To** date it shows the balances only.
+
+![Books check: the line saying folios and ledgers agree, the four ledgers, and the journal by transaction code for the dates picked](/img/billing/books-check.png)
 
 Press **Who makes it up** on a ledger to list every folio with a balance
 in it, biggest first. The (i) on each ledger explains what it holds and

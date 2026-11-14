@@ -30,6 +30,8 @@ pending, open cashiers, open POS bills, and **Ready** or the number of
 blockers. Press **Close the day** (or **Review and close** when something
 blocks).
 
+![Night Audit: one card per property with arrivals and departures pending, open cashiers and open POS bills, and the audit history with From and To dates and Export CSV](/img/night-audit/manage.png)
+
 ## The close-the-day page
 
 One page shows everything for the business date:
@@ -45,6 +47,8 @@ One page shows everything for the business date:
 - **Tills on this date**: expected and counted cash for every session.
 - **Notes for the manager**: weather, incidents, hand-over. They save when
   you leave the box and print on the audit pack.
+
+![Closing the day: the date and the Close button at the top, how many checks are clear, and under Needs you the departures still in house with How to clear this and the list](/img/night-audit/close-day.png)
 
 What each check does when it finds something:
 
@@ -117,6 +121,8 @@ A cashier can also close their own till on **Finance → My Till**: see
    their amount, no-shows, and the new business date.
 3. The audit pack opens on the same page. Every table in it has **Export
    CSV**.
+
+![Closing the day: overriding the blockers with a reason, counting and closing the till, adding a note and pressing Close](/img/night-audit/run-close.gif)
 
 It cannot be undone. The audit closes only the property's current
 business date, and only once that day has started on the server: you
