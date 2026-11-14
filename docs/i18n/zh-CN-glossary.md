@@ -21,7 +21,8 @@
 | Dirty | 待清洁 | 客房清洁状态 |
 | Clean | 已清洁 | |
 | Inspected | 已检查 | 主管查房通过 |
-| Out of Order | 停用 | 维修/不可售 |
+| Out of Order | 维修房 | 维修中，不可售；与 Out of Service 区分 |
+| Out of Service | 暂停使用 | 临时不可售（非维修）；间夜同用“暂停使用” |
 | Housekeeping | 客房清洁 | 模块名；指团队时可写"客房部" |
 | Night Audit | 夜审 | 日结流程 |
 | Folio | 客账 | 一位客人的账单；不译作"账单"以免与 Invoice 混淆 |
@@ -51,7 +52,7 @@
 | Stay | 住店 | 一段住宿；"住宿"用于描述性文字 |
 | Rooming List | 分房单 | 团队分房 |
 | Group Booking | 团队预订 | |
-| Room Block | 预留房 | 团队锁房 |
+| Room Block | 封房 | 团队锁房；与 Blocked（已封锁）同族，不译作“预留房” |
 | Room Change | 换房 | |
 | Upgrade | 升级房型 | |
 | Day Use | 日用房 | 当日入住当日退房 |
@@ -101,6 +102,7 @@
 | Municipality Fee | 市政费 | 部分国家的地方税 |
 | GST | 商品及服务税（GST） | 印度税种，缩写保留 |
 | VAT | 增值税（VAT） | 缩写保留 |
+| Correct back-dated rates | 修正追溯价格 | 设置项名，不译作“倒签” |
 | Night Audit Blocker | 夜审阻断项 | 阻止日结的未处理事项 |
 
 ## 四、餐饮、宴会与运营
@@ -221,14 +223,21 @@
 ## 八、维护流程
 
 ```bash
+# 前端（在 frontend/ 下）
 cd frontend
 node scripts/i18n-extract.mjs          # 重建 catalog.csv（合并全部 locale）
 npm run i18n:coverage                  # 看每个语言的覆盖率
 node scripts/i18n-coverage.mjs --missing zh-CN   # 列出中文缺失的 key
 node scripts/i18n-import.mjs --lang zh-CN --column chinese   # 从 catalog 导入译文
+
+# 后端（在仓库根目录）
+python scripts/i18n/extract_backend_strings.py      # 提取 _() 与 doctype 标签
+python scripts/i18n/build_zh_csv.py                 # 复用 UI 译文，列出缺失
+python scripts/i18n/check_backend_translations.py   # 校验完整性、占位符、重复
 ```
 
-- 译文写进 `catalog.csv` 的 `chinese` 列，再用 `i18n-import` 生成 `zh-CN.json`，
+- 前端译文写进 `catalog.csv` 的 `chinese` 列，再用 `i18n-import` 生成 `zh-CN.json`，
   保证 catalog 与字典一致；直接改 JSON 也可以，但下一次 import 会以 catalog 为准。
-- 后端词条在 `kamra/translations/zh.csv`（`source,translation`），源字符串必须与
+- 后端译文以 `kamra/translations/zh.csv`（`source,translation`）为唯一真源，直接编辑它；
+  `scripts/i18n/backend-strings*.csv` 是可再生的工作文件，不入库。源字符串必须与
   代码里 `_("…")`/`frappe._("…")` 的英文逐字一致，`{0}` 占位符原样保留。

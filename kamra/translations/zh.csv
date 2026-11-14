@@ -424,7 +424,7 @@ Content,内容
 Contract Signed On,合同签署日期
 Copies,份数
 "Corporate stay for {0}, confirm which charges the company pays.",{0} 的企业住店，请确认哪些费用由公司承担。
-"Correcting charged nights is off. Choose Correct back-dated rates under Settings, Stay policies, Rate changes in house.",已关闭已入账房晚的更正。请在“设置 → 住店政策 → 在住房价变更”中启用“更正追溯房价”。
+"Correcting charged nights is off. Choose Correct back-dated rates under Settings, Stay policies, Rate changes in house.",已关闭已入账房晚的更正。请在“设置 → 住店政策 → 在住房价变更”中启用“修正追溯价格”。
 Corrects Line,更正行项
 Cost & Margin,成本与毛利
 Cost / Unit,单位成本
@@ -703,7 +703,7 @@ Grand Total,总计
 Grant Types,授权类型
 Green Room,绿色通道房
 Green Room / Change Room,绿色通道房 / 更衣室
-Green Room Block,绿色通道房预留
+Green Room Block,绿色通道房封房
 Green Room Complimentary,绿色通道房免单
 Green Room From,绿色通道房开始
 Green Room To,绿色通道房结束
@@ -1397,7 +1397,7 @@ Revoked On,撤销时间
 Room,客房
 Room Assigned At,分房时间
 Room Assigned By,分房人
-Room Block,预留房
+Room Block,封房
 Room Category,客房类别
 Room Charges Allowed,允许客房入账
 Room Charges Posted,已入账房费
@@ -2063,7 +2063,7 @@ this bill,本账单
 {0} is over this property's limit for one POS room charge ({1}). Settle it at the outlet or ask the front desk.,{0} 超过本酒店单笔餐饮入房限额（{1}）。请在营业点结账，或联系前台。
 {0} is sold out for {1}: {2} of {3} rooms sold and the overbooking allowance ({4}%) is used up.,{1} 的 {0} 已售罄：{3} 间中已售 {2} 间，且超订允许比例（{4}%）已用尽。
 {0} is sold out for {1}: {2} of {3} rooms sold and {4} held for group blocks until their cutoff.,{1} 的 {0} 已售罄：{3} 间中已售 {2} 间，另有 {4} 间为团队预留至截止时间。
-{0} is sold out for {1}: {2} of {3} sellable rooms sold ({4} out of order or blocked).,{1} 的 {0} 已售罄：{3} 间可售房中已售 {2} 间（{4} 间停用或锁定）。
+{0} is sold out for {1}: {2} of {3} sellable rooms sold ({4} out of order or blocked).,{1} 的 {0} 已售罄：{3} 间可售房中已售 {2} 间（{4} 间维修房或已封锁）。
 "{0} is {1}, not a pending request.",{0} 为 {1}，不是待处理的请求。
 {0} isn't a setting on this page.,{0} 不是本页的设置项。
 {0} key(s),{0} 张房卡
