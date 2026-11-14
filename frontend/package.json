@@ -10,6 +10,8 @@
     "i18n:extract": "node scripts/i18n-extract.mjs",
     "i18n:import": "node scripts/i18n-import.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",
+    "i18n:coverage": "node scripts/i18n-coverage.mjs",
+    "i18n:scan": "node scripts/i18n-english-scan.mjs",
     "phone:check": "node scripts/phone-check.mjs",
     "booking-defaults:check": "node scripts/booking-defaults-check.mjs",
     "key-notice:check": "node scripts/key-notice-check.mjs"

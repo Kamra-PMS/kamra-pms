@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Extract English UI strings from t() and its translate()/translateUI() aliases into catalog.csv.
- * Merges existing Arabic and Spanish from their locale files.
+ * Merges every locale under src/i18n/locales, so a translation survives a rebuild and
+ * a newly added language only needs its own locales/<code>.json.
  *
  * Usage: node scripts/i18n-extract.mjs
  */
@@ -13,8 +14,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, "..")
 const src = path.join(root, "src")
 const outCsv = path.join(root, "src/i18n/catalog.csv")
-const arPath = path.join(root, "src/i18n/locales/ar.json")
-const esPath = path.join(root, "src/i18n/locales/es.json")
+const localesDir = path.join(root, "src/i18n/locales")
+
+/** Shipped languages, in catalog column order: [locale code, column name]. */
+const COLUMNS = [
+  ["ar", "arabic"],
+  ["es", "spanish"],
+  ["pt", "portuguese"],
+  ["zh-CN", "chinese"],
+]
 
 function walk(dir, files = []) {
   for (const name of fs.readdirSync(dir)) {
@@ -35,12 +43,12 @@ function placeholders(s) {
   return [...new Set([...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]))].join(" ")
 }
 
-const existingAr = fs.existsSync(arPath)
-  ? JSON.parse(fs.readFileSync(arPath, "utf8"))
-  : {}
-const existingEs = fs.existsSync(esPath)
-  ? JSON.parse(fs.readFileSync(esPath, "utf8"))
-  : {}
+/** code -> { English source: translation }; missing file means nothing yet. */
+const existing = {}
+for (const [code] of COLUMNS) {
+  const file = path.join(localesDir, `${code}.json`)
+  existing[code] = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {}
+}
 
 const keys = new Map()
 const tCall =
@@ -54,7 +62,9 @@ function add(key, source) {
   if (!key || !/[A-Za-z]/.test(key)) return
   if (key.includes("${")) return
   if (!keys.has(key)) keys.set(key, new Set())
-  keys.get(key).add(path.relative(src, source))
+  // POSIX separators: the catalog is committed, so a Windows build must not
+  // rewrite every row's sources with backslashes.
+  keys.get(key).add(path.relative(src, source).split(path.sep).join("/"))
 }
 
 for (const file of walk(src)) {
@@ -96,24 +106,26 @@ for (const match of fs.readFileSync(settingsFile, "utf8").matchAll(menuDefaults)
 
 // Menu labels, statuses and saved reports can call t(variable). Keep their
 // dictionary keys when rebuilding the catalog so a later import retains them.
-for (const key of new Set([...Object.keys(existingAr), ...Object.keys(existingEs)])) {
-  if (!keys.has(key)) keys.set(key, new Set())
+for (const dict of Object.values(existing)) {
+  for (const key of Object.keys(dict)) {
+    if (!keys.has(key)) keys.set(key, new Set())
+  }
 }
 
 const rows = [...keys.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-const lines = ["key,english,arabic,spanish,sources,placeholders,status"]
+const lines = [
+  ["key", "english", ...COLUMNS.map(([, column]) => column), "sources", "placeholders", "status"].join(","),
+]
 for (const [key, sources] of rows) {
-  const ar = existingAr[key] ?? ""
-  const es = existingEs[key] ?? ""
+  const cells = COLUMNS.map(([code]) => existing[code][key] ?? "")
   lines.push(
     [
       csvEscape(key),
       csvEscape(key),
-      csvEscape(ar),
-      csvEscape(es),
+      ...cells.map(csvEscape),
       csvEscape([...sources].sort().join("; ")),
       csvEscape(placeholders(key)),
-      ar && es ? "translated" : "needs_translation",
+      cells.every(Boolean) ? "translated" : "needs_translation",
     ].join(","),
   )
 }
