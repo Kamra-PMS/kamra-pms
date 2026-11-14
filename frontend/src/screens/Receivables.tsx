@@ -36,6 +36,8 @@ type AccountRow = {
   contact_email?: string
   contact_phone?: string
   balance: number
+  total_debit?: number
+  total_credit?: number
   credit_limit: number
   credit_days: number
   overdue: number
@@ -116,6 +118,8 @@ type Account = {
   restricted: boolean
   restricted_reason?: string | null
   balance: number
+  total_debit?: number
+  total_credit?: number
   in_house: number
   available_credit: number | null
   open_balance: number
@@ -254,6 +258,78 @@ function AccountList() {
             ]}
           />
           )}
+        <CardContent className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="text-xs uppercase text-zinc-400">
+              <tr>
+                <th className="py-2 pr-3">{translate("Account")}</th>
+                <th className="py-2 pr-3">{translate("Company")}</th>
+                <th className="py-2 pr-3">{translate("Contact")}</th>
+                <th className="py-2 pr-3">{translate("Terms")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Credit limit")}</th>
+                <th className="py-2 pr-3 text-right">{translate("To bill")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Overdue")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Last payment")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Debit")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Credit")}</th>
+                <th className="py-2 text-right">{translate("Total Balance")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((r) => (
+                <tr
+                  key={r.name}
+                  className="cursor-pointer border-t border-zinc-100 hover:bg-zinc-50"
+                  onClick={() => navigate(`/receivables/${encodeURIComponent(r.name)}`)}
+                >
+                  <td className="py-2 pr-3 font-mono text-xs">{r.account_number || "-"}</td>
+                  <td className="py-2 pr-3">
+                    <Link
+                      className="font-medium hover:underline"
+                      to={`/receivables/${encodeURIComponent(r.name)}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {r.company_name}
+                    </Link>
+                    {r.restricted ? (
+                      <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">{translate("Restricted")}</span>
+                    ) : null}
+                    {r.credit_limit > 0 && r.balance > r.credit_limit ? (
+                      <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">{translate("Over limit")}</span>
+                    ) : null}
+                  </td>
+                  <td className="py-2 pr-3 text-zinc-600">
+                    {r.contact_name || "-"}
+                    {r.contact_email ? <span className="block text-xs text-zinc-400">{r.contact_email}</span> : null}
+                  </td>
+                  <td className="py-2 pr-3 text-xs text-zinc-500">{translate("{n} days", { n: r.credit_days ?? 0 })}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums">{r.credit_limit > 0 ? fmtMoney(r.credit_limit) : "-"}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums">{r.unbilled ? fmtMoney(r.unbilled) : "-"}</td>
+                  <td className={`py-2 pr-3 text-right tabular-nums ${r.overdue ? "font-medium text-rose-700" : ""}`}>
+                    {r.overdue ? fmtMoney(r.overdue) : "-"}
+                  </td>
+                  <td className="py-2 pr-3 text-right text-xs text-zinc-500">
+                    {r.last_payment_date ? (
+                      <>{fmtMoney(r.last_payment ?? 0)}<span className="block">{r.last_payment_date}</span></>
+                    ) : "-"}
+                  </td>
+                  <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(r.total_debit ?? 0)}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(r.total_credit ?? 0)}</td>
+                  <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(r.balance)}</td>
+                </tr>
+              ))}
+              {rows && !shown.length ? (
+                <tr>
+                  <td colSpan={11} className="py-8 text-center text-zinc-400">
+                    {rows.length ? translate("No account matches.") : translate("No company accounts yet. Open one, or check out a stay billed to a company on credit.")}
+                  </td>
+                </tr>
+              ) : null}
+              {!rows ? (
+                <tr><td colSpan={11} className="py-8 text-center text-zinc-400">{translate("Loading…")}</td></tr>
+              ) : null}
+            </tbody>
+          </table>
         </CardContent>
       </Card>
 
@@ -418,10 +494,11 @@ function AccountPage({ account }: { account: string }) {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <Stat label={translate("Balance")} value={fmtMoney(acc.balance)} />
-        {/* billed: invoices on the account; unbilled: stays in house still running on the company's folio */}
-        <Stat label={translate("Billed, unpaid")} value={fmtMoney(acc.open_balance)} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {/* company sub-ledger: debit = billed to AR, credit = payments, balance = outstanding */}
+        <Stat label={translate("Debit")} value={fmtMoney(acc.total_debit ?? 0)} />
+        <Stat label={translate("Credit")} value={fmtMoney(acc.total_credit ?? 0)} />
+        <Stat label={translate("Total Balance")} value={fmtMoney(acc.balance)} />
         <Stat label={translate("Unbilled, in house")} value={fmtMoney(acc.in_house)} />
         <Stat label={translate("Overdue")} value={fmtMoney(acc.overdue)} tone={acc.overdue > 0 ? "text-rose-700" : undefined} />
         <Stat label={translate("Credit available")}
@@ -462,9 +539,9 @@ function AccountPage({ account }: { account: string }) {
                 <th className="py-2 pr-3">{translate("For")}</th>
                 <th className="py-2 pr-3">{translate("Billed on")}</th>
                 <th className="py-2 pr-3">{translate("Due")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Billed")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Paid")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Owed")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Debit")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Credit")}</th>
+                <th className="py-2 pr-3 text-right">{translate("Total Balance")}</th>
                 <th className="py-2" />
               </tr>
             </thead>
@@ -633,9 +710,9 @@ function AccountPage({ account }: { account: string }) {
                   <th className="py-2 pr-3">{translate("Date")}</th>
                   <th className="py-2 pr-3">{translate("Entry")}</th>
                   <th className="py-2 pr-3">{translate("Details")}</th>
-                  <th className="py-2 pr-3 text-right">{translate("Billed")}</th>
-                  <th className="py-2 pr-3 text-right">{translate("Paid")}</th>
-                  <th className="py-2 text-right">{translate("Balance")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Debit")}</th>
+                  <th className="py-2 pr-3 text-right">{translate("Credit")}</th>
+                  <th className="py-2 text-right">{translate("Total Balance")}</th>
                 </tr>
               </thead>
               <tbody>

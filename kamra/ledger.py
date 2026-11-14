@@ -1539,12 +1539,21 @@ def _account_position(account: str) -> dict:
 	balance = float(frappe.db.sql(
 		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
 		   WHERE account = %s""", account)[0][0] or 0)
+	row = frappe.db.sql(
+		"""SELECT COALESCE(SUM(debit), 0) AS total_debit,
+		          COALESCE(SUM(credit), 0) AS total_credit,
+		          COALESCE(SUM(debit - credit), 0) AS balance
+		   FROM `tabCity Ledger Entry` WHERE account = %s""",
+		account, as_dict=True)[0]
+	balance = float(row.balance or 0)
 	outstanding = round(sum(max(r["outstanding"], 0) for r in open_items), 2)
 	unapplied = round(max(outstanding - balance, 0.0), 2)
 	return {
 		"open_items": open_items,
 		"open_balance": outstanding,
 		"unapplied_credit": unapplied,
+		"total_debit": round(float(row.total_debit or 0), 2),
+		"total_credit": round(float(row.total_credit or 0), 2),
 		"credit_days": effective_credit_days(account),
 		**_age_buckets(open_items, unapplied, aging_date(property)),
 	}

@@ -349,3 +349,17 @@ class ReceivablesTestCase(cc.CreditControlTestCase):
 		           rationale=f"{self.company}: pre reminder")
 		self.assertTrue(statements._reminded(folio, "pre", self.company))
 		self.assertFalse(statements._reminded(folio, "pre", self.other_company()))
+
+	def test_ar_list_shows_debit_credit_and_total_balance(self):
+		# 200 billed, 150 paid → debit 200, credit 150, outstanding 50
+		self.bill(200)
+		ledger.city_ledger_settle(self.account, 150)
+		row = next(r for r in receivables.ar_accounts(PROP_A)["accounts"]
+		           if r["name"] == self.account)
+		self.assertAlmostEqual(row["total_debit"], 200, 2)
+		self.assertAlmostEqual(row["total_credit"], 150, 2)
+		self.assertAlmostEqual(row["balance"], 50, 2)
+		pos = ledger.city_ledger_account(self.account)
+		self.assertAlmostEqual(pos["total_debit"], 200, 2)
+		self.assertAlmostEqual(pos["total_credit"], 150, 2)
+		self.assertAlmostEqual(pos["balance"], 50, 2)

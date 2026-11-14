@@ -93,12 +93,23 @@ def ar_accounts(property: str):
 		         GROUP BY account) m
 		     ON m.account = c.account AND CONCAT(c.posting_date, c.creation) = m.k""",
 		property, as_dict=True)}
+	# lifetime debit/credit on each company sub-ledger (FO company settlements
+	# and payments), so the list matches a financial AR account view
+	totals = {r.account: r for r in frappe.db.sql(
+		"""SELECT account,
+		          COALESCE(SUM(debit), 0) AS total_debit,
+		          COALESCE(SUM(credit), 0) AS total_credit
+		   FROM `tabCity Ledger Entry` WHERE property = %s GROUP BY account""",
+		property, as_dict=True)}
 	for r in rows:
 		# to bill: what the company's stays in house run up, not yet invoiced
 		r["unbilled"] = in_house_exposure(r["company"], property)
 		lp = last.get(r["name"])
 		r["last_payment_date"] = str(lp.posting_date) if lp else None
 		r["last_payment"] = float(lp.credit) if lp else None
+		t = totals.get(r["name"])
+		r["total_debit"] = round(float(t.total_debit), 2) if t else 0.0
+		r["total_credit"] = round(float(t.total_credit), 2) if t else 0.0
 	rows.sort(key=lambda r: (-float(r.get("balance") or 0), r["company_name"]))
 	return {"accounts": rows, "summary": _summary(property, rows)}
 
