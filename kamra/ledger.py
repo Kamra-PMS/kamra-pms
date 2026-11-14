@@ -1184,7 +1184,7 @@ def _post_company_payment(acc, amount: float, mode: str, reference: str | None,
 	applied_total = round(sum(a["amount"] for a in plan), 2)
 	from kamra.webhooks import emit_ar
 	emit_ar("ar.payment_recorded", acc.property, {
-		"account": account, "company": acc.company, "payment": payment.name,
+		"account": acc.name, "company": acc.company, "payment": payment.name,
 		"posting_date": str(bd), "mode": mode, "reference": reference or None,
 		"amount": amount,
 		"applied": [{"folio": a["folio"], "amount": round(float(a["amount"]), 2)}

@@ -7148,11 +7148,7 @@ def t214():
 	           night_audit.night_audit_pack, night_audit.rebuild_audit_pack,
 	           night_audit.recover_stuck_business_date,
 	           api.check_in, api.check_out,
-	           ledger.quick_checkout, cashier.close_session, api.get_folio,
-		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund, t_mcp_transfer,
-		           t_no_show_credit,
-		           t_pos_till_with_tax,
-		           t_capacity_rooms_out_of_sale):
+	           ledger.quick_checkout, cashier.close_session, api.get_folio):
 		assert "Night Auditor" in fn._kamra_roles, fn.__name__
 	assert frappe.db.exists("Role", "Night Auditor")
 	spec = BY_NAME["night_audit_precheck"]
@@ -11400,7 +11396,10 @@ def execute():
 		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
 		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
 		           t_ar_balance_from_entries,
-		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging):
+		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging,
+		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
+		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
+		           t_capacity_rooms_out_of_sale):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

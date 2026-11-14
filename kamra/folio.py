@@ -1215,20 +1215,8 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 		frappe.throw("This line is already voided.")
 	removed = {"charge_type": row.charge_type, "description": row.description,
 	           "amount": row.amount}
-	# no-op when the caller (api.void_folio_charge) already reversed it
-	from kamra.ledger import reverse_ledger_for_charge
-	try:
-		reverse_ledger_for_charge(folio.property, folio.name, row.name,
-		                          reason or "")
-	except Exception:
-		frappe.log_error(title="ledger void reversal failed")
 	line = {**removed, "row": row.name, "posting_date": row.posting_date,
 	        "gst_rate": row.gst_rate, "reservation": row.get("reservation")}
-	folio.remove(row)
-	_recalculate(folio)
-	folio.save(ignore_permissions=True)
-	from kamra.webhooks import emit_charge_voided
-	emit_charge_voided(folio, line, reason or "")
 	from kamra.business_date import get_business_date
 	from kamra.ledger import _original_charge_entry, code_for_charge_type, record_charge_ledger
 	folio.append("charges", {
@@ -1258,6 +1246,8 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 	first = _original_charge_entry(folio.name, row.name)
 	if first:
 		record_charge_ledger(folio, folio.charges[-1].as_dict(), reversal_of=first.name)
+	from kamra.webhooks import emit_charge_voided
+	emit_charge_voided(folio, line, reason or "")
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("void_charge", "Folio", folio.name, folio.property,
