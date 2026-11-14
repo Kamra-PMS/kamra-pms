@@ -419,6 +419,39 @@ def ledger_balances(property: str, business_date: str | None = None):
 	}
 
 
+@frappe.whitelist()
+@require_roles("Finance", "Front Desk", "Hotel Admin", "Night Auditor", "Kamra Agent")
+def ledger_detail(property: str, ledger: str, business_date: str | None = None,
+                  limit: int = 200):
+	"""The drill-down under a ledger card: every folio with a balance in that
+	ledger as of the date (guest, booking, status, company), biggest first.
+	For AR the company the bill is billed to comes with it."""
+	if ledger not in ("Guest", "Deposit", "AR", "Package"):
+		frappe.throw(frappe._("Unknown ledger {0}.").format(ledger))
+	from kamra.authz import assert_property_access
+	assert_property_access(property)
+	date = business_date or get_business_date(property)
+	rows = frappe.db.sql(
+		"""
+		SELECT e.folio, SUM(e.debit) AS debit, SUM(e.credit) AS credit,
+		       SUM(e.debit - e.credit) AS balance, MAX(e.business_date) AS last_date,
+		       f.guest_name, f.folio_type, f.status AS folio_status, f.invoice_number,
+		       r.name AS reservation, r.status AS stay_status, r.company
+		FROM `tabFolio Ledger Entry` e
+		LEFT JOIN `tabFolio` f ON f.name = e.folio
+		LEFT JOIN `tabReservation` r ON r.name = f.reservation
+		WHERE e.property = %(p)s AND e.ledger = %(l)s AND e.business_date <= %(d)s
+		GROUP BY e.folio
+		HAVING ABS(SUM(e.debit - e.credit)) >= 0.01
+		ORDER BY ABS(SUM(e.debit - e.credit)) DESC
+		LIMIT %(n)s
+		""", {"p": property, "l": ledger, "d": date, "n": int(limit)}, as_dict=True)
+	return {"ledger": ledger, "business_date": str(date), "rows": [{
+		**r, "debit": round(float(r.debit), 2), "credit": round(float(r.credit), 2),
+		"balance": round(float(r.balance), 2), "last_date": str(r.last_date)}
+		for r in rows]}
+
+
 def folio_reconciliation(property: str, limit: int = 20) -> dict:
 	"""Guest + Deposit ledger postings per folio against the folio's own
 	balance (charges less payments). A folio whose ledger nets to something
