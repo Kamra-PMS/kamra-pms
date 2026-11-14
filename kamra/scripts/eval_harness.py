@@ -10569,6 +10569,67 @@ def t_safe_deposit_race():
 		frappe.db.rollback(save_point=sp)
 
 
+@check("service account: scoped key reaches only its scope, revoke stops it")
+def t_service_account_scope():
+	from kamra import service_accounts as sa
+	from kamra.mcp_access import property_policy, tool_refusal
+	from kamra.mcp_tools import BY_NAME
+
+	acct = sa.create_service_account("EVAL cashier app", ["cashier.read"], [P])
+	frappe.local.cache.pop("kamra_service_accounts", None)
+	frappe.set_user(acct["user"])  # nosemgrep: frappe-setuser -- acting as the service account under test
+	try:
+		me = sa.account_for()
+		assert sa.refusal(me, "/api/method/kamra.api.get_folio") is None
+		for path in ("/api/method/kamra.api.add_folio_payment",
+		             "/api/method/kamra.reports.manager_flash",
+		             "/api/resource/Folio", "/app"):
+			assert sa.refusal(me, path), f"{path} reachable outside the scope"
+		policy = property_policy(P)
+		assert tool_refusal(BY_NAME["get_folio"], "read", policy) is None
+		assert tool_refusal(BY_NAME["record_payment"], "manage", policy), \
+			"MCP write tool reachable with a read scope"
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+	sa.revoke_service_account(acct["name"])
+	frappe.local.cache.pop("kamra_service_accounts", None)
+	assert sa.refusal(sa.account_for(acct["user"]), "/api/method/kamra.api.get_folio"), \
+		"revoked key still reaches its scope"
+
+
+@check("app pairing: code works once, scoped key, disconnect stops it")
+def t_app_pairing():
+	from unittest.mock import patch
+
+	from kamra import apps
+	from kamra import service_accounts as sa
+
+	url = "https://eval-app.example.test"
+	manifest = {"id": "eval-app", "name": "EVAL app", "url": url,
+	            "scopes": ["reports.read"], "roles": ["Finance"]}
+	before = frappe.db.get_default(apps.UNSIGNED_KEY)
+	frappe.db.set_default(apps.UNSIGNED_KEY, "1")
+	try:
+		with patch.object(apps, "_download", lambda _u: json.dumps(manifest).encode()):
+			reply = apps.connect(url, ["reports.read"], [P])
+		got = apps.pair(reply["code"], "eval-app")
+		assert got["api_secret"] and got["scopes"] == ["reports.read"]
+		assert apps.pair(reply["code"], "eval-app").get("error"), "pairing code worked twice"
+		user = frappe.db.get_value("Kamra Service Account", frappe.db.get_value(
+			"Kamra App", "eval-app", "service_account"), "user")
+		frappe.local.cache.pop("kamra_service_accounts", None)
+		me = sa.account_for(user)
+		assert sa.refusal(me, "/api/method/kamra.apps.property_profile") is None
+		assert sa.refusal(me, "/api/method/kamra.api.folio_invoice"), "outside the scope"
+		apps.disconnect("eval-app")
+		frappe.local.cache.pop("kamra_service_accounts", None)
+		assert sa.refusal(sa.account_for(user), "/api/method/kamra.apps.property_profile"), \
+			"disconnected app still reaches its scope"
+	finally:
+		frappe.local.response.pop("http_status_code", None)
+		frappe.db.set_default(apps.UNSIGNED_KEY, before or "")
+
+
 def _ar_bill(label, phone, day, room_code, corp, amount):
 	"""One company bill on the city ledger: an in-house stay with a charge,
 	moved to the company's account. Returns (account, folio, owed)."""
@@ -10714,8 +10775,9 @@ def execute():
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
-		           t_concurrency_guards, t_safe_deposit_race,
-		           t_ar_settle_idempotent, t_ar_settle_race, t_ar_balance_from_entries):
+		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
+		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
+		           t_ar_balance_from_entries):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
