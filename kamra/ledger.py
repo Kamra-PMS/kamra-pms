@@ -1546,9 +1546,6 @@ def overdue_past_grace(open_items: list[dict], unapplied: float,
 def _account_position(account: str) -> dict:
 	open_items = city_ledger_open_folios(account)
 	property = frappe.db.get_value("City Ledger Account", account, "property")
-	balance = float(frappe.db.sql(
-		"""SELECT COALESCE(SUM(debit - credit), 0) FROM `tabCity Ledger Entry`
-		   WHERE account = %s""", account)[0][0] or 0)
 	row = frappe.db.sql(
 		"""SELECT COALESCE(SUM(debit), 0) AS total_debit,
 		          COALESCE(SUM(credit), 0) AS total_credit,

@@ -140,7 +140,7 @@ restore the backup taken at the start of the upgrade. Keep production on
 `:stable` or a pinned tag - not `:nightly`. Full notes:
 [quickstart → Going back](/quickstart#going-back-downgrade).
 
-Bench self-host — **backup first, or stop**:
+Bench self-host: **back up first, or stop**:
 
 ```bash
 bench --site pms.yourhotel.com backup --with-files   # required
