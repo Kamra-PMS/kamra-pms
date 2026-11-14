@@ -18,6 +18,7 @@ export const LANGS: LangDef[] = [
   { code: "es", nativeLabel: "Español", englishLabel: "Spanish", dir: "ltr" },
   { code: "pt", nativeLabel: "Português", englishLabel: "Portuguese", dir: "ltr" },
   { code: "ar", nativeLabel: "العربية", englishLabel: "Arabic", dir: "rtl" },
+  { code: "zh-CN", nativeLabel: "简体中文", englishLabel: "Chinese (Simplified)", dir: "ltr" },
 ]
 
 export type Lang = string
@@ -30,6 +31,28 @@ const codes = new Set(LANGS.map((l) => l.code))
 
 export function langDef(code: string): LangDef {
   return LANGS.find((l) => l.code === code) ?? LANGS[0]
+}
+
+/** Map a browser tag or stored setting onto a shipped UI language. Exact
+ * tag first ("zh-CN"), then the base language, so plain "zh" and the
+ * script/region forms ("zh-Hans", "zh-Hans-CN", "pt-BR") resolve too.
+ * Returns null when the tag names a language we do not ship. */
+export function matchLang(tag?: string | null): Lang | null {
+  const raw = (tag || "").trim().toLowerCase()
+  if (!raw) return null
+  const exact = LANGS.find((l) => l.code.toLowerCase() === raw)
+  if (exact) return exact.code
+  const base = raw.split("-")[0]
+  return LANGS.find((l) => l.code.toLowerCase().split("-")[0] === base)?.code ?? null
+}
+
+/** The first browser language we ship, or null for the caller's default. */
+function browserLanguage(): Lang | null {
+  for (const tag of navigator.languages ?? [navigator.language]) {
+    const hit = matchLang(tag)
+    if (hit) return hit
+  }
+  return null
 }
 
 // A guest page's language before the guest picks one: the hotel's booking
@@ -70,8 +93,7 @@ export function setLang(l: Lang) {
 /** Guest pages: the guest's own pick wins; until then the hotel's booking
  * engine language (`preferred`), else the browser language. */
 export function adoptGuestLanguage(preferred?: string | null) {
-  const browser = navigator.language?.toLowerCase().split("-")[0]
-  const next = [preferred, browser].find((c) => c && codes.has(c)) ?? null
+  const next = matchLang(preferred) ?? browserLanguage()
   if (next === guestDefault) return
   guestDefault = next
   syncLang()

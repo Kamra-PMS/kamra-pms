@@ -1,0 +1,319 @@
+% of Total	占总计百分比
+(empty)	（空）
+(none)	（无）
+({n} late arrival(s) held that night — list not saved on the original pack)	（当晚有 {n} 位迟到到店客人被保留，原交接包未保存该清单）
+1 more adult	另加 1 位成人
+<p>Dear {name},</p><p>We sent a quotation for your event on {date} and have not heard back. Please reply to this email, call us, or message on WhatsApp so we can hold the hall for you.</p><p>Thank you.</p>	<p>{name} 您好：</p><p>我们已于 {date} 为您发送活动报价，尚未收到回复。请回复本邮件、致电我们，或通过 WhatsApp 联系我们，以便为您保留场地。</p><p>谢谢。</p>
+A cancellation reason is required.	必须填写取消原因。
+A charge or payment is on the bill: void it, or check the guest out.	账单上已有费用或收款：请先作废，或为客人办理退房。
+A closed folio cannot be reopened or renumbered.	已关闭的客账不能重新打开或重新编号。
+A correction can't repost as {0}.	更正不能按 {0} 重新入账。
+A correction needs a reason. It goes on the record.	更正必须填写原因，并会记入记录。
+A credit note or adjustment already changed this bill on the company's account, so the checkout can't be undone. Finance can correct it on the account.	公司账户上已有贷项通知单或调整改动过此账单，因此无法撤销退房。财务可在公司账户上更正。
+A day-use slot must end after it starts.	日用房时段必须晚于开始时间结束。
+A deposit is taken before arrival - this booking is {0}. Take in-house payments on the folio.	押金在到店前收取——该预订为 {0}。在住期间的收款请在客账上操作。
+A Direct IP printer needs its IP address.	直连 IP 打印机需要填写 IP 地址。
+A discount can't be more than 100%.	折扣不能超过 100%。
+A discount can't be negative.	折扣不能为负数。
+A discount needs a reason - it goes on the record.	折扣必须填写原因，并会记入记录。
+A guest	一位客人
+A hotel admin has blocked {0} for AI clients at {1}.	酒店管理员已在 {1} 对 AI 客户端禁用 {0}。
+A new allowance request is always Pending.	新建的备用额申请始终为待审批。
+A new company payment request is always Pending.	新建的公司付款申请始终为待审批。
+A paid bill needs its payment mode.	已付账单必须填写付款方式。
+A plate price can't be negative.	单客价不能为负数。
+A printer can't be its own fallback.	打印机不能把自己设为备用打印机。
+A printer has to print KOTs, bills, or both.	打印机必须至少打印厨房单或账单，或两者都打。
+A rate can't be negative.	房价不能为负数。
+A reason is required.	必须填写原因。
+A receipt has to be a positive amount - use kind 'Refund' to give money back.	收款金额必须为正数——退款请使用类型“Refund”。
+A security deposit can't be taken on a {0} booking.	{0} 预订不能收取押金。
+A security deposit is held for this stay: release or refund it first, or check the guest out.	本次住店仍有押金在押：请先释放或退还，或为客人办理退房。
+A security deposit is refunded from the stay's deposit (refund_deposit), not from the bill.	押金从住店押金中退还（refund_deposit），不从账单中退。
+A served quantity can't be negative.	上菜数量不能为负数。
+A stay joins or leaves a trip only through the trip itself.	住店只能通过行程本身加入或退出。
+A stay needs at least one adult.	一段住店至少需要一位成人。
+A stock take needs a note - what did you count, and why does it differ?	盘点必须填写备注——盘点了什么，为什么有差异？
+A supplementary needs a positive quantity.	附加项数量必须为正数。
+A {0} bag can't move to {1}.	{0} 状态的洗衣袋不能流转到 {1}。
+A {0} function can't go straight to {1}. From here: {2}.	{0} 状态的活动不能直接变为 {1}。当前可转为：{2}。
+A {0} line can't be corrected here. Room nights change through the stay's rate; reverse an allowance or discount with a charge.	{0} 行项不能在此更正。房晚需通过住店房价调整；备用额或折扣请用一笔费用冲减。
+Accepted At	接受时间
+Access Expires	门禁到期
+Access Instructions	门禁说明
+Access Released	门禁已释放
+Access Released On	门禁释放时间
+Access Token Hash	访问令牌哈希
+Account Number	账户编号
+Account number {0} is already used at this property.	账户编号 {0} 已在本酒店使用。
+Acknowledgements (JSON)	确认记录（JSON）
+Action Type	操作类型
+Actor (User)	操作人（用户）
+Actual Check In	实际入住
+Actual Check Out	实际退房
+Actual Pax	实际人数
+Actually Served	实际上菜
+Actuals	实际数
+Add a customer email or phone before sending.	发送前请填写客户邮箱或电话。
+Add at least one available item.	至少添加一个可用项目。
+Add at least one line to the invoice.	发票至少添加一行。
+Add at least one recipient email for a scheduled report.	定时报表至少填写一个收件邮箱。
+Add at least one recipient email.	至少填写一个收件邮箱。
+Add at least one stay to the itinerary.	行程至少添加一段住店。
+Add at most 500 rooms at a time.	一次最多添加 500 间客房。
+Add the other guests' names to the stay first.	请先在住店中添加其他客人的姓名。
+Address Proof	地址证明
+Adjustment Type	调整类型
+Adjustment Value	调整值
+ADR / ARR Target	ADR / ARR 目标
+Adults Capacity	成人容量
+Advance %	预付款比例
+Advance % at booking is between 25 and 100. Leave it empty to use the property's usual deposit.	预订时预付款比例应在 25 到 100 之间。留空则使用酒店常规押金比例。
+Advance Deposit %	预付押金比例
+Advance Deposit % must be between 0 and 100.	预付押金比例必须在 0 到 100 之间。
+Advance Due	应收预付款
+Advance Paid	已付预付款
+Advance Received	已收预付款
+advance {0}	预付款 {0}
+After collecting, give a receipt or confirm the link.	收款后请提供收据或确认链接已送达。
+After Discount	折扣后
+After Snapshot	快照后
+Age Stated by Guest	客人自述年龄
+Agent Commission	代理佣金
+Agent Name	代理名称
+Agent Type	代理类型
+Agree a fee amount with the guest (or waive).	与客人商定费用金额（或减免）。
+Agreed fee {0} for {1}. Confirm with the guest before posting.	{1} 的商定费用为 {0}。入账前请与客人确认。
+Agreed Nightly Rate	商定房价（每晚）
+Agreed Rate	商定房价
+AI access (MCP)	AI 访问（MCP）
+AI access over MCP is turned off for {0}. A hotel admin can turn it on under Settings, AI access (MCP).	{0} 的 MCP AI 访问已关闭。酒店管理员可在“设置 → AI 访问（MCP）”中开启。
+AI clients are read-only at {0}: a hotel admin has blocked every tool that makes changes.	{0} 的 AI 客户端为只读：酒店管理员已禁用所有会产生变更的工具。
+Airport / Station Drop	机场 / 车站送站
+Airport / Station Pickup	机场 / 车站接站
+Alcohol ({0}) can't be billed to {1} - it will have to settle separately.	酒水（{0}）不能记到 {1} 账上——需单独结账。
+Alcohol can't ride a company bill - settle those lines separately.	酒水不能计入公司账单——这些行项需单独结账。
+Alcohol cannot be billed to a company folio.	酒水不能记入公司客账。
+Allocations	分配
+Allowance amount is required.	备用额金额为必填。
+Allowance Serial	备用额流水号
+Allowed Modes	允许的方式
+Allowed Payment Modes	允许的付款方式
+Allowed Shortfall %	允许短款比例
+Allowed shortfall must be between 0 and 100%.	允许短款比例必须在 0 到 100% 之间。
+Already booked	已预订
+Already paid.	已付款。
+Already posted to the room folio - settle it there.	已入账到客房客账——请在该客账结账。
+Amenities List	设施清单
+Amenity	设施
+Amount After Tax	税后金额
+Amount Before Tax	税前金额
+Amount Posted	已入账金额
+Amounts	金额
+An account's property and company can't change.	账户所属酒店和公司不能更改。
+An AI agent can't approve or reject an allowance. Ask a manager.	AI 代理不能审批备用额，请联系主管。
+An AI agent can't confirm a company payment. Ask Finance.	AI 代理不能确认公司付款，请联系财务。
+An AI agent can't put a bill in dispute. Ask Finance.	AI 代理不能将账单置为争议，请联系财务。
+An AI agent can't reverse a company payment. Ask Finance.	AI 代理不能冲正公司付款，请联系财务。
+An allowance needs a reason - it goes on the record.	备用额必须填写原因，并会记入记录。
+An allowance was posted on this folio after the bill. Reverse the allowance first, then move the bill.	该客账在出账后有备用额入账。请先冲正备用额，再移动账单。
+An ingredient needs a name.	食材必须有名称。
+An NC (complimentary) bill needs who authorized it before it can close.	免单（NC）账单关闭前必须记录授权人。
+and	和
+And some lines still cost nothing, so it loses more.	且部分行项仍未计费，因此亏损更多。
+API Endpoint Override	API 端点覆盖
+API Key	API 密钥
+API Key / Password	API 密钥 / 密码
+API Keys	API 密钥
+API Username	API 用户名
+App ID	应用 ID
+App Secret	应用密钥
+App URL	应用 URL
+Applied to the bill at check-out	退房时计入账单
+Approval	审批
+Approve bill {0} before paying it.	付款前请先审批账单 {0}。
+Approve or reject an allowance from Allowances to approve.	在“待审批备用额”中批准或拒绝备用额。
+Approved on	审批时间
+Area Sqft	面积（平方英尺）
+Arrival & transport	到店与交通
+Arrival Mode	到店方式
+Arrival Time	到店时间
+Arrived At	到店时间
+Ask for the guest's name and a government ID.	请询问客人姓名并查验政府证件。
+Assigned At	分配时间
+Assigned By	分配人
+Assigned To	分配给
+Assignment	分配
+At	时间
+At most 20 extra addresses.	最多 20 个附加地址。
+Attempts	尝试次数
+Audit	审计
+Audit Pack	审计包
+Auth	认证
+Auto Assignable	可自动分配
+Auto Posted	自动入账
+Auto Price	自动定价
+Auto-send self check-in links to arrivals	自动向到店客人发送自助入住链接
+Backfill after check-in	入住后补录
+Balance After	变动后余额
+Balance Due	应收余额
+Balances are clear: ready to check out.	余额已结清：可以退房。
+Banquet confirmed: {customer} · {venue} on {date} · {total}	宴会已确认：{customer} · {venue} · {date} · {total}
+Banquet Event Order	宴会执行单
+Banquet indent for {0}	{0} 的宴会领料单
+Banquet manager	宴会经理
+Banquet Menu	宴会菜单
+Banquet: {0} at {1} on {2} - {3}	宴会：{0} · {1} · {2} - {3}
+Base Occupancy	基础入住人数
+Base Price	基础价
+Base Price (BAR)	基础价（BAR）
+Batch	批次
+Bathroom Type	卫浴类型
+Bed Type	床型
+Before Snapshot	快照前
+Before the function	活动开始前
+Behaviour	行为
+Below the {0}% floor. Worth taking only for the rooms it brings, or a date that would otherwise sit empty.	低于 {0}% 的价格下限。只有在能带来客房，或该日期本来会空置时才值得接受。
+Beo Generated On	宴会执行单生成时间
+Bill a confirmed function, not a {0} one.	只能为已确认的活动开票，不能为 {0} 状态的活动开票。
+Bill Printer	账单打印机
+Bill To Name	付款方名称
+Bill {0} from {1} is already entered.	{1} 的账单 {0} 已录入。
+Bill {0} has payments on it and can't be cancelled.	账单 {0} 已有收款，不能取消。
+Bill {0} is already approved.	账单 {0} 已审批。
+Bill {0} is {1}.	账单 {0} 为 {1}。
+Bill {0} only has {1} left to pay.	账单 {0} 仅剩 {1} 待付。
+Bill-to for {0}: {1}. Alcohol always bills the guest.	{0} 的付款方：{1}。酒水始终由客人支付。
+Billable Hours	计费小时
+billing	账单
+Billing Address	账单地址
+Billing Name	账单名称
+Billing Rules	账单规则
+Bills still open	未结账单
+Blacklist Reason	黑名单原因
+Blacklisted guest	黑名单客人
+Block at least one room.	至少锁定一间客房。
+Block Cutoff Date	预留房截止日期
+Block Hours	预留时段
+Block Rate	预留房价
+Block Released On	预留房释放时间
+Blocked MCP tools	已禁用的 MCP 工具
+Blocked Rooms	已锁客房
+Blocking Checks Open	有未处理的阻断项
+Booked By	预订人
+Booked By (if not the guest)	预订人（非客人本人时）
+Booked Check Out	预订退房日期
+Booker Name	预订人姓名
+Booker Phone	预订人电话
+Booking Engine Enabled	已启用预订引擎
+Booking Engine Language	预订引擎语言
+Booking Mode	预订方式
+Booking notes: {0}	预订备注：{0}
+Booking Page Accent	预订页主色
+Booking Payment	预订付款
+Booking Terms & Policies	预订条款与政策
+Booking Type	预订类型
+Both accounts must be at the same property.	两个账户必须属于同一酒店。
+Buffer After Ready (minutes)	就绪后缓冲（分钟）
+Building number (4 digits)	楼栋号（4 位）
+Business Date	营业日
+Business date {0} is already ahead of today ({1}). Night audit for it can run once that day has started.	营业日 {0} 已晚于今天（{1}）。该日期开始后才能运行对应的夜审。
+Buy Rate	买入价
+Can't accept {0}: no {1} room is free for {2} to {3} any more. Decline the request, or move it to another room type first.	无法接受 {0}：{2} 至 {3} 期间已没有空闲的 {1} 客房。请拒绝该请求，或先换到其他房型。
+Can't accept {0}: the villa and its rooms can't both be sold, and {1} is already booked for these dates. Decline the request or offer other dates.	无法接受 {0}：别墅与其客房不能同时售出，而 {1} 已预订这些日期。请拒绝该请求或提供其他日期。
+Can't hold {0} as the green room: {1}	无法将 {0} 保留为绿色通道房：{1}
+Cancel Approved By	取消批准人
+Cancel Reason	取消原因
+Cancellation Fee	取消手续费
+Cancellation Note	取消备注
+Cancellation Number	取消编号
+Cancellation Policy	取消政策
+Cancellation Reason	取消原因
+Cancellation Tiers	取消阶梯
+Cancelled At	取消时间
+Cancelled By	取消人
+Cancelled On	取消日期
+Cancelling {0} · arrival {1}.	正在取消 {0} · 到店 {1}。
+Cannot check out: the guest is owed {0}{1:,.2f}. Issue the refund before departure.	无法退房：客人尚有 {0}{1:,.2f} 待退。请于离店前办理退款。
+Cannot check out: {0}{1:,.2f} is still owed. Collect payment or transfer it to the city ledger before departure.	无法退房：仍有 {0}{1:,.2f} 未结。请于离店前收款，或转入应收账户。
+Cannot close the folio: {0}{1:,.2f} is owed back to the guest. Issue the refund first.	无法关闭客账：尚需退还客人 {0}{1:,.2f}。请先办理退款。
+Cannot close the folio: {0}{1:,.2f} is still owed. Collect payment, or move the company's share to the city ledger, first.	无法关闭客账：仍有 {0}{1:,.2f} 未结。请先收款，或将公司承担部分转入应收账户。
+Cannot move reservation from {0} to {1}.	无法将预订从 {0} 移到 {1}。
+Cannot release access yet. Failed gates: {0}	暂不能释放门禁。未通过的检查：{0}
+Capacity	容量
+Capacity & Attributes	容量与属性
+Cash Collected	已收现金
+Cash Count	现金清点
+Cash Drops	现金缴存
+Cashier ID	收银员 ID
+Cashier Terminal	收银终端
+Ceiling Price	价格上限
+Chain	连锁
+Change Note	变更备注
+Channel / Notes	渠道 / 备注
+Channel Manager & OTA Strategy	渠道管理与 OTA 策略
+Charge %	收费比例
+Charge Type	费用类型
+Charge type	费用类型
+Charge {0} is not on {1}.	费用 {0} 不在 {1} 上。
+charge_type must be one of: {0}.	charge_type 必须是以下之一：{0}。
+Charges move only to a stay that is checked in.	费用只能转移到已入住的住店。
+Charges to the room are allowed unless you block them.	除非你禁止，否则允许将费用记入客房。
+Charges Total	费用合计
+Check In Date	入住日期
+Check Out Date	退房日期
+Check-in date is in the past	入住日期已过
+Check-in Link Sent	已发送入住链接
+Check-in record	入住记录
+Check-in Steps	入住步骤
+Check-in {0} has already passed. Pick today or a later date.	入住时间 {0} 已过。请选择今天或之后的日期。
+Check-out Business Date	退房营业日
+Check-out cannot be before check-in.	退房不能早于入住。
+Check-out must be today (day use) or later ({0}).	退房日期必须为今天（日用房）或之后（{0}）。
+Check-out posts the remaining nights first, and that failed: {0}	退房会先入账剩余房晚，但该操作失败：{0}
+Check-out time must be after check-in.	退房时间必须晚于入住时间。
+Checked In At	入住时间
+Checked In By	办理入住人
+Child Age Limit	儿童年龄上限
+Child Package Rate	儿童套餐价
+Child Price	儿童价
+Children Capacity	儿童容量
+Children Count Towards Base Occupancy	儿童计入基础入住人数
+Choose 5, 15 or 30 days.	请选择 5、15 或 30 天。
+Choose how the group bill is paid.	请选择团队账单的支付方式。
+Choose Refund or Keep as forfeited deposit.	请选择退款，或作为没收押金保留。
+Chosen	已选
+Claimed at	领取时间
+Clean Duration (minutes)	清洁时长（分钟）
+Cleaning Fee Taxable	清洁费计税
+Clear message text after (days)	消息正文清除天数
+Client ID	客户端 ID
+Client Name	客户端名称
+Close Notes	关闭备注
+Close the function out instead - close-out counts the covers, settles the deposit and then marks it Completed.	请改为结账关闭活动——结账会统计用餐人数、结算押金，然后标记为已完成。
+Closed At	关闭时间
+Closed By	关闭人
+Closed On	关闭日期
+Closed Out By	结账人
+Closed Out On	结账日期
+Closing Cash	期末现金
+Code Challenge	代码挑战
+Code Expires	代码到期
+Code Hash	代码哈希
+Collect {0} (or note company billing) before handing keys.	交钥匙前收取 {0}（或注明由公司付款）。
+Collect {0} at the desk or send a payment link.	在前台收取 {0}，或发送付款链接。
+Collect {0} before departure.	离店前收取 {0}。
+Collect {0}{1:,.2f} before departure.	离店前收取 {0}{1:,.2f}。
+Collected Amount	已收金额
+Collected At	收款时间
+Collected By	收款人
+Collecting {0} now, then check in and hand keys.	先收取 {0}，再办理入住并交钥匙。
+Column Break A	分栏点 A
+Column Break At	分栏点
+Column Break B	分栏点 B
+Column Break C	分栏点 C
+Column Break Ch	分栏点 Ch
+Column Break D	分栏点 D
+Column Break E	分栏点 E
+Column Break Loc	分栏点 Loc
+Column Break P	分栏点 P

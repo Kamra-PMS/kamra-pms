@@ -1,0 +1,320 @@
+Guest Response Notes	客人回复备注
+Guest {0} is blacklisted{1}. Remove the flag on the guest profile to book.	客人 {0} 已被列入黑名单{1}。要预订请先在客人资料中移除黑名单标记。
+Hall deal	场地协议价
+Hall Waived	场地费已减免
+Hand over keys for room {0}. {1}	交出 {0} 房钥匙。{1}
+Hand-over	交接
+Handed Over To	交接给
+Handover Notes	交接备注
+Held for a group	已为团队保留
+Hello {guest}, please pay the deposit of {cur} {amount} to secure your booking {ref} at {property} ({checkin} → {checkout}): {url}	{guest} 您好，请支付押金 {cur} {amount} 以确认您在 {property} 的预订 {ref}（{checkin} → {checkout}）：{url}
+Hero Image	主图
+Hold Expires On	保留到期时间
+Hold Window (minutes)	保留时限（分钟）
+Holiday / Long Weekend	节假日 / 长周末
+Hotel admins and IT always have full AI access.	酒店管理员和 IT 始终拥有完整 AI 访问权限。
+Hourly Rate	小时房价
+Hourly View End	小时视图结束
+Hourly View Start	小时视图开始
+House Item	内部项目
+Housekeeping Status	客房清洁状态
+Hub URL	中心 URL
+Hurdle (Min Sell Rate)	最低售价（Hurdle）
+Icon URL	图标 URL
+ID Captured By	证件采集人
+ID Captured On	证件采集时间
+ID Date of Expiry	证件有效期至
+ID Date of Issue	证件签发日期
+ID Discarded	证件已销毁
+ID Document	身份证件
+Id Number	证件号码
+ID Number	证件号码
+ID Place of Issue	证件签发地
+ID Retention	证件留存方式
+ID still needed for: {0}.	以下项目仍需要证件：{0}。
+Id Type	证件类型
+ID Type	证件类型
+Idempotency Key	幂等键
+Idempotency key already used	幂等键已被使用
+IDs are on file. Check them against the guest at the desk.	已有证件存档。请在前台与客人核对。
+If you can read this, the printer works	如果您能看到这行字，说明打印机正常
+Image Url	图片 URL
+Inbound Webhook Secret	入站 Webhook 密钥
+Inclusions	包含项目
+Infants	婴儿
+Input Tax	进项税
+Input Tax Credit	进项税额抵扣
+Inspect Duration (minutes)	查房时长（分钟）
+Instruction	指令
+Instruction must be for one of: {0}.	指令必须是以下之一：{0}。
+Interested in	需求内容
+Internal Notes	内部备注
+Invalid link.	链接无效。
+Invalid schedule frequency.	定时频率无效。
+Invalid status change	状态变更无效
+Invoice a confirmed function, not a {0} one.	只能为已确认的活动开票，不能为 {0} 状态的活动开票。
+Invoice chain	发票链
+Invoice counter (ICV)	发票计数器（ICV）
+Invoice Footer	发票页脚
+Invoice hash	发票哈希
+Invoice No	发票号
+Invoice No.	发票号
+Invoice number	发票号码
+Invoice {0} is issued — its charges are frozen. Post adjustments on a new folio.	发票 {0} 已开具——其费用已冻结。调整请在新客账上入账。
+Invoice {0} was already issued to the old company. Cancel that invoice first, then change the company.	发票 {0} 已开具给原公司。请先作废该发票，再更改公司。
+Is Alcohol	是否酒水
+Is Default	是否默认
+Issue against a confirmed function, not a {0} one.	只能针对已确认的活动开具，不能针对 {0} 状态的活动。
+Issue Date	开具日期
+issued	已开具
+Issued At	开具时间
+Issued By	开具人
+Issued on	开具日期
+It shares part of {0}.	它与 {0} 共用部分房量。
+ITC Claimable	可抵扣进项税
+Item Description	项目描述
+Item name is required.	项目名称为必填。
+Item Type	项目类型
+Itinerary	行程
+Itinerary dates overlap	行程日期重叠
+Itinerary not found.	未找到行程。
+Kamra can't read this ID's code. Type the details in, and take a picture of the ID.	Kamra 无法读取该证件的编码。请手动录入信息，并拍摄证件照片。
+Kamra front-end is not built. Run <code>cd apps/kamra/frontend && yarn install && yarn build</code> (Frappe Cloud runs this automatically on deploy).	Kamra 前端尚未构建。请运行 <code>cd apps/kamra/frontend && yarn install && yarn build</code>（Frappe Cloud 部署时会自动执行）。
+Kamra Verify isn't available yet.	Kamra Verify 暂不可用。
+Key Card Numbers	房卡数量
+Key ID	密钥 ID
+Key Secret	密钥
+Keys Issued	已发房卡
+Keys Issued At	发卡时间
+Keys Issued By	发卡人
+Kitchen Access	厨房访问权限
+KOT #	厨房单号
+KOT Fired	厨房单已下单
+KOT no	厨房单号
+Last ARI push	最近一次 ARI 推送
+Last Counted	最近盘点
+Last delivery	最近送达
+Last delivery on	最近送达日期
+Last error	最近错误
+Last invoice counter (ICV)	上一个发票计数器（ICV）
+Last invoice hash (PIH for the next)	上一张发票哈希（下一张的 PIH）
+Last Name	姓
+Last printed	最近打印
+Last push result	最近推送结果
+Last Reject Reason	最近拒绝原因
+Last seen	最近出现
+Last sent on	最近发送日期
+Last Used	最近使用
+Late Arrival	迟到到店
+Late Arrivals Held	已保留的迟到到店
+Late Cancellation Fee	逾期取消费
+Late Check-out Requested	已申请延迟退房
+Layout Note	布局备注
+Leaving {0} night(s) early: shorten the stay before settling the bill.	提前离店 {0} 晚：请先缩短住店，再结账。
+Left At	离开时间
+Legacy Charge Type	旧版费用类型
+Line Items	行项
+Linked	已关联
+Listing Slug	房源标识
+Local Amount	本币金额
+Locale	区域设置
+Location	位置
+Location Address	位置地址
+Location Name	位置名称
+Locked Until	锁定至
+Log	日志
+Look up by room number or by the guest's last name (2+ letters).	按房号或客人姓氏（至少 2 个字母）查询。
+Lost Reason	失单原因
+Main Room	主房
+Main Room Pays	主房付款
+Manifest	清单
+Manifest URL	清单 URL
+Margin %	毛利率
+Market Mid Rate	市场中位价
+Market Segment	市场细分
+Marketing consent	营销同意
+Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.	营销同意可在客人资料、预订页面或通过回复 STOP / START 更改。
+master_pays must be one of: {0}	master_pays 必须是以下之一：{0}
+Max Cash Refund	现金退款上限
+Max Extra Beds	加床上限
+Max Occupants	最大入住人数
+Max Total Occupants	最大总入住人数
+Max Uses	最多使用次数
+MCP client	MCP 客户端
+Meal Period	餐段
+Media Gallery	媒体库
+Media Type	媒体类型
+Menu Chosen	已选菜单
+Menu Code	菜单代码
+Menu item not found.	未找到菜单项。
+Menu Name	菜单名称
+Message	消息
+Messages	消息
+Meta Cloud API (bring your own number)	Meta Cloud API（自带号码）
+Meta Message ID	Meta 消息 ID
+Method	方式
+Min Nights	最少房晚
+Minimum F&B spend	最低餐饮消费
+Minimum Hours	最少小时
+Minimum nights is at least 1.	最少房晚至少为 1。
+Minimum Pax	最低人数
+Minimum Stay Nights	最少入住晚数
+Minutes Saved	节省分钟数
+Modifier Type	修饰类型
+Modifier Value	修饰值
+Modules In Use	已启用模块
+Money has already been taken - refund the deposit instead of waiving it.	已收取款项——请退还押金，而不是减免。
+Month (YYYY-MM)	月份（YYYY-MM）
+More guests than blocked rooms for {0} on {1}.	{1} 的 {0} 客人数量超过锁定客房数。
+move must be rules or guest.	move 必须是 rules 或 guest。
+Moving charges to another stay needs Finance or Hotel Admin.	将费用转到其他住店需要财务或酒店管理员权限。
+Must Reset	必须重置
+Name the connected app.	请为连接的应用命名。
+Name the main room's guest in the rooming list.	请在分房单中填写主房客人姓名。
+Name the room or the reservation to charge.	请指定要入账的客房或预订。
+NC Authorized By	免单授权人
+NC Reference	免单编号
+Negotiated Rate / Night	协议价 / 晚
+Negotiated Rate Plan	协议价格方案
+Negotiation History	议价历史
+Net Cost	净成本
+Next retry at	下次重试时间
+Night audit can only close the current business date ({0}).	夜审只能关闭当前营业日（{0}）。
+Night audit is blocked: {0}. Resolve them, or acknowledge each with a reason to run anyway.	夜审被阻断：{0}。请先解决，或逐项填写原因后确认继续。
+Night audit pre-checks	夜审预检
+Night Audit Run	夜审运行
+Night audit run {0} not found.	未找到夜审运行记录 {0}。
+Night Of	所属房晚
+No audit pack was saved for this run. Rebuild it to print the night's reports.	本次运行未保存审计包。请重新生成以打印当夜报表。
+No Charge (NC)	免单（NC）
+No checked-in guest in that room.	该客房没有已入住的客人。
+No deposit is due - enter the amount to request.	无应收押金——请输入要请求的金额。
+No discount or voucher lines on the folio.	客账上没有折扣或优惠券行项。
+No event order yet and the function is in {0} days.	尚无宴会执行单，而活动将在 {0} 天后举行。
+No fixed deposit %: take an advance amount the guest agrees.	无固定押金比例：请收取客人同意的预付金额。
+No guaranteed pax - the kitchen can't order.	未确定保证人数——厨房无法备料。
+No guest folio for this stay.	本次住店没有客人客账。
+No guest has that phone number yet. Add their name to create one.	尚无客人使用该电话号码。请添加姓名以创建客人。
+No inventory left	库存已用完
+No payment link has been sent for this booking.	该预订尚未发送付款链接。
+No rate for {0} ({1}) - add it to the rate card first.	{0}（{1}）没有房价——请先添加到房价卡。
+No restaurant or minibar charges on this stay.	本次住店没有餐厅或迷你吧费用。
+No room could be booked, so the group was not created. {0}	无法预订任何客房，因此未创建团队。{0}
+No rooms blocked for {0}.	{0} 没有锁定客房。
+No security deposit has been taken on this stay.	本次住店未收取押金。
+No security deposit is required for this stay.	本次住店无需押金。
+No security deposit on this stay. Note any damage as a Misc charge before settling.	本次住店无押金。结账前请将损坏记为杂项费用。
+No Shows Flagged	已标记未到店
+No Small-group Rate	未设小团队价
+No stay on this trip is waiting for an advance. Take in-house payments on the leg's folio.	本次行程没有住店等待预付款。在住收款请在相应住段的客账上操作。
+No such account.	没有该账户。
+No such allowance.	没有该备用额。
+No such guest.	没有该客人。
+No such line on this function: {0}	该活动没有此行项：{0}
+No such menu.	没有该菜单。
+No such payment term on this function.	该活动没有该付款条款。
+No such receipt on this function.	该活动没有该收款记录。
+No ZATCA record for {0}.	{0} 没有 ZATCA 记录。
+No {0} room is free for these dates.	这些日期没有空闲的 {0} 客房。
+No {0} rooms are free for these dates.	这些日期没有空闲的 {0} 客房。
+No-show Charge	未到店费用
+No-show Credit Default	未到店默认贷项
+No-show Fees Waived (OTA)	未到店费用已减免（OTA）
+No-show Timing	未到店判定时间
+Non-Refundable	不可退款
+Not a booking request	不是预订请求
+Not editable here: {0}	无法在此编辑：{0}
+Not enough rooms for these dates. {0}	这些日期客房不足。{0}
+Notes for the Manager	给主管的备注
+Nothing chosen yet. Compose the menu, then the kitchen can be told what to pull.	尚未选择任何内容。请先编排菜单，之后才能通知厨房领料。
+Nothing counted.	未盘点任何内容。
+Nothing is held on that course.	该菜序没有预留。
+Nothing is held to refund.	没有可退的押金。
+Nothing is owed on that bill on this account.	该账户上的这张账单没有欠款。
+Nothing is waiting at the pass.	出菜口没有待取菜品。
+Nothing on file.	无存档记录。
+Nothing on this quote carries a cost yet, so any margin shown is imaginary. Choose the menu's dishes and put cost rates on the services before trusting the number.	该报价尚无任何成本，因此显示的毛利都是虚的。请先选择菜单菜品，并为服务设置成本率，再采信该数字。
+Nothing received yet against {0}.	尚未收到 {0} 的任何款项。
+Nothing to cancel: no leg of this itinerary is confirmed.	无可取消：该行程没有任何住段已确认。
+Nothing to correct: the line already has these values.	无需更正：该行项已是这些值。
+Nothing to receive.	无可收货。
+Nothing was collected on this order.	该订单没有收款。
+Nothing was scanned.	未扫描任何内容。
+Nothing was sent — check channels and guest contact.	未发送任何内容——请检查渠道与客人联系方式。
+Notification	通知
+nowhere	无
+OAuth Redirect URI	OAuth 重定向 URI
+Occupancy % Target	入住率目标
+Occupancy Status	入住状态
+Occupancy-based Pricing	按入住人数计价
+OG Image	分享图（OG）
+On completion	完成时
+On Hand	现有库存
+On Pack List	在交接清单上
+Onboarding status	上线进度
+Only a bill posted today can be moved. For an earlier day, ask Finance to correct both folios.	只有今天入账的账单可以转移。更早日期的账单请让财务更正两个客账。
+Only a bill that was paid at the outlet can change its payment mode.	只有在营业点完成付款的账单才能更改付款方式。
+Only a checked-in stay can have its check-in reversed.	只有已入住的住店才能撤销入住。
+Only a checked-out stay can be reinstated.	只有已退房的住店才能恢复。
+Only a closed (Completed) function can be reopened - this one is {0}.	只有已关闭（已完成）的活动才能重新打开——当前为 {0}。
+Only a company group can go to the city ledger.	只有公司团队才能转入应收账户。
+Only a Confirmed arrival can be marked no-show (this one is {0}).	只有已确认的到店才能标记为未到店（当前为 {0}）。
+Only a confirmed function can be closed out - this one is {0}.	只有已确认的活动才能结账关闭——当前为 {0}。
+Only a confirmed function gets an event order - this one is {0}.	只有已确认的活动才有宴会执行单——当前为 {0}。
+Only a confirmed or in-house stay has check-in steps (this one is {0}).	只有已确认或在住的住店才有入住步骤（当前为 {0}）。
+Only a hotel admin can manage AI access.	只有酒店管理员可以管理 AI 访问。
+Only a housekeeping supervisor can assign tasks.	只有客房主管可以分配任务。
+Only a housekeeping supervisor can pass an inspection or verify a clean.	只有客房主管可以通过查房或确认清洁。
+Only a housekeeping supervisor can set a room to {0}.	只有客房主管可以将客房设为 {0}。
+Only a No Show's credit is settled here (this one is {0}).	这里只能结算未到店的贷项（当前为 {0}）。
+Only a posted allowance has a voucher.	只有已入账的备用额才有凭证。
+Only a Revenue Manager or Hotel Admin can change a group rate.	只有收益经理或酒店管理员可以更改团队房价。
+Only a Revenue Manager or Hotel Admin can enter a new rate.	只有收益经理或酒店管理员可以录入新房价。
+Only a room of a group booking can pay its own charges.	只有团队预订中的客房才能自付其费用。
+Only a stay with charged nights can be corrected.	只有已计费房晚的住店才能更正。
+Only an arrival that has not checked in can be flagged late.	只有尚未入住的到店客人才能标记为迟到。
+Only an item the kitchen is cooking can be marked ready.	只有厨房正在制作的菜品才能标记为已就绪。
+Only an open ticket can be started.	只有未关闭的工单才能开始处理。
+Only available while the payment gateway is in test mode.	仅在支付网关处于测试模式时可用。
+Only charges above zero can be shared.	只有大于零的费用可以分摊。
+Only Finance or a Hotel Admin can change the early departure charge from the property's policy ({0}).	只有财务或酒店管理员可以脱离酒店政策（{0}）更改提前离店费用。
+Only Finance or a Hotel Admin can override a credit block.	只有财务或酒店管理员可以覆盖挂账限制。
+Only Finance or Hotel Admin can schedule email.	只有财务或酒店管理员可以设置定时邮件。
+Only Finance or Hotel Admin can share a report.	只有财务或酒店管理员可以共享报表。
+Only IT can change an IT administrator.	只有 IT 可以更改 IT 管理员。
+Only IT can change this person's access.	只有 IT 可以更改此人的权限。
+Only IT can grant or remove the IT administrator role.	只有 IT 可以授予或移除 IT 管理员角色。
+Only {0:,.2f} of the deposit is still held.	押金仅剩 {0:,.2f} 在押。
+Only {0} is due back to the guest - can't refund more than that.	仅需退还客人 {0}——退款不能超过该金额。
+Only {0} of this payment is left to refund.	该笔付款仅剩 {0} 可退。
+Open Items	未结项目
+Opened At	开立时间
+Opened On	开立日期
+Opening Cash	期初现金
+Opening Float	开班备用金
+Order line not found.	未找到订单行。
+Order Total	订单合计
+Order Type	订单类型
+Ordered On The Day	当日点单
+Original Invoice	原发票
+OTA Booking Ref	OTA 预订号
+OTA booking {0} is already reservation {1}.	OTA 预订 {0} 已是预订 {1}。
+OTA Daily Rate	OTA 每日房价
+OTA Daily Rate cannot be negative.	OTA 每日房价不能为负数。
+OTA Live Key	OTA 正式密钥
+OTA prepaid stay with nothing held for extras. Blocking charges to the room is safer.	OTA 预付住店，未保留额外费用额度。禁止记入客房费用更稳妥。
+OTA Strategy	OTA 策略
+Outbound URL	出站 URL
+Outlet Name	营业点名称
+Outlet Type	营业点类型
+Outlet {0} is not at this property.	营业点 {0} 不属于本酒店。
+Outside this service account's scope: {0}	超出该服务账号的范围：{0}
+Over room capacity	超过房间容量
+Over the credit limit by {0}{1:,.2f} (limit {0}{2:,.2f}, owed and billed with this {0}{3:,.2f}).	超出信用额度 {0}{1:,.2f}（额度 {0}{2:,.2f}，本次欠款与开票合计 {0}{3:,.2f}）。
+Over-capacity Reason	超容量原因
+Overbooking Allowance %	超订允许比例
+Overbooking limit	超订上限
+Pack List	交接清单
+Package Name	套餐名称
+Package Nights	套餐房晚
+Package Nights must be at least 1.	套餐房晚至少为 1。

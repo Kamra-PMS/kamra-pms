@@ -46,6 +46,7 @@ export const VOICE_LANGS: [string, string][] = [
   ["ar-SA", "العربية"],
   ["es-ES", "Español"],
   ["pt-BR", "Português (Brasil)"],
+  ["zh-CN", "简体中文"],
 ]
 
 const KEY = "kamra_voice_lang"
@@ -59,8 +60,11 @@ export function agentLang(): string {
     // private window: fall through to a guess
   }
   const known = (c: string) => VOICE_LANGS.find(([v]) => v.toLowerCase() === c.toLowerCase())?.[0]
-  return known(navigator.language) ??
+  // the UI language first (zh-CN is a code of its own), then a regional
+  // variant of it (pt -> pt-BR), then the browser, then the desk default
+  return known(getLang()) ??
     VOICE_LANGS.find(([v]) => v.startsWith(`${getLang()}-`))?.[0] ??
+    known(navigator.language) ??
     "en-IN"
 }
 

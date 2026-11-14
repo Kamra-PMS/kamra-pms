@@ -10,7 +10,7 @@ import { Sheet } from "../components/ui/sheet"
 import { fmtMoney, loadLocale, taxLabel, useLocale } from "../lib/money"
 import { useAuth } from "../lib/auth"
 import CityLedgerPayment from "./CityLedgerPayment"
-import { t as translate, useUILanguage } from "../lib/i18n"
+import { serverLang, t as translate, useUILanguage } from "../lib/i18n"
 
 // Accounts receivable: the company accounts the hotel bills on credit.
 // /receivables lists them; /receivables/:account is one account - its bills,
@@ -335,7 +335,7 @@ function AccountPage({ account }: { account: string }) {
   const openPage = async (method: string, args: Record<string, unknown> = {}) => {
     try {
       const res = await call<{ content: string }>(method, {
-        account, format: "html", lang: language, ...args,
+        account, format: "html", lang: serverLang(language), ...args,
       })
       const w = window.open("", "_blank")
       if (w) {
@@ -351,7 +351,7 @@ function AccountPage({ account }: { account: string }) {
   const emailMonthly = async () => {
     try {
       const res = await call<{ sent_to: string[]; number: string }>("kamra.statements.email_monthly_bill", {
-        account, month, lang: language,
+        account, month, lang: serverLang(language),
       })
       setNotice(translate("{v0} sent to {v1}", { v0: res.number, v1: res.sent_to.join(", ") }))
     } catch (e) {
@@ -362,7 +362,7 @@ function AccountPage({ account }: { account: string }) {
   const emailStatement = async () => {
     try {
       const res = await call<{ sent_to: string[] }>("kamra.statements.email_company_statement", {
-        account, lang: language,
+        account, lang: serverLang(language),
       })
       setNotice(translate("Statement sent to {v0}", { v0: res.sent_to.join(", ") }))
     } catch (e) {

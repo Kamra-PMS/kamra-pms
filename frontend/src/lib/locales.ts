@@ -10,6 +10,7 @@ const loaders: Record<string, () => Promise<{ default: Dict }>> = {
 	ar: () => import("../i18n/locales/ar.json"),
 	es: () => import("../i18n/locales/es.json"),
 	pt: () => import("../i18n/locales/pt.json"),
+	"zh-CN": () => import("../i18n/locales/zh-CN.json"),
 }
 
 const inflight = new Map<string, Promise<Dict>>()
