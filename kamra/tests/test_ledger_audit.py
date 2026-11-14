@@ -131,9 +131,9 @@ class LedgerAuditTestCase(AuditTestCase):
 		self.assertAlmostEqual(by["Guest"]["debit"], 590, places=2)
 		self.assertAlmostEqual(by["Guest"]["credit"], 590, places=2)
 		self.assert_ledger_matches_folio()
-		# a second reversal of the same line is refused
-		self.assertIsNone(ledger.reverse_ledger_for_charge(
-			PROP_A, self.folio, row, "again"))
+		# a second void of the same line is refused
+		with self.assertRaisesRegex(frappe.ValidationError, "already voided"):
+			api.void_folio_charge(self.folio, row, reason="UT again")
 
 	def test_refund_of_an_over_collected_advance(self):
 		self.charge(500)
@@ -251,6 +251,13 @@ class LedgerAuditTestCase(AuditTestCase):
 		# default date is the property's business date
 		self.assertEqual(ledger.journal_by_transaction_code(PROP_A)["business_date"],
 		                 d(-1))
+		# a range adds up both days
+		both = {r["transaction_code"]: r for r in ledger.journal_by_transaction_code(
+			PROP_A, d(-1), from_date=d(-2), to_date=d(-1))["rows"]}
+		self.assertAlmostEqual(float(both["3000"]["debit"]), 300, places=2)
+		self.assertEqual(both["3000"]["entries"], 2)
+		with self.assertRaises(frappe.ValidationError):
+			ledger.journal_by_transaction_code(PROP_A, from_date=d(-1), to_date=d(-2))
 
 	def test_financial_activity_lists_the_days_postings_by_user(self):
 		self.charge(100)
@@ -274,7 +281,7 @@ class LedgerAuditTestCase(AuditTestCase):
 		self.charge(500, gst=0)
 		moved = ledger.transfer_to_city_ledger(self.folio, COMPANY)
 		# 45 days later the invoice sits in the 31-60 bucket
-		with patch("kamra.ledger.nowdate", return_value=d(45)):
+		with patch("kamra.ledger.aging_date", return_value=d(45)):
 			acc = ledger.city_ledger_aging(PROP_A)["accounts"]
 		self.assertEqual(len(acc), 1)
 		self.assertEqual(acc[0]["company"], COMPANY)
@@ -282,7 +289,7 @@ class LedgerAuditTestCase(AuditTestCase):
 		self.assertEqual(acc[0]["current"], 0)
 		# a part payment reduces the oldest invoice first
 		ledger.city_ledger_settle(moved["account"], 200)
-		with patch("kamra.ledger.nowdate", return_value=d(130)):
+		with patch("kamra.ledger.aging_date", return_value=d(130)):
 			acc = ledger.city_ledger_aging(PROP_A)["accounts"][0]
 		self.assertAlmostEqual(acc["b90p"], 300, places=2)
 		self.assertAlmostEqual(float(acc["balance"]), 300, places=2)

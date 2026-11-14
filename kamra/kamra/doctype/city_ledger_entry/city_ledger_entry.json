@@ -17,7 +17,11 @@
   "credit",
   "reference",
   "notes",
-  "idempotency_key"
+  "idempotency_key",
+  "received_on",
+  "reverses",
+  "disputed",
+  "dispute_note"
  ],
  "fields": [
   {
@@ -110,11 +114,40 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "received_on",
+   "fieldtype": "Date",
+   "label": "Received On",
+   "description": "Payments: the date the bank or cashier received the money, when it is earlier than the posting (business) date."
+  },
+  {
+   "fieldname": "reverses",
+   "fieldtype": "Link",
+   "label": "Reverses",
+   "options": "City Ledger Entry",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "The company payment this entry reverses (a bounced cheque, a payment on the wrong account)."
+  },
+  {
+   "fieldname": "disputed",
+   "fieldtype": "Check",
+   "label": "Disputed",
+   "default": "0",
+   "read_only": 1,
+   "description": "The company disputes this bill: no payment reminders, and it does not count towards the overdue credit block. It still shows in aging."
+  },
+  {
+   "fieldname": "dispute_note",
+   "fieldtype": "Small Text",
+   "label": "Dispute Note",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-11 10:00:00.000000",
+ "modified": "2026-11-12 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "City Ledger Entry",

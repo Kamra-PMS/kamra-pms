@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **161 governed tools** on the hosted MCP
+Kamra exposes **170 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -608,9 +608,11 @@ Endpoint: `kamra.ledger.folio_in_currency`.
 
 ### `void_charge(folio, charge_row, reason)`
 
-Remove a WRONG charge line from an open folio (duplicate, wrong
-amount, wrong guest). Pass the folio and the charge line's id (`name`
-from get_folio). For settled/invoiced bills use apply_allowance.
+Void a WRONG charge line on an open folio (duplicate, wrong
+amount, wrong guest): the line stays and a reversal line of the
+opposite sign, with the reason, follows it. Pass the folio and the
+charge line's id (`name` from get_folio). For settled/invoiced bills
+use apply_allowance.
 
 Endpoint: `kamra.api.void_folio_charge`.
 Mutating - logged to the activity ledger.
@@ -672,6 +674,71 @@ charge_rows is a list of charge line names from get_folio.
 
 Endpoint: `kamra.api.transfer_folio_charges`.
 Mutating - logged to the activity ledger.
+
+### `refund_payment(folio, payment_row, amount, mode, reason, reason_code, idempotency_key)`
+
+Give money back on an open folio, with a reason (or a Refund
+reason_code). payment_row (a payment line from get_folio) refunds
+that payment: to its own mode by default, or pass mode Cash to give
+cash back; amount defaults to what is left of it. Without
+payment_row give amount and mode. Refuses more than the guest is in
+credit. A security deposit is refunded with refund_deposit. Confirm
+the amount with staff first.
+
+Endpoint: `kamra.api.refund_folio_payment`.
+Mutating - logged to the activity ledger.
+
+### `correct_folio_charge(folio, charge_row, reason, amount, gst_rate, charge_type, description, reason_code, idempotency_key)`
+
+Correct a posted charge on an open folio: the original line stays,
+a reversal of it and a repost with the right amount (pre-tax),
+tax rate, charge type or description are added, both linked to it
+(corrects_row). Give only what changes. Needs a reason (or a Void
+reason_code). Room nights change through the stay's rate, not here;
+settled bills need a credit note.
+
+Endpoint: `kamra.api.correct_folio_charge`.
+Mutating - logged to the activity ledger.
+
+### `folio_statement(folio)`
+
+One folio by its id, as the bill prints: lines with date, charge
+type, transaction code, GL code, tax and corrects_row; payments with
+mode, kind, GL code and refund_of; a dated statement with charges,
+credits and running balance; tax summary; company payments that
+cleared it (allocations). Read-only.
+
+Endpoint: `kamra.api.folio_invoice`.
+
+### `transfer_folio_charge(from_folio, charge_rows, to_folio, to_company, to_reservation, reason, idempotency_key)`
+
+Move charge lines (names from get_folio or folio_statement) off an
+open folio, ledger and all. Give ONE target: to_folio (another folio
+of the same stay or group), to_company=true (the stay's Company
+folio, opened if needed; alcohol never moves there) or
+to_reservation (another checked-in stay here: Finance or Hotel Admin
+only, reason required). Lines keep their GL code.
+
+Endpoint: `kamra.api.transfer_folio_charges`.
+Mutating - logged to the activity ledger.
+
+### `list_cashier_sessions(business_date, to_date, status, limit)`
+
+Till sessions, newest first, for a business date (or
+business_date to to_date), optionally status Open or Closed: cashier,
+terminal, system totals per method, expected, counted, variance and
+its review. Read-only.
+
+Endpoint: `kamra.cashier.list_sessions`.
+
+### `cashier_session_detail(session)`
+
+One till session for a reconciliation: system vs counted per
+method, the note-by-note cash count, every receipt and paid-out in
+time order, the cashier and the supervisor who approved a variance.
+Read-only.
+
+Endpoint: `kamra.cashier.session_report`.
 
 ### `close_folio(folio)`
 
@@ -760,6 +827,43 @@ an agent can't override a block. Refused on a restricted account.
 Confirm the lines and total with the user first.
 
 Endpoint: `kamra.receivables.create_ar_invoice`.
+Mutating - logged to the activity ledger.
+
+### `create_ar_account(company, account_number, credit_limit, use_default_credit_days, credit_days, billing_address, restricted, restricted_reason, idempotency_key)`
+
+Open a company account (AR) at this property, so the company can
+be billed on credit at check-out. `company` is the Corporate Account
+id. Payment terms: the property default unless
+use_default_credit_days is false, then credit_days. credit_limit 0
+means no limit. A restricted account needs restricted_reason and
+takes no new bills. One account per company per property. Needs a
+Finance or Hotel Admin user.
+
+Endpoint: `kamra.receivables.save_ar_account`.
+Mutating - logged to the activity ledger.
+
+### `update_ar_account(account, account_number, credit_limit, use_default_credit_days, credit_days, billing_address, restricted, restricted_reason, idempotency_key)`
+
+Edit a company account (see ar_accounts): account number, credit
+limit, payment terms, billing address, or restrict it (with
+restricted_reason) and lift the restriction. Only the fields you pass
+change. Needs a Finance or Hotel Admin user.
+
+Endpoint: `kamra.receivables.save_ar_account`.
+Mutating - logged to the activity ledger.
+
+### `record_ar_payment(account, amount, mode, reference, allocations, received_on, idempotency_key)`
+
+Record a payment a company made on its account (bank transfer,
+cheque). From an agent it does not post: it waits for a Finance user
+to confirm it with their PIN, and the result says pending with the
+request id and the bills it would clear (oldest first unless
+`allocations` [{folio, amount}] names them). received_on
+(YYYY-MM-DD) is the date the bank received it, the business date if
+left out. Confirm the amount and reference with the user first.
+An agent can't reverse a payment; Finance does that on the account.
+
+Endpoint: `kamra.ledger.city_ledger_settle`.
 Mutating - logged to the activity ledger.
 
 ### `payables_aging()`

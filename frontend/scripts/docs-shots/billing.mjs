@@ -136,16 +136,24 @@ if (want("voids-allowances")) {
   await shot(page, "billing/voids-allowances", (await root.count()) ? { locator: root } : {})
 }
 
-if (want("ledgers")) {
+if (want("books-check")) {
   await open(page, "/ledgers", 4000)
-  const root = page.getByRole("heading", { name: "Ledgers", exact: true }).locator("xpath=ancestor::div[contains(@class,'max-w-5xl')][1]")
-  await shot(page, "billing/ledgers", (await root.count()) ? { locator: root } : {})
+  await shot(page, "billing/books-check", { clip: { x: 236, y: 75, width: 1192, height: 760 } })
 }
 
 if (want("receivables")) {
   await open(page, "/receivables", 3500)
-  await shot(page, "billing/receivables", { clip: { x: 236, y: 75, width: 1192, height: 420 } })
+  await shot(page, "billing/receivables", { clip: { x: 236, y: 75, width: 1192, height: 520 } })
 }
 
+if (want("receivables-account")) {
+  await open(page, "/receivables", 3500)
+  // the company that owes the most, so the page has bills to show
+  await page.getByRole("button", { name: /^Balance/i }).first().click().catch(() => {})
+  await page.waitForTimeout(500)
+  await page.locator("tbody tr").first().click()
+  await page.waitForTimeout(3000)
+  await shot(page, "billing/receivables-account", { clip: { x: 236, y: 75, width: 1192, height: 620 } })
+}
 
 await done()

@@ -96,7 +96,11 @@ export default function HousekeepingBoard() {
 
   useEffect(() => {
     load()
-    const id = setInterval(load, 30_000)
+    // Match Rooms/Today: 60s poll, skip while the tab is hidden.
+    const id = setInterval(() => {
+      if (document.visibilityState === "hidden") return
+      load()
+    }, 60_000)
     return () => clearInterval(id)
   }, [load])
 

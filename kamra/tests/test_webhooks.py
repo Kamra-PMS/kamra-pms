@@ -344,3 +344,138 @@ class LifecycleEventsTestCase(_WebhookCase):
 		self.assertEqual(env["event"], "night_audit.closed")
 		self.assertEqual(env["data"]["business_date"], TODAY)
 		self.assertEqual(env["data"]["room_charges_posted"], 3)
+
+
+class MoneyEventsTestCase(_WebhookCase):
+	"""The money and control events: each fires once, from its writer, signed
+	and delivered like the booking events."""
+
+	COMPANY = "UT Webhook Co"
+
+	def setUp(self):
+		super().setUp()
+		self.rt = make_room_type(PROP_A, "STD", base_price=1000)
+		self.room = make_room(PROP_A, self.rt, "101")
+		self.sub = self.subscribe()
+
+	def fired(self, event):
+		return [json.loads(p)["data"] for p in frappe.get_all(
+			wh.DELIVERY, filters={"property": PROP_A, "event": event},
+			pluck="payload", order_by="creation asc")]
+
+	def stay(self):
+		from kamra.tests.audit_fixtures import guest_folio
+		res = make_reservation(PROP_A, self.rt, d(-1), d(1), room=self.room,
+		                       status="Checked In")
+		return res, guest_folio(res.name)
+
+	def test_every_new_event_is_subscribable_and_documented(self):
+		import os
+		with open(os.path.join(frappe.get_app_path("kamra"), "..", "docs-site",
+		                       "integrations.md")) as handle:
+			doc = handle.read()
+		for event in wh.EVENTS:
+			self.assertIn(f"`{event}`", doc, event)
+
+	def test_void_and_discount_fire_once_and_are_signed(self):
+		from kamra import api
+		_res, folio = self.stay()
+		api.add_folio_charge(folio, "Misc", "UT minibar", 450, gst_rate=0)
+		row = frappe.get_doc("Folio", folio).charges[-1].name
+		api.void_folio_charge(folio, row, reason="Wrong room")
+		voided = self.fired("folio.charge_voided")
+		self.assertEqual(len(voided), 1)
+		self.assertEqual((voided[0]["charge"]["row"], voided[0]["charge"]["amount"],
+		                  voided[0]["reason"]), (row, 450.0, "Wrong room"))
+		with patch("kamra.api._allowance_needs_approval", return_value=False):
+			api.post_allowance(folio, 100, reason="Service recovery")
+		disc = self.fired("folio.discount_applied")
+		self.assertEqual(len(disc), 1)
+		self.assertEqual(disc[0]["amount"], 100.0)
+		self.assertTrue(disc[0]["serial"])
+		name = frappe.get_all(wh.DELIVERY, filters={"event": "folio.discount_applied"},
+		                      pluck="name")[0]
+		with patch("requests.post", return_value=_resp(200)) as post:
+			self.assertEqual(wh.deliver(name)["status"], "Delivered")
+		h, body = post.call_args.kwargs["headers"], post.call_args.kwargs["data"]
+		self.assertTrue(wh.verify(self.sub["secret"], h["X-Kamra-Timestamp"], body,
+		                          h["X-Kamra-Signature"]))
+
+	def test_approval_requested_then_decided(self):
+		from kamra import api
+		_res, folio = self.stay()
+		with patch("kamra.api._allowance_needs_approval", return_value=True), \
+				patch("kamra.api._may_approve_allowance", return_value=False):
+			out = api.post_allowance(folio, 900, reason="Big ask")
+		self.assertTrue(out["pending"])
+		self.assertEqual([r["status"] for r in self.fired("approval.requested")], ["Pending"])
+		self.assertEqual(self.fired("folio.discount_applied"), [])
+		with patch("kamra.api._may_approve_allowance", return_value=True):
+			api.decide_allowance(out["request"], approve=0, note="Not justified")
+		decided = self.fired("approval.decided")
+		self.assertEqual(len(decided), 1)
+		self.assertEqual((decided[0]["approval"], decided[0]["status"]),
+		                 (out["request"], "Rejected"))
+
+	def test_advance_received_and_refunded(self):
+		from kamra import api, cashier
+		cashier.open_session(PROP_A, opening_float=500)
+		res = make_reservation(PROP_A, self.rt, d(3), d(4))
+		api.record_advance(res.name, 1500, "Cash")
+		got = self.fired("deposit.received")
+		self.assertEqual([(g["payment"]["kind"], g["payment"]["amount"]) for g in got],
+		                 [("Advance", 1500.0)])
+		folio = got[0]["folio"]
+		api.refund_folio_payment(folio, 500, "Cash", reason="Guest asked")
+		self.assertEqual([r["payment"]["amount"] for r in self.fired("folio.refunded")], [500.0])
+		self.assertEqual([r["payment"]["amount"] for r in self.fired("deposit.refunded")], [500.0])
+
+	def test_rate_set_by_hand(self):
+		from kamra import api
+		api.set_room_rate(PROP_A, self.rt, d(10), d(12), 1500, reason="Event week")
+		got = self.fired("rate.overridden")
+		self.assertEqual(len(got), 1)
+		self.assertEqual((got[0]["scope"], got[0]["rate"], got[0]["room_type"]),
+		                 ("room_type", 1500.0, self.rt))
+
+	def test_ar_bill_and_payment(self):
+		from kamra import api, ledger
+		corp = frappe.get_doc({"doctype": "Corporate Account", "company_name": self.COMPANY,
+		                       "credit_allowed": 1}) \
+			if not frappe.db.exists("Corporate Account", self.COMPANY) \
+			else frappe.get_doc("Corporate Account", self.COMPANY)
+		corp.credit_allowed = 1
+		corp.save(ignore_permissions=True) if not corp.is_new() else corp.insert(ignore_permissions=True)
+		_res, folio = self.stay()
+		api.add_folio_charge(folio, "Misc", "UT bill", 800, gst_rate=0)
+		ledger.transfer_to_city_ledger(folio, corp.name, credit_check=False)
+		bills = self.fired("ar.bill_created")
+		self.assertEqual(len(bills), 1)
+		self.assertEqual((bills[0]["folio"], bills[0]["company"]), (folio, corp.name))
+		paid = ledger.city_ledger_settle(bills[0]["account"], 300, reference="UT-1")
+		pays = self.fired("ar.payment_recorded")
+		self.assertEqual(len(pays), 1)
+		self.assertEqual((pays[0]["payment"], pays[0]["amount"]), (paid["payment"], 300.0))
+
+	def test_cashier_session_closed(self):
+		from kamra import cashier
+		sess = cashier.open_session(PROP_A, opening_float=500)["name"]
+		cashier.close_session(sess, 500)
+		got = self.fired("cashier.session_closed")
+		self.assertEqual([(g["session"], g["counted_cash"]) for g in got], [(sess, 500.0)])
+
+	def test_group_block_released_once(self):
+		from kamra import api
+		from kamra import group_blocks as gbk
+		make_room(PROP_A, self.rt, "102")
+		gb = api.create_group_block(PROP_A, "UT Offsite", d(30), d(31),
+		                            [{"room_type": self.rt, "rooms_blocked": 2}])
+		name = gb["group_booking"] if isinstance(gb, dict) else gb
+		api.save_group_blocks(name, [{"room_type": self.rt, "rooms_blocked": 2}],
+		                      status="Confirmed")
+		frappe.db.set_value("Group Booking", name, "cutoff_date", d(-1))
+		with patch("kamra.group_blocks.nowdate", return_value=TODAY):
+			gbk.release_expired_blocks()
+			gbk.release_expired_blocks()
+		got = self.fired("group.block_released")
+		self.assertEqual([(g["group_booking"], g["rooms_released"]) for g in got], [(name, 2)])

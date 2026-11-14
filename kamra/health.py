@@ -274,15 +274,21 @@ def _upgrade_payload() -> dict:
 		"releases": GITHUB_RELEASES,
 		"docker_latest": "ghcr.io/kamra-pms/kamra:latest",
 		"docker_nightly": "ghcr.io/kamra-pms/kamra:nightly",
+		# Hard rule: no backup, no update. Docker install.sh update already
+		# aborts if backup fails; bench operators must do the same first step.
 		"bench": (
+			"bench --site <site> backup --with-files && "
 			"bench get-app kamra https://github.com/Kamra-PMS/kamra-pms "
 			"--branch main && bench --site <site> migrate && bench build "
 			"--app kamra && bench restart"
 		),
 		"note": (
 			"Kamra does not auto-upgrade or downgrade the site from this "
-			"screen. Self-host: pull the new image or bench update, then "
-			"migrate. To leave a newer tag, pin the previous vX.Y.Z with "
+			"screen. Rule: take a full backup before every update — if the "
+			"backup fails, stop. Docker: sudo /opt/kamra/install.sh update "
+			"(backs up first, aborts on failure). Bench: run "
+			"`bench --site <site> backup --with-files` before migrate. "
+			"To leave a newer tag, pin the previous vX.Y.Z with "
 			"KAMRA_TAG=… install.sh update (see docs: Going back). "
 			"Frappe Cloud: create a Marketplace release from main."
 		),
@@ -395,6 +401,28 @@ def dismiss_update_nag(tag: str, snooze_days: int = 0):
 
 	frappe.defaults.set_user_default(NAG_DISMISS_KEY, json.dumps(payload))
 	return {"ok": True, "dismissed": payload}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("System Manager", "Administrator")
+def take_site_backup(with_files: int = 1):
+	"""Full site backup before an update. Hard rule: operators (and
+	`deploy/update-bench.sh` / `install.sh update`) must succeed here
+	before migrate. Returns the archive paths under private/backups."""
+	from frappe.utils.backups import new_backup
+
+	backup = new_backup(ignore_files=not cint(with_files))
+	# new_backup returns a BackupGenerator; expose the paths Desk lists.
+	paths = {
+		"database": getattr(backup, "backup_path_db", None),
+		"public_files": getattr(backup, "backup_path_files", None),
+		"private_files": getattr(backup, "backup_path_private_files", None),
+		"config": getattr(backup, "backup_path_conf", None),
+		"site": frappe.local.site,
+		"with_files": bool(cint(with_files)),
+	}
+	frappe.logger("kamra").info(f"take_site_backup ok site={paths['site']}")
+	return paths
 
 
 @frappe.whitelist()

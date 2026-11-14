@@ -59,6 +59,18 @@ EVENTS: dict[str, str] = {
 	"guest.checked_out": "A stay was checked out.",
 	"folio.posted": "A charge was posted to a guest, company or group folio.",
 	"night_audit.closed": "The night audit closed a business date.",
+	"folio.charge_voided": "A charge line was voided off an open folio, with a reason.",
+	"folio.discount_applied": "A discount or allowance posted to a folio (one event per line).",
+	"folio.refunded": "Money was refunded on a folio (advances, deposits and over-payments).",
+	"rate.overridden": "A rate was typed in by hand: a stay's nightly rate, or a room type's rate for dates.",
+	"approval.requested": "Something waits for a manager's approval (an allowance or discount above the line).",
+	"approval.decided": "A manager approved or rejected a pending request.",
+	"deposit.received": "An advance or a security deposit was taken.",
+	"deposit.refunded": "An advance still held for an arrival, or a security deposit, was refunded.",
+	"ar.bill_created": "A bill was moved to a company's city ledger (AR) account.",
+	"ar.payment_recorded": "A company's payment was recorded against its AR account.",
+	"cashier.session_closed": "A cashier counted the drawer and closed the till.",
+	"group.block_released": "A group's cutoff passed and its unpicked rooms went back on sale.",
 }
 # a test event the settings screen sends to one endpoint; not subscribable
 PING = "ping"
@@ -333,6 +345,117 @@ def emit_night_audit_closed(property: str, result: dict) -> list[str]:
 	return emit("night_audit.closed", property,
 	            {k: _s(result.get(k)) if k.endswith("date") else result.get(k)
 	             for k in keys})
+
+
+def _money(v) -> float:
+	return round(float(v or 0), 2)
+
+
+def _currency(property: str):
+	return frappe.db.get_value("Property", property, "currency")
+
+
+def emit_charge_voided(folio, removed: dict, reason: str) -> list[str]:
+	"""folio.charge_voided - `removed` is the line as it was."""
+	return emit("folio.charge_voided", folio.property, {
+		"folio": folio.name, "folio_type": folio.get("folio_type"),
+		"reservation": removed.get("reservation") or folio.get("reservation"),
+		"charge": {"row": removed.get("row"),
+		           "posting_date": _s(removed.get("posting_date")),
+		           "charge_type": removed.get("charge_type"),
+		           "description": removed.get("description"),
+		           "amount": _money(removed.get("amount")),
+		           "tax_rate": float(removed.get("gst_rate") or 0)},
+		"reason": reason, "currency": _currency(folio.property),
+		"balance": _money(folio.get("balance")),
+	})
+
+
+def emit_discount_applied(folio: str, amount, gst_rate, reason: str, serial: str,
+                          approved_by: str | None,
+                          allowance_request: str | None) -> list[str]:
+	"""folio.discount_applied for one allowance line (kamra.api._post_allowance,
+	the writer behind discounts, promo codes and allowances)."""
+	f = frappe.db.get_value("Folio", folio, ["property", "folio_type", "reservation",
+	                                         "balance"], as_dict=True)
+	return emit("folio.discount_applied", f.property, {
+		"folio": folio, "folio_type": f.folio_type, "reservation": f.reservation,
+		"amount": _money(amount), "tax_rate": float(gst_rate or 0),
+		"reason": reason, "serial": serial, "approved_by": approved_by,
+		"allowance_request": allowance_request,
+		"currency": _currency(f.property), "balance": _money(f.balance),
+	})
+
+
+def _payment(folio, row) -> dict:
+	row = row if isinstance(row, dict) else row.as_dict()
+	return {
+		"folio": folio.name, "folio_type": folio.get("folio_type"),
+		"reservation": folio.get("reservation"),
+		"payment": {"row": row.get("name"), "kind": row.get("payment_kind"),
+		            "mode": row.get("mode"),
+		            "posting_date": _s(row.get("posting_date")),
+		            "amount": _money(abs(float(row.get("amount") or 0))),
+		            "reference": row.get("reference")},
+		"currency": _currency(folio.property),
+		"balance": _money(folio.get("balance")),
+	}
+
+
+def emit_payment(event: str, folio, row) -> list[str]:
+	"""folio.refunded, deposit.received or deposit.refunded for one payment
+	row just saved on `folio` (amount is always positive in the payload)."""
+	return emit(event, folio.property, _payment(folio, row))
+
+
+def emit_rate_overridden(property: str, data: dict) -> list[str]:
+	return emit("rate.overridden", property,
+	            {**data, "currency": _currency(property)})
+
+
+def emit_approval(event: str, req) -> list[str]:
+	"""approval.requested / approval.decided for an Allowance Request."""
+	return emit(event, req.property, {
+		"approval": req.name, "type": "allowance", "status": req.status,
+		"folio": req.folio, "reservation": req.get("reservation"),
+		"amount": _money(req.amount), "tax_rate": float(req.get("gst_rate") or 0),
+		"reason": req.get("reason"), "reason_code": req.get("reason_code"),
+		"requested_by": req.get("requested_by"), "channel": req.get("channel"),
+		"decided_by": req.get("decided_by"),
+		"decision_note": req.get("decision_note") or None,
+		"serial": req.get("serial") or None,
+		"currency": _currency(req.property),
+	})
+
+
+def emit_ar(event: str, property: str, data: dict) -> list[str]:
+	"""ar.bill_created / ar.payment_recorded."""
+	return emit(event, property, {**data, "currency": _currency(property)})
+
+
+def emit_session_closed(sess) -> list[str]:
+	return emit("cashier.session_closed", sess.property, {
+		"session": sess.name, "business_date": _s(sess.get("business_date")),
+		"user": sess.get("user"), "closed_by": sess.get("closed_by"),
+		"opened_at": _s(sess.get("opened_at")), "closed_at": _s(sess.get("closed_at")),
+		"opening_float": _money(sess.get("opening_float")),
+		"expected_cash": _money(sess.get("expected_cash")),
+		"counted_cash": _money(sess.get("counted_cash")),
+		"variance": _money(sess.get("variance")),
+		"variance_status": sess.get("variance_status") or None,
+		"currency": _currency(sess.property),
+	})
+
+
+def emit_group_block_released(group, rows: list[dict]) -> list[str]:
+	return emit("group.block_released", group.property, {
+		"group_booking": group.name, "group_name": group.get("group_name"),
+		"check_in_date": _s(group.get("check_in_date")),
+		"check_out_date": _s(group.get("check_out_date")),
+		"cutoff_date": _s(group.get("cutoff_date")),
+		"rooms_released": sum(r["rooms_released"] for r in rows),
+		"blocks": rows,
+	})
 
 
 # ---------------------------------------------------------------------------

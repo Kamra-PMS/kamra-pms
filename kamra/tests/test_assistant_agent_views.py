@@ -53,7 +53,7 @@ class AgentToolsTestCase(unittest.TestCase):
 		self.assertIn("transfer number", str(e.exception))
 
 	def test_empty_answer_is_retried_then_explained(self):
-		from unittest import mock
+		import unittest.mock as mock
 
 		def reply(text):
 			r = mock.Mock(status_code=200)

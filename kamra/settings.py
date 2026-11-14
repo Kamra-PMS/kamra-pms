@@ -194,6 +194,13 @@ MODULES: tuple[Module, ...] = (
 				       "room charge template on the WhatsApp connection. At most one message per bill "
 				       "every 10 minutes; room nights and company bills never send one."),
 			)),
+			Section("room_at_booking", "Room at booking",
+			        "Whether a new reservation takes a specific room straight away.", (
+				S("assign_room_on_booking", "Allow assigning room while making the reservation", "check", 1,
+				  hint="On: a room is assigned when the reservation is made. Off: the reservation holds a "
+				       "room type only, and the room is chosen at check-in. Walk-ins keep their room. "
+				       "Availability still counts the stay against the room type."),
+			)),
 			Section("holds", "Holds & selling", "", (
 				S("hold_minutes", "Hold unconfirmed bookings for", "number", 120, P, min=5, max=10080, unit="min"),
 				S("sell_message", "Sell message", "textarea", store=P,
@@ -213,6 +220,10 @@ MODULES: tuple[Module, ...] = (
 				S("waive_no_show_fee_for_ota", "No no-show fee on OTA bookings", "check", 1, P,
 				  hint="Bookings from an OTA or channel are still marked No Show, but no fee is posted - "
 				       "the OTA charges the guest under its own policy."),
+				S("no_show_credit_default", "When a no-show paid more than the fee", "select", "Refund", P,
+				  options=("Refund", "Keep as forfeited deposit"),
+				  hint="What the desk is offered first for the rest of the advance after a no-show. "
+				       "The desk still picks and gives a reason; the audit pack lists no-shows left in credit."),
 				S("non_guaranteed_release_time", "Release non-guaranteed arrivals at", "time", None, P,
 				  hint="Leave blank to never release. At this time, today's arrivals with no advance, "
 				       "payment or deposit on the folio, and that are not an OTA or company booking, "
@@ -444,6 +455,10 @@ MODULES: tuple[Module, ...] = (
 				  hint="Each morning, email a company's billing contact 3 days before a bill is due, on the "
 				       "due date and 15 days after, with its statement attached. Each reminder goes once per "
 				       "bill, and Finance gets a notice of what was sent."),
+				S("city_ledger_payment_pin", "Ask for a PIN on every company payment", "check", 0,
+				  hint="On: the person recording a company payment confirms it with their own cashier PIN. "
+				       "A payment an AI agent records always waits for a Finance user to confirm it with "
+				       "their PIN, whatever this is set to."),
 			)),
 			Section("cashier", "Cashier controls", "", (
 				S("use_cashier_tills", "Take money through cashier tills", "check", 1,

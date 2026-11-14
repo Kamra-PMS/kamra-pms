@@ -73,11 +73,15 @@ interface RunPayload {
 interface Day {
   date: string
   rooms_sold: number
+  rooms_occupied: number
+  available_rooms: number
+  occupancy_basis: "in_house" | "posted"
   pax: number
   occupancy_pct: number
   room_revenue: number
   fnb_revenue: number
   other_revenue: number
+  allowances: number
   total_revenue: number
   adr: number
   revpar: number
@@ -1062,10 +1066,12 @@ function FlashPanel(props: {
         <Stat
           label={t("Occupancy")}
           value={`${todayData?.occupancy_pct ?? 0}%`}
-          sub={t("{sold} of {total} rooms", {
-            sold: todayData?.rooms_sold ?? 0,
-            total: d.total_rooms,
-          })}
+          sub={t(
+            todayData?.occupancy_basis === "in_house"
+              ? "{occupied} of {available} rooms (in house)"
+              : "{occupied} of {available} rooms (posted)",
+            { occupied: todayData?.rooms_occupied ?? 0, available: todayData?.available_rooms ?? 0 },
+          )}
         />
         <Stat label={t("ADR")} value={`${cur()}${inr(todayData?.adr ?? 0)}`} sub={t("room rate / room sold")} />
         <Stat label={t("RevPAR")} value={`${cur()}${inr(todayData?.revpar ?? 0)}`} sub={t("room rev / room")} />
@@ -1077,10 +1083,11 @@ function FlashPanel(props: {
         <Stat
           label={ranged ? t("Revenue") : t("Revenue (day)")}
           value={`${cur()}${inr(todayData?.total_revenue ?? 0)}`}
-          sub={t("room {room} · F&B {fnb} · other {other}", {
+          sub={t("room {room} · F&B {fnb} · other {other} · allowances {allowances}", {
             room: `${cur()}${inr(todayData?.room_revenue ?? 0)}`,
             fnb: `${cur()}${inr(todayData?.fnb_revenue ?? 0)}`,
             other: `${cur()}${inr(todayData?.other_revenue ?? 0)}`,
+            allowances: `${cur()}${inr(todayData?.allowances ?? 0)}`,
           })}
         />
       </div>
@@ -1108,7 +1115,7 @@ function FlashPanel(props: {
                     <td className="py-1.5 pr-3 text-right">{inr(r.adr)}</td>
                     <td className="py-1.5 pr-3 text-right">{inr(r.revpar)}</td>
                     <td className="py-1.5 text-right">
-                      {inr(r.room_revenue + r.fnb_revenue + r.other_revenue)}
+                      {inr(r.total_revenue)}
                     </td>
                   </tr>
                 ))}

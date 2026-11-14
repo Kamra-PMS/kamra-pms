@@ -58,8 +58,13 @@ export function setLang(l: Lang) {
   const code = codes.has(l) ? l : "en"
   localStorage.setItem(key(), code)
   applyLang(code)
-  // let listeners (React trees) re-render with the new direction/strings
-  window.dispatchEvent(new Event("kamra:lang"))
+  // Load the dictionary before notifying listeners so the first paint
+  // after a switch is already translated (see lib/locales.ts).
+  void import("./locales").then(({ ensureDictionary }) =>
+    ensureDictionary(code).then(() => {
+      window.dispatchEvent(new Event("kamra:lang"))
+    }),
+  )
 }
 
 /** Guest pages: the guest's own pick wins; until then the hotel's booking
@@ -74,11 +79,20 @@ export function adoptGuestLanguage(preferred?: string | null) {
 
 /** Re-apply after moving between a guest page and the desk in one tab. */
 export function syncLang() {
-  applyLang(getLang())
-  window.dispatchEvent(new Event("kamra:lang"))
+  const code = getLang()
+  applyLang(code)
+  void import("./locales").then(({ ensureDictionary }) =>
+    ensureDictionary(code).then(() => {
+      window.dispatchEvent(new Event("kamra:lang"))
+    }),
+  )
 }
 
-/** Call once at boot. */
-export function initLang() {
-  applyLang(getLang())
+/** Call once at boot. Prefetch the active dictionary so t() is ready
+ *  before React mounts (avoids a flash of English on Arabic desks). */
+export async function initLang() {
+  const code = getLang()
+  applyLang(code)
+  const { ensureDictionary } = await import("./locales")
+  await ensureDictionary(code)
 }

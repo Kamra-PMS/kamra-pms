@@ -29,15 +29,12 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 
 	def on(self, day):
 		"""Pin today for the ledger and the statements."""
-		stack = patch("kamra.ledger.nowdate", return_value=day)
-		stack2 = patch("kamra.statements.nowdate", return_value=day)
-		stack.start(), stack2.start()
+		stack = patch("kamra.ledger.aging_date", return_value=day)
+		stack.start()
 		self.addCleanup(stack.stop)
-		self.addCleanup(stack2.stop)
 
 	def remind(self, day):
-		with patch("kamra.ledger.nowdate", return_value=day), \
-		     patch("kamra.statements.nowdate", return_value=day), \
+		with patch("kamra.ledger.aging_date", return_value=day), \
 		     patch("frappe.sendmail") as mail, \
 		     patch("kamra.night_audit.alert_staff") as alert:
 			out = statements.send_property_reminders(PROP_A)
@@ -118,6 +115,34 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 		kw = mail.call_args.kwargs
 		self.assertEqual(kw["recipients"], [EMAIL])
 		self.assertTrue(kw["attachments"][0]["fname"].endswith(".html"))
+
+	def test_bulk_email_sends_each_and_names_the_ones_without_email(self):
+		self.bill(500)
+		self.contact(EMAIL)
+		with patch("frappe.enqueue") as enqueue:
+			out = statements.email_statements_bulk(PROP_A, frappe.as_json([self.account]))
+		self.assertEqual(out, {"queued": 1, "skipped": []})
+		job = enqueue.call_args.kwargs
+		self.assertEqual(job["accounts"], [self.account])
+		with patch("frappe.sendmail") as mail, patch("kamra.night_audit.alert_staff") as alert:
+			out = statements._send_bulk(job["property"], job["accounts"], job["kind"],
+			                            job["month"], job["lang"])
+		self.assertEqual(mail.call_args.kwargs["recipients"], [EMAIL])
+		self.assertEqual(out, {"sent": [self.account], "failed": []})
+		alert.assert_called_once()
+
+		self.contact(None)
+		with patch("frappe.enqueue") as enqueue:
+			out = statements.email_statements_bulk(PROP_A, [self.account], kind="monthly",
+			                                       month=TODAY[:7])
+		self.assertEqual(out, {"queued": 0, "skipped": [cc.COMPANY]})
+		enqueue.assert_not_called()
+		with self.assertRaises(frappe.ValidationError):
+			statements.email_statements_bulk(PROP_A, [self.account], kind="monthly")
+		with self.assertRaises(frappe.ValidationError):
+			statements.email_statements_bulk(PROP_A, ["no-such-account"])
+		with self.assertRaises(frappe.ValidationError):
+			statements.email_statements_bulk(PROP_A, '"not a list"')
 
 	# reminders -------------------------------------------------------------
 
@@ -210,6 +235,7 @@ class CompanyStatementTestCase(cc.CreditControlTestCase):
 		try:
 			for fn in (lambda: statements.company_statement(self.account),
 			           lambda: statements.email_company_statement(self.account),
+			           lambda: statements.email_statements_bulk(PROP_A, [self.account]),
 			           lambda: _run_dataset(PROP_A, "dso", d(-29), TODAY),
 			           lambda: _run_dataset(PROP_A, "overdue_by_company", None, None)):
 				with self.assertRaises(frappe.PermissionError):

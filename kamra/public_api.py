@@ -919,8 +919,9 @@ def book(property: str, room_type: str, check_in_date: str,
          meal_plan: str = "", special_requests: str = "", addons=None,
          voucher_code: str = "", idempotency_key: str = "", pets: int = 0,
          child_ages=None, marketing_consent: int = 0):
-	"""Create a Website booking. Guest identity is the phone number; staff
-	verify at check-in. The advance owed is computed from the property's
+	"""Create a Website booking. An existing guest profile is reused when
+	both the phone and the full name match; staff verify at check-in.
+	The advance owed is computed from the property's
 	current payment policy and snapshotted onto the booking.
 
 	Instant mode (default): Confirmed when nothing is due now, else

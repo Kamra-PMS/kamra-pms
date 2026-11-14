@@ -1,0 +1,182 @@
+{
+ "actions": [],
+ "autoname": "CLP-.#####",
+ "creation": "2026-11-12 10:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "account",
+  "company",
+  "amount",
+  "mode",
+  "reference",
+  "received_on",
+  "allocations",
+  "idempotency_key",
+  "column_break_a",
+  "status",
+  "requested_by",
+  "requested_on",
+  "channel",
+  "decided_by",
+  "decided_on",
+  "decision_note",
+  "payment"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "label": "Account",
+   "options": "City Ledger Account",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "mode",
+   "fieldtype": "Data",
+   "label": "Mode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_on",
+   "fieldtype": "Date",
+   "label": "Received On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "allocations",
+   "fieldtype": "Long Text",
+   "label": "Allocations",
+   "read_only": 1,
+   "description": "What the payment clears, as proposed: [{folio, amount}]. Confirming posts exactly this."
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nConfirmed\nRejected",
+   "read_only": 1,
+   "default": "Pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_on",
+   "fieldtype": "Datetime",
+   "label": "Requested On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Data",
+   "label": "Channel",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Decided By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_on",
+   "fieldtype": "Datetime",
+   "label": "Decided On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_note",
+   "fieldtype": "Small Text",
+   "label": "Decision Note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment",
+   "fieldtype": "Link",
+   "label": "Payment",
+   "options": "City Ledger Entry",
+   "read_only": 1,
+   "description": "The company payment posted on confirmation."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-12 10:00:00",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Company Payment Request",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

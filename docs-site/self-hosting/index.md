@@ -140,13 +140,18 @@ restore the backup taken at the start of the upgrade. Keep production on
 `:stable` or a pinned tag - not `:nightly`. Full notes:
 [quickstart → Going back](/quickstart#going-back-downgrade).
 
-Bench self-host:
+Bench self-host: **back up first, or stop**:
 
 ```bash
+bench --site pms.yourhotel.com backup --with-files   # required
 cd frappe-bench/apps/kamra && git pull
 bench --site pms.yourhotel.com migrate
 bench build && bench restart
 ```
+
+Wrapper that aborts if the backup fails:
+`./deploy/update-bench.sh pms.yourhotel.com` (or
+`/opt/kamra/update-bench.sh` when that file is on the host).
 
 Run the eval harness after any update - deterministic checks over money,
 tax and availability logic:

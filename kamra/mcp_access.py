@@ -102,6 +102,10 @@ def tool_refusal(spec, level: str | None, policy) -> str | None:
 	"""Why this tool can't run for this level at this property, or None."""
 	if not level:
 		return NO_ACCESS
+	from kamra.service_accounts import tool_refusal as scope_refusal
+	scoped = scope_refusal(spec)
+	if scoped:
+		return scoped
 	if spec.name in policy.blocked:
 		return _("A hotel admin has blocked {0} for AI clients at {1}.").format(
 			spec.name, policy.property_name)

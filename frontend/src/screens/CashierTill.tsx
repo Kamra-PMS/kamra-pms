@@ -54,6 +54,7 @@ type Session = {
   expected_cash?: number
   counted_cash?: number
   variance?: number
+  denominations?: number[]
   totals?: Record<string, number>
   transactions?: {
     name: string
@@ -75,6 +76,13 @@ export default function CashierTill() {
   const [session, setSession] = useState<Session | null>(null)
   const [floatAmt, setFloatAmt] = useState("2000")
   const [counted, setCounted] = useState("")
+  // optional count by note and coin: denomination -> count
+  const [notes, setNotes] = useState<Record<string, string>>({})
+  const counts = Object.entries(notes).filter(([, n]) => Number(n) > 0)
+  const noteTotal = counts.length
+    ? Math.round(counts.reduce((sum, [v, n]) => sum + Number(v) * Number(n), 0) * 100) / 100
+    : null
+  const drawer = noteTotal !== null ? String(noteTotal) : counted
   const [paidOutAmt, setPaidOutAmt] = useState("")
   const [paidOutReason, setPaidOutReason] = useState("")
   const [dropAmt, setDropAmt] = useState("")
@@ -138,9 +146,15 @@ export default function CashierTill() {
       await withPin(async (pin) => {
         await call("kamra.cashier.close_session", {
           session: session.name,
-          counted_cash: Number(counted || 0),
+          counted_cash: Number(drawer || 0),
+          ...(noteTotal !== null ? {
+            cash_count: Object.entries(notes)
+              .filter(([, n]) => Number(n) > 0)
+              .map(([value, n]) => ({ value: Number(value), count: Number(n) })),
+          } : {}),
           pin,
         })
+        setNotes({})
       })
     })
 
@@ -451,21 +465,45 @@ export default function CashierTill() {
                   <input
                     className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                     inputMode="decimal"
-                    value={counted}
+                    value={noteTotal !== null ? String(noteTotal) : counted}
+                    readOnly={noteTotal !== null}
                     onChange={(e) => setCounted(e.target.value)}
                   />
                 </label>
-                {counted !== "" ? (
+                {session?.denominations?.length ? (
+                  <details className="rounded-lg border border-zinc-200 px-3 py-2 text-sm">
+                    <summary className="cursor-pointer text-zinc-600">
+                      {t("Count by note and coin")}
+                    </summary>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {session.denominations.map((d) => (
+                        <label key={d} className="flex items-center gap-2">
+                          <span className="w-16 text-right tabular-nums text-zinc-600">{d}</span>
+                          <span className="text-zinc-400">×</span>
+                          <input
+                            className="w-full rounded-md border border-zinc-300 px-2 py-1 text-sm"
+                            inputMode="numeric"
+                            value={notes[String(d)] ?? ""}
+                            onChange={(e) =>
+                              setNotes({ ...notes, [String(d)]: e.target.value.replace(/\D/g, "") })
+                            }
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+                {drawer !== "" ? (
                   <p className="text-sm text-zinc-600">
                     {t("Variance")}:{" "}
                     <span className="font-semibold tabular-nums">
-                      {inr(Number(counted) - Number(session?.expected_cash || 0))}
+                      {inr(Number(drawer) - Number(session?.expected_cash || 0))}
                     </span>
                   </p>
                 ) : null}
                 <Button
                   className="w-full"
-                  disabled={busy || counted === ""}
+                  disabled={busy || drawer === ""}
                   onClick={close}
                 >
                   {t("Close session")}

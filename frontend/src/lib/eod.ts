@@ -182,10 +182,6 @@ export const eodProgress = (
 export const eodAcknowledge = (property: string, key: string, reason: string) =>
   call("kamra.night_audit.eod_acknowledge", { property, key, reason })
 
-export const eodMarkNoShow = (reservation: string) =>
-  call<{ outcome: string; fee_amount: number }>(
-    "kamra.night_audit.eod_mark_no_show", { reservation })
-
 export const runNightAudit = (property: string) =>
   call<{
     audit?: string
@@ -197,8 +193,10 @@ export const runNightAudit = (property: string) =>
     next_business_date?: string
   }>("kamra.api.run_night_audit", { property })
 
-export const auditHistory = (property: string, limit = 60) =>
-  call<RunRow[]>("kamra.night_audit.night_audit_history", { property, limit })
+export const auditHistory = (property: string, limit = 60, from_date?: string, to_date?: string) =>
+  call<RunRow[]>("kamra.night_audit.night_audit_history", {
+    property, limit, from_date: from_date || undefined, to_date: to_date || undefined,
+  })
 
 export const auditPack = (audit: string) =>
   call<PackResponse>("kamra.night_audit.night_audit_pack", { audit })

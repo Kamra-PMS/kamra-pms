@@ -39,7 +39,7 @@ from the reservation.
 guest, invoice or folio, filter by status, or set **Closed from** and
 **To** to see the bills closed in a date range.
 
-![The Billing screen: the Night audit card with its recent runs and Open End of Day, the Cashier till card, and the list of folios with their balances](/img/billing/billing-list.png)
+![The Billing screen: the Night Audit card with its recent runs and Open Night Audit, the Guests left owing list, the Cashier till card, and the list of folios with their balances](/img/billing/billing-list.png)
 
 A folio opens by itself at check-in. Until it is settled it is a
 **Provisional Bill** with no invoice number.
@@ -282,9 +282,28 @@ owes moves to its **city ledger** account by itself, if the company is
 allowed credit.
 
 **Receivables** (Finance → Receivables) is the home of every company
-account: who owes what, how late, and how much credit is left.
+account: who owes what, how late, and how much credit is left. The tiles
+on top are filters: **All accounts**, **Overdue**, **Over credit limit**,
+**In house, not billed** and **Paid ahead**, each with its count and
+amount. The list shows each account's balance by age (not due, 1 to 30
+days late, 31 to 60, 61 to 90, 90+). **Columns** adds the contact, credit
+limit and more; **Export CSV** downloads what is shown.
 
-![Receivables: what companies owe in total and overdue, and each account with its company, contact, terms, credit limit, overdue amount and balance](/img/billing/receivables.png)
+![Receivables: the five filters with their counts and amounts, and each company with its terms, balance by age, balance and last payment](/img/billing/receivables.png)
+
+**Work on several companies at once** (Finance and Hotel Admin): tick
+them (or **Select all**), then **Email statements**, **Send month-end
+bills** for the month you pick, or **Export selected**. Each email goes to
+the company's billing contact and is on the Activity log; a company with
+no billing email is named and skipped.
+
+On a company's page, **New invoice** and **Record payment** are at the
+top; **Statement**, **Month-end bill** and **Account setup** are under
+**More**. Below the totals, a bar shows how old what the company owes is,
+and the tabs **Open bills**, **All bills**, **Payments** and **Account
+history** hold everything on the account.
+
+![A company's account: New invoice, Record payment and More at the top, the totals, the age of what is owed, and the open bills](/img/billing/receivables-account.png)
 
 - **Open an account** (Finance and Hotel Admin): press **New account**,
   pick the company, and set the **Account number**, **Credit limit**
@@ -303,9 +322,9 @@ account: who owes what, how late, and how much credit is left.
 - **Transfer a bill** to another company (the parent company or the
   agency pays): press **Transfer** on the bill. What is still owed moves;
   what was paid stays. The bill keeps its number and date.
-- **Month-end bill** for corporates billed monthly: pick the month next to
-  **Month-end bill** (last month by default) and press it to print, or
-  **Email** to send it to the billing contact. It lists every bill of the
+- **Month-end bill** for corporates billed monthly: **More → Month-end
+  bill** opens a preview for a month (last month by default). Press
+  **Print or save PDF**, or **Email to the billing contact**. It lists every bill of the
   month with its invoice number, taxable value and tax, the company's
   payments, and the balance brought and carried forward. Each stay keeps
   its own tax invoice; the month-end bill is the summary the company pays
@@ -333,21 +352,44 @@ Activity log.
 
 **Record a company's payment** (Finance and Hotel Admin):
 
-1. Open **Finance → Receivables** and the company (or **Finance → Ledgers**). **City ledger aging** lists each company's
-   balance by age (0-30, 31-60, 61-90, 90+ days) and any unapplied credit.
-2. Press **Record payment** on the company's row.
+1. Open **Finance → Receivables** and the company.
+2. Press **Record payment**.
 3. Enter **Amount received**, the **Mode** and the **Reference (UTR /
-   cheque no.)**. By default the payment clears the oldest bills first;
-   you can type the amount for each bill instead.
+   cheque no.)**. **Received on** is the date the bank received it; leave
+   it blank for today's business date. By default the payment clears the
+   oldest bills first; you can type the amount for each bill instead.
 4. Press **Review payment**, check what it clears, then **Confirm**.
 
 Money left over stays on the account as unapplied credit and pays the
-company's next bill automatically.
+company's next bill automatically. With **Ask for a PIN on every company
+payment** on (Settings → Property → Company credit), the person recording
+it confirms with their own cashier PIN.
+
+**Payments an AI agent records** never post on their own. They show under
+**Payments to confirm** on the company's account. A Finance user (not the
+one behind the agent) checks the amount and the bills it clears and
+presses **Confirm** with their PIN, which posts exactly that, or
+**Reject** with a note.
+
+**Reverse a payment** (a bounced cheque, or money put on the wrong
+account): on the **Payments** tab, press **Reverse**, pick the reason
+and add a note. The bills it cleared are owed again with their old due
+dates, any credit it left on the account is taken back, and the reason is
+on the Activity log. A payment can be reversed once, and AI agents can't
+reverse one.
+
+**Disputed bills**: press **Dispute** on an open bill and say what the
+company disputes. The bill stays on the account, in aging and on the
+statement, marked Disputed, but gets no payment reminders and does not
+count towards the overdue credit block. **Clear dispute** ends it.
+
+Aging, reminders and the overdue check count days from the property's
+business date, so they agree with night audit around midnight.
 
 **Send a company its statement** (Finance and Hotel Admin): on the
-company's row in **City ledger aging**, press **Statement** to open it and
-print it or save it as PDF, or **Email statement** to send it (leave the
-address blank to use the billing contact email on the company). The
+company's page, **More → Statement** opens a preview. Press **Print or
+save PDF**, or **Email to the billing contact** (the contact email on the
+company). To send many at once, tick them on the Receivables list. The
 statement lists every open bill with its invoice date, due date, days
 overdue, what was billed and paid, any unapplied credit, the balance due
 and the aging by days overdue.
@@ -495,7 +537,7 @@ the drawer, with the session's recent transactions below.
 2. Press **Close session**.
 
 Finance and the night auditor can also close someone else's till, in the
-**Cashier closure** step of [End of Day](/night-audit). **Finance →
+open tills check of [Night Audit](/night-audit). **Finance →
 Sessions** lists every session with its float, expected and counted cash
 and variance.
 
@@ -614,22 +656,33 @@ lists the currencies with a rate for today. Picking one adds a line such as
 guest only: the tax invoice, its totals and its amount in words stay in
 your currency.
 
-## Check the ledgers
+## Check the books
 
-**Finance → Ledgers** shows the four folio ledgers for a date: **Guest**
-(what in-house guests owe), **Deposit** (advances and security deposits
-held), **AR** (what companies owe) and **Package**. Below them are the
-journal by transaction code and the city ledger aging.
+**Finance → Books check** shows the four folio ledgers: **Guest** (what
+in-house guests owe), **Deposit** (advances and security deposits held),
+**AR** (what companies owe) and **Package**. Pick **From** and **To** at
+the top: the ledger balances are as of the **To** date, and the journal by
+transaction code covers the whole range (this month by default).
 
-![The Ledgers screen: the green banner saying the ledgers agree with folios, the four ledgers, the journal by transaction code and the city ledger aging](/img/billing/ledgers.png)
+One line at the top answers whether the books are right, for the current
+business date:
 
-The banner at the top checks the ledgers against the folios for the
-current business date. **Ledgers agree with folios** means the Guest and
-Deposit ledgers add up to what the folios carry. Debits are higher than
-credits by what guests owe; that is expected. If a folio doesn't match,
-the banner turns amber and lists it (see
-[Troubleshooting](#troubleshooting)). For any other date it shows the totals
-only.
+- **Folios and ledgers agree.** The Guest and Deposit ledgers add up to
+  what the folios carry. Debits are higher than credits by what guests
+  owe; that is expected.
+- **N folio(s) do not match the ledger**, with how far apart, and a link
+  to each folio. Open it to find the posting that reached one side and not
+  the other (see [Troubleshooting](#troubleshooting)).
+
+For an earlier **To** date it shows the balances only.
+
+![Books check: the line saying folios and ledgers agree, the four ledgers, and the journal by transaction code for the dates picked](/img/billing/books-check.png)
+
+Press **Who makes it up** on a ledger to list every folio with a balance
+in it, biggest first. The (i) on each ledger explains what it holds and
+how a mistake is put right. The list and the journal both sort, choose
+columns and **Export CSV**. What each company owes, and how late, is in
+[Receivables](#bill-a-company).
 
 Every charge, payment, void, transfer and allowance writes a ledger entry.
 A void or a move does not delete history: it posts a reversal.
@@ -713,7 +766,7 @@ it says no gateway is configured, set one up under **Settings → Payments**.
 **"Alcohol cannot be billed to a company folio."** Post or move the drink
 to the guest's own folio.
 
-**The Ledgers banner says "Ledger differs from folios".** The banner
+**Books check says "folios do not match the ledger".** The line
 checks that the Guest and Deposit ledgers agree with every folio's
 balance, for the current business date. When they don't, it lists each
 folio that differs, with the folio balance and the ledger balance: a
@@ -738,4 +791,4 @@ The REST endpoints live in `kamra.api` (folios, payments, deposits),
 **Voids & Allowances** screen reads `kamra.reports.void_allowance_report`
 (Finance, Hotel Admin). See the
 [API reference](/api-reference#core-front-desk-folios-guests-rooms) and
-[Ledgers](/api-reference#ledgers-trial-balance-city-ledger-ar-fx-desk).
+[Books check](/api-reference#ledgers-trial-balance-city-ledger-ar-fx-desk).

@@ -101,7 +101,7 @@ Hoy se ve como siempre (Tareas abiertas empieza oculto).
 El registro de entrada es una lista corta de pasos, una pantalla cada uno, en el orden que fijó su
 alojamiento. Los mismos pasos se abren desde cualquier botón **Registrar entrada**: la
 llegada en **Hoy**, la reserva en **Reservas**, una estancia en el
-**Calendario de ocupación**, una llegada en **Cierre del día** y un huésped sin reserva previa.
+**Calendario de ocupación**, una llegada en **Auditoría nocturna** y un huésped sin reserva previa.
 
 1. En **Hoy**, busque al huésped en **Llegadas** y pulse **Registrar entrada**.
 2. Siga los pasos de la parte superior del panel. Cada paso dice qué

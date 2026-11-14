@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 from datetime import datetime
 from typing import Any, Callable
 
@@ -143,7 +144,7 @@ DATASETS: dict[str, Dataset] = {
 		# the desk runs this for occupancy; the money columns are for
 		# kamra.dashboards.FIGURE_ROLES only
 		"money_columns": ("adr", "revpar", "revpax", "room_revenue", "fnb_revenue",
-		                  "other_revenue", "total_revenue"),
+		                  "other_revenue", "allowances", "total_revenue"),
 		"date_field": "date",
 		"needs_range": True,
 		"columns": [
@@ -156,6 +157,7 @@ DATASETS: dict[str, Dataset] = {
 			_col("room_revenue", "Room revenue", "number"),
 			_col("fnb_revenue", "F&B revenue", "number"),
 			_col("other_revenue", "Other revenue", "number"),
+			_col("allowances", "Allowances", "number"),
 			_col("total_revenue", "Total revenue", "number"),
 			_col("pax", "Pax", "number"),
 		],
@@ -1473,6 +1475,8 @@ def _table_html(payload: dict, lang: str = "en") -> str:
 
 
 def _page_html(title: str, meta: str, body: str, lang: str = "en") -> str:
+	# lang comes from the caller and lands in an attribute: keep it a code
+	lang = lang if re.fullmatch(r"[a-z]{2}(-[A-Z]{2})?", str(lang or "")) else "en"
 	rtl = lang == "ar"
 	align = "right" if rtl else "left"
 	esc = frappe.utils.escape_html

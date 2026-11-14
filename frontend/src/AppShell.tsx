@@ -23,10 +23,12 @@ import { Avatar } from "./components/ui/avatar"
 import { Button } from "./components/ui/button"
 import {
   appForPath,
+  useConnectedApps,
   visibleApps,
   type AppDef,
   type AppNavItem,
 } from "./lib/apps"
+import ConnectedAppIcon from "./components/ConnectedAppIcon"
 import {
   call,
   enabledModules,
@@ -277,6 +279,7 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const ref = useRef<HTMLDivElement>(null)
+  const connected = useConnectedApps()
 
   useEffect(() => {
     if (!open) return
@@ -339,6 +342,27 @@ function AppSwitcher({ apps, current }: { apps: AppDef[]; current: AppDef }) {
               )
             })}
           </div>
+          {connected.length > 0 && (
+            <div className="mt-1 grid grid-cols-3 gap-0.5 border-t border-zinc-100 pt-1">
+              {connected.map((app) => (
+                <a
+                  key={app.app_id}
+                  href={app.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="flex flex-col items-center gap-1.5 rounded-md px-1.5 py-2.5 text-center transition-colors hover:bg-zinc-50"
+                >
+                  <span className="flex size-9 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600">
+                    <ConnectedAppIcon src={app.icon} />
+                  </span>
+                  <span className="text-[11px] font-medium leading-tight text-zinc-600">
+                    {app.name}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
           <NavLink
             to="/apps"
             onClick={() => setOpen(false)}

@@ -429,7 +429,11 @@ before_request = [
 	# the public demo shows the maintenance page while it rebuilds
 	"kamra.demo_guard.block_while_rebuilding",
 ]
-after_request = ["kamra.mcp_http.after_request"]
+after_request = [
+	"kamra.mcp_http.after_request",
+	# every service account call goes in the Agent Action Log
+	"kamra.service_accounts.after_request",
+]
 
 # Job Events
 # ----------
@@ -463,7 +467,12 @@ after_request = ["kamra.mcp_http.after_request"]
 # Authentication and authorization
 # --------------------------------
 
-auth_hooks = ["kamra.mcp_http.authenticate"]
+auth_hooks = [
+	"kamra.mcp_http.authenticate",
+	# a service account key reaches only its scoped endpoints (after the
+	# key has been resolved to its user, before the endpoint runs)
+	"kamra.service_accounts.enforce_scope",
+]
 
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True

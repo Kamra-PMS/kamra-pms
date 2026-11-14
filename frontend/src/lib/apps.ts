@@ -73,6 +73,9 @@ import {
   CalendarClock,
   Scale,
 } from "lucide-react"
+import { useEffect, useState } from "react"
+
+import { call } from "./api"
 
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
 const EOD_KEYWORDS = ["End of day", "EOD", "Close the day", "Roll the date"]
@@ -306,7 +309,8 @@ export const APPS: AppDef[] = [
       // Books
       { to: "/receivables", label: "Receivables", icon: Building2, group: "Books",
         keywords: ["AR", "Accounts receivable", "City ledger", "Direct bill", "Company invoice"] },
-      { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
+      { to: "/ledgers", label: "Books check", icon: BookOpen, group: "Books",
+        keywords: ["Ledgers", "Trial balance", "Journal", "Reconciliation"] },
       { to: "/payables", label: "Payables", icon: HandCoins, group: "Books",
         keywords: ["Accounts payable", "Vendors", "Suppliers", "Supplier bills"],
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
@@ -447,4 +451,30 @@ export function visibleApps(roles: string[], modules?: string[]): AppDef[] {
       a.roles.some((r) => roles.includes(r)) &&
       (!modules?.length || modules.includes(a.id)),
   )
+}
+
+/** A connected app from the App Registry (kamra.apps.my_apps): an add-on on
+ *  its own site, paired in Marketplace. The server already filtered it to
+ *  the roles its manifest names. */
+export interface ConnectedApp {
+  app_id: string
+  name: string
+  icon?: string | null
+  url: string
+}
+
+/** The connected apps this person may open. Empty until it answers, and on
+ *  any error: the built-in apps never wait on it. */
+export function useConnectedApps(): ConnectedApp[] {
+  const [apps, setApps] = useState<ConnectedApp[]>([])
+  useEffect(() => {
+    let live = true
+    call<ConnectedApp[]>("kamra.apps.my_apps")
+      .then((rows) => live && setApps(rows ?? []))
+      .catch(() => undefined)
+    return () => {
+      live = false
+    }
+  }, [])
+  return apps
 }

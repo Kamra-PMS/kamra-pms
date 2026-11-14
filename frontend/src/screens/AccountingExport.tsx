@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
+import { downloadCsv } from "../lib/csv"
 
 type Row = Record<string, unknown>
 type Line = Record<string, unknown>
@@ -27,7 +28,7 @@ const money = (v: unknown) => String(Number(v ?? 0).toFixed(2))
 const compHeader = (c: string) => c.toUpperCase()
 
 /** Item-level formats (generic, Zoho) get one row per invoice line group -
- *  each service code (SAC/HSN) and tax rate on the invoice - so a bill with
+ *  each service code (SAC/HSN), GL code and tax rate on the invoice - so a bill with
  *  a room, a dinner and a laundry bag exports three codes, not the room's
  *  code three times. Voucher-level formats (Tally, ERPNext) keep one row per
  *  invoice. */
@@ -43,6 +44,7 @@ function rowsFor(format: string, d: ExportData): Row[] {
             ...r,
             item: String(l.description ?? ""),
             service_code: String(l.service_code ?? ""),
+            gl_code: String(l.gl_code ?? ""),
             rate: Number(l.rate ?? 0),
             taxable: Number(l.taxable ?? 0),
             total_tax: Number(l.total_tax ?? 0),
@@ -107,6 +109,7 @@ function columnsFor(format: string, d: ExportData): Col[] {
     { header: "Place of Supply", pick: (r) => String(r.place_of_supply) },
     { header: "Item", pick: (r) => String(r.item ?? "") },
     { header: "SAC/HSN", pick: (r) => String(r.service_code) },
+    { header: "GL Code", pick: (r) => String(r.gl_code ?? "") },
     { header: `${d.tax_label} %`, pick: (r) => String(r.rate ?? "") },
     { header: "Taxable", pick: (r) => money(r.taxable) },
     ...taxCols,
@@ -145,22 +148,14 @@ export default function AccountingExport() {
   }, [property, from, to])
   useEffect(load, [load])
 
-  const esc = (t: string) =>
-    /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
-
   function download() {
     if (!data) return
     const cols = columnsFor(format, data)
-    const csv = [
-      cols.map((c) => esc(c.header)).join(","),
-      ...rowsFor(format, data).map((r) => cols.map((c) => esc(c.pick(r, data))).join(",")),
-    ].join("\n")
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" })
-    const a = document.createElement("a")
-    a.href = URL.createObjectURL(blob)
-    a.download = `invoices-${format}-${from}-to-${to}.csv`
-    a.click()
-    URL.revokeObjectURL(a.href)
+    downloadCsv(
+      `invoices-${format}-${from}-to-${to}`,
+      cols.map((c) => c.header),
+      rowsFor(format, data).map((r) => cols.map((c) => c.pick(r, data))),
+    )
   }
 
   const cols = data ? columnsFor(format, data) : []

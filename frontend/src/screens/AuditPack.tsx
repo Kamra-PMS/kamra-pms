@@ -3,7 +3,7 @@
     exactly what was printed that night. One report at a time with Print /
     Download PDF (the browser's Save as PDF), or Print all as one A4 run. */
 
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowLeft, Download, Printer } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 import { auditPack, rebuildAuditPack, type Pack, type PackResponse } from "../lib/eod"
@@ -14,6 +14,7 @@ import { Badge } from "../components/ui/badge"
 import { cur, instantLabel, moneyLocale } from "../lib/money"
 import { useT, t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
+import { downloadCsv } from "../lib/csv"
 
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -33,6 +34,10 @@ export const fmtDay = (d: unknown) =>
       })
     : "-"
 
+/** Inside an audit pack report every table offers CSV, named after the
+ *  report and its business date. */
+const PackExport = createContext<string | null>(null)
+
 export interface Col {
   key: string
   label: string
@@ -46,14 +51,19 @@ export function DataTable({
   empty,
   total,
   dense,
+  exportName,
 }: {
   cols: Col[]
   rows: any[]
   empty?: string
   total?: Record<string, ReactNode>
   dense?: boolean
+  /** Shows an Export CSV button; the file gets this name. */
+  exportName?: string
 }) {
   const { t } = useT()
+  const packName = useContext(PackExport)
+  exportName = exportName ?? packName ?? undefined
   const cell = (c: Col, r: any) => {
     if (c.render) return c.render(r)
     const v = r?.[c.key]
@@ -63,10 +73,29 @@ export function DataTable({
     return String(v)
   }
   const right = (c: Col) => (c.kind === "money" || c.kind === "num" ? "text-end tabular-nums" : "")
+  // the file carries the raw figures, not the formatted cells
+  const exportCsv = () =>
+    downloadCsv(exportName!, cols.map((c) => t(c.label)), rows.map((r) => cols.map((c) => {
+      const v = r?.[c.key]
+      return typeof v === "number" || typeof v === "string" ? v : v == null ? null : String(v)
+    })))
   return (
     <div className="overflow-x-auto print:overflow-visible">
+      {exportName && rows.length > 0 && (
+        <div className="mb-1 flex justify-end print:hidden">
+          <Button variant="ghost" className="h-7 px-2 text-xs" onClick={exportCsv}>
+            <Download className="size-3.5" aria-hidden />
+            {t("Export CSV")}
+          </Button>
+        </div>
+      )}
       {/* table-fixed squeezes every column to a sliver on a phone; scroll instead */}
-      <table className={cn("w-full min-w-[32rem] table-fixed text-sm print:min-w-0", dense && "text-xs")}>
+      {/* about 7rem a column on screen, so a wide report scrolls instead of
+          numbers running into each other; print fits the page */}
+      <table
+        style={{ ["--table-min" as string]: `${Math.max(32, cols.length * 7 + 3)}rem` }}
+        className={cn("w-full min-w-[var(--table-min)] table-fixed text-sm print:min-w-0", dense && "text-xs")}
+      >
         <thead>
           <tr className="border-b border-zinc-200 text-start text-[11px] font-medium uppercase tracking-wider text-zinc-500">
             {cols.map((c, i) => (
@@ -75,7 +104,7 @@ export function DataTable({
                 className={cn(
                   "px-2 py-1.5 text-start",
                   right(c),
-                  i === 0 && "w-[24%]",
+                  i === 0 && (cols.length > 6 ? "w-40" : "w-[24%]"),
                 )}
               >
                 {t(c.label)}
@@ -164,6 +193,7 @@ function ManagerFlash({ p }: { p: Pack }) {
           { key: "room_revenue", label: "Room revenue", kind: "money" },
           { key: "fnb_revenue", label: "F&B revenue", kind: "money" },
           { key: "other_revenue", label: "Other revenue", kind: "money" },
+          { key: "allowances", label: "Allowances", kind: "money" },
           { key: "adr", label: "ADR", kind: "money" },
           { key: "revpar", label: "RevPAR", kind: "money" },
         ]}
@@ -438,6 +468,7 @@ function Occupancy({ p }: { p: Pack }) {
           { key: "room_revenue", label: "Room", kind: "money" },
           { key: "fnb_revenue", label: "F&B", kind: "money" },
           { key: "other_revenue", label: "Other", kind: "money" },
+          { key: "allowances", label: "Allowances", kind: "money" },
           { key: "total_revenue", label: "Total", kind: "money" },
           { key: "pax", label: "Guests", kind: "num" },
           { key: "revpax", label: "RevPAX", kind: "money" },
@@ -491,6 +522,18 @@ function NoShows({ p }: { p: Pack }) {
         ]}
         rows={p.held_late_arrivals || []}
         empty={translate("None held.")}
+      />
+      <Sub>{t("No-shows still in credit (refund or keep)")}</Sub>
+      <DataTable
+        cols={[
+          { key: "reservation", label: "Confirmation" },
+          { key: "guest_name", label: "Guest" },
+          { key: "check_in_date", label: "Arrival", kind: "date" },
+          { key: "credit", label: "Credit", kind: "money" },
+          { key: "default", label: "Policy default" },
+        ]}
+        rows={p.no_show_credits || []}
+        empty={translate("None in credit.")}
       />
       <Sub>{t("Cancellations")}</Sub>
       <DataTable
@@ -601,6 +644,8 @@ function AuditReport({ p }: { p: Pack }) {
           col("room_revenue", "Rooms (net of discounts)"), col("adr", "ADR"), col("revpar", "RevPAR"),
           col("food", "Food"), col("beverage", "Beverage"), col("banquets", "Banquets"),
           col("meal_plan_minibar", "Meal plan & minibar"), col("other", "Other"),
+          // a pack saved before this column existed has none: hide it there
+          ...(periods.some((p) => p.allowances != null) ? [col("allowances", "Discounts & allowances")] : []),
           col("total_revenue", "Total"),
         ]}
         rows={periods.map((per) => ({ ...per, label: t(per.label) }))}
@@ -668,7 +713,9 @@ function ReportSheet({ p, report, first }: { p: Pack; report: (typeof REPORTS)[n
           <div>{t("Printed from the audit pack of {when}", { when: String(p.generated_at || "").slice(0, 16) })}</div>
         </div>
       </div>
-      <Body p={p} />
+      <PackExport.Provider value={`${report.key}-${String(p.business_date || "").slice(0, 10)}`}>
+        <Body p={p} />
+      </PackExport.Provider>
     </section>
   )
 }
@@ -794,7 +841,7 @@ export default function AuditPackScreen() {
       <div className="flex items-center justify-between print:hidden">
         <Link to="/end-of-day" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-800">
           <ArrowLeft className="size-4" aria-hidden />
-          {t("End of Day")}
+          {t("Night Audit")}
         </Link>
         <span className="text-xs text-zinc-400">{audit}</span>
       </div>

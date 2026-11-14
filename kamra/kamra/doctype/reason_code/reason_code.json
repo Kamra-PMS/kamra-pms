@@ -30,7 +30,7 @@
    "fieldname": "category",
    "fieldtype": "Select",
    "label": "Category",
-   "options": "Void\nAdjust\nRate Change\nRefund\nPaid Out\nNC",
+   "options": "Void\nAdjust\nRate Change\nRefund\nPaid Out\nNC\nPayment Reversal",
    "reqd": 1,
    "in_list_view": 1
   },
@@ -49,7 +49,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-07 00:00:00",
+ "modified": "2026-11-12 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Reason Code",
