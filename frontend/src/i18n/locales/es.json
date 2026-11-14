@@ -6292,5 +6292,10 @@
   "Policy default": "Opción por defecto de la política",
   "When a no-show paid more than the fee": "Cuando un no presentado pagó más que el cargo",
   "What the desk is offered first for the rest of the advance after a no-show. The desk still picks and gives a reason; the audit pack lists no-shows left in credit.": "Lo que se ofrece primero en recepción para el resto del anticipo tras un no presentado. Recepción sigue eligiendo y da un motivo; el paquete de auditoría lista los no presentados que quedan con saldo a favor.",
-  "Keep as forfeited deposit": "Retener como anticipo perdido"
+  "Keep as forfeited deposit": "Retener como anticipo perdido",
+  "Rows per page": "Filas por página",
+  "{a}-{b} of {n}": "{a}-{b} de {n}",
+  "Previous page": "Página anterior",
+  "Next page": "Página siguiente",
+  "Nothing to show.": "Nada que mostrar."
 }

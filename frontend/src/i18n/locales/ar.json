@@ -6291,5 +6291,10 @@
   "Policy default": "الخيار الافتراضي للسياسة",
   "When a no-show paid more than the fee": "عندما يكون من لم يحضر قد دفع أكثر من الرسوم",
   "What the desk is offered first for the rest of the advance after a no-show. The desk still picks and gives a reason; the audit pack lists no-shows left in credit.": "ما يُعرض أولًا على الاستقبال لباقي الدفعة المقدمة بعد عدم الحضور. يختار الاستقبال ويذكر السبب، وتسرد حزمة التدقيق حالات عدم الحضور التي بقي لها رصيد دائن.",
-  "Keep as forfeited deposit": "الاحتفاظ به كعربون مُصادَر"
+  "Keep as forfeited deposit": "الاحتفاظ به كعربون مُصادَر",
+  "Rows per page": "صفوف في الصفحة",
+  "{a}-{b} of {n}": "{a}-{b} من {n}",
+  "Previous page": "الصفحة السابقة",
+  "Next page": "الصفحة التالية",
+  "Nothing to show.": "لا شيء لعرضه."
 }

@@ -197,6 +197,7 @@
 {0}: reminder sent for {1} ({2}),{0}: reminder sent for {1} ({2}),{0}: تم إرسال تذكير لـ {1} ({2}),{0}: recordatorio enviado para {1} ({2}),,0 1 2,translated
 "{a} adults, {c} children","{a} adults, {c} children",{a} بالغين، {c} أطفال,"{a} adultos, {c} niños",components/RoomDrawer.tsx,a c,translated
 {a} new · {b} updated · {c} skipped,{a} new · {b} updated · {c} skipped,{a} جديدة · {b} محدّثة · {c} متخطاة,{a} nuevas · {b} actualizadas · {c} omitidas,screens/RoomsSetup.tsx,a b c,translated
+{a}-{b} of {n},{a}-{b} of {n},{a}-{b} من {n},{a}-{b} de {n},components/ui/data-table.tsx,a b n,translated
 "{added} added, {updated} updated","{added} added, {updated} updated",تمت إضافة {added}، وتحديث {updated},Agregados: {added}; actualizados: {updated},screens/settings/cards.tsx,added updated,translated
 "{adults} adults, {children} children on the booking","{adults} adults, {children} children on the booking",{adults} بالغين، {children} أطفال في الحجز,"{adults} adultos, {children} niños en la reserva",components/CheckInGuests.tsx,adults children,translated
 {amount} (one-time),{amount} (one-time),{amount} (مرة واحدة),{amount} (pago único),screens/PublicBooking.tsx,amount,translated
@@ -1679,7 +1680,7 @@ Collected upfront; the rest is paid at the hotel.,Collected upfront; the rest is
 Collections,Collections,التحصيلات,Cobros,screens/Dashboard.tsx; screens/Reports.tsx,,translated
 Collections by mode,Collections by mode,التحصيل حسب طريقة الدفع,Cobros por medio de pago,screens/AuditPack.tsx,,translated
 Column mapping,Column mapping,ربط الأعمدة,Correspondencia de columnas,screens/MenuImport.tsx,,translated
-Columns,Columns,الأعمدة,Columnas,components/ResourceScreen.tsx; screens/Guests.tsx; screens/Reports.tsx,,translated
+Columns,Columns,الأعمدة,Columnas,components/ResourceScreen.tsx; components/ui/data-table.tsx; screens/Guests.tsx; screens/Reports.tsx,,translated
 Commercial Registration (CRN),Commercial Registration (CRN),السجل التجاري (CRN),Registro mercantil (CRN),,,translated
 Commission,Commission,العمولة,Comisión,screens/RevenueReports.tsx,,translated
 Commission %,Commission %,العمولة %,Comisión (%),components/BookingDialog.tsx,,translated
@@ -2360,7 +2361,7 @@ Expires {date},Expires {date},تنتهي في {date},Expira {date},components/Ch
 "explains, doesn't act","explains, doesn't act",يشرح ولا ينفذ,"explica los pasos, sin ejecutar acciones",components/HelpPanel.tsx,,translated
 Export,Export,تصدير,Exportar,components/ResourceScreen.tsx; screens/Guests.tsx,,translated
 Export as CSV,Export as CSV,تصدير كـ CSV,Exportar como CSV,components/ResourceScreen.tsx,,translated
-Export CSV,Export CSV,تصدير CSV,Exportar CSV,screens/pos/OrderHistory.tsx; screens/settings/cards.tsx,,translated
+Export CSV,Export CSV,تصدير CSV,Exportar CSV,components/ui/data-table.tsx; screens/pos/OrderHistory.tsx; screens/settings/cards.tsx,,translated
 Export guest data,Export guest data,تصدير بيانات الضيف,Exportar datos del huésped,screens/GuestJourney.tsx,,translated
 Exposure,Exposure,المكشوف,Exposición crediticia,,,translated
 express,express,مستعجل,expreso,screens/HkLaundry.tsx; screens/Laundry.tsx,,translated
@@ -3609,6 +3610,7 @@ Next automatic run {at} ({tz}),Next automatic run {at} ({tz}),التشغيل ا�
 Next day,Next day,اليوم التالي,Día siguiente,screens/InHouse.tsx,,translated
 Next follow-up,Next follow-up,المتابعة التالية,Próximo seguimiento,screens/BanquetFunction.tsx,,translated
 Next month,Next month,الشهر القادم,Mes siguiente,screens/BanquetMonth.tsx,,translated
+Next page,Next page,الصفحة التالية,Página siguiente,components/ui/data-table.tsx,,translated
 Next photo,Next photo,الصورة التالية,Foto siguiente,screens/PublicBooking.tsx,,translated
 Next try {at},Next try {at},المحاولة التالية {at},Siguiente intento {at},screens/settings/WebhooksPage.tsx,at,translated
 Nicaraguan,Nicaraguan,نيكاراغوي,Nicaragüense,,,translated
@@ -3961,6 +3963,7 @@ Nothing to invoice,Nothing to invoice,لا شيء للفوترة,Nada que factur
 Nothing to report.,Nothing to report.,لا شيء للإبلاغ عنه.,Sin novedades.,,,translated
 Nothing to see while it is 0.,Nothing to see while it is 0.,لا شيء لعرضه ما دام صفراً.,Nada que ver mientras esté en 0.,screens/Ledgers.tsx,,translated
 Nothing to set up in Cashfree: every link reports back to,Nothing to set up in Cashfree: every link reports back to,لا شيء لإعداده في Cashfree: كل رابط يرسل النتيجة إلى,No hay nada que configurar en Cashfree: cada enlace informa a,screens/settings/cards.tsx,,translated
+Nothing to show.,Nothing to show.,لا شيء لعرضه.,Nada que mostrar.,components/ui/data-table.tsx,,translated
 Nothing was sent to the kitchen. A reason is enough.,Nothing was sent to the kitchen. A reason is enough.,لم يُرسل شيء إلى المطبخ. يكفي ذكر السبب.,No se envió nada a la cocina. Una razón es suficiente.,screens/pos/VoidApproval.tsx,,translated
 Nothing yet.,Nothing yet.,لا شيء بعد.,Nada todavía.,screens/Banquet.tsx,,translated
 Notification sound,Notification sound,صوت الإشعارات,Sonido de notificación,components/AlertSettings.tsx,,translated
@@ -4573,6 +4576,7 @@ Previous,Previous,السابق,Anterior,screens/TapeChart.tsx,,translated
 Previous 14 days,Previous 14 days,الأيام الـ 14 السابقة,14 días anteriores,components/CalendarView.tsx,,translated
 Previous day,Previous day,اليوم السابق,Día anterior,screens/InHouse.tsx,,translated
 Previous month,Previous month,الشهر السابق,Mes anterior,screens/BanquetMonth.tsx,,translated
+Previous page,Previous page,الصفحة السابقة,Página anterior,components/ui/data-table.tsx,,translated
 Previous period,Previous period,الفترة السابقة,Período anterior,,,translated
 Previous photo,Previous photo,الصورة السابقة,Foto anterior,screens/PublicBooking.tsx,,translated
 price,price,السعر,precio,screens/MenuImport.tsx,,translated
@@ -5146,6 +5150,7 @@ row {n} ({error}),row {n} ({error}),الصف {n} ({error}),fila {n} ({error}),sc
 Row {row},Row {row},الصف {row},Fila {row},screens/RoomsSetup.tsx,row,translated
 rows,rows,صفوف,filas,screens/Reports.tsx,,translated
 Rows,Rows,الصفوف,Filas,screens/GoLiveImport.tsx,,translated
+Rows per page,Rows per page,صفوف في الصفحة,Filas por página,components/ui/data-table.tsx,,translated
 Royal,Royal,أزرق ملكي,Azul real,,,translated
 Run and report exceptions,Run and report exceptions,تشغيل والإبلاغ عن الاستثناءات,Ejecutar y registrar incidencias,,,translated
 Run and report exceptions: the date always rolls; open items go in the audit pack as exceptions. Hold and alert: the business date is not rolled and Hotel Admin and Finance are alerted.,Run and report exceptions: the date always rolls; open items go in the audit pack as exceptions. Hold and alert: the business date is not rolled and Hotel Admin and Finance are alerted.,التشغيل مع الإبلاغ عن الاستثناءات: يتقدم التاريخ دائماً، وتُدرج البنود المفتوحة في حزمة التدقيق كاستثناءات. الإيقاف والتنبيه: لا يتقدم تاريخ العمل ويُنبَّه مدير الفندق والمالية.,Ejecutar e informar excepciones: la fecha avanza y los pendientes se documentan como excepciones. Detener y avisar: la fecha operativa no avanza y se notifica a Administración del hotel y Finanzas.,,,translated
