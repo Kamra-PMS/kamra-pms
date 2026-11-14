@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Check, ExternalLink, Lightbulb, Loader2, Printer, TriangleAlert } from "lucide-react"
 import { call, newIdempotencyKey } from "../lib/api"
+import { MAX_LINES, allocate, isCash, splitProblem, splitTotals, type PayLine } from "../lib/splitPayment"
 import { checkOutWithCredit } from "./CreditCheckout"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { serverError } from "../lib/resource"
@@ -292,10 +293,9 @@ export default function CheckOutDialog(props: {
   const [checkedOut, setCheckedOut] = useState(false)
   const [creditWarnings, setCreditWarnings] = useState<string[]>([])
   // per-step desk input
-  const [payMode, setPayMode] = useState("")
-  const [payRef, setPayRef] = useState("")
-  // one key per folio line for Collect; kept across retries until success (#550)
-  const collectKeysRef = useRef<Record<string, string> | null>(null)
+  // the payment lines to collect with: one or several modes (#597). Each line
+  // keeps its idempotency key across retries until the collect succeeds (#550)
+  const [payLines, setPayLines] = useState<PayLine[]>([])
   const [refundModes, setRefundModes] = useState<Record<string, string>>({})
   const [refundReason, setRefundReason] = useState("")
   const [discountOn, setDiscountOn] = useState(false)
@@ -336,7 +336,17 @@ export default function CheckOutDialog(props: {
   // sensible defaults once the context arrives
   useEffect(() => {
     if (!ctx) return
-    setPayMode((m) => m || ctx.payment_modes[0] || "Cash")
+    // one line for the whole balance until the cashier splits it; a single
+    // line follows the balance if it changes (a discount, a late charge)
+    const due = ctx.collect.reduce((sum, c) => sum + c.amount, 0)
+    setPayLines((ls) => {
+      if (!ctx.collect.length) return []
+      if (ls.length === 0) {
+        return [{ id: newIdempotencyKey(), key: newIdempotencyKey(),
+          mode: ctx.payment_modes[0] || "Cash", amount: String(due), reference: "" }]
+      }
+      return ls.length === 1 ? [{ ...ls[0], amount: String(due) }] : ls
+    })
     setRefundModes((prev) => {
       const next = { ...prev }
       for (const r of ctx.refunds) next[r.kind + r.folio] ??= r.mode
@@ -479,23 +489,33 @@ export default function CheckOutDialog(props: {
   const collectTotal = (ctx?.collect ?? []).reduce((s, c) => s + c.amount, 0)
   const refundTotal = (ctx?.refunds ?? []).reduce((s, r) => s + r.amount, 0)
 
+  const splitTotal = splitTotals(payLines, collectTotal)
+  const splitIssue = splitProblem(payLines, collectTotal, t)
+
+  function updateLine(id: string, patch: Partial<PayLine>) {
+    setPayLines((ls) => ls.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+  }
+
+  function addLine() {
+    setPayLines((ls) => ls.length >= MAX_LINES ? ls : [...ls, {
+      id: newIdempotencyKey(), key: newIdempotencyKey(),
+      mode: ctx?.payment_modes.find((m) => !ls.some((l) => l.mode === m)) || ctx?.payment_modes[0] || "Cash",
+      amount: splitTotal.left > 0 ? String(splitTotal.left) : "", reference: "",
+    }])
+  }
+
+  function removeLine(id: string) {
+    setPayLines((ls) => ls.length > 1 ? ls.filter((l) => l.id !== id) : ls)
+  }
+
   function collect() {
     return run(async () => {
-      if (!collectKeysRef.current) {
-        collectKeysRef.current = Object.fromEntries(
-          (ctx?.collect ?? []).map((c) => [c.folio, newIdempotencyKey()]),
-        )
-      }
-      const keys = collectKeysRef.current
-      for (const c of ctx?.collect ?? []) {
-        await call("kamra.api.add_folio_payment", {
-          folio: c.folio, mode: payMode, amount: c.amount, kind: "Payment",
-          reference: payRef.trim() || undefined,
-          idempotency_key: keys[c.folio],
-        })
-      }
-      collectKeysRef.current = null
-      setPayRef("")
+      // every line is posted in one request: all of them or none
+      await call("kamra.api.add_folio_payments", {
+        payments: allocate(payLines, ctx?.collect ?? []),
+      })
+      // a fresh single line for whatever is owed next
+      setPayLines([])
     })
   }
 
@@ -1246,19 +1266,48 @@ export default function CheckOutDialog(props: {
                       {t("Give a discount before collecting")}
                     </button>
                   )}
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="block text-xs">
-                      <span className="mb-1 block text-zinc-500">{t("Payment mode")}</span>
-                      <select className={inputCls} value={payMode} onChange={(e) => setPayMode(e.target.value)}>
-                        {ctx.payment_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
-                      </select>
-                    </label>
-                    <label className="block text-xs">
-                      <span className="mb-1 block text-zinc-500">{t("Reference (optional)")}</span>
-                      <input className={inputCls} value={payRef} onChange={(e) => setPayRef(e.target.value)} />
-                    </label>
+                  <div className="space-y-2">
+                    {payLines.map((l, i) => (
+                      <div key={l.id} className="grid grid-cols-[1fr_7rem_auto] items-end gap-2 sm:grid-cols-[10rem_8rem_1fr_auto]">
+                        <label className="block text-xs">
+                          <span className="mb-1 block text-zinc-500">{t("Payment mode")}</span>
+                          <select className={inputCls} value={l.mode} onChange={(e) => updateLine(l.id, { mode: e.target.value })}>
+                            {ctx.payment_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
+                          </select>
+                        </label>
+                        <label className="block text-xs">
+                          <span className="mb-1 block text-zinc-500">{t("Amount")}</span>
+                          <input className={cn(inputCls, "tabular-nums")} type="number" min="0" inputMode="decimal"
+                            value={l.amount} onChange={(e) => updateLine(l.id, { amount: e.target.value })} />
+                        </label>
+                        <label className="col-span-2 block text-xs sm:col-span-1">
+                          <span className="mb-1 block text-zinc-500">
+                            {isCash(l.mode) ? t("Reference (optional)") : t("Reference (required)")}
+                          </span>
+                          <input className={inputCls} value={l.reference}
+                            onChange={(e) => updateLine(l.id, { reference: e.target.value })} />
+                        </label>
+                        <button type="button" aria-label={t("Remove payment line")}
+                          className="mb-1 rounded-md px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100 disabled:opacity-30"
+                          disabled={payLines.length < 2} onClick={() => removeLine(l.id)}>
+                          &times;<span className="sr-only">{i + 1}</span>
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <Button className="mt-3 w-full sm:w-auto" disabled={busy || !ctx.till_open} onClick={() => void collect()}>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <button type="button" className="font-medium text-brand-700 hover:underline disabled:opacity-40"
+                      disabled={payLines.length >= MAX_LINES} onClick={addLine}>
+                      {t("+ Add another payment mode")}
+                    </button>
+                    <span className="tabular-nums text-zinc-600">
+                      {t("Entered {entered} · Left {left}", { entered: fmt(splitTotal.entered), left: fmt(splitTotal.left) })}
+                    </span>
+                  </div>
+                  {splitIssue && payLines.length > 0 && (
+                    <p className="mt-1 text-xs text-amber-700">{splitIssue}</p>
+                  )}
+                  <Button className="mt-3 w-full sm:w-auto" disabled={busy || !ctx.till_open || Boolean(splitIssue)} onClick={() => void collect()}>
                     {t("Collect {amount}", { amount: fmt(collectTotal) })}
                   </Button>
                 </Section>

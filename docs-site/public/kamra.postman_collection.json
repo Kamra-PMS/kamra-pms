@@ -1561,6 +1561,43 @@
      }
     },
     {
+     "name": "add_folio_payments",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.add_folio_payments",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.add_folio_payments"
+       ]
+      },
+      "description": "Record several payments in one request: one guest settling a bill\npart by cash, part by card, part by UPI.\n\n`payments` is a list of {folio, mode, amount, reference?, kind?,\nidempotency_key?}. Each row is posted exactly as add_folio_payment\nposts it (till, ledger, activity log), and all rows share one\ntransaction, so if any row is refused none is kept and the folio is\nnever left half-paid. Returns the folios touched and how many rows\nwere posted.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"payments\": \"<payments>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "refund_folio_payment",
      "request": {
       "method": "POST",

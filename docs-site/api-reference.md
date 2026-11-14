@@ -574,6 +574,25 @@ posting again.
 | `currency` | no | `None` |
 | `idempotency_key` | no | `None` |
 
+### `kamra.api.add_folio_payments`
+
+**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+
+Record several payments in one request: one guest settling a bill
+part by cash, part by card, part by UPI.
+
+`payments` is a list of {folio, mode, amount, reference?, kind?,
+idempotency_key?}. Each row is posted exactly as add_folio_payment
+posts it (till, ledger, activity log), and all rows share one
+transaction, so if any row is refused none is kept and the folio is
+never left half-paid. Returns the folios touched and how many rows
+were posted.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `payments` | yes |  |
+| `pin` | no | `None` |
+
 ### `kamra.api.refund_folio_payment`
 
 **POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
