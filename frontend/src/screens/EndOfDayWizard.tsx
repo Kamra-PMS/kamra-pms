@@ -26,9 +26,9 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { call } from "../lib/api"
 import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
+import NoShowDialog from "../components/NoShowDialog"
 import {
   eodAcknowledge,
-  eodMarkNoShow,
   eodProgress,
   eodSession,
   recoverStuckBusinessDate,
@@ -468,6 +468,7 @@ export default function EndOfDayWizard() {
   // check-out opens the guided check-out sheet (settle, credit, invoice)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
+  const [markingNoShow, setMarkingNoShow] = useState<string | null>(null)
 
   async function act(label: string, fn: () => Promise<unknown>, reload = true) {
     setBusy(label)
@@ -605,7 +606,7 @@ export default function EndOfDayWizard() {
                   {t("Check in")}
                 </Button>
                 <Button variant="ghost" className="h-7 px-2 text-xs text-rose-700" disabled={!!busy}
-                  onClick={() => act("noshow", () => eodMarkNoShow(String(r.reservation)))}>
+                  onClick={() => setMarkingNoShow(String(r.reservation))}>
                   {t("Mark no-show")}
                 </Button>
               </div>
@@ -937,6 +938,16 @@ export default function EndOfDayWizard() {
 
   return (
     <div className="space-y-4">
+      {markingNoShow && (
+        <NoShowDialog
+          reservation={markingNoShow}
+          onClose={() => setMarkingNoShow(null)}
+          onDone={() => {
+            setMarkingNoShow(null)
+            void load(active)
+          }}
+        />
+      )}
       {checkingIn && (
         <CheckInDialog
           reservation={checkingIn}

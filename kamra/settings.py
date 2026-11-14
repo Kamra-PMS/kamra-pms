@@ -213,6 +213,10 @@ MODULES: tuple[Module, ...] = (
 				S("waive_no_show_fee_for_ota", "No no-show fee on OTA bookings", "check", 1, P,
 				  hint="Bookings from an OTA or channel are still marked No Show, but no fee is posted - "
 				       "the OTA charges the guest under its own policy."),
+				S("no_show_credit_default", "When a no-show paid more than the fee", "select", "Refund", P,
+				  options=("Refund", "Keep as forfeited deposit"),
+				  hint="What the desk is offered first for the rest of the advance after a no-show. "
+				       "The desk still picks and gives a reason; the audit pack lists no-shows left in credit."),
 				S("non_guaranteed_release_time", "Release non-guaranteed arrivals at", "time", None, P,
 				  hint="Leave blank to never release. At this time, today's arrivals with no advance, "
 				       "payment or deposit on the folio, and that are not an OTA or company booking, "

@@ -1309,6 +1309,7 @@ def build_pack(property: str, bd: str, *, checks: list[dict],
 	_section(pack, "city_ledger",
 	         lambda: _raw(ledger.city_ledger_aging)(property))
 	_section(pack, "cancellations", lambda: _cancellations(property, bd))
+	_section(pack, "no_show_credits", lambda: no_show_credits(property))
 	pack["notes"] = summary.get("notes")
 	pack["reports"] = [{"key": k, "title": t} for k, t in REPORTS]
 	return pack
@@ -1663,16 +1664,13 @@ def eod_acknowledge(property: str, key: str, reason: str):
 	return {"audit": doc.name, "acknowledgement": row, "acknowledgements": acks}
 
 
-@frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Night Auditor", "Hotel Admin", "Kamra Agent")
-def eod_mark_no_show(reservation: str, reason: str | None = None):
-	"""End of Day: mark an arrival that did not come a No Show now, with the
-	property's no-show fee policy applied exactly as the audit applies it
-	(fee posted on the business date, or waived for an OTA booking)."""
-	from kamra import no_show
+NO_SHOW_ROLES = ("Front Desk", "Night Auditor", "Hotel Admin", "Kamra Agent")
+
+
+def _no_show_target(reservation: str):
+	"""The arrival a desk no-show acts on, refused unless it is a Confirmed
+	stay due on or before the business date. Returns (res, business date)."""
 	from kamra.business_date import get_business_date
-	from kamra.folio import apply_no_show
-	from kamra.savings import log_action
 	res = frappe.get_doc("Reservation", reservation)
 	bd = get_business_date(res.property)
 	if res.status != "Confirmed":
@@ -1680,16 +1678,101 @@ def eod_mark_no_show(reservation: str, reason: str | None = None):
 		               "(this one is {0}).").format(res.status))
 	if getdate(res.check_in_date) > getdate(bd):
 		frappe.throw(_("This arrival is due on {0}, after the business date "
-		               "{1}.").format(res.check_in_date, bd))
+		             "{1}.").format(res.check_in_date, bd))
+	return res, bd
+
+
+def _credit_default(property: str) -> str:
+	return (frappe.db.get_value("Property", property, "no_show_credit_default")
+	        or "Refund")
+
+
+@frappe.whitelist()
+@require_roles(*NO_SHOW_ROLES)
+def no_show_preview(reservation: str):
+	"""What marking this arrival a no-show will do, for the confirm step on
+	Today, the reservation and End of Day: the fee the policy posts (pre-tax
+	and with tax, the same numbers apply_no_show posts) or why there is none,
+	what is already paid, and the credit left for the guest afterwards with
+	the property's default for it (refund or keep)."""
+	from kamra import no_show
+	from kamra.folio import _room_gst, policy_fee
+	res, _bd = _no_show_target(reservation)
+	pol = no_show.policy(res.property)
+	d = no_show.fee_decision(res, pol)
+	fee = flt(policy_fee(res, pol.charge), 2) if d.fee == "charge" else 0.0
+	fee_total = flt(fee * (1 + flt(_room_gst(res)) / 100), 2) if fee else 0.0
+	balance = flt(frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest",
+		          "status": ("!=", "Closed")}, "balance") or 0)
+	paid = flt(frappe.db.sql(
+		"""SELECT COALESCE(SUM(fp.amount), 0) FROM `tabFolio Payment` fp
+		   JOIN `tabFolio` f ON fp.parent = f.name
+		   WHERE f.reservation = %s AND f.folio_type = 'Guest'""",
+		res.name)[0][0] or 0, 2)
+	return {
+		"reservation": res.name, "guest_name": res.guest_name,
+		"check_in_date": str(res.check_in_date),
+		"fee": d.fee, "fee_reason": d.reason, "fee_basis": pol.charge,
+		"fee_amount": fee, "fee_total": fee_total,
+		"paid": paid,
+		"credit_after": flt(max(0.0, -(balance + fee_total)), 2),
+		"credit_default": _credit_default(res.property),
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(*NO_SHOW_ROLES)
+def eod_mark_no_show(reservation: str, reason: str | None = None):
+	"""Mark an arrival that did not come a No Show now - from Today, the
+	reservation or End of Day - with the property's no-show fee policy
+	applied exactly as the audit applies it (fee posted on the business
+	date, or waived for an OTA booking). The room is free at once: the
+	channels get a push and open desk screens refresh. `credit` is what the
+	guest paid beyond the fee; settle it with settle_no_show_credit."""
+	from kamra import no_show
+	from kamra.folio import apply_no_show
+	from kamra.savings import log_action
+	res, bd = _no_show_target(reservation)
 	pol = no_show.policy(res.property)
 	ns = apply_no_show(res, pol, no_show.fee_decision(res, pol), bd)
+	ns["credit_default"] = _credit_default(res.property)
 	log_action("no_show", "Reservation", res.name, res.property,
-	           rationale=f"{res.name} ({res.guest_name}) marked no-show at End "
-	                     f"of Day: {ns['outcome']}"
+	           rationale=f"{res.name} ({res.guest_name}) marked no-show at the "
+	                     f"desk: {ns['outcome']}"
 	                     + (f" - {reason.strip()}" if (reason or "").strip() else ""),
 	           channel="MCP" if frappe.flags.get("kamra_agent_call") else "Desk",
 	           after_snapshot=ns)
 	return ns
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Finance", "Hotel Admin", "Kamra Agent")
+def settle_no_show_credit(reservation: str, action: str, reason: str,
+                          mode: str | None = None, pin: str | None = None):
+	"""A no-show paid more than its fee: refund the rest to the guest (the
+	refund writer, so till and ledger move) or keep it as a forfeited
+	deposit, with a reason. Same roles as a folio refund."""
+	from kamra.folio import settle_no_show_credit as settle
+	return settle(frappe.get_doc("Reservation", reservation), action, reason,
+	              mode=mode, pin=pin)
+
+
+def no_show_credits(property: str) -> list[dict]:
+	"""No Shows whose guest folio still holds money for the guest - a refund
+	or a forfeit decision for the morning (audit pack)."""
+	rows = frappe.db.sql(
+		"""SELECT r.name, r.guest_name, r.check_in_date, -f.balance AS credit
+		   FROM `tabReservation` r
+		   JOIN `tabFolio` f ON f.reservation = r.name AND f.folio_type = 'Guest'
+		   WHERE r.property = %s AND r.status = 'No Show'
+		     AND f.status != 'Closed' AND f.balance < -0.01
+		   ORDER BY r.check_in_date, r.name LIMIT %s""",
+		(property, MAX_ITEMS), as_dict=True)
+	default = _credit_default(property)
+	return [{"reservation": r.name, "guest_name": r.guest_name,
+	         "check_in_date": str(r.check_in_date), "credit": flt(r.credit, 2),
+	         "default": default} for r in rows]
 
 
 @frappe.whitelist()

@@ -1572,6 +1572,60 @@ class NightAuditChecklistTestCase(AuditTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			night_audit.eod_mark_no_show(future.name)
 
+	def test_mark_no_show_pushes_channels_and_refreshes_screens(self):
+		from kamra import night_audit
+		due = make_reservation(PROP_A, self.rt, YESTERDAY, d(1))
+		with patch("kamra.channel_manager.enqueue_property_push") as push, \
+				patch("kamra.realtime.notify") as ping:
+			night_audit.eod_mark_no_show(due.name)
+		push.assert_called_once_with(PROP_A)
+		self.assertIn(due.name, [c.args[0].name for c in ping.call_args_list])
+
+	def test_no_show_preview_matches_what_posts(self):
+		from kamra import api, night_audit
+		self.open_till()
+		due = make_reservation(PROP_A, self.rt, YESTERDAY, d(1))
+		api.record_advance(due.name, 3000, "Cash")
+		pre = night_audit.no_show_preview(due.name)
+		self.assertEqual(pre["fee"], "charge")
+		self.assertEqual(pre["paid"], 3000)
+		out = night_audit.eod_mark_no_show(due.name)
+		self.assertAlmostEqual(out["fee_amount"], pre["fee_amount"], places=2)
+		self.assertAlmostEqual(out["credit"], pre["credit_after"], places=2)
+		self.assertGreater(out["credit"], 0)
+		self.assertEqual(out["credit_default"], "Refund")
+		listed = {r["reservation"]: r for r in night_audit.no_show_credits(PROP_A)}
+		self.assertAlmostEqual(listed[due.name]["credit"], out["credit"], places=2)
+
+	def test_no_show_credit_refund_and_keep_settle_the_folio(self):
+		from kamra import api, night_audit
+		self.open_till()
+		frappe.db.set_value("Property", PROP_A, "no_show_credit_default",
+		                    "Keep as forfeited deposit")
+		for action in ("Refund", "Keep as forfeited deposit"):
+			due = make_reservation(PROP_A, self.rt, YESTERDAY, d(1))
+			api.record_advance(due.name, 2500, "Cash")
+			out = night_audit.eod_mark_no_show(due.name)
+			self.assertEqual(out["credit_default"], "Keep as forfeited deposit")
+			with self.assertRaises(frappe.ValidationError):
+				night_audit.settle_no_show_credit(due.name, action, "")
+			done = night_audit.settle_no_show_credit(due.name, action, "Guest called")
+			self.assertAlmostEqual(done["amount"], out["credit"], places=2)
+			self.assertEqual(done["credit"], 0)
+			folio = frappe.get_doc("Folio", guest_folio(due.name))
+			self.assertLess(abs(folio.balance), 0.01)
+			if action == "Refund":
+				self.assertTrue(any(p.payment_kind == "Refund" for p in folio.payments))
+			else:
+				self.assertTrue(any(c.description.startswith("Forfeited advance")
+				                    for c in folio.charges))
+			held = frappe.db.sql(
+				"""SELECT COALESCE(SUM(credit - debit), 0) FROM `tabFolio Ledger Entry`
+				   WHERE folio = %s AND ledger = 'Deposit'""", folio.name)[0][0]
+			self.assertAlmostEqual(float(held or 0), 0, places=2)
+			self.assertNotIn(due.name, {r["reservation"]
+			                            for r in night_audit.no_show_credits(PROP_A)})
+
 	def test_overview_lists_the_property(self):
 		from kamra import night_audit
 		self.open_till()

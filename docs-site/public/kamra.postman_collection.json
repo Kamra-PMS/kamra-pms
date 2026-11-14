@@ -15900,6 +15900,43 @@
      }
     },
     {
+     "name": "no_show_preview",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.night_audit.no_show_preview",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.night_audit.no_show_preview"
+       ]
+      },
+      "description": "What marking this arrival a no-show will do, for the confirm step on\nToday, the reservation and End of Day: the fee the policy posts (pre-tax\nand with tax, the same numbers apply_no_show posts) or why there is none,\nwhat is already paid, and the credit left for the guest afterwards with\nthe property's default for it (refund or keep).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "eod_mark_no_show",
      "request": {
       "method": "POST",
@@ -15924,10 +15961,47 @@
         "kamra.night_audit.eod_mark_no_show"
        ]
       },
-      "description": "End of Day: mark an arrival that did not come a No Show now, with the\nproperty's no-show fee policy applied exactly as the audit applies it\n(fee posted on the business date, or waived for an OTA booking).",
+      "description": "Mark an arrival that did not come a No Show now - from Today, the\nreservation or End of Day - with the property's no-show fee policy\napplied exactly as the audit applies it (fee posted on the business\ndate, or waived for an OTA booking). The room is free at once: the\nchannels get a push and open desk screens refresh. `credit` is what the\nguest paid beyond the fee; settle it with settle_no_show_credit.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"reservation\": \"RES-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "settle_no_show_credit",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.night_audit.settle_no_show_credit",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.night_audit.settle_no_show_credit"
+       ]
+      },
+      "description": "A no-show paid more than its fee: refund the rest to the guest (the\nrefund writer, so till and ledger move) or keep it as a forfeited\ndeposit, with a reason. Same roles as a folio refund.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"action\": \"<action>\",\n  \"reason\": \"<reason>\"\n}",
        "options": {
         "raw": {
          "language": "json"

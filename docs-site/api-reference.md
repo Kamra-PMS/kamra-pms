@@ -7218,3 +7218,33 @@ Leads are System Manager-only and purged after
 | `message` | no | `''` |
 | `country` | no | `''` |
 | `interest` | no | `''` |
+
+### `kamra.night_audit.no_show_preview`
+
+**GET/POST**
+
+What marking this arrival a no-show will do, for the confirm step on
+Today, the reservation and End of Day: the fee the policy posts (pre-tax
+and with tax, the same numbers apply_no_show posts) or why there is none,
+what is already paid, and the credit left for the guest afterwards with
+the property's default for it (refund or keep).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.night_audit.settle_no_show_credit`
+
+**POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
+
+A no-show paid more than its fee: refund the rest to the guest (the
+refund writer, so till and ledger move) or keep it as a forfeited
+deposit, with a reason. Same roles as a folio refund.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+| `action` | yes |  |
+| `reason` | yes |  |
+| `mode` | no | `None` |
+| `pin` | no | `None` |

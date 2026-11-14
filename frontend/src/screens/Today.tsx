@@ -36,6 +36,7 @@ import { RoomMediaButton } from "../components/HkMedia"
 import { cn } from "../lib/utils"
 import type { ShellContext } from "../AppShell"
 import CheckInDialog from "../components/CheckInDialog"
+import NoShowDialog from "../components/NoShowDialog"
 import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
 import { cur, moneyLocale } from "../lib/money"
@@ -490,6 +491,7 @@ export default function Today() {
   const figures = !!kpi && !kpi.figures_hidden
   const [busy, setBusy] = useState<string | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
+  const [markingNoShow, setMarkingNoShow] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [floor, setFloor] = useState("All")
   // the widget layout: last one seen paints first, the server copy wins
@@ -902,12 +904,24 @@ export default function Today() {
             rows={snap?.arrivals ?? []}
             empty={t("No arrivals expected today.")}
             action={(row) => (
-              <Button
-                disabled={busy === row.name}
-                onClick={() => setCheckingIn(row.name)}
-              >
-                {t("Check in")}
-              </Button>
+              <span className="flex items-center gap-1">
+                {snap?.business_date && row.check_in_date <= snap.business_date && (
+                  <Button
+                    variant="ghost"
+                    className="text-rose-700"
+                    disabled={busy === row.name}
+                    onClick={() => setMarkingNoShow(row.name)}
+                  >
+                    {t("No-show")}
+                  </Button>
+                )}
+                <Button
+                  disabled={busy === row.name}
+                  onClick={() => setCheckingIn(row.name)}
+                >
+                  {t("Check in")}
+                </Button>
+              </span>
             )}
           />
         </CardContent>
@@ -1160,6 +1174,17 @@ export default function Today() {
           onClose={() => setCheckingIn(null)}
           onDone={() => {
             setCheckingIn(null)
+            setPanelKey((k) => k + 1)
+            refresh()
+          }}
+        />
+      )}
+      {markingNoShow && (
+        <NoShowDialog
+          reservation={markingNoShow}
+          onClose={() => setMarkingNoShow(null)}
+          onDone={() => {
+            setMarkingNoShow(null)
             setPanelKey((k) => k + 1)
             refresh()
           }}

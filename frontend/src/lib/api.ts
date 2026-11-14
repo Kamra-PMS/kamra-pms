@@ -364,6 +364,7 @@ export interface RoomRow {
 
 export interface Snapshot {
   date: string
+  business_date?: string | null
   arrivals: ReservationRow[]
   departures: ReservationRow[]
   in_house: ReservationRow[]
@@ -1814,6 +1815,7 @@ export interface ReservationDetail {
     can_check_in: boolean
     can_check_out: boolean
     can_cancel: boolean
+    can_no_show?: boolean
     can_amend: boolean
     can_reinstate: boolean
   }

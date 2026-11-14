@@ -1286,9 +1286,15 @@ def apply_no_show(res, pol, decision, business_date) -> dict:
 	emit("reservation.modified", res.property,
 	     {**reservation_payload(res), "status": "No Show",
 	      "changes": {"status": [before, "No Show"]}})
-	# and the bell, for the same reason
+	# and the bell, the live desk screens and the channel push, for the same
+	# reason: the room is free again, so OTAs should see it now, not at the
+	# hourly push_all_ari
 	from kamra.notifications import no_show
 	no_show(res)
+	from kamra.channel_manager import enqueue_property_push
+	from kamra.realtime import notify
+	notify(res, "on_update")
+	enqueue_property_push(res.property)
 	ns = {"reservation": res.name, "guest_name": res.guest_name,
 	      "room_type": (res.room_type or "").split("-")[-1],
 	      "check_in_date": str(res.check_in_date),
@@ -1303,7 +1309,72 @@ def apply_no_show(res, pol, decision, business_date) -> dict:
 		                      posting_date=business_date)
 		ns["fee_amount"] = float(fee or 0)
 		ns["outcome"] = f"No show - {pol.charge.lower()} fee posted"
+	ns["credit"] = no_show_credit(res.name)
 	return ns
+
+
+NO_SHOW_FORFEIT = "Forfeited advance (no-show)"
+CREDIT_ACTIONS = ("Refund", "Keep as forfeited deposit")
+
+
+def no_show_credit(reservation: str) -> float:
+	"""What a No Show's open guest folio holds for the guest after the fee:
+	the advance paid beyond it. 0 when the folio is settled, owes, or does
+	not exist."""
+	row = frappe.db.get_value(
+		"Folio", {"reservation": reservation, "folio_type": "Guest",
+		          "status": ("!=", "Closed")}, "balance")
+	return round(max(0.0, -float(row or 0)), 2)
+
+
+def settle_no_show_credit(res, action: str, reason: str, mode: str | None = None,
+                          pin: str | None = None) -> dict:
+	"""Refund a no-show's credit to the guest, or keep it as a forfeited
+	deposit (a charge at the room's tax rate whose total is the credit, so
+	the folio settles at zero). Either way the advance first leaves the
+	Deposit ledger for the Guest ledger, as post_policy_fee does, so the
+	refund or the forfeit charge clears the Guest ledger and nothing is left
+	shown as held."""
+	if res.status != "No Show":
+		frappe.throw(frappe._("Only a No Show's credit is settled here (this one is {0}).")
+		             .format(res.status))
+	if action not in CREDIT_ACTIONS:
+		frappe.throw(frappe._("Choose Refund or Keep as forfeited deposit."))
+	if not (reason or "").strip():
+		frappe.throw(frappe._("A reason is required."))
+	credit = no_show_credit(res.name)
+	if credit <= 0:
+		frappe.throw(frappe._("This no-show has no credit on its folio."))
+	folio = frappe.db.get_value(
+		"Folio", {"reservation": res.name, "folio_type": "Guest",
+		          "status": ("!=", "Closed")}, "name")
+	from kamra.business_date import get_business_date
+	from kamra.ledger import transfer_advances_to_guest
+	bd = str(get_business_date(res.property))
+	transfer_advances_to_guest(res.name, business_date=bd)
+	if action == "Refund":
+		from kamra.api import _refund_folio_payment
+		_refund_folio_payment(folio, credit, mode or "Cash",
+		                      f"No-show credit refund: {reason.strip()}", pin=pin)
+	else:
+		from kamra.api import _pin_guard, _post_folio_charge
+		_pin_guard(folio, pin)
+		gst = Decimal(str(_room_gst(res)))
+		# pre-tax so that amount + tax is the credit; what rounding leaves
+		# (under a cent) is inside close_folio's tolerance
+		pre = (Decimal(str(credit)) * 100 / (100 + gst)).quantize(Decimal("0.01"))
+		# the reason stays out of the description: words in it must not
+		# re-tax the line (_resolve_charge_gst reads the description)
+		_post_folio_charge(folio, "Misc", NO_SHOW_FORFEIT, float(pre),
+		                   gst_rate=float(gst), posting_date=bd,
+		                   reservation=res.name)
+	from kamra.localization import money_text
+	from kamra.savings import log_action
+	log_action("no_show_credit", "Reservation", res.name, res.property,
+	           rationale=f"{res.name} no-show credit {money_text(res.property, credit)}: "
+	                     f"{action.lower()} - {reason.strip()[:100]}")
+	return {"reservation": res.name, "action": action, "amount": credit,
+	        "credit": no_show_credit(res.name)}
 
 
 def audit_clock(property: str):

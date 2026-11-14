@@ -7099,7 +7099,8 @@ def t214():
 	           night_audit.recover_stuck_business_date,
 	           api.check_in, api.check_out,
 	           ledger.quick_checkout, cashier.close_session, api.get_folio,
-		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund, t_mcp_transfer):
+		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund, t_mcp_transfer,
+		           t_no_show_credit):
 		assert "Night Auditor" in fn._kamra_roles, fn.__name__
 	assert frappe.db.exists("Role", "Night Auditor")
 	spec = BY_NAME["night_audit_precheck"]
@@ -11101,6 +11102,35 @@ def t_mcp_transfer():
 	assert moved.transaction_code == "3000", moved.as_dict()
 	for f in (fa, fb, extra, co["to_folio"]):
 		_assert_folio_on_ledger(f)
+
+@check("desk no-show: preview fee matches the post; the credit refunds or is kept to a zero folio")
+def t_no_show_credit():
+	from kamra import api, night_audit
+	ci = "2034-08-01"
+	saved = frappe.db.get_value("Property", P, ["business_date", "no_show_charge"],
+	                            as_dict=True)
+	frappe.db.set_value("Property", P, {"business_date": ci,
+	                                    "no_show_charge": "First Night"})
+	try:
+		for i, action in enumerate(("Refund", "Keep as forfeited deposit")):
+			res = _res(_guest(f"Eval NoShow Credit {i}", f"+91 70000 0053{i}"),
+			           ci, "2034-08-03")
+			api.record_advance(res.name, 50000, "Cash")
+			pre = night_audit.no_show_preview(res.name)
+			out = night_audit.eod_mark_no_show(res.name)
+			assert out["fee_amount"] > 0 and abs(out["fee_amount"] - pre["fee_amount"]) < 0.01, (pre, out)
+			assert abs(out["credit"] - pre["credit_after"]) < 0.01, (pre, out)
+			night_audit.settle_no_show_credit(res.name, action, "Eval")
+			folio = frappe.get_doc("Folio", {"reservation": res.name, "folio_type": "Guest"})
+			assert abs(folio.balance) < 0.01, folio.balance
+			held = frappe.db.sql(
+				"""SELECT COALESCE(SUM(credit - debit), 0) FROM `tabFolio Ledger Entry`
+				   WHERE folio = %s AND ledger = 'Deposit'""", folio.name)[0][0]
+			assert abs(float(held or 0)) < 0.01, f"{action}: {held} still held as a deposit"
+	finally:
+		frappe.db.set_value("Property", P, {
+			"business_date": saved.business_date,
+			"no_show_charge": saved.no_show_charge})
 
 def execute():
 	global RT, ROOM

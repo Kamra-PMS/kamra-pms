@@ -182,10 +182,6 @@ export const eodProgress = (
 export const eodAcknowledge = (property: string, key: string, reason: string) =>
   call("kamra.night_audit.eod_acknowledge", { property, key, reason })
 
-export const eodMarkNoShow = (reservation: string) =>
-  call<{ outcome: string; fee_amount: number }>(
-    "kamra.night_audit.eod_mark_no_show", { reservation })
-
 export const runNightAudit = (property: string) =>
   call<{
     audit?: string

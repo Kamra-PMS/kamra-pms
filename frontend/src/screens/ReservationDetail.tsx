@@ -13,6 +13,7 @@ import {
   Star,
   TriangleAlert,
   User,
+  UserX,
 } from "lucide-react"
 
 import {
@@ -32,6 +33,7 @@ import { serverError, updateResource, type Row } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import CancelPanel from "../components/CancelPanel"
+import NoShowDialog from "../components/NoShowDialog"
 import ReinstatePanel from "../components/ReinstatePanel"
 import LinkedRecords from "../components/LinkedRecords"
 import DepositPanel from "../components/DepositPanel"
@@ -253,6 +255,7 @@ export default function ReservationDetail({
   const navigate = useNavigate()
   const [checkingOut, setCheckingOut] = useState(false)
   const [checkingIn, setCheckingIn] = useState(false)
+  const [markingNoShow, setMarkingNoShow] = useState(false)
   const [groupNotice, setGroupNotice] = useState<string | null>(null)
 
   function checkInGroup(group: NonNullable<Detail["group"]>) {
@@ -733,6 +736,10 @@ export default function ReservationDetail({
             Finish check-in ({d.checkin_backfill.length})
           </Button>
         )}
+        {d.actions.can_no_show && (
+          <Button variant="outline" className="text-rose-700" disabled={busy} onClick={() => setMarkingNoShow(true)}>
+            <UserX className="size-4" />{translate("Mark no-show")}</Button>
+        )}
         {d.actions.can_check_out && d.security_deposit?.blocks_checkout && (
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800">
             <ShieldCheck className="size-3.5" />{translate(" Security deposit still held - withhold or refund it")}</span>
@@ -762,6 +769,17 @@ export default function ReservationDetail({
         <CancelPanel
           row={row}
           reload={() => {
+            refresh()
+            reload()
+          }}
+        />
+      )}
+      {markingNoShow && (
+        <NoShowDialog
+          reservation={name}
+          onClose={() => setMarkingNoShow(false)}
+          onDone={() => {
+            setMarkingNoShow(false)
             refresh()
             reload()
           }}
