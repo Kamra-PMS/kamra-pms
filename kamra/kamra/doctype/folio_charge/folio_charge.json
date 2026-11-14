@@ -59,6 +59,30 @@
    "options": "Transaction Code"
   },
   {
+   "fieldname": "gl_code",
+   "fieldtype": "Data",
+   "label": "GL Code",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "corrects_row",
+   "fieldtype": "Data",
+   "label": "Corrects Line",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "The line this reversal or repost corrects."
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "hidden": 1,
+   "search_index": 1,
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "description",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -124,7 +148,7 @@
    "label": "Is Alcohol"
   },
   {
-   "description": "Which stay this line belongs to \u2014 needed on group master folios that collect charges from many rooms.",
+   "description": "Which stay this line belongs to — needed on group master folios that collect charges from many rooms.",
    "fieldname": "reservation",
    "fieldtype": "Link",
    "label": "Reservation",
@@ -132,28 +156,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "gl_code",
-   "fieldtype": "Data",
-   "label": "GL Code",
-   "read_only": 1,
-   "no_copy": 1
-  },
-  {
-   "fieldname": "corrects_row",
-   "fieldtype": "Data",
-   "label": "Corrects Line",
-   "read_only": 1,
-   "no_copy": 1,
-   "description": "The line this reversal or repost corrects."
-  },
-  {
-   "fieldname": "idempotency_key",
-   "fieldtype": "Data",
-   "label": "Idempotency Key",
-   "hidden": 1,
-   "search_index": 1,
-   "read_only": 1,
-   "no_copy": 1
    "description": "On a void's reversal line: the line it reverses. Both lines stay on the folio.",
    "fieldname": "reversal_of",
    "fieldtype": "Data",
@@ -181,7 +183,6 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-11-12 12:00:00.000000",
  "modified": "2026-11-13 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
