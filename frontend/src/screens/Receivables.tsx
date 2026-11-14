@@ -7,7 +7,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { DataTable } from "../components/ui/data-table"
 import { Sheet } from "../components/ui/sheet"
-import { chargesTax, fmtMoney, loadLocale, taxLabel, useLocale } from "../lib/money"
+import { fmtMoney, loadLocale, taxLabel, useLocale } from "../lib/money"
 import { useAuth } from "../lib/auth"
 import CityLedgerPayment from "./CityLedgerPayment"
 import { t as translate, useUILanguage } from "../lib/i18n"
@@ -28,6 +28,8 @@ const BILLABLE = [
 ]
 
 type AccountRow = {
+  total_debit?: number
+  total_credit?: number
   name: string
   company: string
   company_name: string
@@ -36,8 +38,6 @@ type AccountRow = {
   contact_email?: string
   contact_phone?: string
   balance: number
-  total_debit?: number
-  total_credit?: number
   credit_limit: number
   credit_days: number
   overdue: number
@@ -106,7 +106,15 @@ type PendingPayment = {
   channel?: string
 }
 
+// a Finance step on the account that needs a note, a reason or a PIN
+type Action =
+  | { kind: "dispute"; item: OpenItem }
+  | { kind: "reverse"; payment: Payment }
+  | { kind: "confirm" | "reject"; request: PendingPayment }
+
 type Account = {
+  total_debit?: number
+  total_credit?: number
   account: string
   company: string
   account_number?: string
@@ -118,8 +126,6 @@ type Account = {
   restricted: boolean
   restricted_reason?: string | null
   balance: number
-  total_debit?: number
-  total_credit?: number
   in_house: number
   available_credit: number | null
   open_balance: number
@@ -130,7 +136,7 @@ type Account = {
   d31_60: number
   d61_90: number
   d90p: number
-  disputed: number
+  disputed?: number
   open_items: OpenItem[]
   // every bill on the account, paid ones included (newer servers)
   bills?: OpenItem[]
@@ -142,12 +148,6 @@ type Account = {
   cashier_pin_required: boolean
   payment_pin_required?: boolean
 }
-
-// a Finance step on the account that needs a note, a reason or a PIN
-type Action =
-  | { kind: "dispute"; item: OpenItem }
-  | { kind: "reverse"; payment: Payment }
-  | { kind: "confirm" | "reject"; request: PendingPayment }
 
 const field = "w-full rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
 
@@ -254,82 +254,12 @@ function AccountList() {
                 <span className={r.overdue ? "font-medium text-rose-700" : ""}>{r.overdue ? fmtMoney(r.overdue) : "-"}</span> },
               { key: "last_payment_date", label: translate("Last payment"), align: "right", render: (r) => r.last_payment_date ? (
                 <span className="text-xs text-zinc-500">{fmtMoney(r.last_payment ?? 0)}<span className="block">{r.last_payment_date}</span></span>) : "-" },
-              { key: "balance", label: translate("Pending"), align: "right", render: (r) => <span className="font-medium">{fmtMoney(r.balance)}</span> },
+              { key: "total_debit", label: translate("Debit"), align: "right", render: (r) => r.total_debit ? fmtMoney(r.total_debit) : "-" },
+              { key: "total_credit", label: translate("Credit"), align: "right", render: (r) => r.total_credit ? fmtMoney(r.total_credit) : "-" },
+              { key: "balance", label: translate("Total Balance"), align: "right", render: (r) => <span className="font-medium">{fmtMoney(r.balance)}</span> },
             ]}
           />
           )}
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase text-zinc-400">
-              <tr>
-                <th className="py-2 pr-3">{translate("Account")}</th>
-                <th className="py-2 pr-3">{translate("Company")}</th>
-                <th className="py-2 pr-3">{translate("Contact")}</th>
-                <th className="py-2 pr-3">{translate("Terms")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Credit limit")}</th>
-                <th className="py-2 pr-3 text-right">{translate("To bill")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Overdue")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Last payment")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Debit")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Credit")}</th>
-                <th className="py-2 text-right">{translate("Total Balance")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((r) => (
-                <tr
-                  key={r.name}
-                  className="cursor-pointer border-t border-zinc-100 hover:bg-zinc-50"
-                  onClick={() => navigate(`/receivables/${encodeURIComponent(r.name)}`)}
-                >
-                  <td className="py-2 pr-3 font-mono text-xs">{r.account_number || "-"}</td>
-                  <td className="py-2 pr-3">
-                    <Link
-                      className="font-medium hover:underline"
-                      to={`/receivables/${encodeURIComponent(r.name)}`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {r.company_name}
-                    </Link>
-                    {r.restricted ? (
-                      <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">{translate("Restricted")}</span>
-                    ) : null}
-                    {r.credit_limit > 0 && r.balance > r.credit_limit ? (
-                      <span className="ml-2 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">{translate("Over limit")}</span>
-                    ) : null}
-                  </td>
-                  <td className="py-2 pr-3 text-zinc-600">
-                    {r.contact_name || "-"}
-                    {r.contact_email ? <span className="block text-xs text-zinc-400">{r.contact_email}</span> : null}
-                  </td>
-                  <td className="py-2 pr-3 text-xs text-zinc-500">{translate("{n} days", { n: r.credit_days ?? 0 })}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{r.credit_limit > 0 ? fmtMoney(r.credit_limit) : "-"}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{r.unbilled ? fmtMoney(r.unbilled) : "-"}</td>
-                  <td className={`py-2 pr-3 text-right tabular-nums ${r.overdue ? "font-medium text-rose-700" : ""}`}>
-                    {r.overdue ? fmtMoney(r.overdue) : "-"}
-                  </td>
-                  <td className="py-2 pr-3 text-right text-xs text-zinc-500">
-                    {r.last_payment_date ? (
-                      <>{fmtMoney(r.last_payment ?? 0)}<span className="block">{r.last_payment_date}</span></>
-                    ) : "-"}
-                  </td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(r.total_debit ?? 0)}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(r.total_credit ?? 0)}</td>
-                  <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(r.balance)}</td>
-                </tr>
-              ))}
-              {rows && !shown.length ? (
-                <tr>
-                  <td colSpan={11} className="py-8 text-center text-zinc-400">
-                    {rows.length ? translate("No account matches.") : translate("No company accounts yet. Open one, or check out a stay billed to a company on credit.")}
-                  </td>
-                </tr>
-              ) : null}
-              {!rows ? (
-                <tr><td colSpan={11} className="py-8 text-center text-zinc-400">{translate("Loading…")}</td></tr>
-              ) : null}
-            </tbody>
-          </table>
         </CardContent>
       </Card>
 
@@ -494,11 +424,10 @@ function AccountPage({ account }: { account: string }) {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {/* company sub-ledger: debit = billed to AR, credit = payments, balance = outstanding */}
-        <Stat label={translate("Debit")} value={fmtMoney(acc.total_debit ?? 0)} />
-        <Stat label={translate("Credit")} value={fmtMoney(acc.total_credit ?? 0)} />
-        <Stat label={translate("Total Balance")} value={fmtMoney(acc.balance)} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <Stat label={translate("Balance")} value={fmtMoney(acc.balance)} />
+        {/* billed: invoices on the account; unbilled: stays in house still running on the company's folio */}
+        <Stat label={translate("Billed, unpaid")} value={fmtMoney(acc.open_balance)} />
         <Stat label={translate("Unbilled, in house")} value={fmtMoney(acc.in_house)} />
         <Stat label={translate("Overdue")} value={fmtMoney(acc.overdue)} tone={acc.overdue > 0 ? "text-rose-700" : undefined} />
         <Stat label={translate("Credit available")}
@@ -531,76 +460,6 @@ function AccountPage({ account }: { account: string }) {
         <CardHeader>
           <CardTitle className="text-base">{translate("Invoices")}</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase text-zinc-400">
-              <tr>
-                <th className="py-2 pr-3">{translate("Invoice")}</th>
-                <th className="py-2 pr-3">{translate("For")}</th>
-                <th className="py-2 pr-3">{translate("Billed on")}</th>
-                <th className="py-2 pr-3">{translate("Due")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Debit")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Credit")}</th>
-                <th className="py-2 pr-3 text-right">{translate("Total Balance")}</th>
-                <th className="py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {(acc.bills ?? acc.open_items).slice().reverse().map((it) => (
-                <tr key={it.folio} className="border-t border-zinc-100">
-                  <td className="py-2 pr-3 font-mono text-xs">
-                    {it.invoice_number || it.folio}
-                    {it.disputed ? (
-                      <span title={it.dispute_note || undefined}
-                        className="mt-0.5 block w-fit rounded bg-amber-100 px-1.5 font-sans text-[11px] text-amber-900">
-                        {translate("Disputed")}{it.dispute_note ? `: ${it.dispute_note}` : ""}
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="py-2 pr-3">
-                    {it.folio_type === "Account" ? (
-                      <span className="text-zinc-500">{translate("Direct invoice")}</span>
-                    ) : (
-                      <>
-                        {it.guest_name || "-"}
-                        {it.reservation ? <span className="block font-mono text-[11px] text-zinc-400">{it.reservation}</span> : null}
-                      </>
-                    )}
-                  </td>
-                  <td className="py-2 pr-3">{it.invoice_date}</td>
-                  <td className={`py-2 pr-3 ${it.days_overdue ? "text-rose-700" : ""}`}>
-                    {it.due_date || "-"}
-                    {it.days_overdue ? <span className="ml-1 text-xs">({translate("{n}d late", { n: it.days_overdue })})</span> : null}
-                  </td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(it.billed)}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{it.paid ? fmtMoney(it.paid) : "-"}</td>
-                  <td className="py-2 pr-3 text-right font-medium tabular-nums">
-                    {it.outstanding > 0.005 ? fmtMoney(it.outstanding) : (
-                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">{translate("Paid")}</span>
-                    )}
-                  </td>
-                  <td className="py-2 text-right">
-                    <div className="flex justify-end gap-1.5">
-                      <Button variant="outline" onClick={() => setSheet({ view: it.folio })}>{translate("View")}</Button>
-                      {isFinance ? (
-                        <>
-                          {it.outstanding > 0.005 ? (
-                            <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
-                          ) : null}
-                          <Button variant="outline" onClick={() => setSheet({ action: { kind: "dispute", item: it } })}>
-                            {it.disputed ? translate("Clear dispute") : translate("Dispute")}
-                          </Button>
-                        </>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {!(acc.bills ?? acc.open_items).length ? (
-                <tr><td colSpan={8} className="py-8 text-center text-zinc-400">{translate("No invoices yet.")}</td></tr>
-              ) : null}
-            </tbody>
-          </table>
         <CardContent>
           <DataTable<OpenItem>
             id="receivables.invoices" exportName={`invoices-${acc.company}`}
@@ -617,16 +476,23 @@ function AccountPage({ account }: { account: string }) {
               { key: "due_date", label: translate("Due"), render: (it) => (
                 <span className={it.days_overdue ? "text-rose-700" : ""}>{it.due_date || "-"}
                   {it.days_overdue ? <span className="ml-1 text-xs">({translate("{n}d late", { n: it.days_overdue })})</span> : null}</span>) },
-              { key: "billed", label: translate("Billed"), align: "right", render: (it) => fmtMoney(it.billed) },
-              { key: "paid", label: translate("Paid"), align: "right", render: (it) => it.paid ? fmtMoney(it.paid) : "-" },
-              { key: "outstanding", label: translate("Owed"), align: "right", render: (it) => it.outstanding > 0.005
+              { key: "billed", label: translate("Debit"), align: "right", render: (it) => fmtMoney(it.billed) },
+              { key: "paid", label: translate("Credit"), align: "right", render: (it) => it.paid ? fmtMoney(it.paid) : "-" },
+              { key: "outstanding", label: translate("Total Balance"), align: "right", render: (it) => it.outstanding > 0.005
                 ? <span className="font-medium">{fmtMoney(it.outstanding)}</span>
                 : <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">{translate("Paid")}</span> },
               { key: "actions", label: "", noSort: true, align: "right", render: (it) => (
                 <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                   <Button variant="outline" onClick={() => setSheet({ view: it.folio })}>{translate("View")}</Button>
-                  {isFinance && it.outstanding > 0.005 ? (
-                    <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
+                  {isFinance ? (
+                    <>
+                      {it.outstanding > 0.005 ? (
+                        <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
+                      ) : null}
+                      <Button variant="outline" onClick={() => setSheet({ action: { kind: "dispute", item: it } })}>
+                        {it.disputed ? translate("Clear dispute") : translate("Dispute")}
+                      </Button>
+                    </>
                   ) : null}
                 </div>) },
             ]}
@@ -665,7 +531,7 @@ function AccountPage({ account }: { account: string }) {
         </Card>
       ) : null}
 
-      {acc.payments.length ? (
+      {acc.payments?.length ? (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{translate("Recent payments")}</CardTitle>
@@ -680,11 +546,10 @@ function AccountPage({ account }: { account: string }) {
                       ? <span className="ml-1 text-xs text-zinc-500">({translate("received {v0}", { v0: p.received_on })})</span>
                       : null}
                     {p.reversed ? <span className="ml-2 rounded bg-zinc-100 px-1.5 text-[11px] text-zinc-600">{translate("Reversed")}</span> : null}
-                    {p.reverses ? <span className="block text-xs text-zinc-500">{p.notes}</span> : null}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className={`tabular-nums ${p.reverses ? "text-rose-700" : ""}`}>
-                      {fmtMoney(p.reverses ? -p.debit : p.credit)}
+                      {fmtMoney(p.reverses ? -(p.debit ?? 0) : p.credit)}
                     </span>
                     {isFinance && !p.reverses && !p.reversed && p.credit > 0 ? (
                       <Button variant="outline" onClick={() => setSheet({ action: { kind: "reverse", payment: p } })}>{translate("Reverse")}</Button>
@@ -703,43 +568,6 @@ function AccountPage({ account }: { account: string }) {
           <CardHeader>
             <CardTitle className="text-base">{translate("Account history")}</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase text-zinc-400">
-                <tr>
-                  <th className="py-2 pr-3">{translate("Date")}</th>
-                  <th className="py-2 pr-3">{translate("Entry")}</th>
-                  <th className="py-2 pr-3">{translate("Details")}</th>
-                  <th className="py-2 pr-3 text-right">{translate("Debit")}</th>
-                  <th className="py-2 pr-3 text-right">{translate("Credit")}</th>
-                  <th className="py-2 text-right">{translate("Total Balance")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.slice().reverse().map((h) => (
-                  <tr key={h.name} className="border-t border-zinc-100 align-top">
-                    <td className="py-2 pr-3 whitespace-nowrap">{h.posting_date}</td>
-                    <td className="py-2 pr-3">{translate(h.kind)}</td>
-                    <td className="py-2 pr-3">
-                      {h.folio ? (
-                        <button type="button" className="hover:underline" onClick={() => setSheet({ view: h.folio! })}>
-                          {h.invoice_number || h.folio}{h.guest_name ? ` · ${h.guest_name}` : ""}
-                        </button>
-                      ) : (h.reference || h.notes || "-")}
-                      {h.applied.map((a) => (
-                        <button key={a.folio} type="button" onClick={() => setSheet({ view: a.folio })}
-                          className="block text-xs text-zinc-500 hover:underline">
-                          {a.invoice_number || a.folio}{a.guest_name ? ` · ${a.guest_name}` : ""} · {fmtMoney(a.amount)}
-                        </button>
-                      ))}
-                    </td>
-                    <td className="py-2 pr-3 text-right tabular-nums">{h.debit ? fmtMoney(h.debit) : ""}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums">{h.credit ? fmtMoney(h.credit) : ""}</td>
-                    <td className="py-2 text-right font-medium tabular-nums">{fmtMoney(h.balance)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           <CardContent>
             <DataTable<HistoryRow>
               id="receivables.history" exportName={`account-history-${acc.company}`}
@@ -764,9 +592,9 @@ function AccountPage({ account }: { account: string }) {
                       </button>
                     ))}
                   </>) },
-                { key: "debit", label: translate("Billed"), align: "right", render: (h) => h.debit ? fmtMoney(h.debit) : "" },
-                { key: "credit", label: translate("Paid"), align: "right", render: (h) => h.credit ? fmtMoney(h.credit) : "" },
-                { key: "balance", label: translate("Balance"), align: "right", render: (h) => <span className="font-medium">{fmtMoney(h.balance)}</span> },
+                { key: "debit", label: translate("Debit"), align: "right", render: (h) => h.debit ? fmtMoney(h.debit) : "" },
+                { key: "credit", label: translate("Credit"), align: "right", render: (h) => h.credit ? fmtMoney(h.credit) : "" },
+                { key: "balance", label: translate("Total Balance"), align: "right", render: (h) => <span className="font-medium">{fmtMoney(h.balance)}</span> },
               ]}
             />
           </CardContent>
@@ -789,14 +617,6 @@ function AccountPage({ account }: { account: string }) {
       {sheet && typeof sheet === "object" && "view" in sheet ? (
         <InvoiceView folio={sheet.view} company={acc.company} onClose={() => setSheet(null)} />
       ) : null}
-      {sheet && typeof sheet === "object" && "action" in sheet ? (
-        <AccountAction
-          acc={acc}
-          action={sheet.action}
-          onClose={() => setSheet(null)}
-          onDone={(msg) => done(msg)}
-        />
-      ) : null}
       {sheet && typeof sheet === "object" && "transfer" in sheet ? (
         <TransferInvoice
           acc={acc}
@@ -804,6 +624,9 @@ function AccountPage({ account }: { account: string }) {
           onClose={() => setSheet(null)}
           onDone={(to) => done(translate("Bill moved to {v0}.", { v0: to }))}
         />
+      ) : null}
+      {sheet && typeof sheet === "object" && "action" in sheet ? (
+        <AccountAction acc={acc} action={sheet.action} onClose={() => setSheet(null)} onDone={done} />
       ) : null}
     </div>
   )
@@ -892,10 +715,10 @@ function AccountAction(props: { acc: Account; action: Action; onClose: () => voi
         ) : null}
         {plan.length ? (
           <ul className="rounded-lg border border-zinc-200 px-3 py-2">
-            {plan.map((p) => (
-              <li key={p.folio} className="flex justify-between">
-                <span className="font-mono text-xs">{p.folio}</span>
-                <span className="tabular-nums">{fmtMoney(p.amount)}</span>
+            {plan.map((row) => (
+              <li key={row.folio} className="flex justify-between">
+                <span className="font-mono text-xs">{row.folio}</span>
+                <span className="tabular-nums">{fmtMoney(row.amount)}</span>
               </li>
             ))}
           </ul>
@@ -982,14 +805,13 @@ function AccountSetup(props: { acc?: Account; onClose: () => void; onSaved: (acc
         property: getCurrentProperty(),
         company,
         account: a?.account,
-        // strings, not undefined: on an edit a field left out keeps its value
-        account_number: number.trim(),
+        account_number: number.trim() || undefined,
         credit_limit: Number(limit) || 0,
         use_default_credit_days: useDefault ? 1 : 0,
         credit_days: Number(days) || 0,
-        billing_address: address.trim(),
+        billing_address: address.trim() || undefined,
         restricted: restricted ? 1 : 0,
-        restricted_reason: restricted ? reason.trim() : "",
+        restricted_reason: restricted ? reason.trim() : undefined,
       })
       props.onSaved(out.account)
     } catch (e) {
@@ -1077,7 +899,6 @@ type Line = { charge_type: string; description: string; amount: string; qty: str
 function NewInvoice(props: { acc: Account; onClose: () => void; onCreated: (invoice: string) => void }) {
   useUILanguage()
   const loc = useLocale()
-  const showTax = chargesTax()
   const [codes, setCodes] = useState<Record<string, string>>({})
   const [lines, setLines] = useState<Line[]>([])
   const [reference, setReference] = useState("")
@@ -1187,7 +1008,7 @@ function NewInvoice(props: { acc: Account; onClose: () => void; onCreated: (invo
                 <th className="py-2 pr-2">{translate("Description")}</th>
                 <th className="w-28 py-2 pr-2 text-right">{translate("Price")}</th>
                 <th className="w-16 py-2 pr-2 text-right">{translate("Qty")}</th>
-                {showTax ? <th className="w-24 py-2 pr-2">{taxLabel()}</th> : null}
+                <th className="w-24 py-2 pr-2">{taxLabel()}</th>
                 <th className="w-28 py-2 pr-2 text-right">{translate("Total")}</th>
                 <th className="w-8 py-2" />
               </tr>
@@ -1214,14 +1035,14 @@ function NewInvoice(props: { acc: Account; onClose: () => void; onCreated: (invo
                       <input className={`${field} text-right`} type="number" min="1" step="1"
                         value={l.qty} onChange={(e) => set(i, { qty: e.target.value })} />
                     </td>
-                    {showTax ? <td className="py-2 pr-2">
+                    <td className="py-2 pr-2">
                       <select className={field} value={fnb ?? l.gst_rate} disabled={fnb != null}
                         title={fnb != null ? translate("Food & beverage is taxed at the hotel's F&B rate") : undefined}
                         onChange={(e) => set(i, { gst_rate: Number(e.target.value) })}>
                         {Array.from(new Set([...loc.tax_rates, ...(fnb != null ? [fnb] : [])])).map((r) =>
                           <option key={r} value={r}>{r}%</option>)}
                       </select>
-                    </td> : null}
+                    </td>
                     <td className="py-2 pr-2 pt-3.5 text-right tabular-nums">
                       {fmtMoney(net(l) + Math.round(net(l) * rateOf(l)) / 100)}
                     </td>
@@ -1242,7 +1063,7 @@ function NewInvoice(props: { acc: Account; onClose: () => void; onCreated: (invo
 
         <dl className="ml-auto max-w-xs space-y-1">
           <div className="flex justify-between"><dt className="text-zinc-500">{translate("Subtotal")}</dt><dd className="tabular-nums">{fmtMoney(subtotal)}</dd></div>
-          {showTax ? <div className="flex justify-between"><dt className="text-zinc-500">{taxLabel()}</dt><dd className="tabular-nums">{fmtMoney(tax)}</dd></div> : null}
+          <div className="flex justify-between"><dt className="text-zinc-500">{taxLabel()}</dt><dd className="tabular-nums">{fmtMoney(tax)}</dd></div>
           <div className="flex justify-between border-t border-zinc-200 pt-1 font-semibold"><dt>{translate("Invoice total")}</dt><dd className="tabular-nums">{fmtMoney(subtotal + tax)}</dd></div>
         </dl>
       </div>
@@ -1268,8 +1089,6 @@ type Invoice = {
 function InvoiceView(props: { folio: string; company: string; onClose: () => void }) {
   useUILanguage()
   const [inv, setInv] = useState<Invoice | null>(null)
-  // a bill with no tax on any line shows no tax column or total
-  const taxed = Number(inv?.tax_total ?? 0) !== 0
   const [err, setErr] = useState<string | null>(null)
   useEffect(() => {
     call<Invoice>("kamra.receivables.ar_invoice", { folio: props.folio })
@@ -1314,7 +1133,7 @@ function InvoiceView(props: { folio: string; company: string; onClose: () => voi
                 <th className="py-2 pr-3">{translate("Description")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Qty")}</th>
                 <th className="py-2 pr-3 text-right">{translate("Amount")}</th>
-                {taxed ? <th className="py-2 pr-3 text-right">{taxLabel()}</th> : null}
+                <th className="py-2 pr-3 text-right">{taxLabel()}</th>
                 <th className="py-2 text-right">{translate("Total")}</th>
               </tr>
             </thead>
@@ -1328,7 +1147,7 @@ function InvoiceView(props: { folio: string; company: string; onClose: () => voi
                   </td>
                   <td className="py-2 pr-3 text-right tabular-nums">{l.qty}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{fmtMoney(l.amount)}</td>
-                  {taxed ? <td className="py-2 pr-3 text-right tabular-nums">{l.gst_rate}%</td> : null}
+                  <td className="py-2 pr-3 text-right tabular-nums">{l.gst_rate}%</td>
                   <td className="py-2 text-right tabular-nums">{fmtMoney(l.total)}</td>
                 </tr>
               ))}
@@ -1336,7 +1155,7 @@ function InvoiceView(props: { folio: string; company: string; onClose: () => voi
           </table>
           <dl className="ml-auto max-w-xs space-y-1">
             <div className="flex justify-between"><dt className="text-zinc-500">{translate("Subtotal")}</dt><dd className="tabular-nums">{fmtMoney(inv.charges_total)}</dd></div>
-            {taxed ? <div className="flex justify-between"><dt className="text-zinc-500">{taxLabel()}</dt><dd className="tabular-nums">{fmtMoney(inv.tax_total)}</dd></div> : null}
+            <div className="flex justify-between"><dt className="text-zinc-500">{taxLabel()}</dt><dd className="tabular-nums">{fmtMoney(inv.tax_total)}</dd></div>
             <div className="flex justify-between border-t border-zinc-200 pt-1 font-semibold"><dt>{translate("Total")}</dt><dd className="tabular-nums">{fmtMoney(inv.grand_total)}</dd></div>
           </dl>
         </div>
