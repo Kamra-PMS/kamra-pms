@@ -360,6 +360,8 @@ export interface RoomRow {
   floor: string | null
   housekeeping_status: "Clean" | "Dirty" | "Inspected" | "Out of Order"
   occupancy_status: "Vacant" | "Occupied"
+  // held out of service today (Room Blocks); null when sellable
+  block?: { reason: string | null; to_date: string } | null
 }
 
 export interface Snapshot {

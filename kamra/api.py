@@ -4170,6 +4170,17 @@ def front_desk_snapshot(property: str | None = None, date: str | None = None):
 		],
 		order_by="room_number asc",
 	)
+	# a room held out of service today (Room Blocks), as the full board shows it
+	block_filters = {"block_status": "Active", "from_date": ("<=", date), "to_date": (">", date)}
+	if scope:
+		block_filters["property"] = scope
+	blocks = {}
+	for b in frappe.get_all("Room Block", filters=block_filters,
+	                        fields=["room", "reason", "to_date"], order_by="from_date asc"):
+		blocks.setdefault(b.room, b)
+	for r in rooms:
+		b = blocks.get(r.name)
+		r["block"] = {"reason": b.reason, "to_date": str(b.to_date)} if b else None
 
 	minutes = frappe.db.sql(
 		"""

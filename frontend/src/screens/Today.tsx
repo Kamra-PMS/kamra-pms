@@ -8,6 +8,7 @@ import {
   Users,
   Wallet,
   ListChecks,
+  Lock,
   PieChart,
   SlidersHorizontal,
   X,
@@ -623,6 +624,8 @@ export default function Today() {
     const arriving = !occupied
       ? (snap?.arrivals ?? []).find((r) => r.room === room.name)
       : undefined
+    // held out of service today (Room Blocks): shown as on the full board
+    const blocked = !occupied && !!room.block
     const item = "flex w-full items-center px-3 py-2.5 text-start hover:bg-zinc-50"
     const openRoom = (tab?: RoomTab) => {
       setRoomMenu(null)
@@ -636,7 +639,9 @@ export default function Today() {
               ? t("{guest} · check out or open registration", { guest: stay.guest_name })
               : arriving
                 ? t("{guest} arrives today · check in", { guest: arriving.guest_name })
-                : t("Housekeeping: {status} · click to change", {
+                : blocked
+                  ? t("Out of service")
+                  : t("Housekeeping: {status} · click to change", {
                     status: t(room.housekeeping_status),
                   }))
           }
@@ -651,17 +656,26 @@ export default function Today() {
             "hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
             occupied
               ? "border-brand-700 bg-brand-700 text-white"
-              : hkTone[room.housekeeping_status],
+              : blocked
+                ? hkTone["Out of Order"]
+                : hkTone[room.housekeeping_status],
           )}
         >
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">{room.room_number}</span>
             {occupied && <BedDouble className="size-3.5" aria-hidden />}
             {arriving && <LogIn className="size-3.5" aria-hidden />}
+            {blocked && !arriving && <Lock className="size-3.5" aria-hidden />}
           </div>
           {/* room on the end side for the photo button, so it never covers the label */}
           <div className="mt-0.5 truncate pe-6 text-[9px] font-medium uppercase tracking-wide opacity-80">
-            {occupied ? t("Occupied") : arriving ? t("Arriving") : t(room.housekeeping_status)}
+            {occupied
+              ? t("Occupied")
+              : arriving
+                ? t("Arriving")
+                : blocked
+                  ? t("Out of service")
+                  : t(room.housekeeping_status)}
           </div>
           {/* ponytail: glance balance; drawer still has full money */}
           {stay?.balance_due != null && Number(stay.balance_due) > 0 && (
@@ -671,7 +685,7 @@ export default function Today() {
             </div>
           )}
         </button>
-        {(occupied || room.housekeeping_status === "Clean") && (
+        {(occupied || (!blocked && room.housekeeping_status === "Clean")) && (
           <RoomMediaButton room={room.name} />
         )}
         {roomMenu === room.name && (
@@ -689,8 +703,9 @@ export default function Today() {
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-zinc-900">{t("Room {n}", { n: room.room_number })}</span>
                     <span className={cn("rounded-full border px-2 py-0.5 text-[11px] font-medium",
-                      occupied ? "border-brand-700 bg-brand-700 text-white" : hkTone[room.housekeeping_status])}>
-                      {occupied ? t("Occupied") : t(room.housekeeping_status)}
+                      occupied ? "border-brand-700 bg-brand-700 text-white"
+                        : blocked ? hkTone["Out of Order"] : hkTone[room.housekeeping_status])}>
+                      {occupied ? t("Occupied") : blocked ? t("Out of service") : t(room.housekeeping_status)}
                     </span>
                   </div>
                   {(stay ?? arriving) && (
