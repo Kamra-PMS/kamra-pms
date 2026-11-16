@@ -309,7 +309,8 @@ export const APPS: AppDef[] = [
       // Books
       { to: "/receivables", label: "Receivables", icon: Building2, group: "Books",
         keywords: ["AR", "Accounts receivable", "City ledger", "Direct bill", "Company invoice"] },
-      { to: "/ledgers", label: "Ledgers", icon: BookOpen, group: "Books" },
+      { to: "/ledgers", label: "Books check", icon: BookOpen, group: "Books",
+        keywords: ["Ledgers", "Trial balance", "Journal", "Reconciliation"] },
       { to: "/payables", label: "Payables", icon: HandCoins, group: "Books",
         keywords: ["Accounts payable", "Vendors", "Suppliers", "Supplier bills"],
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },

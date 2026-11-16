@@ -184,6 +184,72 @@ def email_company_statement(account: str, recipients: str | None = None,
 	return {"ok": True, "sent_to": emails}
 
 
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def email_statements_bulk(property: str, accounts, kind: str = "statement",
+                          month: str | None = None, lang: str = "en"):
+	"""Email several companies at once: their statement (kind=statement) or
+	their month-end bill for `month` (kind=monthly). Each goes to the
+	company's billing contact through the single-account functions, so the
+	same checks and Activity log apply. Accounts with no billing email are
+	skipped and named; the sending runs in the background."""
+	assert_property_access(property)
+	if kind not in ("statement", "monthly"):
+		frappe.throw(_("Pick statement or monthly."))
+	if kind == "monthly" and not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", str(month or "")):
+		frappe.throw(_("Pick a month as YYYY-MM, like 2026-10."))
+	names = frappe.parse_json(accounts) if isinstance(accounts, str) else accounts
+	if not isinstance(names, list) or not names or not all(isinstance(n, str) for n in names):
+		frappe.throw(_("Pick at least one account."))
+	names = sorted(set(names))
+	rows = frappe.get_all("City Ledger Account", fields=["name", "company"],
+	                      filters={"name": ("in", names), "property": property, "disabled": 0})
+	if len(rows) != len(names):
+		frappe.throw(_("Some accounts are not on this property, or are closed."))
+	emails = dict(frappe.get_all("Corporate Account", fields=["name", "contact_email"],
+	                             filters={"name": ("in", [r.company for r in rows])},
+	                             as_list=True))
+	ready = [r.name for r in rows if (emails.get(r.company) or "").strip()]
+	skipped = [r.company for r in rows if not (emails.get(r.company) or "").strip()]
+	if ready:
+		# the job runs as the user who asked (Frappe restores it), so the
+		# role checks and the Activity log apply to every email; a second
+		# press with the same selection while it runs is not queued twice
+		frappe.enqueue("kamra.statements._send_bulk", queue="long",
+		               job_id=f"kamra-bulk-{kind}-{property}-{month or ''}-{abs(hash(tuple(ready)))}",
+		               deduplicate=True, property=property, accounts=ready, kind=kind,
+		               month=month, lang=lang or "en", enqueue_after_commit=True)
+	return {"queued": len(ready), "skipped": skipped}
+
+
+def _send_bulk(property: str, accounts: list[str], kind: str, month: str | None,
+               lang: str) -> dict:
+	"""The background half of email_statements_bulk. Ends with one notice to
+	Finance saying what went out and what failed."""
+	sent, failed = [], []
+	for account in accounts:
+		try:
+			if kind == "monthly":
+				email_monthly_bill(account, month, lang=lang)
+			else:
+				email_company_statement(account, lang=lang)
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- background job: each company is kept once sent, so a later failure does not undo it
+			sent.append(account)
+		except Exception:
+			# one company's failure must not stop the rest; it is in the error log
+			frappe.db.rollback()
+			frappe.log_error(title=f"Bulk {kind} email failed for {account}")
+			failed.append(account)
+	from kamra.night_audit import alert_staff
+	what = _("month-end bills for {0}").format(month) if kind == "monthly" else _("statements")
+	lines = [_("Sent {0} to {1} companies.").format(what, len(sent))]
+	if failed:
+		names = frappe.get_all("City Ledger Account", filters={"name": ("in", failed)}, pluck="company")
+		lines.append(_("Not sent, see the Error Log: {0}").format(", ".join(names)))
+	alert_staff(property, ("Finance",), _("Company emails at {0}").format(property), "<br>".join(lines))
+	return {"sent": sent, "failed": failed}
+
+
 # --- month-end bill ----------------------------------------------------------
 # One page per company per month: what was billed that month (each stay's
 # tax invoice, with its taxable value and tax), what the company paid, and

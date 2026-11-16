@@ -130,7 +130,7 @@ sequenceDiagram
 4. **Check-in** - room assignment, registration card, folio opens.
 5. **In-house** - POS room posting, laundry, tickets, room change, early
    / late fees as coded policies.
-6. **Night audit** - End of Day (manual wizard or 03:00 schedule): post
+6. **Night audit** (one page by hand, or the 03:00 schedule): post
    room nights, no-shows, late-arrival holds, advance the business date,
    save the audit pack.
 7. **Check-out** - every bill settled (or part-settle rules), folio
@@ -146,7 +146,7 @@ MCP tool visibility:
 | Front desk | Today, check-in/out, tape, walk-in, GRC | [Front desk](/front-desk) |
 | Reservations | Bookings, groups, blocks, waitlist, CRS | [Reservations](/reservations) |
 | Billing | Folios, payments, AR, cashier, invoices | [Billing](/billing) |
-| Night audit | End of Day, business date, no-show | [Night audit](/night-audit) |
+| Night audit | Night Audit, business date, no-show | [Night audit](/night-audit) |
 | Housekeeping | Housekeeping Board, `/hk` app, laundry, L&F | [Housekeeping](/housekeeping) |
 | Operations | Guest requests / SLA tickets | [Guest requests](/operations) |
 | F&B | POS, KOT, kitchen display | [F&B](/fnb) |
@@ -213,7 +213,7 @@ flowchart LR
   API --> AAL[Activity Log]
 ```
 
-- **161 governed tools** on develop (see [MCP tools](/mcp-tools)); stable
+- **170 governed tools** on develop (see [MCP tools](/mcp-tools)); stable
   `main` publishes the count for that tag.
 - Tools are filtered by **role ∩ MCP role ∩ enabled modules ∩ the
   property's AI switches** (see [Who can use MCP](/ai-and-mcp#who-can-use-mcp)).

@@ -2,12 +2,13 @@
 import { useCallback, useEffect, useState } from "react"
 import { MoonStar } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { getCurrentProperty } from "../lib/api"
+import { call, getCurrentProperty } from "../lib/api"
 import { listResource, type Row } from "../lib/resource"
 import { auditHistory, type RunRow } from "../lib/eod"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtMoney, moneyLocale } from "../lib/money"
+import { DataTable } from "../components/ui/data-table"
 import { useT, uiDateLocale } from "../lib/i18n"
 import {
   Card,
@@ -35,10 +36,16 @@ const fmtWhen = (d: unknown) =>
       )
     : ""
 
+type GuestOwing = {
+  folio: string; guest_name: string; balance: number; reservation: string
+  status: string; check_in_date: string; check_out_date: string
+}
+
 export default function Billing() {
   const { t } = useT()
   const [folios, setFolios] = useState<Row[]>([])
   const [auditRuns, setAuditRuns] = useState<RunRow[]>([])
+  const [owing, setOwing] = useState<GuestOwing[]>([])
   const navigate = useNavigate()
 
   const load = useCallback(() => {
@@ -50,6 +57,9 @@ export default function Billing() {
       filters: [["property", "=", getCurrentProperty()]],
       orderBy: "modified desc",
     }).then(setFolios)
+    // departed guests who still owe: the desk chases these, not credit control
+    call<GuestOwing[]>("kamra.receivables.guests_owing", { property: getCurrentProperty() })
+      .then(setOwing).catch(() => setOwing([]))
     auditHistory(getCurrentProperty(), 8)
       .then(setAuditRuns)
       .catch(() => setAuditRuns([]))
@@ -62,14 +72,14 @@ export default function Billing() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>{t("Night audit")}</CardTitle>
+            <CardTitle>{t("Night Audit")}</CardTitle>
             <p className="mt-0.5 text-xs text-zinc-400">
-              {t("End of Day walks the night audit checklist, posts room and tax, rolls the business date and prints the audit pack. Runs automatically every night at the time set in Settings.")}
+              {t("Clear what is open, post room and tax, roll the business date and print the audit pack. Runs automatically every night at the time set in Settings.")}
             </p>
           </div>
           <Button onClick={() => navigate(`/end-of-day/${encodeURIComponent(getCurrentProperty())}`)}>
             <MoonStar className="size-4" aria-hidden />
-            {t("Open End of Day")}
+            {t("Open Night Audit")}
           </Button>
         </CardHeader>
         {auditRuns.length > 0 && (
@@ -140,6 +150,30 @@ export default function Billing() {
           </Button>
         </CardHeader>
       </Card>
+
+      {owing.length ? (
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle>{t("Guests left owing")}</CardTitle>
+              <p className="mt-0.5 text-xs text-zinc-400">{t("Departed stays with a balance. Open the folio to take the payment or move it to a company.")}</p>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <DataTable<GuestOwing>
+              id="billing.guests_owing" exportName="guests-left-owing" rows={owing} rowKey={(g) => g.folio}
+              onRowClick={(g) => navigate(`/billing/${encodeURIComponent(g.folio)}`)}
+              columns={[
+                { key: "guest_name", label: t("Guest"), render: (g) => <span className="font-medium">{g.guest_name}</span> },
+                { key: "reservation", label: t("Booking"), render: (g) => <span className="font-mono text-xs">{g.reservation}</span> },
+                { key: "check_in_date", label: t("Stay"), render: (g) => <span className="text-xs text-zinc-500">{g.check_in_date} → {g.check_out_date}</span> },
+                { key: "status", label: t("Status"), render: (g) => <span className="text-xs">{t(g.status)}</span> },
+                { key: "balance", label: t("Owed"), align: "right", render: (g) => <span className="font-medium">{fmtMoney(g.balance)}</span> },
+              ]}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

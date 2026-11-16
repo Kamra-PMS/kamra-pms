@@ -193,8 +193,10 @@ export const runNightAudit = (property: string) =>
     next_business_date?: string
   }>("kamra.api.run_night_audit", { property })
 
-export const auditHistory = (property: string, limit = 60) =>
-  call<RunRow[]>("kamra.night_audit.night_audit_history", { property, limit })
+export const auditHistory = (property: string, limit = 60, from_date?: string, to_date?: string) =>
+  call<RunRow[]>("kamra.night_audit.night_audit_history", {
+    property, limit, from_date: from_date || undefined, to_date: to_date || undefined,
+  })
 
 export const auditPack = (audit: string) =>
   call<PackResponse>("kamra.night_audit.night_audit_pack", { audit })

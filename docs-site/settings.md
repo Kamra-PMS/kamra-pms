@@ -87,7 +87,7 @@ or **Manage** on a row), where each role says in a line what it opens.
 | Front Desk | Bookings, check-in and out, guests, folios, the cashier till |
 | Revenue Manager | Rates, seasons, guardrails, channels, the booking engine, banquet sales |
 | Finance | Billing, ledgers, night audit, exports, tax and cashier controls |
-| Night Auditor | End of Day: arrivals, departures, cashier closure, the audit pack |
+| Night Auditor | Night Audit: arrivals, departures, closing tills, the audit pack |
 | F&B Manager | Outlets, the menu, waiters and tables, the kitchen display, F&B reports and settings, approving POS voids. No folios, till or finance |
 | Housekeeping Supervisor | The Housekeeping Board, inspections, task deadlines, laundry pricing |
 | Housekeeping | Their own tasks, room status, lost & found, usually on the phone app |
