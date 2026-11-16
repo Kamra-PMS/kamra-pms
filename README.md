@@ -112,6 +112,7 @@ The property's country picks its pack. The pack decides tax, invoice wording, ID
 | Malaysia | SST on rooms and F&amp;B, tourism tax note |
 | Thailand | VAT 7%, service charge as its own line |
 | Indonesia | Regional hotel tax (PB1 / PBJT) |
+| Philippines | VAT 12%, TIN, peso. Senior citizen and PWD discount is calculated in the pack and posted by hand |
 | Brazil | ISS, BRL, CNPJ / CPF, NFS-e reference |
 | Nicaragua | IVA 15%, NIO |
 | Anywhere else | One flat rate from property settings |

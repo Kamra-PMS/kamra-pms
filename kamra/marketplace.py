@@ -167,6 +167,10 @@ def registry(property: str):
 				        "SST 8% rooms / 6% F&B, SST registration no., "
 				        "Ringgit. Tourism Tax as folio line.",
 				        detail="Included"),
+				_module("Philippines",
+				        "12% VAT on rooms and hotel F&B, TIN on the invoice, "
+				        "peso. GCash and Maya book as card.",
+				        detail="Included"),
 				_module("United Arab Emirates",
 				        "5% VAT, TRN tax invoices, Dirham. Municipality "
 				        "fee & Tourism Dirham as folio lines.",

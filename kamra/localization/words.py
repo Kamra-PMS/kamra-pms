@@ -33,6 +33,7 @@ CURRENCY_WORDS = {
 	"THB": ("Baht", "Satang"),
 	"IDR": ("Rupiah", "Sen"),
 	"MYR": ("Ringgit", "Sen"),
+	"PHP": ("Pesos", "Sentimo"),
 	"SGD": ("Dollars", "Cents"),
 	"LKR": ("Rupees", "Cents"),
 	"NPR": ("Rupees", "Paisa"),
