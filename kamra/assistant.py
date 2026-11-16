@@ -744,7 +744,7 @@ def _settings(property: str):
 REPLY_LANGS = {
 	"hi-IN": "Hindi", "ta-IN": "Tamil", "kn-IN": "Kannada", "te-IN": "Telugu",
 	"ml-IN": "Malayalam", "ar-SA": "Arabic", "es-ES": "Spanish",
-	"pt-BR": "Brazilian Portuguese",
+	"pt-BR": "Brazilian Portuguese", "fil-PH": "Filipino",
 }
 
 
