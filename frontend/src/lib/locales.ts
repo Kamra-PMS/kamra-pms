@@ -1,5 +1,5 @@
 /** Locale dictionaries are loaded on demand so English (and a single
- *  active language) do not pay for ar + es + pt in the entry bundle.
+ *  active language) do not pay for ar + es + pt + id in the entry bundle.
  *  ~1.4 MB of JSON otherwise ships on every first paint. */
 
 type Dict = Record<string, string>
@@ -10,6 +10,7 @@ const loaders: Record<string, () => Promise<{ default: Dict }>> = {
 	ar: () => import("../i18n/locales/ar.json"),
 	es: () => import("../i18n/locales/es.json"),
 	pt: () => import("../i18n/locales/pt.json"),
+	id: () => import("../i18n/locales/id.json"),
 }
 
 const inflight = new Map<string, Promise<Dict>>()
