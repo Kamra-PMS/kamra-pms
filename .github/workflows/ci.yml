@@ -39,6 +39,10 @@ jobs:
         run: npm run phone:check
         working-directory: frontend
 
+      - name: Check CSV export quoting and the formula guard
+        run: npm run csv:check
+        working-directory: frontend
+
       - name: Check booking default room-type picker
         run: npm run booking-defaults:check
         working-directory: frontend

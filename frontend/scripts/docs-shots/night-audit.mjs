@@ -1,31 +1,22 @@
 // Night audit guide images (docs-site/night-audit.md).
-// STAGE=before  the overview and the wizard's checks (no changes made)
-// STAGE=run     records the GIF that acknowledges the blockers, closes the
-//               docs user's till and runs the audit - rolls the business date
-// STAGE=after   the result, the audit pack and the history
+// STAGE=before  the overview and the close-the-day page (no changes made)
+// STAGE=run     records the GIF that overrides the blockers, closes the docs
+//               user's till, adds a note and closes the day - rolls the
+//               business date
+// STAGE=after   the history and the audit pack
 import { session, api, open, shot, gif, typeSlow, done, PROPERTY } from "./lib.mjs"
 
 const STAGE = process.env.STAGE || "before"
 const ONLY = (process.env.ONLY || "").split(",").filter(Boolean)
 const want = (n) => !ONLY.length || ONLY.includes(n)
-const WIZ = `/end-of-day/${encodeURIComponent(PROPERTY)}`
+const PAGE = `/end-of-day/${encodeURIComponent(PROPERTY)}`
 
-/** The wizard can load twice on first open; reload until it is clean. */
-async function openWizard(page, route = WIZ) {
+/** The page can load twice on first open; reload until it is clean. */
+async function openDay(page) {
   for (let i = 0; i < 4; i++) {
-    await open(page, route, 3500)
+    await open(page, PAGE, 3500)
     if (!(await page.getByText("Record has changed").count())) return
   }
-}
-const step = (page, title) =>
-  page.locator("ol button", { hasText: title }).first().click().then(() => page.waitForTimeout(1200))
-/** The wizard (step list + panel) as laid out, however wide its tables make it. */
-async function wizShot(page, name, height) {
-  const root = page.getByText("Manage Night Audit").first().locator("xpath=ancestor::div[contains(@class,'space-y-4')][1]")
-  const b = await root.boundingBox()
-  const sx = await page.evaluate(() => window.scrollX)
-  const sy = await page.evaluate(() => window.scrollY)
-  await shot(page, name, { fullPage: true, clip: { x: b.x + sx - 12, y: b.y + sy - 12, width: b.width + 24, height: Math.min(height, b.height + 24) } })
 }
 
 const ctx = await session()
@@ -33,27 +24,12 @@ const page = await ctx.newPage()
 
 if (STAGE === "before") {
   if (want("manage")) {
-    await open(page, "/end-of-day", 3000)
+    await open(page, "/end-of-day", 4000)
     await shot(page, "night-audit/manage", { clip: { x: 248, y: 75, width: 1168, height: 715 } })
   }
-  if (want("prepare")) {
-    await openWizard(page)
-    await wizShot(page, "night-audit/wizard", 820)
-  }
-  if (want("arrivals")) {
-    await openWizard(page)
-    await step(page, "Arrivals not checked in")
-    await wizShot(page, "night-audit/arrivals", 820)
-  }
-  if (want("departures")) {
-    await openWizard(page)
-    await step(page, "Departures not checked out")
-    await wizShot(page, "night-audit/departures", 900)
-  }
-  if (want("cashiers")) {
-    await openWizard(page)
-    await step(page, "Cashier closure")
-    await wizShot(page, "night-audit/cashier-closure", 760)
+  if (want("close-day")) {
+    await openDay(page)
+    await shot(page, "night-audit/close-day", { clip: { x: 248, y: 75, width: 1168, height: 800 } })
   }
   if (want("settings")) {
     await open(page, "/settings/front-desk", 3000)
@@ -67,55 +43,51 @@ if (STAGE === "before") {
 }
 
 if (STAGE === "run") {
-  await gif("night-audit/run-end-of-day", async (p, c) => {
-    await openWizard(p)
-    // departures still in house: acknowledged, not checked out here
-    const ack = async (title, why) => {
-      await step(p, title)
+  await gif("night-audit/run-close", async (p, c, rec) => {
+    await openDay(p)
+    rec()
+    // every blocker that is still open: override it with a reason
+    const reasons = ["Late checkouts approved by the duty manager", "Bar tabs carried to tomorrow"]
+    for (const why of reasons) {
       const box = p.getByPlaceholder("Reason")
-      if (!(await box.count())) return
+      if (!(await box.count())) break
+      await box.first().scrollIntoViewIfNeeded()
       await typeSlow(box.first(), why, 25)
       await p.getByRole("button", { name: "Override with reason" }).first().click()
-      await p.waitForTimeout(1500)
+      await p.waitForTimeout(1800)
     }
-    await ack("Departures not checked out", "Late checkouts approved by the duty manager")
-    await ack("Outlets and room postings", "Bar tabs carried to tomorrow")
-    await step(p, "Cashier closure")
+    // the docs user's own till, counted at what it should hold
     const counted = p.getByPlaceholder("Counted cash").first()
     if (await counted.count()) {
-    const cs = await api(c, "kamra.cashier.current_session", { property: PROPERTY })
-    const expected = cs?.expected_cash != null ? String(Math.round(cs.expected_cash)) : ""
-    await typeSlow(counted, expected || "7450", 80)
-    await p.getByRole("button", { name: "Close session" }).first().click()
-    await p.waitForTimeout(1800)
+      await counted.scrollIntoViewIfNeeded()
+      const cs = await api(c, "kamra.cashier.current_session", { property: PROPERTY })
+      const expected = cs?.expected_cash != null ? String(Math.round(cs.expected_cash)) : ""
+      await typeSlow(counted, expected || "7450", 80)
+      await p.getByRole("button", { name: "Count and close" }).first().click()
+      await p.waitForTimeout(2000)
     }
-    await step(p, "Notes")
-    await typeSlow(p.getByPlaceholder("Weather or notes"), "Heavy rain after 20:00. Lift 2 out of service.", 25)
-    await p.getByRole("button", { name: "Save notes" }).click()
-    await p.waitForTimeout(1000)
-    await step(p, "Post room and tax and roll the business date")
-    await p.waitForTimeout(1500)
-    await p.getByRole("button", { name: "Post room and tax and roll the business date" }).last().click()
+    const notes = p.getByLabel("Notes for the manager")
+    await notes.scrollIntoViewIfNeeded()
+    await typeSlow(notes, "Heavy rain after 20:00. Lift 2 out of service.", 25)
+    await p.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }))
+    await p.waitForTimeout(1200)
+    await p.getByRole("button", { name: /^Close / }).first().click()
     await p.waitForTimeout(9000)
   }, { crop: { x: 240, y: 75, width: 1190, height: 790 } })
 }
 
 if (STAGE === "after") {
   if (want("result")) {
-    await open(page, "/end-of-day", 3000)
+    await open(page, "/end-of-day", 4000)
     await shot(page, "night-audit/history", { clip: { x: 248, y: 75, width: 1168, height: 690 } })
   }
   if (want("pack")) {
-    await open(page, "/end-of-day", 3000)
-    // the pack opens from Print in the history's Audit pack column, maybe in a new tab
-    const [tab] = await Promise.all([
-      page.context().waitForEvent("page", { timeout: 6000 }).catch(() => null),
-      page.getByText("Print", { exact: true }).first().click(),
-    ])
-    const p = tab ?? page
-    await p.waitForLoadState("networkidle").catch(() => {})
-    await p.waitForTimeout(3500)
-    await shot(p, "night-audit/audit-pack", { fullPage: true, clip: { x: 0, y: 0, width: 1440, height: 900 } })
+    await open(page, "/end-of-day", 4000)
+    // the pack opens from Print in the history's Audit pack column
+    await page.getByText("Print", { exact: true }).first().click()
+    await page.waitForLoadState("networkidle").catch(() => {})
+    await page.waitForTimeout(3500)
+    await shot(page, "night-audit/audit-pack", { clip: { x: 248, y: 75, width: 1168, height: 800 } })
   }
 }
 

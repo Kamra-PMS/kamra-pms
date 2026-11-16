@@ -93,7 +93,7 @@ herramienta de IA los comprueba en el servidor. Se asignan en
 | Recepción | Reservas, entradas y salidas, huéspedes, folios, la caja |
 | Responsable de ingresos | Tarifas, temporadas, límites de tarifas, canales, el motor de reservas, ventas de banquetes |
 | Finanzas | Facturación, libros contables, auditoría nocturna, exportaciones, controles de impuestos y de caja |
-| Auditor nocturno | Cierre del día: llegadas, salidas, cierre de caja, el paquete de auditoría |
+| Auditor nocturno | Auditoría nocturna: llegadas, salidas, cierre de cajas, el paquete de auditoría |
 | Gerente de alimentos y bebidas | Puntos de venta, la carta, meseros y mesas, la pantalla de cocina, informes y ajustes de alimentos y bebidas, aprobar anulaciones del TPV. Sin folios, caja ni finanzas |
 | Supervisor de limpieza | El panel de habitaciones, inspecciones, plazos de las tareas, precios de lavandería |
 | Limpieza | Sus propias tareas, estado de las habitaciones, objetos perdidos, normalmente en la aplicación móvil |

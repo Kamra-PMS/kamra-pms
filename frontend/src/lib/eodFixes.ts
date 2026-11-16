@@ -93,7 +93,7 @@ export const CHECK_FIXES: Record<string, CheckFix> = {
   },
   credit_limit: {
     why: "Companies whose open bills plus in-house stays exceed their credit limit.",
-    steps: [{ text: "Ask the company to pay or raise the limit.", to: "/ledgers", cta: "Open ledgers" }],
+    steps: [{ text: "Ask the company to pay or raise the limit.", to: "/receivables", cta: "Open Receivables" }],
     override: "Nothing is blocked. It is only flagged.",
     ask: (n, d) => `${n} companies are over their credit limit on ${d}. Show each exposure and what is overdue.`,
   },

@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **167 governed tools** on the hosted MCP
+Kamra exposes **170 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -535,8 +535,7 @@ Mutating - logged to the activity ledger.
 
 ### `get_folio(reservation)`
 
-The guest's bill: charge lines (each with its transaction code and
-GL code), payments, GST, balance.
+The guest's bill: charge lines, payments, GST, balance.
 
 Endpoint: `kamra.api.get_folio`.
 
@@ -668,22 +667,10 @@ staff first and give the reason.
 Endpoint: `kamra.api.change_stay_company`.
 Mutating - logged to the activity ledger.
 
-### `transfer_folio_charge(from_folio, charge_rows, to_folio, to_company, to_reservation, reason, idempotency_key)`
+### `move_charges(from_folio, charge_rows, to_folio)`
 
-Move charge lines (names from get_folio or folio_statement) off an
-open folio, ledger and all. Give ONE target: to_folio (another folio
-of the same stay or group), to_company=true (the stay's Company
-folio, opened if needed; alcohol never moves there) or
-to_reservation (another checked-in stay here: Finance or Hotel Admin
-only, reason required). Lines keep their GL code.
-
-Endpoint: `kamra.api.transfer_folio_charges`.
-Mutating - logged to the activity ledger.
-
-### `move_charges(from_folio, charge_rows, to_folio, idempotency_key)`
-
-Old name for transfer_folio_charge, kept for existing clients.
-Moves charge lines to another folio of the same stay or group.
+Move charge lines to another folio of the same stay or group.
+charge_rows is a list of charge line names from get_folio.
 
 Endpoint: `kamra.api.transfer_folio_charges`.
 Mutating - logged to the activity ledger.
@@ -722,6 +709,36 @@ credits and running balance; tax summary; company payments that
 cleared it (allocations). Read-only.
 
 Endpoint: `kamra.api.folio_invoice`.
+
+### `transfer_folio_charge(from_folio, charge_rows, to_folio, to_company, to_reservation, reason, idempotency_key)`
+
+Move charge lines (names from get_folio or folio_statement) off an
+open folio, ledger and all. Give ONE target: to_folio (another folio
+of the same stay or group), to_company=true (the stay's Company
+folio, opened if needed; alcohol never moves there) or
+to_reservation (another checked-in stay here: Finance or Hotel Admin
+only, reason required). Lines keep their GL code.
+
+Endpoint: `kamra.api.transfer_folio_charges`.
+Mutating - logged to the activity ledger.
+
+### `list_cashier_sessions(business_date, to_date, status, limit)`
+
+Till sessions, newest first, for a business date (or
+business_date to to_date), optionally status Open or Closed: cashier,
+terminal, system totals per method, expected, counted, variance and
+its review. Read-only.
+
+Endpoint: `kamra.cashier.list_sessions`.
+
+### `cashier_session_detail(session)`
+
+One till session for a reconciliation: system vs counted per
+method, the note-by-note cash count, every receipt and paid-out in
+time order, the cashier and the supervisor who approved a variance.
+Read-only.
+
+Endpoint: `kamra.cashier.session_report`.
 
 ### `close_folio(folio)`
 
@@ -812,6 +829,43 @@ Confirm the lines and total with the user first.
 Endpoint: `kamra.receivables.create_ar_invoice`.
 Mutating - logged to the activity ledger.
 
+### `create_ar_account(company, account_number, credit_limit, use_default_credit_days, credit_days, billing_address, restricted, restricted_reason, idempotency_key)`
+
+Open a company account (AR) at this property, so the company can
+be billed on credit at check-out. `company` is the Corporate Account
+id. Payment terms: the property default unless
+use_default_credit_days is false, then credit_days. credit_limit 0
+means no limit. A restricted account needs restricted_reason and
+takes no new bills. One account per company per property. Needs a
+Finance or Hotel Admin user.
+
+Endpoint: `kamra.receivables.save_ar_account`.
+Mutating - logged to the activity ledger.
+
+### `update_ar_account(account, account_number, credit_limit, use_default_credit_days, credit_days, billing_address, restricted, restricted_reason, idempotency_key)`
+
+Edit a company account (see ar_accounts): account number, credit
+limit, payment terms, billing address, or restrict it (with
+restricted_reason) and lift the restriction. Only the fields you pass
+change. Needs a Finance or Hotel Admin user.
+
+Endpoint: `kamra.receivables.save_ar_account`.
+Mutating - logged to the activity ledger.
+
+### `record_ar_payment(account, amount, mode, reference, allocations, received_on, idempotency_key)`
+
+Record a payment a company made on its account (bank transfer,
+cheque). From an agent it does not post: it waits for a Finance user
+to confirm it with their PIN, and the result says pending with the
+request id and the bills it would clear (oldest first unless
+`allocations` [{folio, amount}] names them). received_on
+(YYYY-MM-DD) is the date the bank received it, the business date if
+left out. Confirm the amount and reference with the user first.
+An agent can't reverse a payment; Finance does that on the account.
+
+Endpoint: `kamra.ledger.city_ledger_settle`.
+Mutating - logged to the activity ledger.
+
 ### `payables_aging()`
 
 What the hotel owes each supplier (accounts payable), aged by due
@@ -880,12 +934,14 @@ staff at the desk (cashier PIN) - not by an agent.
 
 Endpoint: `kamra.api.security_deposit`.
 
-### `collect_security_deposit(reservation, amount, mode, reference)`
+### `collect_security_deposit(reservation, amount, mode, reference, idempotency_key)`
 
 Record a refundable security deposit the guest has paid (villas:
 the damage deposit). It is held on the guest folio as a liability,
 not revenue, and refunded or withheld at check-out. mode: one of the
 property's payment modes. Confirm the amount with staff first.
+Pass idempotency_key (new UUID per collect) so a retry does not post
+twice.
 
 Endpoint: `kamra.api.collect_security_deposit`.
 Mutating - logged to the activity ledger.
@@ -897,24 +953,6 @@ required and goes on the record; refused once money was taken.
 
 Endpoint: `kamra.api.waive_security_deposit`.
 Mutating - logged to the activity ledger.
-
-### `list_cashier_sessions(business_date, to_date, status, limit)`
-
-Till sessions, newest first, for a business date (or
-business_date to to_date), optionally status Open or Closed: cashier,
-terminal, system totals per method, expected, counted, variance and
-its review. Read-only.
-
-Endpoint: `kamra.cashier.list_sessions`.
-
-### `cashier_session_detail(session)`
-
-One till session for a reconciliation: system vs counted per
-method, the note-by-note cash count, every receipt and paid-out in
-time order, the cashier and the supervisor who approved a variance.
-Read-only.
-
-Endpoint: `kamra.cashier.session_report`.
 
 ### `cashier_shift_report(business_date, to_date)`
 
