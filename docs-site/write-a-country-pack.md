@@ -1,21 +1,30 @@
 # Write a country pack
-A country pack tells Kamra how one country handles their taxes, the tax rates, documentation of guests, invoices, and payment, which informs how each module behaves. See [Country setup & Saudi e-invoicing (ZATCA)](/country-setup).
 
-Without a pack, Kamra uses a generic pack, that defaults to one flat tax rate, plain labels, and files nothing with the government.
+A country pack is a small Python module that tells Kamra how one country
+taxes rooms and food, which ID documents guests show, how invoices are
+labelled, and which payment modes the desk and POS accept. Without a pack,
+Kamra falls back to a generic flat rate and plain labels. See
+[Country setup & Saudi e-invoicing (ZATCA)](/country-setup).
 
-This guide is for contributors who want to write a country pack so that the country is an option with presets.
+This page is the contributor checklist for shipping a new pack.
 
-## Before you start
+## Prerequisites
 
-1. Set up a Kamra development setup. Follow the [Quickstart (development) section in the README.](https://github.com/Kamra-PMS/kamra-pms/blob/develop/README.md#quickstart-development)
-2. Fork the repository and create a branch from `develop`, named `feat/<country>-pack`.
+1. A local Frappe bench with Kamra installed — use the
+   [Quickstart (development)](https://github.com/Kamra-PMS/kamra-pms/blob/develop/README.md#quickstart-development)
+   section of the README.
+2. A fork of the repo and a branch from `develop` named
+   `feat/<country>-pack`.
 
-## Steps to write a country pack
-1. Copy `kamra/localization/thailand.py` to `kamra/localization/<module name>.py`. The module name is a Python name: lowercase, no spaces, for example `uae` for the United Arab Emirates.
-2. Replace the docstring. Explain what tax your country charges, at what rate, and what the pack does not cover.
-3. Delete anything else that is specific to Thailand.
-4. Set the constants
-	Put these after the docstring:
+## Build the pack
+
+1. Copy `kamra/localization/thailand.py` to
+   `kamra/localization/<module>.py`. The module name is a Python identifier
+   (`uae`, `brazil`, `philippines`).
+2. Rewrite the module docstring: name the tax, the usual rate, and anything
+   the pack deliberately leaves out.
+3. Remove Thailand-specific constants and helpers.
+4. Set the module constants after the docstring:
 
 	```python
 	from decimal import Decimal
@@ -28,15 +37,18 @@ This guide is for contributors who want to write a country pack so that the coun
 	ID_TYPES = ["National ID", "Passport", "Driving License", "Other"]
 	PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 	```
-	| Constant | What it sets |
+
+	| Constant | Effect |
 	| --- | --- |
-	| `DEFAULT_CURRENCY` | The currency the setup screen fills in |
-	| `DEFAULT_TIMEZONE` | The time zone the setup screen fills in. Use a time zone name from the tz database. |
-	| `DEFAULT_NATIONALITY` | The nationality the front desk starts with |
-	| `ID_TYPES` | The ID documents the desk and self check-in accept |
-	| `PAYMENT_MODES` | The ways to pay at the counter, POS and till: **Cash**, **Card**, **Bank Transfer**, plus any of your `INSTANT_PAYMENT_MODES`. Kamra drops any other value. |
-	| `INSTANT_PAYMENT_MODES` | Optional. Your country's own instant or wallet modes (India: `["UPI"]`). The POS settles with them and the till counts them in their own column. Each must already be a payment mode option on Folio Payment and Cashier Transaction. Other countries' properties are refused these modes. |
-5. Write the tax functions
+	| `DEFAULT_CURRENCY` | Prefill on the property setup screen |
+	| `DEFAULT_TIMEZONE` | Prefill; use an IANA tz database name |
+	| `DEFAULT_NATIONALITY` | Starting nationality at the front desk |
+	| `ID_TYPES` | Documents accepted at desk and self check-in |
+	| `PAYMENT_MODES` | Counter, POS and till modes: **Cash**, **Card**, **Bank Transfer**, plus any `INSTANT_PAYMENT_MODES`. Other values are dropped. |
+	| `INSTANT_PAYMENT_MODES` | Optional local wallets (India: `["UPI"]`). Each value must already exist on Folio Payment and Cashier Transaction. |
+
+5. Implement the tax hooks:
+
 	```python
 	def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:
 		v = room_type_doc.get("tax_percent") if room_type_doc else None
@@ -51,12 +63,12 @@ This guide is for contributors who want to write a country pack so that the coun
 		return [0, 10]
 	```
 
-	- `calculate_room_tax` returns the tax percent for a room night. It reads the percent typed on the room type and falls back to your default. When the law changes, the hotel types the new number and the code stays as it is.
-	- `fnb_tax_rate` returns the percent for restaurant bills.
-	- `tax_rate_options` is the list of rates the tax drop-down offers.
+	- `calculate_room_tax` — percent for a room night (room-type override, else default).
+	- `fnb_tax_rate` — percent for restaurant bills.
+	- `tax_rate_options` — values offered in the tax drop-down.
+	- Optional `services_tax_rate(property)` for laundry and similar; without it, services reuse `fnb_tax_rate`.
 
-	If guest services such as laundry carry another rate, add `services_tax_rate(property)`. Without it, these services use the `fnb_tax_rate`.
-6. Write the invoice labels
+6. Implement invoice wording:
 
 	```python
 	def invoice_context(prop_doc) -> dict:
@@ -82,39 +94,43 @@ This guide is for contributors who want to write a country pack so that the coun
 		}
 	```
 
-	- `invoice_context` sets the labels on the printed invoice. `split` says how the tax is named and divided. One national tax is one line.
-	- `locale` sets the currency symbol and number format.
+	`invoice_context` must tolerate an empty property — the setup screen
+	calls it with no data. Prefer `prop_doc.get(...)` with a fallback.
+	`split` names and divides the tax line(s).
 
-	Keep `invoice_context` safe to call on an empty property. The setup screen calls it with no data to read your tax labels, so use `prop_doc.get(...)` with a fallback.
-7. Open `kamra/hooks.py` and add your module to `kamra_localization`:
+7. Register the pack in `kamra/hooks.py` under `kamra_localization`:
 
 	```python
 	kamra_localization = {
 		...
 		"Saudi Arabia": "kamra.localization.saudi",
-		"<country name>": "kamra.localization.<module name>",
+		"<country name>": "kamra.localization.<module>",
 	}
 	```
 
-	The key is the country name and the value is the path to your module. The key must match the country name on the property exactly. The setup screen builds its Region list from this hook.
+	The key must match the Property country field exactly. Reload the bench
+	after editing the hook.
 
-	Reload your bench so it reads the new hook.
-
-	::: warning A wrong module path fails silently
-	If the path in the hook has a typo, Kamra does not raise an error. It quietly uses the generic pack. If your labels look generic, check the path first.
+	::: warning Wrong paths fail quietly
+	A typo in the module path does not raise. Kamra silently uses the
+	generic pack. If labels look generic, check the path first.
 	:::
-8. Test your pack. 
-	- [Create a property with the country pack](/go-live)
-	- [Quote a stay](/reservations#make-a-booking) 
+
+8. Smoke-test on a property that uses the country:
+	- [Create the property](/go-live)
+	- [Quote a stay](/reservations#make-a-booking)
 	- [Post a charge](/billing#post-a-charge)
-	- [Print the invoice](/billing#close-the-folio-and-print-the-invoice)
+	- [Print an invoice](/billing#close-the-folio-and-print-the-invoice)
 
-## Add an eval check
+## Eval harness check
 
-A check keeps a later change from breaking your pack unseen. The checks live in `kamra/scripts/eval_harness.py`.
+Add a regression check in `kamra/scripts/eval_harness.py` so a later change
+cannot quietly break the pack.
 
-1. Pick a name `t<number>` that is free. Check the highest check in `develop`. Look at the open pull requests as well as `develop`. Two checks with the same name do not raise an error. The second silently replaces the first.
-2. Write the check and paste it into `eval_harness.py` above `def execute():`. The file already imports `frappe` and defines `check`. The check creates a property in your country, quotes a stay and asserts the rates, the symbol, the labels and the Region list entry:
+1. Choose a free `t<number>` name. Look at `develop` and open PRs — a
+   duplicate name silently replaces the earlier check.
+2. Insert the check above `def execute():`. Assert the pack module, Region
+   list entry, quote rate, F&B rate, currency symbol and tax-ID label:
 
 	```python
 	@check("<country name> pack: tax rates, labels and Region list entry")
@@ -136,9 +152,7 @@ A check keeps a later change from breaking your pack unseen. The checks live in 
 		}).insert(ignore_permissions=True).name
 
 		pack = pack_for(pname)
-		assert pack.__name__.endswith("<module name>"), pack.__name__
-		# the Region list offers the country; this also fails if
-		# invoice_context cannot handle an empty property
+		assert pack.__name__.endswith("<module>"), pack.__name__
 		assert "<country name>" in {c["country"] for c in supported_countries()}
 		q = quote(pname, rt, "2031-06-01", "2031-06-02", 2, 0)
 		assert q["nightly"][0]["gst_rate"] == <room tax rate>, q["nightly"]
@@ -149,34 +163,57 @@ A check keeps a later change from breaking your pack unseen. The checks live in 
 		assert ctx["tax_id_label"] == "<tax ID label>", ctx
 	```
 
-3. Add your function name to the list of checks inside `execute()`. The decorator alone does not add it to the run. If you resolve a merge conflict in that list, keep every entry from both sides.
+3. Append the function name to the list inside `execute()`. The decorator
+   alone does not schedule the check. On merge conflicts, keep every entry
+   from both sides.
 
-`pack.__name__` is the module path, such as `kamra.localization.uae`, so compare it with your module name, not the country name.
+`pack.__name__` is the import path (`kamra.localization.uae`), so compare
+against the module name, not the country string.
 
-Leave state as you found it. The harness rolls a check back only when it fails, so a passing check's changes stay in place for the checks after it. If your check changes a setting, restore it in a `finally` block.
+Restore any Property setting you change in a `finally` block. The harness
+only rolls back a check when it fails.
 
-## Open a pull request
+## Pull request
 
-1. Commit with a [Conventional Commit](https://www.conventionalcommits.org/) title, for example `feat: add <country name> localization pack`.
-2. Push the branch to your fork and open a pull request against `develop`, not `main`.
-3. In the description, say which tax rules the pack covers, which it leaves out, and link the rules you used.
+1. Commit with a Conventional Commit title such as
+   `feat: add <country name> localization pack`.
+2. Open the PR against `develop` (not `main`).
+3. Describe which tax rules the pack covers, which it omits, and link the
+   official sources you used.
 
-You do not need to edit `CHANGELOG.md` or the version. Maintainers write the release notes.
+Leave `CHANGELOG.md` and the version alone — maintainers write the release
+notes.
 
-## Good to know
+## Notes
 
-- Prices, tax and invoice labels come from code. A language model never invents a rate.
-- If your pack leaves out an optional function, Kamra uses a plain default. If it leaves out a country-only integration such as a payment gateway or a tax return export, that country does not get the feature. Kamra never borrows another country's.
-- You can set `NOTICE_LANGUAGES`, `ADULT_AGE`, `MINOR_IDS` and `REGISTRATION_CARD_REQUIRED`. Add `service_code_for`, `tax_split` and `amount_in_words` if your invoices need them. `india/` shows payment gateways and tax returns. `saudi.py` shows e-invoicing.
+- Rates and invoice labels always come from code. The language model never
+  invents a tax percent.
+- Missing optional hooks fall back to plain defaults. Country-only
+  integrations (payment gateways, tax returns) are never borrowed from
+  another pack.
+- Optional constants include `NOTICE_LANGUAGES`, `ADULT_AGE`, `MINOR_IDS`
+  and `REGISTRATION_CARD_REQUIRED`. Add `service_code_for`, `tax_split`
+  and `amount_in_words` when invoices need them. See `india/` for gateways
+  and returns, and `saudi.py` for e-invoicing.
 
 ## Troubleshooting
 
-**My country is not in the Region list.** Check that the hook entry is saved and that the bench has reloaded. Then check the module path for typos.
+**Country missing from Region.** Confirm the hook entry is saved, the bench
+was reloaded, and the module path has no typo.
 
-**The invoice says "Tax" and the rates are 0, 5, 10, 12, 15 and 20.** That is the generic pack. The country on the property does not match the hook key, or the module path is wrong. Both fail silently.
+**Invoice says "Tax" with rates 0, 5, 10, 12, 15, 20.** That is the generic
+pack. The Property country does not match the hook key, or the module path
+is wrong. Both fail silently.
 
-**The setup screen fails when it lists countries.** Your `invoice_context` probably needs data a blank property does not have. Use `prop_doc.get(...)` with a fallback.
+**Setup screen crashes listing countries.** `invoice_context` probably
+requires fields a blank property does not have. Use `prop_doc.get(...)`
+with a fallback.
 
 ## For developers
 
-The seam is `kamra/localization/__init__.py`. `pack_for(property)` and `pack_for_country(country)` resolve a pack from the `kamra_localization` hook, and `supported_countries()` feeds the Region list through the `kamra.api.localization_countries` endpoint. Quotes are built in `kamra/pricing.py`. See [How Kamra works](/how-it-works) for where packs sit, the [API reference](/api-reference) for the endpoints and [MCP tools](/mcp-tools) for the tools that quote and bill through your pack.
+The seam is `kamra/localization/__init__.py`. `pack_for(property)` and
+`pack_for_country(country)` resolve packs from the `kamra_localization`
+hook; `supported_countries()` feeds the Region list through
+`kamra.api.localization_countries`. Quotes are built in `kamra/pricing.py`.
+See [How Kamra works](/how-it-works), the [API reference](/api-reference)
+and [MCP tools](/mcp-tools).

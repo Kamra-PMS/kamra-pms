@@ -1247,9 +1247,10 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 	doc.status = "Delivered"
 	doc.save()
 	_flag_cleaning_if_freed(doc)
-	# the till takes what the guest paid: the bill with its tax
+	# Match the printed bill: net plus outlet tax is what went in the drawer.
+	till_amount = round(float(doc.order_total or 0) + outlet_tax_for_order(doc)[1], 2)
 	record_cashier_txn(
-		prop, "Payment", mode, round(float(doc.order_total or 0) + _bill_tax(doc)[1], 2),
+		prop, "Payment", mode, till_amount,
 		pos_order=doc.name, reference=f"POS {doc.name}", session=sess)
 	# a paid outlet bill is a (simplified) tax invoice where the pack says so
 	from kamra import localization as loc
@@ -2044,12 +2045,20 @@ def _outlet_history(outlet: str, order: str | None, g, stay) -> dict:
 	}
 
 
-def _bill_tax(doc) -> tuple[float, float]:
-	"""The outlet's tax rate on this bill and the tax amount, as the bill
-	prints it. The guest pays order_total plus this tax."""
-	rate = frappe.db.get_value("POS Outlet", doc.outlet, "gst_rate")
-	rate = 0.0 if doc.nc else float(5 if rate is None else rate)
-	return rate, round(float(doc.order_total or 0) * rate / 100, 2)
+def outlet_tax_for_order(doc) -> tuple[float, float]:
+	"""Outlet tax percent and amount for one POS order.
+
+	Complimentary (NC) bills carry no tax. When the outlet has no gst_rate
+	set, 5% is used — the same default the printed bill historically used.
+	Callers that take money (till, checkout pending amount) must add the
+	amount to `order_total`.
+	"""
+	if doc.nc:
+		return 0.0, 0.0
+	raw = frappe.db.get_value("POS Outlet", doc.outlet, "gst_rate")
+	percent = float(5 if raw is None else raw)
+	net = float(doc.order_total or 0)
+	return percent, round(net * percent / 100, 2)
 
 
 @frappe.whitelist()
@@ -2063,7 +2072,7 @@ def bill_data(order: str):
 	property_name = frappe.db.get_value(
 		"Property", doc.property, "property_name") or doc.property
 	taxable = float(doc.order_total or 0)
-	gst_rate, gst_amount = _bill_tax(doc)
+	gst_rate, gst_amount = outlet_tax_for_order(doc)
 	# the tax is named and split the country's way (CGST+SGST in India,
 	# a single VAT line in the Gulf)
 	from kamra import localization as loc

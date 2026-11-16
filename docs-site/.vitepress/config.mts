@@ -176,8 +176,8 @@ const themeWords = (lang: Exclude<Lang, "en">) => {
     langMenuLabel: es ? "Idioma" : "اللغة",
     footer: {
       message: es
-        ? `Código abierto (AGPL-3.0) · documentación de Kamra v${docCurrent} · todas las funciones incluidas, siempre.`
-        : `مفتوح المصدر (AGPL-3.0) · توثيق Kamra الإصدار ${docCurrent} · كل الميزات مشمولة دائماً.`,
+        ? `Código abierto (Apache-2.0) · documentación de Kamra v${docCurrent} · todas las funciones incluidas, siempre.`
+        : `مفتوح المصدر (Apache-2.0) · توثيق Kamra الإصدار ${docCurrent} · كل الميزات مشمولة دائماً.`,
       copyright: "Kamra PMS · hello@kamrapms.com",
     },
   }
@@ -248,7 +248,7 @@ export default defineConfig({
       { icon: "github", link: "https://github.com/Kamra-PMS/kamra-pms" },
     ],
     footer: {
-      message: `Open source (AGPL-3.0) · docs for Kamra v${docCurrent} · every feature included, always.`,
+      message: `Open source (Apache-2.0) · docs for Kamra v${docCurrent} · every feature included, always.`,
       copyright: "Kamra PMS · hello@kamrapms.com",
     },
     // consumed by the version switcher / outdated banner (custom theme fields)

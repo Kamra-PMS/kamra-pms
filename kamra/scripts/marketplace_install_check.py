@@ -74,9 +74,9 @@ def check_hooks() -> None:
 	rules = str(ns.get("website_route_rules"))
 	if "/kamra/<path:app_path>" not in rules:
 		fail("/kamra SPA route rule missing")
-	if ns.get("app_license") != "agpl-3.0":
-		fail("app_license is not agpl-3.0")
-	ok("hooks.py: payments, /kamra launcher, SPA route, AGPL")
+	if ns.get("app_license") != "apache-2.0":
+		fail("app_license is not apache-2.0")
+	ok("hooks.py: payments, /kamra launcher, SPA route, Apache-2.0")
 
 
 def check_shipped_spa() -> None:

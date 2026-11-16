@@ -11,7 +11,8 @@ Plan big; ship after Hostinger / DigitalOcean / Linode 1-clicks.
 Paid work (implementation, support, HeyKoala concierge minutes) is sold
 separately, not as a hosted SaaS listing.
 
-**Do not** put a paid price on AGPL Kamra software itself.
+**Do not** put a paid price on the Kamra software itself on the
+marketplace listing (sell implementation and support separately).
 
 ## Order
 

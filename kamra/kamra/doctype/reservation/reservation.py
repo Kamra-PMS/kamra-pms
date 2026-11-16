@@ -276,18 +276,20 @@ class Reservation(Document):
 		# not for general sale; a pickup books against its own block. Only
 		# a stay taking NEW inventory is held to this - a block made after
 		# a booking never stops that booking being edited.
-		# Out of order and blocked rooms are not for sale either, on the
-		# nights this stay newly takes; a night it already held is not
-		# re-checked, so shortening or extending a stay still works
-		held, out = {}, {}
+		# Sellable stock also excludes Out of Order rooms and active room
+		# blocks, but only on nights this save newly claims. Nights already
+		# held keep working so a stay can still be shortened, lengthened or
+		# lightly edited after a room goes off sale mid-stay.
+		group_holds, off_sale = {}, {}
 		if self._takes_new_inventory():
 			from kamra.group_blocks import block_hold_by_night
-			held = block_hold_by_night(self.property, self.room_type, dates,
-			                           for_group=self.group_booking, for_update=True)
-			before = self._nights_held_before()
-			new_nights = [d for d in dates if d not in before]
-			if new_nights:
-				out = self._rooms_out_of_sale(new_nights)
+			group_holds = block_hold_by_night(
+				self.property, self.room_type, dates,
+				for_group=self.group_booking, for_update=True)
+			already = self._nights_already_held()
+			fresh = [night for night in dates if night not in already]
+			if fresh:
+				off_sale = self._off_sale_count_by_night(fresh)
 		for d in dates:
 			cnt = len(frappe.db.sql(
 				"""SELECT name FROM `tabReservation`
@@ -299,59 +301,87 @@ class Reservation(Document):
 				   FOR UPDATE""",
 				{"rt": self.room_type, "name": self.name or "new", "d": d},
 			))
-			hold = held.get(d, 0)
-			rooms = total - out.get(d, 0)
-			limit = int(rooms * (1 + pct / 100))
+			hold = group_holds.get(d, 0)
+			sellable = total - off_sale.get(d, 0)
+			limit = int(sellable * (1 + pct / 100))
 			if cnt + hold + 1 > limit:
 				if hold:
 					frappe.throw(
 						_("{0} is sold out for {1}: {2} of {3} rooms sold and "
 						  "{4} held for group blocks until their cutoff.").format(
-							self.room_type, d, cnt, rooms, hold),
+							self.room_type, d, cnt, sellable, hold),
 						title=_("Held for a group"), exc=InventoryRefused)
-				if out.get(d):
+				if off_sale.get(d):
 					frappe.throw(
 						_("{0} is sold out for {1}: {2} of {3} sellable rooms sold "
 						  "({4} out of order or blocked).").format(
-							self.room_type, d, cnt, rooms, out[d]),
+							self.room_type, d, cnt, sellable, off_sale[d]),
 						title=_("Overbooking limit"), exc=InventoryRefused)
 				frappe.throw(
 					_("{0} is sold out for {1}: {2} of {3} rooms sold and "
 					  "the overbooking allowance ({4}%) is used up.").format(
-						self.room_type, d, cnt, rooms, pct),
+						self.room_type, d, cnt, sellable, pct),
 					title=_("Overbooking limit"), exc=InventoryRefused)
 
-	def _nights_held_before(self) -> set[str]:
-		"""Nights this stay already held in this room type before this save.
-		A date change re-checks every night; these are not re-checked
-		against the capacity that out of order or blocked rooms reduce."""
+	def _nights_already_held(self) -> set[str]:
+		"""Nights this reservation already occupied in the same room type
+		before the current save. Those nights are not re-tested against the
+		reduced sellable stock from Out of Order / blocked rooms."""
 		from frappe.utils import add_days
 
 		from kamra.reservation_state import holds_inventory
-		old = None if self.is_new() else self.get_doc_before_save()
-		if not old or old.room_type != self.room_type or not holds_inventory(old.status):
+		prior = None if self.is_new() else self.get_doc_before_save()
+		if (
+			not prior
+			or prior.room_type != self.room_type
+			or not holds_inventory(prior.status)
+		):
 			return set()
-		n = max(1, date_diff(old.check_out_date, old.check_in_date))
-		return {str(add_days(old.check_in_date, i)) for i in range(min(int(n), 366))}
+		span = max(1, date_diff(prior.check_out_date, prior.check_in_date))
+		return {
+			str(add_days(prior.check_in_date, i))
+			for i in range(min(int(span), 366))
+		}
 
-	def _rooms_out_of_sale(self, dates: list[str]) -> dict[str, int]:
-		"""Rooms of this type that can't be sold on each night: Out of Order,
-		or held by an active Room Block. A stay already sitting in one of
-		those rooms is still counted as sold, so this can over-count by one
-		for a guest in house in a room marked Out of Order mid-stay; that
-		errs on refusing a booking, never on overbooking."""
-		rooms = frappe.get_all("Room", filters={"room_type": self.room_type},
-		                       fields=["name", "housekeeping_status"])
-		ooo = {r.name for r in rooms if r.housekeeping_status == "Out of Order"}
-		blocks = frappe.get_all("Room Block", filters={
-			"room": ("in", [r.name for r in rooms]),
-			"block_status": "Active",
-			"from_date": ("<=", dates[-1]), "to_date": (">", dates[0])},
-			fields=["room", "from_date", "to_date"])
-		# a block holds its nights [from_date, to_date)
-		return {d: len(ooo | {b.room for b in blocks
-		                      if str(b.from_date) <= d < str(b.to_date)})
-		        for d in dates}
+	def _off_sale_count_by_night(self, nights: list[str]) -> dict[str, int]:
+		"""Per-night count of rooms of this type that cannot be sold.
+
+		A room is off sale when housekeeping is Out of Order, or an active
+		Room Block covers that night (half-open `[from_date, to_date)`).
+		An in-house guest in a room later marked Out of Order still counts
+		as sold elsewhere, so this may over-count by one; we refuse a new
+		sale rather than overbook.
+		"""
+		if not nights:
+			return {}
+		inventory = frappe.get_all(
+			"Room",
+			filters={"room_type": self.room_type},
+			fields=["name", "housekeeping_status"],
+		)
+		names = [row.name for row in inventory]
+		closed = {
+			row.name for row in inventory
+			if row.housekeeping_status == "Out of Order"
+		}
+		active_blocks = frappe.get_all(
+			"Room Block",
+			filters={
+				"room": ("in", names),
+				"block_status": "Active",
+				"from_date": ("<=", nights[-1]),
+				"to_date": (">", nights[0]),
+			},
+			fields=["room", "from_date", "to_date"],
+		) if names else []
+		counts: dict[str, int] = {}
+		for night in nights:
+			blocked = {
+				blk.room for blk in active_blocks
+				if str(blk.from_date) <= night < str(blk.to_date)
+			}
+			counts[night] = len(closed | blocked)
+		return counts
 
 	def _takes_new_inventory(self) -> bool:
 		"""True when this save starts holding rooms it did not hold before:

@@ -13,7 +13,7 @@ modern hospitality. Privacy first. AI ready. Free.
 Kamra 1.0, released 5 July 2026, was the first PMS to combine three
 things:
 
-- **Open source** under AGPL-3.0.
+- **Open source** under Apache-2.0.
 - **Free**, with no per-room or licence fees.
 - **MCP-driven**, with every operation a governed tool AI agents can use
   with a staff member's permissions and an audit log.

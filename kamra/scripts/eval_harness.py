@@ -11296,60 +11296,62 @@ def t_no_show_credit():
 			"business_date": saved.business_date,
 			"no_show_charge": saved.no_show_charge})
 
-@check("POS: the till takes the bill as printed, tax included")
-def t_pos_till_with_tax():
+@check("POS: cashier till books the printed grand total including tax")
+def t_pos_till_matches_printed_tax():
 	from kamra import cashier, pos
 	outlet = frappe.get_doc({
-		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Till Tax",
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Eval Till Match",
 		"outlet_type": "Restaurant", "gst_rate": 5,
 	}).insert(ignore_permissions=True).name
-	dish = frappe.get_doc({
+	item = frappe.get_doc({
 		"doctype": "Menu Item", "property": P, "outlet": outlet,
-		"item_name": "Eval Till Dosa", "category": "Food", "price": 1000,
+		"item_name": "Eval Till Idli", "category": "Food", "price": 1000,
 		"is_veg": 1, "available": 1, "prep_station": "Kitchen",
 	}).insert(ignore_permissions=True).name
 	cashier.open_session(P, 0)
-	o = pos.create_order(outlet, [{"menu_item": dish, "qty": 1}],
-	                     order_type="Takeaway")["order"]
-	printed = pos.bill_data(o)["grand_total"]
-	pos.pay_order(o, "Cash")
-	took = frappe.db.get_value(
-		"Cashier Transaction", {"pos_order": o, "kind": "Payment"}, "amount")
-	assert printed == 1050.0 and float(took or 0) == printed, (printed, took)
+	order = pos.create_order(outlet, [{"menu_item": item, "qty": 1}],
+	                         order_type="Takeaway")["order"]
+	printed = pos.bill_data(order)["grand_total"]
+	pos.pay_order(order, "Cash")
+	drawer = frappe.db.get_value(
+		"Cashier Transaction", {"pos_order": order, "kind": "Payment"}, "amount")
+	assert printed == 1050.0 and float(drawer or 0) == printed, (printed, drawer)
 
-@check("type capacity: out of order and blocked rooms are not sold to an unassigned stay")
-def t_capacity_rooms_out_of_sale():
+
+@check("type capacity: unsellable rooms (OOO / block) reduce what can be booked")
+def t_capacity_excludes_unsellable_rooms():
 	from kamra.kamra.doctype.reservation.reservation import InventoryRefused
-	RP = "EVAL Inv Out Of Sale"
-	bed, _v, rooms = _inv_property(RP, "IOS", rooms=3, with_villa=False)
-	ci, co = add_days(nowdate(), 70), add_days(nowdate(), 71)
+	RP = "EVAL Inv Unsellable"
+	bed, _v, rooms = _inv_property(RP, "UNS", rooms=3, with_villa=False)
+	arrive, depart = add_days(nowdate(), 70), add_days(nowdate(), 71)
 	frappe.db.set_value("Room", rooms[0], "housekeeping_status", "Out of Order")
-	frappe.get_doc({"doctype": "Room Block", "property": RP, "room": rooms[1],
-	                "from_date": ci, "to_date": co, "reason": "House Use",
-	                "block_status": "Active"}).insert(ignore_permissions=True)
-	_stay(RP, bed, ci, co)  # the one room left
-	frappe.db.savepoint("eval_out_of_sale")
+	frappe.get_doc({
+		"doctype": "Room Block", "property": RP, "room": rooms[1],
+		"from_date": arrive, "to_date": depart, "reason": "House Use",
+		"block_status": "Active",
+	}).insert(ignore_permissions=True)
+	_stay(RP, bed, arrive, depart)  # last sellable room
+	frappe.db.savepoint("eval_unsellable")
 	try:
-		_stay(RP, bed, ci, co, name="Over Sold")
+		_stay(RP, bed, arrive, depart, name="Should Fail")
 		raise AssertionError("sold a room that is out of order or blocked")
 	except InventoryRefused as e:
 		assert "out of order or blocked" in str(e), e
-	frappe.db.rollback(save_point="eval_out_of_sale")
-	# after the block only the out-of-order room is off sale: 2 rooms to sell
-	n2, n3 = add_days(co, 1), add_days(co, 2)
-	long_stay = _stay(RP, bed, co, n3, name="Two Nights")
-	short_stay = _stay(RP, bed, co, n2, name="One Night")
-	# another room goes out of order on that full night: stays already sold
-	# there can still be edited, shortened and extended onto a free night
+	frappe.db.rollback(save_point="eval_unsellable")
+	# Block ends at depart; only the OOO room stays off sale afterwards.
+	mid, later = add_days(depart, 1), add_days(depart, 2)
+	long_stay = _stay(RP, bed, depart, later, name="Two Nights")
+	short_stay = _stay(RP, bed, depart, mid, name="One Night")
+	# Closing the last free room mid-stay must not freeze edits already sold.
 	frappe.db.set_value("Room", rooms[2], "housekeeping_status", "Out of Order")
 	short_stay.reload()
 	short_stay.adults = 1
 	short_stay.save(ignore_permissions=True)
 	long_stay.reload()
-	long_stay.check_out_date = n2
+	long_stay.check_out_date = mid
 	long_stay.save(ignore_permissions=True)
 	short_stay.reload()
-	short_stay.check_out_date = n3
+	short_stay.check_out_date = later
 	short_stay.save(ignore_permissions=True)
 
 def execute():
@@ -11398,8 +11400,8 @@ def execute():
 		           t_ar_balance_from_entries,
 		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging,
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
-		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
-		           t_capacity_rooms_out_of_sale):
+		           t_mcp_transfer, t_no_show_credit, t_pos_till_matches_printed_tax,
+		           t_capacity_excludes_unsellable_rooms):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
