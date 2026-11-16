@@ -307,15 +307,46 @@ APP=kamra BRANCH=main COMMIT=<sha> CHANNEL=stable \
 
 Comment `/rereview` on the registry PR to re-run its checks after a fix.
 
+### discuss.frappe.io / LinkedIn: Apache-2.0 announcement
+
+Paste after the licence change merges. Long form lives at
+https://kamrapms.com/docs/apache-2.0
+
+```
+Title: Kamra PMS is Apache-2.0
+
+Kamra PMS core is now under the Apache License 2.0.
+
+We started under AGPL. That protected the early project. It also blocked
+hotels, chains and integrators whose legal teams cannot approve copyleft.
+Contributors agreed to relicense on GitHub (#591). New releases ship as
+Apache-2.0. Every release already published stays AGPL. Nothing is taken
+back.
+
+What stays the same: free Community, no per-room fees, the Open Pledge,
+self-host or Frappe Cloud, and the MCP tool layer so AI agents run with
+staff permissions and an audit log.
+
+What opens: use, change, host and sell under Apache-2.0, including in
+proprietary products, with attribution. Easier to adopt, build on and
+contribute to.
+
+- Docs: https://kamrapms.com/docs/apache-2.0
+- Vote: https://github.com/Kamra-PMS/kamra-pms/issues/591
+- Source: https://github.com/Kamra-PMS/kamra-pms
+- Demo: https://demo.kamrapms.com
+- Marketplace: https://frappecloud.com/marketplace/apps/kamra
+```
+
 ### discuss.frappe.io announcement (after a release update)
 
 ```
-Title: Kamra PMS — open-source hotel & short-term rental PMS on Frappe v16
+Title: Kamra PMS - open-source hotel & short-term rental PMS on Frappe v16
 
 Kamra is an Apache-2.0 property management system for hotels and short-term
 rentals, built on Frappe v16. Front desk, direct booking, villa catalogs,
 POS, banquets, housekeeping, folios and tax billing (India GST, Saudi
-ZATCA, Gulf and South-East Asian VAT) — install from the Frappe Cloud
+ZATCA, Gulf and South-East Asian VAT) - install from the Frappe Cloud
 Marketplace onto your site, or `bench get-app kamra` from the Frappe
 marketplace registry.
 

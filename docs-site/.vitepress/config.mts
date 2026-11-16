@@ -46,6 +46,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
     items: [
       [L("Introduction", "Introducción", "مقدمة"), ""],
       [L("Why Kamra", "Por qué Kamra", "لماذا Kamra"), "why-kamra"],
+      [L("Kamra is Apache-2.0", "Kamra es Apache-2.0", "Kamra برخصة Apache-2.0"), "apache-2.0"],
       [L("How Kamra works", "Cómo funciona Kamra", "كيف يعمل Kamra"), "how-it-works"],
       [L("Features at a glance", "Funciones de un vistazo", "الميزات بنظرة سريعة"), "features"],
       [L("What's new", "Novedades", "الجديد"), "releases"],

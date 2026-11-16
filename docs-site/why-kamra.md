@@ -49,6 +49,7 @@ taxes always come from code, never from the model. See
 
 ## Read more
 
+- [Kamra is Apache-2.0](/apache-2.0) - what the licence change means
 - [Why Kamra](https://kamrapms.com/why-kamra/) on kamrapms.com
 - [The Kamra Open Pledge](https://kamrapms.com/open-pledge/)
 - [How Kamra makes money](https://kamrapms.com/how-kamra-makes-money/)
