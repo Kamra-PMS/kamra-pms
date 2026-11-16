@@ -75,6 +75,8 @@ MODULES = [
     ("night_audit", "Night audit (End of Day checklist, audit pack)", ""),
     ("agents_api", "Activity ledger", ""),
     ("settings", "Settings hub (module settings)", ""),
+    ("languages", "UI languages (which languages sign-in, staff and guests are offered)",
+     "The list is the whole site. English stays on. Nothing saved means every shipped language is on."),
     ("rooms", "Rooms (room board, room detail and history, insights)",
      "Read-only. Room changes go through set_housekeeping_status, the room block endpoints, check_in / check_out and move_reservation."),
     ("floors", "Floors (Admin > Rooms: Add rooms)",

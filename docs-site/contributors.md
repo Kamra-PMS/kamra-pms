@@ -37,6 +37,11 @@ the translation on the right, keep any `{placeholder}` exactly as it is,
 and open a pull request (GitHub's pencil icon on the file does this for
 you). Messages from the server live in `kamra/translations/<lang>.csv`.
 
+Register a new language with a row in `frontend/src/i18n/languages.json`
+(its native name and direction) and a `frontend/src/i18n/locales/<code>.json`
+file. It is switched on for every site until a Hotel Admin turns it off
+under **Settings → Languages**.
+
 Not on GitHub? Send us a list with three columns (English, current
 translation, correct translation) and we apply it. Use the word your
 front desk, night auditor or housekeeper says every day.

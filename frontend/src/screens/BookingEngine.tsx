@@ -9,8 +9,7 @@ import { serverError, updateResource } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur } from "../lib/money"
-import { LANGS } from "../lib/dir"
-import { t as translate, useUILanguage } from "../lib/i18n"
+import { useOfferedLanguages, t as translate, useUILanguage } from "../lib/i18n"
 
 type Doc = Record<string, any>
 
@@ -23,6 +22,7 @@ const isVideo = (u: string) =>
 
 export default function BookingEngine() {
   useUILanguage()
+  const offered = useOfferedLanguages()
   const property = getCurrentProperty()
   const { section = "profile" } = useParams()
 
@@ -85,7 +85,9 @@ export default function BookingEngine() {
         page_slug: doc?.page_slug,
         meta_title: doc?.meta_title,
         meta_description: doc?.meta_description,
-        booking_language: doc?.booking_language || "",
+        booking_language: offered.some((l) => l.code === (doc?.booking_language ?? ""))
+          ? (doc?.booking_language || "")
+          : "",
         house_rules: doc?.house_rules,
         pets_policy: doc?.pets_policy,
         children_policy: doc?.children_policy,
@@ -794,14 +796,17 @@ export default function BookingEngine() {
                     <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Booking engine language")}</span>
                     <select
                       className={inputCls}
-                      value={doc.booking_language ?? ""}
+                      value={offered.some((l) => l.code === (doc.booking_language ?? "")) ? (doc.booking_language ?? "") : ""}
                       onChange={(e) => updateField("booking_language", e.target.value)}
                     >
                       <option value="">{translate("Guest's browser language")}</option>
-                      {LANGS.map((l) => (
+                      {offered.map((l) => (
                         <option key={l.code} value={l.code}>{l.nativeLabel}</option>
                       ))}
                     </select>
+                    {doc.booking_language && !offered.some((l) => l.code === doc.booking_language) && (
+                      <span className="mt-1 block text-xs text-amber-700">{translate("This property's booking language is switched off, so guests follow their browser until you pick another.")}</span>
+                    )}
                     <span className="mt-1 block text-xs text-zinc-500">{translate("What guests see first on the booking page and self check-in. They can still switch. Your own screen language does not change.")}</span>
                   </label>
 

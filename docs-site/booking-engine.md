@@ -92,10 +92,12 @@ terms it was made under; a later change only affects new bookings.
    this listing**; in Request to Book mode, **Request to book**.) The
    page shows the booking number and what's due now and at the hotel.
 
-Guests pick their language from the dropdown at the top right. The
+Guests pick their language from the dropdown at the top right. It lists
+only the languages switched on under **Settings → Languages**. The
 **Booking engine language** (Booking Engine → SEO) is what they see first
-on the booking page and the self check-in page; **Guest's browser
-language** keeps the browser's. Your own screen language doesn't change.
+on the booking page and the self check-in page, and it has to be one of
+those languages. **Guest's browser language** keeps the browser's when
+that language is switched on. Your own screen language doesn't change.
 
 The notes under the hotel name come from your settings: free
 cancellation when the policy allows it, pay at the hotel when that is

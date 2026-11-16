@@ -107,6 +107,7 @@ def _guest_meta(slug: str | None) -> dict | None:
 	description = (prop.get("meta_description")
 	               or strip_html(prop.get("showcase_description") or "").strip()
 	               or f"Book {prop.property_name}{' in ' + place if place else ''} directly with the hotel.")
+	from kamra.languages import public_booking_language
 	return {"title": title, "description": " ".join(description.split())[:160],
-	        "lang": prop.get("booking_language"),
+	        "lang": public_booking_language(prop.get("booking_language")),
 	        "image": prop.get("og_image") or prop.get("hero_image") or prop.get("logo_url")}

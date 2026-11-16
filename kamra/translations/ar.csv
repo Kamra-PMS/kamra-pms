@@ -270,3 +270,5 @@ Bills still open,فواتير ما زالت مفتوحة
 Use Check out to check a guest out: it makes sure every bill is cleared first.,استخدم «تسجيل المغادرة» لإخراج النزيل: يتأكد أولاً من تسوية كل الفواتير.
 Check out,تسجيل المغادرة
 Discounts and allowances,الخصومات والتسويات
+"{0} is not a Kamra language.","{0} ليست لغة في Kamra."
+"{0} is switched off. Turn it on from Languages in Settings.","{0} متوقفة. فعّلها من اللغات في الإعدادات."

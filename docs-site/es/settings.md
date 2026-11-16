@@ -139,12 +139,27 @@ borra nada; al volver a activar un módulo, vuelve tal como estaba.
 - **Facturación electrónica ZATCA**: solo aparece para Arabia Saudí.
   Consulte [Configuración por país](/country-setup).
 
+## Idiomas
+
+**Configuración → Idiomas** muestra cada idioma que incluye Kamra.
+Desactive los que este sitio no usa. El inicio de sesión, la aplicación
+del personal, la página de reservas y el registro de entrada ofrecen solo los
+que quedan activos. El inglés permanece activo. Solo el administrador
+del hotel.
+
+La elección es para todo el sitio, no para un alojamiento. Un idioma
+desactivado se conserva: un navegador que lo tenía seleccionado vuelve
+a él si lo activa de nuevo. Hasta entonces la aplicación del personal
+usa inglés. Los huéspedes pasan al idioma de reservas del alojamiento
+si ese sigue activo, y si no al inglés. Un idioma añadido en una versión
+posterior queda activo hasta que lo desactive.
+
 ## Apariencia
 
 **Configuración → Apariencia** define el tema (claro, oscuro o el del
-sistema) y el idioma
-solo para este navegador. Al elegir árabe, el diseño pasa a leerse de
-derecha a izquierda.
+sistema) y el idioma solo para este navegador. La lista es la de
+**Configuración → Idiomas**. Un idioma de derecha a izquierda, como el
+árabe, voltea el diseño.
 
 ![Apariencia: tema e idioma](/img/settings/appearance.png)
 

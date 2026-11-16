@@ -270,3 +270,5 @@ Bills still open,Cuentas aún abiertas
 Use Check out to check a guest out: it makes sure every bill is cleared first.,Usa Check-out para dar salida al huésped: primero comprueba que todas las cuentas estén saldadas.
 Check out,Check-out
 Discounts and allowances,Descuentos y bonificaciones
+"{0} is not a Kamra language.","{0} no es un idioma de Kamra."
+"{0} is switched off. Turn it on from Languages in Settings.","{0} está desactivado. Actívelo en Idiomas, dentro de Configuración."

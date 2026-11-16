@@ -41,8 +41,8 @@ import { asset } from "./lib/asset"
 import { useAuth } from "./lib/auth"
 import { subscribeRealtime } from "./lib/realtime"
 import { getTheme, setTheme } from "./lib/theme"
-import { LANGS, setLang } from "./lib/dir"
-import { useT } from "./lib/i18n"
+import { setLang } from "./lib/dir"
+import { useOfferedLanguages, useT } from "./lib/i18n"
 import { loadLocale } from "./lib/money"
 import { cn } from "./lib/utils"
 import { useKiosk } from "./lib/kiosk"
@@ -251,6 +251,7 @@ function AccountMenu({
 /** Language beside the account menu: switches every screen at once. */
 function LanguageToggle() {
   const { t, lang } = useT()
+  const langs = useOfferedLanguages()
   return (
     <label
       title={t("Language")}
@@ -263,7 +264,7 @@ function LanguageToggle() {
         onChange={(e) => setLang(e.target.value)}
         className="max-w-[6rem] cursor-pointer bg-transparent text-xs outline-none"
       >
-        {LANGS.map((l) => (
+        {langs.map((l) => (
           <option key={l.code} value={l.code}>
             {l.nativeLabel}
           </option>

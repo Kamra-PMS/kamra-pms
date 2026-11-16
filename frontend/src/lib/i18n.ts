@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react"
-import { getLang } from "./dir"
+import { LANGS, getLang, offeredLangs, type LangDef } from "./dir"
 import { dictionaryFor } from "./locales"
 
 export type Vars = Record<string, string | number>
@@ -50,6 +50,11 @@ const subscribe = (onChange: () => void) => {
 /** Subscribe presentation components to the same language as t()/tn(). */
 export function useUILanguage() {
   return useSyncExternalStore(subscribe, getLang, () => "en")
+}
+
+/** Languages Settings has switched on. Re-renders when an admin changes them. */
+export function useOfferedLanguages(): LangDef[] {
+  return useSyncExternalStore(subscribe, offeredLangs, () => LANGS)
 }
 
 /** Translate month/weekday names while retaining the existing EN/AR date formats. */
