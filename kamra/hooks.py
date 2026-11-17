@@ -7,7 +7,7 @@ app_description = (
 	"agents can run the property."
 )
 app_email = "hello@kamrapms.com"
-app_license = "agpl-3.0"
+app_license = "apache-2.0"
 
 # Branding shown in the Desk navbar, app switcher and marketplace listing.
 app_logo_url = "/assets/kamra/kamra-mark.svg"

@@ -42,7 +42,7 @@ features:
     details: 27 short episodes from first sign-in to night audit, reports and AI agents. Chapters and captions on every video.
     link: /video-course
   - title: Install
-    details: Docker on a VPS, classic bench, or the Frappe Cloud Marketplace. Same complete AGPL app.
+    details: Docker on a VPS, classic bench, or the Frappe Cloud Marketplace. Same complete Apache-2.0 app.
     link: /self-hosting/
 ---
 

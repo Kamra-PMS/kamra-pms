@@ -96,7 +96,7 @@ A month of small work should usually be one or two PATCHes, not a MINOR.
 
 ## Marketplace readiness (one-time, then keep true)
 
-- [x] Public repo, AGPL-3.0 `license.txt`
+- [x] Public repo, Apache-2.0 `license.txt`
 - [x] `pyproject.toml` valid, version dynamic from `kamra/__init__.py`
 - [x] `requires-python` floor at or below the Frappe Cloud v16 Python
       (`>=3.10`) — a floor above the bench's interpreter makes pip refuse the
