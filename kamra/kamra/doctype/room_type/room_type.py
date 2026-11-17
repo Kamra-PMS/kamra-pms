@@ -67,7 +67,7 @@ class RoomType(Document):
 		want = f"{self.property}-{self.room_type_code}"
 		return want if want != self.name else None
 
-	def on_update(self):  # nosemgrep: frappe-modifying-but-not-comitting -- rename_doc writes the new name; self.name only follows it in memory
+	def on_update(self):  # nosemgrep: frappe-modifying-but-not-comitting, frappe-modifying-but-not-committing -- rename_doc writes the new name; self.name only follows it in memory
 		# a changed code renames the ID too, so staff never have to; every
 		# Link to the room type (rooms, stays, rates) follows the rename
 		new_name = self._renamed_to()
