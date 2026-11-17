@@ -74,3 +74,12 @@ export function useT() {
   )
   return { lang, t, tn: tnBound }
 }
+
+/** The language code the server knows. Frappe ships Simplified Chinese as
+ * "zh" (its translation catalogue is `kamra/translations/zh.csv`), while the
+ * UI and Intl use "zh-CN". Report, statement, WhatsApp and printed pages pass
+ * this through `_(text, lang=...)`, so send the server's code or the lookup
+ * misses and the page comes back in English. */
+export function serverLang(code: string = getLang()): string {
+  return code === "zh-CN" ? "zh" : code
+}

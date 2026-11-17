@@ -694,7 +694,7 @@
    "fieldname": "booking_language",
    "fieldtype": "Select",
    "label": "Booking Engine Language",
-   "options": "\nen\nes\npt\nar",
+   "options": "\nen\nes\npt\nar\nzh-CN",
    "description": "Language guests see first on the booking engine and self check-in. Empty: the guest's browser language. Guests can still switch."
   },
   {
