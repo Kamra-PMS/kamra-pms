@@ -85,6 +85,9 @@ assert.equal(api.t("Phone"), "الهاتف")
 language = "pt"
 assert.equal(api.t("Phone"), "Telefone")
 assert.equal(api.tn(2, "{n} night", "{n} nights"), "2 noites")
+language = "id"
+assert.equal(api.t("Phone"), "Telepon")
+assert.equal(api.tn(2, "{n} night", "{n} nights"), "2 malam")
 language = "unknown"
 assert.equal(api.t("Phone"), "Phone")
 const app = fs.readFileSync(path.join(root, "src/App.tsx"), "utf8")
