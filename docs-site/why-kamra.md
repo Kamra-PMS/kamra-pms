@@ -45,7 +45,8 @@ taxes always come from code, never from the model. See
 - Your data exports free, any time.
 - The API, webhooks and MCP tools stay free, with no interface fee.
 - The Enterprise edition only adds to open-source Kamra. It never takes
-  features away.
+  features away. Turn it on per property under Settings → Enterprise.
+  Guide: [Enterprise](/enterprise).
 
 ## Read more
 

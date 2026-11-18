@@ -73,6 +73,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("Banquets & groups", "Banquetes y grupos", "الحفلات والمجموعات"), "banquets"],
       [L("Revenue & rates", "Ingresos y tarifas", "الإيرادات والأسعار"), "revenue"],
       [L("Booking engine", "Motor de reservas", "محرك الحجز"), "booking-engine"],
+      [L("Enterprise", "Enterprise", "المؤسسات"), "enterprise"],
       [L("Settings & staff", "Configuración y personal", "الإعدادات والموظفون"), "settings"],
     ],
   },

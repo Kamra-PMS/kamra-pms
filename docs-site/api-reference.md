@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **514 endpoints**, generated from the source
+the UI and the AI use. **531 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -7564,3 +7564,195 @@ Leads are System Manager-only and purged after
 | `message` | no | `''` |
 | `country` | no | `''` |
 | `interest` | no | `''` |
+
+
+## Enterprise (forecast, pricing signal, SMS, surveys, ERPNext, website)
+
+> Off until the property's edition is Enterprise. Community calls are refused with a message, except enterprise_status, which reports the edition. property_site and submit_survey are allow_guest.
+
+### `kamra.enterprise.enterprise_status`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Whether this property is on Enterprise, and which switches are on.
+
+Does not refuse Community: the desk uses it to explain how to turn the
+edition on.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.enterprise.enterprise_desk`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`
+
+Forecast, open alerts, maintenance plans and recent surveys.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `days` | no | `14` |
+
+### `kamra.enterprise.occupancy_forecast`
+
+**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+
+Predicted occupancy, peak and low days, and a housekeeping hint.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `days` | no | `0` |
+
+### `kamra.enterprise.dynamic_pricing_preview`
+
+**GET/POST** · roles: `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+
+What auto mode would do. Does not change a rate.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `days` | no | `14` |
+
+### `kamra.enterprise.guest_recommendations`
+
+**GET/POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Offers from the guest profile and earlier stays. Nothing is posted.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `guest` | yes |  |
+
+### `kamra.enterprise.list_anomaly_alerts`
+
+**GET/POST** · roles: `Finance`, `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `open_only` | no | `1` |
+
+### `kamra.enterprise.acknowledge_alert`
+
+**POST** · roles: `Finance`, `Revenue Manager`, `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.enterprise.send_guest_sms`
+
+**POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+
+Send one SMS through the configured provider. A log provider does not send.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `guest` | yes |  |
+| `body` | yes |  |
+| `reservation` | no | `None` |
+
+### `kamra.enterprise.submit_survey` <Badge type='tip' text='public' />
+
+**POST**
+
+A guest scores the stay from 1 to 5. The token is the only credential.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `token` | yes |  |
+| `score` | yes |  |
+| `comment` | no | `''` |
+
+### `kamra.enterprise.survey_prompt` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+The property name for the public survey page. No guest details.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `token` | yes |  |
+
+### `kamra.enterprise.prioritize_arrival_cleans`
+
+**POST** · roles: `Housekeeping`, `Front Desk`, `Hotel Admin`
+
+Set departure-clean priority from today's arrivals. VIP and early ETA first.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `day` | no | `None` |
+
+### `kamra.enterprise.maintenance_plans`
+
+**GET/POST** · roles: `Housekeeping`, `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.enterprise.save_maintenance_plan`
+
+**POST** · roles: `Housekeeping`, `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `title` | yes |  |
+| `interval_days` | no | `30` |
+| `area` | no | `''` |
+| `room` | no | `None` |
+| `next_due` | no | `None` |
+| `name` | no | `None` |
+| `notes` | no | `''` |
+
+### `kamra.enterprise.disable_maintenance_plan`
+
+**POST** · roles: `Housekeeping`, `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.enterprise.sync_erpnext`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Post one day's closed invoices to ERPNext. Refuses to invent a success.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `business_date` | no | `None` |
+
+### `kamra.enterprise.save_enterprise_secrets`
+
+**POST** · roles: `Hotel Admin`
+
+Store provider secrets. Omit a field to leave it. Pass an empty string to clear it.
+
+Values are not written to the activity log.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `sms_auth` | no | `None` |
+| `erpnext_api_secret` | no | `None` |
+| `door_http_secret` | no | `None` |
+
+### `kamra.enterprise.property_site` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+The multi-section property website. Community properties keep /stay and /book.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `slug` | yes |  |

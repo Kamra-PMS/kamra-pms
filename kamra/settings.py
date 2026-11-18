@@ -158,6 +158,79 @@ MODULES: tuple[Module, ...] = (
 			)),
 		),
 	),
+	Module(
+		"enterprise", "Enterprise",
+		"Optional features on top of community Kamra: forecast-driven pricing, "
+		"guest offers, anomaly alerts, SMS, surveys, ERPNext sync, the property "
+		"website, arrival-priority housekeeping and preventive maintenance. "
+		"Turning this on does not remove anything.",
+		editors=("Hotel Admin", "Revenue Manager", "Finance", "Housekeeping Supervisor"),
+		group="organisation",
+		related=(("Enterprise desk", "/enterprise"),),
+		sections=(
+			Section("edition", "Edition",
+			        "Community is the default. Enterprise is included in the source. "
+			        "There is no licence key. A site can force Enterprise for every "
+			        "property with site_config kamra_edition = Enterprise.", (
+				S("ent_edition", "Edition", "select", "Community",
+				  options=("Community", "Enterprise")),
+			)),
+			Section("pricing", "Pricing and forecast",
+			        "Auto mode feeds predicted occupancy into hurdle tiers and, when "
+			        "no tier matches, an open band. The rate guardrail still holds. "
+			        "Suggest mode only shows the forecast.", (
+				S("ent_pricing_mode", "Dynamic pricing", "select", "off",
+				  options=("off", "suggest", "auto")),
+				S("ent_forecast_days", "Forecast horizon", "number", 30, min=7, max=90, unit="days"),
+				S("ent_anomaly_z", "Anomaly sensitivity", "number", 2.0, min=1, max=5,
+				  hint="How many standard deviations from the weekday average counts as unusual."),
+				S("ent_anomaly_min_pct", "Anomaly minimum move", "number", 20, min=0, max=100, unit="%",
+				  hint="Ignore a swing smaller than this percent, even when the z-score is high."),
+			)),
+			Section("messaging", "SMS, welcomes and surveys",
+			        "WhatsApp and email already send booking messages. SMS needs a provider. "
+			        "Log mode records the text and does not send it.", (
+				S("ent_sms_provider", "SMS provider", "select", "none",
+				  options=("none", "log", "http")),
+				S("ent_sms_url", "SMS provider URL",
+				  hint="POST JSON {to, from, text, property, purpose}. 2xx means accepted."),
+				S("ent_sms_from", "SMS sender id"),
+				S("ent_sms_auth_header", "SMS auth header", default="Authorization",
+				  hint="The secret is stored encrypted from the Enterprise desk, not here."),
+				S("ent_vip_welcome", "VIP welcome before arrival", "check", 0),
+				S("ent_surveys", "Satisfaction survey after departure", "check", 0),
+			)),
+			Section("books", "ERPNext journal sync",
+			        "Posts one summary journal per day for closed invoices. "
+			        "CSV export for Tally and Zoho stays on Accounting Export.", (
+				S("ent_erp_mode", "ERPNext sync", "select", "off",
+				  options=("off", "same_site", "remote")),
+				S("ent_erp_url", "Remote ERPNext URL",
+				  hint="Only for remote mode, for example https://books.example.com"),
+				S("ent_erp_key", "ERPNext API key"),
+				S("ent_erp_company", "ERPNext company"),
+				S("ent_acct_debtors", "Debtors account",
+				  hint="Debited with the day's invoice total. Required."),
+				S("ent_acct_room", "Room revenue account", hint="Required."),
+				S("ent_acct_fnb", "Food and beverage account",
+				  hint="Leave blank to fold outlet revenue into the room account."),
+				S("ent_acct_tax", "Tax account",
+				  hint="Leave blank to credit tax inside room revenue."),
+			)),
+			Section("operations", "Housekeeping, maintenance, website, encoder", "", (
+				S("ent_hk_priority", "Prioritize cleans by arrival", "check", 0,
+				  hint="Departure cleans for a same-day arrival become High, or Urgent "
+				       "for a VIP or an arrival by noon."),
+				S("ent_maintenance", "Preventive maintenance plans", "check", 0),
+				S("ent_website", "Property website", "check", 0,
+				  hint="A public site at /hotel/<slug> with rooms, facilities, gallery, "
+				       "policies and a link to book. Arabic and English follow the guest's language."),
+				S("ent_door_url", "Key encoder URL",
+				  hint="Used when Front Desk, Door locks is set to HTTP. "
+				       "POST JSON with action issue or revoke. Enterprise only."),
+			)),
+		),
+	),
 	# --- modules -----------------------------------------------------------
 	Module(
 		"front-desk", "Front Desk", "Arrivals, holds, no-shows and the day view.",
@@ -174,9 +247,11 @@ MODULES: tuple[Module, ...] = (
 			)),
 			Section("door_locks", "Door locks", "How room keys are issued at check-in and cancelled at check-out.", (
 				S("door_lock_adapter", "Door lock system", "select", "manual",
-				  options=("manual",),
-				  hint="Manual: staff encode key cards at the lock's own encoder. Lock vendor "
-				       "connectors plug in here (see the integrations docs)."),
+				  options=("manual", "http"),
+				  hint="Manual: staff encode key cards at the lock's own encoder. "
+				       "HTTP: Kamra Enterprise POSTs the stay to the encoder URL "
+				       "in Settings, Enterprise. Other lock connectors plug in here "
+				       "(see the integrations docs)."),
 			)),
 			Section("guest_info", "Guest info at check-in",
 			        "Shown to the desk in the check-in steps, to tell the guest, print or send on WhatsApp.", (

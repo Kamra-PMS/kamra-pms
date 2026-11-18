@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-11-18 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kamra",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "modified": "2026-11-18 00:00:00.000000",
+ "permissions": [
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "report": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1,
+ "name": "Enterprise Alert",
+ "autoname": "format:ALT-{#####}",
+ "naming_rule": "Expression (old style)",
+ "field_order": [
+  "property",
+  "alert_date",
+  "metric",
+  "status",
+  "actual",
+  "expected",
+  "zscore",
+  "message"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "alert_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "metric",
+   "fieldtype": "Data",
+   "label": "Metric",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nAcknowledged",
+   "default": "Open",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "actual",
+   "fieldtype": "Float",
+   "label": "Actual"
+  },
+  {
+   "fieldname": "expected",
+   "fieldtype": "Float",
+   "label": "Weekday average"
+  },
+  {
+   "fieldname": "zscore",
+   "fieldtype": "Float",
+   "label": "Z score"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message"
+  }
+ ]
+}

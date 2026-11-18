@@ -2519,6 +2519,110 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 		module="",
 	),
+	_t(
+		"occupancy_forecast",
+		"enterprise.occupancy_forecast",
+		"""Enterprise. Predicted occupancy for the coming days from rooms already
+		sold, booking pace and the same weekday's history. Includes peak and
+		low days and a housekeeping staffing hint. Does not change rates.""",
+		{"days": _p("integer")},
+		property=True,
+		group="Revenue",
+		module="",
+	),
+	_t(
+		"dynamic_pricing_preview",
+		"enterprise.dynamic_pricing_preview",
+		"""Enterprise. Shows the premium auto mode would apply from the forecast.
+		Does not change a rate. Auto mode itself runs inside the pricing engine
+		and still respects hurdle tiers and rate guardrails.""",
+		{"days": _p("integer")},
+		property=True,
+		group="Revenue",
+		module="",
+	),
+	_t(
+		"guest_recommendations",
+		"enterprise.guest_recommendations",
+		"""Enterprise. Offers for one guest from their profile and earlier stays:
+		dietary notes, occasions, a room upgrade, dining, spa, laundry, late
+		check-out. Nothing is posted or sent.""",
+		{"guest": _p("string")},
+		required=("guest",),
+		property=True,
+		group="Front desk",
+		module="",
+	),
+	_t(
+		"list_anomaly_alerts",
+		"enterprise.list_anomaly_alerts",
+		"""Enterprise. Revenue, payment, expense and occupancy figures that sit
+		outside the usual weekday range. open_only=1 (default) hides
+		acknowledged alerts.""",
+		{"open_only": _p("integer")},
+		property=True,
+		group="Billing",
+		module="",
+	),
+	_t(
+		"send_guest_sms",
+		"enterprise.send_guest_sms",
+		"""Enterprise. Send one SMS to a guest through the property's SMS
+		provider. If the provider is Log, the text is stored and not sent.
+		Refuses when SMS is not configured.""",
+		{"guest": _p("string"), "body": _p("string"), "reservation": _p("string")},
+		required=("guest", "body"),
+		property=True,
+		mutating=True,
+		group="Front desk",
+		module="",
+	),
+	_t(
+		"sync_erpnext",
+		"enterprise.sync_erpnext",
+		"""Enterprise. Post one day's closed invoices to ERPNext as a single
+		summary journal. business_date defaults to yesterday. Returns posted
+		false when there is nothing to post or the accounts are not set.
+		Does not pretend a failed post succeeded.""",
+		{"business_date": _p("string", format="date")},
+		property=True,
+		mutating=True,
+		group="Billing",
+		module="",
+	),
+	_t(
+		"prioritize_arrival_cleans",
+		"enterprise.prioritize_arrival_cleans",
+		"""Enterprise. Set pending departure-clean priority from today's arrivals.
+		A same-day arrival is High. A VIP or an arrival by noon is Urgent.
+		Requires the arrival-priority setting.""",
+		{"day": _p("string", format="date")},
+		property=True,
+		mutating=True,
+		group="Housekeeping",
+		module="",
+	),
+	_t(
+		"save_maintenance_plan",
+		"enterprise.save_maintenance_plan",
+		"""Enterprise. Schedule preventive maintenance for a room or an area.
+		interval_days is how often a maintenance ticket is opened. The morning
+		job opens the ticket when the plan is due and the setting is on.""",
+		{
+			"title": _p("string"),
+			"interval_days": _p("integer"),
+			"area": _p("string"),
+			"room": _p("string"),
+			"next_due": _p("string", format="date"),
+			"name": _p("string"),
+			"notes": _p("string"),
+		},
+		required=("title",),
+		property=True,
+		mutating=True,
+		group="Housekeeping",
+		module="",
+	),
 )
 
 BY_NAME: dict[str, ToolSpec] = {t.name: t for t in TOOLS}

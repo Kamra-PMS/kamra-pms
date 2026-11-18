@@ -60,6 +60,11 @@ scheduler_events = {
 		# 08:30 - the banquet team's morning list: follow-ups gone quiet,
 		# tentative holds about to lapse, payments due, event orders missing
 		"30 8 * * *": ["kamra.banquet.run_banquet_reminders"],
+		# 06:00 - Enterprise only: VIP welcomes, departure surveys,
+		# arrival-priority housekeeping, preventive maintenance
+		"0 6 * * *": ["kamra.enterprise_jobs.morning"],
+		# 04:30 - Enterprise only: anomaly scan and ERPNext sync, after night audit
+		"30 4 * * *": ["kamra.enterprise_jobs.after_audit"],
 		# 04:15 - wipe the public demo so it cannot be used as a live PMS
 		# (no-op unless kamra_demo_mode is on and the site is a playground)
 		"15 4 * * *": ["kamra.scripts.reset_demo.scheduled"],
