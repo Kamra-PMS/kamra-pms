@@ -25,8 +25,6 @@ Sources (checked 2026-11-18):
 
 from decimal import Decimal
 
-import frappe
-
 DEFAULT_VAT = Decimal("7")    # short-term lodging
 STANDARD_VAT = Decimal("19")  # F&B, spa, laundry, most other services
 
@@ -88,14 +86,12 @@ def invoice_context(prop_doc) -> dict:
 
 
 def locale(prop_doc) -> dict:
-	currency = prop_doc.get("currency") or DEFAULT_CURRENCY
-	symbol = (frappe.db.get_value("Currency", currency, "symbol") or "").strip()
-	if not symbol:
-		symbol = "€" if currency == DEFAULT_CURRENCY else f"{currency} "
+	# € is the pack's desk symbol (same pattern as RM / ฿ / AED ); a property
+	# that bills in another currency still keeps that currency code on the doc.
 	return {
-		"currency_symbol": symbol,
+		"currency_symbol": "€",
 		"locale": "de-DE",
-		"currency": currency,
+		"currency": prop_doc.get("currency") or DEFAULT_CURRENCY,
 		"tax_label": "MwSt",
 		"tax_id_label": "USt-IdNr.",
 		"tax_rates": tax_rate_options(prop_doc.get("name")),
