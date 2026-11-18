@@ -31,11 +31,16 @@ def edition_of(property: str | None) -> str:
 		if (frappe.conf.get("kamra_edition") or "") == "Enterprise":
 			return "Enterprise"
 	except Exception:
-		pass
+		# Site config is optional. A read failure falls through to the property setting.
+		frappe.logger("kamra").debug(
+			"kamra_edition site config unreadable for %s", property, exc_info=True)
 	try:
 		from kamra.settings import get_setting
 		value = get_setting(property, "ent_edition", "Community") or "Community"
 	except Exception:
+		frappe.logger("kamra").debug(
+			"Enterprise edition setting unreadable for %s; treating as Community",
+			property, exc_info=True)
 		return "Community"
 	return "Enterprise" if value == "Enterprise" else "Community"
 

@@ -380,7 +380,7 @@ def _notify_anomaly(property: str, day: str, count: int) -> None:
 			now=False,
 		)
 	except Exception:
-		pass
+		frappe.log_error(title=f"Enterprise anomaly email {property} {day}")
 
 
 # ── messaging: SMS, VIP welcome, surveys ──────────────────────────────────
@@ -490,13 +490,13 @@ def _welcome_channels(property, row, body: str) -> None:
 			                subject=f"Welcome to {property}",
 			                message=body.replace("\n", "<br>"), now=False)
 		except Exception:
-			pass
+			frappe.log_error(title=f"Enterprise VIP welcome email {property} {row.name}")
 	try:
 		from kamra.whatsapp import send_text
 		if guest.get("phone"):
 			send_text(property, guest.phone, body, guest=row.guest, reservation=row.name)
 	except Exception:
-		pass
+		frappe.log_error(title=f"Enterprise VIP welcome WhatsApp {property} {row.name}")
 
 
 def send_departure_surveys(property: str) -> dict:
@@ -543,13 +543,13 @@ def send_departure_surveys(property: str) -> dict:
 				                subject=f"How was your stay at {prop_name}?",
 				                message=body.replace("\n", "<br>"), now=False)
 			except Exception:
-				pass
+				frappe.log_error(title=f"Enterprise survey email {property} {row.name}")
 		try:
 			from kamra.whatsapp import send_text
 			if guest.get("phone"):
 				send_text(property, guest.phone, body, guest=row.guest, reservation=row.name)
 		except Exception:
-			pass
+			frappe.log_error(title=f"Enterprise survey WhatsApp {property} {row.name}")
 		sent += 1
 	return {"sent": sent}
 
