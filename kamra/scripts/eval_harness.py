@@ -2683,9 +2683,12 @@ def t46():
 	]
 	for pname, country, mod, rate, symbol, loc_code in fixtures:
 		if not frappe.db.exists("Property", pname):
+			currency = {"Germany": "EUR", "Thailand": "THB", "Malaysia": "MYR",
+			            "United Arab Emirates": "AED"}.get(country)
 			frappe.get_doc({
 				"doctype": "Property", "property_name": pname,
 				"city": "Eval", "country": country,
+				**({"currency": currency} if currency else {}),
 			}).insert(ignore_permissions=True)
 		rt = frappe.get_doc({
 			"doctype": "Room Type", "property": pname,

@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 import frappe
 
 from kamra import hooks, localization
-from kamra.localization import germany
+from kamra.localization import germany  # noqa: F401 — exercised via hooks
 
 
 class TestGermanyPack(unittest.TestCase):
@@ -57,14 +57,15 @@ class TestGermanyPack(unittest.TestCase):
 		)
 
 	def test_locale_eur_defaults(self):
-		with patch.object(germany, "frappe") as framework:
-			framework.db.get_value.return_value = "€"
-			loc = germany.locale({"currency": None})
-			self.assertEqual(loc["currency"], "EUR")
-			self.assertEqual(loc["currency_symbol"], "€")
-			self.assertEqual(loc["locale"], "de-DE")
-			self.assertEqual(loc["tax_label"], "MwSt")
-			self.assertEqual(loc["tax_id_label"], "USt-IdNr.")
+		loc = germany.locale({"currency": None})
+		self.assertEqual(loc["currency"], "EUR")
+		self.assertEqual(loc["currency_symbol"], "€")
+		self.assertEqual(loc["locale"], "de-DE")
+		self.assertEqual(loc["tax_label"], "MwSt")
+		self.assertEqual(loc["tax_id_label"], "USt-IdNr.")
+		# symbol stays the pack's € even if the property bills another code
+		self.assertEqual(germany.locale({"currency": "USD"})["currency_symbol"], "€")
+		self.assertEqual(germany.locale({"currency": "USD"})["currency"], "USD")
 
 	def test_hook_resolves_germany(self):
 		self.assertEqual(hooks.kamra_localization["Germany"], "kamra.localization.germany")
