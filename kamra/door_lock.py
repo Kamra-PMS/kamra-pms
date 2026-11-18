@@ -104,7 +104,73 @@ class ManualAdapter(DoorLockAdapter):
 		                 message="Collect the key cards; they expire at check-out time.")
 
 
-_BUILTIN: dict[str, type[DoorLockAdapter]] = {ManualAdapter.key: ManualAdapter}
+class HttpEncoderAdapter(DoorLockAdapter):
+	"""POST key requests to a URL the property configures.
+
+	Enterprise only. The encoder (or a proxy in front of the lock vendor)
+	accepts JSON: action, property, reservation, room, room_number,
+	valid_from, valid_to, key_count, guest_name. It returns 2xx and may
+	include key_ids. The shared secret is an Enterprise Secret, sent as
+	Authorization: Bearer <secret> when one is set. A failure is a result,
+	never an exception, so check-in still completes.
+	"""
+
+	key = "http"
+	label = "HTTP encoder (Enterprise)"
+
+	def issue_key(self, request: KeyRequest) -> KeyResult:
+		return self._call("issue", request)
+
+	def revoke_keys(self, property: str, reservation: str, room: str) -> KeyResult:
+		request = KeyRequest(
+			property=property, reservation=reservation, room=room,
+			room_number=room, valid_from="", valid_to="", key_count=0)
+		return self._call("revoke", request)
+
+	def _call(self, action: str, request: KeyRequest) -> KeyResult:
+		from kamra.edition import is_enterprise
+		from kamra.enterprise_http import request_json
+		from kamra.enterprise_logic import parse_provider_json
+		from kamra.settings import get_setting
+		if not is_enterprise(request.property):
+			return KeyResult(
+				ok=False, adapter=self.key,
+				message="HTTP key encoding is a Kamra Enterprise feature. "
+				        "Enable Enterprise for this property, or use manual encoding.")
+		url = (get_setting(request.property, "ent_door_url", "") or "").strip()
+		if not url:
+			return KeyResult(
+				ok=False, adapter=self.key,
+				message="Set the encoder URL under Settings, Enterprise.")
+		secret = ""
+		if frappe.db.exists("DocType", "Enterprise Secret") and frappe.db.exists(
+			"Enterprise Secret", request.property):
+			secret = frappe.get_doc("Enterprise Secret", request.property).get_password(
+				"door_http_secret", raise_exception=False) or ""
+		headers = {"Authorization": f"Bearer {secret}"} if secret else {}
+		status, body = request_json(url, {
+			"action": action,
+			"property": request.property,
+			"reservation": request.reservation,
+			"room": request.room,
+			"room_number": request.room_number,
+			"valid_from": request.valid_from,
+			"valid_to": request.valid_to,
+			"key_count": request.key_count,
+			"guest_name": request.guest_name,
+		}, headers=headers)
+		parsed = parse_provider_json(
+			status, body,
+			ok_message="Key encoded." if action == "issue" else "Keys cancelled.")
+		return KeyResult(
+			ok=parsed["ok"], adapter=self.key, message=parsed["message"],
+			key_ids=parsed["ids"], manual=False)
+
+
+_BUILTIN: dict[str, type[DoorLockAdapter]] = {
+	ManualAdapter.key: ManualAdapter,
+	HttpEncoderAdapter.key: HttpEncoderAdapter,
+}
 
 
 def registered_adapters() -> dict[str, type[DoorLockAdapter]]:

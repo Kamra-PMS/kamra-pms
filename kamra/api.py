@@ -3819,7 +3819,8 @@ def merge_guests(source: str, target: str):
 
 	# fill the survivor's blanks from the duplicate; strictest flags win
 	for field in ("phone", "email", "id_type", "id_number", "nationality",
-	              "address_line", "city", "guest_notes"):
+	              "address_line", "city", "guest_notes", "dietary_notes",
+	              "special_occasions", "preferred_view", "preferred_room_type"):
 		if not dst.get(field) and src.get(field):
 			dst.set(field, src.get(field))
 	if src.vip:
@@ -3963,6 +3964,10 @@ def guest_journey(guest: str):
 			"address": ", ".join(filter(None, [  # nosemgrep: frappe-no-functional-code -- filter(None, ...) drops empty address parts; equivalent to a comprehension
 				doc.get("address_line"), doc.get("city")])),
 			"notes": doc.guest_notes,
+			"preferred_room_type": doc.get("preferred_room_type"),
+			"preferred_view": doc.get("preferred_view"),
+			"dietary_notes": doc.get("dietary_notes"),
+			"special_occasions": doc.get("special_occasions"),
 		},
 		"stats": stats,
 		"documents": guest_documents(guest, scope),

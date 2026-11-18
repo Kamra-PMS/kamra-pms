@@ -22,6 +22,8 @@ const EndOfDayWizard = lazy(() => import("./screens/EndOfDayWizard"))
 const AuditPack = lazy(() => import("./screens/AuditPack"))
 const PublicBooking = lazy(() => import("./screens/PublicBooking"))
 const PublicListing = lazy(() => import("./screens/PublicListing"))
+const PropertyWebsite = lazy(() => import("./screens/PropertyWebsite"))
+const GuestSurvey = lazy(() => import("./screens/GuestSurvey"))
 const PublicCheckin = lazy(() => import("./screens/PublicCheckin"))
 const FolioView = lazy(() => import("./screens/FolioView"))
 const GuestJourney = lazy(() => import("./screens/GuestJourney"))
@@ -37,6 +39,7 @@ const GoLiveImport = lazy(() => import("./screens/GoLiveImport"))
 const HousekeepingBoard = lazy(() => import("./screens/HousekeepingBoard"))
 const Rooms = lazy(() => import("./screens/Rooms"))
 const Settings = lazy(() => import("./screens/settings/SettingsHub"))
+const EnterpriseDesk = lazy(() => import("./screens/EnterpriseDesk"))
 const FinishSetup = lazy(() => import("./screens/FinishSetup"))
 const SystemHealth = lazy(() => import("./screens/SystemHealth"))
 const BookingEngine = lazy(() => import("./screens/BookingEngine"))
@@ -198,6 +201,8 @@ export default function App() {
           path="stay/:slug/:checkin/:checkout?/:adults?/:children?"
           element={<PublicListing />}
         />
+        <Route path="hotel/:slug" element={<PropertyWebsite />} />
+        <Route path="survey/:token" element={<GuestSurvey />} />
         {/* pre-arrival self check-in, tokenized per reservation */}
         <Route path="checkin/:token" element={<PublicCheckin />} />
         {/* housekeeping phone app - share the /hk URL with the HK team */}
@@ -333,6 +338,7 @@ export default function App() {
           <Route path="go-live" element={<GoLiveImport />} />
           <Route path="settings" element={<Settings />} />
           <Route path="settings/:section" element={<Settings />} />
+          <Route path="enterprise" element={<EnterpriseDesk />} />
           <Route path="health" element={<SystemHealth />} />
           <Route path="booking-settings" element={<BookingEngine />} />
           <Route path="booking-settings/:section" element={<BookingEngine />} />

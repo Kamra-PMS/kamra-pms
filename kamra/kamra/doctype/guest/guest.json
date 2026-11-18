@@ -31,6 +31,10 @@
   "address_line",
   "city",
   "guest_notes",
+  "preferred_room_type",
+  "preferred_view",
+  "dietary_notes",
+  "special_occasions",
   "id_file",
   "address_proof_file",
   "photo",
@@ -131,6 +135,28 @@
    "fieldname": "guest_notes",
    "fieldtype": "Small Text",
    "label": "Guest Notes"
+  },
+  {
+   "fieldname": "preferred_room_type",
+   "fieldtype": "Data",
+   "label": "Preferred room type",
+   "description": "The room type this guest asks for. Free text, matched to a room type by name when offering an upgrade."
+  },
+  {
+   "fieldname": "preferred_view",
+   "fieldtype": "Data",
+   "label": "Preferred view"
+  },
+  {
+   "fieldname": "dietary_notes",
+   "fieldtype": "Small Text",
+   "label": "Dietary notes"
+  },
+  {
+   "fieldname": "special_occasions",
+   "fieldtype": "Small Text",
+   "label": "Special occasions",
+   "description": "Birthdays, anniversaries and other dates the desk should remember."
   },
   {
    "default": "0",

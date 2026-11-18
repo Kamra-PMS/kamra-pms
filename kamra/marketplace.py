@@ -193,15 +193,19 @@ def registry(property: str):
 		},
 		{
 			"category": "Kamra Enterprise",
-			"blurb": "A separate paid program that connects to your Kamra "
-			         "over the public API. Community stays free and "
-			         "complete for running a hotel.",
+			"blurb": "Included with Kamra. Turn the edition on per property "
+			         "under Settings, Enterprise. It adds features and "
+			         "does not lock the community app. The quote is for "
+			         "setup and support, not a licence.",
 			"cards": [
 				{"kind": "enterprise", "name": "Kamra Enterprise",
-				 "blurb": "Owner and MD reporting, audit statements, Pro "
-				          "Agent, guest concierge and offers through "
-				          "HeyKoala on voice and WhatsApp, and tools for "
-				          "chains. Contact us for a quote.",
+				 "blurb": "Turn on in Settings, Enterprise: forecast-driven "
+				          "pricing, guest offers, anomaly alerts, SMS, "
+				          "surveys, ERPNext journal sync, the property "
+				          "website, HTTP key encoding, arrival-priority "
+				          "housekeeping and preventive maintenance. "
+				          "Included in the source. Contact us for setup "
+				          "and support. Community stays complete.",
 				 "status": "on_request", "action": "pair"},
 			],
 		},

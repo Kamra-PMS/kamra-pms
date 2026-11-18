@@ -28,7 +28,7 @@
 
 **Why "first":** [Kamra 1.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v1.0.0) shipped on 5 July 2026 as open source, free, and MCP-driven. We know of no open-source PMS that shipped all three earlier. If Kamra is useful to you, [star the repo](https://github.com/Kamra-PMS/kamra-pms/stargazers) so other hoteliers and developers can find it.
 
-Kamra is a full property management system for hotels, resorts and short-term rentals. It runs on [Frappe](https://frappe.io) (the framework behind ERPNext), it is AGPL-3.0, and every feature is in the open-source app: no editions, no per-room fees. Current release: **v2.7.6** ([changelog](CHANGELOG.md)).
+Kamra is a full property management system for hotels, resorts and short-term rentals. It runs on [Frappe](https://frappe.io) (the framework behind ERPNext), it is AGPL-3.0, and the Community edition is the full hotel PMS: no per-room fees and no licence key. Enterprise is an opt-in in the same source (Settings → Enterprise) and only adds features. Current release: **v2.7.6** ([changelog](CHANGELOG.md)).
 
 On the [demo](https://demo.kamrapms.com), tap any role to sign in. The guest booking page is at [/book](https://demo.kamrapms.com/book) and the housekeeping phone app at [/kamra/hk](https://demo.kamrapms.com/kamra/hk).
 
@@ -71,11 +71,18 @@ On the [demo](https://demo.kamrapms.com), tap any role to sign in. The guest boo
 - Short-term rentals: a catalogue of villas sold as rooms or the whole place, cleaning fees and refundable deposits.
 - Channel manager adapters for Channex.io, STAAH and AioSell; CSV import of bookings when you switch.
 
+**Enterprise (opt-in, same app)**
+- Forecast-driven pricing (suggest or auto, still inside the rate guardrail), occupancy forecast and anomaly alerts.
+- Guest offers from profile and stay history. VIP welcome and a 1 to 5 survey after departure.
+- SMS through a log mode or your own HTTP provider. WhatsApp and email stay as they are.
+- ERPNext journal sync (same site or remote) on top of CSV export.
+- Property website at `/hotel/<slug>`, HTTP key encoder, arrival-priority housekeeping and preventive maintenance.
+
 **AI and MCP**
 - Kamra Agent, the in-app assistant, with action cards to check in, collect or open a folio.
-- 170 MCP tools for Claude, ChatGPT or any MCP client. See [Run your hotel with AI](#run-your-hotel-with-ai).
+- 178 MCP tools for Claude, ChatGPT or any MCP client. See [Run your hotel with AI](#run-your-hotel-with-ai).
 
-The staff UI is in English, Spanish, Arabic and Portuguese (Brazil). Module by module, with screenshots: [Features](https://kamrapms.com/docs/features).
+The staff UI is in English, Spanish, Arabic and Portuguese (Brazil). Module by module, with screenshots: [Features](https://kamrapms.com/docs/features). Guide: [Enterprise](https://kamrapms.com/docs/enterprise).
 
 ---
 

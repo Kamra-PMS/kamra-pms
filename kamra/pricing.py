@@ -276,6 +276,19 @@ def days_cover(days_of_week: str | None, day_abbr: str) -> bool:
 	return day_abbr in normalized_days
 
 
+def _guardrail_bounds(property: str, room_type: str, date) -> tuple[Decimal, Decimal]:
+	"""Floor and ceiling for one night. Zero means that side is unset."""
+	rails = frappe.get_all(
+		"Rate Guardrail",
+		filters={"property": property, "disabled": 0,
+		         "room_type": ("in", [room_type, "", None])},
+		fields=["room_type", "floor_price", "ceiling_price", "days_of_week"])
+	rail = rail_for_day(rails, room_type, getdate(date).strftime("%a").lower())
+	if not rail:
+		return Decimal(0), Decimal(0)
+	return _dec(rail.floor_price), _dec(rail.ceiling_price)
+
+
 def rail_for_day(guardrails, room_type: str | None, day_abbr: str):
 	"""The rate guardrail that governs this weekday, or None. The most
 	specific rail wins: room-type + days, then room-type, then
@@ -670,6 +683,10 @@ def quote(
 	if not rate_plan and company:
 		rate_plan = negotiated_rate_plan(property, company)
 	nights = date_diff(check_out_date, check_in_date)
+	# Enterprise auto pricing caches a forecast on the request. Clear it so
+	# one quote cannot reuse another stay's numbers. Community quotes ignore it.
+	frappe.flags.enterprise_mode = None
+	frappe.flags.enterprise_predict = None
 	day_use = nights == 0
 	if nights < 0:
 		frappe.throw("Check-out cannot be before check-in.")
@@ -823,8 +840,20 @@ def quote(
 			if str(date) not in occ_cache:
 				occ_cache[str(date)] = forecast_occupancy(
 					property, date, exclude=exclude_reservation)
+			from kamra.enterprise_pricing import pricing_occupancy
+			priced_occ, open_band = pricing_occupancy(
+				property, str(date), occ_cache[str(date)])
 			rate, tier = demand_adjust(property, room_type, date, rate,
-			                           occupancy=occ_cache[str(date)])
+			                           occupancy=priced_occ)
+			# No hurdle tier for this forecast: the Enterprise open band,
+			# still clamped to the rate guardrail. Off unless auto mode.
+			if open_band and not tier:
+				from kamra.enterprise_logic import apply_open_band
+				floor, ceiling = _guardrail_bounds(property, room_type, date)
+				rate, effective = apply_open_band(rate, priced_occ, floor, ceiling)
+				if effective:
+					tier = {"premium_pct": effective, "min_rate": float(floor or 0),
+					        "occupancy": priced_occ, "occupancy_from": 0}
 			if agreed_rate:
 				# a rate the desk agreed replaces the card and the premium
 				rate, tier = _dec(agreed_rate), None
@@ -861,7 +890,7 @@ def quote(
 			nightly.append({"date": str(date), "rate": float(rate),
 			                "gst_rate": float(gst),
 			                "demand_premium_pct": tier["premium_pct"] if tier else 0,
-			                "occupancy": occ_cache[str(date)]})
+			                "occupancy": priced_occ})
 			room_total += rate
 			room_tax += rate * gst / Decimal(100)
 

@@ -94,6 +94,8 @@ MODULES = [
      "pair is the one allow_guest endpoint here, rate-limited and logged; see Connected apps."),
     ("public_api", "Public (no auth - booking page, check-in)",
      "These are allow_guest endpoints: no token needed, rate-limited."),
+    ("enterprise", "Enterprise (forecast, pricing signal, SMS, surveys, ERPNext, website)",
+     "Off until the property's edition is Enterprise. Community calls are refused with a message, except enterprise_status, which reports the edition. property_site and submit_survey are allow_guest."),
 ]
 
 SAMPLE = {

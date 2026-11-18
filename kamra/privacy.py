@@ -77,7 +77,9 @@ def erase_guest(guest: str, reason: str = "request") -> dict:
 	         "id_type": "", "id_number": "", "id_place_of_issue": "", "id_issue_date": None,
 	         "id_expiry_date": None, "nationality": "", "address_line": "", "city": "",
 	         "id_file": None, "address_proof_file": None, "photo": None, "date_of_birth": None, "gender": "",
-	         "guest_notes": "Profile erased.", "vip": 0, "marketing_consent": 0}
+	         "guest_notes": "Profile erased.", "vip": 0, "marketing_consent": 0,
+	         "dietary_notes": "", "special_occasions": "", "preferred_view": "",
+	         "preferred_room_type": ""}
 	frappe.db.set_value("Guest", guest, {k: v for k, v in blank.items() if g.meta.has_field(k)},
 	                    update_modified=False)
 

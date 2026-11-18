@@ -442,6 +442,12 @@ Then pick it under **Settings → Front Desk → Door locks**. The built-in
 `manual` adapter is the default: staff encode cards at the vendor's
 encoder, and the desk gets an instruction to show.
 
+Kamra Enterprise also ships an `http` adapter. Set the door lock system
+to HTTP, put the encoder URL in **Settings → Enterprise**, and save the
+shared secret on the Enterprise desk. Check-in POSTs `action: issue`
+with the room and the stay window. The contract is in
+[Enterprise](/enterprise).
+
 A connector must follow these rules:
 
 - **It never decides who gets a key.** Kamra calls it after check-in.
@@ -463,3 +469,7 @@ closed invoice in a date range as rows you can download. The API call is
 pack: CGST/SGST in India, a single tax column in VAT countries. The rows
 are ready for your books, for example Tally, Zoho Books or ERPNext. If ERPNext
 is installed on the same site, see [ERPNext & Frappe HR](/self-hosting/erpnext-hr).
+
+Enterprise can also post one summary journal per closed day, on this site
+or to a remote ERPNext URL. That path is off until you set the accounts.
+See [Enterprise](/enterprise). CSV export stays available either way.

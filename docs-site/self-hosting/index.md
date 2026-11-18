@@ -9,7 +9,9 @@ Own your PMS end to end. Ways to install:
 | [Bench install](/self-hosting/bench) | Classic Frappe bench | Teams already running Frappe / ERPNext |
 | [Frappe Cloud Marketplace](/self-hosting/frappe-cloud) | Point and click | Managed Frappe hosting, no server |
 
-Every feature is included - there is no paid edition to upgrade to.
+Every community feature ships in the open-source app. [Enterprise](/enterprise)
+is an opt-in on the same install (Settings → Enterprise). It does not add a
+licence fee and it does not switch off anything you already use.
 
 Want company books or HR on the same Frappe site? That is optional -
 see [ERPNext and Frappe HR](/self-hosting/erpnext-hr) (Marketplace and

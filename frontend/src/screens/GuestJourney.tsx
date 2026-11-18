@@ -74,6 +74,10 @@ interface Journey {
     marketing_consent_source: string | null
     address: string
     notes: string | null
+    preferred_room_type: string | null
+    preferred_view: string | null
+    dietary_notes: string | null
+    special_occasions: string | null
   }
   stats: {
     bookings: number
@@ -365,6 +369,9 @@ export default function GuestJourney() {
   const [merging, setMerging] = useState(false)
   const [confirmAnon, setConfirmAnon] = useState(false)
   const [notes, setNotes] = useState<string | null>(null)
+  const [prefs, setPrefs] = useState({
+    preferred_room_type: "", preferred_view: "", dietary_notes: "", special_occasions: "",
+  })
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(() => {
@@ -372,6 +379,12 @@ export default function GuestJourney() {
       call<Journey>("kamra.api.guest_journey", { guest: name }).then((d) => {
         setData(d)
         setNotes(d.guest.notes ?? "")
+        setPrefs({
+          preferred_room_type: d.guest.preferred_room_type ?? "",
+          preferred_view: d.guest.preferred_view ?? "",
+          dietary_notes: d.guest.dietary_notes ?? "",
+          special_occasions: d.guest.special_occasions ?? "",
+        })
       })
   }, [name])
 
@@ -629,6 +642,29 @@ export default function GuestJourney() {
                       saveField({ vip: e.target.checked ? 1 : 0 })
                     }
                   />{translate("VIP")}</label>
+              </div>
+              <div className="mt-4 grid gap-3">
+                <label className="block text-sm">
+                  <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-400">{translate("Preferred room type")}</span>
+                  <input className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" value={prefs.preferred_room_type}
+                    onChange={(e) => setPrefs({ ...prefs, preferred_room_type: e.target.value })} />
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-400">{translate("Preferred view")}</span>
+                  <input className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" value={prefs.preferred_view}
+                    onChange={(e) => setPrefs({ ...prefs, preferred_view: e.target.value })} />
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-400">{translate("Dietary notes")}</span>
+                  <textarea className="min-h-16 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" value={prefs.dietary_notes}
+                    onChange={(e) => setPrefs({ ...prefs, dietary_notes: e.target.value })} />
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-400">{translate("Special occasions")}</span>
+                  <textarea className="min-h-16 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" value={prefs.special_occasions}
+                    onChange={(e) => setPrefs({ ...prefs, special_occasions: e.target.value })} />
+                </label>
+                <Button variant="outline" disabled={busy} onClick={() => saveField(prefs)}>{translate("Save preferences")}</Button>
               </div>
             </CardContent>
           </Card>

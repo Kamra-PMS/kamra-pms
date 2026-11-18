@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **170 governed tools** on the hosted MCP
+Kamra exposes **178 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -452,6 +452,23 @@ Read-only.
 
 Endpoint: `kamra.custom_reports.run_report_pack`.
 
+### `guest_recommendations(guest)`
+
+Enterprise. Offers for one guest from their profile and earlier stays:
+dietary notes, occasions, a room upgrade, dining, spa, laundry, late
+check-out. Nothing is posted or sent.
+
+Endpoint: `kamra.enterprise.guest_recommendations`.
+
+### `send_guest_sms(guest, body, reservation)`
+
+Enterprise. Send one SMS to a guest through the property's SMS
+provider. If the provider is Log, the text is stored and not sent.
+Refuses when SMS is not configured.
+
+Endpoint: `kamra.enterprise.send_guest_sms`.
+Mutating - logged to the activity ledger.
+
 ## Ops
 
 ### `create_ticket(subject, category, priority, room, description)`
@@ -529,6 +546,24 @@ Housekeeping posts Minibar or Laundry found in a room onto the
 in-house guest's folio. Other charge types are refused.
 
 Endpoint: `kamra.api.hk_post_consumable`.
+Mutating - logged to the activity ledger.
+
+### `prioritize_arrival_cleans(day)`
+
+Enterprise. Set pending departure-clean priority from today's arrivals.
+A same-day arrival is High. A VIP or an arrival by noon is Urgent.
+Requires the arrival-priority setting.
+
+Endpoint: `kamra.enterprise.prioritize_arrival_cleans`.
+Mutating - logged to the activity ledger.
+
+### `save_maintenance_plan(title, interval_days, area, room, next_due, name, notes)`
+
+Enterprise. Schedule preventive maintenance for a room or an area.
+interval_days is how often a maintenance ticket is opened. The morning
+job opens the ticket when the plan is due and the setting is on.
+
+Endpoint: `kamra.enterprise.save_maintenance_plan`.
 Mutating - logged to the activity ledger.
 
 ## Billing
@@ -1011,6 +1046,24 @@ to yesterday).
 Endpoint: `kamra.custom_reports.email_custom_report`.
 Mutating - logged to the activity ledger.
 
+### `list_anomaly_alerts(open_only)`
+
+Enterprise. Revenue, payment, expense and occupancy figures that sit
+outside the usual weekday range. open_only=1 (default) hides
+acknowledged alerts.
+
+Endpoint: `kamra.enterprise.list_anomaly_alerts`.
+
+### `sync_erpnext(business_date)`
+
+Enterprise. Post one day's closed invoices to ERPNext as a single
+summary journal. business_date defaults to yesterday. Returns posted
+false when there is nothing to post or the accounts are not set.
+Does not pretend a failed post succeeded.
+
+Endpoint: `kamra.enterprise.sync_erpnext`.
+Mutating - logged to the activity ledger.
+
 ## Revenue
 
 ### `set_room_rate(room_type, start_date, end_date, rate, reason)`
@@ -1021,6 +1074,22 @@ floor/ceiling. Always give a reason (it goes in the audit trail).
 
 Endpoint: `kamra.api.set_room_rate`.
 Mutating - logged to the activity ledger.
+
+### `occupancy_forecast(days)`
+
+Enterprise. Predicted occupancy for the coming days from rooms already
+sold, booking pace and the same weekday's history. Includes peak and
+low days and a housekeeping staffing hint. Does not change rates.
+
+Endpoint: `kamra.enterprise.occupancy_forecast`.
+
+### `dynamic_pricing_preview(days)`
+
+Enterprise. Shows the premium auto mode would apply from the forecast.
+Does not change a rate. Auto mode itself runs inside the pricing engine
+and still respects hurdle tiers and rate guardrails.
+
+Endpoint: `kamra.enterprise.dynamic_pricing_preview`.
 
 ## Briefings
 

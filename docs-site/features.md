@@ -1,7 +1,8 @@
 # Features at a glance
 
 What Kamra does, module by module, with a link to the full guide for each.
-Everything here is in the open-source app; there are no editions.
+The Community edition is the full hotel PMS. [Enterprise](/enterprise) is an
+opt-in in the same app: it adds features and does not remove any.
 
 **Latest stable:** [v2.6.20](/releases). System map and architecture:
 [How Kamra works](/how-it-works).
@@ -188,6 +189,14 @@ chat text, and a guest privacy notice in several Indian languages.
 Contact details are not sent to the AI provider. Promotional WhatsApp
 goes only to guests who opted in, and a STOP reply opts them out
 ([details](./whatsapp#marketing-consent-and-opt-out)).
+
+## Enterprise
+
+Optional, in the same app. **Settings → Enterprise** turns it on for one
+property. It adds forecast-driven pricing, guest offers, anomaly alerts,
+SMS, post-stay surveys, ERPNext journal sync, a property website, HTTP
+key encoding, arrival-priority housekeeping and preventive maintenance.
+Community features stay available. Full steps: [Enterprise](/enterprise).
 
 ## AI, done safely
 
