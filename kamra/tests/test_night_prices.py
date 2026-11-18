@@ -1,7 +1,7 @@
 """Nightly prices typed on New booking (#634): validation only, no DB writes."""
 
-from decimal import Decimal
 import unittest
+from decimal import Decimal
 from unittest.mock import patch
 
 import frappe

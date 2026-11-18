@@ -6244,8 +6244,7 @@ def _check_night_prices(property: str, room_type: str, check_in_date: str,
 	that is malformed, a caller without the right to set rates, or a booking
 	whose price something else already decides: a voucher, a rate plan (its
 	own or the company's negotiated one), an OTA total or a group block rate."""
-	from kamra.pricing import (negotiated_rate_plan, normalize_night_prices,
-	                           refuse_with_night_prices)
+	from kamra.pricing import negotiated_rate_plan, normalize_night_prices, refuse_with_night_prices
 	typed = normalize_night_prices(night_prices, check_in_date, check_out_date)
 	if not typed:
 		return {}

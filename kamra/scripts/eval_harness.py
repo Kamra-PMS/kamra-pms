@@ -11360,6 +11360,77 @@ def t_capacity_rooms_out_of_sale():
 	short_stay.check_out_date = n3
 	short_stay.save(ignore_permissions=True)
 
+@check("a night the desk prices by hand is quoted, booked, locked and billed at that price")
+def t_night_prices_book():
+	from kamra.api import create_booking, get_quote
+	from kamra.folio import open_folio, post_room_night
+	ci, co = "2033-06-10", "2033-06-12"
+	typed = [{"date": ci, "price": 120}]
+	q = get_quote(P, RT, ci, co, night_prices=typed)
+	assert [n["rate"] for n in q["nightly"]] == [120, 4000], q["nightly"]
+	assert q["nightly"][0]["demand_premium_pct"] == 0
+	out = create_booking(P, RT, ci, co, "Eval Night Guest", phone="+91 70000 00634",
+	                     night_prices=typed)
+	res = frappe.get_doc("Reservation", out["reservation"])
+	assert res.auto_price == 0, res.auto_price
+	assert [float(r.rate) for r in res.night_rates] == [120, 4000], res.night_rates
+	assert [float(r.hand_price) for r in res.night_rates] == [120, 0]
+	assert round(float(res.amount_after_tax), 2) == round(q["amount_after_tax"], 2)
+	open_folio(res)
+	post_room_night(res, ci)
+	amt = frappe.get_all("Folio Charge", filters={
+		"reservation": res.name, "charge_type": "Room"}, pluck="amount")
+	assert [float(a) for a in amt] == [120], amt
+
+
+@check("typed nights that add up to a room total add up exactly")
+def t_night_prices_total():
+	from kamra.api import get_quote
+	ci = "2033-07-10"
+	q = get_quote(P, RT, ci, add_days(ci, 2), night_prices=[
+		{"date": ci, "price": 115}, {"date": add_days(ci, 1), "price": 115}])
+	assert q["room_total"] == 230, q["room_total"]
+	# an odd unit lands on one night, the sum is still exact
+	q = get_quote(P, RT, ci, add_days(ci, 3), night_prices=[
+		{"date": add_days(ci, i), "price": p} for i, p in enumerate((33.34, 33.33, 33.33))])
+	assert q["room_total"] == 100, q["room_total"]
+
+
+@check("typed nights with a voucher or without the right to set rates are refused")
+def t_night_prices_refused():
+	from kamra.api import create_booking, get_quote
+	ci, co = "2033-08-10", "2033-08-12"
+	typed = [{"date": ci, "price": 120}]
+	for extra, word in (({"voucher_code": "EVAL10"}, "voucher"),):
+		try:
+			get_quote(P, RT, ci, co, night_prices=typed, **extra)
+			raise AssertionError(f"typed nights with a {word} were accepted")
+		except frappe.ValidationError as e:
+			assert word in str(e), e
+	try:
+		create_booking(P, RT, ci, co, "Eval Night Refused", phone="+91 70000 00635",
+		               voucher_code="EVAL10", night_prices=typed)
+		raise AssertionError("a booking with a voucher and typed nights was made")
+	except frappe.ValidationError:
+		pass
+	assert not frappe.db.exists("Reservation", {"property": P, "check_in_date": ci})
+	try:
+		get_quote(P, RT, ci, co, night_prices=[{"date": co, "price": 120}])
+		raise AssertionError("a night outside the stay was accepted")
+	except frappe.ValidationError:
+		pass
+	me = frappe.session.user
+	try:
+		frappe.set_user("frontdesk@kamra.local")  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
+		try:
+			get_quote(P, RT, ci, co, night_prices=typed)
+			raise AssertionError("Front Desk was allowed to price a night")
+		except frappe.PermissionError:
+			pass
+	finally:
+		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11407,7 +11478,8 @@ def execute():
 		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging,
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
-		           t_capacity_rooms_out_of_sale):
+		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
+		           t_night_prices_refused):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

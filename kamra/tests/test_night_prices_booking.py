@@ -11,8 +11,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
 
-from kamra.api import (amend_stay, create_booking, create_group_booking, get_quote,
-                       walk_in)
+from kamra.api import amend_stay, create_booking, create_group_booking, get_quote, walk_in
 
 
 class NightPricesBookingTestCase(IntegrationTestCase):
