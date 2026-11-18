@@ -2669,7 +2669,7 @@ def t45():
 	assert _public_locale(P)["currency_symbol"] == "₹"
 
 
-@check("SEA/ME packs: Thai VAT, Malaysian SST room/F&B split, UAE TRN")
+@check("SEA/ME/EU packs: Thai VAT, Malaysian SST, UAE TRN, German MwSt")
 def t46():
 	from kamra.localization import pack_for
 	from kamra.pricing import quote
@@ -2679,6 +2679,7 @@ def t46():
 		("EVAL KL Hotel", "Malaysia", "malaysia", 8, "RM", "ms-MY"),
 		("EVAL Dubai Hotel", "United Arab Emirates", "uae", 5,
 		 "AED ", "en-AE"),
+		("EVAL Berlin Hotel", "Germany", "germany", 7, "€", "de-DE"),
 	]
 	for pname, country, mod, rate, symbol, loc_code in fixtures:
 		if not frappe.db.exists("Property", pname):
@@ -2702,7 +2703,7 @@ def t46():
 		assert loc["currency_symbol"] == symbol, (pname, loc)
 		assert loc["locale"] == loc_code, (pname, loc)
 
-	# Malaysia is the one seam country where F&B differs from rooms
+	# Malaysia and Germany are the seam countries where F&B differs from rooms
 	from kamra.localization import malaysia
 	assert malaysia.fnb_tax_rate("EVAL KL Hotel") == 6.0
 	ctx = malaysia.invoice_context(frappe.get_doc("Property", "EVAL KL Hotel"))
@@ -2710,6 +2711,12 @@ def t46():
 	from kamra.localization import uae
 	assert uae.invoice_context(
 		frappe.get_doc("Property", "EVAL Dubai Hotel"))["tax_id_label"] == "TRN"
+	from kamra.localization import germany
+	assert germany.fnb_tax_rate("EVAL Berlin Hotel") == 19.0
+	assert germany.services_tax_rate("EVAL Berlin Hotel") == 19.0
+	gctx = germany.invoice_context(frappe.get_doc("Property", "EVAL Berlin Hotel"))
+	assert gctx["tax_id_label"] == "USt-IdNr.", gctx
+	assert gctx["split"][0][0] == "mwst", gctx
 
 
 @check("generic pack: currency symbol comes from the Currency master")
@@ -7853,7 +7860,7 @@ def t316():
 	# India keeps 18% GST on services; every pack's services rate is one it allows
 	assert services_tax_rate(pack_for_country("India"), P) == 18.0
 	for country in ("India", "Saudi Arabia", "United Arab Emirates", "Malaysia",
-	                "Thailand", "Indonesia", "Brazil"):
+	                "Thailand", "Indonesia", "Brazil", "Germany"):
 		# no property: the pack's statutory default (P is an Indian hotel
 		# whose 5% room types would otherwise steer the VAT packs)
 		pack = pack_for_country(country)
@@ -7861,6 +7868,7 @@ def t316():
 		assert rate in [float(x) for x in pack.tax_rate_options(None)], (country, rate)
 	assert services_tax_rate(pack_for_country("Saudi Arabia"), None) == 15.0
 	assert services_tax_rate(pack_for_country("Malaysia"), None) == 8.0
+	assert services_tax_rate(pack_for_country("Germany"), None) == 19.0
 	from kamra import laundry
 	assert not hasattr(laundry, "LAUNDRY_GST"), "laundry still hardcodes a GST rate"
 	# activity-log money follows the property's currency, not a fixed rupee

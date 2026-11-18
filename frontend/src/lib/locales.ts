@@ -8,6 +8,7 @@ const cache: Record<string, Dict> = { en: {} }
 
 const loaders: Record<string, () => Promise<{ default: Dict }>> = {
 	ar: () => import("../i18n/locales/ar.json"),
+	de: () => import("../i18n/locales/de.json"),
 	es: () => import("../i18n/locales/es.json"),
 	pt: () => import("../i18n/locales/pt.json"),
 	id: () => import("../i18n/locales/id.json"),
