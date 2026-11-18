@@ -4707,7 +4707,8 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
             booked_via: str | None = None,
             ota_ref: str | None = None,
             ota_total: float = 0,
-            ota_commission_pct: float | None = None):
+            ota_commission_pct: float | None = None,
+            night_prices=None):
 	"""Walk-in in one step: book, register the ID, check into the chosen
 	room and take the money - the counter flow that used to be four screens.
 
@@ -4726,7 +4727,8 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 
 	An OTA guest who books and arrives the same day is a walk-in booked
 	via that site: booked_via / ota_ref / ota_total / ota_commission_pct
-	work as in create_booking (the stay's source is then OTA)."""
+	work as in create_booking (the stay's source is then OTA). night_prices
+	books nights at the desk's own prices, as in create_booking."""
 	from kamra.crs import assert_property_access
 	from kamra.localization import pack_for, payment_modes, validate_id_type
 	assert_property_access(property)
@@ -4773,7 +4775,7 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 		blacklist_override_reason=blacklist_override_reason,
 		credit_override_reason=credit_override_reason,
 		booked_via=booked_via, ota_ref=ota_ref, ota_total=ota_total,
-		ota_commission_pct=ota_commission_pct)
+		ota_commission_pct=ota_commission_pct, night_prices=night_prices)
 	reservation = booked["reservation"]
 	folio_filter = {"reservation": reservation, "folio_type": "Guest"}
 
@@ -6231,6 +6233,64 @@ def _can_set_rate() -> bool:
 	return _is_admin() or "Revenue Manager" in frappe.get_roles()
 
 
+def _check_night_prices(property: str, room_type: str, check_in_date: str,
+                        check_out_date: str, night_prices, *,
+                        voucher_code: str | None = None,
+                        rate_plan: str | None = None,
+                        company: str | None = None, ota_total: float = 0,
+                        group_booking: str | None = None) -> dict:
+	"""Gate for nights a desk priced by hand ({"YYYY-MM-DD": Decimal}, empty
+	when none were typed). Refuses - with the reason, never silently - a payload
+	that is malformed, a caller without the right to set rates, or a booking
+	whose price something else already decides: a voucher, a rate plan (its
+	own or the company's negotiated one), an OTA total or a group block rate."""
+	from kamra.pricing import (negotiated_rate_plan, normalize_night_prices,
+	                           refuse_with_night_prices)
+	typed = normalize_night_prices(night_prices, check_in_date, check_out_date)
+	if not typed:
+		return {}
+	if not _can_set_rate():
+		frappe.throw(_("Only a Revenue Manager or Hotel Admin can set nightly prices."),
+		             frappe.PermissionError)
+	if voucher_code:
+		refuse_with_night_prices(_("a voucher"))
+	if rate_plan:
+		refuse_with_night_prices(_("a rate plan"))
+	if negotiated_rate_plan(property, company):
+		refuse_with_night_prices(_("the company's negotiated rate plan"))
+	if flt(ota_total) > 0:
+		refuse_with_night_prices(_("an OTA total, which already sets the price"))
+	from kamra.group_blocks import group_rate
+	if group_rate(group_booking, room_type) > 0:
+		refuse_with_night_prices(_("the group's block rate"))
+	return typed
+
+
+def _record_night_prices(doc, typed: dict) -> None:
+	"""Leave the trail for a booking priced night by night: a comment on the
+	reservation, the action log, and the rate.overridden webhook (scope night)."""
+	from kamra.localization import money_text
+	from kamra.savings import log_action
+	from kamra.webhooks import emit_rate_overridden
+	typed_text = ", ".join(f"{d} {float(p):,.2f}" for d, p in sorted(typed.items()))
+	doc.add_comment("Comment", _("Hand-set nightly prices: {0}. The other nights are at the rate card.")
+	                .format(typed_text))
+	log_action(
+		"set_night_prices", "Reservation", doc.name, doc.property,
+		rationale=(f"Hand-set nightly prices on {doc.room_type} "
+		           f"{doc.check_in_date}→{doc.check_out_date}: "
+		           + ", ".join(f"{d} {money_text(doc.property, float(p))}"
+		                       for d, p in sorted(typed.items()))
+		           + f"; total {money_text(doc.property, doc.amount_after_tax)}"))
+	emit_rate_overridden(doc.property, {
+		"scope": "night", "reservation": doc.name, "room_type": doc.room_type,
+		"room": doc.room, "start_date": str(doc.check_in_date),
+		"end_date": str(doc.check_out_date),
+		"nights": [{"date": d, "price": float(p)} for d, p in sorted(typed.items())],
+		"amount_after_tax": round(float(doc.amount_after_tax or 0), 2),
+		"reason": None})
+
+
 def _move_price(res, new_type: str | None, rate_mode: str,
                 agreed_rate: float | None) -> dict:
 	"""Price preview for a room move. Leaves res holding the move's price
@@ -6276,7 +6336,10 @@ def _reprice_preview(res, **changes) -> dict:
 	out = {"current_amount": current, "new_amount": current,
 	       "difference": 0.0, "auto_price": bool(res.get("auto_price")),
 	       "reprices": False, "needs_confirmation": False, "nights": []}
-	if not res.get("auto_price") or not res.room_type:
+	# a stay with hand-set nights is re-priced around them (the save does it
+	# in Reservation.keep_hand_set_nights); any other manual price is kept
+	hand = any(flt(r.get("hand_price")) > 0 for r in res.get("night_rates") or [])
+	if (not res.get("auto_price") and not hand) or not res.room_type:
 		return out
 	inputs = res.quote_inputs()
 	if res.get("night_rates") and old_key == res.rate_lock_key_for(inputs):
@@ -6588,6 +6651,8 @@ def booking_options(property: str):
 		"property": _booking_property_policy(property),
 		"ota_channels": _ota_channels(property),
 		"ota_commission": channel_commission_pcts(),
+		# who may type a night's price on the booking screen (night_prices)
+		"can_set_rate": _can_set_rate(),
 	}
 
 
@@ -6654,10 +6719,17 @@ def get_quote(property: str, room_type: str, check_in_date: str,
               over_capacity_charge: float = 0, pets: int = 0,
               company: str | None = None,
               check_in_time: str | None = None,
-              check_out_time: str | None = None):
+              check_out_time: str | None = None,
+              night_prices=None):
 	"""Price a stay. With a company and no rate plan, the company's
 	negotiated plan applies - the same plan create_booking stores.
-	check_in_time / check_out_time price an hourly or block day-use plan."""
+	check_in_time / check_out_time price an hourly or block day-use plan.
+
+	night_prices ([{date, price}], a Revenue Manager / Hotel Admin only)
+	prices those nights at the typed figure - tax included when the
+	property's rates include tax - and the rest at the rate card. A voucher,
+	rate plan, long-stay discount or holiday package with typed nights is
+	refused."""
 	from kamra.booking_refs import (resolve_meal_plan, resolve_rate_plan,
 	                                resolve_room_type)
 	from kamra.pricing import quote
@@ -6667,13 +6739,17 @@ def get_quote(property: str, room_type: str, check_in_date: str,
 	room_type = resolve_room_type(property, room_type)
 	meal_plan = resolve_meal_plan(property, meal_plan)
 	rate_plan = resolve_rate_plan(property, rate_plan)
+	typed = _check_night_prices(
+		property, room_type, check_in_date, check_out_date, night_prices,
+		voucher_code=voucher_code, rate_plan=rate_plan, company=company)
 	q = quote(property, room_type, check_in_date, check_out_date,
 	          int(adults), int(children), meal_plan or None,
 	          rate_plan or None, voucher_code or None,
 	          over_capacity_charge=float(over_capacity_charge or 0),
 	          pets=int(pets or 0), company=company or None,
 	          check_in_time=check_in_time or None,
-	          check_out_time=check_out_time or None)
+	          check_out_time=check_out_time or None,
+	          night_prices=[{"date": d, "price": str(p)} for d, p in typed.items()])
 	if isinstance(q, dict):
 		q["cancellation"] = cancellation_outlook(
 			property, room_type, check_in_date, check_out_date)
@@ -7043,7 +7119,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
                    ota_total: float = 0,
                    ota_commission_pct: float | None = None,
                    marketing_consent: int = 0,
-                   market_segment: str | None = None):
+                   market_segment: str | None = None,
+                   night_prices=None):
 	"""One-call booking: attach to an existing guest profile when given,
 	else reuse a profile whose phone and full name both match (a
 	blacklisted phone always resolves to its profile) / create one.
@@ -7065,7 +7142,14 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	A stay billed to a company on credit runs the property's credit control
 	(kamra.credit) for its amount: a warning comes back as `credit_warning`;
 	a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
-	`credit_override_reason`, which is logged. Agents can't override."""
+	`credit_override_reason`, which is logged. Agents can't override.
+
+	night_prices ([{date, price}]) books those nights at the figure the desk
+	agreed (tax included when the property's rates include tax) and the rest
+	at the rate card; the booking is then priced by hand (auto_price off),
+	each typed night is locked in night_rates and logged. Only a Revenue
+	Manager or Hotel Admin may; a voucher, rate plan, company plan, OTA
+	total or group block rate with typed nights is refused."""
 	from kamra.crs import assert_property_access
 	from kamra.kamra.doctype.reservation.reservation import lock_property_for_inventory
 	from kamra.reservation_state import find_by_idempotency, lock_sius_for_booking
@@ -7083,6 +7167,11 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	room_type = resolve_room_type(property, room_type)
 	meal_plan = resolve_meal_plan(property, meal_plan)
 	rate_plan = resolve_rate_plan(property, rate_plan)
+	# refused here, before the guest or any inventory is touched
+	typed = _check_night_prices(
+		property, room_type, check_in_date, check_out_date, night_prices,
+		voucher_code=voucher_code, rate_plan=rate_plan, company=company,
+		ota_total=ota_total if booked_via else 0, group_booking=group_booking)
 
 	# "MCP" / "Chat" while an agent tool call runs; its bookings are AI Agent
 	# bookings whichever agent surface made them
@@ -7255,6 +7344,14 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	if over_capacity_charge:
 		doc.over_capacity_charge = float(over_capacity_charge)
 
+	# The desk's nightly prices: Reservation.keep_hand_set_nights prices the
+	# booking with them in this first save (typed nights at the typed price,
+	# the rest at the rate card) and locks the nights.
+	if typed:
+		doc.auto_price = 0
+		doc.set("night_rates", [{"stay_date": d, "hand_price": float(p)}
+		                        for d, p in sorted(typed.items())])
+
 	# extras chosen at booking - priced from the Experience, posted to the
 	# folio the moment it opens
 	if isinstance(addons, str):
@@ -7364,6 +7461,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			doc = frappe.get_doc(payload)
 	if via:
 		set_ota_commission(doc, ota_commission_pct)
+	if typed:
+		_record_night_prices(doc, typed)
 
 	from kamra.savings import log_action
 	log_action(
@@ -7460,7 +7559,9 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
                          master_pays: str | None = None):
 	"""Create a Group Booking plus one reservation per requested room.
 	`rooms` = [{"room_type": <name>, "count": 2, "room": <optional>,
-	"guest_name": <optional>}, ...] (JSON string ok).
+	"guest_name": <optional>, "night_prices": <optional>}, ...] (JSON string
+	ok). A row's `night_prices` ([{date, price}], as in create_booking) price
+	that row's rooms night by night; every row keeps its own.
 
 	`master_index` picks the main room (the index of the room as expanded
 	by count, default the first): its guest pays what `master_pays` covers
@@ -7498,6 +7599,23 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 			shares[i] = round(total * w / sum(weights), 2)
 		shares[-1] = round(total - sum(shares[:-1]), 2)  # rounding
 
+	# Nights a room was priced by hand are checked for every room before the
+	# group is made: a refusal must stop the booking, not show up later as a
+	# room skipped from the group.
+	for spec in lines:
+		if spec.get("night_prices"):
+			from kamra.booking_refs import resolve_room_type
+			from kamra.pricing import quote as price_quote
+			rt = resolve_room_type(property, spec["room_type"])
+			typed = _check_night_prices(
+				property, rt, check_in_date, check_out_date,
+				spec["night_prices"], rate_plan=rate_plan, company=company,
+				ota_total=total)
+			price_quote(property, rt, check_in_date, check_out_date,
+			            int(spec.get("adults", 2)), int(spec.get("children", 0)),
+			            company=company or None, night_prices=[
+			                {"date": d, "price": str(p)} for d, p in typed.items()])
+
 	group = frappe.get_doc({
 		"doctype": "Group Booking",
 		"property": property,
@@ -7532,6 +7650,7 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 				ota_ref=ota_ref,
 				ota_total=share,
 				ota_commission_pct=ota_commission_pct,
+				night_prices=spec.get("night_prices"),
 			)
 			created.append(res["reservation"])
 			if main is None and i >= int(master_index or 0):

@@ -21,6 +21,7 @@ import { Button } from "./ui/button"
 import { cur, moneyLocale, useLocale } from "../lib/money"
 import { isPhoneComplete } from "../lib/phone"
 import { nightsBetween, parseDate, shiftDate } from "../lib/stay"
+import { typedNights, type NightPrice } from "../lib/nightPrices"
 import PhoneInput from "./PhoneInput"
 import { clampGuests, sleeps } from "../lib/occupancy"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
@@ -54,6 +55,8 @@ interface ExtraRoom {
   guest_name: string
   /** rooms of this kind ("Deluxe × 5") */
   count: number
+  /** nights the desk priced by hand for this room (its own, not the main room's) */
+  night_prices?: NightPrice[]
 }
 
 const inputCls =
@@ -405,6 +408,26 @@ export function BookingDialog(props: {
       ? form.check_in_date
       : shiftDate(form.check_in_date, Math.max(1, form.nights))
 
+  // Nights the desk priced by hand (date -> price, in the basis the rates
+  // screen shows). Only a Revenue Manager / Hotel Admin may; an OTA total
+  // already sets the price, and a day-use stay is priced by its slot.
+  const [nightPrices, setNightPrices] = useState<Record<string, number>>({})
+  const canSetPrice = !!options?.can_set_rate && otaTotal <= 0 && !dayUse
+  const stayNights = badDate || dayUse
+    ? []
+    : Array.from({ length: Math.max(1, form.nights) }, (_, i) => shiftDate(form.check_in_date, i))
+  const nightPricesArg = canSetPrice ? typedNights(nightPrices, stayNights) : []
+  // a night that is no longer in the stay is dropped with the date change
+  const stayKey = stayNights.join(",")
+  useEffect(() => {
+    if (!stayKey) return // a date still being typed: keep what was entered
+    setNightPrices((p) => {
+      const keep = Object.fromEntries(Object.entries(p).filter(([d]) => stayKey.split(",").includes(d)))
+      return Object.keys(keep).length === Object.keys(p).length ? p : keep
+    })
+  }, [stayKey])
+  const nightPricesParam = nightPricesArg.length ? { night_prices: nightPricesArg } : {}
+
   useEffect(() => {
     if (!autoRoomType.current || !options?.room_types.length || badDate) return
     let live = true
@@ -473,6 +496,7 @@ export function BookingDialog(props: {
         voucher_code: form.voucher_code || undefined,
         over_capacity_charge: extraCharge || undefined,
         pets: form.pets || undefined,
+        ...nightPricesParam,
       })
         .then((q) => {
           setQuote(q)
@@ -502,6 +526,8 @@ export function BookingDialog(props: {
     form.over_capacity_guests,
     form.pets,
     checkOut,
+    // a typed price re-quotes: the totals, tax and advance follow it
+    JSON.stringify(nightPricesArg),
   ])
 
   // quotes for the additional rooms
@@ -523,13 +549,14 @@ export function BookingDialog(props: {
                 meal_plan: r.meal_plan || undefined,
                 rate_plan: form.rate_plan || undefined,
                 company: form.company || undefined,
+                ...(r.night_prices?.length && canSetPrice ? { night_prices: r.night_prices } : {}),
               }).catch(() => null)
             : Promise.resolve(null),
         ),
       ).then(setMoreQuotes)
     }, 300)
     return () => clearTimeout(t)
-  }, [moreRooms, form.check_in_date, checkOut, form.rate_plan, form.company])
+  }, [moreRooms, form.check_in_date, checkOut, form.rate_plan, form.company, canSetPrice])
 
   // walk-in: the actual rooms free tonight, clean ones first
   useEffect(() => {
@@ -610,6 +637,7 @@ export function BookingDialog(props: {
           pets: form.pets || undefined,
           company: form.company || undefined,
           waitlist: 1,
+          ...nightPricesParam,
           ...slotArgs,
           blacklist_override_reason: blacklistOverride,
         })
@@ -626,6 +654,8 @@ export function BookingDialog(props: {
             adults: form.adults,
             children: form.children,
             meal_plan: form.meal_plan || undefined,
+            // the main room's own nights; each extra room carries its own below
+            ...nightPricesParam,
           },
           ...moreRooms.map((r) => ({
             room_type: r.room_type,
@@ -634,6 +664,7 @@ export function BookingDialog(props: {
             children: r.children,
             meal_plan: r.meal_plan || undefined,
             guest_name: (r.count === 1 && r.guest_name.trim()) || undefined,
+            night_prices: (canSetPrice && r.night_prices?.length ? r.night_prices : undefined),
           })),
         ]
         const roomCount = rooms.reduce((s, r) => s + r.count, 0)
@@ -723,6 +754,7 @@ export function BookingDialog(props: {
         credit_override_reason: creditOverride,
         ...viaArgs,
         marketing_consent: offers ? 1 : undefined,
+        ...nightPricesParam,
       })
       await addOthers(res.reservation)
       setDone({ ref: res.reservation, room: res.room })
@@ -778,6 +810,7 @@ export function BookingDialog(props: {
         ...slotArgs,
         blacklist_override_reason: blacklistOverride,
         ...viaArgs,
+        ...nightPricesParam,
         // book, assign and take the money now; the guided check-in
         // (property's required steps) finishes it right after
         defer_check_in: 1,
@@ -1780,6 +1813,14 @@ export function BookingDialog(props: {
                     voucher={form.voucher_code || undefined}
                     ratePlan={form.rate_plan}
                     onPickPlan={(p) => set("rate_plan", p)}
+                    nightPrices={nightPrices}
+                    onNightPrices={setNightPrices}
+                    canSetPrice={canSetPrice}
+                    lockedNote={
+                      options?.can_set_rate && otaTotal > 0
+                        ? t("The OTA total sets the price, so nights cannot be priced one by one.")
+                        : undefined
+                    }
                   />
                 )}
 

@@ -51,6 +51,10 @@ jobs:
         run: npm run key-notice:check
         working-directory: frontend
 
+      - name: Check nightly prices typed on New booking
+        run: npm run night-prices:check
+        working-directory: frontend
+
   contract:
     # Fails a PR that breaks what connected apps rely on (MCP tools, REST
     # methods, scopes, webhooks). No bench: the contract is read from source.
