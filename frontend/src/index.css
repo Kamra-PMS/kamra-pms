@@ -13,6 +13,16 @@
   --color-brand-700: #0b5442;
   --color-brand-900: #073527;
 
+  /* CJK fallbacks. Tailwind's default sans stack stops at system-ui, which on
+     some Linux/distro images resolves to a face without Han glyphs. Naming the
+     common Simplified Chinese faces keeps 简体中文 identical across Windows,
+     macOS and the Docker image that renders print/PDF output. Latin text still
+     resolves first, so English typography is unchanged. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Noto Sans SC", "PingFang SC",
+    "Microsoft YaHei", "Hiragino Sans GB", "Source Han Sans SC",
+    "WenQuanYi Micro Hei", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+
   /* Neutrals carry a faint warm bias so the greys read as chosen, not the
      stock cool zinc. Dark mode + print remap these below. */
   --color-zinc-50: #f8f7f5;
