@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { call, getCurrentProperty } from "../lib/api"
 import { InfoTip } from "./InfoTip"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, moneyDigits, moneyLocale } from "../lib/money"
+import { isOverride, maxPriceDigits, parsePrice, splitRoomTotal } from "../lib/nightPrices"
 import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 
@@ -31,6 +32,8 @@ interface Options {
   plain: { room_total: number; amount_after_tax: number }
   plans: PlanRow[]
   voucher: { code: string; valid: boolean; discount?: number; kind?: string; value?: number; reason?: string } | null
+  /** the figures above (and a typed night price) include tax */
+  tax_inclusive?: boolean
 }
 
 /** The stay's rate, explained: each night's BAR and what moved it, the whole
@@ -46,6 +49,10 @@ export function RateOptions({
   voucher,
   ratePlan,
   onPickPlan,
+  nightPrices,
+  onNightPrices,
+  canSetPrice,
+  lockedNote,
 }: {
   roomType: string
   checkIn: string
@@ -56,10 +63,20 @@ export function RateOptions({
   voucher?: string
   ratePlan: string
   onPickPlan: (plan: string) => void
+  /** nights the desk priced by hand: date -> price, in the basis shown here */
+  nightPrices: Record<string, number>
+  onNightPrices: (prices: Record<string, number>) => void
+  /** the desk may type a night's price (right to set rates, not an OTA total) */
+  canSetPrice: boolean
+  /** why the prices cannot be typed, when it is not a missing right */
+  lockedNote?: string
 }) {
   const { t } = useT()
   const [data, setData] = useState<Options | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  // what is being typed, before it is a valid price (a night's text, or the room total)
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const inputs = useRef<Record<string, HTMLInputElement | null>>({})
 
   useEffect(() => {
     if (!roomType || !checkIn || !checkOut) return
@@ -92,6 +109,56 @@ export function RateOptions({
   if (err) return <p className="text-xs text-zinc-400">{translate(err)}</p>
   if (!data) return null
   const moved = data.nights.some((x) => x.season || x.demand)
+  const digits = maxPriceDigits(moneyDigits())
+  const plain = (n: number) => String(Number(n.toFixed(digits)))
+  const priceOf = (x: NightRate) => nightPrices[x.date] ?? x.rate
+  const hasTyped = data.nights.some((x) => isOverride(nightPrices[x.date], x.rate, digits))
+  const roomTotal = data.nights.reduce((sum, x) => sum + priceOf(x), 0)
+  const basis = data.tax_inclusive ? t("Prices include tax.") : t("Prices are before tax.")
+
+  /** Set one night; a price equal to what Kamra charges, or none, is not an override. */
+  function setNight(x: NightRate, price: number | null) {
+    const next = { ...nightPrices }
+    if (price === null || !isOverride(price, x.rate, digits)) delete next[x.date]
+    else next[x.date] = price
+    onNightPrices(next)
+  }
+  const draft = (key: string, text: string | null) =>
+    setDrafts((d) => {
+      const { [key]: _gone, ...rest } = d
+      return text === null ? rest : { ...rest, [key]: text }
+    })
+  function typeNight(x: NightRate, text: string) {
+    draft(x.date, text)
+    if (text.trim() === "") return setNight(x, null)
+    const price = parsePrice(text, digits)
+    if (price !== null) setNight(x, price)
+  }
+  function typeTotal(text: string) {
+    draft("total", text)
+    const total = parsePrice(text, digits)
+    if (total === null || !data) return
+    const parts = splitRoomTotal(total, data.nights.length, digits)
+    const next: Record<string, number> = {}
+    data.nights.forEach((x, i) => {
+      if (isOverride(parts[i], x.rate, digits)) next[x.date] = parts[i]
+    })
+    onNightPrices(next)
+  }
+  function onNightKey(e: React.KeyboardEvent<HTMLInputElement>, i: number, x: NightRate) {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      const other = data?.nights[i + (e.key === "ArrowUp" ? -1 : 1)]
+      if (other) {
+        e.preventDefault()
+        inputs.current[other.date]?.focus()
+        inputs.current[other.date]?.select()
+      }
+    } else if (e.key === "Backspace" && e.altKey) {
+      e.preventDefault()
+      draft(x.date, null)
+      setNight(x, null)
+    }
+  }
   return (
     <div className="space-y-3 rounded-xl border border-zinc-200 p-4">
       <div className="flex items-center gap-1.5">
@@ -101,33 +168,120 @@ export function RateOptions({
         </InfoTip>
       </div>
 
+      {canSetPrice && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          <label htmlFor="night-room-total" className="text-zinc-600">
+            {t("Room total")}
+          </label>
+          <span className="inline-flex items-center gap-1">
+            <span className="text-zinc-500">{cur()}</span>
+            <input
+              id="night-room-total"
+              inputMode="decimal"
+              className={cn(
+                "w-28 rounded-md border px-2 py-1 text-right tabular-nums",
+                drafts.total !== undefined && parsePrice(drafts.total, digits) === null
+                  ? "border-rose-400"
+                  : "border-zinc-300",
+              )}
+              value={drafts.total ?? plain(roomTotal)}
+              aria-invalid={drafts.total !== undefined && parsePrice(drafts.total, digits) === null}
+              onChange={(e) => typeTotal(e.target.value)}
+              onBlur={() => draft("total", null)}
+            />
+          </span>
+          <span className="text-xs text-zinc-400">{basis}</span>
+        </div>
+      )}
+      {!canSetPrice && lockedNote && <p className="text-xs text-zinc-400">{lockedNote}</p>}
+
       <ul className="divide-y divide-zinc-100 text-sm">
-        {data.nights.map((x) => (
-          <li key={x.date} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
-            <span className="w-24 text-zinc-500">{x.date.slice(5)}</span>
-            <span className="font-medium tabular-nums">
-              {cur()}
-              {n0(x.rate)}
-            </span>
-            {x.rate !== x.bar && (
-              <span className="text-xs text-zinc-400 tabular-nums">
-                {t("BAR {r}", { r: `${cur()}${n0(x.bar)}` })}
-              </span>
-            )}
-            {x.season && (
-              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
-                {x.season.label} {x.season.change}
-              </span>
-            )}
-            {x.demand && (
-              <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-800">
-                {t("Busy house {p}%", { p: Math.round(x.occupancy) })}
-                {x.demand.premium_pct ? ` +${x.demand.premium_pct}%` : ""}
-              </span>
-            )}
-          </li>
-        ))}
+        {data.nights.map((x, i) => {
+          const typed = isOverride(nightPrices[x.date], x.rate, digits)
+          const bad = drafts[x.date] !== undefined && drafts[x.date].trim() !== "" && parsePrice(drafts[x.date], digits) === null
+          return (
+            <li
+              key={x.date}
+              className={cn(
+                "flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5",
+                typed && "-mx-2 rounded-md bg-brand-50 px-2",
+              )}
+            >
+              <span className="w-24 text-zinc-500">{x.date.slice(5)}</span>
+              {canSetPrice ? (
+                <span className="inline-flex items-center gap-1">
+                  <span className="text-zinc-500">{cur()}</span>
+                  <input
+                    ref={(el) => {
+                      inputs.current[x.date] = el
+                    }}
+                    inputMode="decimal"
+                    aria-label={t("Price for {d}", { d: x.date })}
+                    aria-invalid={bad}
+                    className={cn(
+                      "w-28 rounded-md border px-2 py-1 text-right font-medium tabular-nums",
+                      bad ? "border-rose-400" : typed ? "border-brand-600" : "border-zinc-300",
+                    )}
+                    value={drafts[x.date] ?? plain(priceOf(x))}
+                    onChange={(e) => typeNight(x, e.target.value)}
+                    onKeyDown={(e) => onNightKey(e, i, x)}
+                    onBlur={() => draft(x.date, null)}
+                  />
+                </span>
+              ) : (
+                <span className="font-medium tabular-nums">
+                  {cur()}
+                  {n0(priceOf(x))}
+                </span>
+              )}
+              {typed ? (
+                <>
+                  <span className="text-xs text-zinc-400 tabular-nums line-through">
+                    {t("BAR {r}", { r: `${cur()}${n0(x.rate)}` })}
+                  </span>
+                  <button
+                    type="button"
+                    className="text-xs text-brand-700 underline"
+                    onClick={() => {
+                      draft(x.date, null)
+                      setNight(x, null)
+                    }}
+                  >
+                    {t("Back to BAR")}
+                  </button>
+                </>
+              ) : (
+                x.rate !== x.bar && (
+                  <span className="text-xs text-zinc-400 tabular-nums">
+                    {t("BAR {r}", { r: `${cur()}${n0(x.bar)}` })}
+                  </span>
+                )
+              )}
+              {x.season && (
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-800">
+                  {x.season.label} {x.season.change}
+                </span>
+              )}
+              {x.demand && !typed && (
+                <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-800">
+                  {t("Busy house {p}%", { p: Math.round(x.occupancy) })}
+                  {x.demand.premium_pct ? ` +${x.demand.premium_pct}%` : ""}
+                </span>
+              )}
+            </li>
+          )
+        })}
       </ul>
+      {canSetPrice && (
+        <p className="text-xs text-zinc-400">
+          {t("Type a price to set a night by hand. Up and down arrows move between nights; Alt+Backspace returns a night to BAR.")}
+        </p>
+      )}
+      {hasTyped && (
+        <p className="text-xs text-zinc-500">
+          {t("Prices set by hand cannot be combined with a rate plan or a voucher.")}
+        </p>
+      )}
       {!moved && (
         <p className="text-xs text-zinc-400">{t("No season or demand rule applies: every night is at BAR.")}</p>
       )}
@@ -155,8 +309,9 @@ export function RateOptions({
                 key={p.name}
                 type="button"
                 onClick={() => onPickPlan(p.name)}
+                disabled={hasTyped}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-lg border px-3 py-1.5 text-sm",
+                  "flex w-full items-center justify-between rounded-lg border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50",
                   ratePlan === p.name ? "border-brand-600 bg-brand-50" : "border-zinc-200 hover:bg-zinc-50",
                 )}
               >
