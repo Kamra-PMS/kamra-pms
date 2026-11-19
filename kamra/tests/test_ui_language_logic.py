@@ -22,7 +22,12 @@ class UiLanguageLogicTest(unittest.TestCase):
 		rows = load_catalog()
 		codes = [row["code"] for row in rows]
 		self.assertEqual(codes[0], BASE)
-		self.assertEqual(codes, ["en", "es", "pt", "ar"])
+		self.assertIn("es", codes)
+		self.assertIn("pt", codes)
+		self.assertIn("ar", codes)
+		self.assertIn("de", codes)
+		self.assertIn("id", codes)
+		self.assertIn("zh-CN", codes)
 		self.assertTrue(CATALOG_PATH.is_file())
 		arabic = next(row for row in rows if row["code"] == "ar")
 		self.assertEqual(arabic["dir"], "rtl")

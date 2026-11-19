@@ -14,7 +14,12 @@ from pathlib import Path
 
 CATALOG_PATH = Path(__file__).resolve().parents[1] / "frontend" / "src" / "i18n" / "languages.json"
 BASE = "en"
-_CODE = re.compile(r"^[a-z]{2,8}$")
+# ponytail: BCP47 primary + optional region (zh-CN); keep catalog casing
+_CODE = re.compile(r"^[a-z]{2,8}(-[a-z0-9]{2,8})?$", re.I)
+
+
+def _norm(code: str) -> str:
+	return str(code).strip().lower()
 
 
 def load_catalog(path: Path | None = None) -> list[dict]:
@@ -27,19 +32,20 @@ def load_catalog(path: Path | None = None) -> list[dict]:
 	for item in raw:
 		if not isinstance(item, dict):
 			raise ValueError("UI language catalog row must be an object")
-		code = str(item.get("code") or "").strip().lower()
+		code = str(item.get("code") or "").strip()
 		native = str(item.get("nativeLabel") or "").strip()
 		english = str(item.get("englishLabel") or "").strip()
 		direction = item.get("dir")
 		if not _CODE.match(code):
 			raise ValueError(f"UI language code {code!r} is not a short language code")
-		if code in seen:
+		key = _norm(code)
+		if key in seen:
 			raise ValueError(f"UI language code {code} is listed twice")
 		if not native or not english:
 			raise ValueError(f"UI language {code} needs a native and an English name")
 		if direction not in ("ltr", "rtl"):
 			raise ValueError(f"UI language {code} direction must be ltr or rtl")
-		seen.add(code)
+		seen.add(key)
 		rows.append({
 			"code": code,
 			"nativeLabel": native,
@@ -55,10 +61,19 @@ def catalog_codes(rows: list[dict] | None = None) -> list[str]:
 	return [row["code"] for row in (rows if rows is not None else load_catalog())]
 
 
+def _canonical(code: str, known: list[str]) -> str | None:
+	key = _norm(code)
+	for item in known:
+		if _norm(item) == key:
+			return item
+	return None
+
+
 def language_label(code: str, rows: list[dict] | None = None) -> str:
 	"""The English name staff see in an error, or the code when it is unknown."""
+	key = _norm(code)
 	for row in rows if rows is not None else load_catalog():
-		if row["code"] == code:
+		if _norm(row["code"]) == key:
 			return row["englishLabel"]
 	return code
 
@@ -76,13 +91,12 @@ def parse_stored_disabled(raw, known: list[str]) -> list[str]:
 			return []
 	if not isinstance(items, list):
 		return []
-	known_set = set(known)
 	found: set[str] = set()
 	for item in items:
-		code = str(item).strip().lower()
-		if code and code != BASE and code in known_set:
-			found.add(code)
-	return [code for code in known if code in found]
+		canon = _canonical(str(item), known)
+		if canon and _norm(canon) != BASE:
+			found.add(_norm(canon))
+	return [code for code in known if _norm(code) in found]
 
 
 class UnknownLanguage(ValueError):
@@ -110,34 +124,40 @@ def clean_requested_disabled(items, known: list[str]) -> list[str]:
 				items = [part.strip() for part in text.split(",")]
 	if not isinstance(items, (list, tuple)):
 		raise UnknownLanguage("")
-	known_set = set(known)
 	found: set[str] = set()
 	for item in items:
-		code = str(item).strip().lower()
-		if not code or code == BASE:
+		raw = str(item).strip()
+		if not raw or _norm(raw) == BASE:
 			continue
-		if code not in known_set:
-			raise UnknownLanguage(code)
-		found.add(code)
-	return [code for code in known if code in found]
+		canon = _canonical(raw, known)
+		if not canon:
+			raise UnknownLanguage(raw)
+		found.add(_norm(canon))
+	return [code for code in known if _norm(code) in found]
 
 
 def enabled_list(known: list[str], disabled: list[str]) -> list[str]:
 	"""Catalog order, English always included. Codes absent from `disabled`
 	stay on, which is how a newly registered language is on by default."""
-	off = set(disabled)
-	return [code for code in known if code == BASE or code not in off]
+	off = {_norm(code) for code in disabled}
+	return [code for code in known if _norm(code) == BASE or _norm(code) not in off]
 
 
 def resolve_language(saved: str | None, enabled: list[str] | set[str],
                      *fallbacks: str | None) -> str:
 	"""`saved` when it is still enabled, else the first enabled fallback, else English."""
-	allow = set(enabled)
+	offered = list(enabled)
+	allow = {_norm(code) for code in offered}
 	allow.add(BASE)
 	for code in (saved, *fallbacks, BASE):
 		if not code:
 			continue
-		norm = str(code).strip().lower()
-		if norm in allow:
-			return norm
+		key = _norm(code)
+		if key not in allow:
+			continue
+		for item in offered:
+			if _norm(item) == key:
+				return item
+		if key == BASE:
+			return BASE
 	return BASE

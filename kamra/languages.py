@@ -58,7 +58,8 @@ def enabled_codes() -> list[str]:
 def language_enabled(code: str | None) -> bool:
 	if not code:
 		return False
-	return str(code).strip().lower() in set(enabled_codes())
+	key = str(code).strip().lower()
+	return any(c.lower() == key for c in enabled_codes())
 
 
 def resolve_saved(saved: str | None, *fallbacks: str | None) -> str:
@@ -72,25 +73,28 @@ def public_booking_language(code: str | None) -> str | None:
 	None means the guest's browser language (the page then keeps it only
 	when that language is on).
 	"""
-	norm = (code or "").strip().lower()
-	return norm if norm and language_enabled(norm) else None
+	raw = (code or "").strip()
+	if not raw or not language_enabled(raw):
+		return None
+	return resolve_language(raw, enabled_codes())
 
 
 def assert_enabled_language(code: str) -> str:
 	"""Refuse a booking language that is unknown or switched off.
 
-	Empty is allowed (the guest's browser). Returns the normalised code.
+	Empty is allowed (the guest's browser). Returns the catalogue code.
 	"""
-	norm = (code or "").strip().lower()
-	if not norm:
+	raw = (code or "").strip()
+	if not raw:
 		return ""
 	known = known_codes()
-	if norm not in known:
-		frappe.throw(_("{0} is not a Kamra language.").format(language_label(norm, catalog())))
-	if norm not in set(enabled_list(known, disabled_codes())):
+	match = next((c for c in known if c.lower() == raw.lower()), None)
+	if not match:
+		frappe.throw(_("{0} is not a Kamra language.").format(language_label(raw, catalog())))
+	if match not in enabled_list(known, disabled_codes()):
 		frappe.throw(_("{0} is switched off. Turn it on from Languages in Settings.").format(
-			language_label(norm, catalog())))
-	return norm
+			language_label(match, catalog())))
+	return match
 
 
 def _as_requested(disabled):
