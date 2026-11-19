@@ -9,6 +9,17 @@ Install or upgrade: [Frappe Cloud Marketplace](/self-hosting/frappe-cloud)
 or [self-hosting](/self-hosting/). After upgrade, open
 **Admin → System Health** to confirm the site version.
 
+## New: Apache-2.0
+
+Announced 16 Nov 2026.
+
+Kamra PMS core is moving to the Apache License 2.0. New releases after the
+change are permissive: use, change, host and sell under Apache-2.0, including
+in proprietary products, with attribution. Published AGPL releases stay as
+they are. The free Community product and the [Open Pledge](https://kamrapms.com/open-pledge/)
+do not change. Full note: [Kamra is Apache-2.0](/apache-2.0). Contributor
+vote: [GitHub #591](https://github.com/Kamra-PMS/kamra-pms/issues/591).
+
 ## New: free video course
 
 Released 27 Oct 2026.

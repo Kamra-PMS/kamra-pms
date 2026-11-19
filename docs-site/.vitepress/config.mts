@@ -46,6 +46,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
     items: [
       [L("Introduction", "Introducción", "مقدمة"), ""],
       [L("Why Kamra", "Por qué Kamra", "لماذا Kamra"), "why-kamra"],
+      [L("Kamra is Apache-2.0", "Kamra es Apache-2.0", "Kamra برخصة Apache-2.0"), "apache-2.0"],
       [L("How Kamra works", "Cómo funciona Kamra", "كيف يعمل Kamra"), "how-it-works"],
       [L("Features at a glance", "Funciones de un vistazo", "الميزات بنظرة سريعة"), "features"],
       [L("What's new", "Novedades", "الجديد"), "releases"],
@@ -176,8 +177,8 @@ const themeWords = (lang: Exclude<Lang, "en">) => {
     langMenuLabel: es ? "Idioma" : "اللغة",
     footer: {
       message: es
-        ? `Código abierto (AGPL-3.0) · documentación de Kamra v${docCurrent} · todas las funciones incluidas, siempre.`
-        : `مفتوح المصدر (AGPL-3.0) · توثيق Kamra الإصدار ${docCurrent} · كل الميزات مشمولة دائماً.`,
+        ? `Código abierto (Apache-2.0) · documentación de Kamra v${docCurrent} · todas las funciones incluidas, siempre.`
+        : `مفتوح المصدر (Apache-2.0) · توثيق Kamra الإصدار ${docCurrent} · كل الميزات مشمولة دائماً.`,
       copyright: "Kamra PMS · hello@kamrapms.com",
     },
   }
@@ -248,7 +249,7 @@ export default defineConfig({
       { icon: "github", link: "https://github.com/Kamra-PMS/kamra-pms" },
     ],
     footer: {
-      message: `Open source (AGPL-3.0) · docs for Kamra v${docCurrent} · every feature included, always.`,
+      message: `Open source (Apache-2.0) · docs for Kamra v${docCurrent} · every feature included, always.`,
       copyright: "Kamra PMS · hello@kamrapms.com",
     },
     // consumed by the version switcher / outdated banner (custom theme fields)

@@ -39,7 +39,7 @@ features:
     details: De la recepción a los banquetes, Alimentos y bebidas, WhatsApp y paquetes fiscales por país, además de las novedades de la v2.6.20.
     link: /es/features
   - title: Instalación
-    details: Docker en un VPS, bench clásico o Frappe Cloud Marketplace. La misma aplicación AGPL completa.
+    details: Docker en un VPS, bench clásico o Frappe Cloud Marketplace. La misma aplicación Apache-2.0 completa.
     link: /self-hosting/
 ---
 

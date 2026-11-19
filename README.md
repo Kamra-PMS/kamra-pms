@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://demo.kamrapms.com"><img src="https://img.shields.io/badge/demo-live-0f766e?style=flat-square" alt="Live demo" /></a>
   <a href="https://github.com/Kamra-PMS/kamra-pms/releases/latest"><img src="https://img.shields.io/github/v/release/Kamra-PMS/kamra-pms?style=flat-square&label=release" alt="Latest release" /></a>
-  <a href="license.txt"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square" alt="AGPL-3.0" /></a>
+  <a href="license.txt"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="Apache-2.0" /></a>
   <a href="https://cloud.frappe.io/marketplace/apps/kamra"><img src="https://img.shields.io/badge/Frappe%20Cloud-Marketplace-ed8936?style=flat-square" alt="Frappe Cloud Marketplace" /></a>
   <a href="https://kamrapms.com/docs/"><img src="https://img.shields.io/badge/docs-kamrapms.com-111827?style=flat-square" alt="Documentation" /></a>
   <img src="https://img.shields.io/github/stars/Kamra-PMS/kamra-pms?style=flat-square" alt="GitHub stars" />
@@ -28,7 +28,7 @@
 
 **Why "first":** [Kamra 1.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v1.0.0) shipped on 5 July 2026 as open source, free, and MCP-driven. We know of no open-source PMS that shipped all three earlier. If Kamra is useful to you, [star the repo](https://github.com/Kamra-PMS/kamra-pms/stargazers) so other hoteliers and developers can find it.
 
-Kamra is a full property management system for hotels, resorts and short-term rentals. It runs on [Frappe](https://frappe.io) (the framework behind ERPNext), it is AGPL-3.0, and every feature is in the open-source app: no editions, no per-room fees. Current release: **v2.7.6** ([changelog](CHANGELOG.md)).
+Kamra is a full property management system for hotels, resorts and short-term rentals. It runs on [Frappe](https://frappe.io) (the framework behind ERPNext), it is Apache-2.0, and every feature is in the open-source app: no editions, no per-room fees. Current release: **v2.7.6** ([changelog](CHANGELOG.md)).
 
 On the [demo](https://demo.kamrapms.com), tap any role to sign in. The guest booking page is at [/book](https://demo.kamrapms.com/book) and the housekeeping phone app at [/kamra/hk](https://demo.kamrapms.com/kamra/hk).
 
@@ -182,7 +182,7 @@ More in [docs-dev.md](docs-dev.md).
 
 ## License and trademark
 
-The code is **AGPL-3.0**: free to use, change, host and sell. Anyone offering a modified Kamra as a hosted service must share those changes. The Kamra name and mark are covered by [TRADEMARK.md](TRADEMARK.md): run and resell Kamra freely, show your own hotel or partner logo next to ours, and give a changed fork its own name.
+The code is **Apache-2.0**: free to use, change, host and sell, including in proprietary products, with attribution and patent protections as the license requires. Releases published before this change remain AGPL-3.0. The Kamra name and mark are covered by [TRADEMARK.md](TRADEMARK.md): run and resell Kamra freely, show your own hotel or partner logo next to ours, and give a changed fork its own name.
 
 ---
 

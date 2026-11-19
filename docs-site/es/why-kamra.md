@@ -14,7 +14,7 @@ la IA. Gratis.
 Kamra 1.0, publicado el 5 de julio de 2026, fue el primer PMS en combinar
 tres cosas:
 
-- **Código abierto** con licencia AGPL-3.0.
+- **Código abierto** con licencia Apache-2.0.
 - **Gratis**, sin cuotas por habitación ni de licencia.
 - **Basado en MCP**, con cada operación como una herramienta controlada que
   los agentes de IA pueden usar con los permisos de un miembro del personal
