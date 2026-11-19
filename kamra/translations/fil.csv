@@ -1,0 +1,59 @@
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","Ang marketing consent ay binabago sa guest profile, sa booking page, o sa sagot na STOP / START."
+This guest has no phone number on file.,Walang telepono sa file ng guest na ito.
+This guest has not agreed to marketing messages.,Hindi pumayag ang guest na ito sa marketing messages.
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Makakatanggap kayo ng offers mula sa {0} sa WhatsApp. Reply STOP kahit kailan para huminto.
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,Hindi na kayo makakatanggap ng offers mula sa {0}. Tuloy ang booking at stay messages. Reply START para sumali ulit.
+AI Provider,Provider ng AI
+"Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.","Aaktong {0} ang AI provider ninyo, sa loob ng role ninyo. Ang presyo, tax, at availability ay nananatili sa Kamra. Bawat aksyon ay naitatala sa pangalan ninyo sa Activity log."
+{0} bill from {1},Bill ng {0} mula kay {1}
+{0} to {1},{0} hanggang {1}
+Billed this month,Nasingil ngayong buwan
+Bills this month,Mga bill ngayong buwan
+Brought forward,Dinalang balanse
+"Each bill above is a tax invoice of its own; this is a summary of the month, not a tax invoice. Taxable value and tax show where the whole invoice is on this account.","Bawat bill sa itaas ay sariling tax invoice; buod ito ng buwan, hindi tax invoice. Ang taxable value at tax ay lumalabas kapag ang buong invoice ay nasa account na ito."
+Monthly bill,Buwanang bill
+No such account.,Walang ganyang account.
+Paid this month,Bayad ngayong buwan
+Payments this month,Mga bayad ngayong buwan
+"Pick a month, like 2026-10.","Pumili ng buwan, halimbawa 2026-10."
+Taxable value,Taxable na halaga
+"Your bill for {0} is attached: {1} billed, {2} due.","Naka-attach ang bill ninyo para sa {0}: {1} ang nasingil, {2} ang due."
+Balance due,Balanse na due
+Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,Naubos na ang credit ng AI key ninyo. Mag-load sa provider o palitan ang key sa Settings > AI assistant.
+Sells alcohol,May binebenta na alcohol
+"Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","I-off sa property na walang alcohol: nagtatago ang bawat alcohol field, tick box, at label, sa lahat ng wika. Hindi nagbabago ang nai-post na."
+Extend unchecked-out departures one night,Pahabain ng isang night ang departure na hindi pa nache-check-out
+"On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.","Naka-on: ang guest na Checked In pa pagkalampas ng departure date ay pahahabain ng isang night pag tumakbo ang audit, at ipo-post ang night na iyon gaya ng iba. Ang stay na hindi mapapahaba (naka-book ang room) ay mananatili sa checklist."
+The guest owes {0} - nothing is due back to refund.,May utang ang guest na {0} - walang ibabalik.
+Only {0} is due back to the guest - can't refund more than that.,{0} lang ang dapat ibalik sa guest - hindi puwedeng mag-refund ng higit pa.
+Room type code {0} is already used at this property.,Ginagamit na sa property na ito ang room type code na {0}.
+There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,Wala pang room nights sa bill na ito. Ang discount ay babawas sa naka-post na nights: ibigay pagkatapos ng night audit o sa check-out.
+Enter a discount above zero.,Maglagay ng discount na higit sa zero.
+A discount can't be more than 100%.,Hindi puwedeng higit sa 100% ang discount.
+The discount is more than the room nights on the bill ({0}).,Mas malaki ang discount kaysa room nights sa bill ({0}).
+"This folio is settled - give the discount on the guest's open folio, or cancel the invoice first.","Na-settle na ang folio na ito - ibigay ang discount sa bukas na folio ng guest, o kanselahin muna ang invoice."
+"Pick a percent or an amount, per night or for the stay.","Pumili ng porsyento o halaga, bawat night o para sa buong stay."
+Promo code {0} is already on this stay.,Nasa stay na ang promo code na {0}.
+Discount {0}%,Diskwento {0}%
+Discount {0} per night,Diskwento {0} bawat night
+A discount needs a reason - it goes on the record.,Kailangan ng dahilan ang discount - mapupunta ito sa record.
+Monthly,Buwanan
+Revenue by department,Kita ayon sa departamento
+Department,Departamento
+"Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.","Rooms, bawat outlet, banquets, at bawat maliit na departamento (laundry, spa, taxi...), gaya ng nasa night audit report."
+Food and beverage on folios,Food at beverage sa mga folio
+Meal plans and minibar,Mga meal plan at minibar
+Banquets,Mga banquet
+Misc,Iba pa
+Early Check-in,Maagang check-in
+Late Checkout,Late check-out
+Early Departure,Maagang alis
+Cleaning Fee,Bayad sa paglilinis
+Extra Guests,Dagdag na guest
+Pet Charge,Bayad sa pet
+Bills paid,Mga bill na bayad na
+{0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,{0} bill ng stay na ito ang wala pa sa bill ng guest: {1}. I-post sa room o i-settle bago mag-check-out.
+Bills still open,Mga bill na bukas pa
+Use Check out to check a guest out: it makes sure every bill is cleared first.,Gamitin ang Check out para i-check-out ang guest: tinitiyak nito na clear muna ang bawat bill.
+Check out,I-check-out
+Discounts and allowances,Mga discount at allowance

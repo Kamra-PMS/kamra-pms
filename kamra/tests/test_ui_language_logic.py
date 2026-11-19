@@ -27,6 +27,7 @@ class UiLanguageLogicTest(unittest.TestCase):
 		self.assertIn("ar", codes)
 		self.assertIn("de", codes)
 		self.assertIn("id", codes)
+		self.assertIn("fil", codes)
 		self.assertIn("zh-CN", codes)
 		self.assertTrue(CATALOG_PATH.is_file())
 		arabic = next(row for row in rows if row["code"] == "ar")

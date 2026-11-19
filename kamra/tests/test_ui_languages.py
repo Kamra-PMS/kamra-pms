@@ -42,7 +42,9 @@ class UiLanguagesTest(IntegrationTestCase):
 		frappe.set_user("Guest")  # nosemgrep: frappe-setuser -- the login screen reads this as a guest
 		offered = languages.enabled_ui_languages()["enabled"]
 		self.assertEqual(offered[0], BASE)
-		self.assertEqual(offered, ["en", "es", "pt", "ar"])
+		self.assertEqual(offered, languages.known_codes())
+		for code in ("en", "es", "pt", "ar", "de", "id", "fil", "zh-CN"):
+			self.assertIn(code, offered)
 
 		frappe.set_user(self.admin)  # nosemgrep: frappe-setuser -- Hotel Admin may change the list
 		saved = languages.set_disabled_ui_languages(["en", "ar", "ar"])

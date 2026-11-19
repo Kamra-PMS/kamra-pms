@@ -75,7 +75,7 @@ On the [demo](https://demo.kamrapms.com), tap any role to sign in. The guest boo
 - Kamra Agent, the in-app assistant, with action cards to check in, collect or open a folio.
 - 170 MCP tools for Claude, ChatGPT or any MCP client. See [Run your hotel with AI](#run-your-hotel-with-ai).
 
-The staff UI is in English, Spanish, Arabic and Portuguese (Brazil). Module by module, with screenshots: [Features](https://kamrapms.com/docs/features).
+The staff UI is in English, Spanish, Arabic, Portuguese (Brazil) and Filipino. Module by module, with screenshots: [Features](https://kamrapms.com/docs/features).
 
 ---
 
@@ -112,6 +112,7 @@ The property's country picks its pack. The pack decides tax, invoice wording, ID
 | Malaysia | SST on rooms and F&amp;B, tourism tax note |
 | Thailand | VAT 7%, service charge as its own line |
 | Indonesia | Regional hotel tax (PB1 / PBJT) |
+| Philippines | VAT 12%, TIN, peso. Senior citizen and PWD discount is calculated in the pack and posted by hand |
 | Brazil | ISS, BRL, CNPJ / CPF, NFS-e reference |
 | Nicaragua | IVA 15%, NIO |
 | Anywhere else | One flat rate from property settings |

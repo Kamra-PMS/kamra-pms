@@ -588,6 +588,7 @@ propia moneda:
 | Malasia | USD, SGD, EUR, GBP, AUD, CNY, JPY, IDR |
 | Indonesia | USD, SGD, AUD, EUR, JPY, CNY, MYR, SAR |
 | Tailandia | USD, EUR, GBP, CNY, JPY, AUD, SGD, INR |
+| Filipinas | USD, EUR, JPY, KRW, CNY, AUD, SGD, HKD |
 
 Finanzas y el Administrador del hotel pueden obtener los tipos o escribirlos.
 
