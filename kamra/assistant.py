@@ -745,6 +745,8 @@ REPLY_LANGS = {
 	"hi-IN": "Hindi", "ta-IN": "Tamil", "kn-IN": "Kannada", "te-IN": "Telugu",
 	"ml-IN": "Malayalam", "ar-SA": "Arabic", "es-ES": "Spanish",
 	"pt-BR": "Brazilian Portuguese",
+	# the UI says zh-CN, Frappe's catalogue says zh: accept both from clients
+	"zh-CN": "Simplified Chinese", "zh": "Simplified Chinese",
 }
 
 

@@ -60,7 +60,11 @@ export function useOfferedLanguages(): LangDef[] {
 /** Translate month/weekday names while retaining the existing EN/AR date formats. */
 export function uiDateLocale(locales?: string | string[]) {
   const language = getLang()
-  return language === "en" || language === "ar" ? locales : language
+  if (language !== "en" && language !== "ar") return language
+  // a country pack's number locale (th-TH) would print Thai month names and
+  // the Buddhist year on an English screen
+  if (language === "en" && typeof locales === "string" && !locales.startsWith("en")) return "en-GB"
+  return locales
 }
 
 /** Subscribe to the language and return its translators. */
@@ -78,4 +82,13 @@ export function useT() {
     [t],
   )
   return { lang, t, tn: tnBound }
+}
+
+/** The language code the server knows. Frappe ships Simplified Chinese as
+ * "zh" (its translation catalogue is `kamra/translations/zh.csv`), while the
+ * UI and Intl use "zh-CN". Report, statement, WhatsApp and printed pages pass
+ * this through `_(text, lang=...)`, so send the server's code or the lookup
+ * misses and the page comes back in English. */
+export function serverLang(code: string = getLang()): string {
+  return code === "zh-CN" ? "zh" : code
 }

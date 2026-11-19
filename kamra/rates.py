@@ -146,4 +146,7 @@ def rate_options(property: str, room_type: str, check_in_date: str, check_out_da
 			           "kind": v.discount_type, "value": float(v.value or 0)}
 		except frappe.ValidationError as e:
 			voucher = {"code": code, "valid": False, "reason": str(e)}
-	return {"nights": night_rows, "plain": plain, "plans": plans, "voucher": voucher}
+	from kamra.pricing import rates_include_tax
+	return {"nights": night_rows, "plain": plain, "plans": plans, "voucher": voucher,
+	        # the basis of every nightly figure above (and of a typed night price)
+	        "tax_inclusive": bool(rates_include_tax(property))}
