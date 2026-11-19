@@ -18,6 +18,7 @@ export const LANGS: LangDef[] = [
   { code: "de", nativeLabel: "Deutsch", englishLabel: "German", dir: "ltr" },
   { code: "es", nativeLabel: "Español", englishLabel: "Spanish", dir: "ltr" },
   { code: "pt", nativeLabel: "Português", englishLabel: "Portuguese", dir: "ltr" },
+  { code: "fil", nativeLabel: "Filipino", englishLabel: "Filipino", dir: "ltr" },
   { code: "ar", nativeLabel: "العربية", englishLabel: "Arabic", dir: "rtl" },
   { code: "id", nativeLabel: "Bahasa Indonesia", englishLabel: "Indonesian", dir: "ltr" },
   { code: "zh-CN", nativeLabel: "简体中文", englishLabel: "Chinese (Simplified)", dir: "ltr" },
