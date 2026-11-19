@@ -277,6 +277,7 @@ function Message({ tone, children }: { tone: "info" | "warn" | "block" | "ok"; c
 
 /** What to do about a check: usual fixes, ask the agent, or override. */
 function FixHelp({ check, date }: { check: Check; date: string }) {
+  const property = decodeURIComponent(useParams().property ?? "")
   const { t } = useT()
   const navigate = useNavigate()
   const fix = CHECK_FIXES[check.key]
@@ -301,7 +302,7 @@ function FixHelp({ check, date }: { check: Check; date: string }) {
         <Button
           variant="outline"
           className="h-8 px-3 text-xs"
-          onClick={() => navigate("/assistant", { state: { prompt: translate(fix.ask(check.count, date)) } })}
+          onClick={() => navigate("/assistant", { state: { prompt: translate(fix.ask(check.count, date)), property } })}
         >
           <Sparkles className="me-1.5 size-3.5" aria-hidden />
           {t("Ask Kamra Agent to help")}

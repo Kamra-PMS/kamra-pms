@@ -9,6 +9,10 @@ node_modules/
 frontend/dist/
 frontend/tsconfig.tsbuildinfo
 
+# Regenerable i18n work files (kamra/translations/zh.csv is the source of truth)
+scripts/i18n/backend-strings.csv
+scripts/i18n/backend-strings-todo.csv
+
 # Frappe
 kamra/public/dist/
 kamra/public/node_modules/

@@ -9,6 +9,7 @@ no LLM ever computes money. Resolution order per night:
 from decimal import Decimal
 
 import frappe
+from frappe import _
 from frappe.utils import add_days, cint, date_diff, getdate, nowdate
 
 from kamra.localization import default_currency, pack_for
@@ -646,6 +647,71 @@ def negotiated_rate_plan(property: str, company: str | None) -> str | None:
 	return None
 
 
+# A typed nightly price is a sanity-checked figure, not a free-for-all: the
+# bound is far above any real room rate in any currency but stops a stray
+# digit string (or an overflow probe) from reaching the ledger.
+MAX_NIGHT_PRICE = Decimal("100000000")
+
+
+def refuse_with_night_prices(what: str):
+	"""Nights priced by hand and `what` both set the room price: say so."""
+	frappe.throw(
+		_("Nightly prices typed by hand cannot be combined with {0}. "
+		  "Clear the typed prices, or remove {0}.").format(what),
+		title=_("Prices typed by hand"))
+
+
+def normalize_night_prices(night_prices, check_in_date, check_out_date) -> dict:
+	"""Validate the nightly prices a desk typed: [{date, price}, ...] (a JSON
+	string works too). Returns {"YYYY-MM-DD": Decimal} - empty when none were
+	typed. Nothing is coerced or dropped: a malformed payload, a date outside
+	the stay, a repeated date, or a price that is not a finite number above
+	zero (with at most 2 decimals) is refused with the reason."""
+	if night_prices in (None, "", [], {}):
+		return {}
+	if isinstance(night_prices, str):
+		try:
+			night_prices = frappe.parse_json(night_prices)
+		except Exception:
+			frappe.throw(_("night_prices must be a list of {date, price}."))
+	if not isinstance(night_prices, (list, tuple)):
+		frappe.throw(_("night_prices must be a list of {date, price}."))
+	if date_diff(check_out_date, check_in_date) < 1:
+		frappe.throw(_("Nightly prices need an overnight stay; a day-use stay is priced by its time slot."))
+	first, last = getdate(check_in_date), getdate(check_out_date)
+	out: dict = {}
+	for row in night_prices:
+		if not isinstance(row, dict) or set(row) != {"date", "price"}:
+			frappe.throw(_("Each night price must be exactly {date, price}."))
+		try:
+			day = getdate(row["date"])
+		except Exception:
+			day = None
+		if not day or not isinstance(row["date"], str):
+			frappe.throw(_("{0} is not a valid night.").format(row["date"]))
+		if not first <= day < last:
+			frappe.throw(_("{0} is not a night of this stay ({1} to {2}).").format(
+				day, first, last))
+		if str(day) in out:
+			frappe.throw(_("The night {0} is priced twice.").format(day))
+		raw = row["price"]
+		if isinstance(raw, bool) or not isinstance(raw, (int, float, str)):
+			frappe.throw(_("The price for {0} must be a number.").format(day))
+		try:
+			price = Decimal(str(raw).strip())
+		except Exception:
+			frappe.throw(_("The price for {0} must be a number.").format(day))
+		if not price.is_finite() or price <= 0:
+			frappe.throw(_("The price for {0} must be above zero.").format(day))
+		if price > MAX_NIGHT_PRICE:
+			frappe.throw(_("The price for {0} is above the highest price Kamra accepts ({1}).").format(
+				day, f"{MAX_NIGHT_PRICE:,.0f}"))
+		if price.as_tuple().exponent < -2:
+			frappe.throw(_("The price for {0} can have at most 2 decimals.").format(day))
+		out[str(day)] = price
+	return out
+
+
 def quote(
 	property: str,
 	room_type: str,
@@ -664,11 +730,14 @@ def quote(
 	agreed_rate: float = 0,
 	check_in_time: str | None = None,
 	check_out_time: str | None = None,
+	night_prices=None,
 ) -> dict:
 	# a stay for a company is priced on the plan the company negotiated,
 	# unless the caller named a plan of its own
+	company_plan = False
 	if not rate_plan and company:
 		rate_plan = negotiated_rate_plan(property, company)
+		company_plan = bool(rate_plan)
 	nights = date_diff(check_out_date, check_in_date)
 	day_use = nights == 0
 	if nights < 0:
@@ -709,6 +778,23 @@ def quote(
 	day_use_meta = None
 
 	pkg = None if agreed_rate else active_holiday_package(property, check_in_date, check_out_date, room_type)
+
+	# Nights the desk priced by hand. Anything that would also move the room
+	# price is refused rather than quietly dropped or stacked on the typed
+	# figure: the guest was told that exact price.
+	typed = normalize_night_prices(night_prices, check_in_date, check_out_date)
+	if typed:
+		refused = (
+			(voucher_code, _("a voucher")),
+			(rate_plan and not company_plan, _("a rate plan")),
+			(company_plan, _("the company's negotiated rate plan")),
+			(agreed_rate, _("an agreed rate")),
+			(los, _("the long-stay discount")),
+			(pkg, _("a holiday package")),
+		)
+		for hit, what in refused:
+			if hit:
+				refuse_with_night_prices(what)
 	if pkg:
 		pkg_doc = frappe.get_doc("Holiday Package", pkg.name)
 		pkg_nights = int(getattr(pkg, "package_nights", None) or getattr(pkg, "minimum_nights", None) or 1)
@@ -828,6 +914,13 @@ def quote(
 			if agreed_rate:
 				# a rate the desk agreed replaces the card and the premium
 				rate, tier = _dec(agreed_rate), None
+			hand = typed.get(str(date))
+			if hand is not None:
+				# a night the desk priced: replaces the card, the season and
+				# any demand premium. In a tax-inclusive property the typed
+				# figure is gross, and the slab / back-out below read it the
+				# way they read the card.
+				rate, tier = hand, None
 			if los_pct:
 				off = rate * (Decimal(1) - los_pct / Decimal(100))
 				# never below the owner's floor or the hurdle tier's minimum for
@@ -861,7 +954,9 @@ def quote(
 			nightly.append({"date": str(date), "rate": float(rate),
 			                "gst_rate": float(gst),
 			                "demand_premium_pct": tier["premium_pct"] if tier else 0,
-			                "occupancy": occ_cache[str(date)]})
+			                "occupancy": occ_cache[str(date)],
+			                **({"hand_set": True, "typed_price": float(hand)}
+			                   if hand is not None else {})})
 			room_total += rate
 			room_tax += rate * gst / Decimal(100)
 

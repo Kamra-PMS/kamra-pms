@@ -11,7 +11,7 @@ import { fmtMoney, loadLocale, taxLabel, useLocale } from "../lib/money"
 import { useAuth } from "../lib/auth"
 import { downloadCsv } from "../lib/csv"
 import CityLedgerPayment from "./CityLedgerPayment"
-import { t as translate, useUILanguage } from "../lib/i18n"
+import { serverLang, t as translate, useUILanguage } from "../lib/i18n"
 
 // Accounts receivable: the company accounts the hotel bills on credit.
 // /receivables lists them; /receivables/:account is one account - its bills,
@@ -235,7 +235,7 @@ function AccountList() {
     try {
       const out = await call<{ queued: number; skipped: string[] }>("kamra.statements.email_statements_bulk", {
         property: getCurrentProperty(), accounts: JSON.stringify(chosen.map((r) => r.name)),
-        kind, month: kind === "monthly" ? month : undefined, lang: language,
+        kind, month: kind === "monthly" ? month : undefined, lang: serverLang(language),
       })
       setNotice(translate("Sending {what} to {n} companies. Each one is in the Activity log.", { what, n: out.queued })
         + (out.skipped.length ? " " + translate("Not sent, no billing email: {v0}", { v0: out.skipped.join(", ") }) : ""))
@@ -414,7 +414,7 @@ function AccountPage({ account }: { account: string }) {
   const emailMonthly = async (): Promise<boolean> => {
     try {
       const res = await call<{ sent_to: string[]; number: string }>("kamra.statements.email_monthly_bill", {
-        account, month, lang: language,
+        account, month, lang: serverLang(language),
       })
       setNotice(translate("{v0} sent to {v1}", { v0: res.number, v1: res.sent_to.join(", ") }))
       return true
@@ -427,7 +427,7 @@ function AccountPage({ account }: { account: string }) {
   const emailStatement = async (): Promise<boolean> => {
     try {
       const res = await call<{ sent_to: string[] }>("kamra.statements.email_company_statement", {
-        account, lang: language,
+        account, lang: serverLang(language),
       })
       setNotice(translate("Statement sent to {v0}", { v0: res.sent_to.join(", ") }))
       return true
@@ -679,7 +679,7 @@ function AccountPage({ account }: { account: string }) {
 
       {preview ? (
         <DocumentPreview
-          kind={preview} account={account} company={acc.company} lang={language}
+          kind={preview} account={account} company={acc.company} lang={serverLang(language)}
           month={month} onMonth={setMonth}
           onClose={() => setPreview(null)}
           onEmail={() => preview === "monthly" ? emailMonthly() : emailStatement()}

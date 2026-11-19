@@ -187,6 +187,11 @@ def registry(property: str):
 				        "15% IVA, Córdoba, hotel invoice wording in "
 				        "Spanish and English. INTUR levy as a folio line.",
 				        detail="Included"),
+				_module("Germany",
+				        "7% MwSt on lodging / 19% on F&B and services, "
+				        "USt-IdNr., Euro. City tax as a folio line. "
+				        "Community-requested.",
+				        detail="Included"),
 				_link("Your country",
 				      "Not listed yet? A country pack is one Python file. "
 				      "Follow the guide, or pick up an open country pack "
