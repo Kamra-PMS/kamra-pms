@@ -7863,7 +7863,8 @@ def t316():
 	# India keeps 18% GST on services; every pack's services rate is one it allows
 	assert services_tax_rate(pack_for_country("India"), P) == 18.0
 	for country in ("India", "Saudi Arabia", "United Arab Emirates", "Malaysia",
-	                "Thailand", "Indonesia", "Brazil", "Germany"):
+	                "Thailand", "Indonesia", "Brazil", "Nicaragua", "Germany",
+	                "Philippines"):
 		# no property: the pack's statutory default (P is an Indian hotel
 		# whose 5% room types would otherwise steer the VAT packs)
 		pack = pack_for_country(country)
@@ -7872,6 +7873,7 @@ def t316():
 	assert services_tax_rate(pack_for_country("Saudi Arabia"), None) == 15.0
 	assert services_tax_rate(pack_for_country("Malaysia"), None) == 8.0
 	assert services_tax_rate(pack_for_country("Germany"), None) == 19.0
+	assert services_tax_rate(pack_for_country("Philippines"), None) == 12.0
 	from kamra import laundry
 	assert not hasattr(laundry, "LAUNDRY_GST"), "laundry still hardcodes a GST rate"
 	# activity-log money follows the property's currency, not a fixed rupee
@@ -10546,6 +10548,52 @@ def t_nicaragua_pack():
 		frappe.clear_document_cache("Property", "EVAL Nicaragua Hotel")
 
 
+@check("Philippines pack: 12% VAT, TIN, peso, senior and PWD discount")
+def t_philippines_pack():
+	from decimal import Decimal
+
+	from kamra.api import _apply_country_defaults
+	from kamra.localization import pack_for, supported_countries
+	from kamra.pricing import quote
+
+	sp = "philippines_pack_state"
+	frappe.db.savepoint(sp)
+	try:
+		values = {"property_name": "EVAL Manila Hotel", "country": "Philippines",
+		          "city": "Manila", "rates_include_tax": 0, "room_levy_percent": 0}
+		_apply_country_defaults(values)
+		assert values["currency"] == "PHP", values
+		assert values["timezone"] == "Asia/Manila", values
+		assert values["gst_rate_low"] == 12, values
+		assert "room_levy_label" not in values, values
+		prop = frappe.get_doc({"doctype": "Property", **values}).insert(ignore_permissions=True)
+		rt = frappe.get_doc({
+			"doctype": "Room Type", "property": prop.name,
+			"room_type_code": "STD", "room_type_name": "Standard",
+			"base_price": 1000, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1,
+		}).insert(ignore_permissions=True)
+		pack = pack_for(prop.name)
+		assert pack.__name__ == "kamra.localization.philippines", pack.__name__
+		assert "Philippines" in {row["country"] for row in supported_countries()}
+		q = quote(prop.name, rt.name, "2031-06-01", "2031-06-02", 2, 0)
+		assert q["nightly"][0]["gst_rate"] == 12, q
+		assert round(q["tax_amount"], 2) == 120, q
+		assert round(q["amount_after_tax"], 2) == 1120, q
+		assert q["room_levy"] == 0, q
+		assert pack.fnb_tax_rate(prop.name) == 12.0
+		loc = pack.locale(prop)
+		assert (loc["currency"], loc["currency_symbol"], loc["locale"]) == ("PHP", "₱", "en-PH"), loc
+		ctx = pack.invoice_context(prop)
+		assert (ctx["tax_label"], ctx["tax_id_label"]) == ("VAT", "TIN"), ctx
+		sale = pack.senior_pwd_amounts(q["amount_after_tax"])
+		assert (sale["vat_exclusive"], sale["discount"], sale["amount_due"], sale["tax_rate"]) == (
+			Decimal("1000.00"), Decimal("200.00"), Decimal("800.00"), Decimal("0")), sale
+	finally:
+		frappe.db.rollback(save_point=sp)
+		frappe.clear_document_cache("Property", "EVAL Manila Hotel")
+
+
 @check("concurrency: a second booking, villa, OTA delivery, voucher, credit, till and stock count see what the first one wrote")
 def t_concurrency_guards():
 	from frappe.utils import add_days, nowdate
@@ -11475,6 +11523,7 @@ def execute():
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
+		           t_philippines_pack,
 		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
 		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
 		           t_ar_balance_from_entries,

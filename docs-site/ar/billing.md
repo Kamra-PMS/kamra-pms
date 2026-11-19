@@ -526,6 +526,7 @@ Adjustment** (تعديل السعر) بتاريخ اليوم، والليلة م
 | ماليزيا | USD, SGD, EUR, GBP, AUD, CNY, JPY, IDR |
 | إندونيسيا | USD, SGD, AUD, EUR, JPY, CNY, MYR, SAR |
 | تايلاند | USD, EUR, GBP, CNY, JPY, AUD, SGD, INR |
+| الفلبين | USD, EUR, JPY, KRW, CNY, AUD, SGD, HKD |
 
 تستطيع المالية ومدير الفندق جلب الأسعار أو كتابتها.
 
