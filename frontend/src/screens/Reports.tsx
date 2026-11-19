@@ -5,7 +5,7 @@ import { call, getCurrentProperty } from "../lib/api"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur, moneyLocale } from "../lib/money"
-import { useT, t as translate } from "../lib/i18n"
+import { useT, serverLang, t as translate } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
 
 const VOID_REPORT_ROLES = ["Finance", "Hotel Admin", "System Manager", "Administrator"]
@@ -315,7 +315,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
           filters: JSON.stringify(drill ? [...active, { ...drill, op: "=" }] : active),
           group_by: JSON.stringify(groupBy && !drill ? [groupBy] : []),
           format,
-          lang: language,
+          lang: serverLang(language),
         },
       )
       if (title.trim()) res.title = title.trim()
@@ -349,7 +349,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     try {
       const res = await call<{ content: string }>(
         name ? "kamra.custom_reports.run_custom_report" : "kamra.custom_reports.run_report_pack",
-        { property, pack, name, from_date: fromDate, to_date: toDate, format: "html", lang: language },
+        { property, pack, name, from_date: fromDate, to_date: toDate, format: "html", lang: serverLang(language) },
       )
       const w = window.open("", "_blank")
       if (w) {
@@ -371,7 +371,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
     try {
       await call("kamra.custom_reports.email_custom_report", {
         property, recipients: to, dataset: pack.id,
-        from_date: fromDate, to_date: toDate, lang: language,
+        from_date: fromDate, to_date: toDate, lang: serverLang(language),
       })
       window.alert(t("Report emailed."))
     } catch (e) {
@@ -391,7 +391,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         property, title: translate(pack.label), dataset: pack.id, is_shared: 1,
         schedule_frequency: "Weekly", schedule_weekday: "Mon", schedule_time: "07:00",
         recipients: to,
-        lang: language,
+        lang: serverLang(language),
       })
       await reload()
       setTab("saved")
@@ -420,7 +420,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
         schedule_time: scheduleTime,
         schedule_weekday: scheduleWeekday,
         recipients,
-        lang: language,
+        lang: serverLang(language),
       })
       setEditName(savedDef.name)
       await reload()
@@ -463,7 +463,7 @@ export default function Reports({ initialTab = "saved" }: { initialTab?: Tab }) 
           ? undefined
           : JSON.stringify(filters.filter((f) => f.field && f.value !== "")),
         group_by: name || editName ? undefined : JSON.stringify(groupBy ? [groupBy] : []),
-        lang: language,
+        lang: serverLang(language),
         attach_format: "csv",
       })
       await reload()

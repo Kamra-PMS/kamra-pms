@@ -10,7 +10,8 @@
   "rate",
   "gst_rate",
   "meal_amount",
-  "demand_premium_pct"
+  "demand_premium_pct",
+  "hand_price"
  ],
  "fields": [
   {
@@ -48,13 +49,20 @@
    "fieldtype": "Percent",
    "label": "Demand Premium %",
    "read_only": 1
+  },
+  {
+   "description": "The price the desk typed for this night, as the booking screen showed it (tax included when the property's rates include tax). Zero for a night Kamra priced.",
+   "fieldname": "hand_price",
+   "fieldtype": "Currency",
+   "label": "Typed Price",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-15 10:00:00.000000",
+ "modified": "2026-11-18 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Reservation Night Rate",

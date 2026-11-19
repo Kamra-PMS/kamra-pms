@@ -99,7 +99,7 @@ its own property.
 | `folio.charge_voided` | A charge line is voided off an open folio. Carries the line as it was and the reason. |
 | `folio.discount_applied` | A discount, promo code or allowance posts to a folio. One event per line (a discount over several tax rates posts several lines). An allowance waiting for approval sends `approval.requested` first and this one once it is approved. |
 | `folio.refunded` | Money is refunded on a folio: an over-payment, an advance or a security deposit. |
-| `rate.overridden` | A rate is typed in by hand: a stay's nightly rate on a room move (`scope: "stay"`), or a room type's rate for dates set by a Revenue Manager (`scope: "room_type"`). |
+| `rate.overridden` | A rate is typed in by hand: a stay's nightly rate on a room move (`scope: "stay"`), or a room type's rate for dates set by a Revenue Manager (`scope: "room_type"`), or the nights a Revenue Manager priced one by one on a new booking (`scope: "night"`). |
 | `approval.requested` | An allowance or discount above the approval line waits for a manager. |
 | `approval.decided` | A manager approves or rejects it. `status` is `Approved` or `Rejected`. |
 | `deposit.received` | An advance or a security deposit is taken. |
@@ -180,6 +180,13 @@ For `deposit.received`, `payment.kind` is `Advance` or `Security Deposit`.
  "room": "Kamra Demo Palace-301", "rate": 7500.0, "start_date": "2026-10-19",
  "end_date": "2026-10-21", "previous_amount": 11800.0, "amount_after_tax": 16800.0,
  "reason": "Upgrade agreed with the guest", "currency": "INR"}
+```
+
+```json
+{"scope": "night", "reservation": "RES-2026-00043", "room_type": "Kamra Demo Palace-DLX",
+ "room": "Kamra Demo Palace-204", "start_date": "2026-12-01", "end_date": "2026-12-03",
+ "nights": [{"date": "2026-12-01", "price": 120.0}], "amount_after_tax": 230.0,
+ "reason": null, "currency": "INR"}
 ```
 
 ```json
