@@ -8842,7 +8842,10 @@ def t343():
 	res, folio = _settle_stay("E343", "+91 70000 03430")
 	# nothing posted yet, so the empty bill is settled and closes
 	assert abs(float(frappe.db.get_value("Folio", folio, "balance") or 0)) < 0.01
-	api.close_folio(folio)
+	# the desk can no longer close an in-house guest's bill; a bill closed
+	# before that guard (or by a migration) still reaches checkout like this
+	from kamra.folio import close_folio as _close
+	_close(folio)
 	s = api.checkout_context(res.name)
 	codes = [b["code"] for b in s["blockers"]]
 	assert "nights_not_posted" in codes and not s["actions"]["can_checkout"], s["blockers"]
@@ -11482,6 +11485,29 @@ def t_night_prices_refused():
 		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
+@check("folio: the desk cannot invoice an in-house guest's own bill; Settle & continue keeps the stay billable")
+def t_folio_no_close_in_house():
+	from kamra import api
+	from kamra.folio import part_settle, post_room_night
+	res, folio = _in_house("Eval In House Close", "+91 70000 06401", "2036-09-01",
+	                       "2036-09-03", _ledger_room("L6401"))
+	try:
+		api.close_folio(folio)
+		raise AssertionError("closed an in-house guest's bill")
+	except frappe.ValidationError as e:
+		assert "Settle & continue" in str(e), e
+	assert frappe.db.get_value("Folio", folio, "status") == "Open"
+	assert post_room_night(res, "2036-09-01")
+	api.add_folio_payment(folio, "UPI", float(frappe.db.get_value("Folio", folio, "balance")))
+	out = part_settle(folio)
+	# the next night lands on the fresh bill, so the audit keeps posting
+	assert post_room_night(res, "2036-09-02")
+	assert frappe.db.get_value("Folio", out["new_folio"], "status") == "Open"
+	assert frappe.db.get_value("Folio Charge", {
+		"charge_type": "Room", "posting_date": "2036-09-02",
+		"reservation": res.name, "parenttype": "Folio"}, "parent") == out["new_folio"]
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11531,7 +11557,7 @@ def execute():
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
-		           t_night_prices_refused):
+		           t_night_prices_refused, t_folio_no_close_in_house):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

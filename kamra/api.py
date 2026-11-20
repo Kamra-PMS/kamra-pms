@@ -2832,7 +2832,17 @@ def settle_group_bill(group_booking: str, mode: str | None = None,
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def close_folio(folio: str, pin: str | None = None):
 	_pin_guard(folio, pin)
-	prop = frappe.db.get_value("Folio", folio, "property")
+	row = frappe.db.get_value(
+		"Folio", folio, ["property", "folio_type", "reservation", "status"], as_dict=True)
+	prop = row.property if row else None
+	# closing an in-house guest's own bill leaves nothing open for tonight's
+	# charges, and the night audit then fails on the frozen bill
+	if row and row.status != "Closed" and (row.folio_type or "Guest") == "Guest" \
+			and row.reservation and frappe.db.get_value(
+				"Reservation", row.reservation, "status") == "Checked In":
+		frappe.throw(_("The guest is still in house, so their bill stays open for "
+		               "tonight's charges. To invoice what is paid so far, use "
+		               "Settle & continue stay."))
 	try:
 		from kamra.cashier import require_open_session
 		require_open_session(prop)
