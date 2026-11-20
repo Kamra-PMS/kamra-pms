@@ -11482,6 +11482,67 @@ def t_night_prices_refused():
 		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
+@check("channel manager: an OTA phone or email the Guest would refuse never costs the booking; a JSON webhook reads ?connection=")
+def t_ota_contact_never_drops_booking():
+	from frappe.app import make_form_dict
+	from werkzeug.test import EnvironBuilder
+
+	from kamra import channel_manager as cm
+	from kamra.authz import act_as
+	CP = "EVAL OTA Contact"
+	bed, _v, _rooms = _inv_property(CP, "OCT", rooms=2, with_villa=False)
+	conn = frappe.get_doc({"doctype": "Channel Manager Connection", "property": CP,
+	                       "provider": "Channex", "active": 1,
+	                       "external_property_id": "eval-oct",
+	                       "webhook_secret": "eval-oct-hook"}).insert(ignore_permissions=True)
+	frappe.get_doc({"doctype": "Channel Room Mapping", "connection": conn.name,
+	                "room_type": bed, "external_room_id": "oct-bed"}).insert(ignore_permissions=True)
+	ci, co = add_days(nowdate(), 75), add_days(nowdate(), 76)
+	e = {"event": "book", "ota_ref": "EVAL-OCT-1", "channel": "Booking.com",
+	     "room_type_external_id": "oct-bed", "check_in": ci, "check_out": co,
+	     "adults": 2, "children": 0, "guest_name": "Eval Contact",
+	     "phone": "abc-123", "email": "not-an-email", "total": 0, "nightly": [],
+	     "currency": "", "notes": "Late arrival"}
+	# Frappe validates Data/Phone and Data/Email on the Guest insert: before
+	# this the booking was lost with an InvalidPhoneNumberError
+	out = cm._apply_event(conn, e)
+	assert out["result"] == "booked", out
+	res = frappe.get_doc("Reservation", out["reservation"])
+	g = frappe.db.get_value("Guest", res.guest, ["phone", "email"], as_dict=True)
+	assert not g.phone and not g.email, g
+	notes = res.special_requests or ""
+	assert "abc-123" in notes and "not-an-email" in notes, notes
+	assert notes.index("Late arrival") < notes.index("abc-123"), notes
+	# a modify without a contact keeps the line the booking already had
+	cm._apply_event(conn, dict(e, event="modify", phone="", email="", notes="Baby cot"))
+	notes = frappe.db.get_value("Reservation", res.name, "special_requests") or ""
+	assert "Baby cot" in notes and "abc-123" in notes, notes
+	assert notes.count("could not be saved on the guest profile") == 1, notes
+	# Channex POSTs JSON to the URL Kamra hands out (?connection=...): Frappe
+	# builds the arguments from the body alone, and the call used to 500
+	payload = {"status": "new", "ota_reservation_code": "EVAL-OCT-WH",
+	           "ota_name": "Booking.com", "arrival_date": str(ci),
+	           "departure_date": str(co),
+	           "customer": {"name": "Eval", "surname": "Webhook", "phone": "abc-123",
+	                        "mail": "eval-oct-wh@example.com"},
+	           "rooms": [{"room_type_id": "oct-bed", "occupancy": {"adults": 2}}]}
+	request = EnvironBuilder(method="POST", path="/api/method/kamra.channel_manager.webhook",
+	                         query_string={"connection": conn.name},
+	                         json={"event": "booking", "payload": payload},
+	                         headers={"X-Webhook-Secret": "eval-oct-hook"}).get_request()
+	before = getattr(frappe.local, "request", None), frappe.local.form_dict
+	frappe.local.request = request
+	try:
+		make_form_dict(request)
+		with act_as("Guest"):
+			# what Frappe's handler does: the whitelisted call with form_dict
+			out = cm.webhook(**frappe.form_dict)
+	finally:
+		frappe.local.request, frappe.local.form_dict = before
+	assert out["results"][0]["result"] == "booked", out
+	assert frappe.db.exists("Reservation", {"property": CP, "ota_ref": "EVAL-OCT-WH"})
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11531,7 +11592,7 @@ def execute():
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
-		           t_night_prices_refused):
+		           t_night_prices_refused, t_ota_contact_never_drops_booking):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
