@@ -9,7 +9,7 @@ import math
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, cint, flt, get_datetime, getdate, now_datetime, nowdate
+from frappe.utils import add_days, cint, flt, formatdate, get_datetime, getdate, now_datetime, nowdate
 
 from kamra.authz import act_as, assert_property_access, require_it_admin, require_roles
 from kamra.install import AGENT_EMAIL
@@ -4650,7 +4650,8 @@ def checkin_context(reservation: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Night Auditor", "Kamra Agent")
-def check_in(reservation: str, room: str | None = None):
+def check_in(reservation: str, room: str | None = None,
+             early_arrival: int = 0, confirm_price: int = 0):
 	"""Check the guest in: the last step of the guided check-in.
 
 	Hard gate: a room must be assigned (or passed here). Soft-required
@@ -4658,10 +4659,35 @@ def check_in(reservation: str, room: str | None = None):
 	is warned and finishes them later. kamra.checkin.check_in_readiness
 	lists hard blockers and pending backfill. Records who checked the guest
 	in and when; a connected door-lock system then makes the keys recorded
-	in the Keys step."""
+	in the Keys step.
+
+	A stay booked to arrive after today is refused (EarlyArrival) unless
+	early_arrival=1: the arrival then moves to today, the nights it was
+	booked for keep their booked rate and the extra nights take today's
+	price. A stay with a voucher, an Amount or Absolute rate plan, or a
+	holiday package is re-quoted for all nights. Call amend_stay_preview
+	with early_arrival=1 first and pass confirm_price=1 when the total
+	changes. A fixed price stay (an OTA total, a hand-set amount) or a
+	day-use stay cannot arrive early here."""
 	doc = frappe.get_doc("Reservation", reservation)
-	from kamra.checkin import after_check_in, assert_ready, evaluate, soft_pending
+	from kamra.checkin import after_check_in, assert_ready, early_arrival_to, evaluate, soft_pending
+	moved_from = None
 	if doc.status == "Confirmed":
+		target = early_arrival_to(doc)
+		if target:
+			if not cint(early_arrival):
+				frappe.throw(_("{0} is booked to arrive on {1}. Checking in now moves the "
+				               "arrival to {2} and bills the extra night(s).").format(
+				             doc.guest_name, formatdate(doc.check_in_date), formatdate(target)),
+				             exc=EarlyArrival, title=_("Early arrival"))
+			moved_from = str(doc.check_in_date)
+			# moves check_in_date on the doc and re-quotes; the save below writes it
+			preview = _early_arrival_preview(doc)
+			if not preview["reprices"]:
+				frappe.throw(_("This booking has a fixed price, so the extra night(s) "
+				               "can't be priced here. Book them as a separate stay, or "
+				               "have the price changed first."))
+			_require_price_confirmation(preview, confirm_price)
 		assert_ready(doc, room=room)
 	if room:
 		doc.room = room
@@ -4674,6 +4700,9 @@ def check_in(reservation: str, room: str | None = None):
 		where = "the whole villa"
 	log_action("check_in", "Reservation", doc.name, doc.property,
 	           rationale=f"{doc.guest_name} into {where}")
+	if moved_from:
+		log_action("early_arrival", "Reservation", doc.name, doc.property,
+		           rationale=f"arrival {moved_from} -> {doc.check_in_date}")
 	out = {"ok": True, "reservation": doc.name, "room": doc.room,
 	       "checked_in_by": frappe.session.user}
 	steps, _ctx = evaluate(doc)
@@ -6321,6 +6350,11 @@ class PriceConfirmationRequired(frappe.ValidationError):
 	the new price (the *_preview endpoint) and pass confirm_price=1."""
 
 
+class EarlyArrival(frappe.ValidationError):
+	"""check_in on a stay booked to arrive after today; the caller passes
+	early_arrival=1 to move the arrival to today and bill the extra nights."""
+
+
 def _reprice_preview(res, **changes) -> dict:
 	"""What saving these changes would do to the bill - priced by the same
 	code the save runs (Reservation.requote), the booking itself left out of
@@ -6360,6 +6394,27 @@ def _reprice_preview(res, **changes) -> dict:
 	if hold["nights"]:
 		out["charged_nights"] = _charged_nights_summary(hold)
 	return out
+
+
+def _early_arrival_preview(doc) -> dict:
+	"""Move an early arrival to today on the doc and price it: nights it was
+	booked for keep their booked rate and the added nights take today's
+	quote. A voucher, an Amount or Absolute rate plan, or a holiday package
+	is priced on the whole stay, so those stays re-quote every night."""
+	from kamra.checkin import early_arrival_to
+	target = early_arrival_to(doc)
+	if not target:
+		frappe.throw(_("This booking is not arriving early."))
+	if str(doc.check_out_date) == str(doc.check_in_date):
+		frappe.throw(_("A day-use booking can't arrive early; change its date first."))
+	from kamra.pricing import active_holiday_package
+	plan = doc.rate_plan and frappe.db.get_value("Rate Plan", doc.rate_plan, "modifier_type")
+	package = not flt(doc.get("agreed_rate")) and any(
+		active_holiday_package(doc.property, ci, doc.check_out_date, doc.room_type)
+		for ci in (doc.check_in_date, target))
+	if not doc.voucher and plan in (None, "", "Percent") and not package:
+		doc.flags.keep_booked_nights = True
+	return _reprice_preview(doc, check_in_date=target)
 
 
 def _charged_nights_summary(hold: dict) -> dict:
@@ -6467,18 +6522,24 @@ def movable_rooms(reservation: str, check_in_date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
-def amend_stay_preview(reservation: str, check_in_date: str, check_out_date: str):
+@require_roles("Front Desk", "Night Auditor", "Kamra Agent")
+def amend_stay_preview(reservation: str, check_in_date: str, check_out_date: str,
+                       early_arrival: int = 0):
 	"""What new dates would do to the bill, before anything changes: the
 	current and new totals and the new nightly rates, priced by the engine
 	from today's rules. amend_stay needs confirm_price=1 when the total
 	changes. For a stay in house, `charged_nights` says what the property's
 	rate-change policy does to nights already on the folio: kept at their
 	charged rate (kept_difference is what the desk may give back as an
-	allowance) or credited (credit_total, posted by Kamra)."""
+	allowance) or credited (credit_total, posted by Kamra).
+
+	early_arrival=1 previews check_in(early_arrival=1) instead: the arrival
+	moves to today and the passed dates are not used."""
 	doc = frappe.get_doc("Reservation", reservation)
 	from kamra.crs import assert_property_access
 	assert_property_access(doc.property)
+	if cint(early_arrival):
+		return _early_arrival_preview(doc)
 	return _reprice_preview(doc, check_in_date=check_in_date,
 	                        check_out_date=check_out_date)
 

@@ -11482,6 +11482,66 @@ def t_night_prices_refused():
 		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
+@check("check-in before the arrival date moves the arrival to today and bills it")
+def t_early_arrival_check_in():
+	from kamra import api
+	from kamra.business_date import get_business_date
+	day = max(str(get_business_date(P)), nowdate())
+	with _steps_enforced():
+		g = _guest("Eval Early Arrival", "+91 70000 06402")
+		res = _res(g, add_days(day, 2), add_days(day, 4), _ledger_room("L6402"))
+		before = float(res.amount_after_tax or 0)
+		_refused(api.check_in, res.name, exc=api.EarlyArrival, contains="booked to arrive")
+		day_use = _res(g, add_days(day, 3), add_days(day, 3), day_use=1)
+		_refused(api.check_in, day_use.name, early_arrival=1, contains="day-use")
+		ota = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early OTA",
+		                         phone="+91 70000 06403", booked_via="Booking.com",
+		                         ota_ref="EVAL-EA-6403", ota_total=9000)["reservation"]
+		_refused(api.check_in, ota, early_arrival=1, confirm_price=1, contains="fixed price")
+		# a voucher's discount is on the whole stay, so its nights are all re-quoted
+		vou = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early Voucher",
+		                         phone="+91 70000 06404", voucher_code="EVAL10")["reservation"]
+		# an Absolute plan sets the stay's room total, so its nights are all re-quoted too
+		frappe.db.delete("Rate Plan", {"property": P, "code": "EVEAABS"})
+		abs_plan = frappe.get_doc({
+			"doctype": "Rate Plan", "property": P, "rate_plan_name": "Eval Early Absolute",
+			"code": "EVEAABS", "modifier_type": "Absolute", "modifier_value": 5000,
+		}).insert(ignore_permissions=True).name
+		fixed = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early Plan",
+		                           phone="+91 70000 06405", rate_plan=abs_plan)["reservation"]
+		co = str(res.check_out_date)
+		booked = {str(r.stay_date): (float(r.rate), float(r.gst_rate)) for r in res.night_rates}
+		# today's price moves after booking: the booked nights must not follow it
+		old = frappe.db.get_value("Room Type", RT, "base_price")
+		frappe.db.set_value("Room Type", RT, "base_price", float(old) + 100)
+		try:
+			held = api.amend_stay_preview(res.name, day, co, early_arrival=1)
+			plain = api.amend_stay_preview(res.name, day, co)
+			v_held = api.amend_stay_preview(vou, day, co, early_arrival=1)
+			v_plain = api.amend_stay_preview(vou, day, co)
+			p_held = api.amend_stay_preview(fixed, day, co, early_arrival=1)
+			p_plain = api.amend_stay_preview(fixed, day, co)
+			api.check_in(res.name, early_arrival=1, confirm_price=1)
+		finally:
+			frappe.db.set_value("Room Type", RT, "base_price", old)
+	assert plain["new_amount"] > held["new_amount"], (plain, held)
+	assert v_held["new_amount"] == v_plain["new_amount"], (v_held, v_plain)
+	assert p_held["new_amount"] == p_plain["new_amount"], (p_held, p_plain)
+	res.reload()
+	assert str(res.check_in_date) == day and res.status == "Checked In", res.check_in_date
+	assert res.nights == 4, res.nights
+	# the early nights are on the bill, not spread over the booked price
+	assert float(res.amount_after_tax or 0) > before, (before, res.amount_after_tax)
+	quoted = {n["date"]: float(n["rate"]) for n in plain["nights"]}
+	for r in res.night_rates:
+		night = str(r.stay_date)
+		if night in booked:
+			assert (float(r.rate), float(r.gst_rate)) == booked[night], (night, r.rate, booked)
+		else:  # an added night takes today's quote
+			assert float(r.rate) == quoted[night], (night, r.rate, quoted)
+	assert abs(held["new_amount"] - float(res.amount_after_tax)) < 0.01, (held, res.amount_after_tax)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11531,7 +11591,7 @@ def execute():
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
-		           t_night_prices_refused):
+		           t_night_prices_refused, t_early_arrival_check_in):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

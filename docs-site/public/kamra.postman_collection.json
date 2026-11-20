@@ -3639,10 +3639,10 @@
         "kamra.api.check_in"
        ]
       },
-      "description": "Check the guest in: the last step of the guided check-in.\n\nHard gate: a room must be assigned (or passed here). Soft-required\nsteps (ID, deposit, registration card, \u2026) may still be open \u2014 the desk\nis warned and finishes them later. kamra.checkin.check_in_readiness\nlists hard blockers and pending backfill. Records who checked the guest\nin and when; a connected door-lock system then makes the keys recorded\nin the Keys step.",
+      "description": "Check the guest in: the last step of the guided check-in.\n\nHard gate: a room must be assigned (or passed here). Soft-required\nsteps (ID, deposit, registration card, \u2026) may still be open \u2014 the desk\nis warned and finishes them later. kamra.checkin.check_in_readiness\nlists hard blockers and pending backfill. Records who checked the guest\nin and when; a connected door-lock system then makes the keys recorded\nin the Keys step.\n\nA stay booked to arrive after today is refused (EarlyArrival) unless\nearly_arrival=1: the arrival then moves to today, the nights it was\nbooked for keep their booked rate and the extra nights take today's\nprice. A stay with a voucher, an Amount or Absolute rate plan, or a\nholiday package is re-quoted for all nights. Call amend_stay_preview\nwith early_arrival=1 first and pass confirm_price=1 when the total\nchanges. A fixed price stay (an OTA total, a hand-set amount) or a\nday-use stay cannot arrive early here.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\"\n}",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"room\": \"Your Property-101\",\n  \"early_arrival\": 0,\n  \"confirm_price\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -4675,10 +4675,10 @@
         "kamra.api.amend_stay_preview"
        ]
       },
-      "description": "What new dates would do to the bill, before anything changes: the\ncurrent and new totals and the new nightly rates, priced by the engine\nfrom today's rules. amend_stay needs confirm_price=1 when the total\nchanges. For a stay in house, `charged_nights` says what the property's\nrate-change policy does to nights already on the folio: kept at their\ncharged rate (kept_difference is what the desk may give back as an\nallowance) or credited (credit_total, posted by Kamra).",
+      "description": "What new dates would do to the bill, before anything changes: the\ncurrent and new totals and the new nightly rates, priced by the engine\nfrom today's rules. amend_stay needs confirm_price=1 when the total\nchanges. For a stay in house, `charged_nights` says what the property's\nrate-change policy does to nights already on the folio: kept at their\ncharged rate (kept_difference is what the desk may give back as an\nallowance) or credited (credit_total, posted by Kamra).\n\nearly_arrival=1 previews check_in(early_arrival=1) instead: the arrival\nmoves to today and the passed dates are not used.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\"\n}",
+       "raw": "{\n  \"reservation\": \"RES-2026-00001\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"early_arrival\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

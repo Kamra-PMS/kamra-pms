@@ -826,7 +826,14 @@ class Reservation(Document):
 			return out
 		from kamra.folio import charged_nights
 		charged = charged_nights(self.name)
-		if not charged:
+		# an early arrival (api.check_in) keeps the nights the stay was booked
+		# for at their booked rate; only the added nights take the new quote
+		booked = {}
+		if self.flags.get("keep_booked_nights"):
+			for r in self.get("night_rates") or []:  # still the booked rows here
+				if str(r.stay_date) not in charged:
+					booked[str(r.stay_date)] = r
+		if not charged and not booked:
 			return out
 		from kamra.settings import get_setting
 		policy = get_setting(self.property, "charged_night_rate_change")
@@ -836,15 +843,24 @@ class Reservation(Document):
 		levy_taxed = cint(prop.get("room_levy_taxable")
 		                  if prop.get("room_levy_taxable") is not None else 1)
 		for row in rows:
-			c = charged.get(str(row["stay_date"]))
+			night = str(row["stay_date"])
+			c = charged.get(night)
+			b = booked.get(night)
+			if b:
+				# a booked night is held like a kept charged night, with no folio
+				bb, bg = flt(b.rate), flt(b.gst_rate)
+				c = {"base": bb, "gst_rate": bg, "levy_base": bb * levy_pct,
+				     "levy_tax": bb * levy_pct * bg / 100 if levy_taxed else 0}
+				row["demand_premium_pct"] = flt(b.demand_premium_pct)
 			if not c:
 				continue
-			night = str(row["stay_date"])
 			new, new_gst = flt(row["rate"]), flt(row["gst_rate"])
 			base, gst = c["base"], c["gst_rate"]
 			changed = abs(new - base) >= 0.01 or (correct and abs(new_gst - gst) >= 0.01)
 			action = "kept" if changed else "same"
-			if changed and correct:
+			if b:
+				pass  # never corrected or credited: nothing of it is on a folio
+			elif changed and correct:
 				out["lines"] += [
 					{"night": night, "folio": c["folio"], "amount": -base,
 					 "gst_rate": gst,
@@ -868,7 +884,7 @@ class Reservation(Document):
 			out["base"] += (base - new) + (c["levy_base"] - levy_new)
 			out["tax"] += (base * gst - new * new_gst) / 100 + c["levy_tax"] - (
 				levy_new * new_gst / 100 if levy_taxed else 0)
-			if action != "same":
+			if action != "same" and not b:  # the summary is of nights on the folio
 				out["nights"].append({"date": night, "charged": c["base"],
 				                      "new": round(new, 2), "action": action})
 			row["rate"], row["gst_rate"] = round(base, 2), gst
