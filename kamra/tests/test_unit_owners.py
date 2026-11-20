@@ -119,3 +119,50 @@ class UnitOwnerTest(AuditTestCase):
 				owners.my_portal(PROP_A, TODAY, TODAY)
 		finally:
 			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+
+	def test_manage_can_hold_only_its_own_unit(self):
+		frappe.set_user(self.owner_a)  # nosemgrep: frappe-setuser -- test fixture
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				owners.block_unit(PROP_A, self.room_a, d(3), d(5))
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		frappe.set_user(self.owner_b)  # nosemgrep: frappe-setuser -- test fixture
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				owners.block_unit(PROP_A, self.room_a, d(3), d(5))
+			with self.assertRaisesRegex(frappe.ValidationError, "already booked") as caught:
+				owners.block_unit(PROP_A, self.room_b, TODAY, d(2))
+			self.assertNotIn("Omar", str(caught.exception))
+			held = owners.block_unit(PROP_A, self.room_b, d(3), d(5))
+			owners.release_block(held["name"])
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		self.assertEqual(
+			frappe.db.get_value("Room Block", held["name"], "block_status"), "Released")
+
+	def test_statement_is_revenue_minus_commission_and_names_nobody(self):
+		self.doc_a.commission_percent = 10
+		self.doc_a.save(ignore_permissions=True)
+		frappe.set_user(self.owner_a)  # nosemgrep: frappe-setuser -- test fixture
+		try:
+			sheet = owners.my_statement(PROP_A, "2031-03")
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		self.assertGreater(sheet["revenue"], 0)
+		self.assertEqual(sheet["commission"], round(sheet["revenue"] * 0.1, 2))
+		self.assertEqual(sheet["payout"], round(sheet["revenue"] - sheet["commission"], 2))
+		self.assertEqual(sheet["costs"], 0)
+		blob = json.dumps(sheet)
+		self.assertNotIn("Lina", blob)
+		self.assertNotIn("Omar", blob)
+
+	def test_a_new_email_becomes_an_owner_login(self):
+		owners.save_owner(
+			PROP_A, "East wing", [self.room_a], ["ut.owner.new@example.com"])
+		self.assertEqual(
+			frappe.db.get_value("User", "ut.owner.new@example.com", "user_type"),
+			"System User")
+		self.assertIn(
+			"Owner",
+			[r.role for r in frappe.get_doc("User", "ut.owner.new@example.com").roles])

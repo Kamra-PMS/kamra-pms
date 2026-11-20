@@ -6452,5 +6452,14 @@
   "Add facility": "إضافة مرفق",
   "Plan name": "اسم الخطة",
   "Plan price": "سعر الخطة",
-  "Add plan": "إضافة خطة"
+  "Add plan": "إضافة خطة",
+  "A new email is created as a login. Set the password in Staff & Access. Manage can hold their own units. Read only cannot.": "البريد الجديد يُنشأ كتسجيل دخول. عيّن كلمة المرور من الموظفون والصلاحيات. الإدارة توقف وحداتها عن البيع. القراءة فقط لا تستطيع.",
+  "Hold a unit": "إيقاف وحدة عن البيع",
+  "This takes one of your units off sale. It does not create a guest booking or change a price.": "هذا يسحب إحدى وحداتك من البيع. لا ينشئ حجز نزيل ولا يغيّر سعراً.",
+  "Hold these dates": "احجز هذه التواريخ",
+  "Room revenue minus commission. Costs are not itemised yet, and guest names are not on this file.": "إيراد الغرف بعد خصم العمولة. التكاليف غير مفصّلة بعد، وأسماء النزلاء ليست في هذا الملف.",
+  "Show statement": "عرض الكشف",
+  "Costs": "التكاليف",
+  "Payout": "الصافي",
+  "Download statement": "تنزيل الكشف"
 }

@@ -348,5 +348,19 @@
   "Night of {date}: {from} to {to}": "Nacht vom {date}: {from} auf {to}",
   "Click a room to change its status or open it": "Klicke auf eine Einheit, um den Status zu ändern oder sie zu öffnen",
   "Housekeeping: {status} · click to change": "Housekeeping: {status} · zum Ändern klicken",
-  "Tap again to confirm": "Zum Bestätigen erneut tippen"
+  "Tap again to confirm": "Zum Bestätigen erneut tippen",
+  "Manage": "Verwalten",
+  "Commission %": "Provision %",
+  "A new email is created as a login. Set the password in Staff & Access. Manage can hold their own units. Read only cannot.": "Eine neue E-Mail wird als Login angelegt. Das Passwort setzt du unter Personal & Zugang. Verwalten kann eigene Einheiten sperren. Nur lesen kann das nicht.",
+  "Hold a unit": "Einheit sperren",
+  "This takes one of your units off sale. It does not create a guest booking or change a price.": "Das nimmt eine deiner Einheiten aus dem Verkauf. Es legt keine Gästebuchung an und ändert keinen Preis.",
+  "Hold these dates": "Diesen Zeitraum sperren",
+  "Release": "Freigeben",
+  "Statement": "Abrechnung",
+  "Room revenue minus commission. Costs are not itemised yet, and guest names are not on this file.": "Zimmerumsatz abzüglich Provision. Kosten sind noch nicht einzeln aufgeführt, und Gästenamen stehen nicht in dieser Datei.",
+  "Show statement": "Abrechnung zeigen",
+  "Commission": "Provision",
+  "Costs": "Kosten",
+  "Payout": "Auszahlung",
+  "Download statement": "Abrechnung herunterladen"
 }

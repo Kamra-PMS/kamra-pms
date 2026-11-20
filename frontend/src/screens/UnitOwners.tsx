@@ -1,7 +1,8 @@
 /** Unit owners (#639). Hotel Admin links an owner to units and logins.
- *  The owner signs in and sees only those units: occupancy, bookings and
- *  room revenue. Guest name and phone stay hidden unless the admin turns
- *  Show guest contact on. */
+ *  The owner signs in and sees only those units: a calendar, occupancy,
+ *  bookings, room revenue and a monthly statement. Manage can hold one
+ *  of their own units. Guest name and phone stay hidden unless the admin
+ *  turns Show guest contact on. */
 
 import { useCallback, useEffect, useState } from "react"
 import { call, getCurrentProperty, serverError } from "../lib/api"
@@ -15,6 +16,7 @@ interface OwnerRow {
   owner_name: string
   access: string
   show_guest_contact: number
+  commission_percent: number
   units: string[]
   users: string[]
 }
@@ -32,6 +34,15 @@ interface Booking {
   guest: string
   phone: string | null
 }
+interface Hold {
+  name: string
+  room: string
+  room_number: string
+  from_date: string
+  to_date: string
+  reason: string
+  mine: boolean
+}
 interface Portal {
   owner_name: string
   access: string
@@ -41,6 +52,16 @@ interface Portal {
   revenue: number
   units: { room: string; room_number: string; occupancy_status: string }[]
   bookings: Booking[]
+  blocks: Hold[]
+}
+interface Statement {
+  from_date: string
+  to_date: string
+  room_nights: number
+  revenue: number
+  commission: number
+  costs: number
+  payout: number
 }
 
 const inputCls =
@@ -96,6 +117,7 @@ function DeskPanel() {
   const [ownerName, setOwnerName] = useState("")
   const [access, setAccess] = useState("Read only")
   const [show, setShow] = useState(false)
+  const [commission, setCommission] = useState("0")
   const [rooms, setRooms] = useState<string[]>([])
   const [users, setUsers] = useState("")
 
@@ -111,6 +133,7 @@ function DeskPanel() {
     setOwnerName(row.owner_name)
     setAccess(row.access)
     setShow(!!row.show_guest_contact)
+    setCommission(String(row.commission_percent ?? 0))
     setRooms(row.units)
     setUsers(row.users.join("\n"))
   }
@@ -125,6 +148,7 @@ function DeskPanel() {
         owner_name: ownerName,
         access,
         show_guest_contact: show ? 1 : 0,
+        commission_percent: Number(commission) || 0,
         rooms,
         users: users.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean),
       })
@@ -133,6 +157,7 @@ function DeskPanel() {
       setUsers("")
       setRooms([])
       setShow(false)
+      setCommission("0")
       load()
     } catch (e) {
       setError(serverError(e))
@@ -158,6 +183,11 @@ function DeskPanel() {
           <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} />
           {t("Show guest name and phone")}
         </label>
+        <input className={inputCls} inputMode="decimal" placeholder={t("Commission %")}
+          value={commission} onChange={(e) => setCommission(e.target.value)} />
+        <p className="text-xs text-zinc-500">
+          {t("A new email is created as a login. Set the password in Staff & Access. Manage can hold their own units. Read only cannot.")}
+        </p>
         <div className="flex flex-wrap gap-2">
           {(desk?.rooms ?? []).map((r) => (
             <label key={r.name} className="flex items-center gap-1 rounded-full border border-zinc-200 px-2 py-1 text-sm">
@@ -183,7 +213,7 @@ function DeskPanel() {
             <div>
               <div className="font-medium">{row.owner_name}</div>
               <div className="text-zinc-500">
-                {row.access} · {row.units.length} {t("units")} · {row.users.join(", ")}
+                {t(row.access)} · {row.commission_percent}% · {row.units.length} {t("units")} · {row.users.join(", ")}
                 {row.show_guest_contact ? ` · ${t("guest contact on")}` : ""}
               </div>
             </div>
@@ -197,6 +227,24 @@ function DeskPanel() {
   )
 }
 
+function daysBetween(from: string, to: string): string[] {
+  const startText = from <= to ? from : to
+  const endText = from <= to ? to : from
+  const out: string[] = []
+  const cursor = new Date(`${startText}T12:00:00`)
+  const end = new Date(`${endText}T12:00:00`)
+  while (cursor <= end && out.length < 42) {
+    const z = new Date(cursor.getTime() - cursor.getTimezoneOffset() * 60000)
+    out.push(z.toISOString().slice(0, 10))
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return out
+}
+
+function covers(day: string, start: string, end: string) {
+  return start <= day && day < end
+}
+
 function PortalPanel() {
   const { t } = useT()
   const property = getCurrentProperty()
@@ -204,13 +252,57 @@ function PortalPanel() {
   const [to, setTo] = useState(iso(30))
   const [data, setData] = useState<Portal | null>(null)
   const [error, setError] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [holdRoom, setHoldRoom] = useState("")
+  const [holdFrom, setHoldFrom] = useState(iso(1))
+  const [holdTo, setHoldTo] = useState(iso(3))
+  const [month, setMonth] = useState(iso(0).slice(0, 7))
+  const [statement, setStatement] = useState<Statement | null>(null)
 
   const load = useCallback(() => {
     call<Portal>("kamra.owners.my_portal", { property, from_date: from, to_date: to })
-      .then(setData)
+      .then((portal) => {
+        setData(portal)
+        setHoldRoom((cur) => cur || portal.units[0]?.room || "")
+      })
       .catch((e) => setError(serverError(e)))
   }, [property, from, to])
   useEffect(() => { load() }, [load])
+
+  async function act(run: () => Promise<unknown>) {
+    setBusy(true)
+    setError("")
+    try {
+      await run()
+      load()
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const days = daysBetween(from, to)
+  const blocks = data?.blocks ?? []
+  const manage = data?.access === "Manage"
+
+  function download(row: Statement) {
+    const lines = [
+      ["from", row.from_date],
+      ["to", row.to_date],
+      ["room_nights", String(row.room_nights)],
+      ["revenue", String(row.revenue)],
+      ["commission", String(row.commission)],
+      ["costs", String(row.costs)],
+      ["payout", String(row.payout)],
+    ]
+    const blob = new Blob([lines.map((line) => line.join(",")).join("\n")], { type: "text/csv" })
+    const link = document.createElement("a")
+    link.href = URL.createObjectURL(blob)
+    link.download = `owner-statement-${row.from_date}.csv`
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
 
   return (
     <div className="space-y-4">
@@ -222,7 +314,7 @@ function PortalPanel() {
       {data && (
         <>
           <p className="text-sm text-zinc-500">
-            {data.owner_name} · {data.access}
+            {data.owner_name} · {t(data.access)}
             {data.show_guest_contact ? "" : ` · ${t("Guest names are hidden")}`}
           </p>
           <div className="grid grid-cols-3 gap-2">
@@ -230,14 +322,27 @@ function PortalPanel() {
             <Stat label={t("Room nights")} value={String(data.room_nights)} />
             <Stat label={t("Room revenue")} value={String(data.revenue)} />
           </div>
-          <ul className="space-y-2">
-            {data.units.map((u) => (
-              <li key={u.room} className="rounded-2xl border border-zinc-200 bg-white p-3 text-sm">
-                <span className="font-medium">{u.room_number}</span>
-                <span className="ms-2 text-zinc-500">{u.occupancy_status}</span>
-              </li>
-            ))}
-          </ul>
+          {data.units.map((unit) => (
+            <section key={unit.room} className="rounded-2xl border border-zinc-200 bg-white p-3">
+              <div className="mb-2 text-sm font-medium">
+                {unit.room_number}
+                <span className="ms-2 font-normal text-zinc-500">{unit.occupancy_status}</span>
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {days.map((day) => {
+                  const stay = data.bookings.some((b) => b.room_number === unit.room_number && covers(day, b.check_in, b.check_out))
+                  const held = blocks.some((b) => b.room === unit.room && covers(day, b.from_date, b.to_date))
+                  return (
+                    <div key={day} title={day}
+                      className={"rounded px-1 py-1 text-center text-[10px] " +
+                        (stay ? "bg-zinc-900 text-white" : held ? "bg-amber-100 text-amber-900" : "bg-zinc-100 text-zinc-500")}>
+                      {day.slice(8)}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
           <ul className="space-y-2">
             {data.bookings.map((b) => (
               <li key={b.reservation} className="rounded-2xl border border-zinc-200 bg-white p-3 text-sm">
@@ -249,6 +354,69 @@ function PortalPanel() {
               </li>
             ))}
           </ul>
+          {manage && (
+            <div className="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
+              <h2 className="text-sm font-semibold">{t("Hold a unit")}</h2>
+              <p className="text-xs text-zinc-500">
+                {t("This takes one of your units off sale. It does not create a guest booking or change a price.")}
+              </p>
+              <select className={inputCls} value={holdRoom} onChange={(e) => setHoldRoom(e.target.value)}>
+                {data.units.map((unit) => (
+                  <option key={unit.room} value={unit.room}>{unit.room_number}</option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <input type="date" className={inputCls} value={holdFrom} onChange={(e) => setHoldFrom(e.target.value)} />
+                <input type="date" className={inputCls} value={holdTo} onChange={(e) => setHoldTo(e.target.value)} />
+              </div>
+              <button type="button" disabled={busy || !holdRoom}
+                className="rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+                onClick={() => act(() => call("kamra.owners.block_unit", {
+                  property, room: holdRoom, from_date: holdFrom, to_date: holdTo,
+                }))}>
+                {t("Hold these dates")}
+              </button>
+              <ul className="space-y-1">
+                {blocks.filter((b) => b.mine).map((b) => (
+                  <li key={b.name} className="flex items-center justify-between text-sm">
+                    <span>{b.room_number} · {b.from_date} – {b.to_date}</span>
+                    <button type="button" className="underline" disabled={busy}
+                      onClick={() => act(() => call("kamra.owners.release_block", { name: b.name }))}>
+                      {t("Release")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
+            <h2 className="text-sm font-semibold">{t("Statement")}</h2>
+            <p className="text-xs text-zinc-500">
+              {t("Room revenue minus commission. Costs are not itemised yet, and guest names are not on this file.")}
+            </p>
+            <input type="month" className={inputCls} value={month} onChange={(e) => setMonth(e.target.value)} />
+            <button type="button" disabled={busy || !month}
+              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+              onClick={() => act(async () => {
+                setStatement(await call<Statement>("kamra.owners.my_statement", { property, month }))
+              })}>
+              {t("Show statement")}
+            </button>
+            {statement && (
+              <div className="space-y-2 text-sm">
+                <div>{statement.from_date} – {statement.to_date}</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Stat label={t("Room revenue")} value={String(statement.revenue)} />
+                  <Stat label={t("Commission")} value={String(statement.commission)} />
+                  <Stat label={t("Costs")} value={String(statement.costs)} />
+                  <Stat label={t("Payout")} value={String(statement.payout)} />
+                </div>
+                <button type="button" className="underline" onClick={() => download(statement)}>
+                  {t("Download statement")}
+                </button>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

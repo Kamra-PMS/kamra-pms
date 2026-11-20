@@ -9,6 +9,7 @@
   "property",
   "access",
   "show_guest_contact",
+  "commission_percent",
   "units",
   "users"
  ],
@@ -36,7 +37,7 @@
    "label": "Access",
    "options": "Read only\nManage",
    "reqd": 1,
-   "description": "Read only is occupancy, bookings and revenue. Manage is the same, still without guest identity documents. Guest name and phone stay off unless Show guest contact is ticked."
+   "description": "Read only is the calendar, occupancy, bookings and the statement. Manage can also hold their own units out of sale. Neither creates a guest booking or edits a price. Guest name and phone stay off unless Show guest contact is ticked."
   },
   {
    "default": "0",
@@ -44,6 +45,13 @@
    "fieldtype": "Check",
    "label": "Show guest contact",
    "description": "Off by default. When on, this owner's logins see the guest's name and phone for their own units. Identity documents are never included."
+  },
+  {
+   "default": "0",
+   "fieldname": "commission_percent",
+   "fieldtype": "Percent",
+   "label": "Commission %",
+   "description": "Taken off room revenue on the owner's monthly statement. The payout is room revenue minus this commission. Itemised costs are not on the statement yet."
   },
   {
    "fieldname": "units",
@@ -58,7 +66,7 @@
    "label": "Logins",
    "options": "Unit Owner User",
    "reqd": 1,
-   "description": "Each login is a user who already exists. They receive the Owner role and may see only these units."
+   "description": "Each address is a login for these units. A new address is created as a user with no welcome mail; set the password in Staff & Access."
   }
  ],
  "links": [],
