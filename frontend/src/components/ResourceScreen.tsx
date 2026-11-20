@@ -105,6 +105,7 @@ export interface FieldSpec {
     | "date"
     | "link"
     | "readonly"
+    | "password"
     | "image"
     | "tags"
   options?: string[] // for select / tags (static fallback)
@@ -378,6 +379,17 @@ function FieldInput(props: {
       return (
         <input className={inputCls} disabled value={String(value ?? "")} />
       )
+    case "password":
+      // a stored secret is never shown nor sent back: always empty on open
+      return (
+        <input
+          type="password"
+          autoComplete="new-password"
+          className={inputCls}
+          value={String(value ?? "")}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )
     case "image":
       return (
         <ImageField
@@ -638,11 +650,17 @@ export function ResourceScreen({
     }
     // List rows only carry column fields - fetch the full document so
     // form extras (location, slugs, etc.) aren't blank and can't wipe DB values.
-    setDraft({ ...row })
+    const secrets = config.form.filter((f) => f.type === "password").map((f) => f.field)
+    const withoutSecrets = (doc: Row) => {
+      const copy: Record<string, unknown> = { ...doc }
+      for (const field of secrets) delete copy[field]
+      return copy
+    }
+    setDraft(withoutSecrets(row))
     frappeFetch<{ data: Row }>(
       `/api/resource/${encodeURIComponent(config.doctype)}/${encodeURIComponent(row.name)}`,
     )
-      .then((r) => setDraft(r.data))
+      .then((r) => setDraft(withoutSecrets(r.data)))
       .catch((e) => setError(serverError(e)))
   }
 
@@ -653,6 +671,8 @@ export function ResourceScreen({
       const payload: Record<string, unknown> = {}
       for (const f of config.form) {
         if (f.type === "readonly") continue
+        // an empty secret keeps the stored one
+        if (f.type === "password" && !draft[f.field]) continue
         if (f.field in draft) payload[f.field] = draft[f.field]
       }
       if (config.propertyScoped) payload.property = getCurrentProperty()

@@ -6576,5 +6576,22 @@
   "Fix Night Audit blockers": "Corrigir bloqueios do Fechamento de Dia",
   "Showing the latest {n}. Pick From and To dates to see others.": "Mostrando as {n} mais recentes. Escolha as datas De e Até para ver outras.",
   "Showing the {n} biggest balances. The ledger total above includes every folio.": "Mostrando os {n} maiores saldos. O total do livro acima inclui todos os fólios.",
-  "Not sent. The reason is on the page behind this one.": "Não enviado. O motivo aparece na página por trás desta."
+  "Not sent. The reason is on the page behind this one.": "Não enviado. O motivo aparece na página por trás desta.",
+  "{created} to create, {updated} to update, {unmatched} unmatched.": "{created} a criar, {updated} a atualizar, {unmatched} sem mapeamento.",
+  "{date} at {time}": "{date} às {time}",
+  "{kind} paused by the channel manager for {seconds} s.": "{kind} em pausa pelo gerenciador de canais por {seconds} s.",
+  "Availability and rates sync": "Sincronização de disponibilidade e tarifas",
+  "Base price": "Preço base",
+  "Changes waiting": "Mudanças na fila",
+  "Failed changes": "Mudanças com falha",
+  "Full sync": "Sincronização completa",
+  "Full sync queued. It goes out within a minute.": "Sincronização completa na fila. Sai em menos de um minuto.",
+  "Import mapping": "Importar mapeamentos",
+  "Last full sync": "Última sincronização completa",
+  "Mapping imported: {created} created, {updated} updated.": "Mapeamentos importados: {created} criados, {updated} atualizados.",
+  "Mapping preview": "Prévia dos mapeamentos",
+  "Never": "Nunca",
+  "Rates and restrictions": "Tarifas e restrições",
+  "Send it": "Enviar",
+  "The last full sync went out on {date} at {time}. The channel manager admits one a day: send another anyway?": "A última sincronização completa saiu no dia {date} às {time}. O gerenciador de canais aceita uma por dia: enviar outra mesmo assim?"
 }

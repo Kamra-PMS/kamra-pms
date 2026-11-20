@@ -272,3 +272,15 @@ Check out,Check-out
 Discounts and allowances,Descuentos y bonificaciones
 "{0} is not a Kamra language.","{0} no es un idioma de Kamra."
 "{0} is switched off. Turn it on from Languages in Settings.","{0} está desactivado. Actívelo en Idiomas, dentro de Configuración."
+No room mappings yet - map your room types to the provider's room and rate ids first.,Todavía no hay asociaciones de habitaciones: primero asocie sus tipos de habitación a los ids de habitación y de tarifa del proveedor.
+No room type matches it.,No coincide con ningún tipo de habitación.
+Provider rate plan {0} is already mapped on this connection.,El plan de tarifa {0} del proveedor ya está asociado en esta conexión.
+"Rate plan {0} adds a fixed amount: on the channels it applies every night, on direct bookings once per stay.","El plan de tarifa {0} suma un importe fijo: en las plataformas se aplica cada noche, en la venta directa una vez por estancia."
+"Rate plan {0} belongs to {1}, not to this connection's property {2}.","El plan de tarifa {0} pertenece a {1}, no a la propiedad {2} de esta conexión."
+Rate plan {0} is priced per person; Kamra sends one price per room.,El plan de tarifa {0} tiene precio por persona; Kamra envía un precio por habitación.
+"Room type {0} belongs to {1}, not to this connection's property {2}.","El tipo de habitación {0} pertenece a {1}, no a la propiedad {2} de esta conexión."
+Several rate plans of this room match no Kamra rate plan: map them by hand.,Varios planes de tarifa de esta habitación no coinciden con ningún plan de Kamra: asócielos a mano.
+The channel manager has {0} rooms of {1}; Kamra has {2}.,El gestor de canales tiene {0} habitaciones de {1}; Kamra tiene {2}.
+The channel manager sells in {0}; this property is in {1}.,El gestor de canales vende en {0}; esta propiedad está en {1}.
+The channel manager's property time zone is {0}; this property's is {1}.,La zona horaria de la propiedad en el gestor de canales es {0}; la de esta propiedad es {1}.
+{0} does not take ARI changes.,{0} no admite el envío de disponibilidad y tarifas por cambios.
