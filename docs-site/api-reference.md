@@ -1410,10 +1410,19 @@ lists hard blockers and pending backfill. Records who checked the guest
 in and when; a connected door-lock system then makes the keys recorded
 in the Keys step.
 
+A stay booked to arrive after today is refused (EarlyArrival) unless
+early_arrival=1: the arrival then moves to today and the stay is
+re-priced for the extra nights, so call amend_stay_preview for the new
+dates first and pass confirm_price=1 when the total changes. A fixed
+price stay (an OTA total, a hand-set amount) or a day-use stay cannot
+arrive early here.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `room` | no | `None` |
+| `early_arrival` | no | `0` |
+| `confirm_price` | no | `0` |
 
 ### `kamra.api.walk_in`
 
@@ -1870,7 +1879,7 @@ booking's current type is listed first.
 
 ### `kamra.api.amend_stay_preview`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
 
 What new dates would do to the bill, before anything changes: the
 current and new totals and the new nightly rates, priced by the engine

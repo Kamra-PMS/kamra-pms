@@ -25,7 +25,7 @@ from contextlib import nullcontext
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, now_datetime
+from frappe.utils import cint, flt, now_datetime, nowdate
 
 from kamra.authz import require_roles
 from kamra.guest_documents import id_status, used_stays_count
@@ -399,6 +399,18 @@ def assert_ready(res, room: str | None = None) -> None:
 			exc=CheckInStepsMissing, title=_("Check-in not finished"))
 
 
+def early_arrival_to(res) -> str | None:
+	"""The date a Confirmed stay booked to arrive after today moves to when
+	it checks in now: today, the later of the hotel's business date and
+	the calendar date. None when it is not early, or under the server-only
+	steps-off flag (evals that check in stays dated years ahead)."""
+	if res.status != "Confirmed" or frappe.flags.kamra_checkin_steps_off:
+		return None
+	from kamra.business_date import get_business_date
+	today = max(get_business_date(res.property), nowdate())
+	return today if str(res.check_in_date) > today else None
+
+
 def after_check_in(res) -> dict | None:
 	"""Called by check_in once the guest is in: a connected lock system
 	makes the keys the desk recorded in the Keys step. The manual adapter
@@ -524,6 +536,8 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 			{"step": s["step_key"], "title": s["title"], "tip": s.get("tip") or ""}
 			for s in soft_pending(steps)],
 		"rooms": _free_rooms(res) if not res.room else [],
+		# booked to arrive after today: check_in moves the arrival here
+		"early_arrival_to": early_arrival_to(res),
 		"request_presets": [{"key": k, "label": v[0], "priced": bool(v[3])}
 		                    for k, v in REQUEST_PRESETS.items()],
 		# the deposit step takes money: is the operator's till open, or can

@@ -11482,6 +11482,30 @@ def t_night_prices_refused():
 		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
+@check("check-in before the arrival date moves the arrival to today and bills it")
+def t_early_arrival_check_in():
+	from kamra import api
+	from kamra.business_date import get_business_date
+	day = max(str(get_business_date(P)), nowdate())
+	with _steps_enforced():
+		g = _guest("Eval Early Arrival", "+91 70000 06402")
+		res = _res(g, add_days(day, 2), add_days(day, 4), _ledger_room("L6402"))
+		before = float(res.amount_after_tax or 0)
+		_refused(api.check_in, res.name, exc=api.EarlyArrival, contains="booked to arrive")
+		day_use = _res(g, add_days(day, 3), add_days(day, 3), day_use=1)
+		_refused(api.check_in, day_use.name, early_arrival=1, contains="day-use")
+		ota = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early OTA",
+		                         phone="+91 70000 06403", booked_via="Booking.com",
+		                         ota_ref="EVAL-EA-6403", ota_total=9000)["reservation"]
+		_refused(api.check_in, ota, early_arrival=1, confirm_price=1, contains="fixed price")
+		api.check_in(res.name, early_arrival=1, confirm_price=1)
+	res.reload()
+	assert str(res.check_in_date) == day and res.status == "Checked In", res.check_in_date
+	assert res.nights == 4, res.nights
+	# the early nights are on the bill, not spread over the booked price
+	assert float(res.amount_after_tax or 0) > before, (before, res.amount_after_tax)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11531,7 +11555,7 @@ def execute():
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
-		           t_night_prices_refused):
+		           t_night_prices_refused, t_early_arrival_check_in):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
