@@ -1411,11 +1411,13 @@ in and when; a connected door-lock system then makes the keys recorded
 in the Keys step.
 
 A stay booked to arrive after today is refused (EarlyArrival) unless
-early_arrival=1: the arrival then moves to today and the stay is
-re-priced for the extra nights, so call amend_stay_preview for the new
-dates first and pass confirm_price=1 when the total changes. A fixed
-price stay (an OTA total, a hand-set amount) or a day-use stay cannot
-arrive early here.
+early_arrival=1: the arrival then moves to today, the nights it was
+booked for keep their booked rate and the extra nights take today's
+price. A stay with a voucher, an Amount or Absolute rate plan, or a
+holiday package is re-quoted for all nights. Call amend_stay_preview
+with early_arrival=1 first and pass confirm_price=1 when the total
+changes. A fixed price stay (an OTA total, a hand-set amount) or a
+day-use stay cannot arrive early here.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1889,11 +1891,15 @@ rate-change policy does to nights already on the folio: kept at their
 charged rate (kept_difference is what the desk may give back as an
 allowance) or credited (credit_total, posted by Kamra).
 
+early_arrival=1 previews check_in(early_arrival=1) instead: the arrival
+moves to today and the passed dates are not used.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `reservation` | yes |  |
 | `check_in_date` | yes |  |
 | `check_out_date` | yes |  |
+| `early_arrival` | no | `0` |
 
 ### `kamra.api.amend_stay`
 

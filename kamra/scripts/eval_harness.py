@@ -11498,12 +11498,48 @@ def t_early_arrival_check_in():
 		                         phone="+91 70000 06403", booked_via="Booking.com",
 		                         ota_ref="EVAL-EA-6403", ota_total=9000)["reservation"]
 		_refused(api.check_in, ota, early_arrival=1, confirm_price=1, contains="fixed price")
-		api.check_in(res.name, early_arrival=1, confirm_price=1)
+		# a voucher's discount is on the whole stay, so its nights are all re-quoted
+		vou = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early Voucher",
+		                         phone="+91 70000 06404", voucher_code="EVAL10")["reservation"]
+		# an Absolute plan sets the stay's room total, so its nights are all re-quoted too
+		frappe.db.delete("Rate Plan", {"property": P, "code": "EVEAABS"})
+		abs_plan = frappe.get_doc({
+			"doctype": "Rate Plan", "property": P, "rate_plan_name": "Eval Early Absolute",
+			"code": "EVEAABS", "modifier_type": "Absolute", "modifier_value": 5000,
+		}).insert(ignore_permissions=True).name
+		fixed = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early Plan",
+		                           phone="+91 70000 06405", rate_plan=abs_plan)["reservation"]
+		co = str(res.check_out_date)
+		booked = {str(r.stay_date): (float(r.rate), float(r.gst_rate)) for r in res.night_rates}
+		# today's price moves after booking: the booked nights must not follow it
+		old = frappe.db.get_value("Room Type", RT, "base_price")
+		frappe.db.set_value("Room Type", RT, "base_price", float(old) + 100)
+		try:
+			held = api.amend_stay_preview(res.name, day, co, early_arrival=1)
+			plain = api.amend_stay_preview(res.name, day, co)
+			v_held = api.amend_stay_preview(vou, day, co, early_arrival=1)
+			v_plain = api.amend_stay_preview(vou, day, co)
+			p_held = api.amend_stay_preview(fixed, day, co, early_arrival=1)
+			p_plain = api.amend_stay_preview(fixed, day, co)
+			api.check_in(res.name, early_arrival=1, confirm_price=1)
+		finally:
+			frappe.db.set_value("Room Type", RT, "base_price", old)
+	assert plain["new_amount"] > held["new_amount"], (plain, held)
+	assert v_held["new_amount"] == v_plain["new_amount"], (v_held, v_plain)
+	assert p_held["new_amount"] == p_plain["new_amount"], (p_held, p_plain)
 	res.reload()
 	assert str(res.check_in_date) == day and res.status == "Checked In", res.check_in_date
 	assert res.nights == 4, res.nights
 	# the early nights are on the bill, not spread over the booked price
 	assert float(res.amount_after_tax or 0) > before, (before, res.amount_after_tax)
+	quoted = {n["date"]: float(n["rate"]) for n in plain["nights"]}
+	for r in res.night_rates:
+		night = str(r.stay_date)
+		if night in booked:
+			assert (float(r.rate), float(r.gst_rate)) == booked[night], (night, r.rate, booked)
+		else:  # an added night takes today's quote
+			assert float(r.rate) == quoted[night], (night, r.rate, quoted)
+	assert abs(held["new_amount"] - float(res.amount_after_tax)) < 0.01, (held, res.amount_after_tax)
 
 
 def execute():

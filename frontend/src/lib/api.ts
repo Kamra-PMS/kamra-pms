@@ -1893,11 +1893,13 @@ export const amendStayPreview = (
   reservation: string,
   check_in_date: string,
   check_out_date: string,
+  early_arrival = 0,
 ) =>
   call<RepricePreview>("kamra.api.amend_stay_preview", {
     reservation,
     check_in_date,
     check_out_date,
+    early_arrival,
   })
 
 export const amendStay = (

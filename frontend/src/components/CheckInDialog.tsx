@@ -408,7 +408,7 @@ export default function CheckInDialog(props: {
     setEarly(null)
     if (!earlyTo || !checkOut || !atConfirm) return
     let live = true
-    amendStayPreview(props.reservation, earlyTo, checkOut)
+    amendStayPreview(props.reservation, earlyTo, checkOut, 1)
       .then((p) => live && setEarly(p))
       .catch((e) => live && setError(serverError(e)))
     return () => {
