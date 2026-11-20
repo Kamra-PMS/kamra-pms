@@ -180,3 +180,18 @@ class AssistantCurrencyTestCase(unittest.TestCase):
 		self.assertIn("AI provider error (500)",
 		              assistant._provider_error(Mock(status_code=500, text="boom")))
 		self.assertTrue(assistant._out_of_credit(Mock(status_code=402, text="")))
+
+	def test_a_rejected_key_is_an_sse_error_with_the_provider_status(self):
+		settings = SimpleNamespace(enabled=True, base_url="https://provider.example.test/v1",
+		                           model="m", get_password=Mock(return_value="k"))
+		denied = Mock(status_code=401, text="invalid api key")
+		history = [{"role": "user", "content": "complete the order"}]
+		with ExitStack() as stack:
+			stack.enter_context(patch.object(assistant, "_settings", return_value=settings))
+			stack.enter_context(patch.object(assistant, "_system_prompt", return_value="sys"))
+			stack.enter_context(patch.object(assistant, "_tool_defs", return_value=[]))
+			stack.enter_context(patch.object(assistant, "_post_chat", return_value=denied))
+			body = unwrap(assistant.ask_stream)("P", history).get_data(as_text=True)
+		self.assertIn("AI provider error (401)", body)
+		self.assertIn('"code": "provider_error"', body)
+		self.assertNotIn("out_of_credit", body)

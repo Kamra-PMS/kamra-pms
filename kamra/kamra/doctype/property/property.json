@@ -834,6 +834,10 @@
    "report": 1,
    "print": 1,
    "role": "F&B Manager"
+  },
+  {
+   "read": 1,
+   "role": "Owner"
   }
  ],
  "row_format": "Dynamic",

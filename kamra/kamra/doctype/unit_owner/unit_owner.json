@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "autoname": "format:OWN-{#####}",
+ "creation": "2026-11-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "owner_name",
+  "property",
+  "access",
+  "show_guest_contact",
+  "units",
+  "users"
+ ],
+ "fields": [
+  {
+   "fieldname": "owner_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Owner",
+   "reqd": 1
+  },
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "default": "Read only",
+   "fieldname": "access",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Access",
+   "options": "Read only\nManage",
+   "reqd": 1,
+   "description": "Read only is occupancy, bookings and revenue. Manage is the same, still without guest identity documents. Guest name and phone stay off unless Show guest contact is ticked."
+  },
+  {
+   "default": "0",
+   "fieldname": "show_guest_contact",
+   "fieldtype": "Check",
+   "label": "Show guest contact",
+   "description": "Off by default. When on, this owner's logins see the guest's name and phone for their own units. Identity documents are never included."
+  },
+  {
+   "fieldname": "units",
+   "fieldtype": "Table",
+   "label": "Units",
+   "options": "Unit Owner Unit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "users",
+   "fieldtype": "Table",
+   "label": "Logins",
+   "options": "Unit Owner User",
+   "reqd": 1,
+   "description": "Each login is a user who already exists. They receive the Owner role and may see only these units."
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Unit Owner",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Hotel Admin"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "owner_name",
+ "track_changes": 1
+}

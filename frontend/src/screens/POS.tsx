@@ -545,12 +545,23 @@ export default function POS() {
       : orderType === "Room Service" && room ? `Room ${room.split("-").pop()}`
         : `${orderType}${custName ? ` · ${custName.split(" ")[0]}` : ""}`
 
+  /** A zero-priced dish is refused until the captain confirms it is free. */
+  async function confirmFree<T>(run: (allowZero: boolean) => Promise<T>): Promise<T> {
+    try {
+      return await run(false)
+    } catch (e) {
+      const msg = serverError(e)
+      if (/no price/i.test(msg) && window.confirm(msg)) return run(true)
+      throw e
+    }
+  }
+
   /** Create the bill (optionally firing the KOT). Returns the order id. */
   async function createBill(fire: boolean) {
     if (fire) {
       // one round trip: create, discount, confirm and fire on the server
-      const kot = await call<{ order: string; kot_no: number | null; fired_items: { item_name: string; qty: number; instructions?: string | null }[]; ticket?: KotTicket }>(
-        "kamra.pos.send_order", { ...newBillArgs(), discount: disc > 0 ? disc : 0 })
+      const kot = await confirmFree((allowZero) => call<{ order: string; kot_no: number | null; fired_items: { item_name: string; qty: number; instructions?: string | null }[]; ticket?: KotTicket }>(
+        "kamra.pos.send_order", { ...newBillArgs(), discount: disc > 0 ? disc : 0, allow_zero: allowZero ? 1 : 0 }))
       maybePrintKot(kot, newBillLabel(), orderType,
         custName || null, orderType === "Delivery" ? custAddr || null : null)
       return kot.order
@@ -566,11 +577,12 @@ export default function POS() {
       if (cart.length === 0) return
       await act(async () => {
         // one round trip: add the round and fire it on the server
-        const kot = await call<{ kot_no: number | null; nc?: boolean; ticket?: KotTicket; fired_items: { item_name: string; qty: number; instructions?: string | null }[] }>(
+        const kot = await confirmFree((allowZero) => call<{ kot_no: number | null; nc?: boolean; ticket?: KotTicket; fired_items: { item_name: string; qty: number; instructions?: string | null }[] }>(
           "kamra.pos.send_round", {
             order: selected,
             items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions })),
-          })
+            allow_zero: allowZero ? 1 : 0,
+          }))
         if (detail) maybePrintKot(kot, orderLabel(detail), detail.order_type,
           detail.customer_name, detail.delivery_address, detail.nc_authorized_by)
         setCart([])
