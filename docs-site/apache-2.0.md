@@ -7,7 +7,7 @@ description: Kamra PMS core is now under the Apache License 2.0. What changed, w
 
 Kamra PMS core is now licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). The same complete hotel PMS, the same free Community edition, and a clearer path for hotels, chains and integrators whose legal teams could not adopt AGPL.
 
-This is a deliberate step toward more openness and more contribution. Contributors agreed on [GitHub #591](https://github.com/Kamra-PMS/kamra-pms/issues/591). The change lands with the next release after that pull request merges.
+This is a deliberate step toward more openness and more contribution. Every contributor whose code is in core agreed on [GitHub #591](https://github.com/Kamra-PMS/kamra-pms/issues/591). Apache-2.0 starts with **Kamra 2.8.0**.
 
 ## What changed
 
@@ -50,6 +50,22 @@ Enterprise work, if any, only adds services around that open core. It does not t
 ## For contributors
 
 New pull requests land under Apache-2.0. See [CONTRIBUTING.md](https://github.com/Kamra-PMS/kamra-pms/blob/develop/CONTRIBUTING.md). Country packs, docs and product fixes are all welcome.
+
+## Thank you
+
+This change needed a yes from everyone whose code is in Kamra core, and they all said it within a week:
+
+- Paul Mwanje ([@pmwanje2](https://github.com/pmwanje2))
+- Kruthika Gowda ([@Kruthikagowda12](https://github.com/Kruthikagowda12))
+- Ernesto Ruiz ([@ernestoruiz89](https://github.com/ernestoruiz89))
+- Muneef ([@muneef-m](https://github.com/muneef-m)) and Mohammed Muneef ([@Mohammed-Muneef](https://github.com/Mohammed-Muneef))
+- Sandro Garcia ([@SandroG1977](https://github.com/SandroG1977))
+- Shaikh Ameer Pasha ([@ShaikhAmerPasha](https://github.com/ShaikhAmerPasha))
+- Madhukar Hiranya ([@madhukarah](https://github.com/madhukarah)), for Pace Wisdom
+- Kentrick Felix Kepawitono ([@kentrick22](https://github.com/kentrick22))
+- 白羽 ([@baiyu0616a](https://github.com/baiyu0616a)), for the Simplified Chinese interface (#618, #647). Agreed in #591 on 19 Nov 2026 to relicense under MIT or Apache-2.0, so zh-CN stays in core.
+
+Fares Alslahi ([@faresalslahi-collab](https://github.com/faresalslahi-collab)) gave Kamra the booking guest and room summary (#83). That idea stays credited. The confirmation summary in core was rewritten for this licence change.
 
 ## Read more
 

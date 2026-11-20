@@ -331,6 +331,12 @@ What opens: use, change, host and sell under Apache-2.0, including in
 proprietary products, with attribution. Easier to adopt, build on and
 contribute to.
 
+Starts with Kamra 2.8.0. Thank you to everyone who voted yes: Paul
+Mwanje, Kruthika Gowda, Ernesto Ruiz, Muneef, Mohammed Muneef, Sandro
+Garcia, Shaikh Ameer Pasha, Madhukar Hiranya (Pace Wisdom), Kentrick
+Felix Kepawitono and 白羽 (baiyu0616a), whose Simplified Chinese
+interface stays.
+
 - Docs: https://kamrapms.com/docs/apache-2.0
 - Vote: https://github.com/Kamra-PMS/kamra-pms/issues/591
 - Source: https://github.com/Kamra-PMS/kamra-pms
