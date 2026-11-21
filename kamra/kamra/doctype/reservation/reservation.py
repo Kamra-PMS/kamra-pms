@@ -646,10 +646,14 @@ class Reservation(Document):
 		if cint(self.get("is_day_use")) or (
 				self.check_in_date and self.check_out_date
 				and getdate(self.check_in_date) == getdate(self.check_out_date)):
+			# HH:MM whether the time came from the desk ("08:00:00") or
+			# from the database (a timedelta), so the key does not change
+			# when a saved booking is read back
+			from kamra.day_use import hhmm
 			if self.get("planned_check_in_time"):
-				inputs["check_in_time"] = str(self.planned_check_in_time)[:5]
+				inputs["check_in_time"] = hhmm(self.planned_check_in_time)
 			if self.get("planned_check_out_time"):
-				inputs["check_out_time"] = str(self.planned_check_out_time)[:5]
+				inputs["check_out_time"] = hhmm(self.planned_check_out_time)
 		return inputs
 
 	def hand_set_prices(self) -> list[dict]:
