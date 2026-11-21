@@ -55,7 +55,7 @@
 | Room Block | 封房 | 团队锁房；与 Blocked（已封锁）同族，不译作“预留房” |
 | Room Change | 换房 | |
 | Upgrade | 升级房型 | |
-| Day Use | 日用房 | 当日入住当日退房 |
+| Day Use | 钟点房 | 当日入住当日退房 |
 | Early Check-out | 提前退房 | |
 | Late Check-out | 延迟退房 | |
 | Overbooking | 超订 | |

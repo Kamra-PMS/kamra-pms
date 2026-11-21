@@ -212,7 +212,7 @@ cd apps/kamra/frontend && npm install && npm run dev   # 界面热重载在 :517
 - [@lhertig](https://github.com/lhertig)：以物业货币进行 folio 收款（[#341](https://github.com/Kamra-PMS/kamra-pms/issues/341)）、混合成人与儿童预订的 `max_total_occupants`（[#342](https://github.com/Kamra-PMS/kamra-pms/issues/342)）、到店前预付退款释放押金并减少 `advance_paid`（[#343](https://github.com/Kamra-PMS/kamra-pms/issues/343)），以及并发预订时的 `tabSeries` 死锁重试（[#344](https://github.com/Kamra-PMS/kamra-pms/issues/344)）
 - [@faresalslahi-collab](https://github.com/faresalslahi-collab)（Sarawat Park Hotel & Resort）：单屏散客入住（[#97](https://github.com/Kamra-PMS/kamra-pms/issues/97)），由此催生了沙特阿拉伯包和 ZATCA、阿拉伯世界区号（[#98](https://github.com/Kamra-PMS/kamra-pms/issues/98)），以及 Kamra 的厨房台账与共享站点上 ERPNext 库存冲突的问题（[#131](https://github.com/Kamra-PMS/kamra-pms/issues/131)）
 - [@atomic-glitch](https://github.com/atomic-glitch)：客房清洁房态板与角色校验（[#99](https://github.com/Kamra-PMS/kamra-pms/issues/99)）、从预订和 GRC 换房（[#113](https://github.com/Kamra-PMS/kamra-pms/issues/113)），以及到店前押金（[#114](https://github.com/Kamra-PMS/kamra-pms/issues/114)）
-- [@ali-qa-sudo](https://github.com/ali-qa-sudo)：按角色显示的"散客入住 / 新预订"按钮（[#120](https://github.com/Kamra-PMS/kamra-pms/issues/120)）
+- [@ali-qa-sudo](https://github.com/ali-qa-sudo)：按角色显示的"散客入住 / 新增预订"按钮（[#120](https://github.com/Kamra-PMS/kamra-pms/issues/120)）
 - [@omar99elnemr](https://github.com/omar99elnemr)：账单未结清前拒绝退房（[#132](https://github.com/Kamra-PMS/kamra-pms/issues/132)）
 - [@Syzygy2048](https://github.com/Syzygy2048)：助手中使用当前的 OpenAI 模型（[#23](https://github.com/Kamra-PMS/kamra-pms/issues/23)）
 
