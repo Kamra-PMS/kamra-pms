@@ -18,7 +18,7 @@
 <p align="center">
   <a href="https://demo.kamrapms.com"><img src="https://img.shields.io/badge/demo-live-0f766e?style=flat-square" alt="在线演示" /></a>
   <a href="https://github.com/Kamra-PMS/kamra-pms/releases/latest"><img src="https://img.shields.io/github/v/release/Kamra-PMS/kamra-pms?style=flat-square&label=release" alt="最新版本" /></a>
-  <a href="license.txt"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square" alt="AGPL-3.0" /></a>
+  <a href="license.txt"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="Apache-2.0" /></a>
   <a href="https://cloud.frappe.io/marketplace/apps/kamra"><img src="https://img.shields.io/badge/Frappe%20Cloud-Marketplace-ed8936?style=flat-square" alt="Frappe Cloud Marketplace" /></a>
   <a href="https://kamrapms.com/docs/"><img src="https://img.shields.io/badge/docs-kamrapms.com-111827?style=flat-square" alt="文档" /></a>
   <img src="https://img.shields.io/github/stars/Kamra-PMS/kamra-pms?style=flat-square" alt="GitHub 星标数" />
@@ -32,7 +32,7 @@
 
 **为什么说"首个"：** [Kamra 1.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v1.0.0) 于 2026 年 7 月 5 日发布，同时满足开源、免费、由 MCP 驱动这三点。我们不知道有哪个开源 PMS 更早地把这三件事同时做到。如果 Kamra 对你有用，欢迎[给仓库点个星](https://github.com/Kamra-PMS/kamra-pms/stargazers)，让更多酒店经营者和开发者看到它。
 
-Kamra 是面向酒店、度假村和短租业务的完整物业管理系统（PMS）。它运行在 [Frappe](https://frappe.io)（ERPNext 背后的框架）之上，采用 AGPL-3.0 许可，所有功能都在这个开源应用中：没有版本分级，也没有按房间数收费。当前版本：**v2.7.6**（[更新日志](CHANGELOG.md)）。
+Kamra 是面向酒店、度假村和短租业务的完整物业管理系统（PMS）。它运行在 [Frappe](https://frappe.io)（ERPNext 背后的框架）之上，采用 Apache-2.0 许可，所有功能都在这个开源应用中：没有版本分级，也没有按房间数收费。当前版本：**v2.7.6**（[更新日志](CHANGELOG.md)）。
 
 在[演示环境](https://demo.kamrapms.com)里，点任意角色即可登录。客人预订页在 [/book](https://demo.kamrapms.com/book)，客房清洁手机端在 [/kamra/hk](https://demo.kamrapms.com/kamra/hk)。
 
@@ -185,7 +185,7 @@ cd apps/kamra/frontend && npm install && npm run dev   # 界面热重载在 :517
 
 ## 许可与商标
 
-代码为 **AGPL-3.0**：可自由使用、修改、托管和销售。任何人若把修改后的 Kamra 作为托管服务提供，必须公开这些修改。Kamra 的名称与标志受 [TRADEMARK.md](TRADEMARK.md) 保护：可自由运行和转售 Kamra，可在我们的标志旁展示你自己的酒店或合作伙伴标志，但修改过的分支需使用自己的名称。
+代码为 **Apache-2.0**：可自由使用、修改、托管和销售，也可用于专有产品，但须按许可证要求保留署名，并享有其中的专利保护。此次变更之前发布的版本仍为 AGPL-3.0。Kamra 的名称与标志受 [TRADEMARK.md](TRADEMARK.md) 保护：可自由运行和转售 Kamra，可在我们的标志旁展示你自己的酒店或合作伙伴标志，但修改过的分支需使用自己的名称。
 
 ---
 

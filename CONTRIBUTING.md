@@ -1,6 +1,6 @@
 # Contributing to Kamra PMS
 
-Kamra is AGPL-3.0 and welcomes contributions — code, country packs, docs, bug
+Kamra is Apache-2.0 and welcomes contributions: code, country packs, docs, bug
 reports. This file covers the mechanics; see [`README.md`](README.md) for
 install/quickstart and [`docs/`](docs/) for architecture.
 

@@ -1042,94 +1042,62 @@ export function BookingDialog(props: {
               </div>
             )}
 
-            {/* Confirmation snapshot so desk staff can read the stay back
-                without reopening the reservation (Fares). */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <dl className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs font-medium text-zinc-400">{t("Guest name")}</dt>
-                  <dd className="mt-1 font-semibold text-zinc-900">
-                    {form.guest_name || "-"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-zinc-400">{t("Phone")}</dt>
-                  <dd className="mt-1 font-semibold text-zinc-900">
-                    {form.phone || "-"}
-                  </dd>
-                </div>
-
-                <div
-                  className={
-                    "sm:col-span-2 rounded-xl border p-4 " +
-                    (done.room
-                      ? "border-brand-200 bg-brand-50"
-                      : "border-zinc-200 bg-zinc-50")
-                  }
-                >
-                  <dt
-                    className={
-                      "text-xs font-semibold " +
-                      (done.room ? "text-brand-700" : "text-zinc-500")
-                    }
-                  >
-                    {t("Room")}
-                  </dt>
-                  <dd
-                    className={
-                      "mt-1 text-2xl font-bold " +
-                      (done.room ? "text-brand-900" : "text-zinc-700")
-                    }
-                  >
-                    {done.room
-                      ? (done.room.split("-").pop() ?? done.room)
-                      : t("Unassigned")}
-                  </dd>
-                  <dd
-                    className={
-                      "mt-1 text-sm " +
-                      (done.room ? "text-brand-700" : "text-zinc-500")
-                    }
-                  >
+            {/* Stay receipt for the desk: guest, room and dates in one place
+                so staff can confirm without opening the reservation. */}
+            <div className="space-y-3 border-t border-zinc-100 pt-4 text-sm text-zinc-800">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-zinc-500">{t("Guest name")}</span>
+                <span className="font-medium">{form.guest_name || "-"}</span>
+              </div>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-zinc-500">{t("Phone")}</span>
+                <span className="font-medium">{form.phone || "-"}</span>
+              </div>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-zinc-500">{t("Room")}</span>
+                <span className="text-right font-medium">
+                  {done.room
+                    ? (done.room.split("-").pop() ?? done.room)
+                    : t("Unassigned")}
+                  <span className="mt-0.5 block text-xs font-normal text-zinc-500">
                     {roomTypeName || form.room_type}
                     {moreRooms.length > 0
                       ? ` · ${1 + moreRooms.reduce((s, r) => s + r.count, 0)} ${t("Rooms")}`
                       : ""}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-xs font-medium text-zinc-400">{t("Check-in")}</dt>
-                  <dd className="mt-1 font-semibold text-zinc-900">
-                    {form.check_in_date}
-                    {!dayUse && !walkIn && stayIn ? ` · ${stayIn}` : ""}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-zinc-400">{t("Check-out")}</dt>
-                  <dd className="mt-1 font-semibold text-zinc-900">
-                    {checkOut}
-                    {!dayUse && !walkIn && stayOut ? ` · ${stayOut}` : ""}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-zinc-400">
-                    {dayUse ? t("Day use") : t("Nights")}
-                  </dt>
-                  <dd className="mt-1 font-semibold text-zinc-900">
-                    {dayUse ? `${slot.from}-${slot.to}` : form.nights}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-zinc-400">{t("Guests")}</dt>
-                  <dd className="mt-1 font-semibold text-zinc-900">
-                    {form.adults} {t("Adults")}
-                    {form.children > 0
-                      ? ` · ${form.children} ${t("Children")}`
-                      : ""}
-                  </dd>
-                </div>
-              </dl>
+                  </span>
+                </span>
+              </div>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-zinc-500">{t("Check-in")}</span>
+                <span className="font-medium">
+                  {form.check_in_date}
+                  {!dayUse && !walkIn && stayIn ? ` · ${stayIn}` : ""}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-zinc-500">{t("Check-out")}</span>
+                <span className="font-medium">
+                  {checkOut}
+                  {!dayUse && !walkIn && stayOut ? ` · ${stayOut}` : ""}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-zinc-500">
+                  {dayUse ? t("Day use") : t("Nights")}
+                </span>
+                <span className="font-medium">
+                  {dayUse ? `${slot.from}-${slot.to}` : form.nights}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-zinc-500">{t("Guests")}</span>
+                <span className="font-medium">
+                  {form.adults} {t("Adults")}
+                  {form.children > 0
+                    ? ` · ${form.children} ${t("Children")}`
+                    : ""}
+                </span>
+              </div>
             </div>
 
             {done.deposit && !done.walkIn && !done.waitlist && (
