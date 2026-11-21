@@ -1,6 +1,6 @@
 # Kamra name and brand
 
-The code is AGPL-3.0: you may use, change, host and sell it under that
+The code is Apache-2.0: you may use, change, host and sell it under that
 license. The name "Kamra", "Kamra PMS", "Kamra Agent" and the Kamra mark
 (see [`branding/`](branding/README.md)) are not part of that license. This
 page says how to use them, in the same spirit as Frappe and ERPNext.
@@ -21,8 +21,8 @@ page says how to use them, in the same spirit as Frappe and ERPNext.
 - A product, company or domain name that contains "Kamra", or a logo that
   looks like the Kamra mark.
 - Removing Kamra's name or mark from the app and presenting it as your
-  own product. The AGPL lets you do that in your own fork; it does not let
-  that fork use the Kamra name.
+  own product. Apache-2.0 lets you do that in your own fork; it does not
+  let that fork use the Kamra name.
 
 ## Not allowed
 

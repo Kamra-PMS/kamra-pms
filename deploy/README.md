@@ -117,7 +117,7 @@ first boot (20–45 minutes).
 
 ## Hyperscalers
 
-Free self-host AMI/VM listings are planned — see [docs](../docs-site/self-hosting/marketplace/hyperscalers.md). Do not put a price on AGPL Kamra itself.
+Free self-host AMI/VM listings are planned. See [docs](../docs-site/self-hosting/marketplace/hyperscalers.md). Do not put a price on the Kamra software itself on those listings.
 
 ## Published images
 

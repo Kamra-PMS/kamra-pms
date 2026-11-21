@@ -49,6 +49,13 @@ booking (see [Change a booking](#change-a-booking)). The stay shows under
 For a stay of a few hours, switch **Overnight** to **Day use** and set the
 time slot. The guest checks in and out the same day.
 
+Under **Rates for these dates**, a Revenue Manager or Hotel Admin can
+type a price on a night. The quote uses that price. A typed night does
+not combine with a rate plan or a voucher, and the fields stay locked
+when the booking already has an OTA sold total or is day use. **Back to
+BAR** returns that night to the rate card. Front Desk cannot set these
+prices.
+
 ## Add company, add-ons and arrival details
 
 Open **Company, add-ons & arrival details** in the booking window for:
