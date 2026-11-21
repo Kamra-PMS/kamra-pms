@@ -742,9 +742,10 @@ Endpoint: `kamra.cashier.session_report`.
 
 ### `close_folio(folio)`
 
-Close / settle an open folio and issue the invoice number. Balance
-must be zero (or use part-settle elsewhere). Confirm with staff  -
-irreversible.
+Close a settled folio and issue the invoice number. Balance must be
+zero. Refuses the Guest folio of a stay that is still checked in: use
+part_settle_folio (Settle & continue stay) so tonight's charges still
+have an open bill. Confirm with staff. Irreversible.
 
 Endpoint: `kamra.api.close_folio`.
 Mutating - logged to the activity ledger.

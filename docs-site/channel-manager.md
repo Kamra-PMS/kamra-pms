@@ -34,19 +34,45 @@ to them, certified with Booking.com, Agoda, Expedia, Airbnb and more.
    the connection's ID: it's the value you picked in the **Connection**
    field of the room mapping in step 3 (for example `CMC-00001`).
 
-That's the whole setup. From then on:
+That's the whole setup.
 
-- **Availability and rates push automatically** - every hour, and again
-  right after any booking lands (from any source), so an OTA can't
-  oversell a room the front desk just gave away. Rates come from the
-  pricing engine with demand premiums and hurdle floors applied.
-- **OTA bookings arrive as reservations** - source OTA, the channel's
-  name and booking reference kept, the guest matched by phone/email or
-  created, the OTA's sell price preserved (never re-priced), and the
+### What Channex sends
+
+Channex does not get a fresh copy of the whole calendar every hour.
+Kamra sends **only the dates that changed**, joined into ranges:
+
+- A booking, a season, a rate plan, a room going out of order, or a
+  mapping queues those dates. A worker sends them within about a
+  minute. Rate edits made inside the **Rate batch window (seconds)**
+  (default 30) go out together.
+- Availability and restrictions are separate calls. **ARI calls per
+  minute** (default 10, which is what Channex allows) caps each of
+  them. If Channex answers 429, that kind pauses and retries.
+- A full copy of the horizon (500 days) goes out only when a Revenue
+  Manager or Hotel Admin presses **Full sync** on the connection. If
+  the last full sync was less than 24 hours ago, Kamra asks you to
+  confirm. Channex admits one a day.
+- Once a night, at 06:20, a sweep sends only the differences: the new
+  day entering that horizon, and anything a trigger missed. It is not
+  a full sync.
+
+Open the connection under **Revenue → Channel Manager**. The panel
+**Availability and rates sync** shows **Changes waiting**, **Failed
+changes**, **Last push** and **Last full sync**. **Import mapping**
+reads Channex's rooms and rate plans, shows a preview, and writes the
+rows you apply. Anything it cannot place stays unmatched so you can
+map it by hand.
+
+### Bookings that arrive
+
+- **OTA bookings arrive as reservations**: source OTA, the channel's
+  name and booking reference kept, the guest matched by phone or email
+  or created, the OTA's sell price preserved (never re-priced), and the
   same capacity and double-booking rules a front-desk booking obeys.
   Modifications and cancellations match on the OTA reference.
-- The connection row shows the **last push and its result**; failures
-  land in the activity log.
+- The connection row shows the **last push and its result**. Failures
+  land in the activity log. Rates still come from the pricing engine,
+  with demand premiums and hurdle floors applied.
 
 ## STAAH and AioSell
 
@@ -58,6 +84,11 @@ access, then enter the credentials and endpoint they issue on the
 connection row. No code changes needed for the standard flows; field
 name adjustments against their partner docs are expected on first
 certification.
+
+STAAH and AioSell keep the hourly push of the whole window in **Days
+to push**. They do not use the Channex outbox, **Full sync** or
+**Import mapping**. The **ARI calls per minute** and **Rate batch
+window** fields are for Channex.
 
 ## No channel manager? Key it in from the email
 

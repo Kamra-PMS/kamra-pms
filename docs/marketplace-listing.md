@@ -295,6 +295,10 @@ by PR. Kamra's entry is `apps.json` (category `Applications`) plus
 }
 ```
 
+From 2.8.0 the payments dependency is `>=16.0.0,<17.0.0` (Frappe v16
+payments, [#641](https://github.com/Kamra-PMS/kamra-pms/pull/641)). Put that
+range on the 2.8.0 registry row. The sample above is the 2.6.16 shape.
+
 The registry CI reads `version` from the `__version__` line verbatim and
 rejects symlinks that point outside the repo, so keep the release-please
 marker on its own lines in `kamra/__init__.py`. To add a later release,
@@ -357,7 +361,7 @@ Marketplace onto your site, or `bench get-app kamra` from the Frappe
 marketplace registry.
 
 - Marketplace: https://frappecloud.com/marketplace/apps/kamra
-- Release: https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.6.16
+- Release: https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.8.0
 - Live demo: https://demo.kamrapms.com
 - Villa catalog: https://demo.kamrapms.com/book
 - Docs: https://kamrapms.com/docs/
