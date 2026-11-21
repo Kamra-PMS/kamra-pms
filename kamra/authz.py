@@ -140,6 +140,56 @@ def property_has_permission(doc, ptype: str | None = None, user: str | None = No
 	return allowed is None or doc.get("property") in allowed
 
 
+# A connection pushes and pulls one property's channel data; these doctypes
+# hang from it and carry no property of their own.
+_CONNECTION_DOCTYPES = ("Channel Manager Connection", "Channel Provider Connection")
+
+
+def _connection_link(doctype: str) -> tuple[str, str] | None:
+	"""(fieldname, connection doctype) of the doctype's link to a channel
+	connection."""
+	for df in frappe.get_meta(doctype).get("fields", {"fieldtype": "Link"}):
+		if df.options in _CONNECTION_DOCTYPES:
+			return df.fieldname, df.options
+	return None
+
+
+def connection_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
+	"""permission_query_conditions hook for doctypes that belong to a property
+	through their channel connection (Channel ARI State, Channel Room
+	Mapping...). Property User Permissions only bite on a Property link, so
+	this applies the user's properties - restricted or strict scope - to the
+	connection's: the rows of another hotel's connection are not listed."""
+	allowed = restricted_properties(user)
+	if allowed is None or not doctype:
+		return ""
+	link = _connection_link(doctype)
+	if not allowed or not link:
+		return "1=0"
+	field, target = link
+	props = ", ".join(frappe.db.escape(p) for p in sorted(allowed))
+	return (f"`tab{doctype}`.`{field}` IN (SELECT `name` FROM `tab{target}`"
+	        f" WHERE `property` IN ({props}))")
+
+
+def connection_has_permission(doc, ptype: str | None = None, user: str | None = None,
+                              debug: bool = False) -> bool:
+	"""has_permission hook matching connection_query_conditions: read, write
+	or create a row only if its connection is at a property the user may
+	access (the connection it points to now, also on a save that moves it)."""
+	allowed = restricted_properties(user)
+	if allowed is None:
+		return True
+	link = _connection_link(doc.doctype)
+	if not link:
+		return False
+	field, target = link
+	connection = doc.get(field)
+	if not connection:
+		return True  # nothing to reach into yet; the link is mandatory on save
+	return frappe.db.get_value(target, connection, "property") in allowed
+
+
 def assert_property_access(property: str | None):
 	"""Refuse a call aimed at a property the user isn't permitted for."""
 	allowed = restricted_properties()

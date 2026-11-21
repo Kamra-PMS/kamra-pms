@@ -1,0 +1,79 @@
+{
+ "doctype": "DocType",
+ "name": "Channel ARI State",
+ "module": "Kamra",
+ "engine": "InnoDB",
+ "in_create": 1,
+ "track_changes": 0,
+ "description": "What the channel manager last accepted, per connection, kind and provider id, so nothing already sent goes again. Dates and values only.",
+ "field_order": [
+  "connection",
+  "kind",
+  "external_id",
+  "sent_values"
+ ],
+ "fields": [
+  {
+   "fieldname": "connection",
+   "fieldtype": "Link",
+   "label": "Connection",
+   "options": "Channel Manager Connection",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "availability\nrestrictions",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "external_id",
+   "fieldtype": "Data",
+   "label": "Provider ID",
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "sent_values",
+   "fieldtype": "Long Text",
+   "label": "Sent Values (JSON)",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "links": [],
+ "actions": [],
+ "states": [],
+ "allow_rename": 0
+}

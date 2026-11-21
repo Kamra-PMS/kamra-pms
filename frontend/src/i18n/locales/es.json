@@ -6575,5 +6575,22 @@
   "Fix Night Audit blockers": "Resolver bloqueos de la auditoría nocturna",
   "Showing the latest {n}. Pick From and To dates to see others.": "Se muestran las {n} más recientes. Elija las fechas Desde y Hasta para ver otras.",
   "Showing the {n} biggest balances. The ledger total above includes every folio.": "Se muestran los {n} saldos más altos. El total del libro de arriba incluye todos los folios.",
-  "Not sent. The reason is on the page behind this one.": "No se envió. El motivo aparece en la página de detrás."
+  "Not sent. The reason is on the page behind this one.": "No se envió. El motivo aparece en la página de detrás.",
+  "{created} to create, {updated} to update, {unmatched} unmatched.": "{created} por crear, {updated} por actualizar, {unmatched} sin asociar.",
+  "{date} at {time}": "{date} a las {time}",
+  "{kind} paused by the channel manager for {seconds} s.": "{kind} en pausa por el gestor de canales durante {seconds} s.",
+  "Availability and rates sync": "Sincronización de disponibilidad y tarifas",
+  "Base price": "Precio base",
+  "Changes waiting": "Cambios en espera",
+  "Failed changes": "Cambios fallidos",
+  "Full sync": "Sincronización completa",
+  "Full sync queued. It goes out within a minute.": "Sincronización completa en cola. Sale en menos de un minuto.",
+  "Import mapping": "Importar correspondencia",
+  "Last full sync": "Última sincronización completa",
+  "Mapping imported: {created} created, {updated} updated.": "Correspondencia importada: {created} filas nuevas, {updated} actualizadas.",
+  "Mapping preview": "Vista previa de la correspondencia",
+  "Never": "Nunca",
+  "Rates and restrictions": "Tarifas y restricciones",
+  "Send it": "Enviarla",
+  "The last full sync went out on {date} at {time}. The channel manager admits one a day: send another anyway?": "La última sincronización completa salió el {date} a las {time}. El gestor de canales admite una al día: ¿desea enviar otra de todos modos?"
 }

@@ -3192,13 +3192,17 @@ def t53():
 	assert day0["available"] >= 0 and day0["rate"] > 0, day0
 
 	pushes = []
-	real_call = channex._call
-	channex._call = lambda c, m, path, payload=None: (
-		pushes.append((path, payload)) or (True, {"data": "ok"}))
+	real_send = channex._send
+	channex._send = lambda c, m, path, params=None, payload=None: (
+		pushes.append((path, payload)) or ({"data": [{"id": "eval-task"}]}, {}))
 	try:
+		# a Channex connection queues a full sync on its ARI outbox; the
+		# worker sends it, one call per kind
+		from kamra import channel_ari
 		out = cm.push_ari(conn.name)
-		assert out["ok"], out
-		assert {p_ for p_, _ in pushes} == {"availability", "restrictions"}
+		assert out["ok"] and out.get("queued"), out
+		sent = channel_ari.flush_outbox(conn.name)
+		assert {p_ for p_, _ in pushes} == {"availability", "restrictions"}, (pushes, sent)
 		before = frappe.db.get_value("Channel Manager Connection",
 		                             conn.name, "last_push_status")
 		assert before and before.startswith("OK"), before
@@ -3249,7 +3253,7 @@ def t53():
 		           room_type_external_id="unknown-room")
 		assert cm._apply_event(conn, bad)["result"] == "unmapped_room"
 	finally:
-		channex._call = real_call
+		channex._send = real_send
 
 
 @check("ticket SLA: priority sets due window")
