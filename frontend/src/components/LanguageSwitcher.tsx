@@ -1,10 +1,11 @@
 import { Globe } from "lucide-react"
-import { LANGS, setLang } from "../lib/dir"
-import { useT } from "../lib/i18n"
+import { setLang } from "../lib/dir"
+import { useOfferedLanguages, useT } from "../lib/i18n"
 
 /** Language dropdown for the public guest pages. */
 export function LanguageSwitcher(props?: { className?: string }) {
   const { t, lang } = useT()
+  const langs = useOfferedLanguages()
   return (
     <label
       className={
@@ -19,7 +20,7 @@ export function LanguageSwitcher(props?: { className?: string }) {
         onChange={(e) => setLang(e.target.value)}
         className="bg-transparent pe-1 outline-none"
       >
-        {LANGS.map((l) => (
+        {langs.map((l) => (
           <option key={l.code} value={l.code}>
             {l.nativeLabel}
           </option>

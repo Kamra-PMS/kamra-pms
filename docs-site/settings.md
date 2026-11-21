@@ -129,12 +129,26 @@ switching a module back on brings it back as it was.
 - **ZATCA e-invoicing**: shown for Saudi Arabia only. See
   [Country setup](/country-setup).
 
+## Languages
+
+**Settings → Languages** lists every language Kamra ships. Switch off
+the ones this site does not use. Sign-in, the staff app, the booking
+page and self check-in then offer only the ones left on. English stays
+on. Hotel Admin only.
+
+The choice is for the whole site, not one property. A language you
+switch off is kept: a browser that had it selected comes back to it if
+you switch it on again. Until then the staff app uses English. Guests
+fall back to the property's booking language when that one is still on,
+then to English. A language added in a later release is on until you
+switch it off.
+
 ## Appearance
 
 **Settings → Appearance** sets the theme (light, dark or follow the
-system) and the language
-for this browser only. Choosing Arabic switches the layout to right to
-left.
+system) and the language for this browser only. The list is the
+languages switched on under **Settings → Languages**. A right-to-left
+language, such as Arabic, flips the layout.
 
 ![Appearance: theme and language](/img/settings/appearance.png)
 

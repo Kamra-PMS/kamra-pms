@@ -31,11 +31,16 @@ desk, or disclosed a security problem responsibly.
 ## Fix a translation
 
 All screen text lives in one file per language in the repository:
-`frontend/src/i18n/locales/ar.json` (Arabic), `es.json` (Spanish) and
-`pt.json` (Portuguese). Each line is `"English": "translation"`. Change
+`frontend/src/i18n/locales/ar.json` (Arabic), `es.json` (Spanish),
+`pt.json` (Portuguese) and `fil.json` (Filipino). Each line is `"English": "translation"`. Change
 the translation on the right, keep any `{placeholder}` exactly as it is,
 and open a pull request (GitHub's pencil icon on the file does this for
 you). Messages from the server live in `kamra/translations/<lang>.csv`.
+
+Register a new language with a row in `frontend/src/i18n/languages.json`
+(its native name and direction) and a `frontend/src/i18n/locales/<code>.json`
+file. It is switched on for every site until a Hotel Admin turns it off
+under **Settings → Languages**.
 
 Not on GitHub? Send us a list with three columns (English, current
 translation, correct translation) and we apply it. Use the word your

@@ -393,6 +393,7 @@ class Reservation(Document):
 		self.validate_type_capacity()
 		self.validate_cancellation_path()
 		self.apply_negotiated_rate_plan()
+		self.keep_hand_set_nights()
 		self.apply_pricing()
 		self.stamp_room_assignment()
 
@@ -635,6 +636,11 @@ class Reservation(Document):
 		# same rule: only when set, so existing rate-lock keys stay put
 		if flt(self.get("agreed_rate")) > 0:
 			inputs["agreed_rate"] = flt(self.get("agreed_rate"))
+		# nights the desk priced by hand: only when there are some, so every
+		# other booking's rate-lock key stays the same
+		hand = self.hand_set_prices()
+		if hand:
+			inputs["night_prices"] = hand
 		# Day-use times only enter the lock key when the stay is same-day:
 		# overnight ETA/ETD is display-only and must not re-price.
 		if cint(self.get("is_day_use")) or (
@@ -645,6 +651,39 @@ class Reservation(Document):
 			if self.get("planned_check_out_time"):
 				inputs["check_out_time"] = str(self.planned_check_out_time)[:5]
 		return inputs
+
+	def hand_set_prices(self) -> list[dict]:
+		"""The nights the desk priced by hand that are still inside the stay,
+		as the {date, price} list the quote takes (price as the desk typed it)."""
+		if not self.check_in_date or not self.check_out_date:
+			return []
+		first, last = getdate(self.check_in_date), getdate(self.check_out_date)
+		rows = [{"date": str(getdate(r.stay_date)), "price": flt(r.hand_price)}
+		        for r in self.get("night_rates") or []
+		        if flt(r.get("hand_price")) > 0
+		        and first <= getdate(r.stay_date) < last]
+		return sorted(rows, key=lambda r: r["date"])
+
+	def keep_hand_set_nights(self):
+		"""Prices the nights a desk typed (night_rates rows carrying a
+		hand_price, auto_price off): on the first save, quoted with those
+		nights; after a date, room-type or party change, the typed nights
+		still in the stay are kept and Kamra prices the others. With none
+		left the booking goes back to auto pricing."""
+		if self.get("auto_price") or not self.room_type:
+			return
+		if not any(flt(r.get("hand_price")) > 0 for r in self.get("night_rates") or []):
+			return  # priced by hand as a whole (OTA total, desk amount)
+		inputs = self.quote_inputs()
+		key = self.rate_lock_key_for(inputs)
+		if self.get("rate_lock_key") == key:
+			return
+		if not inputs.get("night_prices"):
+			if self.is_new():
+				frappe.throw(_("None of the nights with a typed price is in this stay."))
+			self.auto_price = 1  # apply_pricing re-quotes and re-locks it
+			return
+		self.apply_quote(self.requote(), key)
 
 	@staticmethod
 	def rate_lock_key_for(inputs: dict) -> str:
@@ -689,6 +728,11 @@ class Reservation(Document):
 			check_voucher_limits=bool(
 				self.is_new() or self.has_value_changed("voucher")),
 		)
+		self.apply_quote(q, key)
+
+	def apply_quote(self, q: dict, key: str | None):
+		"""Put a quote on the booking: its amounts, the immutable snapshot and
+		the locked nightly rates, under the lock key of the inputs it priced."""
 		self.amount_before_tax = q["amount_before_tax"]
 		self.tax_amount = q["tax_amount"]
 		self.amount_after_tax = q["amount_after_tax"]
@@ -754,6 +798,8 @@ class Reservation(Document):
 				"gst_rate": float(n.get("gst_rate") or 0),
 				"meal_amount": meal,
 				"demand_premium_pct": float(n.get("demand_premium_pct") or 0),
+				# what the desk typed for the night (0: Kamra priced it)
+				"hand_price": float(n.get("typed_price") or 0),
 			})
 		return rows
 

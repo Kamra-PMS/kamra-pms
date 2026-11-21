@@ -28,6 +28,10 @@ jobs:
         working-directory: frontend
       - run: npm run i18n:check
         working-directory: frontend
+      - run: npm run languages:check
+        working-directory: frontend
+      - name: UI language fallback rules
+        run: python3 -m unittest kamra.tests.test_ui_language_logic
       - run: npm run build
         working-directory: frontend
       - name: Verify production serve base
@@ -49,6 +53,10 @@ jobs:
 
       - name: Check lock messages after undoing a check-in
         run: npm run key-notice:check
+        working-directory: frontend
+
+      - name: Check nightly prices typed on New booking
+        run: npm run night-prices:check
         working-directory: frontend
 
   contract:
@@ -166,7 +174,7 @@ jobs:
       - name: Run the night audit, ledger and scheduled-audit unit tests
         run: |
           cd frappe-bench
-          for m in test_assistant_currency test_nicaragua_pack test_night_audit test_ledger_audit test_folio_leaks test_bill_settlement test_health test_scheduled_jobs test_golive test_credit_control test_webhooks test_pos_interface test_mcp test_contract_keys test_seed_history test_rates test_holiday_package test_siu_room_type_sync test_booking_options_order test_payment_idempotency; do
+          for m in test_assistant_currency test_nicaragua_pack test_night_audit test_ledger_audit test_folio_leaks test_bill_settlement test_health test_scheduled_jobs test_golive test_credit_control test_webhooks test_pos_interface test_mcp test_contract_keys test_seed_history test_rates test_night_prices test_night_prices_booking test_holiday_package test_siu_room_type_sync test_booking_options_order test_payment_idempotency test_ui_languages; do
             bench --site test.localhost run-tests --module kamra.tests.$m \
               2>&1 | tee "$m.out"
             # known bugs are pinned as expected failures and a few tests skip

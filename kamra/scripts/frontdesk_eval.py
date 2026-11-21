@@ -204,7 +204,8 @@ def f7():
 		open_session(P)
 		fd = frappe.get_doc("Folio", folio)
 		api.add_folio_payment(folio, "UPI", fd.grand_total)
-		inv = api.close_folio(folio)
+		# an in-house guest's bill is invoiced with Settle & continue stay
+		inv = api.part_settle_folio(folio)
 		assert inv["invoice_number"].startswith("INV-"), inv
 		fd.reload()
 		fd.charges[0].amount = 1

@@ -19,6 +19,7 @@ import re
 from decimal import Decimal
 
 import frappe
+from frappe import _
 from frappe.utils import add_days, nowdate
 
 from kamra.authz import require_roles
@@ -77,7 +78,7 @@ def _connections(property: str | None = None, only_active=True):
 def _mappings(connection: str) -> list[dict]:
 	return frappe.get_all(
 		"Channel Room Mapping", filters={"connection": connection},
-		fields=["room_type", "external_room_id", "external_rate_id"])
+		fields=["room_type", "external_room_id", "external_rate_id", "rate_plan"])
 
 
 def _sellable(property: str, room_type: str, check_in, check_out) -> int:
@@ -113,16 +114,27 @@ def _sellable(property: str, room_type: str, check_in, check_out) -> int:
 	return max(0, int(total) - int(booked) - int(hold))
 
 
-def ari_snapshot(property: str, connection: str, days: int = 90) -> list[dict]:
+def ari_snapshot(property: str, connection: str, days: int = 90, start=None,
+                 with_rates: bool = True) -> list[dict]:
 	"""Availability + rate per mapped room type per day, in the seam's
 	normalized shape. Availability comes from the same engine the
 	double-booking guard uses; the rate is the pricing engine's one-night
-	sell rate (base occupancy, demand premiums and hurdle floors applied)."""
+	sell rate (base occupancy, demand premiums and hurdle floors applied).
+
+	`start` (default today) is the first day. with_rates=False leaves the
+	rate out (None) and gives one row per room type and provider room id,
+	however many rate plans are mapped to it: the outbox prices each mapped
+	plan on its own (kamra.channel_ari)."""
 	from kamra.api import _available_rooms_raw, _block_hold
 	from kamra.kamra.doctype.reservation.reservation import villa_locked_nights
 	from kamra.siu.availability import capacity_by_night, has_active_sius
 
 	mappings = _mappings(connection)
+	if not with_rates:
+		seen = set()
+		mappings = [m for m in mappings
+		            if (m.room_type, m.external_room_id) not in seen
+		            and not seen.add((m.room_type, m.external_room_id))]
 	# room_category + physical room count per mapped room type - needed by the
 	# villa lockout to know which rows are the whole-property bundle and when a
 	# room type is fully free.
@@ -133,8 +145,12 @@ def ari_snapshot(property: str, connection: str, days: int = 90) -> list[dict]:
 	} for m in mappings}
 
 	out = []
-	start = nowdate()
+	start = str(start or nowdate())
 	end = add_days(start, days)
+
+	def rate(room_type, d, d2):
+		return _one_night_rate(property, room_type, d, d2) if with_rates else None
+
 	for m in mappings:
 		row = {"room_type": m.room_type,
 		       "external_room_id": m.external_room_id,
@@ -152,7 +168,7 @@ def ari_snapshot(property: str, connection: str, days: int = 90) -> list[dict]:
 			d2 = add_days(d, 1)
 			if str(d) in locked:
 				row["days"].append({"date": str(d), "available": 0,
-				                    "rate": _one_night_rate(property, m.room_type, d, d2)})
+				                    "rate": rate(m.room_type, d, d2)})
 				continue
 			hold = _block_hold(property, m.room_type, d, d2)
 			if use_siu:
@@ -165,7 +181,7 @@ def ari_snapshot(property: str, connection: str, days: int = 90) -> list[dict]:
 			if meta[m.room_type]["total"]:
 				avail = min(avail, _sellable(property, m.room_type, d, d2))
 			row["days"].append({"date": str(d), "available": avail,
-			                    "rate": _one_night_rate(property, m.room_type, d, d2)})
+			                    "rate": rate(m.room_type, d, d2)})
 		out.append(row)
 	_apply_villa_lockout(out, meta)
 	return out
@@ -220,10 +236,16 @@ def _apply_villa_lockout(rows: list[dict], meta: dict) -> None:
 @frappe.whitelist()
 @require_roles("Revenue Manager", "Hotel Admin", "Kamra Agent")
 def push_ari(connection: str, days: int | None = None):
-	"""Push availability + rates for one connection, now."""
+	"""Push availability + rates for one connection, now. A connection whose
+	adapter takes changes (Channex) queues a full sync on its outbox instead:
+	one call per kind, through the same cap and retries (kamra.channel_ari)."""
 	conn = frappe.get_doc("Channel Manager Connection", connection)
 	if not conn.active:
 		frappe.throw("This connection is not active.")
+	from kamra import channel_ari
+	if channel_ari.uses_outbox(connection):
+		channel_ari.queue_full_sync(conn)
+		return {"ok": True, "queued": True, "detail": "full sync queued"}
 	snapshot = ari_snapshot(conn.property, connection,
 	                        int(days or conn.sync_days or 90))
 	if not snapshot:
@@ -248,21 +270,37 @@ def push_ari(connection: str, days: int | None = None):
 def push_all_ari(property: str | None = None):
 	"""Hourly cron (and the post-change trigger): keep active connections
 	fresh. Best-effort per connection - one provider being down never blocks
-	the others. Pass `property` to scope the push to one property."""
+	the others. Pass `property` to scope the push to one property.
+
+	Connections whose adapter takes changes are skipped: their outbox sends
+	what changed, and a full sync only on demand (kamra.channel_ari)."""
+	from kamra.channel_ari import uses_outbox
 	for name in _connections(property):
+		if uses_outbox(name):
+			continue
 		try:
 			push_ari(name)
 		except Exception:
 			frappe.log_error(title=f"ARI push failed: {name}")
 
 
-def enqueue_property_push(property: str | None) -> None:
+def enqueue_property_push(property: str | None, outbox: bool = True) -> None:
 	"""Pipeline 1 trigger: after any availability or rate change, fan the new
 	numbers out to this property's OTAs. After-commit so it runs on the
 	saved state, and fully swallowed so a channel hiccup can never block or
-	fail the booking / rate write that triggered it."""
+	fail the booking / rate write that triggered it.
+
+	Connections with an outbox get an availability change over the whole
+	horizon (only what moved goes out); `outbox=False` leaves them to a
+	caller that queued its own window."""
+	from kamra import channel_ari
 	try:
-		if not property or not _connections(property):
+		if not property:
+			return
+		if outbox:
+			channel_ari.enqueue_ari_change(property, kinds="availability",
+			                               reason="enqueue_property_push")
+		if not [n for n in _connections(property) if not channel_ari.uses_outbox(n)]:
 			return
 		frappe.enqueue("kamra.channel_manager.push_all_ari", queue="long",
 		               enqueue_after_commit=True, property=property)
@@ -274,8 +312,16 @@ def on_reservation_change(doc, method=None):
 	"""doc_event on Reservation: any insert/update/cancel moves availability,
 	so refresh the channel side. The lockout + push run through the same
 	ari_snapshot as everything else, so a direct front-desk villa/room
-	booking tightens OTA inventory exactly like an OTA one does."""
-	enqueue_property_push(getattr(doc, "property", None))
+	booking tightens OTA inventory exactly like an OTA one does.
+
+	A connection with an outbox gets the booking's own nights, before and
+	after the change, for availability and price (occupancy moves price)."""
+	from kamra import channel_ari
+	window = channel_ari.reservation_window(doc, method)
+	if window and getattr(doc, "property", None):
+		channel_ari.enqueue_ari_change(doc.property, window[0], window[1], kinds="both",
+		                               reason=f"Reservation {doc.name}")
+	enqueue_property_push(getattr(doc, "property", None), outbox=False)
 
 
 # ---------------------------------------------------------------------------
@@ -615,7 +661,13 @@ def import_room_mappings(connection: str, dry_run: int = 0):
 	creates/updates a Channel Room Mapping (external_room_id = provider room id,
 	external_rate_id = the room's first rate plan). Anything it can't place is
 	returned under `unmatched` so you can map it by hand. Pass dry_run=1 to
-	preview without writing."""
+	preview without writing.
+
+	A provider that prices each rate plan (details["per_rate_plan"], Channex)
+	gets one mapping per provider rate plan instead, matched to a Kamra Rate
+	Plan by code or name; the one plan of a room left unmatched sells the
+	room type's base price. `warnings` lists what to check by hand: currency,
+	time zone, room counts, per-person plans and fixed-amount plans."""
 	conn = frappe.get_doc("Channel Manager Connection", connection)
 	provider = provider_for(conn.provider)
 	if not hasattr(provider, "fetch_property_details"):
@@ -630,6 +682,9 @@ def import_room_mappings(connection: str, dry_run: int = 0):
 		for key in (rt.room_type_code, rt.room_type_name,
 		            rt.name.split("-")[-1]):
 			index.setdefault(_norm(key), rt.name)
+
+	if details.get("per_rate_plan"):
+		return _import_rate_plan_mappings(conn, details, index, int(dry_run or 0))
 
 	created, updated, unmatched = [], [], []
 	for r in details.get("rooms") or []:
@@ -662,7 +717,88 @@ def import_room_mappings(connection: str, dry_run: int = 0):
 			created.append({**row, "name": doc.name})
 	return {"hotel_id": details.get("hotel_id"),
 	        "hotel_name": details.get("hotel_name"),
-	        "created": created, "updated": updated, "unmatched": unmatched}
+	        "created": created, "updated": updated, "unmatched": unmatched,
+	        "warnings": []}
+
+
+def _import_rate_plan_mappings(conn, details: dict, index: dict, dry_run: int) -> dict:
+	"""import_room_mappings for a provider that prices each rate plan: one
+	Channel Room Mapping per provider rate plan, found again by
+	(connection, external_rate_id)."""
+	from frappe.utils import get_system_timezone
+	plans = {}
+	for p in frappe.get_all("Rate Plan", filters={"property": conn.property, "disabled": 0},
+	                        fields=["name", "code", "rate_plan_name", "modifier_type"]):
+		for key in (p.code, p.rate_plan_name):
+			if key:
+				plans.setdefault(_norm(key), p)
+	prop = frappe.db.get_value("Property", conn.property, ["currency", "timezone"], as_dict=True) or {}
+	warnings, warned = [], set()
+
+	def warn(code: str, key, message: str) -> None:
+		if (code, key) not in warned:
+			warned.add((code, key))
+			warnings.append({"code": code, "message": message})
+
+	if details.get("currency") and prop.get("currency") and details["currency"] != prop["currency"]:
+		warn("currency", None, _("The channel manager sells in {0}; this property is in {1}.").format(
+			details["currency"], prop["currency"]))
+	timezone = prop.get("timezone") or get_system_timezone()
+	if details.get("timezone") and details["timezone"] != timezone:
+		warn("timezone", None, _("The channel manager's property time zone is {0}; this property's is {1}.").format(
+			details["timezone"], timezone))
+
+	created, updated, unmatched = [], [], []
+	for r in details.get("rooms") or []:
+		room_id = str(r.get("room_id") or "")
+		rateplans = r.get("rateplans") or []
+		match = index.get(_norm(r.get("room_id"))) or index.get(_norm(r.get("room_name")))
+		if not match:
+			unmatched.append({"room_id": room_id, "room_name": r.get("room_name"),
+			                  "rateplans": [rp.get("rateplan_id") for rp in rateplans],
+			                  "reason": _("No room type matches it.")})
+			continue
+		rooms = frappe.db.count("Room", {"room_type": match})
+		if r.get("count_of_rooms") is not None and int(r["count_of_rooms"]) != rooms:
+			warn("count_of_rooms", room_id, _("The channel manager has {0} rooms of {1}; Kamra has {2}.").format(
+				r["count_of_rooms"], r.get("room_name") or room_id, rooms))
+		paired, loose = [], []
+		for rp in rateplans:
+			plan = plans.get(_norm(rp.get("rateplan_name"))) or plans.get(_norm(rp.get("rateplan_id")))
+			(paired if plan else loose).append((rp, plan))
+		if len(loose) == 1:  # the room's own price: no Kamra plan, the base price
+			paired.append((loose[0][0], None))
+			loose = []
+		for rp, _plan in loose:
+			unmatched.append({"room_id": room_id, "room_name": r.get("room_name"),
+			                  "rateplan_id": str(rp.get("rateplan_id") or ""), "rateplan_name": rp.get("rateplan_name"),
+			                  "reason": _("Several rate plans of this room match no Kamra rate plan: map them by hand.")})
+		for rp, plan in paired:
+			rate_id = str(rp.get("rateplan_id") or "")
+			if rp.get("sell_mode") == "per_person":
+				warn("per_person", rate_id, _("Rate plan {0} is priced per person; Kamra sends one price per room.").format(
+					rp.get("rateplan_name") or rate_id))
+			if plan and plan.modifier_type in ("Amount", "Absolute"):
+				warn("fixed_amount", plan.name, _("Rate plan {0} adds a fixed amount: on the channels it applies every "
+				                                  "night, on direct bookings once per stay.").format(plan.rate_plan_name))
+			row = {"room_type": match, "external_room_id": room_id, "external_rate_id": rate_id,
+			       "rate_plan": plan.name if plan else None}
+			existing = frappe.db.get_value("Channel Room Mapping",
+			                               {"connection": conn.name, "external_rate_id": rate_id}, "name")
+			if dry_run:
+				(updated if existing else created).append(row)
+				continue
+			if existing:
+				doc = frappe.get_doc("Channel Room Mapping", existing)
+				doc.update(row)
+				doc.save(ignore_permissions=True)
+				updated.append({**row, "name": existing})
+			else:
+				doc = frappe.get_doc({"doctype": "Channel Room Mapping", "connection": conn.name,
+				                      **row}).insert(ignore_permissions=True)
+				created.append({**row, "name": doc.name})
+	return {"hotel_id": details.get("hotel_id"), "hotel_name": details.get("hotel_name"),
+	        "created": created, "updated": updated, "unmatched": unmatched, "warnings": warnings}
 
 
 @frappe.whitelist()

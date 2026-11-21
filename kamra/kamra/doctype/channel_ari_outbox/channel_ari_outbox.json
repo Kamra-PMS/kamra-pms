@@ -1,0 +1,168 @@
+{
+ "doctype": "DocType",
+ "name": "Channel ARI Outbox",
+ "module": "Kamra",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "in_create": 1,
+ "track_changes": 0,
+ "description": "Availability and rate changes waiting to go to a channel manager, and what became of them. Dates and ids only: no guest data.",
+ "field_order": [
+  "connection",
+  "property",
+  "date_from",
+  "date_to",
+  "kinds",
+  "full",
+  "reason",
+  "column_break_a",
+  "status",
+  "attempts",
+  "queued_at",
+  "next_attempt_at",
+  "sent_at",
+  "section_break_b",
+  "task_ids",
+  "detail"
+ ],
+ "fields": [
+  {
+   "fieldname": "connection",
+   "fieldtype": "Link",
+   "label": "Connection",
+   "options": "Channel Manager Connection",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_from",
+   "fieldtype": "Date",
+   "label": "From",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_to",
+   "fieldtype": "Date",
+   "label": "To",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "kinds",
+   "fieldtype": "Select",
+   "label": "Kinds",
+   "options": "both\navailability\nrestrictions",
+   "default": "both",
+   "read_only": 1
+  },
+  {
+   "fieldname": "full",
+   "fieldtype": "Check",
+   "label": "Full sync",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Data",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nSending\nSent\nFailed",
+   "default": "Pending",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "attempts",
+   "fieldtype": "Int",
+   "label": "Attempts",
+   "read_only": 1
+  },
+  {
+   "fieldname": "queued_at",
+   "fieldtype": "Datetime",
+   "label": "Queued At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "next_attempt_at",
+   "fieldtype": "Datetime",
+   "label": "Next Attempt At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "label": "Sent At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_b",
+   "fieldtype": "Section Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "task_ids",
+   "fieldtype": "Small Text",
+   "label": "Provider Task IDs",
+   "read_only": 1
+  },
+  {
+   "fieldname": "detail",
+   "fieldtype": "Small Text",
+   "label": "Detail",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "title_field": "reason",
+ "links": [],
+ "actions": [],
+ "states": [],
+ "allow_rename": 0
+}

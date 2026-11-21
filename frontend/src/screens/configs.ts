@@ -8,6 +8,7 @@ const EventLinks = lazy(() => import("../components/EventLinks"))
 const GroupControl = lazy(() => import("../components/GroupControl"))
 const RoomTypeMedia = lazy(() => import("../components/RoomTypeMedia"))
 const OutletWaiters = lazy(() => import("../components/OutletWaiters"))
+const ChannelConnectionActions = lazy(() => import("../components/ChannelConnectionActions"))
 const HkTaskMediaPanel = lazy(() =>
   import("../components/HkMedia").then((m) => ({ default: m.HkTaskMediaPanel })),
 )
@@ -878,7 +879,7 @@ export const channelManagerConfig: ScreenConfig = {
   doctype: "Channel Manager Connection",
   title: "Channel Manager",
   description:
-    "Two-way OTA sync through a channel manager. Bring your own Channex.io account (self-serve, covers Booking.com / Agoda / Expedia / Airbnb); STAAH and AioSell adapters activate with their partner credentials. Map your room types under OTA Room Mappings, then availability and rates push automatically every hour and after every booking - and their bookings land as reservations here.",
+    "Two-way OTA sync through a channel manager. Bring your own Channex.io account (self-serve, covers Booking.com / Agoda / Expedia / Airbnb); STAAH and AioSell adapters activate with their partner credentials. Map your room types under OTA Room Mappings (or import them from the connection), then every change to availability, rates and restrictions goes out on its own within a minute - and their bookings land as reservations here.",
   searchFields: ["provider", "external_property_id"],
   filters: [
     { field: "provider", label: "Provider", options: ["Channex", "STAAH", "AioSell", "Custom"] },
@@ -896,13 +897,16 @@ export const channelManagerConfig: ScreenConfig = {
   ],
   form: [
     { field: "provider", label: "Provider", type: "select", options: ["Channex", "STAAH", "AioSell", "Custom"], required: true },
-    { field: "api_key", label: "API key / token", type: "data", hint: "Stored encrypted. Channex: your user API key; STAAH/AioSell: from partner onboarding" },
+    { field: "api_key", label: "API key / token", type: "password", hint: "Stored encrypted. Channex: your user API key; STAAH/AioSell: from partner onboarding" },
     { field: "external_property_id", label: "Provider's property ID", type: "data", required: true },
     { field: "endpoint", label: "API endpoint override", type: "data", hint: "Leave blank for the provider default" },
-    { field: "webhook_secret", label: "Webhook secret", type: "data", hint: "Set the same value on the provider's booking webhook" },
+    { field: "webhook_secret", label: "Webhook secret", type: "password", hint: "Set the same value on the provider's booking webhook" },
     { field: "sync_days", label: "Days to push", type: "int" },
+    { field: "ari_calls_per_minute", label: "ARI calls per minute", type: "int", hint: "Per endpoint (availability and restrictions count apart). Channex allows 10." },
+    { field: "ari_batch_seconds", label: "Rate batch window (seconds)", type: "int", hint: "Rate changes made within this window go out together in one call." },
     { field: "active", label: "Active", type: "check" },
   ],
+  extra: ChannelConnectionActions,
 }
 
 export const channelRoomMappingsConfig: ScreenConfig = {
@@ -918,12 +922,14 @@ export const channelRoomMappingsConfig: ScreenConfig = {
     { field: "room_type", label: "Room Type" },
     { field: "external_room_id", label: "Provider room ID" },
     { field: "external_rate_id", label: "Provider rate ID" },
+    { field: "rate_plan", label: "Rate plan" },
   ],
   form: [
     { field: "connection", label: "Connection", type: "link", linkDoctype: "Channel Manager Connection", linkPropertyScoped: true, required: true },
     { field: "room_type", label: "Room type", type: "link", linkDoctype: "Room Type", linkPropertyScoped: true, required: true },
     { field: "external_room_id", label: "Provider room ID", type: "data", required: true },
     { field: "external_rate_id", label: "Provider rate plan ID", type: "data" },
+    { field: "rate_plan", label: "Rate plan", type: "link", linkDoctype: "Rate Plan", linkPropertyScoped: true, hint: "Empty: the room type's base price" },
   ],
 }
 

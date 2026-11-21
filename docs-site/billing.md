@@ -607,6 +607,7 @@ including your own currency:
 | Malaysia | USD, SGD, EUR, GBP, AUD, CNY, JPY, IDR |
 | Indonesia | USD, SGD, AUD, EUR, JPY, CNY, MYR, SAR |
 | Thailand | USD, EUR, GBP, CNY, JPY, AUD, SGD, INR |
+| Philippines | USD, EUR, JPY, KRW, CNY, AUD, SGD, HKD |
 
 Finance and Hotel Admin can fetch rates or type them in.
 

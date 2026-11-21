@@ -11,7 +11,8 @@
   "room_type",
   "column_break_a",
   "external_room_id",
-  "external_rate_id"
+  "external_rate_id",
+  "rate_plan"
  ],
  "fields": [
   {
@@ -47,6 +48,14 @@
    "fieldtype": "Data",
    "label": "Provider Rate Plan ID",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "rate_plan",
+   "fieldtype": "Link",
+   "label": "Rate Plan",
+   "options": "Rate Plan",
+   "in_list_view": 1,
+   "description": "The Kamra rate plan this provider rate plan sells. Blank: the room type's base price."
   }
  ],
  "permissions": [

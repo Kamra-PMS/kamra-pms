@@ -1,18 +1,24 @@
 /** Locale dictionaries are loaded on demand so English (and a single
- *  active language) do not pay for ar + es + pt in the entry bundle.
- *  ~1.4 MB of JSON otherwise ships on every first paint. */
+ *  active language) do not pay for every other language in the entry bundle.
+ *  A new locales/<code>.json is picked up here without another import;
+ *  register its name and direction in i18n/languages.json so the pickers
+ *  and the Settings toggles offer it. */
 
 type Dict = Record<string, string>
 
 const cache: Record<string, Dict> = { en: {} }
 
-const loaders: Record<string, () => Promise<{ default: Dict }>> = {
-	ar: () => import("../i18n/locales/ar.json"),
-	es: () => import("../i18n/locales/es.json"),
-	pt: () => import("../i18n/locales/pt.json"),
-}
+const loaders = import.meta.glob<{ default: Dict }>("../i18n/locales/*.json")
 
 const inflight = new Map<string, Promise<Dict>>()
+
+function loaderFor(language: string) {
+	const suffix = `/${language}.json`
+	for (const [path, load] of Object.entries(loaders)) {
+		if (path.endsWith(suffix)) return load
+	}
+	return undefined
+}
 
 /** Ensure `language` is in memory. Safe to call repeatedly; en is a no-op. */
 export async function ensureDictionary(language: string): Promise<Dict> {
@@ -20,7 +26,7 @@ export async function ensureDictionary(language: string): Promise<Dict> {
 	if (cache[language]) return cache[language]
 	const pending = inflight.get(language)
 	if (pending) return pending
-	const loader = loaders[language]
+	const loader = loaderFor(language)
 	if (!loader) return cache.en
 	const task = loader()
 		.then((mod) => {

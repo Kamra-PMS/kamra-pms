@@ -345,14 +345,18 @@ export default function Assistant() {
   }
   // a screen can hand the agent a ready question (End of Day blockers);
   // it is put in the box for the user to read and send, not sent for them
-  const handoff = (useLocation().state as { prompt?: string } | null)?.prompt
+  const handoffState = useLocation().state as { prompt?: string; property?: string } | null
+  const handoff = handoffState?.prompt
+  // the question is about the property the screen was showing (Night Audit
+  // lists every property), not whichever one the header switcher holds
+  const chatProperty = handoffState?.property || getCurrentProperty()
   useEffect(() => {
     if (handoff) setInput(handoff)
   }, [handoff])
 
   useEffect(() => {
     call<{ enabled: boolean }>("kamra.assistant.assistant_status", {
-      property: getCurrentProperty(),
+      property: chatProperty,
     })
       .then((s) => setAiEnabled(s.enabled))
       .catch(() => setAiEnabled(true))
@@ -431,7 +435,7 @@ export default function Assistant() {
       }
 
       const res = await postRaw("/api/method/kamra.assistant.ask_stream", {
-        property: getCurrentProperty(),
+        property: chatProperty,
         messages: history.map(({ role, content }) => ({ role, content })),
         lang: agentLang(),
       })
@@ -546,7 +550,7 @@ export default function Assistant() {
           <span className="truncate">
             {aiEnabled === false ? translate("Not set up") : translate("Acting as you")} ·{" "}
             <span className="font-medium text-zinc-700">
-              {getCurrentProperty()?.split("-")[0] ?? translate("your hotel")}
+              {chatProperty?.split("-")[0] ?? translate("your hotel")}
             </span>
           </span>
         </div>

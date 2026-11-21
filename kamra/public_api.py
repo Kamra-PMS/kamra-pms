@@ -299,6 +299,7 @@ def default_property():
 
 
 def _public_locale(property: str) -> dict:
+	from kamra.languages import enabled_codes, public_booking_language
 	from kamra.localization import pack_for, privacy_terms
 	prop = frappe.get_cached_doc("Property", property)
 	pack = pack_for(property)
@@ -307,7 +308,8 @@ def _public_locale(property: str) -> dict:
 	return {"currency_symbol": loc.get("currency_symbol") or "",
 	        "locale": loc.get("locale") or "en",
 	        "currency": loc.get("currency") or "",
-	        "default_language": prop.get("booking_language") or None,
+	        "default_language": public_booking_language(prop.get("booking_language")),
+	        "enabled_languages": enabled_codes(),
 	        **privacy_terms(pack)}
 
 
