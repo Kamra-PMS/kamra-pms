@@ -79,9 +79,9 @@ class DayUsePricingTestCase(AuditTestCase):
 		self.assertAlmostEqual(q["room_total"], 4800, places=0)
 
 	def test_due_out_only_after_planned_etd(self):
+		# a day use from the start: validate_dates refuses a same-day stay otherwise
 		res = make_reservation(PROP_A, self.rt, TODAY, TODAY,
-		                       status="Checked In", room=self.room)
-		res.db_set("is_day_use", 1)
+		                       status="Checked In", room=self.room, is_day_use=1)
 		res.db_set("planned_check_out_time", "13:00:00")
 		row = frappe.get_doc("Reservation", res.name)
 		before = datetime.strptime(f"{TODAY} 12:00:00", "%Y-%m-%d %H:%M:%S")
@@ -90,9 +90,9 @@ class DayUsePricingTestCase(AuditTestCase):
 		self.assertTrue(day_use.is_due_out(row, now=after))
 
 	def test_room_board_due_out_respects_etd(self):
+		# a day use from the start: validate_dates refuses a same-day stay otherwise
 		res = make_reservation(PROP_A, self.rt, TODAY, TODAY,
-		                       status="Checked In", room=self.room)
-		res.db_set("is_day_use", 1)
+		                       status="Checked In", room=self.room, is_day_use=1)
 		res.db_set("planned_check_out_time", "23:30:00")
 		with patch("kamra.day_use.now_datetime",
 		           return_value=datetime.strptime(
@@ -124,9 +124,9 @@ class DayUsePricingTestCase(AuditTestCase):
 		self.assertGreater(float(room[0].amount), 400)
 
 	def test_alert_overdue_day_use_once(self):
+		# a day use from the start: validate_dates refuses a same-day stay otherwise
 		res = make_reservation(PROP_A, self.rt, TODAY, TODAY,
-		                       status="Checked In", room=self.room)
-		res.db_set("is_day_use", 1)
+		                       status="Checked In", room=self.room, is_day_use=1)
 		res.db_set("planned_check_out_time", "08:00:00")
 		past = datetime.strptime(f"{TODAY} 10:00:00", "%Y-%m-%d %H:%M:%S")
 		with patch("kamra.day_use.now_datetime", return_value=past):
