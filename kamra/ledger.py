@@ -7,6 +7,7 @@ the four Opera ledgers (Guest / Deposit / AR / Package) can be balanced."""
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
 from typing import Any
 
@@ -2131,7 +2132,10 @@ def upsert_exchange_rate(property: str, currency: str, buy_rate: float,
 #    "time_last_update_utc": "Thu, 29 Oct 2026 00:02:31 +0000",
 #    "rates": {"INR": 1, "USD": 0.01189, ...}}   # foreign units per 1 base
 # and on failure {"result": "error", "error-type": "unsupported-code"}.
-# Swap the provider here; market_rates() is the only reader.
+# Swap the provider here; market_rates() is the only reader. A country
+# pack whose bills must use an official rate (a central bank's daily
+# quote) declares its own market_rates(home) with the same contract;
+# _rates_source() picks it.
 FX_RATES_URL = "https://open.er-api.com/v6/latest/{base}"
 FX_TIMEOUT_S = 5
 FX_MAX_BYTES = 256 * 1024  # the real reply is ~4 KB
@@ -2200,14 +2204,15 @@ def _fetch_rates(property: str, only_missing: bool = False) -> dict:
 	out = {"business_date": str(bd), "updated": [], "kept_manual": [],
 	       "not_offered": [], "as_of": None}
 	skip_key = f"kamra:fx_not_offered:{property}:{bd}"
+	source = _rates_source(property)
 	if only_missing:
 		skipped = set(frappe.cache.get_value(skip_key) or ())
 		wanted = [c for c in wanted if c not in existing and c not in skipped]
 		if not wanted:
 			return out
-		mids, out["as_of"] = _market_rates_hourly(home)
+		mids, out["as_of"] = _market_rates_hourly(home, source)
 	else:
-		mids, out["as_of"] = market_rates(home)
+		mids, out["as_of"] = source(home)
 	margin = float(get_setting(property, "fx_margin_pct") or 0) / 100
 	for cur in wanted:
 		row = existing.get(cur)
@@ -2246,15 +2251,24 @@ def _fetch_rates(property: str, only_missing: bool = False) -> dict:
 	return out
 
 
-def _market_rates_hourly(home: str) -> tuple[dict, str | None]:
-	"""market_rates for the scheduler: one provider call per home currency
-	an hour, however many properties share it (the provider asks for no
-	more than about hourly). A failure is not cached."""
-	key = f"kamra:fx_market:{home}"
+def _rates_source(property: str) -> Callable[[str], tuple[dict, str | None]]:
+	"""Where the property's rates come from: its country pack's
+	market_rates(home) when the pack declares one (an official source),
+	else the open market feed above. Same contract either way."""
+	from kamra.localization import pack_for
+	return getattr(pack_for(property), "market_rates", None) or market_rates
+
+
+def _market_rates_hourly(home: str, source: Callable[[str], tuple[dict, str | None]] = market_rates
+                         ) -> tuple[dict, str | None]:
+	"""market_rates for the scheduler: one provider call per source and
+	home currency an hour, however many properties share it (the provider
+	asks for no more than about hourly). A failure is not cached."""
+	key = f"kamra:fx_market:{source.__module__}:{home}"
 	hit = frappe.cache.get_value(key)
 	if hit:
 		return hit[0], hit[1]
-	mids, as_of = market_rates(home)
+	mids, as_of = source(home)
 	frappe.cache.set_value(key, [mids, as_of], expires_in_sec=3600)
 	return mids, as_of
 
