@@ -153,7 +153,8 @@ etiquetas de impuestos, textos de la factura, moneda y formato de números,
 los documentos de identidad que acepta la recepción y las formas de pago.
 Hay paquetes para la India (GST), Indonesia, Tailandia, Malasia, Filipinas,
 los Emiratos Árabes Unidos y Arabia Saudí (con facturación electrónica ZATCA),
-Brasil y Nicaragua, además de un paquete de impuesto único para el resto de
+Brasil, Alemania (7% de MwSt en el alojamiento, 19% en comida y servicios)
+y Nicaragua, además de un paquete de impuesto único para el resto de
 países. Añadir un país es un solo archivo de Python. Consulte
 [Configuración por país](/country-setup).
 

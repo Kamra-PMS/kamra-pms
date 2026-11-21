@@ -49,6 +49,14 @@ reserva (consulte [Cambiar una reserva](#cambiar-una-reserva)). La estancia apar
 Para una estancia de pocas horas, cambie **Durante la noche** a **Uso diurno** y fije la
 franja horaria. El huésped entra y sale el mismo día.
 
+En **Tarifas para estas fechas**, un **Responsable de ingresos** o un
+**Administrador del hotel** puede escribir el precio de una noche. El
+presupuesto usa ese precio. Una noche escrita a mano no se combina con
+un plan de tarifas ni con un vale, y los campos quedan bloqueados cuando
+la reserva ya tiene un total vendido por una OTA o es de uso diurno.
+**Back to BAR** devuelve esa noche a la tarifa de carta. Recepción no
+puede fijar estos precios.
+
 ## Añadir empresa, servicios adicionales y datos de llegada
 
 Abra **Empresa, complementos y detalles de llegada** en la ventana de reserva para:

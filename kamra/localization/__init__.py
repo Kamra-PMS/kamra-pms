@@ -24,6 +24,11 @@ and the accessors refuse rather than fall back to another country's:
   tax_return_rows(property, from_date, to_date) -> list[dict]
   verify_tax_id(property, tax_id, business_name) -> dict
   verify_guest_id(property, guest, id_type, consent) -> dict
+
+Optional official FX source. Absent means the open market feed
+(kamra.ledger.market_rates):
+  market_rates(home) -> (rates, as_of)
+  rates: {ISO code: home-currency units per 1 foreign unit}
 """
 
 import importlib

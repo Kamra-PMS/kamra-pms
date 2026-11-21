@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **514 endpoints**, generated from the source
+the UI and the AI use. **516 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -955,6 +955,14 @@ house: the reply warns, and their later charges open a new group bill.
 
 **GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
 
+Close a settled folio and issue its invoice number.
+
+The Guest folio of a stay that is still checked in stays open, so
+tonight's charges and the night audit have a bill to post to. Invoice
+what is already paid with part_settle_folio (Settle & continue stay).
+Any other folio, including a company folio, can still close while the
+guest is in house.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `folio` | yes |  |
@@ -1437,7 +1445,8 @@ booking, not a walk-in.
 
 An OTA guest who books and arrives the same day is a walk-in booked
 via that site: booked_via / ota_ref / ota_total / ota_commission_pct
-work as in create_booking (the stay's source is then OTA).
+work as in create_booking (the stay's source is then OTA). night_prices
+books nights at the desk's own prices, as in create_booking.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1471,6 +1480,7 @@ work as in create_booking (the stay's source is then OTA).
 | `ota_ref` | no | `None` |
 | `ota_total` | no | `0` |
 | `ota_commission_pct` | no | `None` |
+| `night_prices` | no | `None` |
 
 ### `kamra.api.upload_occupant_id`
 
@@ -1962,6 +1972,12 @@ Price a stay. With a company and no rate plan, the company's
 negotiated plan applies - the same plan create_booking stores.
 check_in_time / check_out_time price an hourly or block day-use plan.
 
+night_prices ([{date, price}], a Revenue Manager / Hotel Admin only)
+prices those nights at the typed figure - tax included when the
+property's rates include tax - and the rest at the rate card. A voucher,
+rate plan, long-stay discount or holiday package with typed nights is
+refused.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -1978,6 +1994,7 @@ check_in_time / check_out_time price an hourly or block day-use plan.
 | `company` | no | `None` |
 | `check_in_time` | no | `None` |
 | `check_out_time` | no | `None` |
+| `night_prices` | no | `None` |
 
 ### `kamra.api.create_booking`
 
@@ -2005,6 +2022,13 @@ A stay billed to a company on credit runs the property's credit control
 (kamra.credit) for its amount: a warning comes back as `credit_warning`;
 a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 `credit_override_reason`, which is logged. Agents can't override.
+
+night_prices ([{date, price}]) books those nights at the figure the desk
+agreed (tax included when the property's rates include tax) and the rest
+at the rate card; the booking is then priced by hand (auto_price off),
+each typed night is locked in night_rates and logged. Only a Revenue
+Manager or Hotel Admin may; a voucher, rate plan, company plan, OTA
+total or group block rate with typed nights is refused.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -2053,6 +2077,7 @@ a block refuses (CREDIT_BLOCKED) unless Finance or a Hotel Admin passes
 | `ota_commission_pct` | no | `None` |
 | `marketing_consent` | no | `0` |
 | `market_segment` | no | `None` |
+| `night_prices` | no | `None` |
 
 ### `kamra.api.waitlist`
 
@@ -2093,7 +2118,9 @@ can proactively reach the guest the moment a room opens.
 
 Create a Group Booking plus one reservation per requested room.
 `rooms` = [{"room_type": &lt;name>, "count": 2, "room": &lt;optional>,
-"guest_name": &lt;optional>}, ...] (JSON string ok).
+"guest_name": &lt;optional>, "night_prices": &lt;optional>}, ...] (JSON string
+ok). A row's `night_prices` ([{date, price}], as in create_booking) price
+that row's rooms night by night; every row keeps its own.
 
 `master_index` picks the main room (the index of the room as expanded
 by count, default the first): its guest pays what `master_pays` covers
@@ -6599,6 +6626,34 @@ Switch one module on or off for the property.
 | `property` | yes |  |
 | `module` | yes |  |
 | `enabled` | yes |  |
+
+
+## UI languages (which languages sign-in, staff and guests are offered)
+
+> The list is the whole site. English stays on. Nothing saved means every shipped language is on.
+
+### `kamra.languages.enabled_ui_languages` <Badge type='tip' text='public' />
+
+**GET/POST**
+
+Language codes sign-in, the staff app and guest pages may offer.
+
+English is always included. With nothing saved, every shipped language
+is included.
+
+### `kamra.languages.set_disabled_ui_languages`
+
+**POST**
+
+Switch UI languages off for the whole site. Hotel Admin.
+
+`disabled` is a JSON list of language codes to hide. English is ignored.
+A shipped language left off this list stays on, including one added
+after the list was last saved.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `disabled` | no | `None` |
 
 
 ## Rooms (room board, room detail and history, insights)

@@ -2831,6 +2831,14 @@ def settle_group_bill(group_booking: str, mode: str | None = None,
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Kamra Agent")
 def close_folio(folio: str, pin: str | None = None):
+	"""Close a settled folio and issue its invoice number.
+
+	The Guest folio of a stay that is still checked in stays open, so
+	tonight's charges and the night audit have a bill to post to. Invoice
+	what is already paid with part_settle_folio (Settle & continue stay).
+	Any other folio, including a company folio, can still close while the
+	guest is in house.
+	"""
 	_pin_guard(folio, pin)
 	row = frappe.db.get_value(
 		"Folio", folio, ["property", "folio_type", "reservation", "status"], as_dict=True)
