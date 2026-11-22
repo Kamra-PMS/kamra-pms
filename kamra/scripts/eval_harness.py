@@ -11383,6 +11383,90 @@ def t_pos_till_with_tax():
 		"Cashier Transaction", {"pos_order": o, "kind": "Payment"}, "amount")
 	assert printed == 1050.0 and float(took or 0) == printed, (printed, took)
 
+@check("POS: a bill settles by Bank Transfer, and by QRIS in Indonesia; the till keeps both out of the cash drawer")
+def t_pos_outlet_bank_transfer_qris():
+	from kamra import cashier, pos
+	from kamra.localization import outlet_payment_modes, pack_for
+
+	# the doctypes the modes are stored on took the migration, not just the JSON
+	for doctype, field, mode in (("Folio Payment", "mode", "QRIS"),
+	                             ("Cashier Transaction", "mode", "QRIS"),
+	                             ("Banquet Receipt", "mode", "QRIS"),
+	                             ("POS Order", "payment_mode", "QRIS"),
+	                             ("POS Order", "payment_mode", "Bank Transfer")):
+		options = (frappe.get_meta(doctype).get_field(field).options or "").split("\n")
+		assert mode in options, (doctype, field, options)
+
+	# India (the harness property) still has no QRIS; Bank Transfer is there
+	assert outlet_payment_modes(pack_for(P)) == ["Cash", "Card", "UPI", "Bank Transfer"], \
+		outlet_payment_modes(pack_for(P))
+	try:
+		pos._assert_outlet_mode(P, "QRIS")
+	except frappe.ValidationError:
+		pass
+	else:
+		raise AssertionError("QRIS was accepted at an Indian outlet")
+	pos._assert_outlet_mode(P, "Bank Transfer")
+
+	P6 = "EVAL Bali Hotel"  # the Indonesia property t44 creates
+	if not frappe.db.exists("Property", P6):
+		frappe.get_doc({
+			"doctype": "Property", "property_name": P6, "city": "Ubud",
+			"country": "Indonesia",
+		}).insert(ignore_permissions=True)
+	assert outlet_payment_modes(pack_for(P6)) == ["Cash", "Card", "QRIS", "Bank Transfer"], \
+		outlet_payment_modes(pack_for(P6))
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P6, "outlet_name": "Eval Warung",
+		"outlet_type": "Restaurant", "gst_rate": 10,
+	}).insert(ignore_permissions=True).name
+	dish = frappe.get_doc({
+		"doctype": "Menu Item", "property": P6, "outlet": outlet,
+		"item_name": "Eval Nasi Goreng", "category": "Food", "price": 50000,
+		"is_veg": 0, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+	session = cashier.open_session(P6, 0)["name"]
+
+	def bill():
+		o = pos.create_order(outlet, [{"menu_item": dish, "qty": 1}],
+		                     order_type="Takeaway")["order"]
+		return o, pos.bill_data(o)["grand_total"]
+
+	# a mode this country does not have is refused, and the bill stays open
+	o, _ = bill()
+	try:
+		pos.pay_order(o, "UPI")
+	except frappe.ValidationError:
+		pass
+	else:
+		raise AssertionError("UPI was accepted at an Indonesian outlet")
+	assert not frappe.db.get_value("POS Order", o, "paid")
+
+	# each way to pay closes a bill and puts the till's money where it belongs
+	grand = None
+	for mode in ("Cash", "QRIS", "Bank Transfer"):
+		o, grand = bill()
+		pos.pay_order(o, mode)
+		doc = frappe.get_doc("POS Order", o)
+		assert doc.paid and doc.payment_mode == mode, (mode, doc.paid, doc.payment_mode)
+		took = frappe.db.get_value(
+			"Cashier Transaction", {"pos_order": o, "kind": "Payment"},
+			["mode", "amount"], as_dict=True)
+		assert took.mode == mode and float(took.amount) == grand, (mode, took, grand)
+	t = cashier.session_as_dict(session)["totals"]
+	# the open "UPI" bill above never paid, so three bills are on the till
+	assert (t["cash"], t["upi"], t["other"], t["card"]) == (grand, grand, grand, 0), t
+	assert t["expected_cash"] == grand, t  # only the cash is in the drawer
+
+	# a cashier who pressed the wrong mode can move it to either
+	o, grand = bill()
+	pos.pay_order(o, "Cash")
+	pos.change_payment_mode(o, "QRIS")
+	pos.change_payment_mode(o, "Bank Transfer")
+	assert frappe.db.get_value("POS Order", o, "payment_mode") == "Bank Transfer"
+	t = cashier.session_as_dict(session)["totals"]
+	assert (t["cash"], t["upi"], t["other"]) == (grand, grand, grand * 2), t
+
 @check("type capacity: out of order and blocked rooms are not sold to an unassigned stay")
 def t_capacity_rooms_out_of_sale():
 	from kamra.kamra.doctype.reservation.reservation import InventoryRefused
@@ -11560,6 +11644,7 @@ def execute():
 		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging,
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
+		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_refused, t_folio_no_close_in_house):
 			fn()

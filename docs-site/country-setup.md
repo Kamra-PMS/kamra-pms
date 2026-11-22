@@ -33,7 +33,7 @@ does not file DATEV and does not cover the small-business exemption
 | India | Aadhaar, Passport, Driving License, Voter ID, PAN | Cash, Card, UPI, Bank Transfer |
 | Saudi Arabia | National ID, Iqama, Passport, GCC ID | Cash, Card (incl. mada), Bank Transfer |
 | UAE | Emirates ID, Passport, GCC ID, Driving License | Cash, Card, Bank Transfer |
-| Indonesia | KTP, Passport, KITAS, Driving License | Cash, Card (incl. QRIS), Bank Transfer |
+| Indonesia | KTP, Passport, KITAS, Driving License | Cash, Card, QRIS, Bank Transfer |
 | Thailand | Thai ID Card, Passport, Driving License | Cash, Card, Bank Transfer |
 | Malaysia | MyKad, Passport, Driving License | Cash, Card, Bank Transfer |
 | Philippines | PhilSys National ID, Passport, Driver's License, UMID, SSS, PRC, PhilHealth, Postal ID, Senior Citizen ID, PWD ID, ACR I-Card | Cash, Card (incl. GCash and Maya), Bank Transfer |

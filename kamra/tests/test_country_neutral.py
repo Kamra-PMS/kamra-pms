@@ -59,12 +59,14 @@ class TestCountryNeutralCore(unittest.TestCase):
 	def test_instant_modes_come_from_the_pack(self):
 		from kamra.localization import saudi, thailand
 		self.assertIn("UPI", localization.payment_modes(india))
-		self.assertEqual(localization.outlet_payment_modes(india), ["Cash", "Card", "UPI"])
+		self.assertEqual(localization.outlet_payment_modes(india),
+		                 ["Cash", "Card", "UPI", "Bank Transfer"])
 		for pack in (saudi, thailand, generic):
 			with self.subTest(pack=pack.__name__):
 				self.assertNotIn("UPI", localization.payment_modes(pack))
 				self.assertEqual(localization.instant_payment_modes(pack), [])
-				self.assertEqual(localization.outlet_payment_modes(pack), ["Cash", "Card"])
+				self.assertEqual(localization.outlet_payment_modes(pack),
+				                 ["Cash", "Card", "Bank Transfer"])
 		from kamra import zatca
 		self.assertNotIn("UPI", zatca.PAYMENT_MEANS)
 
