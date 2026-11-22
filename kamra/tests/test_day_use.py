@@ -139,6 +139,23 @@ class DayUsePricingTestCase(AuditTestCase):
 		self.assertEqual(len(room), 1)
 		self.assertIn("day use · 3 h", room[0].description)
 
+	def test_a_morning_block_day_use_bills_its_block(self):
+		"""Same parser as the hourly stay: an 08:00 block start is a
+		timedelta, and posting it (check-out) used to raise."""
+		res = make_reservation(
+			PROP_A, self.rt, TODAY, TODAY, status="Checked In", room=self.room,
+			rate_plan=self.block.name, is_day_use=1, auto_price=1,
+			planned_check_in_time="08:00:00", planned_check_out_time="11:00:00")
+		row = frappe.get_doc("Reservation", res.name)
+		at_etd = datetime.strptime(f"{TODAY} 11:00:00", "%Y-%m-%d %H:%M:%S")
+		with patch("kamra.day_use.now_datetime", return_value=at_etd):
+			self.assertEqual(day_use.reservation_slot_hours(row), (3.0, 3.0))
+			folio_mod.post_remaining_nights(row)
+		folio = frappe.get_doc("Folio", guest_folio(res.name))
+		room = [c for c in folio.charges if c.charge_type == "Room"]
+		self.assertEqual(len(room), 1)
+		self.assertIn("day use · 1 × 3h", room[0].description)
+
 	def _morning_changeover(self):
 		"""The guest in the room leaves today at 10:00; the next one arrives at 08:00."""
 		make_reservation(PROP_A, self.rt, d(-1), TODAY, status="Checked In", room=self.room,
@@ -154,6 +171,14 @@ class DayUsePricingTestCase(AuditTestCase):
 		chart = api.tape_chart(PROP_A, start_date=d(-1), days=3)
 		conflict = next(c for c in chart["conflicts"] if c["room"] == self.room)
 		self.assertEqual((conflict["eta"], conflict["etd"]), ("08:00", "10:00"))
+		# the bars themselves used to keep the raw timedelta, and the screen
+		# cuts that text to five characters ("8:00:")
+		bars = next(r for r in chart["rooms"] if r.name == self.room).bookings
+		incoming = next(b for b in bars if str(b.check_in_date) == TODAY)
+		outgoing = next(b for b in bars
+		                if str(b.check_out_date) == TODAY and b.name != incoming.name)
+		self.assertEqual(incoming.planned_check_in_time, "08:00")
+		self.assertEqual(outgoing.planned_check_out_time, "10:00")
 
 	def test_position_briefing_flags_a_morning_arrival_before_the_departure(self):
 		"""The briefing compares the same two times: "8:00:" sorted after "10:00"."""
@@ -161,6 +186,10 @@ class DayUsePricingTestCase(AuditTestCase):
 		briefing = api.position_briefing(PROP_A, TODAY)
 		self.assertIn({"room_no": "201", "eta": "08:00", "etd": "10:00"},
 		              [{k: c[k] for k in ("room_no", "eta", "etd")} for c in briefing["changeover_conflicts"]])
+		arrival = next(a for a in briefing["arrivals"] if a.eta == "08:00")
+		departure = next(x for x in briefing["departures"] if x.etd == "10:00")
+		self.assertEqual(arrival.planned_check_in_time, "08:00")
+		self.assertEqual(departure.planned_check_out_time, "10:00")
 
 	def test_a_morning_day_use_keeps_its_rate_lock_key_when_read_back(self):
 		"""The booking is priced from the times the desk sent ("08:00:00");

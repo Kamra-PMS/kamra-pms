@@ -658,8 +658,10 @@ def registration_card(reservation: str):
 				prop.address_line, prop.city, prop.state, prop.pincode])),
 			"gstin": prop.gstin, "phone": prop.phone, "email": prop.email,
 			"tax_id_label": _pack_tax_id_label(prop),
-			"checkin_time": str(prop.checkin_time or ""),
-			"checkout_time": str(prop.checkout_time or ""),
+			# the card falls back to these and keeps five characters, so a
+			# 09:00 standard time has to be "09:00", not "9:00:"
+			"checkin_time": hhmm(prop.checkin_time) or "",
+			"checkout_time": hhmm(prop.checkout_time) or "",
 		},
 		"money": _stay_money(res),
 		"readiness": {
@@ -5821,6 +5823,13 @@ def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 					"eta": hhmm(b.planned_check_in_time),
 				})
 
+	# The bars and the stay panel keep the first five characters of these.
+	# Done after the conflict scan: a midnight timedelta is falsy, and the
+	# scan still treats that as "no time".
+	for b in bookings:
+		b["planned_check_in_time"] = hhmm(b.planned_check_in_time)
+		b["planned_check_out_time"] = hhmm(b.planned_check_out_time)
+
 	# the day-by-day house position: sold vs capacity vs the overbooking
 	# ceiling, plus the demand tier the pricing engine is applying
 	from kamra.pricing import demand_tier, forecast_occupancy
@@ -5966,9 +5975,11 @@ def position_briefing(property: str, date: str | None = None):
 		order_by="planned_check_out_time asc")
 	for a in arrivals:
 		a["eta"] = hhmm(a.planned_check_in_time) if a.planned_check_in_time else None
+		a["planned_check_in_time"] = a["eta"]
 		a["room_no"] = (a.room or "").split("-")[-1] or None
 	for dep in departures:
 		dep["etd"] = hhmm(dep.planned_check_out_time) if dep.planned_check_out_time else None
+		dep["planned_check_out_time"] = dep["etd"]
 		dep["room_no"] = (dep.room or "").split("-")[-1]
 	# what check-out will ask for, unposted nights included
 	dep_money = _stay_balances([dep.name for dep in departures])
