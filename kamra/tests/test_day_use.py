@@ -243,9 +243,24 @@ class DayUseUnitsTestCase(AuditTestCase):
 		whose first five characters were "8:00:"."""
 		for value, text in ((timedelta(hours=8), "08:00"), (timedelta(hours=23, minutes=30), "23:30"),
 		                    ("08:00:00", "08:00"), ("8:05", "08:05"), ("13:00", "13:00"),
-		                    (time(7, 45), "07:45"), (None, None), ("", None)):
+		                    ("8:00:", "08:00"), (time(7, 45), "07:45"),
+		                    (datetime(2031, 3, 12, 8, 5), "08:05"),
+		                    (None, None), ("", None), ("   ", None),
+		                    ("nope", None), ("99:99", None), ("24:00", None)):
 			with self.subTest(value=value):
 				self.assertEqual(day_use.hhmm(value), text)
+
+	def test_an_unreadable_time_does_not_raise(self):
+		"""A bad string must not take down due-out or the hourly bill."""
+		res = frappe._dict(check_out_date=TODAY, is_day_use=1, status="Checked In",
+		                   planned_check_out_time="nope")
+		now = datetime.strptime(f"{TODAY} 12:00", "%Y-%m-%d %H:%M")
+		self.assertTrue(day_use.is_due_out(res, now=now))
+		slot = frappe._dict(check_in_date=TODAY, planned_check_in_time="nope",
+		                    planned_check_out_time="also")
+		at = datetime.strptime(f"{TODAY} 12:00", "%Y-%m-%d %H:%M")
+		with patch("kamra.day_use.now_datetime", return_value=at):
+			self.assertEqual(day_use.reservation_slot_hours(slot), (2.0, 8.0))
 
 	def test_billable_units_rounding(self):
 		plan = {"billing_basis": "Hourly", "hourly_rate": 100, "min_hours": 2,

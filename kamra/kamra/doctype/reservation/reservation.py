@@ -650,10 +650,13 @@ class Reservation(Document):
 			# from the database (a timedelta), so the key does not change
 			# when a saved booking is read back
 			from kamra.day_use import hhmm
-			if self.get("planned_check_in_time"):
-				inputs["check_in_time"] = hhmm(self.planned_check_in_time)
-			if self.get("planned_check_out_time"):
-				inputs["check_out_time"] = hhmm(self.planned_check_out_time)
+			# only a real HH:MM enters the key; None would change it
+			check_in = hhmm(self.get("planned_check_in_time"))
+			check_out = hhmm(self.get("planned_check_out_time"))
+			if check_in:
+				inputs["check_in_time"] = check_in
+			if check_out:
+				inputs["check_out_time"] = check_out
 		return inputs
 
 	def hand_set_prices(self) -> list[dict]:

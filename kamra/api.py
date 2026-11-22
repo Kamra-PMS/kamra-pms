@@ -5813,14 +5813,17 @@ def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 			out = by_date_out.get(str(b.check_in_date))
 			if not out or out.name == b.name or not b.planned_check_in_time:
 				continue
-			if hhmm(b.planned_check_in_time) <= hhmm(out.planned_check_out_time):
+			eta = hhmm(b.planned_check_in_time)
+			etd = hhmm(out.planned_check_out_time)
+			# both have to be clock times: None <= "10:00" raises
+			if eta and etd and eta <= etd:
 				conflicts.append({
 					"room": r.name, "room_number": r.room_number,
 					"date": str(b.check_in_date),
 					"out_res": out.name, "out_guest": out.guest_name,
-					"etd": hhmm(out.planned_check_out_time),
+					"etd": etd,
 					"in_res": b.name, "in_guest": b.guest_name,
-					"eta": hhmm(b.planned_check_in_time),
+					"eta": eta,
 				})
 
 	# The bars and the stay panel keep the first five characters of these.
