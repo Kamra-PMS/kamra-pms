@@ -11512,6 +11512,64 @@ def t_folio_no_close_in_house():
 		"reservation": res.name, "parenttype": "Folio"}, "parent") == out["new_folio"]
 
 
+@check("a price with tax and the levy inside bills to exactly that price; with neither inside nothing changes")
+def t_rates_include_levy():
+	from kamra.api import _apply_country_defaults
+	from kamra.folio import open_folio, post_room_night
+	from kamra.pricing import quote
+
+	sp = "rates_include_levy_state"
+	frappe.db.savepoint(sp)
+	try:
+		values = {"property_name": "EVAL Levy Hotel", "country": "Indonesia",
+		          "city": "Bandar Lampung", "rates_include_tax": 0, "room_levy_percent": 10}
+		_apply_country_defaults(values)
+		prop = frappe.get_doc({"doctype": "Property", **values}).insert(ignore_permissions=True)
+		rt = frappe.get_doc({
+			"doctype": "Room Type", "property": prop.name,
+			"room_type_code": "STD", "room_type_name": "Standard",
+			"base_price": 99.94, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1,
+		}).insert(ignore_permissions=True)
+		ci, co = "2033-09-10", "2033-09-11"
+
+		def stay():
+			guest = frappe.get_doc({"doctype": "Guest", "first_name": "Levy Eval"}
+			                       ).insert(ignore_permissions=True)
+			res = frappe.get_doc({
+				"doctype": "Reservation", "property": prop.name, "room_type": rt.name,
+				"guest": guest.name, "status": "Confirmed", "adults": 2, "children": 0,
+				"check_in_date": ci, "check_out_date": co})
+			res.flags.allow_past_check_in = True
+			res.insert(ignore_permissions=True)
+			open_folio(res)
+			post_room_night(res, ci)
+			levy = frappe.get_all("Folio Charge", filters={
+				"reservation": res.name, "charge_type": "Room Levy"}, pluck="amount")
+			grand = frappe.db.get_value("Folio", {"reservation": res.name}, "grand_total")
+			return res, [round(float(x), 6) for x in levy], float(grand)
+
+		# neither inside (the default): a rate keeps its cents, the levy is whole cents
+		res, levy, _grand = stay()
+		assert round(float(res.night_rates[0].rate), 6) == 99.94, res.night_rates[0].rate
+		assert levy == [9.99], levy  # 9.994 -> 9.99
+
+		# tax and the levy both inside 331: 331 / 1.21 = 273.553719, billed back to 331
+		frappe.db.set_value("Property", prop.name, {
+			"rates_include_tax": 1, "rates_include_levy": 1})
+		frappe.clear_document_cache("Property", prop.name)
+		frappe.db.set_value("Room Type", rt.name, "base_price", 331)
+		q = quote(prop.name, rt.name, ci, co, 2, 0)
+		assert round(q["nightly"][0]["rate"], 6) == 273.553719, q["nightly"]
+		assert abs(q["amount_after_tax"] - 331) < 1e-5, q["amount_after_tax"]
+		res, levy, grand = stay()
+		assert round(float(res.night_rates[0].rate), 6) == 273.553719, res.night_rates[0].rate
+		assert abs(grand - 331) < 1e-5, grand  # not 331.001 from a rate stored in cents
+	finally:
+		frappe.db.rollback(save_point=sp)
+		frappe.clear_document_cache("Property", "EVAL Levy Hotel")
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11561,7 +11619,8 @@ def execute():
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
-		           t_night_prices_refused, t_folio_no_close_in_house):
+		           t_night_prices_refused, t_folio_no_close_in_house,
+		           t_rates_include_levy):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

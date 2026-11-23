@@ -74,6 +74,40 @@ def hours_between(start, end) -> float:
 	return round(secs / 3600.0, 4)
 
 
+def hhmm(value) -> str | None:
+	"""A Time field as HH:MM. The database gives a timedelta, and
+	str(timedelta(hours=8)) is "8:00:00", so its first five characters were
+	"8:00:" - which does not parse, and sorts after "10:00"; a form gives a
+	string ("08:00:00" or "8:00"), a datetime.time formats as it is. None,
+	blank, or a value that is not a clock time stays None, so one bad row
+	cannot raise inside the room board or land in a rate-lock key."""
+	if value is None or value == "":
+		return None
+	if isinstance(value, str) and not value.strip():
+		return None
+	if isinstance(value, timedelta):
+		seconds = int(value.total_seconds())
+		if seconds < 0:
+			return None
+		minutes = seconds // 60
+		return f"{minutes // 60 % 24:02d}:{minutes % 60:02d}"
+	if hasattr(value, "hour") and hasattr(value, "minute"):
+		try:
+			hour, minute = int(value.hour), int(value.minute)
+		except (TypeError, ValueError):
+			return None
+	else:
+		try:
+			parts = str(value).strip().split(":")
+			hour = int(parts[0])
+			minute = int(parts[1]) if len(parts) > 1 and parts[1] else 0
+		except (TypeError, ValueError, IndexError):
+			return None
+	if not (0 <= hour <= 23 and 0 <= minute <= 59):
+		return None
+	return f"{hour:02d}:{minute:02d}"
+
+
 def _as_dt(value, ref: datetime | None = None) -> datetime:
 	if isinstance(value, datetime):
 		return value
@@ -161,8 +195,9 @@ def reservation_slot_hours(res) -> tuple[float, float]:
 	date = getdate(res.check_in_date)
 	start = res.get("planned_check_in_time") or "10:00"
 	end = res.get("planned_check_out_time") or "18:00"
-	start_dt = _as_dt(f"{date} {str(start)[:5]}")
-	end_dt = _as_dt(f"{date} {str(end)[:5]}", ref=start_dt)
+	# an unreadable time uses the same default as a missing one
+	start_dt = _as_dt(f"{date} {hhmm(start) or '10:00'}")
+	end_dt = _as_dt(f"{date} {hhmm(end) or '18:00'}", ref=start_dt)
 	planned = hours_between(start_dt, end_dt)
 	# Actual elapsed: from planned start (or now if earlier) to now.
 	now = now_datetime()
@@ -195,7 +230,10 @@ def is_due_out(res, now=None) -> bool:
 	etd = res.get("planned_check_out_time")
 	if not etd:
 		return True
-	deadline = _as_dt(f"{co} {str(etd)[:5]}")
+	clock = hhmm(etd)
+	if not clock:
+		return True
+	deadline = _as_dt(f"{co} {clock}")
 	return now >= deadline
 
 
@@ -229,7 +267,7 @@ def alert_overdue_day_use(property: str | None = None) -> list[str]:
 			continue
 		if _already_alerted(res.name):
 			continue
-		etd = str(res.planned_check_out_time)[:5]
+		etd = hhmm(res.planned_check_out_time) or ""
 		subject = (f"Day-use past checkout ({etd}) - {res.guest_name}"
 		           + (f" · Room {room_no(res.room)}" if res.room else ""))
 		record(res.property, "front-desk", subject,

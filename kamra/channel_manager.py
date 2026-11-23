@@ -190,12 +190,31 @@ def ari_snapshot(property: str, connection: str, days: int = 90, start=None,
 def _one_night_rate(property: str, room_type: str, d, d2) -> float:
 	"""The pricing engine's one-night sell rate (2 adults), 0 when the
 	night cannot be quoted - availability still goes out for that day."""
-	from kamra.pricing import quote
+	from kamra.pricing import quote, rates_include_levy
 	try:
 		q = quote(property, room_type, str(d), str(d2), 2, 0)
-		return round(float(q["nightly"][0]["rate"]), 2)
+		night = q["nightly"][0]
+		rate = float(night["rate"])
+		if rates_include_levy(property):
+			# The channel adds its own tax to whatever price it is given and
+			# knows no levy, so a levy inside the displayed price is pushed
+			# inside that price. An untaxed levy is sent with the tax taken
+			# out, or the channel taxes it. The displayed price does not have
+			# to include tax already: the channel adds tax either way. Room
+			# 100, levy 10%, tax 10% bills 120 here; pushing 110 would show 121,
+			# and the booking that comes back would lock a different room rate.
+			levy = float(q.get("room_levy") or 0)
+			if not _levy_is_taxed(property):
+				levy /= 1 + float(night.get("gst_rate") or 0) / 100
+			rate += levy
+		return round(rate, 2)
 	except Exception:
 		return 0.0
+
+
+def _levy_is_taxed(property: str) -> bool:
+	taxable = frappe.get_cached_doc("Property", property).get("room_levy_taxable")
+	return bool(1 if taxable is None else taxable)
 
 
 def _apply_villa_lockout(rows: list[dict], meta: dict) -> None:
@@ -562,7 +581,7 @@ def lock_channel_rates(doc, total_after_tax, nightly=None) -> None:
 		return
 	from frappe.utils import date_diff, getdate
 
-	from kamra.pricing import room_gst_rate
+	from kamra.pricing import rates_include_levy, room_gst_rate, room_net_rate, room_rate_digits
 
 	nights = max(date_diff(doc.check_out_date, doc.check_in_date), 1)
 	dates = [str(add_days(doc.check_in_date, i)) for i in range(nights)]
@@ -574,16 +593,23 @@ def lock_channel_rates(doc, total_after_tax, nightly=None) -> None:
 	rt = frappe.get_doc("Room Type", doc.room_type)
 	rows, running = [], 0.0
 	scale = total / sum(weights)
+	# the room rate keeps the decimals the property's own bookings keep
+	digits = room_rate_digits(doc.property)
+	levy_inside = rates_include_levy(doc.property)
 	for i, (d, w) in enumerate(zip(dates, weights, strict=True)):
 		gross = round(total - running, 2) if i == nights - 1 else round(w * scale, 2)
 		running += gross
-		gst = Decimal(str(room_gst_rate(doc.property, rt, Decimal(str(gross)))))
-		pre = Decimal(str(gross)) / (1 + gst / 100)
-		gst2 = Decimal(str(room_gst_rate(doc.property, rt, pre)))
-		if gst2 != gst:  # the slab follows the pre-tax rate
-			gst = gst2
+		if levy_inside:
+			# the OTA's total is the guest's price: the levy comes out of it too
+			pre, gst = room_net_rate(doc.property, rt, gross, tax_included=True)
+		else:
+			gst = Decimal(str(room_gst_rate(doc.property, rt, Decimal(str(gross)))))
 			pre = Decimal(str(gross)) / (1 + gst / 100)
-		rows.append({"stay_date": d, "rate": round(float(pre), 2),
+			gst2 = Decimal(str(room_gst_rate(doc.property, rt, pre)))
+			if gst2 != gst:  # the slab follows the pre-tax rate
+				gst = gst2
+				pre = Decimal(str(gross)) / (1 + gst / 100)
+		rows.append({"stay_date": d, "rate": round(float(pre), digits),
 		             "gst_rate": float(gst), "meal_amount": 0,
 		             "demand_premium_pct": 0})
 	doc.set("night_rates", rows)

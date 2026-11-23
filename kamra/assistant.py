@@ -773,6 +773,8 @@ def _system_prompt(property: str, settings, lang: str | None = None) -> str:
 	symbol = (frappe.db.get_value("Currency", currency, "symbol") or "").strip() if currency else ""
 	inclusive = bool(prop.get("rates_include_tax"))
 	tax_mode = "rates include taxes" if inclusive else "rates exclude taxes"
+	if prop.get("rates_include_levy") and float(prop.get("room_levy_percent") or 0) > 0:
+		tax_mode += ", and the displayed rates already include the room levy"
 	today = getdate(nowdate())
 	week = ", ".join(f"{d:%A} {d}" for d in (add_days(today, i) for i in range(1, 8)))
 	return SYSTEM.format(

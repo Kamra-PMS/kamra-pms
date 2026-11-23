@@ -21,6 +21,7 @@ interface Calendar {
   from: string
   days: number
   tax_inclusive: boolean
+  levy_inclusive?: boolean
   room_types: { room_type: string; code: string; name: string; base_price: number; nights: NightRate[] }[]
 }
 
@@ -63,7 +64,14 @@ export default function RateCalendar() {
           </h1>
           <p className="text-sm text-zinc-500">
             {t("What each room costs per night, and what moved it.")}{" "}
-            {data && (data.tax_inclusive ? t("Prices include tax.") : t("Prices are before tax."))}
+            {data &&
+              (data.levy_inclusive
+                ? data.tax_inclusive
+                  ? t("Prices include tax and the levy.")
+                  : t("Prices include the levy, before tax.")
+                : data.tax_inclusive
+                  ? t("Prices include tax.")
+                  : t("Prices are before tax."))}
           </p>
         </div>
         <div className="flex items-center gap-2">

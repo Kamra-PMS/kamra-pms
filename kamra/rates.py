@@ -77,7 +77,12 @@ def rate_calendar(property: str, from_date: str | None = None, days: int = 14,
 	moved it. A room type's own days are read with the same functions the
 	quote uses; nothing here sets a price."""
 	assert_property_access(property)
-	from kamra.pricing import forecast_occupancy, rates_include_tax, small_group_allows_stay
+	from kamra.pricing import (
+		forecast_occupancy,
+		rates_include_levy,
+		rates_include_tax,
+		small_group_allows_stay,
+	)
 	start = getdate(from_date) if from_date else getdate(frappe.utils.nowdate())
 	days = max(1, min(int(days or 14), 31))
 	dates = [add_days(start, i) for i in range(days)]
@@ -95,6 +100,7 @@ def rate_calendar(property: str, from_date: str | None = None, days: int = 14,
 		             "name": doc.room_type_name, "base_price": float(doc.base_price or 0),
 		             "nights": nights})
 	return {"from": str(start), "days": days, "tax_inclusive": bool(rates_include_tax(property)),
+	        "levy_inclusive": bool(rates_include_levy(property)),
 	        "adults": int(adults), "room_types": rows}
 
 
@@ -146,7 +152,8 @@ def rate_options(property: str, room_type: str, check_in_date: str, check_out_da
 			           "kind": v.discount_type, "value": float(v.value or 0)}
 		except frappe.ValidationError as e:
 			voucher = {"code": code, "valid": False, "reason": str(e)}
-	from kamra.pricing import rates_include_tax
+	from kamra.pricing import rates_include_levy, rates_include_tax
 	return {"nights": night_rows, "plain": plain, "plans": plans, "voucher": voucher,
 	        # the basis of every nightly figure above (and of a typed night price)
-	        "tax_inclusive": bool(rates_include_tax(property))}
+	        "tax_inclusive": bool(rates_include_tax(property)),
+	        "levy_inclusive": bool(rates_include_levy(property))}

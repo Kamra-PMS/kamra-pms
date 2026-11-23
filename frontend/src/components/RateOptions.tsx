@@ -34,6 +34,8 @@ interface Options {
   voucher: { code: string; valid: boolean; discount?: number; kind?: string; value?: number; reason?: string } | null
   /** the figures above (and a typed night price) include tax */
   tax_inclusive?: boolean
+  /** ... and the room levy */
+  levy_inclusive?: boolean
 }
 
 /** The stay's rate, explained: each night's BAR and what moved it, the whole
@@ -114,7 +116,13 @@ export function RateOptions({
   const priceOf = (x: NightRate) => nightPrices[x.date] ?? x.rate
   const hasTyped = data.nights.some((x) => isOverride(nightPrices[x.date], x.rate, digits))
   const roomTotal = data.nights.reduce((sum, x) => sum + priceOf(x), 0)
-  const basis = data.tax_inclusive ? t("Prices include tax.") : t("Prices are before tax.")
+  const basis = data.levy_inclusive
+    ? data.tax_inclusive
+      ? t("Prices include tax and the levy.")
+      : t("Prices include the levy, before tax.")
+    : data.tax_inclusive
+      ? t("Prices include tax.")
+      : t("Prices are before tax.")
 
   /** Set one night; a price equal to what Kamra charges, or none, is not an override. */
   function setNight(x: NightRate, price: number | null) {

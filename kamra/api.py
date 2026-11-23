@@ -12,6 +12,7 @@ from frappe import _
 from frappe.utils import add_days, cint, flt, get_datetime, getdate, now_datetime, nowdate
 
 from kamra.authz import act_as, assert_property_access, require_it_admin, require_roles
+from kamra.day_use import hhmm
 from kamra.install import AGENT_EMAIL
 
 # The apps a property actually runs. The launcher and the sidebar read
@@ -657,8 +658,10 @@ def registration_card(reservation: str):
 				prop.address_line, prop.city, prop.state, prop.pincode])),
 			"gstin": prop.gstin, "phone": prop.phone, "email": prop.email,
 			"tax_id_label": _pack_tax_id_label(prop),
-			"checkin_time": str(prop.checkin_time or ""),
-			"checkout_time": str(prop.checkout_time or ""),
+			# the card falls back to these and keeps five characters, so a
+			# 09:00 standard time has to be "09:00", not "9:00:"
+			"checkin_time": hhmm(prop.checkin_time) or "",
+			"checkout_time": hhmm(prop.checkout_time) or "",
 		},
 		"money": _stay_money(res),
 		"readiness": {
@@ -687,9 +690,9 @@ def registration_card(reservation: str):
 			"check_out_date": str(res.check_out_date),
 			# the times agreed for this booking; the card falls back to the
 			# property's standard times when none were set
-			"planned_check_in_time": str(res.planned_check_in_time)[:5]
+			"planned_check_in_time": hhmm(res.planned_check_in_time)
 			                         if res.get("planned_check_in_time") else None,
-			"planned_check_out_time": str(res.planned_check_out_time)[:5]
+			"planned_check_out_time": hhmm(res.planned_check_out_time)
 			                          if res.get("planned_check_out_time") else None,
 			"nights": res.nights, "adults": res.adults,
 			"children": res.children, "is_day_use": res.get("is_day_use"),
@@ -5636,7 +5639,7 @@ def room_board(property: str):
 		r["due_out"] = bool(stay and _is_due_out(stay))
 		# a day-use room turns the same day: housekeeping plans on its slot
 		r["day_use"] = bool(stay and stay.is_day_use)
-		r["etd"] = str(stay.planned_check_out_time)[:5] \
+		r["etd"] = hhmm(stay.planned_check_out_time) \
 			if stay and stay.planned_check_out_time else None
 		t = tasks.get(r.name)
 		r["task"] = {
@@ -5810,15 +5813,25 @@ def tape_chart(property: str, start_date: str | None = None, days: int = 14):
 			out = by_date_out.get(str(b.check_in_date))
 			if not out or out.name == b.name or not b.planned_check_in_time:
 				continue
-			if str(b.planned_check_in_time) <= str(out.planned_check_out_time):
+			eta = hhmm(b.planned_check_in_time)
+			etd = hhmm(out.planned_check_out_time)
+			# both have to be clock times: None <= "10:00" raises
+			if eta and etd and eta <= etd:
 				conflicts.append({
 					"room": r.name, "room_number": r.room_number,
 					"date": str(b.check_in_date),
 					"out_res": out.name, "out_guest": out.guest_name,
-					"etd": str(out.planned_check_out_time)[:5],
+					"etd": etd,
 					"in_res": b.name, "in_guest": b.guest_name,
-					"eta": str(b.planned_check_in_time)[:5],
+					"eta": eta,
 				})
+
+	# The bars and the stay panel keep the first five characters of these.
+	# Done after the conflict scan: a midnight timedelta is falsy, and the
+	# scan still treats that as "no time".
+	for b in bookings:
+		b["planned_check_in_time"] = hhmm(b.planned_check_in_time)
+		b["planned_check_out_time"] = hhmm(b.planned_check_out_time)
 
 	# the day-by-day house position: sold vs capacity vs the overbooking
 	# ceiling, plus the demand tier the pricing engine is applying
@@ -5964,10 +5977,12 @@ def position_briefing(property: str, date: str | None = None):
 		        "planned_check_out_time"],
 		order_by="planned_check_out_time asc")
 	for a in arrivals:
-		a["eta"] = str(a.planned_check_in_time)[:5] if a.planned_check_in_time else None
+		a["eta"] = hhmm(a.planned_check_in_time) if a.planned_check_in_time else None
+		a["planned_check_in_time"] = a["eta"]
 		a["room_no"] = (a.room or "").split("-")[-1] or None
 	for dep in departures:
-		dep["etd"] = str(dep.planned_check_out_time)[:5] if dep.planned_check_out_time else None
+		dep["etd"] = hhmm(dep.planned_check_out_time) if dep.planned_check_out_time else None
+		dep["planned_check_out_time"] = dep["etd"]
 		dep["room_no"] = (dep.room or "").split("-")[-1]
 	# what check-out will ask for, unposted nights included
 	dep_money = _stay_balances([dep.name for dep in departures])
