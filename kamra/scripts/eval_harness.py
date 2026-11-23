@@ -11589,6 +11589,87 @@ def t_rates_include_levy():
 		frappe.clear_document_cache("Property", "EVAL Levy Hotel")
 
 
+@check("night audit: seeded anomalies are flagged with a reason and rows, and wait for history (#558)")
+def t_audit_anomalies():
+	from unittest.mock import patch
+
+	from frappe.utils import add_days as _ad
+
+	from kamra import night_audit as na
+	from kamra.savings import log_action
+	bd, user = "2035-03-31", "frontdesk@kamra.local"
+	day = lambda n: str(_ad(bd, n))  # noqa: E731
+	frappe.db.savepoint("eval_anom")
+	try:
+		_na_reset()
+
+		def res(name, ci, status="Checked Out", channel="EVAL Direct"):
+			frappe.get_doc({"doctype": "Reservation", "name": name, "property": P,
+			                "room_type": RT, "status": status, "check_in_date": ci,
+			                "check_out_date": str(_ad(ci, 1)), "channel": channel,
+			                "source": "Manual", "guest_name": name}).db_insert()
+
+		# rate: a room type that posts ~1000 a night, one night at 5000 today
+		res("EVAL-ANOM-R0", day(-40), "Checked In")
+		folio = frappe.get_doc({"doctype": "Folio", "name": "EVAL-ANOM-F0", "property": P,
+		                        "reservation": "EVAL-ANOM-R0", "folio_type": "Guest",
+		                        "status": "Open"})
+		folio.db_insert()
+		for i, (n, amt) in enumerate([(n, 990 + (n % 3) * 10) for n in range(-30, 0)]
+		                             + [(0, 5000)]):
+			frappe.get_doc({"doctype": "Folio Charge", "name": f"EVAL-ANOM-C{i}",
+			                "parent": folio.name, "parenttype": "Folio",
+			                "parentfield": "charges", "idx": i + 1, "posting_date": day(n),
+			                "charge_type": "Room", "amount": amt, "rate": amt, "qty": 1,
+			                "reservation": "EVAL-ANOM-R0"}).db_insert()
+		# voids: one every other day for 40 days, eight today
+		for n in [*range(-40, 0, 2), *[0] * 8]:
+			name = log_action("void_charge", "Folio", folio.name, P, rationale="eval")
+			frappe.db.sql("UPDATE `tabAgent Action Log` SET actor=%s, creation=%s WHERE name=%s",
+			              (user, f"{day(n)} 12:00:00", name))
+		# allowances: one every other day, five today
+		for i, n in enumerate([*range(-24, 0, 2), *[0] * 5]):
+			req = frappe.get_doc({"doctype": "Allowance Request", "property": P,
+			                      "folio": folio.name, "amount": 10, "reason": "eval",
+			                      "status": "Approved", "requested_by": user,
+			                      "requested_on": f"{day(n)} 12:00:00"})
+			req.flags.kamra_decision = True
+			req.insert(ignore_permissions=True)
+		# tills: a few units over/short for weeks, 900 short today
+		for n in range(-15, 1):
+			frappe.get_doc({"doctype": "Cashier Session", "property": P, "user": user,
+			                "business_date": day(n), "status": "Closed",
+			                "variance": -900 if n == 0 else (n % 6) - 2}
+			               ).insert(ignore_permissions=True, ignore_mandatory=True)
+		# no-shows: half of one agency's recent arrivals, none of direct's
+		for i in range(10):
+			res(f"EVAL-ANOM-NS{i}", day(-2 - i), "No Show" if i % 2 else "Checked Out",
+			    "EVAL NS Agency")
+		for i in range(40):
+			res(f"EVAL-ANOM-D{i}", day(-3 - i * 4))
+
+		with patch.object(na, "_history_days", return_value=5):
+			early = na.check_anomalies(P, bd)
+		assert early["count"] == 0 and not early["ready"], early
+
+		out = na.check_anomalies(P, bd)
+		assert out["ready"] and out["severity"] == "warn", out
+		kinds = {(i["kind"], i["who"]) for i in out["items"]}
+		for want in (("voids", user), ("allowances", user), ("cash_variance", user),
+		             ("rate", "EVAL-ANOM-R0"), ("no_shows", "EVAL NS Agency")):
+			assert want in kinds, (want, out["items"])
+		assert ("no_shows", "EVAL Direct") not in kinds, out["items"]
+		assert all(i["reason"] and i["sources"] for i in out["items"]), out["items"]
+		void = next(i for i in out["items"] if i["kind"] == "voids")
+		assert void["value"] == 8 and len(void["sources"]) == 8, void
+
+		_na_setting("na_anomaly_checks", 0)
+		assert na.check_anomalies(P, bd)["count"] == 0
+	finally:
+		frappe.db.rollback(save_point="eval_anom")
+		_na_reset()
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11640,7 +11721,8 @@ def execute():
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_refused, t_folio_no_close_in_house,
-		           t_rates_include_levy):
+		           t_rates_include_levy,
+		           t_audit_anomalies):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
