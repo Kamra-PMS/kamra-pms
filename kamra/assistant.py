@@ -748,6 +748,7 @@ REPLY_LANGS = {
 	# the UI says zh-CN, Frappe's catalogue says zh: accept both from clients
 	"zh-CN": "Simplified Chinese", "zh": "Simplified Chinese",
 	"fil-PH": "Filipino",
+	"vi-VN": "Vietnamese", "vi": "Vietnamese",
 }
 
 
