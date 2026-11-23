@@ -4318,6 +4318,43 @@
      }
     },
     {
+     "name": "occupancy_on_books",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.occupancy_on_books",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.occupancy_on_books"
+       ]
+      },
+      "description": "Occupancy on the books per night, start_date to end_date (both\nnights included, at most 90): confirmed and in-house reservations over\nall rooms, as pricing's hurdle tiers see it. Rooms on the books, not a\nforecast.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"start_date\": \"2026-08-01\",\n  \"end_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "position_briefing",
      "request": {
       "method": "POST",
@@ -5567,6 +5604,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"group_booking\": \"<group_booking>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "bulk_stays",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.bulk_stays",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.bulk_stays"
+       ]
+      },
+      "description": "Check in, check out or cancel several stays at once (a group, a busy\nmorning). Each stay goes through the same call as one at a time -\ncheck_in, check_out, cancel_reservation - with its own roles, property\nscope and checks, in its own savepoint: one that fails is rolled back\nand reported with why, and the rest go on. Returns\n{\"results\": [{\"reservation\", \"done\": 1, ...} | {\"reservation\", \"error\"}]}.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"action\": \"<action>\",\n  \"reservations\": \"<reservations>\",\n  \"reason\": \"Guest request\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -15178,7 +15252,7 @@
         "kamra.ledger.city_ledger_settle"
        ]
       },
-      "description": "Record a company's payment against its city ledger account and clear\nthe AR it pays. By default it pays the oldest open bills first;\n`allocations` ([{folio, amount}]) names the folios instead. Any excess\nstays on the account as unapplied credit and settles the company's next\nbill. `received_on` is the date the money arrived (the business date\nwhen left out, never later).\n\nAn AI agent's payment is not posted: it waits as a Company Payment\nRequest ({\"pending\": True, ...}) until Finance confirms it with a PIN\n(decide_city_ledger_payment). With the property's \"PIN on company\npayments\" setting on, a desk payment asks for the user's PIN too.\n\nPass idempotency_key (one per \"Record payment\" press): a retry with the\nsame key returns the first result and posts nothing. Two payments on\none account at once run one after the other, so they never both clear\nthe same bill.",
+      "description": "Record a company's payment against its city ledger account and clear\nthe AR it pays.\n\n`withholdings` ([{folio, amount, tax, rate?, certificate_number?,\ncertificate_period?}], #521) is tax the company kept back from named\nbills: it clears that part of each bill too and is tracked as tax\nwithheld until its certificate arrives (kamra.receivables). `tax` is a\ncode from the country pack's withholding taxes. By default it pays the oldest open bills first;\n`allocations` ([{folio, amount}]) names the folios instead. Any excess\nstays on the account as unapplied credit and settles the company's next\nbill. `received_on` is the date the money arrived (the business date\nwhen left out, never later).\n\nAn AI agent's payment is not posted: it waits as a Company Payment\nRequest ({\"pending\": True, ...}) until Finance confirms it with a PIN\n(decide_city_ledger_payment). With the property's \"PIN on company\npayments\" setting on, a desk payment asks for the user's PIN too.\n\nPass idempotency_key (one per \"Record payment\" press): a retry with the\nsame key returns the first result and posts nothing. Two payments on\none account at once run one after the other, so they never both clear\nthe same bill.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"account\": \"<account>\",\n  \"amount\": 1000,\n  \"mode\": \"Bank Transfer\"\n}",
@@ -16631,6 +16705,80 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"account\": \"<account>\",\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "record_withholding_certificate",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.record_withholding_certificate",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.record_withholding_certificate"
+       ]
+      },
+      "description": "The payer's certificate for tax it withheld came in: keep its number\nand period. The amount stays as recorded.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"tax_withheld\": \"<tax_withheld>\",\n  \"certificate_number\": \"<certificate_number>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "withheld_tax",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.withheld_tax",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.withheld_tax"
+       ]
+      },
+      "description": "Tax companies withheld from their payments: by default the amounts\nstill waiting for a certificate, oldest first, with totals per tax.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"status\": \"Awaiting Certificate\"\n}",
        "options": {
         "raw": {
          "language": "json"
