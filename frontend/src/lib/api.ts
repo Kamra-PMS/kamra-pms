@@ -8,6 +8,7 @@
 import { htmlToText } from "./utils"
 import { t as translate } from "./i18n"
 import type { NightPrice } from "./nightPrices"
+import * as offline from "./offline"
 
 function csrfToken(): string | undefined {
   const t = (window as unknown as { csrf_token?: string }).csrf_token
@@ -160,6 +161,8 @@ export async function login(usr: string, pwd: string) {
 
 export async function logout() {
   await doFetch("/api/method/logout", { method: "POST" })
+  const store = offlineStore()
+  if (store) offline.clearAll(store)
   announceSessionChange()
 }
 
@@ -270,15 +273,69 @@ export function newIdempotencyKey(): string {
     : `k-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
+/** Frappe's own (readable) cookie names the signed-in user: the offline
+ *  copies are kept per user, so a shared desk PC never mixes them. */
+function cookieUser(): string {
+  const m = document.cookie.match(/(?:^|;\s*)user_id=([^;]*)/)
+  return m ? decodeURIComponent(m[1]) : "Guest"
+}
+
+function offlineStore(): offline.Store | null {
+  try {
+    return window.localStorage
+  } catch {
+    return null
+  }
+}
+
 export async function call<T = unknown>(
   method: string,
   params: Record<string, unknown> = {},
 ): Promise<T> {
-  const data = await frappeFetch<{ message: T }>(`/api/method/${method}`, {
-    method: "POST",
-    body: JSON.stringify(params),
+  try {
+    const data = await frappeFetch<{ message: T }>(`/api/method/${method}`, {
+      method: "POST",
+      body: JSON.stringify(params),
+    })
+    const store = offlineStore()
+    if (store) offline.saveRead(store, cookieUser(), method, params, data.message, Date.now())
+    return data.message
+  } catch (e) {
+    // an outage (#228): the last copy of a read-only screen, or a safe
+    // write kept to send when the server is back. Everything else fails.
+    const store = offlineStore()
+    if (!store || !isNetworkError(e)) throw e
+    const kept = offline.loadRead<T>(store, cookieUser(), method, params)
+    if (kept) {
+      window.dispatchEvent(new CustomEvent("kamra:stale", { detail: kept.at }))
+      return kept.data
+    }
+    if (offline.enqueue(store, cookieUser(), method, params, Date.now())) {
+      window.dispatchEvent(new Event("kamra:queue"))
+      return { ok: true, queued: true, ...params } as T
+    }
+    throw e
+  }
+}
+
+// every successful call says "online", so replays would overlap: one at a
+// time, or a queued change could be sent twice
+let replaying: Promise<unknown> | null = null
+
+/** Send the writes kept during an outage, one replay at a time. */
+export function replayOffline() {
+  const store = offlineStore()
+  if (replaying || !store || !offline.queued(store).length) return replaying
+  replaying = offline.replay(
+    store,
+    (method, params) => frappeFetch(`/api/method/${method}`, { method: "POST", body: JSON.stringify(params) }),
+    isNetworkError,
+    serverError,
+  ).finally(() => {
+    replaying = null
+    window.dispatchEvent(new Event("kamra:queue"))
   })
-  return data.message
+  return replaying
 }
 
 /** Call an allow_guest endpoint as a guest, whoever is logged in.

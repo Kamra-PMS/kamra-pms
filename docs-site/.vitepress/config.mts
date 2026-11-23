@@ -99,6 +99,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("AWS", "AWS", "AWS"), "self-hosting/aws"],
       [L("AWS / Azure / GCP marketplaces", "Marketplaces de AWS / Azure / GCP", "أسواق AWS / Azure / GCP"), "self-hosting/marketplace/hyperscalers"],
       [L("Install with bench", "Instalar con bench", "التثبيت باستخدام bench"), "self-hosting/bench"],
+      [L("A box at the hotel (offline)", "Un equipo en el hotel (sin conexión)", "جهاز في الفندق (دون اتصال)"), "self-hosting/hotel-box"],
       [L("Frappe Cloud marketplace", "Marketplace de Frappe Cloud", "سوق Frappe Cloud"), "self-hosting/frappe-cloud"],
       [L("ERPNext & Frappe HR", "ERPNext y Frappe HR", "ERPNext و Frappe HR"), "self-hosting/erpnext-hr"],
       [L("Email (SMTP) setup", "Configurar el correo (SMTP)", "إعداد البريد (SMTP)"), "self-hosting/email"],
