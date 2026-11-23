@@ -1,0 +1,14 @@
+{
+  "name": "Kamra PMS",
+  "short_name": "Kamra",
+  "description": "Kamra hotel PMS - front desk, housekeeping and billing.",
+  "start_url": "/kamra",
+  "scope": "/kamra",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/assets/kamra/frontend/kamra-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/assets/kamra/frontend/apple-touch-180.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

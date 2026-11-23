@@ -15,7 +15,8 @@ class LedgerEntriesReadOnlyTestCase(IntegrationTestCase):
 			for p in perms:
 				if p.role == "System Manager":
 					continue
-				self.assertTrue(p.read, (doctype, p.role))
+				# read, or select only: a row that just carries a Permission Type
+				self.assertTrue(p.read or p.select, (doctype, p.role))
 				self.assertFalse(p.write or p.create or p.delete, (doctype, p.role))
 
 	def test_patch_strips_custom_docperm_writes(self):

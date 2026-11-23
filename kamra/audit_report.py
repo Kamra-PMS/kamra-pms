@@ -26,7 +26,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, date_diff, flt, getdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm, require_roles
 from kamra.folio import NOT_VOIDED, STANDS_ON_ITS_DATE
 
 FOLIO_SKIP = ("Opening Balance", "Room Levy")
@@ -228,7 +228,7 @@ def build(property: str, d) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
+@require_perm("Property", "view_flash")
 def night_audit_report(property: str, date: str | None = None):
 	"""The night audit report for a business date (default: the last one
 	closed): rooms, food and beverage separately, each outlet, banquets,

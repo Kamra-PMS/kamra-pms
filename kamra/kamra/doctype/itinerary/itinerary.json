@@ -75,7 +75,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 12:00:00.000000",
+ "modified": "2026-10-31 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Itinerary",
@@ -92,32 +92,37 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "view_trips": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Hotel Admin"
+   "role": "Hotel Admin",
+   "view_trips": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Front Desk"
+   "role": "Front Desk",
+   "view_trips": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Finance"
+   "role": "Finance",
+   "view_trips": 1
   },
   {
    "read": 1,
-   "role": "Kamra Agent"
+   "role": "Kamra Agent",
+   "view_trips": 1
   }
  ],
  "row_format": "Dynamic",

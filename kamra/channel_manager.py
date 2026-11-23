@@ -22,7 +22,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.channels import provider_for
 
 
@@ -253,7 +253,7 @@ def _apply_villa_lockout(rows: list[dict], meta: dict) -> None:
 
 
 @frappe.whitelist()
-@require_roles("Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_perm("Channel Manager Connection", "sync_channels")
 def push_ari(connection: str, days: int | None = None):
 	"""Push availability + rates for one connection, now. A connection whose
 	adapter takes changes (Channex) queues a full sync on its outbox instead:
@@ -755,7 +755,7 @@ def _norm(s: str) -> str:
 
 
 @frappe.whitelist()
-@require_roles("Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_perm("Channel Manager Connection", "sync_channels")
 def import_room_mappings(connection: str, dry_run: int = 0):
 	"""Property mapping, done once: pull the provider's room + rate-plan codes
 	(via the adapter's fetch_property_details) and map them onto this
@@ -906,7 +906,7 @@ def _import_rate_plan_mappings(conn, details: dict, index: dict, dry_run: int) -
 
 
 @frappe.whitelist()
-@require_roles("Revenue Manager", "Hotel Admin", "Front Desk", "Kamra Agent")
+@require_perm("Channel Manager Connection", "view_channels")
 def connection_status(property: str):
 	"""The sync-health card: connections, mappings, last push."""
 	out = []

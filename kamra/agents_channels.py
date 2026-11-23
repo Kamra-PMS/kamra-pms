@@ -30,7 +30,7 @@ import json
 import frappe
 
 from kamra import savings
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 # ---------------------------------------------------------------------------
 # Inbound webhooks
@@ -143,7 +143,7 @@ def messaging_webhook(payload: str | dict | None = None) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("WhatsApp Message", "configure")
 def channel_connections(property: str) -> list[dict]:
 	rows = frappe.get_all(
 		"Channel Provider Connection",

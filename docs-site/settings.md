@@ -77,9 +77,13 @@ title), and only IT can change an IT administrator.
 
 ## What each role can do
 
-Roles are fixed bundles: every screen, API call and AI tool checks them on
-the server. You give them under **Settings → Staff & access** (**Add staff**,
-or **Manage** on a row), where each role says in a line what it opens.
+**Settings → Roles & permissions** shows which apps each role opens and
+which settings pages it may change. Every screen, API call and AI tool
+checks the role's permissions on the server. IT can create roles and
+change what each role may do in Desk (Role Permission Manager): see
+[Roles and access](/roles-and-access).
+
+![The roles matrix: apps each role opens and settings each role may change](/img/settings/roles.png)
 
 | Role | Day to day |
 | --- | --- |

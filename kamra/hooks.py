@@ -308,6 +308,9 @@ permission_query_conditions = {
 	"Itinerary": "kamra.authz.itinerary_query_conditions",
 	**{dt: "kamra.authz.property_query_conditions" for dt in _PROPERTY_SCOPED},
 	**{dt: "kamra.authz.connection_query_conditions" for dt in _CONNECTION_SCOPED},
+	# both apply (Frappe ANDs a doctype's conditions): chats stay their owner's
+	"Copilot Conversation": ["kamra.authz.property_query_conditions",
+	                         "kamra.authz.copilot_query_conditions"],
 }
 
 has_permission = {

@@ -44,7 +44,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, getdate, now_datetime
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 AUDIT_ROLES = ("Front Desk", "Finance", "Night Auditor", "Hotel Admin", "Kamra Agent")
 
@@ -979,7 +979,7 @@ def _last_hold(property: str) -> dict | None:
 
 
 @frappe.whitelist()
-@require_roles(*AUDIT_ROLES)
+@require_perm("Night Audit Run", "run_audit")
 def night_audit_precheck(property: str):
 	"""The night audit checklist for the property's current business date.
 	Read-only. Each check: key, title, severity (block | warn | info),
@@ -1011,7 +1011,7 @@ def night_audit_precheck(property: str):
 
 
 @frappe.whitelist()
-@require_roles(*AUDIT_ROLES, scope={"audit": "Night Audit Run"})
+@require_perm("Night Audit Run", "run_audit", scope={"audit": "Night Audit Run"})
 def night_audit_pack(audit: str):
 	"""The saved audit pack of one Night Audit Run. Missing packs answer
 	has_pack: false with a message; rebuild_audit_pack can recreate them."""
@@ -1102,7 +1102,7 @@ def _no_shows_for_pack(property: str, bd: str) -> list[dict]:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*AUDIT_ROLES, scope={"audit": "Night Audit Run"})
+@require_perm("Night Audit Run", "run_audit", scope={"audit": "Night Audit Run"})
 def rebuild_audit_pack(audit: str):
 	"""Rebuild and save the printable audit pack for a completed run.
 	Use when the automatic night left has_pack false, or to refresh the
@@ -1181,7 +1181,7 @@ def stuck_business_date(property: str) -> dict | None:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Night Audit Run", "recover_date")
 def recover_stuck_business_date(property: str):
 	"""Advance the business date when a completed audit exists for the
 	current date but the roll did not stick. Never re-posts room nights."""
@@ -1207,7 +1207,7 @@ def recover_stuck_business_date(property: str):
 
 
 @frappe.whitelist()
-@require_roles(*AUDIT_ROLES)
+@require_perm("Night Audit Run", "run_audit")
 def night_audit_history(property: str, limit: int = 20, from_date: str | None = None,
                         to_date: str | None = None):
 	"""Night Audit Runs of a property, newest first, with whether each has a
@@ -1295,7 +1295,7 @@ def _write_log(property, trigger, business_date, status, message, started, audit
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Night Auditor")
+@require_perm("Night Audit Run", "schedule_audit")
 def night_audit_schedule(property: str):
 	"""The automatic night audit at a glance: on or off, the next run on the
 	property clock (None = manual only), the business date and the last 30
@@ -1815,7 +1815,7 @@ def _eod_state(property: str, audit: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*AUDIT_ROLES)
+@require_perm("Night Audit Run", "run_audit")
 def eod_session(property: str, audit: str | None = None):
 	"""Open (or resume) End of Day for the property's current business date:
 	the draft run that keeps the wizard's progress, every pre-check and
@@ -1829,7 +1829,7 @@ def eod_session(property: str, audit: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*AUDIT_ROLES)
+@require_perm("Night Audit Run", "run_audit")
 def eod_progress(property: str, step: int | None = None,
                  status: str | None = None, key: str | None = None,
                  notes: str | None = None):
@@ -1871,7 +1871,7 @@ def eod_progress(property: str, step: int | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*AUDIT_ROLES)
+@require_perm("Night Audit Run", "run_audit")
 def eod_acknowledge(property: str, key: str, reason: str):
 	"""Acknowledge a blocking check with a reason so End of Day can go on.
 	Who and when are recorded on the run and in the Activity log."""
@@ -1962,7 +1962,7 @@ def no_show_preview(reservation: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*NO_SHOW_ROLES)
+@require_perm("Reservation", "check_in_out")
 def eod_mark_no_show(reservation: str, reason: str | None = None):
 	"""Mark an arrival that did not come a No Show now - from Today, the
 	reservation or End of Day - with the property's no-show fee policy
@@ -1984,6 +1984,7 @@ def eod_mark_no_show(reservation: str, reason: str | None = None):
 	           channel="MCP" if frappe.flags.get("kamra_agent_call") else "Desk",
 	           after_snapshot=ns)
 	return ns
+
 
 
 @frappe.whitelist(methods=["POST"])
@@ -2016,7 +2017,7 @@ def no_show_credits(property: str) -> list[dict]:
 
 
 @frappe.whitelist()
-@require_roles(*AUDIT_ROLES)
+@require_perm("Night Audit Run", "run_audit")
 def eod_overview():
 	"""Manage End of Day: one row per property the user can access - the
 	business date, the property's local time, arrivals and departures

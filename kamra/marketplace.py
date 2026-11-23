@@ -17,7 +17,7 @@ Card kinds, each with its own install model - never conflated:
 
 import frappe
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 DOCS_COUNTRY_PACK = "https://kamrapms.com/docs/write-a-country-pack"
 COUNTRY_PACK_ISSUES = ("https://github.com/Kamra-PMS/kamra-pms/issues"
@@ -25,7 +25,7 @@ COUNTRY_PACK_ISSUES = ("https://github.com/Kamra-PMS/kamra-pms/issues"
 
 
 @frappe.whitelist()
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Property", "configure")
 def registry(property: str):
 	"""Everything on offer, grouped, with this property's live status."""
 	ai = frappe.db.get_value(
@@ -246,7 +246,7 @@ def _bench(name, blurb, command, status="planned"):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Property", "configure")
 def connect_heykoala(property: str, channel: str, phone_number: str):
 	"""Wire a HeyKoala Voice/WhatsApp channel to this property. Creates (or
 	revives) the Channel Provider Connection, mints an inbound webhook secret,
@@ -293,7 +293,7 @@ def connect_heykoala(property: str, channel: str, phone_number: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Channel Manager Connection", "configure")
 def disconnect_channel(connection: str):
 	"""Switch off a Channel Provider Connection. Kamra Enterprise drives guest
 	AI channels now; kept unchanged as a public API contract."""
@@ -303,7 +303,7 @@ def disconnect_channel(connection: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin", "System Manager")
+@require_perm("Property", "configure")
 def enterprise_enquiry(property: str, item: str, note: str = "",
                        contact: str = ""):
 	"""Register interest in Kamra Enterprise or a custom integration. The
