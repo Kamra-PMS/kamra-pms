@@ -2554,6 +2554,79 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Billing",
 		module="",
 	),
+	# AI guest booking (#228): only a `guest.booking` service account sees
+	# these (kamra.guest_booking); the booking engine prices and holds
+	_t(
+		"guest_search_stay",
+		"guest_booking.search",
+		"""Rooms free for a guest's stay with the real total per meal plan and what is
+		due now under the hotel's payment policy. Always search before holding.""",
+		{
+			"check_in_date": _p("string", format="date"),
+			"check_out_date": _p("string", format="date"),
+			"adults": _p("integer"),
+			"children": _p("integer"),
+			"child_ages": _p("array", items=_p("integer")),
+			"voucher_code": _p("string"),
+		},
+		required=("check_in_date", "check_out_date"),
+		property=True,
+		group="Channels",
+	),
+	_t(
+		"guest_hold_booking",
+		"guest_booking.hold",
+		"""Book the stay for the guest (name and phone required). If nothing is due now the
+		hotel confirms it at once; otherwise it is held until hold_expires_on - send
+		guest_payment_link before then. Pass an idempotency_key so a retry can't book twice.""",
+		{
+			"room_type": _p("string"),
+			"check_in_date": _p("string", format="date"),
+			"check_out_date": _p("string", format="date"),
+			"guest_name": _p("string"),
+			"phone": _p("string"),
+			"email": _p("string"),
+			"adults": _p("integer"),
+			"children": _p("integer"),
+			"child_ages": _p("array", items=_p("integer")),
+			"meal_plan": _p("string"),
+			"special_requests": _p("string"),
+			"voucher_code": _p("string"),
+			"idempotency_key": IDEMPOTENCY_KEY_PARAM,
+		},
+		required=("room_type", "check_in_date", "check_out_date", "guest_name", "phone"),
+		property=True,
+		mutating=True,
+		group="Channels",
+	),
+	_t(
+		"guest_payment_link",
+		"guest_booking.payment_link",
+		"""A payment link (the hotel's gateway) for the advance still due on a booking this
+		connection made. Paying it confirms the booking.""",
+		{"reservation": _p("string")},
+		required=("reservation",),
+		mutating=True,
+		group="Channels",
+	),
+	_t(
+		"guest_confirm_booking",
+		"guest_booking.confirm",
+		"""Confirm a held booking - refused until the advance is paid (or nothing was due).""",
+		{"reservation": _p("string")},
+		required=("reservation",),
+		mutating=True,
+		group="Channels",
+	),
+	_t(
+		"guest_booking_status",
+		"guest_booking.status",
+		"""Status, dates, total, advance paid and still due, and hold expiry of a booking
+		this connection made.""",
+		{"reservation": _p("string")},
+		required=("reservation",),
+		group="Channels",
+	),
 )
 
 BY_NAME: dict[str, ToolSpec] = {t.name: t for t in TOOLS}
@@ -2590,9 +2663,10 @@ IDEMPOTENT = frozenset({
 	"set_room_hk_status", "set_room_rate", "run_night_audit", "rebuild_audit_pack",
 	"assign_rooms_apply", "open_guest_bills",
 	"create_ar_account", "update_ar_account", "record_ar_payment",
+	"guest_hold_booking", "guest_confirm_booking",
 })
 # Tools that reach someone outside Kamra (a message to the guest)
-OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link"})
+OPEN_WORLD = frozenset({"send_payment_link", "send_deposit_link", "guest_payment_link"})
 _TITLE_WORDS = {"hk": "HK", "pos": "POS", "kot": "KOT", "id": "ID", "ar": "AR"}
 
 
