@@ -33,7 +33,7 @@ import uuid
 import frappe
 from frappe import _
 
-from kamra.authz import require_perm
+from kamra.authz import require_perm, require_roles
 from kamra.localization import money_text
 
 # Who may look at stock, and who may move it. Chefs never appear here: they

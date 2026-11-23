@@ -28,7 +28,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
-from kamra.authz import assert_property_access, require_perm
+from kamra.authz import assert_property_access, require_perm, require_roles
 from kamra.business_date import get_business_date
 
 

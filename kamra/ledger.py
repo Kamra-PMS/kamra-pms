@@ -14,7 +14,7 @@ from typing import Any
 import frappe
 from frappe.utils import getdate, now_datetime, nowdate
 
-from kamra.authz import require_perm
+from kamra.authz import require_perm, require_roles
 from kamra.business_date import get_business_date
 
 CHARGE_TYPE_TO_CODE = {

@@ -25,7 +25,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt
 
-from kamra.authz import assert_property_access, require_perm
+from kamra.authz import assert_property_access, require_perm, require_roles
 
 # (stage, days past the due date it starts), latest stage first
 STAGES = (("late", 15), ("due", 0), ("pre", -3))

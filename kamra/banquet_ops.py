@@ -13,7 +13,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, getdate, now_datetime, nowdate
 
-from kamra.authz import require_perm
+from kamra.authz import require_perm, require_roles
 
 BANQUET_ROLES = ("Front Desk", "Revenue Manager", "Kamra Agent")
 READ_ROLES = BANQUET_ROLES + ("Finance", "Housekeeping")

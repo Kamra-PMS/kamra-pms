@@ -44,7 +44,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, getdate, now_datetime
 
-from kamra.authz import require_perm
+from kamra.authz import require_perm, require_roles
 
 AUDIT_ROLES = ("Front Desk", "Finance", "Night Auditor", "Hotel Admin", "Kamra Agent")
 

@@ -19,7 +19,7 @@ import frappe
 from frappe.utils import add_to_date, cint, get_datetime, now_datetime
 
 from kamra import __version__ as KAMRA_VERSION
-from kamra.authz import require_perm
+from kamra.authz import require_perm, require_roles
 
 GITHUB_REPO = "Kamra-PMS/kamra-pms"
 GITHUB_LATEST = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"

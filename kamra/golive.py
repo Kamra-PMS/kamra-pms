@@ -35,7 +35,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, flt, getdate, now_datetime
 
-from kamra.authz import require_perm
+from kamra.authz import require_perm, require_roles
 from kamra.migrate import (
 	_detect_dayfirst,
 	_map_headers,
