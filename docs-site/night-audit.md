@@ -62,8 +62,29 @@ What each check does when it finds something:
 | Rate variance and zero-rate rooms | Room nights posted away from the booked rate. |
 | Room status | Rooms where the front office and the room board disagree. |
 | Open tills | Type the counted cash and press **Count and close**. Blocks by default. |
+| Unusual against this property's history | Look at each flag: who or what it is about, why it was flagged, and the rows behind it. A warning, never a blocker. See below. |
 
 Every list can be searched and sorted.
+
+### Unusual against this property's history
+
+This check compares the business date with the property's own last 90 days,
+using the mean and standard deviation. It flags:
+
+- **Void spike / Allowance spike**: a user with at least 3 voids, or 3
+  allowances and discounts, in the day, more than 3 standard deviations
+  above their usual day. A user with less than 10 days of history is
+  compared with everyone's days.
+- **Till variance**: a till closed for the business date that is over or
+  short far more than this cashier's usual, or the property's.
+- **Unusual room rate**: a room night posted far above or below what that
+  room type usually posts.
+- **Repeated no-shows**: a travel agent, company or channel with at least 3
+  no-shows in 30 days, at 3 times the property's no-show rate or more.
+
+Each flag says what the usual is and lists the rows it is about. The check
+stays quiet until the property has 30 days of posted room nights, and can be
+switched off in Settings.
 
 **Mark no-show** applies the property's policy straight away: the stay
 becomes a No Show and the fee is posted on the business date, or waived
@@ -262,6 +283,7 @@ that is actually due.
 | Extend unchecked-out departures one night | Settings → Front Desk → Night audit checklist | Off | On: a guest still checked in past their departure date gets one more night when the audit runs, through the same path as **Extend stay**, and that night is posted. A stay that can't be extended (the room is booked) stays on the checklist. The departures check lists these guests as a warning instead of a blocker. |
 | Flag in-house folios owing more than | Settings → Front Desk → Night audit checklist | 50000 | 0 turns the high-balance check off. |
 | Rate variance tolerance | Settings → Front Desk → Night audit checklist | 1 | How far (in currency units) a posted room night may be from the booked rate before it is listed. |
+| Flag what is unusual for this property | Settings → Front Desk → Night audit checklist | On | Off: the history check above is not run. It starts on its own after 30 days of posted room nights. |
 | Run the night audit automatically | Settings → Front Desk → Automatic night audit | On | Off: only staff close the day. |
 | Run at | Settings → Front Desk → Automatic night audit | 03:00 | Property local time. |
 | Wait after that time | Settings → Front Desk → Automatic night audit | 0 min | Up to 120 minutes extra, for outlets still posting. |

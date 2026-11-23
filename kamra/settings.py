@@ -266,6 +266,10 @@ MODULES: tuple[Module, ...] = (
 				  min=0, max=100000,
 				  hint="A room night posted more than this away from the booked (locked) "
 				       "nightly rate is listed as a rate variance."),
+				S("na_anomaly_checks", "Flag what is unusual for this property", "check", 1,
+				  hint="Voids, allowances, till variances and room rates far outside this "
+				       "property's own history, and sources whose guests often no-show. "
+				       "Starts after 30 days of posted room nights. Listed as a warning."),
 				S("na_auto_audit_with_blockers", "Scheduled audit when checks block", "select",
 				  "Run and report exceptions",
 				  options=("Run and report exceptions", "Hold and alert"),

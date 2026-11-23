@@ -22,6 +22,10 @@ export interface Check {
   amount?: number
   threshold?: number
   enabled?: boolean
+  /** anomalies: compared only once the property has enough history */
+  ready?: boolean
+  history_days?: number
+  min_history_days?: number
   outcomes?: Record<string, number>
   mismatches?: number
   acknowledgement?: Acknowledgement | null
