@@ -380,6 +380,10 @@ class VenueBooking(Document):
 			              "function needs a reason."))
 		if self.status == "Confirmed":
 			self._no_double_booking()
+			from kamra.banquet_ops import equipment_overbooked
+			short = equipment_overbooked(self)
+			if short:
+				frappe.throw(short)
 			over = self._over_capacity()
 			if over:
 				frappe.msgprint(over, indicator="orange", alert=True)

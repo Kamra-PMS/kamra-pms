@@ -12,7 +12,10 @@
   "amount",
   "status",
   "received_on",
-  "reference"
+  "reference",
+  "payment_link_id",
+  "payment_link_url",
+  "guest_reminded_on"
  ],
  "fields": [
   {
@@ -58,11 +61,30 @@
    "fieldname": "reference",
    "fieldtype": "Data",
    "label": "Reference"
+  },
+  {
+   "fieldname": "payment_link_id",
+   "fieldtype": "Data",
+   "label": "Payment Link ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_link_url",
+   "fieldtype": "Data",
+   "label": "Payment Link",
+   "read_only": 1,
+   "options": "URL"
+  },
+  {
+   "fieldname": "guest_reminded_on",
+   "fieldtype": "Date",
+   "label": "Guest Reminded On",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-31 10:00:00.000000",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Banquet Payment Term",

@@ -752,6 +752,8 @@ export interface BanquetService {
   is_alcohol: 0 | 1
   on_pack_list: 0 | 1
   description: string | null
+  /** units owned; 0 = not tracked on the equipment calendar */
+  stock_qty?: number
 }
 export interface BanquetVenue {
   name: string
@@ -767,6 +769,23 @@ export interface BanquetVenue {
   gst_rate: number
   setup_styles: string | null
   amenities: string | null
+}
+export interface EquipmentCalendar {
+  start: string
+  end: string
+  items: {
+    item: string
+    item_name: string
+    category: string
+    stock_qty: number
+    days: {
+      date: string
+      confirmed: number
+      tentative: number
+      over: boolean
+      functions: { function: string; customer_name: string; status: string; qty: number }[]
+    }[]
+  }[]
 }
 export interface BanquetCatalogue {
   menus: BanquetMenu[]
@@ -805,6 +824,8 @@ export interface PaymentTerm {
   status: "Pending" | "Overdue" | "Received" | "Waived"
   received_on: string | null
   reference: string | null
+  payment_link_url?: string | null
+  guest_reminded_on?: string | null
 }
 export interface OpenItem {
   name: string
@@ -918,6 +939,19 @@ export interface FunctionSheet {
   beo_number: string | null
   beo_generated_on: string | null
   contract_signed_on: string | null
+  tasting_status?: "" | "Requested" | "Scheduled" | "Done" | "Waived" | null
+  tasting_on?: string | null
+  tasting_pax?: number | null
+  tasting_chef?: string | null
+  tasting_notes?: string | null
+  tasting_invited_on?: string | null
+  wifi_ssid?: string | null
+  wifi_password?: string | null
+  speed_test_mbps?: number | null
+  av_notes?: string | null
+  staff_male?: number | null
+  staff_female?: number | null
+  bar_setup?: "" | "No" | "Yes" | null
   payment_terms_note: string | null
   requirements: string | null
   beo_notes: string | null
@@ -1032,6 +1066,8 @@ export interface BanquetPipeline {
     pipeline_value: number
     outstanding: number
     conversion_rate: number | null
+    /** each stage at its odds: Enquiry 20%, Tentative 50%, Confirmed 100% */
+    weighted_value?: number
   }
   lost_reasons: { reason: string; count: number }[]
 }
@@ -1722,6 +1758,23 @@ export const banquet = {
         }[]
       }[]
     }>("kamra.banquet_ops.function_tasks", { function: fn }),
+  scheduleTasting: (fn: string, tastingOn: string, opts?: { pax?: number; chef?: string; notes?: string }) =>
+    call<{ ok: boolean; tasting_status: string; tasting_on: string; emailed: boolean }>(
+      "kamra.banquet_ops.schedule_tasting",
+      { function: fn, tasting_on: tastingOn, pax: opts?.pax ?? null, chef: opts?.chef ?? null, notes: opts?.notes ?? null },
+    ),
+  recordTasting: (fn: string, outcome: "Done" | "Waived", notes?: string) =>
+    call<{ ok: boolean; tasting_status: string }>("kamra.banquet_ops.record_tasting", {
+      function: fn, outcome, notes: notes ?? null,
+    }),
+  sendPaymentLink: (fn: string, term: string, channels: string[] = ["email"]) =>
+    call<{ url: string; amount: number; currency: string; sent: string[]; test_mode: boolean }>(
+      "kamra.banquet_ops.send_payment_link", { function: fn, term, channels },
+    ),
+  equipmentCalendar: (startDate?: string, days = 30) =>
+    call<EquipmentCalendar>("kamra.banquet_ops.equipment_calendar", {
+      property: getCurrentProperty(), start_date: startDate ?? null, days,
+    }),
   completeFunctionTask: (task: string, done = true) =>
     call<{ ok: boolean; name: string; status: string }>(
       "kamra.banquet_ops.complete_function_task",
