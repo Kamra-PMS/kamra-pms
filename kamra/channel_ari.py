@@ -195,9 +195,6 @@ def _range(ext_id: str, run: dict) -> dict:
 # What the provider accepted (Channel ARI State)
 # ---------------------------------------------------------------------------
 
-_ID_FIELD = {"availability": "external_room_id", "restrictions": "external_rate_id"}
-
-
 def _state_name(connection: str, kind: str, ext_id: str) -> str:
 	return f"{connection}|{kind}|{ext_id}"
 

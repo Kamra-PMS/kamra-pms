@@ -13,11 +13,10 @@ from unittest.mock import patch
 
 import frappe
 
-import kamra
 from kamra import hooks, localization
 from kamra.localization import india, indonesia, thailand
 
-DOCTYPES = Path(kamra.__file__).parent / "kamra" / "doctype"
+DOCTYPES = Path(hooks.__file__).parent / "kamra" / "doctype"
 
 
 def _options(doctype: str, fieldname: str) -> list[str]:
