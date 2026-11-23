@@ -190,18 +190,21 @@ def ari_snapshot(property: str, connection: str, days: int = 90, start=None,
 def _one_night_rate(property: str, room_type: str, d, d2) -> float:
 	"""The pricing engine's one-night sell rate (2 adults), 0 when the
 	night cannot be quoted - availability still goes out for that day."""
-	from kamra.pricing import quote, rates_include_levy, rates_include_tax
+	from kamra.pricing import quote, rates_include_levy
 	try:
 		q = quote(property, room_type, str(d), str(d2), 2, 0)
 		night = q["nightly"][0]
 		rate = float(night["rate"])
 		if rates_include_levy(property):
-			# The channel adds its own tax to the price it is given but knows no
-			# levy, so a levy that is inside the displayed price goes inside the
-			# pushed one too. A levy that carries no tax would otherwise be
-			# taxed by the channel: push it with that tax taken out.
+			# The channel adds its own tax to whatever price it is given and
+			# knows no levy, so a levy inside the displayed price is pushed
+			# inside that price. An untaxed levy is sent with the tax taken
+			# out, or the channel taxes it. The displayed price does not have
+			# to include tax already: the channel adds tax either way. Room
+			# 100, levy 10%, tax 10% bills 120 here; pushing 110 would show 121,
+			# and the booking that comes back would lock a different room rate.
 			levy = float(q.get("room_levy") or 0)
-			if rates_include_tax(property) and not _levy_is_taxed(property):
+			if not _levy_is_taxed(property):
 				levy /= 1 + float(night.get("gst_rate") or 0) / 100
 			rate += levy
 		return round(rate, 2)

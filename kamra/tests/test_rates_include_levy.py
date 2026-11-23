@@ -201,6 +201,56 @@ class RatesIncludeLevyTestCase(AuditTestCase):
 		self.rates(330, tax=1)
 		self.assertEqual(_one_night_rate(PROP, self.rt, d(0), d(1)), 300.0)
 
+	def test_an_untaxed_levy_inside_the_price_is_not_taxed_by_the_channel(self):
+		"""Tax on top, levy inside the displayed price, levy not taxed.
+
+		Room 100, levy 10%, tax 10%: the guest pays 120, tax on the room
+		only. The channel adds its own 10% to the price it is given, so the
+		push is 100 + 10/1.10 = 109.09 and the channel shows 120. Pushing the
+		full 110 would show 121, and locking that 121 back would split the
+		room as 100.833333 instead of the desk's 100. A taxed levy is the
+		channel's to tax: 110 pushed, 121 on the channel, same as the bill.
+		"""
+		self.rates(110, levy_included=1, levy_taxable=0)
+		self.assertEqual(_one_night_rate(PROP, self.rt, d(0), d(1)), 109.09)
+		res = self.stay()
+		self.assertEqual(self.lines(res, "Room"), [100.0])
+		self.assertEqual(self.lines(res, "Room Levy"), [10.0])
+		self.assertAlmostEqual(self.bill(res), 120, places=5)
+		# 109.09 with the channel's 10% on top comes back as 120, the desk's rate
+		lock_channel_rates(res, 120)
+		self.assertEqual([round(float(r.rate), 6) for r in res.night_rates], [100.0])
+
+		self.rates(110, levy_included=1, levy_taxable=1)
+		self.assertEqual(_one_night_rate(PROP, self.rt, d(0), d(1)), 110.0)
+		q = quote(PROP, self.rt, d(0), d(1), 2, 0)
+		self.assertAlmostEqual(q["amount_after_tax"], 121, places=5)
+
+	def test_a_charged_night_correction_posts_the_exact_rate(self):
+		"""The reversal is the exact charged rate. Rounding the replacement
+		or the credit to cents puts the drift back: 273.553719 corrected to
+		272.727273 must not post 272.73, and the credit is -0.826446, not -0.83.
+		"""
+		from kamra.settings import clear_cache, write_kv
+
+		self.rates(331, tax=1, levy_included=1)
+		res = self.stay()
+		self.rates(330, tax=1, levy_included=1)
+		frappe.clear_document_cache("Room Type", self.rt)
+		rows = res.quote_night_rows(res.requote())
+
+		corrected = res.hold_charged_nights(rows, correct=True)
+		self.assertEqual([round(line["amount"], 6) for line in corrected["lines"]],
+		                 [-273.553719, 272.727273])
+		self.assertEqual(round(corrected["nights"][0]["new"], 6), 272.727273)
+
+		write_kv(PROP, "charged_night_rate_change", "Credit the difference")
+		clear_cache(PROP)
+		credited = res.hold_charged_nights(rows, correct=False)
+		self.assertEqual([round(line["amount"], 6) for line in credited["lines"]],
+		                 [-0.826446])
+		self.assertEqual(round(credited["nights"][0]["new"], 6), 272.727273)
+
 	def test_moving_a_night_to_another_folio_leaves_nothing_on_the_ledger(self):
 		"""A room line billed to a company folio leaves the guest's ledger. The
 		reversal used to be rounded to whole cents, leaving a fraction behind."""
