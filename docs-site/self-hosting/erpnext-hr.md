@@ -110,16 +110,70 @@ If your accountant stays on Tally, Zoho, or another ledger:
 
 No ERPNext required.
 
-## Day-to-day bridge (today)
+## Day-to-day bridge
 
-Until live posting ships:
+### Without ERPNext on the site
 
-1. Close guest stays and settle folios in Kamra.
-2. Export from **Accounting Export**.
-3. Import or post into ERPNext (or Tally / Zoho).
+Close stays and settle folios in Kamra, export from **Accounting
+Export**, and import into Tally, Zoho or your ledger.
 
-Payroll journals from Frappe HR post into the same ERPNext company when
-HR is installed.
+### With ERPNext on the same site: post the day automatically
+
+Settings → Finance → **ERPNext books** (Finance and Hotel Admin):
+
+1. Set the **ERPNext company** (and a **cost center** if you use one).
+2. Fill the **account map**, one `key = ERPNext account` per line:
+
+   ```
+   Guest = Guest Ledger - HC
+   Deposit = Guest Deposits - HC
+   AR = City Ledger - HC
+   Package = Package Ledger - HC
+   Tax = Output Tax - HC
+   4000 = Room Revenue - HC      # a GL code (set on the transaction code)
+   3000 = Laundry Revenue - HC   # or a transaction code
+   9001 = Cash - HC
+   ```
+
+   Map the four Kamra ledgers to plain asset or liability accounts, not
+   to a Receivable or Payable account type: ERPNext asks for a party on
+   those, and a day's total has none.
+3. Switch on **Post the day to ERPNext at night audit**.
+
+After each night audit, the closed business date goes to ERPNext as one
+submitted **Journal Entry**. Every Kamra ledger posting is one leg (its
+ledger account); the other leg is the account of the GL code the line
+was posted with (else its transaction code), with a charge's tax split
+out to **Tax**. The entry always balances, so the day's revenue ties to
+the GL with no manual export. Each business date posts once. If a key is
+missing from the map, nothing posts for that day and the error log says
+which keys to add; then post it again.
+
+For developers: `kamra.erpnext_bridge.preview_daily_journal` (what a
+date would post, and the missing keys - works without ERPNext),
+`post_daily_journal`, and `reverse_daily_journal` (cancels the entry in
+ERPNext, which writes the reversing GL, so the date can post again after
+a correction). Each post is kept in **ERPNext Sync Log**.
+
+### Supplier bills
+
+With **Post supplier bills to ERPNext** on, an approved supplier bill
+posts a Journal Entry against the ERPNext **Supplier** (created from the
+vendor's name when missing, in the supplier group you set): debit the
+account mapped for its expense category (else `Expense`) and `Purchase
+Tax`, credit `Creditors` with the supplier as party. Each payment clears
+it: debit `Creditors`, credit `Pay:<mode>` (for example `Pay:Bank
+Transfer`) or `Bank`. A post that fails never blocks the bill;
+`kamra.erpnext_bridge.sync_vendor_bills` posts whatever is missing.
+Ingredient stock stays in Kamra; it is not mirrored to ERPNext stock.
+
+### Frappe HR: link staff to their Employee
+
+With Frappe HR installed, `kamra.erpnext_bridge.staff_employees` lists
+each Kamra login with its Employee, and `link_employee(user, employee)`
+links them through the Employee's own **User ID**, so HR and Kamra agree
+on who is who. Payroll journals from Frappe HR post into the same
+ERPNext company.
 
 ## What Kamra will not do
 
