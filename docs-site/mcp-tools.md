@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **170 governed tools** on the hosted MCP
+Kamra exposes **171 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -1022,6 +1022,15 @@ floor/ceiling. Always give a reason (it goes in the audit trail).
 
 Endpoint: `kamra.api.set_room_rate`.
 Mutating - logged to the activity ledger.
+
+### `occupancy_on_books(start_date, end_date)`
+
+Occupancy on the books per night for a date range (both dates
+included, at most 90 nights): confirmed and in-house reservations
+over all rooms. Rooms already sold, not a forecast. Quote the
+figures as returned - never estimate or round them yourself.
+
+Endpoint: `kamra.api.occupancy_on_books`.
 
 ## Briefings
 
