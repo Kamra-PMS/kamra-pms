@@ -793,11 +793,15 @@ class Reservation(Document):
 				["price_per_adult", "price_per_child"], as_dict=True) or {}
 			meal = ((self.adults or 1) * float(mp.get("price_per_adult") or 0)
 			        + (self.children or 0) * float(mp.get("price_per_child") or 0))
+		# a price shown with tax / the levy inside it is split by division; the
+		# pieces only add back up to the shown price at 6 decimals
+		from kamra.pricing import room_rate_digits
+		digits = room_rate_digits(self.property)
 		rows, running = [], 0.0
 		for i, n in enumerate(nightly):
-			rate = round(float(n["rate"]) * factor, 2)
+			rate = round(float(n["rate"]) * factor, digits)
 			if i == len(nightly) - 1 and plan_free:
-				rate = round(room_total - running, 2)
+				rate = round(room_total - running, digits)
 			running += rate
 			rows.append({
 				"stay_date": n["date"],
@@ -832,7 +836,9 @@ class Reservation(Document):
 		if self.is_new() or not rows:
 			return out
 		from kamra.folio import charged_nights
-		charged = charged_nights(self.name)
+		from kamra.pricing import room_rate_digits
+		digits = room_rate_digits(self.property)
+		charged = charged_nights(self.name, digits)
 		if not charged:
 			return out
 		from kamra.settings import get_setting
@@ -878,7 +884,7 @@ class Reservation(Document):
 			if action != "same":
 				out["nights"].append({"date": night, "charged": c["base"],
 				                      "new": round(new, 2), "action": action})
-			row["rate"], row["gst_rate"] = round(base, 2), gst
+			row["rate"], row["gst_rate"] = round(base, digits), gst
 		out["base"], out["tax"] = round(out["base"], 2), round(out["tax"], 2)
 		return out
 

@@ -4741,7 +4741,9 @@ Price per night,Price per night,السعر لكل ليلة,Precio por noche,Pre�
 Priced per plate. The quantity follows the guaranteed pax.,Priced per plate. The quantity follows the guaranteed pax.,مسعّر لكل طبق. الكمية تتبع عدد الضيوف المضمون.,Precio por plato. La cantidad corresponde al mínimo de asistentes garantizado.,Preço por prato. A quantidade segue o pax garantido.,按份计价，数量随保底人数调整。,screens/BanquetFunction.tsx,,translated
 Priced the stay,Priced the stay,تم تسعير الإقامة,Estancia cotizada,Preço da estadia,已为住宿定价,,,translated
 Prices are before tax.,Prices are before tax.,الأسعار قبل الضريبة.,Los precios son antes de impuestos.,Os preços são antes de impostos.,价格不含税。,components/RateOptions.tsx; screens/RateCalendar.tsx,,translated
+Prices include tax and the levy.,Prices include tax and the levy.,,,,,components/RateOptions.tsx; screens/RateCalendar.tsx,,needs_translation
 Prices include tax.,Prices include tax.,الأسعار شاملة الضريبة.,Los precios incluyen impuestos.,Os preços incluem impostos.,价格含税。,components/RateOptions.tsx; screens/RateCalendar.tsx,,translated
+"Prices include the levy, before tax.","Prices include the levy, before tax.",,,,,components/RateOptions.tsx; screens/RateCalendar.tsx,,needs_translation
 Prices set by hand cannot be combined with a rate plan or a voucher.,Prices set by hand cannot be combined with a rate plan or a voucher.,,,,,components/RateOptions.tsx,,needs_translation
 Print,Print,طباعة,Imprimir,Imprimir,打印,components/CheckInDialog.tsx; screens/AuditPack.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/EndOfDay.tsx; screens/Reports.tsx; screens/TripConfirmation.tsx; screens/VoidAllowanceReport.tsx; screens/banquet/Economics.tsx,,translated
 Print / Save as PDF,Print / Save as PDF,,Imprimir / Guardar como PDF,,打印 / 另存为 PDF,screens/GroupQuotation.tsx,,needs_translation
