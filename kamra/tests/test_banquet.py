@@ -741,7 +741,7 @@ class TestBanquetOps(BanquetTestCase):
 		fn = self._quoted()
 		value = float(self.sheet(fn).grand_total)
 		event = self.sheet(fn).event_date
-		data = bq.banquet_pipeline(self.f["property"], from_date=event, to_date=event)
+		data = bq.banquet_pipeline(self.f["property"], from_date=str(event), to_date=str(event))
 		enquiries = sum(float(r.grand_total or 0) for r in frappe.get_all(
 			"Venue Booking", filters={"property": self.f["property"], "event_date": event,
 			                          "status": "Enquiry"}, fields=["grand_total"]))
