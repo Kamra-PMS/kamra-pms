@@ -13126,6 +13126,80 @@
      }
     },
     {
+     "name": "business_date",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.reports.business_date",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.reports.business_date"
+       ]
+      },
+      "description": "The property's open business date (the day the night audit closes\nnext) and the calendar date, so a connected app dates what it posts.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "kpi_snapshots",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.reports.kpi_snapshots",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.reports.kpi_snapshots"
+       ]
+      },
+      "description": "The daily KPI snapshots of closed business dates from_date..to_date\n(both included, at most 366 days), oldest first. A date with no\nsnapshot (not closed yet, or closed before snapshots existed) is\nabsent, never estimated.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "budget_vs_actual",
      "request": {
       "method": "POST",

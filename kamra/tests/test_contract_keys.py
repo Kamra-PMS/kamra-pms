@@ -53,6 +53,8 @@ class ContractKeysTestCase(AuditTestCase):
 			"cashier.list_sessions": cashier.list_sessions(PROP_A),
 			"cashier.session_report": cashier.session_report(sess),
 			"reports.manager_flash": reports.manager_flash(PROP_A, TODAY),
+			"reports.business_date": reports.business_date(PROP_A),
+			"reports.kpi_snapshots": reports.kpi_snapshots(PROP_A, TODAY),
 		}
 		self.assertEqual(set(calls), set(RESPONSE_KEYS), "a documented method is untested")
 		for dotted, out in calls.items():
