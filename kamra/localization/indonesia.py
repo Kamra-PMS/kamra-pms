@@ -34,8 +34,11 @@ DEFAULT_NATIONALITY = "Indonesian"
 # a passport or ID card MRZ names the country by this code
 HOME_COUNTRY_ISO3 = "IDN"
 ID_TYPES = ["KTP", "Passport", "KITAS", "Driving License", "Other"]
-# QRIS settles like a card through the acquirer - book it as Card
-PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
+# QRIS is its own mode, as UPI is India's: the guest scans a QR and pays from a
+# wallet or banking app, with no card swipe. The till counts it in the instant
+# column, apart from cash and card.
+PAYMENT_MODES = ["Cash", "Card", "QRIS", "Bank Transfer"]
+INSTANT_PAYMENT_MODES = ["QRIS"]
 # notes and coins the till counts at close, largest first
 CASH_DENOMINATIONS = (100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100)
 

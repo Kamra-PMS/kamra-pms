@@ -169,9 +169,10 @@ def amount_in_words(pack, prop_doc, amount) -> str:
 # ── front-desk vocabulary: IDs and ways to pay ───────────────────────────
 # A pack declares ID_TYPES / PAYMENT_MODES / DEFAULT_* as module constants.
 # The desk offers Cash, Card and Bank Transfer everywhere. A pack may add
-# its own instant / wallet modes (INSTANT_PAYMENT_MODES, e.g. India's UPI):
-# each must also be a Folio Payment / Cashier Transaction option, and the
-# till keeps them in their own bucket (Cashier Session.system_upi).
+# its own instant / wallet modes (INSTANT_PAYMENT_MODES, e.g. India's UPI,
+# Indonesia's QRIS): each must also be an option on Folio Payment, Cashier
+# Transaction, Banquet Receipt and POS Order, and the till keeps them in
+# their own bucket (Cashier Session.system_upi).
 
 GENERIC_ID_TYPES = ["Passport", "National ID", "Driving License", "Other"]
 GENERIC_PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
@@ -201,10 +202,13 @@ def cash_denominations(pack) -> list[float]:
 
 
 def outlet_payment_modes(pack) -> list[str]:
-	"""What a bill is settled with at an outlet (POS): cash, card and the
-	pack's instant modes."""
+	"""What a bill is settled with at an outlet (POS): cash, card, bank
+	transfer and the pack's instant modes. A restaurant takes a transfer as
+	the front desk does. Whatever a pack adds here must also be an option on
+	POS Order's Payment Mode."""
 	instant = instant_payment_modes(pack)
-	return [m for m in payment_modes(pack) if m in ("Cash", "Card") or m in instant]
+	return [m for m in payment_modes(pack)
+	        if m in ("Cash", "Card", "Bank Transfer") or m in instant]
 
 
 def assert_payment_mode(property: str, mode: str | None) -> None:
