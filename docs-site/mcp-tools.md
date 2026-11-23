@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **170 governed tools** on the hosted MCP
+Kamra exposes **175 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -1608,3 +1608,43 @@ them to the user rather than silently dropping rows.
 
 Endpoint: `kamra.api.import_bookings`.
 Mutating - logged to the activity ledger.
+
+## Channels
+
+### `guest_search_stay(check_in_date, check_out_date, adults, children, child_ages, voucher_code)`
+
+Rooms free for a guest's stay with the real total per meal plan and what is
+due now under the hotel's payment policy. Always search before holding.
+
+Endpoint: `kamra.guest_booking.search`.
+
+### `guest_hold_booking(room_type, check_in_date, check_out_date, guest_name, phone, email, adults, children, child_ages, meal_plan, special_requests, voucher_code, idempotency_key)`
+
+Book the stay for the guest (name and phone required). If nothing is due now the
+hotel confirms it at once; otherwise it is held until hold_expires_on - send
+guest_payment_link before then. Pass an idempotency_key so a retry can't book twice.
+
+Endpoint: `kamra.guest_booking.hold`.
+Mutating - logged to the activity ledger.
+
+### `guest_payment_link(reservation)`
+
+A payment link (the hotel's gateway) for the advance still due on a booking this
+connection made. Paying it confirms the booking.
+
+Endpoint: `kamra.guest_booking.payment_link`.
+Mutating - logged to the activity ledger.
+
+### `guest_confirm_booking(reservation)`
+
+Confirm a held booking - refused until the advance is paid (or nothing was due).
+
+Endpoint: `kamra.guest_booking.confirm`.
+Mutating - logged to the activity ledger.
+
+### `guest_booking_status(reservation)`
+
+Status, dates, total, advance paid and still due, and hold expiry of a booking
+this connection made.
+
+Endpoint: `kamra.guest_booking.status`.

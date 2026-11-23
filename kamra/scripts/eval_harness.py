@@ -10829,6 +10829,79 @@ def t_service_account_scope():
 		"revoked key still reaches its scope"
 
 
+@check("AI guest booking: guest scope only, own bookings only, holds expire, confirm needs the advance (#228)")
+def t_ai_guest_booking():
+	from frappe.utils import add_to_date, now_datetime
+
+	from kamra import guest_booking as gb
+	from kamra import service_accounts as sa
+	from kamra.reservation_state import expire_holds
+
+	# scope: the five guest tools and branding, no staff endpoint, no staff role
+	assert sa.scope_tools(["guest.booking"]) == {
+		"guest_search_stay", "guest_hold_booking", "guest_payment_link",
+		"guest_confirm_booking", "guest_booking_status"}
+	assert sa.scope_roles(["guest.booking"]) == {sa.ROLE, "MCP Manage"}, \
+		sa.scope_roles(["guest.booking"])
+	a = sa.create_service_account("EVAL guest assistant A", ["guest.booking"], [P])
+	b = sa.create_service_account("EVAL guest assistant B", ["guest.booking"], [P])
+	frappe.local.cache.pop("kamra_service_accounts", None)
+	frappe.db.set_value("Property", P, {"booking_payment_mode": "Advance percent",
+	                                    "advance_percent": 25})
+	frappe.clear_document_cache("Property", P)
+	try:
+		frappe.set_user(a["user"])  # nosemgrep: frappe-setuser -- acting as the key under test
+		me = sa.account_for()
+		assert sa.refusal(me, "/api/method/kamra.guest_booking.hold") is None
+		for path in ("/api/method/kamra.api.find_reservations",
+		             "/api/method/kamra.api.stay_detail", "/api/resource/Guest"):
+			assert sa.refusal(me, path), f"{path} reachable with the guest scope"
+		rows = gb.search(P, "2031-06-10", "2031-06-11", adults=1)
+		assert any(r["room_type"] == RT and r["quote"] for r in rows), rows
+		held = gb.hold(P, RT, "2031-06-10", "2031-06-11", "Eval AI Guest",
+		               "+919812302281", adults=1, idempotency_key="eval-ai-228")
+		assert held["status"] == "Pending Payment" and held["hold_expires_on"], held
+		assert held["still_due_now"] > 0 and not held["confirmed"], held
+		# the policy, not the model, confirms: refused while the advance is due
+		_refused(gb.confirm, held["reservation"], contains="advance")
+		assert gb.status(held["reservation"])["reservation"] == held["reservation"]
+		frappe.set_user(b["user"])  # nosemgrep: frappe-setuser -- the other key
+		_refused(gb.status, held["reservation"], exc=frappe.DoesNotExistError)
+		_refused(gb.confirm, held["reservation"], exc=frappe.DoesNotExistError)
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+	res = held["reservation"]
+	# paid in full: confirm goes through
+	due = frappe.db.get_value("Reservation", res, "advance_due")
+	frappe.db.set_value("Reservation", res, "advance_paid", due)
+	frappe.set_user(a["user"])  # nosemgrep: frappe-setuser -- acting as the key under test
+	try:
+		assert gb.confirm(res)["confirmed"]
+		second = gb.hold(P, RT, "2031-06-12", "2031-06-13", "Eval AI Guest 2",
+		                 "+919812302282", adults=1)
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+	# an unpaid hold is released when its window passes
+	frappe.db.set_value("Reservation", second["reservation"], "hold_expires_on",
+	                    add_to_date(now_datetime(), minutes=-5))
+	expire_holds()
+	assert frappe.db.get_value("Reservation", second["reservation"], "status") == "Cancelled"
+	# pay at the hotel: the property's policy confirms at once
+	frappe.db.set_value("Property", P, "booking_payment_mode", "Pay at hotel")
+	frappe.clear_document_cache("Property", P)
+	frappe.set_user(a["user"])  # nosemgrep: frappe-setuser -- acting as the key under test
+	try:
+		now = gb.hold(P, RT, "2031-06-14", "2031-06-15", "Eval AI Guest 3",
+		              "+919812302283", adults=1)
+		assert now["confirmed"] and now["still_due_now"] == 0, now
+		_refused(gb.payment_link, now["reservation"], contains="Nothing is due")
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+	for acct in (a, b):
+		sa.revoke_service_account(acct["name"])
+	frappe.local.cache.pop("kamra_service_accounts", None)
+
+
 @check("app pairing: code works once, scoped key, disconnect stops it")
 def t_app_pairing():
 	from unittest.mock import patch
@@ -11697,7 +11770,7 @@ def execute():
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
 		           t_philippines_pack,
 		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
-		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
+		           t_app_pairing, t_ai_guest_booking, t_ar_settle_idempotent, t_ar_settle_race,
 		           t_ar_balance_from_entries,
 		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging,
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,

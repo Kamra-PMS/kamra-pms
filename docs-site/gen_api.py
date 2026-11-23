@@ -56,6 +56,8 @@ MODULES = [
     ("menu_import", "Menu bulk import", ""),
     ("id_documents", "Guest ID documents", ""),
     ("crs", "Central reservations (chain)", ""),
+    ("guest_booking", "AI guest booking (guest.booking scope)",
+     "Only a service account with the guest.booking scope may call these; it sees only the bookings it made."),
     ("dashboards", "Dashboards", ""),
     ("reports", "Reports", ""),
     ("audit_report", "Night audit report (day, MTD, YTD)", "Read only. Food and beverage come from the restaurant bills; the year starts where the country pack says."),

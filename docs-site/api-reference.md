@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **516 endpoints**, generated from the source
+the UI and the AI use. **521 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -5227,6 +5227,84 @@ idempotency_key returns the trip without posting again.
 | `reference` | no | `None` |
 | `pin` | no | `None` |
 | `idempotency_key` | no | `None` |
+
+
+## AI guest booking (guest.booking scope)
+
+> Only a service account with the guest.booking scope may call these; it sees only the bookings it made.
+
+### `kamra.guest_booking.search`
+
+**GET/POST**
+
+Room types free for the stay, each with the real quoted total per
+meal plan and what is due now under the property's payment policy.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
+
+### `kamra.guest_booking.hold`
+
+**POST**
+
+Book the stay for the guest. Pay-at-hotel properties confirm it at
+once; with an advance due it is held (Pending Payment) until
+hold_expires_on - send the payment link before then.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room_type` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `guest_name` | yes |  |
+| `phone` | yes |  |
+| `email` | no | `''` |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `child_ages` | no | `None` |
+| `meal_plan` | no | `''` |
+| `special_requests` | no | `''` |
+| `voucher_code` | no | `''` |
+| `idempotency_key` | no | `''` |
+
+### `kamra.guest_booking.payment_link`
+
+**POST**
+
+A payment link for the advance still due on this booking.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.guest_booking.confirm`
+
+**POST**
+
+Confirm the booking - only once the property's policy is met: the
+advance is paid, or nothing was due now. Never on the model's say-so.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.guest_booking.status`
+
+**GET/POST**
+
+Where a booking this connection made stands.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
 
 
 ## Dashboards
