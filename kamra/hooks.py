@@ -65,7 +65,9 @@ scheduler_events = {
 		"15 4 * * *": ["kamra.scripts.reset_demo.scheduled"],
 		# 03:30 - storage limitation (DPDP s.8(7)): erase guests idle past
 		# their property's retention period
-		"30 3 * * *": ["kamra.privacy.apply_retention"],
+		"30 3 * * *": ["kamra.privacy.apply_retention",
+		               # recreation memberships past their last day (#632)
+		               "kamra.recreation.expire_memberships"],
 		# 03:40 - the same for conversations: WhatsApp message text and AI
 		# assistant chats past the property's message retention period
 		"40 3 * * *": ["kamra.privacy.apply_message_retention"],
@@ -286,6 +288,9 @@ _PROPERTY_SCOPED = (
 	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Table Reservation",
 	"Print Job",
 	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan", "Rate Restriction",
+	"Recreation Booking", "Recreation Customer", "Recreation Facility",
+	"Recreation Membership", "Recreation Plan", "Recreation Therapist",
+	"Recreation Treatment", "Recreation Visit",
 	"Reservation",
 	"Long Stay Discount", "Revenue Budget", "Room", "Room Block", "Room Discrepancy", "Room Type", "Season",
 	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template", "Ticket Event",

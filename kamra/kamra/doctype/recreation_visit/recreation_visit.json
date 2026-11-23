@@ -11,12 +11,14 @@
   "guest",
   "customer",
   "membership",
+  "booking",
   "who",
   "status",
   "started_at",
   "ended_at",
   "payment_mode",
-  "amount"
+  "amount",
+  "paid_by"
  ],
  "fields": [
   {
@@ -64,6 +66,13 @@
    "options": "Recreation Membership"
   },
   {
+   "fieldname": "booking",
+   "fieldtype": "Link",
+   "label": "Booking",
+   "options": "Recreation Booking",
+   "read_only": 1
+  },
+  {
    "fieldname": "who",
    "fieldtype": "Data",
    "label": "Who",
@@ -103,10 +112,16 @@
    "fieldtype": "Currency",
    "label": "Amount",
    "default": "0"
+  },
+  {
+   "fieldname": "paid_by",
+   "fieldtype": "Data",
+   "label": "Paid By",
+   "description": "How a walk-in paid (Cash, Card, ...)."
   }
  ],
  "links": [],
- "modified": "2026-11-19 12:00:00.000000",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Recreation Visit",

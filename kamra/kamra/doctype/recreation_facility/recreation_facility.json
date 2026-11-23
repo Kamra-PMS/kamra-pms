@@ -12,7 +12,8 @@
   "price",
   "status",
   "opens",
-  "closes"
+  "closes",
+  "slot_minutes"
  ],
  "fields": [
   {
@@ -78,10 +79,16 @@
    "fieldname": "closes",
    "fieldtype": "Time",
    "label": "Closes"
+  },
+  {
+   "fieldname": "slot_minutes",
+   "fieldtype": "Int",
+   "label": "Session Minutes",
+   "description": "Pool or court sessions: bookable slots of this length between opening and closing. 0 = no slots."
   }
  ],
  "links": [],
- "modified": "2026-11-19 12:00:00.000000",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Recreation Facility",

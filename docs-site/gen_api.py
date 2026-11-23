@@ -51,6 +51,8 @@ MODULES = [
     ("laundry", "Laundry (housekeeping)", ""),
     ("housekeeping", "Housekeeping (room status cases, inspection pass rate)", "Each part is behind its Housekeeping setting; switched off, the endpoints refuse or report enabled: false."),
     ("banquet", "Banquets (functions, quotations, event orders)", ""),
+    ("recreation", "Recreation (gym, pool, spa: visits, memberships, bookings, passes)",
+     "Walk-in and membership money goes in the till with a receipt; a guest's paid access is on the folio."),
     ("migrate", "Migration (CSV import)", ""),
     ("golive", "Go-live data (companies, opening balances, reconciliation)", ""),
     ("inventory", "Inventory & recipes", ""),
