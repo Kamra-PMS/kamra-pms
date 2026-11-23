@@ -336,14 +336,6 @@ def _ensure_login(email: str, owner_name: str) -> str:
 	return email
 
 
-def _unwrapped(fn):
-	"""The desk function under the whitelist and its role guard. The owner
-	check has already run, so the desk's Front Desk role is not required."""
-	while getattr(fn, "__wrapped__", None):
-		fn = fn.__wrapped__
-	return fn
-
-
 def _managed_rooms(user: str, property: str) -> list[str]:
 	docs = _owner_docs(user, property)
 	if not docs:
@@ -413,12 +405,19 @@ def block_unit(property: str, room: str, from_date: str, to_date: str,
 	owned = _managed_rooms(frappe.session.user, property)
 	if room not in owned:
 		frappe.throw(_("You can only hold a unit you manage."), frappe.PermissionError)
-	from kamra.api import create_room_block
+	from kamra.savings import log_action
 	try:
-		with _without_desk_permission():
-			return _unwrapped(create_room_block)(
-				property, room, from_date, to_date, reason="Owner",
-				note=(note or "").strip() or _("Owner hold"))
+		# the owner has no desk permission on Room Block: the ownership check
+		# above is the guard, and the doctype's own clash check still runs
+		doc = frappe.get_doc({
+			"doctype": "Room Block", "property": property, "room": room,
+			"from_date": from_date, "to_date": to_date, "reason": "Owner",
+			"note": (note or "").strip() or _("Owner hold"),
+			"block_status": "Active",
+		}).insert(ignore_permissions=True)
+		log_action("room_block", "Room Block", doc.name, property,
+		           rationale=f"Owner: {room} {from_date}→{to_date}")
+		return {"name": doc.name}
 	except frappe.ValidationError as exc:
 		# the desk's clash message names the guest; an owner does not get that
 		if "booked" in str(exc).lower():
@@ -438,5 +437,11 @@ def release_block(name: str) -> dict:
 		owned = _managed_rooms(frappe.session.user, doc.property)
 		if doc.room not in owned:
 			frappe.throw(_("You can only hold a unit you manage."), frappe.PermissionError)
-		from kamra.api import release_room_block
-		return _unwrapped(release_room_block)(name)
+		doc.block_status = "Released"
+		doc.released_by = frappe.session.user
+		doc.released_on = frappe.utils.now_datetime()
+		doc.save(ignore_permissions=True)
+	from kamra.savings import log_action
+	log_action("room_unblock", "Room Block", doc.name, doc.property,
+	           rationale=f"owner released {doc.room}")
+	return {"name": doc.name, "block_status": "Released"}
