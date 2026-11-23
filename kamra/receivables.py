@@ -421,3 +421,131 @@ def transfer_ar_invoice(account: str, folio: str, to_account: str,
 	                     + (f" · {note}" if note else ""))
 	return {"folio": folio, "amount": amount,
 	        "from_balance": src.balance, "to_balance": dst.balance}
+
+
+# ── Bad-debt write-off (#522) ────────────────────────────────────────────────
+# A bill already on a company's account that will not be paid comes off as
+# bad debt. Same approval rules as an allowance (kamra.api): above the
+# property's allowance line, or with a supervisor reason code, it waits as
+# an Allowance Request (kind Write Off) until a manager approves it with
+# their PIN. AI agents only ever ask.
+
+WRITE_OFF_CODE = ("9110", "Bad Debt Write-off")
+
+
+def _write_off_code() -> str:
+	code, desc = WRITE_OFF_CODE
+	if not frappe.db.exists("Transaction Code", code):
+		frappe.get_doc({"doctype": "Transaction Code", "code": code,
+		                "description": desc, "txn_type": "Adjustment",
+		                "revenue_group": "Adjustment", "subgroup": "Bad Debt",
+		                }).insert(ignore_permissions=True)
+	return code
+
+
+def _open_bill(account: str, folio: str) -> dict:
+	"""The bill as it stands now, from a locking read (the caller holds the
+	account)."""
+	from kamra.ledger import locked_account_figures
+	item = next((r for r in locked_account_figures(account)["open_items"]
+	             if r["folio"] == folio), None)
+	if not item or item["outstanding"] <= 0.005:
+		frappe.throw(_("Nothing is owed on that bill on this account."))
+	return item
+
+
+def post_write_off(account: str, folio: str, amount: float, text: str,
+                   approver: str | None = None) -> str:
+	"""The one write-off writer: a Write Off entry on the account (the bill
+	and aging drop by it) and the AR credit on the books, coded to bad debt.
+	Returns the City Ledger Entry."""
+	from kamra.ledger import _lock_account, _sync_account_balance, write_ledger_entry
+	from kamra.localization import money_text
+	_lock_account(account)
+	acc = frappe.get_doc("City Ledger Account", account)
+	item = _open_bill(account, folio)
+	amount = round(float(amount), 2)
+	if amount > item["outstanding"] + 0.005:
+		frappe.throw(_("The bill owes {0} now - a write-off can't be more.").format(
+			money_text(acc.property, item["outstanding"])))
+	entry = frappe.get_doc({
+		"doctype": "City Ledger Entry", "account": account,
+		"property": acc.property, "posting_date": get_business_date(acc.property),
+		"kind": "Write Off", "folio": folio,
+		"invoice_number": item["invoice_number"], "debit": 0, "credit": amount,
+		"reference": "Bad debt", "notes": text[:500],
+	}).insert(ignore_permissions=True)
+	# not sourced to the City Ledger Entry: those AR credits count as the
+	# company's payments (city_ledger_open_folios); this lowers what is billed
+	write_ledger_entry(
+		property=acc.property, folio=folio, ledger="AR", credit=amount,
+		description=f"Bad debt written off {acc.company} · {entry.name}",
+		transaction_code=_write_off_code(),
+		source_doctype="Folio", source_name=folio)
+	_sync_account_balance(account)
+	from kamra.savings import log_action
+	log_action("ar_write_off", "Folio", folio, acc.property,
+	           rationale=f"Wrote off {money_text(acc.property, amount)} of "
+	                     f"{item['invoice_number'] or folio} ({acc.company}): {text}",
+	           approver=approver)
+	return entry.name
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+def write_off_ar_bill(account: str, folio: str, amount: float,
+                      reason: str = "", reason_code: str | None = None,
+                      pin: str | None = None):
+	"""Write off part or all of what a bill still owes on a company's account
+	as bad debt, with a reason (an Adjust reason code and/or a note).
+
+	Above the property's allowance approval line (or with a supervisor
+	reason code) it becomes a pending request ({"pending": True, ...}) that a
+	manager approves with their PIN (kamra.api.decide_allowance), unless the
+	caller is that manager. An AI agent's write-off always waits."""
+	from frappe.utils import flt
+
+	from kamra.api import (_allowance_needs_approval, _allowance_reason,
+	                       _may_approve_allowance)
+	from kamra.authz import require_cashier_pin, verify_supervisor
+	from kamra.credit import _is_agent
+	from kamra.ledger import _lock_account
+	from kamra.localization import money_text
+	_lock_account(account)
+	acc = _account(account)
+	amount = round(abs(flt(amount)), 2)
+	if not amount:
+		frappe.throw(_("Enter the amount to write off."))
+	item = _open_bill(account, folio)
+	if amount > item["outstanding"] + 0.005:
+		frappe.throw(_("The bill owes {0} - a write-off can't be more.").format(
+			money_text(acc.property, item["outstanding"])))
+	text = _allowance_reason(reason_code, reason)
+	agent = _is_agent()
+	if agent or _allowance_needs_approval(acc.property, amount, reason_code):
+		if agent or not _may_approve_allowance(acc.property):
+			from kamra.api import agent_channel
+			req = frappe.get_doc({
+				"doctype": "Allowance Request", "kind": "Write Off",
+				"property": acc.property, "folio": folio,
+				"city_ledger_account": account,
+				"reservation": frappe.db.get_value("Folio", folio, "reservation"),
+				"amount": amount, "reason_code": reason_code or None,
+				"reason": text, "status": "Pending",
+				"requested_by": frappe.session.user,
+				"requested_on": now_datetime(),
+				"channel": agent_channel() or "Desk",
+			}).insert(ignore_permissions=True)
+			from kamra.webhooks import emit_approval
+			emit_approval("approval.requested", req)
+			from kamra.savings import log_action
+			log_action("ar_write_off_requested", "Folio", folio, acc.property,
+			           rationale=f"Asked to write off {money_text(acc.property, amount)} "
+			                     f"({acc.company}): {text}",
+			           channel=agent_channel() or "Desk", approval_status="Pending")
+			return {"ok": True, "pending": True, "request": req.name}
+		approver = verify_supervisor(acc.property, frappe.session.user, pin)
+		entry = post_write_off(account, folio, amount, text, approver)
+		return {"ok": True, "entry": entry, "approved_by": approver}
+	require_cashier_pin(acc.property, pin)
+	return {"ok": True, "entry": post_write_off(account, folio, amount, text)}

@@ -3212,7 +3212,15 @@ def decide_allowance(allowance_request: str, approve: int = 1,
 	else:
 		_pin_guard(req.folio, pin)
 	note = (note or "").strip()
-	if cint(approve):
+	if cint(approve) and req.get("kind") == "Write Off":
+		# a bad-debt write-off on a company's account (#522): the bill is
+		# settled by design, so no open-folio check; post_write_off rechecks
+		# what the bill owes now
+		from kamra.receivables import post_write_off
+		post_write_off(req.city_ledger_account, req.folio, flt(req.amount),
+		               req.reason, approver)
+		req.status = "Approved"
+	elif cint(approve):
 		if frappe.db.get_value("Folio", req.folio, "status") == "Closed":
 			frappe.throw(_("This folio is settled now. Reject this request and "
 			               "pass the allowance on the guest's open folio."))
@@ -3242,7 +3250,8 @@ def decide_allowance(allowance_request: str, approve: int = 1,
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Hotel Admin", "Kamra Agent")
 def allowance_requests(property: str, status: str = "Pending",
-                       folio: str | None = None):
+                       folio: str | None = None,
+                       city_ledger_account: str | None = None):
 	"""Allowances waiting for a manager (or decided ones, by status), with
 	the stay they are for. can_decide says if the caller may approve."""
 	assert_property_access(property)
@@ -3251,9 +3260,12 @@ def allowance_requests(property: str, status: str = "Pending",
 		filters["status"] = status
 	if folio:
 		filters["folio"] = folio
+	if city_ledger_account:
+		filters["city_ledger_account"] = city_ledger_account
 	rows = frappe.get_all(
 		"Allowance Request", filters=filters,
-		fields=["name", "serial", "folio", "reservation", "amount", "gst_rate",
+		fields=["name", "serial", "kind", "city_ledger_account", "folio",
+		        "reservation", "amount", "gst_rate",
 		        "reason_code", "reason", "status", "requested_by",
 		        "requested_on", "channel", "decided_by", "decided_on",
 		        "decision_note"],

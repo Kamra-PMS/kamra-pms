@@ -6,8 +6,8 @@ from frappe import _
 from frappe.model.document import Document
 
 # what was asked for: fixed once the request exists
-_ASKED = ("property", "folio", "reservation", "amount", "gst_rate",
-          "reason_code", "reason", "requested_by")
+_ASKED = ("property", "folio", "reservation", "kind", "city_ledger_account",
+          "amount", "gst_rate", "reason_code", "reason", "requested_by")
 
 
 class AllowanceRequest(Document):

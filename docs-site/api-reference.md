@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **516 endpoints**, generated from the source
+the UI and the AI use. **517 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -1049,6 +1049,7 @@ the stay they are for. can_decide says if the caller may approve.
 | `property` | yes |  |
 | `status` | no | `'Pending'` |
 | `folio` | no | `None` |
+| `city_ledger_account` | no | `None` |
 
 ### `kamra.api.allowance_voucher`
 
@@ -6162,6 +6163,27 @@ re-run - finance is choosing who pays.
 | `folio` | yes |  |
 | `to_account` | yes |  |
 | `reason` | no | `None` |
+
+### `kamra.receivables.write_off_ar_bill`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Write off part or all of what a bill still owes on a company's account
+as bad debt, with a reason (an Adjust reason code and/or a note).
+
+Above the property's allowance approval line (or with a supervisor
+reason code) it becomes a pending request ({"pending": True, ...}) that a
+manager approves with their PIN (kamra.api.decide_allowance), unless the
+caller is that manager. An AI agent's write-off always waits.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `folio` | yes |  |
+| `amount` | yes |  |
+| `reason` | no | `''` |
+| `reason_code` | no | `None` |
+| `pin` | no | `None` |
 
 
 ## Accounts payable (vendors, supplier bills, approval, payments)

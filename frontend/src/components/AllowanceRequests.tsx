@@ -17,6 +17,8 @@ import { Button } from "./ui/button"
 interface Req {
   name: string
   serial: string | null
+  kind?: "Allowance" | "Write Off" | null
+  city_ledger_account?: string | null
   folio: string
   amount: number
   reason: string
@@ -42,9 +44,11 @@ const inputCls =
 const money = (n: number) =>
   `${cur()}${fmtAmount(n || 0)}`
 
-export default function AllowanceRequests({ property, folio, status = "Pending", refreshKey, onChanged, showStay }: {
+export default function AllowanceRequests({ property, folio, cityLedgerAccount, status = "Pending", refreshKey, onChanged, showStay }: {
   property: string
   folio?: string
+  /** only the write-offs on this company account */
+  cityLedgerAccount?: string
   status?: string
   refreshKey?: number
   onChanged?: () => void
@@ -66,11 +70,11 @@ export default function AllowanceRequests({ property, folio, status = "Pending",
 
   const load = useCallback(() => {
     call<{ requests: Req[]; can_decide: boolean }>("kamra.api.allowance_requests", {
-      property, status, folio,
+      property, status, folio, city_ledger_account: cityLedgerAccount,
     })
       .then((r) => { setRows(r.requests); setCanDecide(r.can_decide) })
       .catch((e) => setError(serverError(e)))
-  }, [property, status, folio])
+  }, [property, status, folio, cityLedgerAccount])
   useEffect(load, [load, refreshKey])
 
   async function decide(req: string, params: Record<string, unknown>, ownPin: boolean) {
@@ -112,8 +116,17 @@ export default function AllowanceRequests({ property, folio, status = "Pending",
         <div key={r.name} className="rounded-lg border border-amber-200 bg-amber-50/60 p-2.5 text-sm">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <span className="font-medium tabular-nums">{money(r.amount)}</span>
-            <span className="min-w-0 flex-1 text-zinc-700">{r.reason}</span>
-            {showStay && (
+            <span className="min-w-0 flex-1 text-zinc-700">
+              {r.kind === "Write Off" && (
+                <span className="mr-1.5 rounded bg-rose-100 px-1.5 py-0.5 text-xs font-medium text-rose-800">{t("Bad debt write-off")}</span>
+              )}
+              {r.reason}
+            </span>
+            {showStay && r.kind === "Write Off" && r.city_ledger_account ? (
+              <Link to={`/receivables/${encodeURIComponent(r.city_ledger_account)}`} className="text-xs text-brand-700 hover:underline">
+                {[r.bill_to_name || r.guest_name, r.folio].filter(Boolean).join(" · ")}
+              </Link>
+            ) : showStay && (
               <Link to={`/billing/${encodeURIComponent(r.folio)}`} className="text-xs text-brand-700 hover:underline">
                 {[r.room, r.bill_to_name || r.guest_name, r.folio].filter(Boolean).join(" · ")}
               </Link>
@@ -152,7 +165,7 @@ export default function AllowanceRequests({ property, folio, status = "Pending",
                   <input className={`${inputCls} w-24`} type="password" inputMode="numeric" autoComplete="off"
                     value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
                     placeholder={t("Your PIN")} aria-label={t("Your PIN")} />
-                  <Button variant="outline" disabled={busy || !pin || r.folio_status === "Closed"}
+                  <Button variant="outline" disabled={busy || !pin || (r.kind !== "Write Off" && r.folio_status === "Closed")}
                     onClick={() => void decide(r.name, { approve: 1, pin }, false)}>
                     {t("Approve")}
                   </Button>
@@ -185,7 +198,7 @@ export default function AllowanceRequests({ property, folio, status = "Pending",
                   )}
                 </>
               )}
-              {r.folio_status === "Closed" && (
+              {r.kind !== "Write Off" && r.folio_status === "Closed" && (
                 <span className="text-xs text-rose-700">{t("This bill is settled now. Reject it and pass the allowance on an open bill.")}</span>
               )}
             </div>
