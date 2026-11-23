@@ -238,7 +238,9 @@ def set_room_rate(property: str, room_type: str, start_date: str,
 		"priority": 100,
 		"days_of_week": days_str
 	})
-	season.insert()
+	# require_roles already gated the caller; Kamra Agent (owner path via
+	# act_as) has no Season DocPerm
+	season.insert(ignore_permissions=True)
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("set_room_rate", "Season", season.name, property,
