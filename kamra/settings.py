@@ -379,6 +379,13 @@ MODULES: tuple[Module, ...] = (
 				S("banquet_advance_pct", "Advance at confirmation", "number", 25, min=0, max=100, unit="%"),
 				S("banquet_interim_pct", "Interim payment", "number", 50, min=0, max=100, unit="%"),
 				S("banquet_interim_days", "Interim due", "number", 15, min=0, max=365, unit="days before"),
+				S("banquet_refundable_deposit", "Refundable deposit on confirmation", "number", 0, min=0,
+				  hint="Held against damage and settled at close-out. 0 asks for none."),
+			)),
+			Section("tasting", "Food tasting", "", (
+				S("banquet_tasting_allowed", "Offer food tastings", "check", 1),
+				S("banquet_tasting_pax", "People at a tasting", "number", 4, min=1, max=50,
+				  hint="What the kitchen prepares portions for, unless the function says otherwise."),
 			)),
 			Section("followup", "Sales follow-up", "", (
 				S("banquet_follow_up_days", "Follow up an enquiry after", "number", 2, min=0, max=60, unit="days"),

@@ -380,9 +380,17 @@ def parse_payment_webhook(gateway: str, payload: bytes, headers: dict,
 	if not provider:
 		return None
 	folio = provider.webhook_folio(payload)
-	if not folio or not frappe.db.exists("Folio", folio):
+	# a banquet milestone link carries "VB:<function>:<term>" (kamra.banquet_ops)
+	banquet = (folio or "").startswith("VB:")
+	if banquet:
+		function = folio[3:].partition(":")[0]
+		property = frappe.db.get_value("Venue Booking", function, "property")
+		if not property:
+			return None
+	elif not folio or not frappe.db.exists("Folio", folio):
 		return None
-	property = frappe.db.get_value("Folio", folio, "property")
+	else:
+		property = frappe.db.get_value("Folio", folio, "property")
 	if gateway not in payment_gateways(pack_for(property)):
 		return None
 	settings = settings_for(property)

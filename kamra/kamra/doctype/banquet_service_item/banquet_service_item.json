@@ -11,6 +11,7 @@
   "category",
   "column_break_a",
   "uom",
+  "stock_qty",
   "rate",
   "cost_rate",
   "cost_gst_rate",
@@ -57,6 +58,12 @@
    "in_list_view": 1,
    "default": "Per Event",
    "options": "Per Event\nPer Hour\nPer Day\nPer Pax\nPer Unit"
+  },
+  {
+   "fieldname": "stock_qty",
+   "fieldtype": "Int",
+   "label": "Units Owned",
+   "description": "How many the hotel owns. Set it and confirmed functions can't book more than this at the same time; 0 means not tracked."
   },
   {
    "fieldname": "rate",
@@ -125,7 +132,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-31 14:00:00.000000",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Banquet Service Item",
