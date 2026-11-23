@@ -1,0 +1,43 @@
+{
+ "actions": [],
+ "autoname": "field:snapshot_key",
+ "creation": "2026-11-23 10:00:00.000000",
+ "description": "The figures of one closed business date, written once at night audit. Equal to the manager flash for that date.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["snapshot_key", "property", "business_date", "occupancy_pct", "adr", "revpar",
+                 "column_break_a", "room_revenue", "total_revenue", "collections_total", "ar_balance", "figures"],
+ "fields": [
+  {"fieldname": "snapshot_key", "fieldtype": "Data", "label": "Key", "unique": 1, "read_only": 1, "hidden": 1},
+  {"fieldname": "property", "fieldtype": "Link", "label": "Property", "options": "Property", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1, "search_index": 1},
+  {"fieldname": "business_date", "fieldtype": "Date", "label": "Business Date", "reqd": 1, "in_list_view": 1, "search_index": 1},
+  {"fieldname": "occupancy_pct", "fieldtype": "Percent", "label": "Occupancy", "in_list_view": 1},
+  {"fieldname": "adr", "fieldtype": "Currency", "label": "ADR", "in_list_view": 1},
+  {"fieldname": "revpar", "fieldtype": "Currency", "label": "RevPAR"},
+  {"fieldname": "column_break_a", "fieldtype": "Column Break"},
+  {"fieldname": "room_revenue", "fieldtype": "Currency", "label": "Room Revenue"},
+  {"fieldname": "total_revenue", "fieldtype": "Currency", "label": "Total Revenue", "in_list_view": 1},
+  {"fieldname": "collections_total", "fieldtype": "Currency", "label": "Collections"},
+  {"fieldname": "ar_balance", "fieldtype": "Currency", "label": "AR Balance"},
+  {"fieldname": "figures", "fieldtype": "JSON", "label": "Figures", "read_only": 1}
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-23 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Daily KPI Snapshot",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1},
+  {"role": "Hotel Admin", "read": 1},
+  {"role": "Finance", "read": 1},
+  {"role": "Revenue Manager", "read": 1},
+  {"role": "Night Auditor", "read": 1}
+ ],
+ "sort_field": "business_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

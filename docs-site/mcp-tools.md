@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **170 governed tools** on the hosted MCP
+Kamra exposes **172 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -1053,6 +1053,23 @@ outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
 Read-only.
 
 Endpoint: `kamra.reports.manager_flash`.
+
+### `business_date()`
+
+The property's open business date (the day the next night audit
+closes) and today's calendar date. Read-only.
+
+Endpoint: `kamra.reports.business_date`.
+
+### `kpi_snapshots(from_date, to_date)`
+
+Daily KPI snapshots of closed business dates, written once at night
+audit and equal to the manager flash for each date: occupancy, ADR,
+RevPAR, revenue by group, collections by mode and the AR balance.
+from_date..to_date YYYY-MM-DD, both included, at most 366 days. A date
+not yet closed has no snapshot. Read-only.
+
+Endpoint: `kamra.reports.kpi_snapshots`.
 
 ### `night_audit_report(date)`
 

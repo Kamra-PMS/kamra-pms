@@ -241,6 +241,87 @@ def manager_flash(property: str, date: str | None = None,
 	}
 
 
+# ── Business date and daily KPI snapshot (#542) ──────────────────────────────
+
+KPI_RANGE_DAYS = 366
+
+
+@frappe.whitelist()
+@require_roles("Front Desk", "Finance", "Revenue Manager", "Night Auditor",
+               "Housekeeping", "Kamra Agent")
+def business_date(property: str):
+	"""The property's open business date (the day the night audit closes
+	next) and the calendar date, so a connected app dates what it posts."""
+	from kamra.business_date import get_business_date
+	return {"property": property, "business_date": get_business_date(property),
+	        "calendar_date": nowdate()}
+
+
+def kpi_figures(property: str, date: str) -> dict:
+	"""One date's figures as the manager flash shows them (its "today" and
+	collections), plus the AR ledger balance at that date."""
+	from kamra.api import cash_summary
+	from kamra.ledger import ledger_balances
+	total_rooms = frappe.db.count("Room", {"property": property}) or 0
+	day = _day_stats(property, str(date), total_rooms)
+	collections = cash_summary(property, str(date), str(date))
+	ar = next(row["balance"] for row in ledger_balances(property, str(date))["ledgers"]
+	          if row["ledger"] == "AR")
+	return {**day, "total_rooms": total_rooms,
+	        "revenue_by_group": {"rooms": day["room_revenue"], "fnb": day["fnb_revenue"],
+	                             "other": day["other_revenue"],
+	                             "allowances": day["allowances"]},
+	        "collections": collections, "ar_balance": round(float(ar), 2)}
+
+
+def write_kpi_snapshot(property: str, date: str) -> str:
+	"""Store a closed business date's figures once. The night audit calls it
+	after the date rolls; a second call for the same date keeps the first
+	snapshot (the unique key refuses a duplicate even from two workers)."""
+	key = f"{property}:{date}"
+	if frappe.db.exists("Daily KPI Snapshot", key):
+		return key
+	f = kpi_figures(property, date)
+	try:
+		frappe.get_doc({
+			"doctype": "Daily KPI Snapshot", "snapshot_key": key,
+			"property": property, "business_date": str(date),
+			"occupancy_pct": f["occupancy_pct"], "adr": f["adr"], "revpar": f["revpar"],
+			"room_revenue": f["room_revenue"], "total_revenue": f["total_revenue"],
+			"collections_total": float(f["collections"].get("grand_total") or 0),
+			"ar_balance": f["ar_balance"],
+			"figures": json.dumps(f, default=str),
+		}).insert(ignore_permissions=True)
+	except frappe.DuplicateEntryError:
+		pass
+	return key
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
+def kpi_snapshots(property: str, from_date: str, to_date: str | None = None):
+	"""The daily KPI snapshots of closed business dates from_date..to_date
+	(both included, at most 366 days), oldest first. A date with no
+	snapshot (not closed yet, or closed before snapshots existed) is
+	absent, never estimated."""
+	from frappe.utils import date_diff
+	to_date = to_date or from_date
+	if getdate(to_date) < getdate(from_date):
+		frappe.throw("to_date is before from_date.")
+	if date_diff(to_date, from_date) + 1 > KPI_RANGE_DAYS:
+		frappe.throw(f"Ask for at most {KPI_RANGE_DAYS} days at a time.")
+	rows = frappe.get_all(
+		"Daily KPI Snapshot",
+		filters={"property": property,
+		         "business_date": ["between", [str(from_date), str(to_date)]]},
+		fields=["business_date", "figures", "creation"],
+		order_by="business_date asc", limit_page_length=0)
+	return {"property": property, "from_date": str(from_date), "to_date": str(to_date),
+	        "snapshots": [{**json.loads(r.figures or "{}"),
+	                       "business_date": str(r.business_date),
+	                       "written_at": str(r.creation)} for r in rows]}
+
+
 def _days(property: str, d, end, total_rooms: int) -> list[dict]:
 	out = []
 	while d <= end:

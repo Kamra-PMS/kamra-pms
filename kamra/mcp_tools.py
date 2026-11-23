@@ -2335,6 +2335,28 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Briefings",
 	),
 	_t(
+		"business_date",
+		"reports.business_date",
+		"""The property's open business date (the day the next night audit
+		closes) and today's calendar date. Read-only.""",
+		{},
+		property=True,
+		group="Briefings",
+	),
+	_t(
+		"kpi_snapshots",
+		"reports.kpi_snapshots",
+		"""Daily KPI snapshots of closed business dates, written once at night
+		audit and equal to the manager flash for each date: occupancy, ADR,
+		RevPAR, revenue by group, collections by mode and the AR balance.
+		from_date..to_date YYYY-MM-DD, both included, at most 366 days. A date
+		not yet closed has no snapshot. Read-only.""",
+		{"from_date": _p("string", format="date"), "to_date": _p("string", format="date")},
+		required=("from_date",),
+		property=True,
+		group="Briefings",
+	),
+	_t(
 		"night_audit_report",
 		"audit_report.night_audit_report",
 		"""The night audit report for a business date (default: the last one

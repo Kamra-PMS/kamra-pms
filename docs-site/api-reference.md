@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **516 endpoints**, generated from the source
+the UI and the AI use. **518 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -5304,6 +5304,32 @@ the day figures, trend, movement and collections cover from_date..date.
 | `property` | yes |  |
 | `date` | no | `None` |
 | `from_date` | no | `None` |
+
+### `kamra.reports.business_date`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Night Auditor`, `Housekeeping`, `Kamra Agent`
+
+The property's open business date (the day the night audit closes
+next) and the calendar date, so a connected app dates what it posts.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.reports.kpi_snapshots`
+
+**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
+
+The daily KPI snapshots of closed business dates from_date..to_date
+(both included, at most 366 days), oldest first. A date with no
+snapshot (not closed yet, or closed before snapshots existed) is
+absent, never estimated.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | yes |  |
+| `to_date` | no | `None` |
 
 ### `kamra.reports.budget_vs_actual`
 
