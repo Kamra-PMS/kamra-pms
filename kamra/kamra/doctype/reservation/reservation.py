@@ -793,11 +793,15 @@ class Reservation(Document):
 				["price_per_adult", "price_per_child"], as_dict=True) or {}
 			meal = ((self.adults or 1) * float(mp.get("price_per_adult") or 0)
 			        + (self.children or 0) * float(mp.get("price_per_child") or 0))
+		# a price shown with tax / the levy inside it is split by division; the
+		# pieces only add back up to the shown price at 6 decimals
+		from kamra.pricing import room_rate_digits
+		digits = room_rate_digits(self.property)
 		rows, running = [], 0.0
 		for i, n in enumerate(nightly):
-			rate = round(float(n["rate"]) * factor, 2)
+			rate = round(float(n["rate"]) * factor, digits)
 			if i == len(nightly) - 1 and plan_free:
-				rate = round(room_total - running, 2)
+				rate = round(room_total - running, digits)
 			running += rate
 			rows.append({
 				"stay_date": n["date"],
@@ -832,7 +836,9 @@ class Reservation(Document):
 		if self.is_new() or not rows:
 			return out
 		from kamra.folio import charged_nights
-		charged = charged_nights(self.name)
+		from kamra.pricing import room_rate_digits
+		digits = room_rate_digits(self.property)
+		charged = charged_nights(self.name, digits)
 		if not charged:
 			return out
 		from kamra.settings import get_setting
@@ -842,6 +848,9 @@ class Reservation(Document):
 		levy_pct = flt(prop.get("room_levy_percent")) / 100
 		levy_taxed = cint(prop.get("room_levy_taxable")
 		                  if prop.get("room_levy_taxable") is not None else 1)
+		# the reversal is the exact charged rate; the replacement and the
+		# credit have to use the same decimals or the difference comes back
+		money = f",.{digits}f"
 		for row in rows:
 			c = charged.get(str(row["stay_date"]))
 			if not c:
@@ -855,17 +864,17 @@ class Reservation(Document):
 				out["lines"] += [
 					{"night": night, "folio": c["folio"], "amount": -base,
 					 "gst_rate": gst,
-					 "description": f"Rate correction: night of {night} reversed at {base:,.2f}"},
-					{"night": night, "folio": c["folio"], "amount": round(new, 2),
+					 "description": f"Rate correction: night of {night} reversed at {base:{money}}"},
+					{"night": night, "folio": c["folio"], "amount": round(new, digits),
 					 "gst_rate": new_gst,
-					 "description": f"Rate correction: night of {night} at {new:,.2f}"},
+					 "description": f"Rate correction: night of {night} at {new:{money}}"},
 				]
 				base, gst, action = new, new_gst, "corrected"
 			elif changed and policy == "Credit the difference" and new < base:
 				out["lines"].append(
 					{"night": night, "folio": c["folio"],
-					 "amount": round(new - base, 2), "gst_rate": gst,
-					 "description": f"Rate change: night of {night} {base:,.2f} to {new:,.2f}"})
+					 "amount": round(new - base, digits), "gst_rate": gst,
+					 "description": f"Rate change: night of {night} {base:{money}} to {new:{money}}"})
 				action = "credited"
 				base = new
 			# the folio's levy for the night stays as posted
@@ -877,8 +886,8 @@ class Reservation(Document):
 				levy_new * new_gst / 100 if levy_taxed else 0)
 			if action != "same":
 				out["nights"].append({"date": night, "charged": c["base"],
-				                      "new": round(new, 2), "action": action})
-			row["rate"], row["gst_rate"] = round(base, 2), gst
+				                      "new": round(new, digits), "action": action})
+			row["rate"], row["gst_rate"] = round(base, digits), gst
 		out["base"], out["tax"] = round(out["base"], 2), round(out["tax"], 2)
 		return out
 

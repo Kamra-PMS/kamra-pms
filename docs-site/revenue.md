@@ -302,6 +302,7 @@ this year, for the same dates one year back, and the change in percent.
 | Overbooking allowance | **Settings → Revenue** | 0% | How far above capacity unassigned bookings may sell. |
 | Demand tiers | **Settings → Revenue** | none | Premium and hurdle by forecast occupancy, for all room types or one. |
 | Displayed rates include tax | **Settings → Finance** | off | When on, your prices are tax-inclusive and Kamra backs the tax out. |
+| Displayed rates include the levy | **Settings → Finance**, Fees & levies | off | When on, your prices already contain the room levy and Kamra backs it out, showing it as its own line. Needs a room levy above 0%. |
 | Tax mode, slab threshold and rates | **Settings → Finance** | from the country pack | The tax on room nights. |
 | Cleaning fee, pet charge, room levy | **Settings → Finance** | 0 | Extra lines on every quote. |
 
@@ -319,6 +320,21 @@ this year, for the same dates one year back, and the change in percent.
   company when the booking names no other plan. At a sister property,
   the plan with the same **Code** applies; with none, the stay is priced
   without a plan.
+- When your prices include tax, the levy, or both, the guest is shown one
+  price and the bill comes to exactly that price. Kamra splits the price
+  into room, levy and tax by division and keeps the room rate to 6
+  decimals, so the pieces add back up (100 with 10% tax inside is 90.909091,
+  not 90.91). With both settings off nothing changes: rates and the levy
+  stay in whole cents.
+- Turning **Displayed rates include tax** or **…include the levy** on or
+  off changes what your price list means for every new quote. Bookings
+  already made keep the rates they were made with.
+- The tax slab reads the price without the levy, so a levy inside the price
+  doesn't push a night into the next slab.
+- Channel Manager: when the levy is inside your prices, the price pushed to
+  a channel carries the levy too, because the channel adds its own tax but
+  knows no levy. An OTA booking's total is treated as the guest's price, with
+  the levy and the tax both backed out of it.
 
 ## Troubleshooting
 

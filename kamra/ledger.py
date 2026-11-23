@@ -354,8 +354,12 @@ def reverse_ledger_for_charge(property: str, folio: str, charge_row_name: str,
 	if amount is not None:
 		# a part of a debit line (or of a credit line, sign kept)
 		net = abs(float(amount)) if net >= 0 else -abs(float(amount))
-	net = round(net, 2)
-	if abs(net) < 0.005:
+	# a line the folio holds to 6 decimals leaves the ledger to 6: whole cents
+	# would leave the fraction behind
+	from kamra.pricing import room_rate_digits
+	digits = room_rate_digits(property)
+	net = round(net, digits)
+	if abs(net) < 0.5 * 10 ** -digits:
 		return None  # already fully reversed
 	return write_ledger_entry(
 		property=property,
