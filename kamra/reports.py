@@ -293,6 +293,7 @@ def write_kpi_snapshot(property: str, date: str) -> str:
 			"figures": json.dumps(f, default=str),
 		}).insert(ignore_permissions=True)
 	except frappe.DuplicateEntryError:
+		# Two workers raced after the exists check; keep the first snapshot.
 		pass
 	return key
 
