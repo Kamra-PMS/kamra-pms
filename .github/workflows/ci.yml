@@ -61,6 +61,8 @@ jobs:
 
       - name: Check the offline cache and queue
         run: npm run offline:check
+        working-directory: frontend
+
       - name: Check the food-order basket survives a typed done
         run: npm run agent-order:check
         working-directory: frontend
