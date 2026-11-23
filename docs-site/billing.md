@@ -383,6 +383,35 @@ company disputes. The bill stays on the account, in aging and on the
 statement, marked Disputed, but gets no payment reminders and does not
 count towards the overdue credit block. **Clear dispute** ends it.
 
+**Write off a bill as bad debt** (Finance and Hotel Admin): when a
+company will not pay, press **Write off** on the open bill, enter the
+amount (up to what it still owes) and pick a reason (an Adjust reason
+code such as *Bad debt - the company will not pay*, and/or a note). It
+follows the same approval rules as an allowance: above the property's
+approval line, or with a reason code that needs a supervisor, the
+write-off waits on the company's page and in **Allowance approvals**
+until a manager approves it with their PIN. A manager's own write-off
+posts at once, signed with their PIN. Once posted, the bill, the
+account balance and aging drop by the amount, the account history shows
+a **Write Off** line, and the books post an AR credit to transaction
+code 9110 *Bad Debt Write-off* (map its GL code to your bad-debt
+account). AI agents can ask for a write-off, never approve one.
+
+**Tax the company withheld** (TDS in India): many companies pay a bill
+less tax they withhold and send a certificate later. In **Record company
+payment**, tick **The company withheld tax**, pick the tax (and rate),
+and enter what was withheld on each bill. A payment of 98 with 2
+withheld clears a 100 bill: the withheld part comes off the bill and
+aging, so it never ages past 90 days or trips the credit block. It is
+kept as **tax withheld** - a receivable from the tax authority, posted
+to transaction code 9120 *Tax Withheld by Payer* (map its GL code to
+your withholding-tax receivable). **Receivables** lists every amount
+still waiting for its certificate; press **Record certificate** to add
+the certificate number and period when it arrives. Reversing the
+payment brings the withheld part back onto the bill. The country pack
+names the taxes and rates (India: TDS u/s 194C at 1% or 2%, u/s 194-I at
+10%); other countries get a plain *Tax withheld*.
+
 Aging, reminders and the overdue check count days from the property's
 business date, so they agree with night audit around midnight.
 

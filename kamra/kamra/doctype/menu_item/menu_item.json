@@ -64,7 +64,8 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Price",
-   "reqd": 1
+   "reqd": 1,
+   "description": "Leave this at 0 only for a complimentary dish. Sending it to the kitchen asks the captain to confirm."
   },
   {
    "default": "0",

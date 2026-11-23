@@ -223,6 +223,12 @@ export default function BanquetFunction() {
         <CloseOutCard fn={fn} busy={busy} act={act} onCount={() => setStep("margin")} />
       )}
 
+      {(fn.status === "Enquiry" || fn.status === "Tentative" || fn.status === "Confirmed") && (
+        <TastingCard fn={fn} busy={busy} act={act} />
+      )}
+      {(fn.status === "Tentative" || fn.status === "Confirmed") && (
+        <OpsCard fn={fn} busy={busy} act={act} />
+      )}
       {(fn.status === "Confirmed" || fn.status === "Completed") && (
         <ChecklistPanel fn={fn.name} busy={busy} act={act} />
       )}
@@ -1731,7 +1737,7 @@ function MoneyTab({
               {terms.map((t, i) => (
                 <div
                   key={i}
-                  className="grid gap-2 rounded-lg border border-zinc-200 px-3 py-2 sm:grid-cols-[1fr_auto_auto_auto_auto]"
+                  className="grid gap-2 rounded-lg border border-zinc-200 px-3 py-2 sm:grid-cols-[1fr_auto_auto_auto_auto_auto]"
                 >
                   <input
                     className={inputCls}
@@ -1779,6 +1785,15 @@ function MoneyTab({
                     <option value={"Received"}>{translate("Received")}</option>
                     <option value={"Waived"}>{translate("Waived")}</option>
                   </select>
+                  {/* a one-off gateway link the guest pays this milestone by */}
+                  {t.name && !dirty && t.status !== "Received" && t.status !== "Waived" ? (
+                    <Button
+                      variant="outline"
+                      disabled={busy}
+                      title={t.guest_reminded_on ? translate("Guest last reminded {v0}", { v0: t.guest_reminded_on }) : undefined}
+                      onClick={() => act(() => banquet.sendPaymentLink(fn.name, t.name as string, ["email", "whatsapp"]))}
+                    >{t.payment_link_url ? translate("Resend pay link") : translate("Send pay link")}</Button>
+                  ) : <span />}
                 </div>
               ))}
               <p className="pt-1 text-xs text-zinc-400">{translate("Scheduled ")}{inr(scheduled)}{translate(" of ")}{inr(fn.grand_total)}
@@ -2667,5 +2682,98 @@ function RunLine({
       <dt>{translate(label)}</dt>
       <dd className="tabular-nums">{inr(value)}</dd>
     </div>
+  )
+}
+
+/* ── food tasting (#67) ───────────────────────────────────────────────── */
+
+/** Book the tasting: the guest gets the menu and a calendar invite, the
+ *  chef and the sales owner an alert. Afterwards, what they thought. */
+function TastingCard({ fn, busy, act }: { fn: FunctionSheet; busy: boolean; act: Act }) {
+  useUILanguage()
+  const [when, setWhen] = useState((fn.tasting_on ?? "").slice(0, 16).replace(" ", "T"))
+  const [pax, setPax] = useState(String(fn.tasting_pax ?? ""))
+  const [notes, setNotes] = useState(fn.tasting_notes ?? "")
+  const status = fn.tasting_status || ""
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{translate("Food tasting")}</CardTitle>
+        {status ? <span className="text-xs text-zinc-500">{translate(status)}
+          {fn.tasting_invited_on ? ` · ${translate("guest invited {v0}", { v0: fn.tasting_invited_on.slice(0, 16) })}` : ""}</span> : null}
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label={translate("When")}>
+            <input type="datetime-local" className={inputCls} value={when} onChange={(e) => setWhen(e.target.value)} />
+          </Field>
+          <Field label={translate("People tasting")}>
+            <input type="number" min={1} className={inputCls} value={pax} onChange={(e) => setPax(e.target.value)} />
+          </Field>
+          <Field label={translate("Notes")} hint={translate("What they liked or want changed")}>
+            <input className={inputCls} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </Field>
+        </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          {status === "Scheduled" ? (
+            <Button variant="outline" disabled={busy}
+              onClick={() => act(() => banquet.recordTasting(fn.name, "Done", notes))}>{translate("Tasting done")}</Button>
+          ) : null}
+          {status !== "Done" && status !== "Waived" ? (
+            <Button variant="ghost" disabled={busy}
+              onClick={() => act(() => banquet.recordTasting(fn.name, "Waived", notes))}>{translate("No tasting")}</Button>
+          ) : null}
+          <Button disabled={busy || !when}
+            onClick={() => act(() => banquet.scheduleTasting(fn.name, when.replace("T", " ") + ":00", {
+              pax: Number(pax) || undefined, notes,
+            }))}>{status === "Scheduled" ? translate("Reschedule and tell the guest") : translate("Book and invite the guest")}</Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── engineering & HR brief (#67) ─────────────────────────────────────── */
+
+const OPS_FIELDS = ["wifi_ssid", "wifi_password", "speed_test_mbps", "av_notes",
+  "staff_male", "staff_female", "bar_setup"] as const
+
+function OpsCard({ fn, busy, act }: { fn: FunctionSheet; busy: boolean; act: Act }) {
+  useUILanguage()
+  const initial = () => Object.fromEntries(OPS_FIELDS.map((k) => [k, fn[k] ?? ""])) as Record<string, string | number>
+  const [v, setV] = useState(initial)
+  const dirty = OPS_FIELDS.some((k) => String(v[k] ?? "") !== String(fn[k] ?? ""))
+  const set = (k: string) => (e: { target: { value: string } }) => setV({ ...v, [k]: e.target.value })
+  return (
+    <Card>
+      <CardHeader><CardTitle>{translate("Engineering & HR")}</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label={translate("WiFi network")}><input className={inputCls} value={v.wifi_ssid} onChange={set("wifi_ssid")} /></Field>
+          <Field label={translate("WiFi password / coupons")}><input className={inputCls} value={v.wifi_password} onChange={set("wifi_password")} /></Field>
+          <Field label={translate("Speed test (Mbps)")}><input type="number" min={0} className={inputCls} value={v.speed_test_mbps} onChange={set("speed_test_mbps")} /></Field>
+          <Field label={translate("Extra staff (male)")}><input type="number" min={0} className={inputCls} value={v.staff_male} onChange={set("staff_male")} /></Field>
+          <Field label={translate("Extra staff (female)")}><input type="number" min={0} className={inputCls} value={v.staff_female} onChange={set("staff_female")} /></Field>
+          <Field label={translate("Bar setup")}>
+            <select className={inputCls} value={v.bar_setup} onChange={set("bar_setup")}>
+              <option value="">-</option>
+              <option value="No">{translate("No")}</option>
+              <option value="Yes">{translate("Yes")}</option>
+            </select>
+          </Field>
+        </div>
+        <Field label={translate("AV & engineering notes")} hint={translate("AC set point, projector and HDMI check, microphones")}>
+          <textarea rows={2} className={inputCls} value={v.av_notes} onChange={set("av_notes")} />
+        </Field>
+        {dirty ? (
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setV(initial())}>{translate("Discard")}</Button>
+            <Button disabled={busy} onClick={() => act(() => banquet.update(fn.name, Object.fromEntries(
+              OPS_FIELDS.map((k) => [k, ["speed_test_mbps", "staff_male", "staff_female"].includes(k)
+                ? (v[k] === "" ? null : Number(v[k])) : (v[k] || null)]))))}>{translate("Save")}</Button>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   )
 }

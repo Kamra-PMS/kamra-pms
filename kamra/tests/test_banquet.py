@@ -615,6 +615,141 @@ class TestBanquetOps(BanquetTestCase):
 		self.assertIsNone(ops.quote_no_response_alert(self.sheet(fn)))
 
 
+	# ── Phase 1 leftovers, Phase 2 and 3 (#67) ──────────────────────────
+
+	def test_the_quote_email_carries_its_pdf(self):
+		from unittest.mock import patch
+
+		from kamra import banquet_ops as ops
+
+		fn = self._quoted()
+		with patch("frappe.utils.pdf.get_pdf", return_value=b"%PDF-1.4"), \
+				patch("frappe.sendmail") as mail:
+			ops.send_quotation(fn, channels=["email"])
+		att = mail.call_args.kwargs["attachments"]
+		self.assertTrue(att[0]["fname"].endswith(".pdf"))
+		self.assertEqual(att[0]["fcontent"], b"%PDF-1.4")
+
+	def test_food_tasting_emails_the_guest_and_alerts_the_chef(self):
+		from unittest.mock import patch
+
+		from kamra import banquet_ops as ops
+
+		fn = self._quoted()
+		bq.update_function(fn, {"sales_owner": "Administrator"})
+		when = f"{add_days(nowdate(), 5)} 15:00:00"
+		with patch("frappe.sendmail") as mail, \
+				patch("kamra.banquet_ops._staff_alert") as alert:
+			out = ops.schedule_tasting(fn, when, pax=6, chef="Administrator")
+		self.assertEqual(out["tasting_status"], "Scheduled")
+		self.assertTrue(out["emailed"])
+		kw = mail.call_args.kwargs
+		self.assertEqual(kw["recipients"], ["guest@example.com"])
+		self.assertEqual(kw["attachments"][0]["fname"], "tasting.ics")
+		self.assertIn(b"BEGIN:VEVENT", kw["attachments"][0]["fcontent"])
+		self.assertIn("Administrator", alert.call_args.args[1])  # chef + sales
+		doc = self.sheet(fn)
+		self.assertEqual((doc.tasting_pax, bool(doc.tasting_invited_on)), (6, True))
+		with patch("kamra.banquet_ops._staff_alert"):
+			ops.record_tasting(fn, "Done", notes="Less spice")
+		self.assertEqual(self.sheet(fn).tasting_notes, "Less spice")
+
+	def test_balance_due_sends_the_guest_a_reminder_with_the_pay_link(self):
+		from unittest.mock import patch
+
+		from kamra import banquet_ops as ops
+
+		fn = self._quoted()
+		bq.set_payment_terms(fn, [{"milestone": "Advance", "percent": 50,
+		                           "due_date": nowdate()}])
+		doc = self.sheet(fn)
+		doc.status = "Tentative"
+		doc.save(ignore_permissions=True)
+
+		def link(doc, row):
+			row.payment_link_url = "https://pay.example/abc"
+			return {"url": row.payment_link_url}
+		with patch("kamra.banquet_ops.create_term_link", side_effect=link), \
+				patch("frappe.sendmail") as mail:
+			sent = ops.remind_guest_balance(self.sheet(fn))
+			self.assertEqual(len(sent), 1)
+			self.assertIn("https://pay.example/abc", mail.call_args.kwargs["message"])
+			# once every three days, not every night
+			self.assertEqual(ops.remind_guest_balance(self.sheet(fn)), [])
+
+	def test_a_paid_link_records_the_receipt_against_its_milestone(self):
+		from kamra import banquet_ops as ops
+
+		fn = self._quoted()
+		bq.set_payment_terms(fn, [{"milestone": "Advance", "amount": 5000,
+		                           "due_date": nowdate()}])
+		term = self.sheet(fn).payment_terms[0].name
+		ref = f"VB:{fn}:{term}"
+		self.assertTrue(ops.settle_term_link(ref, "plink_UT1", 5000))
+		self.assertFalse(ops.settle_term_link(ref, "plink_UT1", 5000))  # retried webhook
+		doc = self.sheet(fn)
+		self.assertEqual(float(doc.advance_received), 5000)
+		self.assertEqual(doc.payment_terms[0].status, "Received")
+
+	def test_confirm_adds_engineering_and_hr_checklists(self):
+		fn = self._quoted()
+		bq.set_status(fn, "Confirmed")
+		depts = set(frappe.get_all("Banquet Function Task",
+		                           filters={"venue_booking": fn}, pluck="department"))
+		self.assertLessEqual({"Engineering", "HR"}, depts)
+
+	def test_confirm_applies_the_property_deposit_rules(self):
+		from kamra.tests.test_billing_approvals_split import set_setting
+
+		set_setting(self.f["property"], "banquet_refundable_deposit", 10000)
+		try:
+			fn = self._quoted()
+			self.assertFalse(self.sheet(fn).payment_terms)
+			out = bq.set_status(fn, "Confirmed")
+			self.assertTrue(out["confirm_fanout"]["deposit_rules"]["terms"])
+			doc = self.sheet(fn)
+			self.assertGreater(len(doc.payment_terms), 0)
+			self.assertEqual(float(doc.refundable_deposit), 10000)
+		finally:
+			set_setting(self.f["property"], "banquet_refundable_deposit", 0)
+
+	def test_equipment_is_never_double_booked(self):
+		from kamra import banquet_ops as ops
+		from kamra.tests.fixtures import next_day_offset
+
+		frappe.db.set_value("Banquet Service Item", self.f["led"], "stock_qty", 1)
+		try:
+			day = next_day_offset()
+			one = enquiry(self.f, day_offset=day)
+			two = enquiry(self.f, day_offset=day, venue=self.f["small"],
+			              attendees=20)
+			for fn in (one, two):
+				bq.add_service(fn, self.f["led"], qty=1)
+			bq.set_status(one, "Confirmed")
+			with self.assertRaisesRegex(frappe.ValidationError, "Only 1"):
+				bq.set_status(two, "Confirmed")
+			cal = ops.equipment_calendar(self.f["property"],
+			                             start_date=self.sheet(one).event_date, days=1)
+			led = next(r for r in cal["items"] if r["item"] == self.f["led"])
+			cell = led["days"][0]
+			self.assertEqual((cell["confirmed"], cell["tentative"], cell["over"]),
+			                 (1, 0, False))  # two stayed an enquiry
+		finally:
+			frappe.db.set_value("Banquet Service Item", self.f["led"], "stock_qty", 0)
+
+	def test_the_pipeline_weighs_what_is_still_in_play(self):
+		fn = self._quoted()
+		value = float(self.sheet(fn).grand_total)
+		event = self.sheet(fn).event_date
+		data = bq.banquet_pipeline(self.f["property"], from_date=str(event), to_date=str(event))
+		enquiries = sum(float(r.grand_total or 0) for r in frappe.get_all(
+			"Venue Booking", filters={"property": self.f["property"], "event_date": event,
+			                          "status": "Enquiry"}, fields=["grand_total"]))
+		self.assertGreaterEqual(data["totals"]["weighted_value"], round(0.2 * value, 2) - 0.01)
+		self.assertLessEqual(data["totals"]["weighted_value"],
+		                     data["totals"]["confirmed_value"] + enquiries)
+
+
 # ══ the customer, and the books ══════════════════════════════════════════
 
 class TestCustomer(BanquetTestCase):

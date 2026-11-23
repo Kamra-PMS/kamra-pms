@@ -860,6 +860,19 @@ def _fire(doc, course: str | None = None) -> dict:
 	        "stock_alerts": alerts}
 
 
+def _refuse_zero_price(lines, allow_zero) -> None:
+	"""A dish saved at 0 is usually a missing price, not a complimentary.
+	Sending it to the kitchen needs an explicit confirm (allow_zero)."""
+	if cint(allow_zero):
+		return
+	free = [l.get("item_name") or l.get("menu_item") for l in lines
+	        if float(l.get("rate") or 0) == 0]
+	free = [n for n in free if n]
+	if free:
+		frappe.throw(_("These dishes have no price: {0}. Set a price on the menu, or confirm they are free.")
+		             .format(", ".join(free)))
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
 def send_order(outlet: str, items, property: str | None = None,
@@ -871,7 +884,8 @@ def send_order(outlet: str, items, property: str | None = None,
                delivery_address: str | None = None,
                allergy_note: str | None = None,
                discount: float = 0, discount_reason: str = "",
-               guest: str | None = None, waiter: str | None = None):
+               guest: str | None = None, waiter: str | None = None,
+               allow_zero: int = 0):
 	"""A captain's new bill straight to the kitchen, in one call: what
 	create_order, apply_discount, confirm_order and fire_kot do one after
 	another, in one request and one transaction. The till waits for one
@@ -880,6 +894,9 @@ def send_order(outlet: str, items, property: str | None = None,
 	                   "Manual", notes, order_type, guests, customer_name,
 	                   customer_phone, delivery_address, allergy_note, guest,
 	                   waiter)
+	_refuse_zero_price(
+		[{"item_name": it.item_name, "rate": it.rate} for it in doc.items],
+		allow_zero)
 	doc.status = "Confirmed"
 	if float(discount or 0) > 0:
 		doc.discount_amount = float(discount)
@@ -892,7 +909,7 @@ def send_order(outlet: str, items, property: str | None = None,
 
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
-def send_round(order: str, items):
+def send_round(order: str, items, allow_zero: int = 0):
 	"""Another round on a running bill, straight to the kitchen: add_items
 	and fire_kot in one call and one save."""
 	doc = frappe.get_doc("POS Order", order)
@@ -901,6 +918,7 @@ def send_round(order: str, items):
 	lines = _load_items(items)
 	if not lines:
 		frappe.throw(_("Add at least one available item."))
+	_refuse_zero_price(lines, allow_zero)
 	for line in lines:
 		doc.append("items", line)
 	out = _fire(doc)

@@ -214,6 +214,8 @@ def approve_vendor_bill(bill: str):
 	from kamra.savings import log_action
 	log_action("vendor_bill_approved", "Vendor Bill", doc.name, doc.property,
 	           rationale=f"{doc.vendor_name} {doc.total:,.2f}")
+	from kamra.erpnext_bridge import after_vendor_bill_change
+	after_vendor_bill_change(doc.name)
 	return _bill_row(doc)
 
 
@@ -248,6 +250,8 @@ def pay_vendor_bill(bill: str, amount: float, mode: str = "Bank Transfer",
 	from kamra.savings import log_action
 	log_action("vendor_bill_paid", "Vendor Bill", doc.name, doc.property,
 	           rationale=f"{doc.vendor_name} paid {amount:,.2f} by {mode}")
+	from kamra.erpnext_bridge import after_vendor_bill_change
+	after_vendor_bill_change(doc.name)
 	return _bill_row(doc)
 
 

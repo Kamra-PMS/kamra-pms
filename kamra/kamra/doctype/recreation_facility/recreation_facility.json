@@ -1,0 +1,135 @@
+{
+ "actions": [],
+ "creation": "2026-11-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "facility_name",
+  "category",
+  "capacity",
+  "access",
+  "price",
+  "status",
+  "opens",
+  "closes",
+  "slot_minutes"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "facility_name",
+   "fieldtype": "Data",
+   "label": "Facility",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "options": "Gym\nPool\nSpa\nSauna\nSteam\nYoga\nCourt\nOther",
+   "default": "Gym",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "capacity",
+   "fieldtype": "Int",
+   "label": "Capacity",
+   "default": "1",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "access",
+   "fieldtype": "Select",
+   "label": "Access",
+   "options": "Complimentary\nPaid\nBoth",
+   "default": "Both",
+   "reqd": 1
+  },
+  {
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "label": "Session price",
+   "default": "0",
+   "description": "Charged to the guest folio, or taken in cash from a walk-in, unless the visit is complimentary or covered by a membership."
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nMaintenance",
+   "default": "Open",
+   "reqd": 1
+  },
+  {
+   "fieldname": "opens",
+   "fieldtype": "Time",
+   "label": "Opens"
+  },
+  {
+   "fieldname": "closes",
+   "fieldtype": "Time",
+   "label": "Closes"
+  },
+  {
+   "fieldname": "slot_minutes",
+   "fieldtype": "Int",
+   "label": "Session Minutes",
+   "description": "Pool or court sessions: bookable slots of this length between opening and closing. 0 = no slots."
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-23 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Recreation Facility",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "report": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "report": 1
+  },
+  {
+   "role": "Front Desk",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "F&B Manager",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "format:FAC-{#####}",
+ "naming_rule": "Expression",
+ "title_field": "facility_name"
+}

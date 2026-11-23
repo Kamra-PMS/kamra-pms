@@ -15,7 +15,11 @@
   "floor",
   "housekeeping_status",
   "occupancy_status",
-  "notes"
+  "notes",
+  "sb_features",
+  "accessible",
+  "accessibility_features",
+  "connects_to"
  ],
  "fields": [
   {
@@ -72,12 +76,38 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "fieldname": "sb_features",
+   "fieldtype": "Section Break",
+   "label": "Accessibility and connecting"
+  },
+  {
+   "fieldname": "accessible",
+   "fieldtype": "Check",
+   "label": "Accessible Room",
+   "in_standard_filter": 1,
+   "description": "Allocation gives this room to a guest who needs an accessible room."
+  },
+  {
+   "fieldname": "accessibility_features",
+   "fieldtype": "Small Text",
+   "label": "Accessibility Features",
+   "depends_on": "accessible",
+   "description": "For example: roll-in shower, grab bars, wide door, visual alarm."
+  },
+  {
+   "fieldname": "connects_to",
+   "fieldtype": "Link",
+   "label": "Connecting Room",
+   "options": "Room",
+   "description": "The room behind the connecting door. Set on one room, it is kept on both."
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-28 12:51:22.820746",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Room",
@@ -159,6 +189,10 @@
    "report": 1,
    "print": 1,
    "role": "Night Auditor"
+  },
+  {
+   "read": 1,
+   "role": "Owner"
   }
  ],
  "row_format": "Dynamic",

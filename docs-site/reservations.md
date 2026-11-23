@@ -206,6 +206,20 @@ What else is on the tape chart:
   matched to type and preferences. **Review** marks a choice worth a second
   look; **Assign** places them all.
 
+### Accessible and connecting rooms
+
+On each room (**Admin → Rooms**), tick **Accessible room** and list its
+features (roll-in shower, grab bars), and set its **Connecting room** -
+the room behind the connecting door. Set it on one room and Kamra keeps it
+on both. The Rooms list filters to **Accessible rooms**.
+
+In **New booking**, under the service options, tick **Accessible room**
+for a guest who needs one. Booking two or more rooms at once also offers
+**Connecting rooms**. **Auto-assign arrivals** then gives an accessible
+guest an accessible room (and says so when none is free), and puts two
+stays of the same group or guest that asked for connecting rooms in a
+connecting pair when one is free.
+
 ## Sell from the calendar
 
 **Front Desk → Calendar** shows two weeks of availability by room type:

@@ -38,6 +38,8 @@ RESPONSE_KEYS: dict[str, tuple[str, ...]] = {
 		"date", "from_date", "total_rooms", "today", "mtd", "movement",
 		"collections", "trend", "outlook",
 	),
+	"reports.business_date": ("property", "business_date", "calendar_date"),
+	"reports.kpi_snapshots": ("property", "from_date", "to_date", "snapshots"),
 }
 
 # Every webhook delivery wraps its data in this envelope (webhooks._queue)

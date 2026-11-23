@@ -61,7 +61,8 @@ SCOPES: dict[str, dict] = {
 		"tools": ("manager_flash", "night_audit_report", "voids_allowances_report",
 		          "sla_report", "list_report_packs", "run_report_pack",
 		          "list_report_datasets", "list_custom_reports", "run_custom_report",
-		          "profit_and_loss", "balance_sheet", "cash_forecast"),
+		          "profit_and_loss", "balance_sheet", "cash_forecast",
+		          "business_date", "kpi_snapshots"),
 		"rest": ("apps.property_profile", "api.property_locale"),
 	},
 	"cashier.read": {

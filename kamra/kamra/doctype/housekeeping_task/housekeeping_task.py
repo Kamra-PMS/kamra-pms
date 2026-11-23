@@ -18,6 +18,14 @@ def sla_minutes(property: str | None, priority: str | None) -> int:
 
 class HousekeepingTask(Document):
 	def before_insert(self):
+		if self.task_type == "Inspection" and not self.clean_task and self.room:
+			# the clean this inspection checks: its attendant owns the pass
+			# rate (kamra.housekeeping.hk_quality)
+			self.clean_task = frappe.db.get_value(
+				"Housekeeping Task",
+				{"room": self.room, "task_type": ("!=", "Inspection"),
+				 "status": ("in", ("Done", "Verified"))},
+				"name", order_by="modified desc")
 		if not self.due_by:
 			self.due_by = add_to_date(
 				now_datetime(),
@@ -29,6 +37,11 @@ class HousekeepingTask(Document):
 		old_status = previous.status if previous else None
 		if self.status == old_status:
 			return
+		if self.status in ("Done", "Verified") and not self.completed_on:
+			self.db_set("completed_on", now_datetime(), update_modified=False)
+		if (self.status == "Verified" and self.task_type == "Inspection"
+				and not self.inspection_result):
+			self.db_set("inspection_result", "Passed", update_modified=False)
 		# Completed cleans flow back into the room's live status so the
 		# front desk (and any agent checking availability) sees readiness.
 		if self.status == "Done" and self.task_type == "Inspection":

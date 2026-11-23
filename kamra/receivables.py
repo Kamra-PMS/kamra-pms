@@ -421,3 +421,320 @@ def transfer_ar_invoice(account: str, folio: str, to_account: str,
 	                     + (f" · {note}" if note else ""))
 	return {"folio": folio, "amount": amount,
 	        "from_balance": src.balance, "to_balance": dst.balance}
+
+
+# ── Bad-debt write-off (#522) ────────────────────────────────────────────────
+# A bill already on a company's account that will not be paid comes off as
+# bad debt. Same approval rules as an allowance (kamra.api): above the
+# property's allowance line, or with a supervisor reason code, it waits as
+# an Allowance Request (kind Write Off) until a manager approves it with
+# their PIN. AI agents only ever ask.
+
+WRITE_OFF_CODE = ("9110", "Bad Debt Write-off")
+
+
+def _write_off_code() -> str:
+	code, desc = WRITE_OFF_CODE
+	if not frappe.db.exists("Transaction Code", code):
+		frappe.get_doc({"doctype": "Transaction Code", "code": code,
+		                "description": desc, "txn_type": "Adjustment",
+		                "revenue_group": "Adjustment", "subgroup": "Bad Debt",
+		                }).insert(ignore_permissions=True)
+	return code
+
+
+def _open_bill(account: str, folio: str) -> dict:
+	"""The bill as it stands now, from a locking read (the caller holds the
+	account)."""
+	from kamra.ledger import locked_account_figures
+	item = next((r for r in locked_account_figures(account)["open_items"]
+	             if r["folio"] == folio), None)
+	if not item or item["outstanding"] <= 0.005:
+		frappe.throw(_("Nothing is owed on that bill on this account."))
+	return item
+
+
+def post_write_off(account: str, folio: str, amount: float, text: str,
+                   approver: str | None = None) -> str:
+	"""The one write-off writer: a Write Off entry on the account (the bill
+	and aging drop by it) and the AR credit on the books, coded to bad debt.
+	Returns the City Ledger Entry."""
+	from kamra.ledger import _lock_account, _sync_account_balance, write_ledger_entry
+	from kamra.localization import money_text
+	_lock_account(account)
+	acc = frappe.get_doc("City Ledger Account", account)
+	item = _open_bill(account, folio)
+	amount = round(float(amount), 2)
+	if amount > item["outstanding"] + 0.005:
+		frappe.throw(_("The bill owes {0} now - a write-off can't be more.").format(
+			money_text(acc.property, item["outstanding"])))
+	entry = frappe.get_doc({
+		"doctype": "City Ledger Entry", "account": account,
+		"property": acc.property, "posting_date": get_business_date(acc.property),
+		"kind": "Write Off", "folio": folio,
+		"invoice_number": item["invoice_number"], "debit": 0, "credit": amount,
+		"reference": "Bad debt", "notes": text[:500],
+	}).insert(ignore_permissions=True)
+	# not sourced to the City Ledger Entry: those AR credits count as the
+	# company's payments (city_ledger_open_folios); this lowers what is billed
+	write_ledger_entry(
+		property=acc.property, folio=folio, ledger="AR", credit=amount,
+		description=f"Bad debt written off {acc.company} · {entry.name}",
+		transaction_code=_write_off_code(),
+		source_doctype="Folio", source_name=folio)
+	_sync_account_balance(account)
+	from kamra.savings import log_action
+	log_action("ar_write_off", "Folio", folio, acc.property,
+	           rationale=f"Wrote off {money_text(acc.property, amount)} of "
+	                     f"{item['invoice_number'] or folio} ({acc.company}): {text}",
+	           approver=approver)
+	return entry.name
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+def write_off_ar_bill(account: str, folio: str, amount: float,
+                      reason: str = "", reason_code: str | None = None,
+                      pin: str | None = None):
+	"""Write off part or all of what a bill still owes on a company's account
+	as bad debt, with a reason (an Adjust reason code and/or a note).
+
+	Above the property's allowance approval line (or with a supervisor
+	reason code) it becomes a pending request ({"pending": True, ...}) that a
+	manager approves with their PIN (kamra.api.decide_allowance), unless the
+	caller is that manager. An AI agent's write-off always waits."""
+	from frappe.utils import flt
+
+	from kamra.api import (_allowance_needs_approval, _allowance_reason,
+	                       _may_approve_allowance)
+	from kamra.authz import require_cashier_pin, verify_supervisor
+	from kamra.credit import _is_agent
+	from kamra.ledger import _lock_account
+	from kamra.localization import money_text
+	_lock_account(account)
+	acc = _account(account)
+	amount = round(abs(flt(amount)), 2)
+	if not amount:
+		frappe.throw(_("Enter the amount to write off."))
+	item = _open_bill(account, folio)
+	if amount > item["outstanding"] + 0.005:
+		frappe.throw(_("The bill owes {0} - a write-off can't be more.").format(
+			money_text(acc.property, item["outstanding"])))
+	text = _allowance_reason(reason_code, reason)
+	agent = _is_agent()
+	if agent or _allowance_needs_approval(acc.property, amount, reason_code):
+		if agent or not _may_approve_allowance(acc.property):
+			from kamra.api import agent_channel
+			req = frappe.get_doc({
+				"doctype": "Allowance Request", "kind": "Write Off",
+				"property": acc.property, "folio": folio,
+				"city_ledger_account": account,
+				"reservation": frappe.db.get_value("Folio", folio, "reservation"),
+				"amount": amount, "reason_code": reason_code or None,
+				"reason": text, "status": "Pending",
+				"requested_by": frappe.session.user,
+				"requested_on": now_datetime(),
+				"channel": agent_channel() or "Desk",
+			}).insert(ignore_permissions=True)
+			from kamra.webhooks import emit_approval
+			emit_approval("approval.requested", req)
+			from kamra.savings import log_action
+			log_action("ar_write_off_requested", "Folio", folio, acc.property,
+			           rationale=f"Asked to write off {money_text(acc.property, amount)} "
+			                     f"({acc.company}): {text}",
+			           channel=agent_channel() or "Desk", approval_status="Pending")
+			return {"ok": True, "pending": True, "request": req.name}
+		approver = verify_supervisor(acc.property, frappe.session.user, pin)
+		entry = post_write_off(account, folio, amount, text, approver)
+		return {"ok": True, "entry": entry, "approved_by": approver}
+	require_cashier_pin(acc.property, pin)
+	return {"ok": True, "entry": post_write_off(account, folio, amount, text)}
+
+
+# ── Tax withheld by the payer (#521) ─────────────────────────────────────────
+# A company often pays a bill less tax it withholds (TDS in India) and sends
+# a certificate later. The withheld part clears the bill like the payment
+# does - an Adjustment entry on the account and an AR credit coded 9120 -
+# and sits as a Tax Withheld record, the receivable from the tax
+# authority, until its certificate is in. The country pack names the taxes
+# (kamra.localization.withholding_taxes).
+
+WITHHOLDING_CODE = ("9120", "Tax Withheld by Payer")
+
+
+def _withholding_code() -> str:
+	code, desc = WITHHOLDING_CODE
+	if not frappe.db.exists("Transaction Code", code):
+		frappe.get_doc({"doctype": "Transaction Code", "code": code,
+		                "description": desc, "txn_type": "Payment",
+		                "revenue_group": "Payment", "subgroup": "Tax Withheld",
+		                }).insert(ignore_permissions=True)
+	return code
+
+
+def property_withholding_taxes(property: str) -> list[dict]:
+	from kamra.localization import pack_for, withholding_taxes
+	return withholding_taxes(pack_for(property))
+
+
+def withholding_plan(acc, withholdings) -> list[dict]:
+	"""Check what the company says it withheld, per bill, against the bills
+	(a locking read: the caller holds the account) and the country's taxes.
+	Returns [{folio, invoice_number, amount, tax, tax_label, rate,
+	certificate_number, certificate_period}]."""
+	from kamra.ledger import locked_account_figures
+	if isinstance(withholdings, str):
+		withholdings = json.loads(withholdings or "[]")
+	if not withholdings:
+		return []
+	taxes = {t["code"]: t for t in property_withholding_taxes(acc.property)}
+	bills = {r["folio"]: r for r in locked_account_figures(acc.name)["open_items"]}
+	out, per_folio = [], {}
+	for w in withholdings:
+		w = w or {}
+		folio, amt = w.get("folio"), round(float(w.get("amount") or 0), 2)
+		if not amt:
+			continue
+		if amt < 0:
+			frappe.throw(_("Tax withheld must be a positive amount."))
+		bill = bills.get(folio)
+		if not bill or bill["outstanding"] <= 0.005:
+			frappe.throw(_("{0} has nothing open on this account.").format(folio))
+		tax = taxes.get(w.get("tax") or (next(iter(taxes)) if len(taxes) == 1 else None))
+		if not tax:
+			frappe.throw(_("Pick the tax that was withheld ({0}).").format(
+				", ".join(taxes)))
+		rate = w.get("rate")
+		if rate not in (None, "") and tax["rates"] and float(rate) not in [
+				float(r) for r in tax["rates"]]:
+			frappe.throw(_("{0} is withheld at {1}%.").format(
+				tax["label"], ", ".join(f"{float(r):g}" for r in tax["rates"])))
+		per_folio[folio] = round(per_folio.get(folio, 0.0) + amt, 2)
+		if per_folio[folio] > bill["outstanding"] + 0.005:
+			frappe.throw(_("Tax withheld on {0} is more than it owes.").format(
+				bill["invoice_number"] or folio))
+		out.append({"folio": folio, "invoice_number": bill["invoice_number"],
+		            "amount": amt, "tax": tax["code"], "tax_label": tax["label"],
+		            "rate": float(rate) if rate not in (None, "") else None,
+		            "certificate_number": (w.get("certificate_number") or "").strip()[:140] or None,
+		            "certificate_period": (w.get("certificate_period") or "").strip()[:140] or None})
+	return out
+
+
+def post_withholdings(acc, payment: str, held: list[dict], received: str) -> list[dict]:
+	"""Clear each withheld amount off its bill and record it as Tax Withheld.
+	Called by kamra.ledger._post_company_payment under the account lock."""
+	from kamra.ledger import write_ledger_entry
+	bd = get_business_date(acc.property)
+	code = _withholding_code()
+	out = []
+	for h in held:
+		entry = frappe.get_doc({
+			"doctype": "City Ledger Entry", "account": acc.name,
+			"property": acc.property, "posting_date": bd, "kind": "Adjustment",
+			"folio": h["folio"], "invoice_number": h["invoice_number"],
+			"debit": 0, "credit": h["amount"],
+			"reference": f"{h['tax_label']} withheld"[:140],
+			"notes": f"Withheld from {payment}",
+		}).insert(ignore_permissions=True)
+		# sourced to the folio, not the payment entry: the AR credits of a
+		# payment entry are what the company paid (city_ledger_open_folios)
+		write_ledger_entry(
+			property=acc.property, folio=h["folio"], ledger="AR", credit=h["amount"],
+			description=f"{h['tax_label']} withheld by {acc.company} · {entry.name}",
+			transaction_code=code, source_doctype="Folio", source_name=h["folio"])
+		doc = frappe.get_doc({
+			"doctype": "Tax Withheld", "property": acc.property,
+			"account": acc.name, "company": acc.company, "folio": h["folio"],
+			"invoice_number": h["invoice_number"], "payment": payment,
+			"entry": entry.name, "tax_code": h["tax"], "tax_label": h["tax_label"],
+			"rate": h["rate"], "amount": h["amount"], "withheld_on": received,
+			"certificate_number": h["certificate_number"],
+			"certificate_period": h["certificate_period"],
+			"status": "Certificate Received" if h["certificate_number"] else "Awaiting Certificate",
+			"certificate_received_on": bd if h["certificate_number"] else None,
+		})
+		doc.flags.kamra_withholding = True
+		doc.insert(ignore_permissions=True)
+		out.append({**h, "name": doc.name})
+	return out
+
+
+def reverse_withholdings(acc, payment: str, why: str) -> list[str]:
+	"""A reversed company payment brings back the tax withheld from it: the
+	bill owes that part again and the Tax Withheld record is Reversed."""
+	from kamra.ledger import write_ledger_entry
+	done = []
+	for w in frappe.get_all("Tax Withheld", fields=["name", "folio", "amount", "entry",
+	                                                 "tax_label", "invoice_number"],
+	                        filters={"payment": payment, "status": ("!=", "Reversed")}):
+		frappe.get_doc({
+			"doctype": "City Ledger Entry", "account": acc.name,
+			"property": acc.property, "posting_date": get_business_date(acc.property),
+			"kind": "Adjustment", "folio": w.folio, "invoice_number": w.invoice_number,
+			"debit": w.amount, "credit": 0, "reverses": w.entry,
+			"reference": f"{w.tax_label} withheld, reversed"[:140],
+			"notes": f"Payment {payment} reversed: {why}"[:500],
+		}).insert(ignore_permissions=True)
+		write_ledger_entry(
+			property=acc.property, folio=w.folio, ledger="AR", debit=w.amount,
+			description=f"{w.tax_label} withheld, reversed · {payment}",
+			transaction_code=_withholding_code(),
+			source_doctype="Folio", source_name=w.folio)
+		frappe.db.set_value("Tax Withheld", w.name, "status", "Reversed")
+		done.append(w.name)
+	return done
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Finance", "Hotel Admin")
+def record_withholding_certificate(tax_withheld: str, certificate_number: str,
+                                   certificate_period: str | None = None,
+                                   received_on: str | None = None):
+	"""The payer's certificate for tax it withheld came in: keep its number
+	and period. The amount stays as recorded."""
+	doc = frappe.get_doc("Tax Withheld", tax_withheld)
+	assert_property_access(doc.property)
+	if doc.status == "Reversed":
+		frappe.throw(_("The payment this was withheld from was reversed."))
+	number = (certificate_number or "").strip()
+	if not number:
+		frappe.throw(_("Enter the certificate number."))
+	doc.update({"certificate_number": number[:140],
+	            "certificate_period": (certificate_period or "").strip()[:140] or None,
+	            "certificate_received_on": received_on or get_business_date(doc.property),
+	            "status": "Certificate Received"})
+	doc.save(ignore_permissions=True)
+	from kamra.savings import log_action
+	log_action("withholding_certificate", "Tax Withheld", doc.name, doc.property,
+	           rationale=f"{doc.company}: {doc.tax_label} {doc.amount:,.2f} on "
+	                     f"{doc.invoice_number or doc.folio}, certificate {number}")
+	return {"name": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+def withheld_tax(property: str, status: str | None = "Awaiting Certificate",
+                 account: str | None = None):
+	"""Tax companies withheld from their payments: by default the amounts
+	still waiting for a certificate, oldest first, with totals per tax."""
+	assert_property_access(property)
+	filters = {"property": property}
+	if status:
+		filters["status"] = status
+	if account:
+		filters["account"] = account
+	rows = frappe.get_all(
+		"Tax Withheld", filters=filters, order_by="withheld_on asc, creation asc",
+		fields=["name", "account", "company", "folio", "invoice_number", "payment",
+		        "tax_code", "tax_label", "rate", "amount", "withheld_on", "status",
+		        "certificate_number", "certificate_period", "certificate_received_on"],
+		limit_page_length=500)
+	totals: dict[str, float] = {}
+	for r in rows:
+		r["amount"] = float(r["amount"] or 0)
+		totals[r["tax_label"]] = round(totals.get(r["tax_label"], 0.0) + r["amount"], 2)
+		r["withheld_on"] = str(r["withheld_on"]) if r["withheld_on"] else None
+	return {"rows": rows, "totals": totals,
+	        "total": round(sum(r["amount"] for r in rows), 2),
+	        "taxes": property_withholding_taxes(property)}

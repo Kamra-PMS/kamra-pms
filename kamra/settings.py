@@ -266,6 +266,10 @@ MODULES: tuple[Module, ...] = (
 				  min=0, max=100000,
 				  hint="A room night posted more than this away from the booked (locked) "
 				       "nightly rate is listed as a rate variance."),
+				S("na_anomaly_checks", "Flag what is unusual for this property", "check", 1,
+				  hint="Voids, allowances, till variances and room rates far outside this "
+				       "property's own history, and sources whose guests often no-show. "
+				       "Starts after 30 days of posted room nights. Listed as a warning."),
 				S("na_auto_audit_with_blockers", "Scheduled audit when checks block", "select",
 				  "Run and report exceptions",
 				  options=("Run and report exceptions", "Hold and alert"),
@@ -300,6 +304,14 @@ MODULES: tuple[Module, ...] = (
 				       "Passing it marks the room Ready."),
 				S("inspect_duration_minutes", "Inspection takes", "number", 30, "turnover", min=5, max=480, unit="min",
 				  hint="The inspection task is due this long after the clean is done."),
+			)),
+			Section("quality", "Room status and inspections", "", (
+				S("hk_discrepancy_cases", "Room status cases", "check", 1,
+				  hint="When the front office and housekeeping disagree on a room, open a case "
+				       "with an owner on the Housekeeping Board and close it with a reason."),
+				S("hk_quality_report", "Inspection pass rate and turn time", "check", 1,
+				  hint="Supervisors can fail an inspection with a reason. The board shows the pass "
+				       "rate and turn time by attendant and room type."),
 			)),
 			Section("laundry", "Laundry", "", (
 				S("laundry_express_multiplier", "Express price", "number", 1.5, min=1, max=5, unit="x regular",
@@ -379,6 +391,13 @@ MODULES: tuple[Module, ...] = (
 				S("banquet_advance_pct", "Advance at confirmation", "number", 25, min=0, max=100, unit="%"),
 				S("banquet_interim_pct", "Interim payment", "number", 50, min=0, max=100, unit="%"),
 				S("banquet_interim_days", "Interim due", "number", 15, min=0, max=365, unit="days before"),
+				S("banquet_refundable_deposit", "Refundable deposit on confirmation", "number", 0, min=0,
+				  hint="Held against damage and settled at close-out. 0 asks for none."),
+			)),
+			Section("tasting", "Food tasting", "", (
+				S("banquet_tasting_allowed", "Offer food tastings", "check", 1),
+				S("banquet_tasting_pax", "People at a tasting", "number", 4, min=1, max=50,
+				  hint="What the kitchen prepares portions for, unless the function says otherwise."),
 			)),
 			Section("followup", "Sales follow-up", "", (
 				S("banquet_follow_up_days", "Follow up an enquiry after", "number", 2, min=0, max=60, unit="days"),
@@ -464,6 +483,28 @@ MODULES: tuple[Module, ...] = (
 				       "A payment an AI agent records always waits for a Finance user to confirm it with "
 				       "their PIN, whatever this is set to."),
 			)),
+			Section("erpnext", "ERPNext books",
+			        "Only when ERPNext is installed on this site. Night audit posts one journal entry per "
+			        "business date to the ERPNext ledger, and approved supplier bills and their payments "
+			        "post to the supplier's account. Kamra keeps working without ERPNext.", (
+				S("erpnext_gl_posting", "Post the day to ERPNext at night audit", "check", 0,
+				  hint="On: after each night audit, the day's ledger postings go to ERPNext as one "
+				       "submitted journal entry, once per business date."),
+				S("erpnext_company", "ERPNext company", "text", "",
+				  hint="The ERPNext Company the entries are booked in, exactly as named there."),
+				S("erpnext_cost_center", "Cost center", "text", "",
+				  hint="Optional. Every line of the journal entry gets this ERPNext Cost Center."),
+				S("erpnext_account_map", "Account map", "textarea", "",
+				  hint="One per line: key = ERPNext account. Keys are a GL code or transaction code "
+				       "(revenue, payments), a ledger (Guest, Deposit, AR, Package), Tax, and for supplier "
+				       "bills an expense category, Purchase Tax, Creditors and Pay:<mode> (or Bank). "
+				       "Example: 4000 = Room Revenue - HC"),
+				S("erpnext_purchase_sync", "Post supplier bills to ERPNext", "check", 0,
+				  hint="On: an approved supplier bill posts to the ERPNext supplier's account (the "
+				       "supplier is created when missing), and each payment clears it."),
+				S("erpnext_supplier_group", "Supplier group for new suppliers", "text",
+				  "All Supplier Groups"),
+			)),
 			Section("cashier", "Cashier controls", "", (
 				S("use_cashier_tills", "Take money through cashier tills", "check", 1,
 				  hint="On: staff open their till (with an opening float) before taking or giving back "
@@ -508,6 +549,9 @@ MODULES: tuple[Module, ...] = (
 			Section("page", "Booking page", "", (
 				S("booking_engine_enabled", "Public booking page is live", "check", 1, P),
 				S("booking_mode", "Booking mode", "select", "Instant", P, options=("Instant", "Request to Book")),
+				S("booking_links", "Booking links with a source tag", "check", 1,
+				  hint="Share links that open a room type, dates or plan. The link's src (or "
+				       "utm_source) tag is kept on the booking."),
 			)),
 			Section("payment", "Guest payment", "", (
 				S("booking_payment_mode", "Guests pay", "select", "Pay at hotel", P,

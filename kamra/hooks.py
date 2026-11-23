@@ -65,7 +65,9 @@ scheduler_events = {
 		"15 4 * * *": ["kamra.scripts.reset_demo.scheduled"],
 		# 03:30 - storage limitation (DPDP s.8(7)): erase guests idle past
 		# their property's retention period
-		"30 3 * * *": ["kamra.privacy.apply_retention"],
+		"30 3 * * *": ["kamra.privacy.apply_retention",
+		               # recreation memberships past their last day (#632)
+		               "kamra.recreation.expire_memberships"],
 		# 03:40 - the same for conversations: WhatsApp message text and AI
 		# assistant chats past the property's message retention period
 		"40 3 * * *": ["kamra.privacy.apply_message_retention"],
@@ -79,6 +81,10 @@ scheduler_events = {
 		"45 4 * * *": ["kamra.hosting_enquiry_retention.purge_expired_hosting_enquiries"],
 		# 06:00 and 18:00 - warm the GitHub latest-release cache for the update nag
 		"0 6,18 * * *": ["kamra.health.poll_github_releases"],
+		# 05:35 - the anonymous install heartbeat (#657); off in Settings,
+		# or with KAMRA_TELEMETRY=0 / DO_NOT_TRACK=1 / kamra_telemetry: 0
+		# ponytail: one fixed minute for every install; add jitter if the endpoint sees bursts
+		"35 5 * * *": ["kamra.telemetry.send_heartbeat"],
 		# every minute - outbound webhook retries that are due (backoff), and
 		# the ARI outbox: what waited for its batch window, pause or retry
 		"* * * * *": ["kamra.webhooks.retry_due", "kamra.channel_ari.enqueue_ari_flushes"],
@@ -272,7 +278,7 @@ _PROPERTY_SCOPED = (
 	"Banquet Service Item", "Cancelled Invoice", "Cash Transfer", "Cashier", "Cashier Session", "Cashier Terminal",
 	"Cashier Transaction", "Channel ARI Outbox", "Channel Manager Connection",
 	"Channel Provider Connection", "City Ledger Account", "City Ledger Entry",
-	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
+	"Copilot Conversation", "Credit Note", "Discount Voucher", "ERPNext Sync Log", "Exchange Rate",
 	"Exchange Transaction", "Experience", "External POS Charge", "Floor", "Folio", "Folio Ledger Entry",
 	"Folio Reprint", "Group Booking", "Holiday Package", "Housekeeping Task", "Hurdle Rate",
 	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kamra Custom Report", "Kamra Notification", "Kitchen Printer",
@@ -281,11 +287,14 @@ _PROPERTY_SCOPED = (
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
 	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Table Reservation",
 	"Print Job",
-	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
+	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan", "Rate Restriction",
+	"Recreation Booking", "Recreation Customer", "Recreation Facility",
+	"Recreation Membership", "Recreation Plan", "Recreation Therapist",
+	"Recreation Treatment", "Recreation Visit",
 	"Reservation",
-	"Long Stay Discount", "Revenue Budget", "Room", "Room Block", "Room Type", "Season",
+	"Long Stay Discount", "Revenue Budget", "Room", "Room Block", "Room Discrepancy", "Room Type", "Season",
 	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template", "Ticket Event",
-	"Transaction Code", "Turnover Profile", "Vendor", "Vendor Bill", "Venue", "Venue Booking",
+	"Tax Withheld", "Transaction Code", "Turnover Profile", "Vendor", "Vendor Bill", "Venue", "Venue Booking",
 	"WhatsApp Message", "ZATCA Invoice", "ZATCA Settings",
 )
 
@@ -368,7 +377,7 @@ doc_events["Reservation"] = {
 # What moves availability or price queues an ARI change for the connections
 # with an outbox (kamra.channel_ari: only changes, in ranges, under the
 # provider's rate limit). Reservations go through on_reservation_change.
-for _doctype in ("Season", "Rate Plan", "Room Type", "Hurdle Rate", "Rate Guardrail",
+for _doctype in ("Season", "Rate Restriction", "Rate Plan", "Room Type", "Hurdle Rate", "Rate Guardrail",
                  "Room", "Room Block", "Channel Room Mapping"):
 	_events = doc_events.setdefault(_doctype, {})
 	for _event in ("on_update", "after_insert", "on_trash"):
@@ -376,6 +385,15 @@ for _doctype in ("Season", "Rate Plan", "Room Type", "Hurdle Rate", "Rate Guardr
 		_events[_event] = ([_current] if isinstance(_current, str) else list(_current)) + [
 			"kamra.channel_ari.on_ari_source_change"]
 del _doctype, _events, _event, _current
+
+# a unit added to (or moved between) unit types an owner holds joins
+# that owner's scope at once (#639)
+_room = doc_events.setdefault("Room", {})
+for _event in ("after_insert", "on_update"):
+	_current = _room.get(_event) or []
+	_room[_event] = ([_current] if isinstance(_current, str) else list(_current)) + [
+		"kamra.owners.on_room_change"]
+del _room, _event, _current
 
 # Scheduled Tasks
 # ---------------

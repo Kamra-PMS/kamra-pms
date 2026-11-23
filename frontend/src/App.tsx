@@ -74,6 +74,8 @@ const AllowanceApprovals = lazy(() => import("./screens/AllowanceApprovals"))
 const TapeChart = lazy(() => import("./screens/TapeChart"))
 const Tickets = lazy(() => import("./screens/Tickets"))
 const Laundry = lazy(() => import("./screens/Laundry"))
+const Recreation = lazy(() => import("./screens/Recreation"))
+const UnitOwners = lazy(() => import("./screens/UnitOwners"))
 const MenuItems = lazy(() => import("./screens/MenuItems"))
 const RoomsSetup = lazy(() => import("./screens/RoomsSetup"))
 const Groups = lazy(() => import("./screens/Groups"))
@@ -253,6 +255,10 @@ export default function App() {
             element={<ConfiguredScreen config="seasonsConfig" />}
           />
           <Route
+            path="rate-restrictions"
+            element={<ConfiguredScreen config="rateRestrictionsConfig" />}
+          />
+          <Route
             path="packages"
             element={<ConfiguredScreen config="holidayPackagesConfig" />}
           />
@@ -390,6 +396,8 @@ export default function App() {
           />
           <Route path="tickets" element={<Tickets />} />
           <Route path="laundry" element={<Laundry />} />
+          <Route path="recreation" element={<Recreation />} />
+          <Route path="unit-owners" element={<UnitOwners />} />
           <Route path="housekeeping-board" element={<HousekeepingBoard />} />
           <Route path="room-board" element={<Rooms />} />
           <Route

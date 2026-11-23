@@ -117,13 +117,36 @@ count them. Quotes below the floor margin are flagged.
    for 15 days. Stamp again after a change to issue the next version.
 3. Click **Email to guest** or **WhatsApp guest**. Email needs a customer
    email on the Enquiry step; WhatsApp needs a phone and a connected
-   [WhatsApp](/whatsapp) number.
+   [WhatsApp](/whatsapp) number. The email carries the quotation as a
+   PDF attachment (when the server can make PDFs; otherwise the quote is
+   in the email itself).
 4. Click **Open** on any document to view or print it.
 
 ![The Documents step: quotation, contract, event order, pack list and invoice, and the Issue buttons](/img/banquets/documents.png)
 
 If a quote goes 3 days with no reply, the function shows on the morning
-list, and Kamra emails the guest a reminder when it has their email.
+list, and Kamra emails the guest a reminder when it has their email. On
+**All functions**, the **Guest response** column marks each quote still
+**Awaiting response**; filter the status list by *Awaiting guest response*
+to see only those.
+
+## Book a food tasting
+
+On an enquiry, tentative or confirmed function, the **Food tasting** card
+books one:
+
+1. Pick **When** and how many **People tasting** (the kitchen prepares
+   portions for them; the default is in Settings).
+2. Click **Book and invite the guest**. The guest gets an email with the
+   menu and a calendar invite; the chef and the sales owner get a
+   WhatsApp alert (the F&B manager when no chef is named).
+3. After the tasting, add what they liked or want changed under
+   **Notes** and click **Tasting done** - or **No tasting** when they
+   skip it. The sales owner hears what they said.
+
+A tasting the guest asked for but nobody booked shows on the morning
+list in the last three weeks before the function. Switch tastings off
+under Settings when the property doesn't offer them.
 
 ## Record the guest's answer and confirm
 
@@ -144,7 +167,8 @@ function, **Close out** opens **The night** step (see
 
 When a function is confirmed, Kamra creates the **Department checklist**
  -  Sales, Finance, Housekeeping and F&B tasks with due dates counted back
-from the event - and tells those teams.
+from the event - and tells those teams. Engineering and HR get their
+tasks too (see [Engineering and HR](#engineering-and-hr)).
 
 ## Take payments
 
@@ -161,6 +185,18 @@ from the event - and tells those teams.
 A percentage milestone follows the quote when it changes; a fixed amount
 stays put. A security deposit is held money, not payment: it never comes
 off the bill.
+
+**Payment links**: with a payment gateway set up ([Settings → Payments](/settings)), click
+**Send pay link** on a saved milestone. The guest gets a one-off link
+by email and WhatsApp; paying it records the receipt on the function and
+ticks the milestone off, with no one typing it in. When a milestone is
+due within three days, or overdue, Kamra emails the guest a reminder with
+the link (at most once every three days per milestone). Without a
+gateway the reminder still goes, without a link.
+
+**Deposit rules**: a function confirmed without its own schedule gets the
+property's default milestones automatically, and the refundable deposit
+from Settings when it holds none.
 
 ### Put the function on the group's bill
 
@@ -230,7 +266,29 @@ on the folio instead.
 On the Banquets home, open **Month by month**. Each month shows the value
 of confirmed functions and of those still in play, dated by the event,
 with the totals by status. It covers the next six months from the 1st;
-set **From** and **To** to look at any other period.
+set **From** and **To** to look at any other period. **Still in play**
+also shows the weighted value: enquiries at 20%, tentative holds at 50%
+and confirmed functions in full.
+
+## Keep equipment from being double-booked
+
+In **Menus & services**, set **Units owned** on a service the hotel
+counts (projectors, LED walls, podiums). A confirmed function can then
+not take more of it than the hotel owns while other confirmed functions
+run at the same time - confirming says what is short. On the Banquets
+home, the **Equipment** tab shows each counted item day by day:
+confirmed units plus tentative holds, amber when the holds would need
+more than you own. An hourly line counts as one unit.
+
+## Engineering and HR
+
+On a tentative or confirmed function, the **Engineering & HR** card
+keeps the brief those teams work from: WiFi network and password or
+coupons, the speed test, AV and AC notes, extra male and female staff,
+and whether a bar is set up. On confirmation the checklist adds
+Engineering tasks (AC set point, projector and microphone test, WiFi and
+speed test) and HR tasks (extra staff rostered, bar crew booked); their
+managers (Hotel Admin) are told.
 
 ## Print the registers
 
@@ -271,6 +329,9 @@ leaves sellable inventory.
 | Interim payment | 50% | Second milestone. |
 | Interim due | 15 days before | When the interim falls due. |
 | Follow up an enquiry after | 2 days | The follow-up date on a new enquiry. |
+| Refundable deposit on confirmation | 0 | Set on a function confirmed without one. 0 asks for none. |
+| Offer food tastings | On | Off hides nothing but refuses to book a tasting. |
+| People at a tasting | 4 | Portions the kitchen prepares, unless the function says otherwise. |
 
 ## Good to know
 

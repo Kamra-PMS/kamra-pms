@@ -82,6 +82,7 @@ def on_checkout_clean_done(task) -> None:
 			"priority": "High",
 			"status": "Pending",
 			"reservation": task.reservation,
+			"clean_task": task.name,
 			"due_by": add_to_date(now_datetime(), minutes=mins),
 		}
 	).insert(ignore_permissions=True)

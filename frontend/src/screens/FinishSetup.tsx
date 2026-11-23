@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { InfoTip } from "../components/InfoTip"
 import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
+import { UsageSetupCard } from "./settings/UsageReportingPage"
 
 
 export interface ChecklistItem {
@@ -89,6 +90,7 @@ export default function FinishSetup() {
           </CardContent>
         </Card>
       )}
+      <UsageSetupCard prefill={{}} />
     </div>
   )
 }

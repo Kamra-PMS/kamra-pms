@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Link, useLocation, useOutletContext } from "react-router-dom"
 import {
-  ArrowRight,
-  KeyRound,
   LayoutGrid,
   Loader2,
   MessageSquare,
+  Minus,
   Plus,
   Send,
   Sparkles,
@@ -24,11 +23,13 @@ import {
   listConversations,
   postRaw,
   saveConversation,
+  serverError,
   type BookingOptions,
   type ChatMsg,
   type ConversationSummary,
   type Snapshot,
 } from "../lib/api"
+import { agentFailureText, fold, isBasketClear, isBasketClose, spokenHitsChoice } from "../lib/agentMatch"
 import { cn } from "../lib/utils"
 import { cur, moneyLocale } from "../lib/money"
 import { Markdown } from "../lib/markdown"
@@ -43,12 +44,18 @@ import {
   type Choice,
   type FlowId,
   fitsStep,
+  BASKET_CLEAR,
+  BASKET_DONE,
+  orderFromAnswers,
+  readCart,
+  writeCart,
+  type CartLine,
   type GuideData,
   type GuideMenu,
   type GuideOutlet,
   type Outcome,
 } from "../components/AgentGuide"
-import VoiceButton, { agentLang, type VoiceHandle } from "../components/VoiceButton"
+import VoiceButton, { agentLang, voiceSupported, type VoiceHandle } from "../components/VoiceButton"
 import type { ShellContext } from "../AppShell"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
@@ -93,7 +100,7 @@ const SUGGESTIONS = [
 const SHORTCUT_FLOWS: FlowId[] = ["walkin", "checkin", "checkout", "booking", "order", "payment", "today"]
 
 // "check in", "Check-in" and "check in." all name the same task
-const norm = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()
+const norm = fold
 
 type FlowState = { id: FlowId; step: number; answers: Answers }
 
@@ -109,40 +116,46 @@ function ThinkingDots() {
   )
 }
 
-const SETUP_STEPS = [
-  "Create an API key with your AI provider (OpenAI works out of the box).",
-  "Open Settings → AI assistant, paste the key, pick a model and Test.",
-  "Switch it on, save, and come back here.",
-]
-
-function AiSetupNotice() {
-  useUILanguage()
+function ChoiceButtons(props: {
+  choices: Choice[]
+  live: boolean
+  busy: boolean
+  onPick: (c: Choice) => void
+}) {
+  const button = (c: Choice, j: number) => (
+    <button
+      key={`${c.group ?? ""}-${c.label}-${j}`}
+      type="button"
+      disabled={!props.live || props.busy}
+      onClick={() => props.onPick(c)}
+      className={cn(
+        "rounded-xl border px-3 py-1.5 text-left text-sm transition disabled:cursor-default",
+        c.goto === "menu"
+          ? "border-transparent text-zinc-500 hover:text-zinc-800"
+          : "border-brand-200 bg-white text-zinc-800 shadow-sm hover:border-brand-400 hover:bg-brand-50",
+      )}
+    >
+      <span className="block font-medium">{c.label}</span>
+      {c.hint && <span className="block text-xs text-zinc-500">{c.hint}</span>}
+    </button>
+  )
+  const loose = props.choices.filter((c) => !c.group)
+  const groups: { name: string; items: Choice[] }[] = []
+  for (const c of props.choices) {
+    if (!c.group) continue
+    const found = groups.find((g) => g.name === c.group)
+    if (found) found.items.push(c)
+    else groups.push({ name: c.group, items: [c] })
+  }
   return (
-    <div className="mx-auto max-w-md text-center">
-      <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 ring-1 ring-brand-100">
-        <KeyRound className="size-5 text-brand-600" aria-hidden />
-      </span>
-      <h2 className="mt-4 text-lg font-semibold tracking-tight text-zinc-900">{translate("Add an AI key to start")}</h2>
-      <p className="mt-1 text-sm text-zinc-500">{translate("Kamra Agent runs on your own AI account. It takes about two minutes.")}</p>
-      <ol className="mt-5 space-y-2.5 text-left">
-        {SETUP_STEPS.map((step, i) => (
-          <li
-            key={step}
-            className="flex gap-3 rounded-lg border border-zinc-100 bg-zinc-50/70 px-3 py-2.5 text-sm text-zinc-700"
-          >
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[11px] font-semibold text-white">
-              {i + 1}
-            </span>
-            {translate(step)}
-          </li>
-        ))}
-      </ol>
-      <Link
-        to="/settings/ai"
-        className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-      >{translate("Open AI settings")}<ArrowRight className="size-4" aria-hidden />
-      </Link>
-      <p className="mt-4 text-xs text-zinc-400">{translate("The key stays on your server, stored masked. Usage is billed to your own provider account.")}</p>
+    <div className="space-y-2">
+      {loose.length > 0 && <div className="flex flex-wrap gap-1.5">{loose.map(button)}</div>}
+      {groups.map((g) => (
+        <div key={g.name}>
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{g.name}</div>
+          <div className="flex flex-wrap gap-1.5">{g.items.map(button)}</div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -253,7 +266,8 @@ export default function Assistant() {
     runStep({ ...f, step: f.step + 1, answers: { ...f.answers, [step.key]: picked } })
   }
 
-  // the guide sends a food order itself - the same call the POS till makes
+  // the guide sends a food order itself - the same call the POS till makes.
+  // the basket stays open until the kitchen has accepted it
   async function placeOrder(c: Choice) {
     if (!c.order) return
     push({ role: "user", content: c.label })
@@ -261,8 +275,10 @@ export default function Assistant() {
     try {
       const r = await call<{ order: string; order_total: number }>("kamra.pos.send_order", {
         ...c.order,
+        allow_zero: c.order.allow_zero ? 1 : 0,
         property: getCurrentProperty(),
       })
+      setFlow(null)
       push({
         role: "assistant",
         content: translate("Sent to the kitchen. Order {order}, total {total}.", {
@@ -272,12 +288,19 @@ export default function Assistant() {
         choices: [{ label: translate("Another food order"), goto: "order" }, startOver()],
       })
     } catch (e) {
+      const reason = serverError(e)
+      const free = !c.order.allow_zero && /no price/i.test(reason)
       push({
         role: "assistant",
-        content: translate("The order didn't go through: {reason}", {
-          reason: e instanceof Error ? e.message : translate("unknown error"),
-        }),
-        choices: [{ label: translate("Try again"), goto: "order" }, startOver()],
+        content: free
+          ? reason
+          : translate("The order didn't go through: {reason}", { reason }),
+        choices: free
+          ? [
+              { label: translate("Send them free"), order: { ...c.order, allow_zero: true } },
+              startOver(),
+            ]
+          : [{ label: translate("Try again"), goto: "order" }, startOver()],
       })
     } finally {
       setStepping(false)
@@ -312,23 +335,43 @@ export default function Assistant() {
     send(c.label)
   }
 
+  function closePhrases() {
+    return [translate("Done"), translate("Send to the kitchen"), translate("Complete the order")]
+  }
+
+  function liveChoices(): Choice[] {
+    for (let i = msgsRef.current.length - 1; i >= 0; i--) {
+      const choices = msgsRef.current[i].choices
+      if (choices?.length) return choices
+    }
+    return []
+  }
+
   function submit(text: string) {
     const q = text.trim()
     const f = flowRef.current
     if (!q || busy || stepping) return
     const step = f && flows()[f.id].steps[f.step]
+    // a food-order basket does not need the AI. "complete the order" is Done.
+    if (step?.collect && isBasketClear(q, [translate("Clear the order")])) {
+      setInput("")
+      return answer(BASKET_CLEAR, translate("Clear the order"), true)
+    }
+    if (step?.collect && isBasketClose(q, closePhrases())) {
+      setInput("")
+      return answer(BASKET_DONE, translate("Done"), true)
+    }
     if (step && fitsStep(step, q)) {
       setInput("")
       return answer(q, q, true)
     }
     // a tap-only question: typing (or saying) one of the answers counts as
-    // tapping it - the guest's name, or the room number shown under it
-    const open = msgsRef.current[msgsRef.current.length - 1]?.choices ?? []
+    // tapping it - the guest's name, the dish, or the room number under it
+    const open = liveChoices()
     const said = norm(q)
     const hit = said && open.find((c) =>
-      (f ? c.value !== undefined : !!(c.goto || c.order || c.book)) &&
-      (norm(c.label).includes(said) ||
-       (/\d/.test(said) && !!c.hint && ` ${norm(c.hint)} `.includes(` ${said} `))))
+      (f ? c.value !== undefined || !!(c.order || c.goto || c.book) : !!(c.goto || c.order || c.book)) &&
+      spokenHitsChoice(said, c.label, c.hint))
     if (hit) {
       setInput("")
       return pick(hit)
@@ -339,8 +382,22 @@ export default function Assistant() {
       setInput("")
       return startFlow(tile.id, tile.label)
     }
-    // typed while a tap-only question was open: a free question for the AI
-    setFlow(null)
+    // a guided task is still open: keep it. A typed aside must not throw
+    // the basket away and hand the sentence to an AI call that can fail.
+    if (f) {
+      setInput("")
+      push({ role: "user", content: q })
+      push({
+        role: "assistant",
+        content: translate("That isn't one of the choices. Tap one below, or type its name."),
+        choices: open.filter((c) => c.value !== undefined || c.goto || c.order || c.book),
+      })
+      return
+    }
+    if (aiEnabled === false) {
+      setError(translate("Add an AI key in Settings to ask in your own words. The tasks above work without it."))
+      return
+    }
     send(q)
   }
   // a screen can hand the agent a ready question (End of Day blockers);
@@ -409,7 +466,8 @@ export default function Assistant() {
     setInput("")
     setError(null)
     setNoCredit(false)
-    setFlow(null)
+    // a guided task stays until this call has actually succeeded
+    const guided = flowRef.current
     const isFirst = !activeId
     // the AI reads only what was said; old tap buttons stay on screen
     const history: ChatMsg[] = [...msgsRef.current, { role: "user", content: q }]
@@ -420,6 +478,7 @@ export default function Assistant() {
       setAll(msgsRef.current.map((m, i) => (i === aIdx ? fn(m) : m)))
 
     let content = ""
+    let streamError = ""
     const actions: { tool: string; ok: boolean }[] = []
     const cards: AgentCard[] = []
     try {
@@ -439,7 +498,10 @@ export default function Assistant() {
         messages: history.map(({ role, content }) => ({ role, content })),
         lang: agentLang(),
       })
-      if (!res.ok || !res.body) throw new Error(`stream ${res.status}`)
+      if (!res.ok || !res.body) {
+        const body = await res.text().catch(() => "")
+        throw Object.assign(new Error(serverError({ status: res.status, body })), { status: res.status })
+      }
       const reader = res.body.getReader()
       const dec = new TextDecoder()
       let buf = ""
@@ -469,11 +531,25 @@ export default function Assistant() {
             cards.push(d as AgentCard)
             patch((m) => ({ ...m, cards: [...cards] }))
           } else if (event === "error") {
-            setError(d.message)
+            streamError = String(d.message || "")
             setNoCredit(d.code === "out_of_credit")
           }
         }
       }
+      const failure = streamError ? agentFailureText(streamError) : null
+      if (failure) {
+        setError(failure.text)
+        if (failure.credit) setNoCredit(true)
+        // the question's buttons stay tappable: drop the failed turn
+        if (guided) {
+          setAll(msgsRef.current.filter((_, i) => i !== aIdx && i !== aIdx - 1))
+          setFlow(guided)
+        } else if (!content) {
+          setAll(msgsRef.current.filter((_, i) => i !== aIdx))
+        }
+        return
+      }
+      setFlow(null)
       // persist the completed turn
       const finalMsgs: ChatMsg[] = [
         ...history,
@@ -485,13 +561,51 @@ export default function Assistant() {
         isFirst ? q.slice(0, 60) : undefined,
       )
       if (isFirst) refreshList()
-    } catch {
-      setError(translate("The agent couldn't finish - check the AI key in Settings."))
-      if (!content) setAll(msgsRef.current.filter((_, i) => i !== aIdx))
+    } catch (e) {
+      const failure = agentFailureText(e instanceof Error ? e.message : "")
+      setError(failure.text)
+      if (failure.credit) setNoCredit(true)
+      if (guided) {
+        setAll(msgsRef.current.filter((_, i) => i !== aIdx && i !== aIdx - 1))
+        setFlow(guided)
+      } else if (!content) {
+        setAll(msgsRef.current.filter((_, i) => i !== aIdx))
+      }
     } finally {
       setBusy(false)
     }
   }
+
+  function setQty(item: string, qty: number) {
+    const f = flowRef.current
+    if (!f || busy || stepping) return
+    const step = flows()[f.id].steps[f.step]
+    if (!step?.collect) return
+    const cart = readCart(f.answers[step.key]).flatMap((l) => {
+      if (l.item !== item) return [l]
+      if (qty < 1) return []
+      return [{ ...l, qty }]
+    })
+    runStep({ ...f, answers: { ...f.answers, [step.key]: writeCart(cart) } })
+  }
+
+  function sendBasket() {
+    const f = flowRef.current
+    if (!f || busy || stepping) return
+    const built = orderFromAnswers(f.answers)
+    if (!built) return
+    placeOrder({ label: translate("Send to the kitchen"), order: built.order })
+  }
+
+  const stepNow = flow ? flows()[flow.id].steps[flow.step] : undefined
+  const basketLines: CartLine[] | null = stepNow?.collect && flow
+    ? readCart(flow.answers[stepNow.key])
+    : null
+  let liveChoiceAt = -1
+  msgs.forEach((m, i) => {
+    if (m.role === "assistant" && m.choices?.length) liveChoiceAt = i
+  })
+  const chatLocked = aiEnabled === false && !flow
 
   return (
     // fills the viewport under the top bar + page header; only panes scroll
@@ -556,16 +670,20 @@ export default function Assistant() {
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
-          {msgs.length === 0 && aiEnabled === false && (
-            <div className="flex min-h-full items-center justify-center py-6">
-              <AiSetupNotice />
-            </div>
-          )}
-          {msgs.length === 0 && aiEnabled !== false && (
+          {msgs.length === 0 && (
             <div className="mx-auto max-w-3xl space-y-3 py-4 text-center">
               <Sparkles className="mx-auto size-8 text-brand-500" />
               <h2 className="text-lg font-semibold">{translate("What would you like to do?")}</h2>
-              <p className="text-sm text-zinc-500">{translate("Tap a task and I'll ask you one thing at a time. Or just type what you need.")}</p>
+              <p className="text-sm text-zinc-500">
+                {aiEnabled === false
+                  ? translate("Tap a task and I'll ask you one thing at a time. Asking in your own words needs an AI key.")
+                  : translate("Tap a task and I'll ask you one thing at a time. Or just type what you need.")}
+              </p>
+              {aiEnabled === false && (
+                <Link to="/settings/ai" className="inline-flex text-sm font-medium text-brand-700 underline">
+                  {translate("Open AI settings")}
+                </Link>
+              )}
               <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-3 lg:grid-cols-4">
                 {menuTiles().map((tl) => (
                   <button
@@ -583,18 +701,22 @@ export default function Assistant() {
                   </button>
                 ))}
               </div>
-              <p className="pt-3 text-xs font-medium uppercase tracking-wide text-zinc-400">{translate("Or ask in your own words")}</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => send(translate(s))}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-left text-sm text-zinc-600 hover:border-brand-400 hover:bg-zinc-50"
-                  >
-                    {translate(s)}
-                  </button>
-                ))}
-              </div>
+              {aiEnabled !== false && (
+                <>
+                  <p className="pt-3 text-xs font-medium uppercase tracking-wide text-zinc-400">{translate("Or ask in your own words")}</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {SUGGESTIONS.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => send(translate(s))}
+                        className="rounded-lg border border-zinc-200 px-3 py-2 text-left text-sm text-zinc-600 hover:border-brand-400 hover:bg-zinc-50"
+                      >
+                        {translate(s)}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
           {msgs.map((m, i) => {
@@ -661,25 +783,14 @@ export default function Assistant() {
               </div>
             )}
             {m.role === "assistant" && choices.length > 0 && (
-              // only the newest question can still be answered
-              <div className={cn("ms-9 flex max-w-[85%] flex-wrap gap-1.5", !last && "opacity-50")}>
-                {choices.map((c, j) => (
-                  <button
-                    key={j}
-                    type="button"
-                    disabled={!last || busy || stepping}
-                    onClick={() => pick(c)}
-                    className={cn(
-                      "rounded-xl border px-3 py-1.5 text-left text-sm transition disabled:cursor-default",
-                      c.goto === "menu"
-                        ? "border-transparent text-zinc-500 hover:text-zinc-800"
-                        : "border-brand-200 bg-white text-zinc-800 shadow-sm hover:border-brand-400 hover:bg-brand-50",
-                    )}
-                  >
-                    <span className="block font-medium">{c.label}</span>
-                    {c.hint && <span className="block text-xs text-zinc-500">{c.hint}</span>}
-                  </button>
-                ))}
+              // the open question stays tappable after a failed AI send
+              <div className={cn("ms-9 max-w-[85%]", !(flow ? i === liveChoiceAt : last) && "opacity-50")}>
+                <ChoiceButtons
+                  choices={choices}
+                  live={flow ? i === liveChoiceAt : last}
+                  busy={busy || stepping}
+                  onPick={pick}
+                />
               </div>
             )}
             </div>
@@ -703,9 +814,7 @@ export default function Assistant() {
           <div ref={endRef} />
         </div>
 
-        {aiEnabled !== false && (
-          // wraps rather than scrolls; no dark:bg — .dark remaps zinc/white vars
-          <div className="flex flex-wrap gap-1.5 border-t border-zinc-100 px-3 pt-2.5">
+        <div className="flex flex-wrap gap-1.5 border-t border-zinc-100 px-3 pt-2.5">
             <button
               type="button"
               disabled={busy || stepping}
@@ -729,6 +838,58 @@ export default function Assistant() {
                 </button>
               ))}
           </div>
+        {basketLines && (
+          <div className="border-t border-zinc-100 px-3 py-2">
+            <div className="mb-1 flex items-center justify-between text-sm">
+              <span className="font-medium text-zinc-800">{translate("In the order")}</span>
+              <span className="tabular-nums text-zinc-700">
+                {cur()}{basketLines.reduce((s, l) => s + l.qty * l.price, 0).toLocaleString(moneyLocale())}
+              </span>
+            </div>
+            {basketLines.length === 0 && (
+              <p className="text-xs text-zinc-500">{translate("Tap a dish. Done and Send stay here.")}</p>
+            )}
+            <ul className="max-h-28 space-y-1 overflow-y-auto">
+              {basketLines.map((l) => (
+                <li key={l.item} className="flex items-center gap-2 text-sm">
+                  <span className="min-w-0 flex-1 truncate text-zinc-800">
+                    {l.name}
+                    {l.price === 0 && (
+                      <span className="ms-2 text-xs text-amber-700">{translate("No price set")}</span>
+                    )}
+                  </span>
+                  <button type="button" aria-label={translate("Less")} disabled={busy || stepping}
+                    onClick={() => setQty(l.item, l.qty - 1)}
+                    className="flex size-7 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:opacity-40">
+                    <Minus className="size-3.5" />
+                  </button>
+                  <span className="w-5 text-center tabular-nums">{l.qty}</span>
+                  <button type="button" aria-label={translate("One more")} disabled={busy || stepping}
+                    onClick={() => setQty(l.item, l.qty + 1)}
+                    className="flex size-7 items-center justify-center rounded-full border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:opacity-40">
+                    <Plus className="size-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button type="button" disabled={busy || stepping || basketLines.length === 0}
+                onClick={() => answer(BASKET_DONE, translate("Done"))}
+                className="rounded-full bg-brand-600 px-3 py-1 text-xs font-medium text-white disabled:opacity-40">
+                {translate("Done")}
+              </button>
+              <button type="button" disabled={busy || stepping || basketLines.length === 0}
+                onClick={sendBasket}
+                className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-800 disabled:opacity-40">
+                {translate("Send to the kitchen")}
+              </button>
+              <button type="button" disabled={busy || stepping || basketLines.length === 0}
+                onClick={() => answer(BASKET_CLEAR, translate("Clear the order"))}
+                className="rounded-full px-3 py-1 text-xs font-medium text-zinc-500 disabled:opacity-40">
+                {translate("Clear the order")}
+              </button>
+            </div>
+          </div>
         )}
         <form
           className="p-3"
@@ -744,25 +905,24 @@ export default function Assistant() {
               ref={inputRef}
               className="flex-1 bg-transparent py-2 text-sm outline-none text-zinc-900 placeholder:text-zinc-400 disabled:cursor-not-allowed"
               placeholder={
-                (aiEnabled === false
-                  ? translate("Add an AI key in Settings to start chatting")
-                  : (flow && flows()[flow.id].steps[flow.step]?.text) ||
-                    translate("Ask anything about the hotel…"))
+                chatLocked
+                  ? translate("Tap a task. Typing a question needs an AI key.")
+                  : (stepNow?.text || translate("Ask anything about the hotel…"))
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              disabled={busy || aiEnabled === false}
+              disabled={busy}
             />
             <VoiceButton
               ref={voiceRef}
-              disabled={busy || stepping || aiEnabled === false}
+              disabled={busy || stepping}
               onText={setInput}
               onError={setError}
             />
             <button
               type="submit"
               aria-label={translate("Send")}
-              disabled={busy || stepping || aiEnabled === false || !input.trim()}
+              disabled={busy || stepping || !input.trim()}
               className="flex size-9 items-center justify-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-40"
             >
               {busy ? (
@@ -772,6 +932,11 @@ export default function Assistant() {
               )}
             </button>
           </div>
+          {!voiceSupported && (
+            <p className="px-1 pt-1.5 text-xs text-zinc-500">
+              {translate("This browser can't use the microphone. Type instead, or open Kamra in Chrome or Safari.")}
+            </p>
+          )}
         </form>
       </div>
     </div>

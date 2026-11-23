@@ -128,6 +128,23 @@
   "deposit_refunded",
   "closed_out_on",
   "closed_out_by",
+  "sb_tasting",
+  "tasting_status",
+  "tasting_on",
+  "tasting_pax",
+  "column_break_tasting",
+  "tasting_chef",
+  "tasting_invited_on",
+  "tasting_notes",
+  "sb_ops",
+  "wifi_ssid",
+  "wifi_password",
+  "speed_test_mbps",
+  "av_notes",
+  "column_break_ops",
+  "staff_male",
+  "staff_female",
+  "bar_setup",
   "sb_notes",
   "requirements",
   "beo_notes",
@@ -861,6 +878,98 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_tasting",
+   "fieldtype": "Section Break",
+   "label": "Food Tasting",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "tasting_status",
+   "fieldtype": "Select",
+   "label": "Tasting",
+   "options": "\nRequested\nScheduled\nDone\nWaived"
+  },
+  {
+   "fieldname": "tasting_on",
+   "fieldtype": "Datetime",
+   "label": "Tasting On"
+  },
+  {
+   "fieldname": "tasting_pax",
+   "fieldtype": "Int",
+   "label": "Tasting Pax",
+   "description": "How many people taste - the kitchen prepares portions for them."
+  },
+  {
+   "fieldname": "column_break_tasting",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tasting_chef",
+   "fieldtype": "Link",
+   "label": "Chef",
+   "options": "User"
+  },
+  {
+   "fieldname": "tasting_invited_on",
+   "fieldtype": "Datetime",
+   "label": "Guest Invited On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tasting_notes",
+   "fieldtype": "Small Text",
+   "label": "Tasting Notes",
+   "description": "What the guest liked or wants changed - feeds the menu."
+  },
+  {
+   "fieldname": "sb_ops",
+   "fieldtype": "Section Break",
+   "label": "Engineering & HR",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "wifi_ssid",
+   "fieldtype": "Data",
+   "label": "WiFi Network"
+  },
+  {
+   "fieldname": "wifi_password",
+   "fieldtype": "Data",
+   "label": "WiFi Password / Coupons"
+  },
+  {
+   "fieldname": "speed_test_mbps",
+   "fieldtype": "Float",
+   "label": "Speed Test (Mbps)"
+  },
+  {
+   "fieldname": "av_notes",
+   "fieldtype": "Small Text",
+   "label": "AV & Engineering Notes",
+   "description": "AC setpoint, projector and HDMI check, microphones."
+  },
+  {
+   "fieldname": "column_break_ops",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "staff_male",
+   "fieldtype": "Int",
+   "label": "Extra Staff (Male)"
+  },
+  {
+   "fieldname": "staff_female",
+   "fieldtype": "Int",
+   "label": "Extra Staff (Female)"
+  },
+  {
+   "fieldname": "bar_setup",
+   "fieldtype": "Select",
+   "label": "Bar Setup",
+   "options": "\nNo\nYes"
+  },
+  {
    "fieldname": "sb_notes",
    "fieldtype": "Section Break",
    "label": "Notes"
@@ -897,7 +1006,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-01 18:00:00.000000",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Venue Booking",

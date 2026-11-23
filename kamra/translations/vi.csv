@@ -1,0 +1,59 @@
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","Sự đồng ý nhận tin tiếp thị được thay đổi từ hồ sơ khách, trang đặt phòng hoặc khi khách trả lời STOP / START."
+This guest has no phone number on file.,Khách này chưa có số điện thoại trong hồ sơ.
+This guest has not agreed to marketing messages.,Khách này chưa đồng ý nhận tin nhắn tiếp thị.
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Bạn sẽ nhận ưu đãi từ {0} qua WhatsApp. Trả lời STOP bất cứ lúc nào để hủy đăng ký.
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,Bạn sẽ không còn nhận ưu đãi từ {0}. Tin nhắn về đặt phòng và kỳ lưu trú vẫn tiếp tục. Trả lời START để đăng ký lại.
+AI Provider,Nhà cung cấp AI
+"Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.","Nhà cung cấp AI của bạn sẽ thao tác với tư cách {0}, trong phạm vi vai trò của bạn. Giá, thuế và tình trạng phòng vẫn nằm trong Kamra. Mọi thao tác đều được ghi dưới tên bạn trong nhật ký Hoạt động."
+{0} bill from {1},Hóa đơn {0} từ {1}
+{0} to {1},{0} đến {1}
+Billed this month,Đã lập hóa đơn trong tháng này
+Bills this month,Hóa đơn trong tháng này
+Brought forward,Số dư chuyển sang
+"Each bill above is a tax invoice of its own; this is a summary of the month, not a tax invoice. Taxable value and tax show where the whole invoice is on this account.","Mỗi hóa đơn ở trên là một hóa đơn thuế riêng; đây là bản tóm tắt của tháng, không phải hóa đơn thuế. Giá trị chịu thuế và thuế hiển thị khi toàn bộ hóa đơn nằm trên tài khoản này."
+Monthly bill,Hóa đơn tháng
+No such account.,Không có tài khoản này.
+Paid this month,Đã thanh toán trong tháng này
+Payments this month,Khoản thanh toán trong tháng này
+"Pick a month, like 2026-10.","Chọn một tháng, ví dụ 2026-10."
+Taxable value,Giá trị chịu thuế
+"Your bill for {0} is attached: {1} billed, {2} due.","Hóa đơn của bạn cho {0} được đính kèm: đã lập hóa đơn {1}, còn phải trả {2}."
+Balance due,Số tiền phải trả
+Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,Khóa AI của bạn đã hết hạn mức. Hãy nạp thêm với nhà cung cấp hoặc đổi khóa trong Cài đặt > Trợ lý AI.
+Sells alcohol,Có bán đồ uống có cồn
+"Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","Tắt cho cơ sở không phục vụ rượu bia: mọi trường, ô đánh dấu và nhãn liên quan đến đồ uống có cồn đều bị ẩn, ở mọi ngôn ngữ. Những gì đã ghi sổ trước đó không thay đổi."
+Extend unchecked-out departures one night,Gia hạn một đêm cho các khách đi chưa trả phòng
+"On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.","Bật: khách vẫn ở trạng thái Đã nhận phòng sau ngày đi sẽ được gia hạn thêm một đêm khi kiểm toán chạy, và đêm đó được ghi sổ như mọi đêm khác. Kỳ lưu trú không thể gia hạn (phòng đã có người đặt) vẫn nằm trong danh sách kiểm tra."
+The guest owes {0} - nothing is due back to refund.,Khách còn nợ {0} - không có khoản nào cần hoàn lại.
+Only {0} is due back to the guest - can't refund more than that.,Chỉ có {0} cần hoàn lại cho khách - không thể hoàn nhiều hơn số đó.
+Room type code {0} is already used at this property.,Mã loại phòng {0} đã được dùng tại cơ sở này.
+There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,Hóa đơn này chưa có đêm phòng nào. Giảm giá được trừ vào các đêm đã ghi sổ: hãy giảm giá sau kiểm toán đêm hoặc khi trả phòng.
+Enter a discount above zero.,Nhập mức giảm giá lớn hơn 0.
+A discount can't be more than 100%.,Giảm giá không được vượt quá 100%.
+The discount is more than the room nights on the bill ({0}).,Mức giảm giá lớn hơn tiền các đêm phòng trên hóa đơn ({0}).
+"This folio is settled - give the discount on the guest's open folio, or cancel the invoice first.","Folio này đã được thanh toán - hãy giảm giá trên folio đang mở của khách, hoặc hủy hóa đơn trước."
+"Pick a percent or an amount, per night or for the stay.","Chọn phần trăm hoặc số tiền, theo đêm hoặc cho cả kỳ lưu trú."
+Promo code {0} is already on this stay.,Mã khuyến mãi {0} đã được áp dụng cho kỳ lưu trú này.
+Discount {0}%,Giảm giá {0}%
+Discount {0} per night,Giảm giá {0} mỗi đêm
+A discount needs a reason - it goes on the record.,Giảm giá cần có lý do - lý do được ghi vào hồ sơ.
+Monthly,Hằng tháng
+Revenue by department,Doanh thu theo bộ phận
+Department,Bộ phận
+"Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.","Phòng, từng điểm bán, tiệc và từng bộ phận phụ (giặt là, spa, taxi...), như trên báo cáo kiểm toán đêm."
+Food and beverage on folios,Đồ ăn và đồ uống trên folio
+Meal plans and minibar,Gói ăn và minibar
+Banquets,Tiệc
+Misc,Khác
+Early Check-in,Nhận phòng sớm
+Late Checkout,Trả phòng muộn
+Early Departure,Rời đi sớm
+Cleaning Fee,Phí dọn dẹp
+Extra Guests,Khách thêm
+Pet Charge,Phí thú cưng
+Bills paid,Hóa đơn đã thanh toán
+{0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,{0} hóa đơn của kỳ lưu trú này chưa có trên hóa đơn của khách: {1}. Ghi vào phòng hoặc thanh toán trước khi trả phòng.
+Bills still open,Hóa đơn vẫn đang mở
+Use Check out to check a guest out: it makes sure every bill is cleared first.,Dùng Trả phòng để trả phòng cho khách: thao tác này bảo đảm mọi hóa đơn đã được xử lý trước.
+Check out,Trả phòng
+Discounts and allowances,Giảm giá và giảm trừ

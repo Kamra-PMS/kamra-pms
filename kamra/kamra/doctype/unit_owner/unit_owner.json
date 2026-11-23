@@ -1,0 +1,115 @@
+{
+ "actions": [],
+ "autoname": "format:OWN-{#####}",
+ "creation": "2026-11-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "owner_name",
+  "property",
+  "access",
+  "show_guest_contact",
+  "commission_percent",
+  "units",
+  "room_types",
+  "users",
+  "costs"
+ ],
+ "fields": [
+  {
+   "fieldname": "owner_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Owner",
+   "reqd": 1
+  },
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "default": "Read only",
+   "fieldname": "access",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Access",
+   "options": "Read only\nManage",
+   "reqd": 1,
+   "description": "Read only is the calendar, occupancy, bookings and the statement. Manage can also hold their own units out of sale. Neither creates a guest booking or edits a price. Guest name and phone stay off unless Show guest contact is ticked."
+  },
+  {
+   "default": "0",
+   "fieldname": "show_guest_contact",
+   "fieldtype": "Check",
+   "label": "Show guest contact",
+   "description": "Off by default. When on, this owner's logins see the guest's name and phone for their own units. Identity documents are never included."
+  },
+  {
+   "default": "0",
+   "fieldname": "commission_percent",
+   "fieldtype": "Percent",
+   "label": "Commission %",
+   "description": "Taken off room revenue on the owner's monthly statement. The payout is room revenue minus this commission. Itemised costs are not on the statement yet."
+  },
+  {
+   "fieldname": "units",
+   "fieldtype": "Table",
+   "label": "Units",
+   "options": "Unit Owner Unit"
+  },
+  {
+   "fieldname": "room_types",
+   "fieldtype": "Table",
+   "label": "Unit Types",
+   "options": "Unit Owner Room Type",
+   "description": "Every unit of these types belongs to this owner too, including units added later."
+  },
+  {
+   "fieldname": "users",
+   "fieldtype": "Table",
+   "label": "Logins",
+   "options": "Unit Owner User",
+   "reqd": 1,
+   "description": "Each address is a login for these units. A new address is created as a user with no welcome mail; set the password in Staff & Access."
+  },
+  {
+   "fieldname": "costs",
+   "fieldtype": "Table",
+   "label": "Costs",
+   "options": "Unit Owner Cost",
+   "description": "Costs charged to the owner (cleaning, repairs, fees); they come off the monthly payout."
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-23 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Unit Owner",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Hotel Admin"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "owner_name",
+ "track_changes": 1
+}

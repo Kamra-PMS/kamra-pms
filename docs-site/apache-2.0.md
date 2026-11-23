@@ -63,7 +63,7 @@ This change needed a yes from everyone whose code is in Kamra core, and they all
 - Shaikh Ameer Pasha ([@ShaikhAmerPasha](https://github.com/ShaikhAmerPasha))
 - Madhukar Hiranya ([@madhukarah](https://github.com/madhukarah)), for Pace Wisdom
 - Kentrick Felix Kepawitono ([@kentrick22](https://github.com/kentrick22))
-- 白羽 ([@baiyu0616a](https://github.com/baiyu0616a)), for the Simplified Chinese interface (#618, #647). Agreed in #591 on 19 Nov 2026 to relicense under MIT or Apache-2.0, so zh-CN stays in core.
+- 白羽 ([@baiyu0616a](https://github.com/baiyu0616a)), for the Simplified Chinese interface (#618, #647). Agreed in #591 on 20 Nov 2026 to relicense under MIT or Apache-2.0, so zh-CN stays in core.
 
 Fares Alslahi ([@faresalslahi-collab](https://github.com/faresalslahi-collab)) gave Kamra the booking guest and room summary (#83). That idea stays credited. The confirmation summary in core was rewritten for this licence change.
 

@@ -51,6 +51,8 @@ export interface OrderRequest {
   order_type: "Room Service" | "Dine In" | "Takeaway"
   reservation?: string
   table_no?: string
+  /** the captain confirmed a dish whose menu price is 0 */
+  allow_zero?: boolean
 }
 
 /** One tappable answer. Exactly one of value / goto / prompt / book / order
@@ -60,6 +62,8 @@ export interface OrderRequest {
 export interface Choice {
   label: string
   hint?: string
+  /** dishes from one menu category render under this heading */
+  group?: string
   value?: string
   goto?: FlowId | "menu"
   prompt?: string
@@ -549,11 +553,19 @@ export function flows(): Record<FlowId, Flow> {
           const menu = await d.menu(a.outlet.value)
           const cart = readCart(a.items)
           const dishes: Choice[] = menu.categories.flatMap((c) =>
-            c.items.map((it) => ({
-              label: it.item_name,
-              hint: `${c.category} · ${money(it.price)}`,
-              value: JSON.stringify({ item: it.name, name: it.item_name, price: Number(it.price) || 0 }),
-            })))
+            c.items.map((it) => {
+              const price = Number(it.price) || 0
+              const have = cart.find((l) => l.item === it.name)
+              return {
+                label: it.item_name,
+                group: c.category || translate("Other"),
+                hint: [
+                  price ? money(price) : translate("No price set"),
+                  have ? `× ${have.qty}` : "",
+                ].filter(Boolean).join(" · "),
+                value: JSON.stringify({ item: it.name, name: it.item_name, price }),
+              }
+            }))
           if (!dishes.length)
             return { ask: translate("This kitchen has no dishes on its menu yet."), choices: [] }
           if (!cart.length)
@@ -561,35 +573,22 @@ export function flows(): Record<FlowId, Flow> {
           return {
             ask: translate("In the order: {items} - {total}. Tap more, or Done.",
               { items: cartText(cart), total: money(cartTotal(cart)) }),
-            choices: [
-              { label: translate("Done"), hint: translate("Check the order"), value: DONE },
-              ...dishes,
-              { label: translate("Clear the order"), value: CLEAR },
-            ],
+            // Done, Clear and Send stay in the bar above the box, so a long
+            // menu cannot push them off the screen.
+            choices: dishes,
           }
         },
       },
     ],
     finish: (a) => {
+      const built = orderFromAnswers(a)
       const cart = readCart(a.items)
-      const to = a.to.value
-      const room = to.startsWith("res:")
-      const order: OrderRequest = {
-        outlet: a.outlet.value,
-        items: cart.map((l) => ({ menu_item: l.item, qty: l.qty })),
-        order_type: room ? "Room Service" : to === "table" ? "Dine In" : "Takeaway",
-        ...(room ? { reservation: to.slice(4) } : {}),
-        ...(to === "table" ? { table_no: a.table?.value } : {}),
-      }
-      const where = room
-        ? translate("room service for {name}", { name: a.to.label })
-        : to === "table"
-          ? translate("table {table}", { table: a.table?.value ?? "" })
-          : translate("takeaway")
       return {
         say: translate("{items} for {where}. {total} before tax. Send it to the kitchen?",
-          { items: cartText(cart), where, total: money(cartTotal(cart)) }),
-        choices: [{ label: translate("Send to the kitchen"), order }, startOver()],
+          { items: cartText(cart), where: built?.where ?? "", total: money(cartTotal(cart)) }),
+        choices: built
+          ? [{ label: translate("Send to the kitchen"), order: built.order }, startOver()]
+          : [startOver()],
       }
     },
   },
@@ -597,10 +596,12 @@ export function flows(): Record<FlowId, Flow> {
 }
 
 // the food-order basket, carried between taps as the answer's value
-const DONE = "__done"
-const CLEAR = "__clear"
-interface CartLine { item: string; name: string; price: number; qty: number }
-function readCart(a?: Answer): CartLine[] {
+export const BASKET_DONE = "__done"
+export const BASKET_CLEAR = "__clear"
+const DONE = BASKET_DONE
+const CLEAR = BASKET_CLEAR
+export interface CartLine { item: string; name: string; price: number; qty: number }
+export function readCart(a?: Answer): CartLine[] {
   try {
     return a ? (JSON.parse(a.value) as CartLine[]) : []
   } catch {
@@ -608,7 +609,33 @@ function readCart(a?: Answer): CartLine[] {
   }
 }
 const cartText = (cart: CartLine[]) => cart.map((l) => `${l.qty} × ${l.name}`).join(", ")
-const cartTotal = (cart: CartLine[]) => cart.reduce((s, l) => s + l.qty * l.price, 0)
+export const cartTotal = (cart: CartLine[]) => cart.reduce((s, l) => s + l.qty * l.price, 0)
+
+export function writeCart(cart: CartLine[]): Answer {
+  return { label: cartText(cart), value: JSON.stringify(cart) }
+}
+
+/** The kitchen order the basket is holding, or null when it is empty. */
+export function orderFromAnswers(a: Answers): { order: OrderRequest; where: string } | null {
+  if (!a.outlet || !a.to) return null
+  const cart = readCart(a.items)
+  if (!cart.length) return null
+  const to = a.to.value
+  const room = to.startsWith("res:")
+  const order: OrderRequest = {
+    outlet: a.outlet.value,
+    items: cart.map((l) => ({ menu_item: l.item, qty: l.qty })),
+    order_type: room ? "Room Service" : to === "table" ? "Dine In" : "Takeaway",
+    ...(room ? { reservation: to.slice(4) } : {}),
+    ...(to === "table" ? { table_no: a.table?.value } : {}),
+  }
+  const where = room
+    ? translate("room service for {name}", { name: a.to.label })
+    : to === "table"
+      ? translate("table {table}", { table: a.table?.value ?? "" })
+      : translate("takeaway")
+  return { order, where }
+}
 
 /** "Options: A | B" on the AI's last line becomes tap buttons. */
 /** Does typed text answer this step? A question, or no number where one is

@@ -1157,8 +1157,12 @@ def hk_queue(property: str):
 
 @frappe.whitelist()
 @require_roles("Housekeeping", "Front Desk", "Kamra Agent")
-def hk_update_task(task: str, status: str):
+def hk_update_task(task: str, status: str, expected: str | None = None):
 	"""Start or complete a housekeeping task from the phone.
+
+	`expected` is the status the phone last saw - sent by a change queued
+	during an outage (#228). If the task moved on meanwhile it is refused,
+	never applied over someone else's change.
 
 	An Inspection is completed by passing it: Done on an inspection is taken
 	as Verified, which moves the room to Ready (inspection required by the
@@ -1168,6 +1172,7 @@ def hk_update_task(task: str, status: str):
 	if status not in ("In Progress", "Done", "Verified"):
 		frappe.throw("Status must be In Progress, Done or Verified.")
 	doc = frappe.get_doc("Housekeeping Task", task)
+	_offline_conflict(_("Task {0}").format(task), expected, doc.status, status)
 	if doc.task_type == "Inspection" and status == "Done":
 		status = "Verified"
 	if status == "Verified" and not _is_room_supervisor():
@@ -3214,7 +3219,15 @@ def decide_allowance(allowance_request: str, approve: int = 1,
 	else:
 		_pin_guard(req.folio, pin)
 	note = (note or "").strip()
-	if cint(approve):
+	if cint(approve) and req.get("kind") == "Write Off":
+		# a bad-debt write-off on a company's account (#522): the bill is
+		# settled by design, so no open-folio check; post_write_off rechecks
+		# what the bill owes now
+		from kamra.receivables import post_write_off
+		post_write_off(req.city_ledger_account, req.folio, flt(req.amount),
+		               req.reason, approver)
+		req.status = "Approved"
+	elif cint(approve):
 		if frappe.db.get_value("Folio", req.folio, "status") == "Closed":
 			frappe.throw(_("This folio is settled now. Reject this request and "
 			               "pass the allowance on the guest's open folio."))
@@ -3244,7 +3257,8 @@ def decide_allowance(allowance_request: str, approve: int = 1,
 @frappe.whitelist()
 @require_roles("Finance", "Front Desk", "Hotel Admin", "Kamra Agent")
 def allowance_requests(property: str, status: str = "Pending",
-                       folio: str | None = None):
+                       folio: str | None = None,
+                       city_ledger_account: str | None = None):
 	"""Allowances waiting for a manager (or decided ones, by status), with
 	the stay they are for. can_decide says if the caller may approve."""
 	assert_property_access(property)
@@ -3253,9 +3267,12 @@ def allowance_requests(property: str, status: str = "Pending",
 		filters["status"] = status
 	if folio:
 		filters["folio"] = folio
+	if city_ledger_account:
+		filters["city_ledger_account"] = city_ledger_account
 	rows = frappe.get_all(
 		"Allowance Request", filters=filters,
-		fields=["name", "serial", "folio", "reservation", "amount", "gst_rate",
+		fields=["name", "serial", "kind", "city_ledger_account", "folio",
+		        "reservation", "amount", "gst_rate",
 		        "reason_code", "reason", "status", "requested_by",
 		        "requested_on", "channel", "decided_by", "decided_on",
 		        "decision_note"],
@@ -5558,6 +5575,18 @@ _ROOM_SUPERVISORS = {HK_SUPERVISOR, "Front Desk", "Hotel Admin",
 _ATTENDANT_STATUSES = {"Clean", "Dirty"}
 
 
+def _offline_conflict(what: str, expected: str | None, current: str | None,
+                      wanted: str) -> None:
+	"""A change made offline carries the status it was made from. Someone
+	else changed it meanwhile (and not already to the same thing): refuse,
+	so the later change on the server is never overwritten."""
+	if expected is None or (current or "") == expected or current == wanted:
+		return
+	frappe.throw(_("{0} is {1} now (it was {2} when you changed it offline), so "
+	               "your change to {3} was not applied.").format(
+		what, _(current or "-"), _(expected or "-"), _(wanted)))
+
+
 def _is_room_supervisor() -> bool:
 	return frappe.session.user == "Administrator" or \
 		bool(_ROOM_SUPERVISORS & set(frappe.get_roles()))
@@ -5565,12 +5594,13 @@ def _is_room_supervisor() -> bool:
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Housekeeping", HK_SUPERVISOR, "Front Desk", "Kamra Agent")
-def set_housekeeping_status(room: str, status: str):
+def set_housekeeping_status(room: str, status: str, expected: str | None = None):
 	"""Change a room's housekeeping status - role, property and DocPerm
 	checked (#99): an attendant can mark Clean / Dirty, only a supervisor
 	can pass a room or take it out of order, nobody can touch a room of a
 	property they aren't assigned to, and removing Write on Room in the
-	role permissions actually removes the ability."""
+	role permissions actually removes the ability. `expected` (a change
+	queued offline, #228): refused if the room's status moved on since."""
 	allowed = {"Clean", "Dirty", "Inspected", "Ready", "Out of Order"}
 	if status not in allowed:
 		frappe.throw(f"Invalid status. Use one of {sorted(allowed)}")
@@ -5585,6 +5615,7 @@ def set_housekeeping_status(room: str, status: str):
 		frappe.throw(
 			_("Only a housekeeping supervisor can set a room to {0}.").format(status),
 			frappe.PermissionError)
+	_offline_conflict(_("Room {0}").format(room), expected, r.housekeeping_status, status)
 	if status == r.housekeeping_status:
 		return {"ok": True, "room": room, "status": status}
 	frappe.db.set_value("Room", room, "housekeeping_status", status)
@@ -5944,6 +5975,35 @@ def set_day_use_times(reservation: str, from_time: str, to_time: str):
 	"""Set planned check-in/out times for a day-use booking (drives the hourly
 	tape view)."""
 	return set_stay_times(reservation, from_time, to_time)
+
+
+OCCUPANCY_ON_BOOKS_MAX_NIGHTS = 90
+
+
+@frappe.whitelist()
+@require_roles("Revenue Manager")
+def occupancy_on_books(property: str, start_date: str, end_date: str | None = None):
+	"""Occupancy on the books per night, start_date to end_date (both
+	nights included, at most 90): confirmed and in-house reservations over
+	all rooms, as pricing's hurdle tiers see it. Rooms on the books, not a
+	forecast."""
+	from kamra.pricing import forecast_occupancy
+	start = getdate(start_date)
+	end = getdate(end_date or start_date)
+	nights = (end - start).days + 1
+	if nights < 1:
+		frappe.throw(_("The end date is before the start date."))
+	if nights > OCCUPANCY_ON_BOOKS_MAX_NIGHTS:
+		frappe.throw(_("Ask for {0} nights or fewer at a time.").format(
+			OCCUPANCY_ON_BOOKS_MAX_NIGHTS))
+	# ponytail: one count query per night, fine at 90 nights; one grouped
+	# query if the cap ever goes up
+	return {
+		"property": property,
+		"rooms": frappe.db.count("Room", {"property": property}),
+		"nights": [{"date": str(d), "occupancy_pct": forecast_occupancy(property, d)}
+		           for d in (add_days(start, i) for i in range(nights))],
+	}
 
 
 @frappe.whitelist()
@@ -7413,6 +7473,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		"pickup_note", "departure_mode", "departure_ref", "departure_datetime",
 		"drop_required", "drop_note", "purpose", "extra_beds", "infants",
 		"valet_parking", "early_checkin", "late_checkout",
+		"needs_accessible", "needs_connecting",
 	}
 	if isinstance(stay_details, str):
 		stay_details = frappe.parse_json(stay_details)
@@ -7590,8 +7651,11 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
                          ota_commission_pct: float | None = None,
                          group_type: str | None = None,
                          master_index: int | None = None,
-                         master_pays: str | None = None):
+                         master_pays: str | None = None,
+                         stay_details=None):
 	"""Create a Group Booking plus one reservation per requested room.
+	`stay_details` (as in create_booking, e.g. needs_connecting) goes on
+	every room.
 	`rooms` = [{"room_type": <name>, "count": 2, "room": <optional>,
 	"guest_name": <optional>, "night_prices": <optional>}, ...] (JSON string
 	ok). A row's `night_prices` ([{date, price}], as in create_booking) price
@@ -7685,6 +7749,7 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 				ota_total=share,
 				ota_commission_pct=ota_commission_pct,
 				night_prices=spec.get("night_prices"),
+				stay_details=stay_details,
 			)
 			created.append(res["reservation"])
 			if main is None and i >= int(master_index or 0):
@@ -7980,7 +8045,7 @@ def inventory_availability(property: str, check_in_date: str, check_out_date: st
 @require_roles("Front Desk", "Kamra Agent")
 def available_rooms(property: str, room_type: str, check_in_date: str,
                     check_out_date: str, group_booking: str | None = None,
-                    ready_now: int = 0):
+                    ready_now: int = 0, accessible: int = 0):
 	"""Rooms of a type with no overlapping live reservation - the same
 	logic the double-booking guard enforces, exposed as a query. Confirmed
 	group blocks hold their unsold rooms out of general sale; pass the
@@ -7990,7 +8055,9 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	departs today is "free" for a booking. Pass ready_now=1 when the guest
 	is being put in the room now (check-in, walk-in, allocation for today):
 	a room whose occupant is still Checked In is then left out until they
-	check out - the same rule Reservation.validate_room_vacant enforces."""
+	check out - the same rule Reservation.validate_room_vacant enforces.
+
+	accessible=1 keeps only rooms marked Accessible (#536)."""
 	# Prefer Sellable Unit availability when SIUs exist for this type
 	# (ADR-003). Fall back to legacy Room SQL during migration.
 	rooms = None
@@ -8010,6 +8077,10 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	                   for_group=group_booking)
 	if hold:
 		rooms = rooms[:max(0, len(rooms) - hold)]
+	if int(accessible or 0):
+		ok = set(frappe.get_all("Room", pluck="name",
+		                        filters={"property": property, "accessible": 1}))
+		rooms = [r for r in rooms or [] if r["name"] in ok]
 	# Always frappe._dict so callers can use row["name"] or row.name.
 	return [frappe._dict(r) for r in (rooms or [])]
 
@@ -8530,6 +8601,36 @@ def _each_room(rows: list, fn) -> dict:
 			frappe.clear_messages()
 			results.append({"reservation": r.name, "error": str(e)})
 	return {"results": results}
+
+
+BULK_MAX = 100
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Night Auditor", "Kamra Agent")
+def bulk_stays(action: str, reservations, reason: str = "Guest request"):
+	"""Check in, check out or cancel several stays at once (a group, a busy
+	morning). Each stay goes through the same call as one at a time -
+	check_in, check_out, cancel_reservation - with its own roles, property
+	scope and checks, in its own savepoint: one that fails is rolled back
+	and reported with why, and the rest go on. Returns
+	{"results": [{"reservation", "done": 1, ...} | {"reservation", "error"}]}."""
+	fns = {
+		"check_in": lambda r: check_in(reservation=r.name),
+		"check_out": lambda r: check_out(reservation=r.name),
+		"cancel": lambda r: cancel_reservation(reservation=r.name, reason=reason),
+	}
+	if action not in fns:
+		frappe.throw(_("Pick check in, check out or cancel."))
+	if isinstance(reservations, str):
+		reservations = frappe.parse_json(reservations)
+	names = list(dict.fromkeys(n for n in (reservations or []) if n))
+	if not names:
+		frappe.throw(_("Pick at least one stay."))
+	if len(names) > BULK_MAX:
+		frappe.throw(_("Pick at most {0} stays at a time.").format(BULK_MAX))
+	return _each_room([frappe._dict(name=n) for n in names],
+	                  lambda r: {"done": 1, **(fns[action](r) or {})})
 
 
 @frappe.whitelist(methods=["POST"])

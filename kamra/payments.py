@@ -121,6 +121,10 @@ def handle_webhook(gateway: str, payload: bytes, headers: dict) -> dict:
 	paid = loc.parse_payment_webhook(gateway, payload, headers, _settings)
 	if not paid:
 		return {"ignored": True}
+	if paid["folio"].startswith("VB:"):
+		from kamra.banquet_ops import settle_term_link
+		posted = settle_term_link(paid["folio"], paid["link_id"], paid["amount"])
+		return {"ok": True, "function": paid["folio"][3:].partition(":")[0], "posted": posted}
 	posted = settle_payment_link(paid["folio"], paid["link_id"], paid["amount"])
 	return {"ok": True, "folio": paid["folio"], "posted": posted}
 
