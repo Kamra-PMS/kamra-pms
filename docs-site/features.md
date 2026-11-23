@@ -138,9 +138,10 @@ the hotel, an advance, a registration fee or the full amount online.
 The property's country picks a **localisation pack**: tax rules and
 labels, invoice wording, currency and number format, the ID documents the
 desk accepts and the ways to pay. Packs exist for India (GST), Indonesia,
-Thailand, Malaysia, the UAE and Saudi Arabia (with ZATCA e-invoicing),
-plus a flat-tax pack for everywhere else. Adding a country is one Python
-file. See [Country setup](/country-setup).
+Thailand, Malaysia, the Philippines, the UAE and Saudi Arabia (with ZATCA
+e-invoicing), Brazil, Germany (7% MwSt on lodging, 19% on food and
+services) and Nicaragua, plus a flat-tax pack for everywhere else. Adding
+a country is one Python file. See [Country setup](/country-setup).
 
 ## Short-term rentals
 

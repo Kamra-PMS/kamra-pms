@@ -264,3 +264,127 @@ class PropertyScopeTestCase(IntegrationTestCase):
 			save_hurdle_rate(HOME, 10, name=theirs.name)
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- verify
 		self.assertEqual(frappe.db.get_value("Hurdle Rate", theirs.name, "property"), OTHER)
+
+
+REVENUE = "scope.revenue@test.local"
+CONNECTION_SCOPED = ("Channel ARI State", "Channel Room Mapping")
+
+
+class ConnectionScopeTestCase(IntegrationTestCase):
+	"""Doctypes that hang from a channel connection carry no property of their
+	own: Frappe's Property User Permissions never reach them. A Revenue
+	Manager limited to HOME must not list, read or write the rows of OTHER's
+	connection - with the strict scope off and on."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture setup
+		from kamra import channel_ari
+		self.conns = {}
+		self.rows = {}
+		tag = frappe.generate_hash(length=6).upper()
+		for prop in (_property(HOME), _property(OTHER)):
+			rt = frappe.get_doc({"doctype": "Room Type", "property": prop,
+				"room_type_code": f"SC{tag}{len(self.conns)}", "room_type_name": "Scope",
+				"base_price": 100, "adults_capacity": 2}).insert(ignore_permissions=True).name
+			conn = frappe.get_doc({"doctype": "Channel Manager Connection", "property": prop,
+				"provider": "Channex", "active": 0,
+				"external_property_id": f"scope-{tag}-{len(self.conns)}"}).insert(ignore_permissions=True).name
+			mapping = frappe.get_doc({"doctype": "Channel Room Mapping", "connection": conn,
+				"room_type": rt, "external_room_id": f"rt-{tag}"}).insert(ignore_permissions=True).name
+			channel_ari._remember(conn, "restrictions", {"rp-scope": {nowdate(): {"rate": "100.00"}}})
+			self.conns[prop] = conn
+			self.rows[prop] = {"Channel Room Mapping": mapping,
+				"Channel ARI State": channel_ari._state_name(conn, "restrictions", "rp-scope")}
+		self.room_type = rt  # OTHER's
+		if not frappe.db.exists("User", REVENUE):
+			frappe.get_doc({"doctype": "User", "email": REVENUE, "first_name": "Scope",
+				"enabled": 1, "user_type": "System User", "send_welcome_email": 0,
+				"roles": [{"role": "Revenue Manager"}]}).insert(ignore_permissions=True)
+		frappe.db.delete("User Permission", {"user": REVENUE, "allow": "Property"})
+		frappe.get_doc({"doctype": "User Permission", "user": REVENUE, "allow": "Property",
+			"for_value": HOME}).insert(ignore_permissions=True)
+		frappe.clear_cache(user=REVENUE)
+
+	def tearDown(self):
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture teardown
+
+	def as_revenue(self):
+		frappe.set_user(REVENUE)  # nosemgrep: frappe-setuser -- acting as the restricted persona
+
+	def scopes(self):
+		for strict in (False, True):
+			with patch.dict(frappe.conf, {"kamra_strict_property_scope": strict}):
+				self.as_revenue()
+				yield strict
+				frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the fixture
+
+	def test_lists_hide_another_propertys_connection_rows(self):
+		both = [self.conns[HOME], self.conns[OTHER]]
+		for strict in self.scopes():
+			for doctype in CONNECTION_SCOPED:
+				with self.subTest(doctype=doctype, strict=strict):
+					listed = set(frappe.get_list(doctype, filters={"connection": ["in", both]},
+					                             pluck="connection", limit_page_length=0))
+					self.assertEqual(listed, {self.conns[HOME]})
+					rest = frappe.client.get_list(doctype, fields=["connection"],
+						filters={"connection": ["in", both]}, limit_page_length=0)
+					self.assertEqual({r["connection"] for r in rest}, {self.conns[HOME]})
+
+	def test_reads_refuse_another_propertys_connection_rows(self):
+		for strict in self.scopes():
+			for doctype in CONNECTION_SCOPED:
+				with self.subTest(doctype=doctype, strict=strict):
+					self.assertTrue(frappe.has_permission(doctype, "read", self.rows[HOME][doctype]))
+					self.assertFalse(frappe.has_permission(doctype, "read", self.rows[OTHER][doctype]))
+					with self.assertRaises(frappe.PermissionError):
+						frappe.client.get(doctype, self.rows[OTHER][doctype])
+
+	def test_writes_refuse_another_propertys_room_mappings(self):
+		for strict in self.scopes():
+			with self.subTest(strict=strict):
+				theirs = frappe.get_doc("Channel Room Mapping", self.rows[OTHER]["Channel Room Mapping"])
+				theirs.external_room_id = "rt-taken"
+				with self.assertRaises(frappe.PermissionError):
+					theirs.save()
+				with self.assertRaises(frappe.PermissionError):
+					frappe.get_doc({"doctype": "Channel Room Mapping", "connection": self.conns[OTHER],
+						"room_type": self.room_type, "external_room_id": "rt-new"}).insert()
+				mine = frappe.get_doc("Channel Room Mapping", self.rows[HOME]["Channel Room Mapping"])
+				mine.external_room_id = f"rt-mine-{int(strict)}"
+				mine.save()
+				mine.connection = self.conns[OTHER]
+				with self.assertRaises(frappe.PermissionError):
+					mine.save()
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- verify
+		self.assertNotEqual(frappe.db.get_value("Channel Room Mapping",
+			self.rows[OTHER]["Channel Room Mapping"], "external_room_id"), "rt-taken")
+		self.assertEqual(frappe.db.get_value("Channel Room Mapping",
+			self.rows[HOME]["Channel Room Mapping"], "connection"), self.conns[HOME])
+
+	def test_unrestricted_staff_still_see_every_connection(self):
+		for doctype in CONNECTION_SCOPED:
+			self.assertEqual(authz.connection_query_conditions("Administrator", doctype), "")
+			listed = set(frappe.get_list(doctype, filters={"connection": ["in", list(self.conns.values())]},
+			                             pluck="connection", limit_page_length=0))
+			self.assertEqual(listed, set(self.conns.values()))
+
+	def test_every_connection_linked_doctype_is_scoped(self):
+		"""A Kamra doctype that links a channel connection and has no property
+		field of its own is filtered by its connection's property."""
+		linked = {
+			row.parent for row in frappe.get_all(
+				"DocField", filters={"fieldtype": "Link", "parenttype": "DocType",
+				                     "options": ("in", ("Channel Manager Connection",
+				                                        "Channel Provider Connection"))},
+				fields=["parent"])
+			if frappe.db.get_value("DocType", row.parent, "module") == "Kamra"
+			and not frappe.get_meta(row.parent).istable
+			and not frappe.get_meta(row.parent).issingle
+			and not frappe.get_meta(row.parent).has_field("property")
+		}
+		self.assertLessEqual(set(CONNECTION_SCOPED), linked)
+		queries = frappe.get_hooks("permission_query_conditions")
+		checks = frappe.get_hooks("has_permission")
+		for doctype in sorted(linked):
+			self.assertIn("kamra.authz.connection_query_conditions", queries.get(doctype, []), doctype)
+			self.assertIn("kamra.authz.connection_has_permission", checks.get(doctype, []), doctype)

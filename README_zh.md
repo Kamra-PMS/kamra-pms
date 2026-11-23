@@ -18,7 +18,7 @@
 <p align="center">
   <a href="https://demo.kamrapms.com"><img src="https://img.shields.io/badge/demo-live-0f766e?style=flat-square" alt="在线演示" /></a>
   <a href="https://github.com/Kamra-PMS/kamra-pms/releases/latest"><img src="https://img.shields.io/github/v/release/Kamra-PMS/kamra-pms?style=flat-square&label=release" alt="最新版本" /></a>
-  <a href="license.txt"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square" alt="AGPL-3.0" /></a>
+  <a href="license.txt"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="Apache-2.0" /></a>
   <a href="https://cloud.frappe.io/marketplace/apps/kamra"><img src="https://img.shields.io/badge/Frappe%20Cloud-Marketplace-ed8936?style=flat-square" alt="Frappe Cloud Marketplace" /></a>
   <a href="https://kamrapms.com/docs/"><img src="https://img.shields.io/badge/docs-kamrapms.com-111827?style=flat-square" alt="文档" /></a>
   <img src="https://img.shields.io/github/stars/Kamra-PMS/kamra-pms?style=flat-square" alt="GitHub 星标数" />
@@ -32,7 +32,7 @@
 
 **为什么说"首个"：** [Kamra 1.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v1.0.0) 于 2026 年 7 月 5 日发布，同时满足开源、免费、由 MCP 驱动这三点。我们不知道有哪个开源 PMS 更早地把这三件事同时做到。如果 Kamra 对你有用，欢迎[给仓库点个星](https://github.com/Kamra-PMS/kamra-pms/stargazers)，让更多酒店经营者和开发者看到它。
 
-Kamra 是面向酒店、度假村和短租业务的完整物业管理系统（PMS）。它运行在 [Frappe](https://frappe.io)（ERPNext 背后的框架）之上，采用 AGPL-3.0 许可，所有功能都在这个开源应用中：没有版本分级，也没有按房间数收费。当前版本：**v2.7.6**（[更新日志](CHANGELOG.md)）。
+Kamra 是面向酒店、度假村和短租业务的完整物业管理系统（PMS）。它运行在 [Frappe](https://frappe.io)（ERPNext 背后的框架）之上，采用 Apache-2.0 许可，所有功能都在这个开源应用中：没有版本分级，也没有按房间数收费。当前版本：**v2.8.0**（[更新日志](CHANGELOG.md)，[新功能](https://kamrapms.com/docs/releases)）。
 
 在[演示环境](https://demo.kamrapms.com)里，点任意角色即可登录。客人预订页在 [/book](https://demo.kamrapms.com/book)，客房清洁手机端在 [/kamra/hk](https://demo.kamrapms.com/kamra/hk)。
 
@@ -72,13 +72,13 @@ Kamra 是面向酒店、度假村和短租业务的完整物业管理系统（PM
 **预订引擎**
 - 你自己的预订页 `/book`：实时房价、附加产品、即时确认或请求预订，以及独立的预订页语言。
 - 短租：别墅目录，可按房间或整栋出售，含清洁费和可退押金。
-- 渠道管理器适配器：Channex.io、STAAH、AioSell；迁移时可 CSV 导入订单。
+- 渠道管理器适配器：Channex.io、STAAH、AioSell。Channex 只发送有变化的日期。迁移时可 CSV 导入订单。
 
 **AI 与 MCP**
 - Kamra Agent 内置助手，带操作卡片，可办理入住、收款或打开 folio。
 - 面向 Claude、ChatGPT 或任何 MCP 客户端的 161 个 MCP 工具。见[用 AI 经营你的酒店](#run-your-hotel-with-ai)。
 
-员工端界面支持英语、西班牙语、阿拉伯语和葡萄牙语（巴西）。按模块查看带截图的说明：[功能](https://kamrapms.com/docs/features)。
+员工端界面支持英语、德语、西班牙语、阿拉伯语、葡萄牙语（巴西）、印尼语、菲律宾语和简体中文。按模块查看带截图的说明：[功能](https://kamrapms.com/docs/features)。
 
 ---
 
@@ -185,7 +185,7 @@ cd apps/kamra/frontend && npm install && npm run dev   # 界面热重载在 :517
 
 ## 许可与商标
 
-代码为 **AGPL-3.0**：可自由使用、修改、托管和销售。任何人若把修改后的 Kamra 作为托管服务提供，必须公开这些修改。Kamra 的名称与标志受 [TRADEMARK.md](TRADEMARK.md) 保护：可自由运行和转售 Kamra，可在我们的标志旁展示你自己的酒店或合作伙伴标志，但修改过的分支需使用自己的名称。
+代码为 **Apache-2.0**：可自由使用、修改、托管和销售，也可用于专有产品，但须按许可证要求保留署名，并享有其中的专利保护。此次变更之前发布的版本仍为 AGPL-3.0。Kamra 的名称与标志受 [TRADEMARK.md](TRADEMARK.md) 保护：可自由运行和转售 Kamra，可在我们的标志旁展示你自己的酒店或合作伙伴标志，但修改过的分支需使用自己的名称。说明见 [Kamra is Apache-2.0](https://kamrapms.com/docs/apache-2.0)。
 
 ---
 
@@ -202,6 +202,11 @@ cd apps/kamra/frontend && npm install && npm run dev   # 界面热重载在 :517
 - [@ernestoruiz89](https://github.com/ernestoruiz89)：西班牙语本地化与菜单导航修复（fork [#320](https://github.com/Kamra-PMS/kamra-pms/pull/320)，经 [#324](https://github.com/Kamra-PMS/kamra-pms/pull/324) 合入，包含在 2.6.21 中），国际客人电话前缀（[#345](https://github.com/Kamra-PMS/kamra-pms/pull/345)、[#360](https://github.com/Kamra-PMS/kamra-pms/pull/360)），聊天助手使用物业所用货币（[#368](https://github.com/Kamra-PMS/kamra-pms/pull/368)，2.6.22），以及 MCP OAuth 发现修复（[#387](https://github.com/Kamra-PMS/kamra-pms/pull/387)，2.7.0）
 - [@SandroG1977](https://github.com/SandroG1977)：巴西国家包：ISS、BRL、CNPJ/CPF、NFS-e（[#378](https://github.com/Kamra-PMS/kamra-pms/pull/378)）；葡萄牙语（pt-BR）员工端界面（[#377](https://github.com/Kamra-PMS/kamra-pms/pull/377)，经 [#383](https://github.com/Kamra-PMS/kamra-pms/pull/383) 合入）；葡萄牙语审校与措辞术语表（[#410](https://github.com/Kamra-PMS/kamra-pms/pull/410)）；助手按准确入住人数与含税总额报价（[#432](https://github.com/Kamra-PMS/kamra-pms/pull/432)）；报价卡片上的房间计价字段与儿童信息（[#444](https://github.com/Kamra-PMS/kamra-pms/pull/444)）
 - [@pmwanje2](https://github.com/pmwanje2)：在 Kamra 标志旁显示酒店自己的名称与标志（[#431](https://github.com/Kamra-PMS/kamra-pms/pull/431)，经 [#436](https://github.com/Kamra-PMS/kamra-pms/pull/436) 合入）
+- [@diegolweb](https://github.com/diegolweb)：Channex 只发送有变化的日期（[#650](https://github.com/Kamra-PMS/kamra-pms/pull/650)，2.8.0）；国家包可提供汇率来源（[#644](https://github.com/Kamra-PMS/kamra-pms/pull/644)）；补齐西班牙语前台与服务端文案（[#651](https://github.com/Kamra-PMS/kamra-pms/pull/651)）
+- [@madhukarah](https://github.com/madhukarah)：前台不再关闭在住客人自己的账单（[#648](https://github.com/Kamra-PMS/kamra-pms/pull/648)，2.8.0）
+- [@kentrick22](https://github.com/kentrick22)：今日、预订和账单的印尼语（[#625](https://github.com/Kamra-PMS/kamra-pms/pull/625)，2.8.0）
+- [@baiyu0616a](https://github.com/baiyu0616a)：简体中文员工界面（[#618](https://github.com/Kamra-PMS/kamra-pms/pull/618)）及酒店用语修订（[#647](https://github.com/Kamra-PMS/kamra-pms/pull/647)，2.8.0）
+- [@ankitxxdevil](https://github.com/ankitxxdevil)：Frappe payments 依赖升到 v16（[#641](https://github.com/Kamra-PMS/kamra-pms/pull/641)，2.8.0）
 
 **文档与指南**
 
@@ -212,9 +217,10 @@ cd apps/kamra/frontend && npm install && npm run dev   # 界面热重载在 :517
 - [@lhertig](https://github.com/lhertig)：以物业货币进行 folio 收款（[#341](https://github.com/Kamra-PMS/kamra-pms/issues/341)）、混合成人与儿童预订的 `max_total_occupants`（[#342](https://github.com/Kamra-PMS/kamra-pms/issues/342)）、到店前预付退款释放押金并减少 `advance_paid`（[#343](https://github.com/Kamra-PMS/kamra-pms/issues/343)），以及并发预订时的 `tabSeries` 死锁重试（[#344](https://github.com/Kamra-PMS/kamra-pms/issues/344)）
 - [@faresalslahi-collab](https://github.com/faresalslahi-collab)（Sarawat Park Hotel & Resort）：单屏散客入住（[#97](https://github.com/Kamra-PMS/kamra-pms/issues/97)），由此催生了沙特阿拉伯包和 ZATCA、阿拉伯世界区号（[#98](https://github.com/Kamra-PMS/kamra-pms/issues/98)），以及 Kamra 的厨房台账与共享站点上 ERPNext 库存冲突的问题（[#131](https://github.com/Kamra-PMS/kamra-pms/issues/131)）
 - [@atomic-glitch](https://github.com/atomic-glitch)：客房清洁房态板与角色校验（[#99](https://github.com/Kamra-PMS/kamra-pms/issues/99)）、从预订和 GRC 换房（[#113](https://github.com/Kamra-PMS/kamra-pms/issues/113)），以及到店前押金（[#114](https://github.com/Kamra-PMS/kamra-pms/issues/114)）
-- [@ali-qa-sudo](https://github.com/ali-qa-sudo)：按角色显示的"散客入住 / 新预订"按钮（[#120](https://github.com/Kamra-PMS/kamra-pms/issues/120)）
+- [@ali-qa-sudo](https://github.com/ali-qa-sudo)：按角色显示的"散客入住 / 新增预订"按钮（[#120](https://github.com/Kamra-PMS/kamra-pms/issues/120)）
 - [@omar99elnemr](https://github.com/omar99elnemr)：账单未结清前拒绝退房（[#132](https://github.com/Kamra-PMS/kamra-pms/issues/132)）
 - [@Syzygy2048](https://github.com/Syzygy2048)：助手中使用当前的 OpenAI 模型（[#23](https://github.com/Kamra-PMS/kamra-pms/issues/23)）
+- [@andreasnewuser](https://github.com/andreasnewuser)：德国国家包，住宿 7% MwSt（[#623](https://github.com/Kamra-PMS/kamra-pms/issues/623)，2.8.0）
 
 **安全**
 

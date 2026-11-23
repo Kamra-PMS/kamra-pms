@@ -6,6 +6,7 @@ authors = [
 description = "Open-source, AI-native hotel PMS"
 requires-python = ">=3.10"
 readme = "README.md"
+license = { text = "Apache-2.0" }
 dynamic = ["version"]
 dependencies = [
     # "frappe~=16.0.0" # Installed and managed by bench.
@@ -20,7 +21,7 @@ build-backend = "flit_core.buildapi"
 # lower bound also accepts a pre-GA v16 bench.
 [tool.bench.frappe-dependencies]
 frappe = ">=16.0.0-dev,<17.0.0"
-payments = ">=0.0.1,<1.0.0"
+payments = ">=16.0.0,<17.0.0"
 
 # These dependencies are only installed when developer mode is enabled
 [tool.bench.dev-dependencies]

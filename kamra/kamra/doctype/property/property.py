@@ -35,6 +35,7 @@ def default_short_code(name: str, exclude: str | None = None) -> str:
 class Property(Document):
 	def validate(self):
 		self._validate_short_code()
+		self._validate_booking_language()
 		# setup, Settings and the booking engine all save the hotel's phone
 		# here: read it with the hotel's own country (#468), as typed if not
 		if self.phone and (self.is_new() or self.has_value_changed("phone")
@@ -64,6 +65,19 @@ class Property(Document):
 		                                 "name": ("!=", self.name or "")}):
 			frappe.throw(_("Short code {0} is already used by another property.").format(code))
 		self.short_code = code
+
+	def _validate_booking_language(self):
+		# Empty follows the guest's browser. A value already stored stays
+		# saveable after that language is switched off, so the rest of the
+		# property can still be edited; choosing it again is refused.
+		raw = self.booking_language or ""
+		code = raw.strip().lower()
+		changed = self.is_new() or self.has_value_changed("booking_language") or code != raw
+		if code != raw:
+			self.booking_language = code
+		if code and changed:
+			from kamra.languages import assert_enabled_language
+			self.booking_language = assert_enabled_language(code)
 
 	def after_insert(self):
 		# A new property starts with allowances signed off by a Hotel Admin,

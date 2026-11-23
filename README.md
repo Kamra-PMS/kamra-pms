@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://demo.kamrapms.com"><img src="https://img.shields.io/badge/demo-live-0f766e?style=flat-square" alt="Live demo" /></a>
   <a href="https://github.com/Kamra-PMS/kamra-pms/releases/latest"><img src="https://img.shields.io/github/v/release/Kamra-PMS/kamra-pms?style=flat-square&label=release" alt="Latest release" /></a>
-  <a href="license.txt"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square" alt="AGPL-3.0" /></a>
+  <a href="license.txt"><img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="Apache-2.0" /></a>
   <a href="https://cloud.frappe.io/marketplace/apps/kamra"><img src="https://img.shields.io/badge/Frappe%20Cloud-Marketplace-ed8936?style=flat-square" alt="Frappe Cloud Marketplace" /></a>
   <a href="https://kamrapms.com/docs/"><img src="https://img.shields.io/badge/docs-kamrapms.com-111827?style=flat-square" alt="Documentation" /></a>
   <img src="https://img.shields.io/github/stars/Kamra-PMS/kamra-pms?style=flat-square" alt="GitHub stars" />
@@ -28,7 +28,7 @@
 
 **Why "first":** [Kamra 1.0](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v1.0.0) shipped on 5 July 2026 as open source, free, and MCP-driven. We know of no open-source PMS that shipped all three earlier. If Kamra is useful to you, [star the repo](https://github.com/Kamra-PMS/kamra-pms/stargazers) so other hoteliers and developers can find it.
 
-Kamra is a full property management system for hotels, resorts and short-term rentals. It runs on [Frappe](https://frappe.io) (the framework behind ERPNext), it is AGPL-3.0, and every feature is in the open-source app: no editions, no per-room fees. Current release: **v2.7.6** ([changelog](CHANGELOG.md)).
+Kamra is a full property management system for hotels, resorts and short-term rentals. It runs on [Frappe](https://frappe.io) (the framework behind ERPNext), it is Apache-2.0, and every feature is in the open-source app: no editions, no per-room fees. Current release: **v2.8.0** ([changelog](CHANGELOG.md), [what's new](https://kamrapms.com/docs/releases)).
 
 On the [demo](https://demo.kamrapms.com), tap any role to sign in. The guest booking page is at [/book](https://demo.kamrapms.com/book) and the housekeeping phone app at [/kamra/hk](https://demo.kamrapms.com/kamra/hk).
 
@@ -69,13 +69,13 @@ On the [demo](https://demo.kamrapms.com), tap any role to sign in. The guest boo
 **Booking engine**
 - Your own booking page at `/book` with live rates, add-ons, instant booking or request to book, and a booking language of its own.
 - Short-term rentals: a catalogue of villas sold as rooms or the whole place, cleaning fees and refundable deposits.
-- Channel manager adapters for Channex.io, STAAH and AioSell; CSV import of bookings when you switch.
+- Channel manager adapters for Channex.io, STAAH and AioSell. Channex sends only the dates that changed. CSV import of bookings when you switch.
 
 **AI and MCP**
 - Kamra Agent, the in-app assistant, with action cards to check in, collect or open a folio.
 - 170 MCP tools for Claude, ChatGPT or any MCP client. See [Run your hotel with AI](#run-your-hotel-with-ai).
 
-The staff UI is in English, Spanish, Arabic and Portuguese (Brazil). Module by module, with screenshots: [Features](https://kamrapms.com/docs/features).
+The staff UI is in English, German, Spanish, Arabic, Portuguese (Brazil), Indonesian, Filipino and Simplified Chinese. Module by module, with screenshots: [Features](https://kamrapms.com/docs/features).
 
 ---
 
@@ -112,6 +112,7 @@ The property's country picks its pack. The pack decides tax, invoice wording, ID
 | Malaysia | SST on rooms and F&amp;B, tourism tax note |
 | Thailand | VAT 7%, service charge as its own line |
 | Indonesia | Regional hotel tax (PB1 / PBJT) |
+| Philippines | VAT 12%, TIN, peso. Senior citizen and PWD discount is calculated in the pack and posted by hand |
 | Brazil | ISS, BRL, CNPJ / CPF, NFS-e reference |
 | Nicaragua | IVA 15%, NIO |
 | Anywhere else | One flat rate from property settings |
@@ -182,7 +183,7 @@ More in [docs-dev.md](docs-dev.md).
 
 ## License and trademark
 
-The code is **AGPL-3.0**: free to use, change, host and sell. Anyone offering a modified Kamra as a hosted service must share those changes. The Kamra name and mark are covered by [TRADEMARK.md](TRADEMARK.md): run and resell Kamra freely, show your own hotel or partner logo next to ours, and give a changed fork its own name.
+The code is **Apache-2.0**: free to use, change, host and sell, including in proprietary products, with attribution and patent protections as the license requires. Releases published before this change remain AGPL-3.0. The Kamra name and mark are covered by [TRADEMARK.md](TRADEMARK.md): run and resell Kamra freely, show your own hotel or partner logo next to ours, and give a changed fork its own name. See [Kamra is Apache-2.0](https://kamrapms.com/docs/apache-2.0).
 
 ---
 
@@ -199,6 +200,11 @@ Every merged PR and every issue that shapes a feature is credited in the release
 - [@ernestoruiz89](https://github.com/ernestoruiz89): Spanish localization and menu navigation fixes (fork [#320](https://github.com/Kamra-PMS/kamra-pms/pull/320), landed via [#324](https://github.com/Kamra-PMS/kamra-pms/pull/324), included in 2.6.21), international guest phone prefixes ([#345](https://github.com/Kamra-PMS/kamra-pms/pull/345), [#360](https://github.com/Kamra-PMS/kamra-pms/pull/360)), and the chat assistant using the property's currency ([#368](https://github.com/Kamra-PMS/kamra-pms/pull/368), 2.6.22), and the MCP OAuth discovery fix ([#387](https://github.com/Kamra-PMS/kamra-pms/pull/387), 2.7.0)
 - [@SandroG1977](https://github.com/SandroG1977): Brazil country pack: ISS, BRL, CNPJ/CPF, NFS-e ([#378](https://github.com/Kamra-PMS/kamra-pms/pull/378)); Portuguese (pt-BR) staff UI ([#377](https://github.com/Kamra-PMS/kamra-pms/pull/377), landed via [#383](https://github.com/Kamra-PMS/kamra-pms/pull/383)); the Portuguese review and wording glossary ([#410](https://github.com/Kamra-PMS/kamra-pms/pull/410)); the assistant quoting with exact occupancy and tax-inclusive totals ([#432](https://github.com/Kamra-PMS/kamra-pms/pull/432)); room pricing fields and children on quote cards ([#444](https://github.com/Kamra-PMS/kamra-pms/pull/444))
 - [@pmwanje2](https://github.com/pmwanje2): the hotel's own name and logo next to Kamra's ([#431](https://github.com/Kamra-PMS/kamra-pms/pull/431), landed via [#436](https://github.com/Kamra-PMS/kamra-pms/pull/436))
+- [@diegolweb](https://github.com/diegolweb): Channex sends only the dates that changed ([#650](https://github.com/Kamra-PMS/kamra-pms/pull/650), 2.8.0); a country pack can supply the exchange-rate source ([#644](https://github.com/Kamra-PMS/kamra-pms/pull/644)); the missing Spanish front-desk and server strings ([#651](https://github.com/Kamra-PMS/kamra-pms/pull/651))
+- [@madhukarah](https://github.com/madhukarah): the desk no longer closes an in-house guest's own bill ([#648](https://github.com/Kamra-PMS/kamra-pms/pull/648), 2.8.0)
+- [@kentrick22](https://github.com/kentrick22): Bahasa Indonesia for Today, the reservation and the folio ([#625](https://github.com/Kamra-PMS/kamra-pms/pull/625), 2.8.0)
+- [@baiyu0616a](https://github.com/baiyu0616a): Simplified Chinese staff UI ([#618](https://github.com/Kamra-PMS/kamra-pms/pull/618)) and the hotel-term refinements ([#647](https://github.com/Kamra-PMS/kamra-pms/pull/647), 2.8.0)
+- [@ankitxxdevil](https://github.com/ankitxxdevil): Frappe payments dependency moved to v16 ([#641](https://github.com/Kamra-PMS/kamra-pms/pull/641), 2.8.0)
 
 **Docs and guides**
 
@@ -212,6 +218,7 @@ Every merged PR and every issue that shapes a feature is credited in the release
 - [@ali-qa-sudo](https://github.com/ali-qa-sudo): role-aware Walk-in / New booking buttons ([#120](https://github.com/Kamra-PMS/kamra-pms/issues/120))
 - [@omar99elnemr](https://github.com/omar99elnemr): checkout refused until the bill is settled ([#132](https://github.com/Kamra-PMS/kamra-pms/issues/132))
 - [@Syzygy2048](https://github.com/Syzygy2048): current OpenAI models in the assistant ([#23](https://github.com/Kamra-PMS/kamra-pms/issues/23))
+- [@andreasnewuser](https://github.com/andreasnewuser): the Germany country pack, 7% MwSt on lodging ([#623](https://github.com/Kamra-PMS/kamra-pms/issues/623), 2.8.0)
 
 **Security**
 

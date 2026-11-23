@@ -16,6 +16,11 @@ desk, or disclosed a security problem responsibly.
 | [@SandroG1977](https://github.com/SandroG1977) | Brazil country pack (ISS, BRL, CNPJ/CPF, NFS-e) (#378); Portuguese (pt-BR) staff UI (#377, landed via #383); Portuguese review and wording glossary (#410); assistant quotes with exact occupancy and tax-inclusive totals (#432); room pricing fields and children on quote cards (#444) |
 | [@pmwanje2](https://github.com/pmwanje2) | The hotel's own name and logo next to Kamra's (#431, landed via #436) |
 | [@caseylee-TC](https://github.com/caseylee-TC) | Step-by-step tutorial for writing a country pack ([#362](https://github.com/Kamra-PMS/kamra-pms/pull/362), fixes [#258](https://github.com/Kamra-PMS/kamra-pms/issues/258)) |
+| [@diegolweb](https://github.com/diegolweb) | Channex sends only the dates that changed ([#650](https://github.com/Kamra-PMS/kamra-pms/pull/650)); a country pack can supply the exchange-rate source ([#644](https://github.com/Kamra-PMS/kamra-pms/pull/644)); the missing Spanish front-desk and server strings ([#651](https://github.com/Kamra-PMS/kamra-pms/pull/651)) |
+| [@madhukarah](https://github.com/madhukarah) | The desk no longer closes an in-house guest's own bill ([#648](https://github.com/Kamra-PMS/kamra-pms/pull/648)) |
+| [@kentrick22](https://github.com/kentrick22) | Bahasa Indonesia for Today, the reservation and the folio ([#625](https://github.com/Kamra-PMS/kamra-pms/pull/625)) |
+| [@baiyu0616a](https://github.com/baiyu0616a) | Simplified Chinese staff UI ([#618](https://github.com/Kamra-PMS/kamra-pms/pull/618)) and the hotel-term refinements ([#647](https://github.com/Kamra-PMS/kamra-pms/pull/647)) |
+| [@ankitxxdevil](https://github.com/ankitxxdevil) | Frappe payments dependency moved to v16 ([#641](https://github.com/Kamra-PMS/kamra-pms/pull/641)) |
 
 ## Issues from the front desk
 
@@ -27,15 +32,22 @@ desk, or disclosed a security problem responsibly.
 | [@ali-qa-sudo](https://github.com/ali-qa-sudo) | Role-aware Walk-in / New booking buttons (#120) |
 | [@omar99elnemr](https://github.com/omar99elnemr) | Checkout refused until the bill is settled (#132) |
 | [@Syzygy2048](https://github.com/Syzygy2048) | Current OpenAI models in the assistant (#23) |
+| [@andreasnewuser](https://github.com/andreasnewuser) | Germany country pack: 7% MwSt on lodging (#623) |
 
 ## Fix a translation
 
 All screen text lives in one file per language in the repository:
-`frontend/src/i18n/locales/ar.json` (Arabic), `es.json` (Spanish) and
-`pt.json` (Portuguese). Each line is `"English": "translation"`. Change
+`frontend/src/i18n/locales/ar.json` (Arabic), `de.json` (German),
+`es.json` (Spanish), `pt.json` (Portuguese), `id.json` (Indonesian),
+`fil.json` (Filipino) and `zh-CN.json` (Simplified Chinese). Each line is `"English": "translation"`. Change
 the translation on the right, keep any `{placeholder}` exactly as it is,
 and open a pull request (GitHub's pencil icon on the file does this for
 you). Messages from the server live in `kamra/translations/<lang>.csv`.
+
+Register a new language with a row in `frontend/src/i18n/languages.json`
+(its native name and direction) and a `frontend/src/i18n/locales/<code>.json`
+file. It is switched on for every site until a Hotel Admin turns it off
+under **Settings → Languages**.
 
 Not on GitHub? Send us a list with three columns (English, current
 translation, correct translation) and we apply it. Use the word your

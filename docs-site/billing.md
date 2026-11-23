@@ -474,6 +474,14 @@ till. See [Book a trip across properties](/reservations#book-a-trip-across-prope
    Invoice**.
 3. Press **Print invoice**, or choose **Save as PDF** in the print dialog.
 
+**Close & generate invoice** refuses the Guest folio of a stay that is
+still checked in. Tonight's charges need an open bill, and closing it
+stops the night audit for the property. When that bill is fully paid
+and you want the invoice now, press **Settle & continue stay**. Kamra
+issues the invoice and opens a fresh Guest folio for the rest of the
+stay. Any other open folio, including the company's, still closes when
+its balance is zero. At check-out, **Check out** closes the bills.
+
 The invoice's title, tax lines and wording come from the country pack. In
 Saudi Arabia a settled bill prints as a *Simplified Tax Invoice* with the
 ZATCA QR code; set up the seller details once under **Settings → ZATCA
@@ -581,7 +589,12 @@ again the same day updates it.
 Instead of typing each rate, Finance or a Hotel Admin can press **Fetch
 today's rates** on the Currency Desk. Kamra asks a free online service
 ([Exchange Rate API](https://www.exchangerate-api.com), refreshed once a
-day) for the market mid rate of each currency you take, and stores:
+day) for the market mid rate of each currency you take. When the
+property's country pack defines `market_rates`, that official source is
+used instead. No pack ships one yet, so every country still uses
+Exchange Rate API until its pack adds the function. The margin, a rate
+you typed by hand, and the rest of this desk stay the same either way.
+Kamra stores:
 
 - **Buy** = market rate less your margin, **Sell** = market rate plus it.
 - **Source** Online, the market rate, and who fetched it.
@@ -607,6 +620,8 @@ including your own currency:
 | Malaysia | USD, SGD, EUR, GBP, AUD, CNY, JPY, IDR |
 | Indonesia | USD, SGD, AUD, EUR, JPY, CNY, MYR, SAR |
 | Thailand | USD, EUR, GBP, CNY, JPY, AUD, SGD, INR |
+| Philippines | USD, EUR, JPY, KRW, CNY, AUD, SGD, HKD |
+| Germany | USD, GBP, CHF, PLN, CZK, DKK, SEK, NOK |
 
 Finance and Hotel Admin can fetch rates or type them in.
 

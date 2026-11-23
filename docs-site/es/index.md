@@ -36,10 +36,10 @@ features:
     details: Llame a los mismos métodos desde su sistema. Descargue la colección de Postman y empiece.
     link: /developers
   - title: Funciones y última versión
-    details: De la recepción a los banquetes, Alimentos y bebidas, WhatsApp y paquetes fiscales por país, además de las novedades de la v2.6.20.
+    details: De la recepción a los banquetes, Alimentos y bebidas, WhatsApp y paquetes fiscales por país, además de las novedades de la v2.8.0.
     link: /es/features
   - title: Instalación
-    details: Docker en un VPS, bench clásico o Frappe Cloud Marketplace. La misma aplicación AGPL completa.
+    details: Docker en un VPS, bench clásico o Frappe Cloud Marketplace. La misma aplicación Apache-2.0 completa.
     link: /self-hosting/
 ---
 

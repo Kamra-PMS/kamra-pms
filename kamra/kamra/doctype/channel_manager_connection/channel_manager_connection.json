@@ -21,6 +21,9 @@
   "webhook_secret",
   "sb_sync",
   "sync_days",
+  "ari_calls_per_minute",
+  "ari_batch_seconds",
+  "last_full_sync",
   "last_push",
   "last_push_status"
  ],
@@ -109,6 +112,28 @@
    "fieldtype": "Int",
    "label": "Days to push",
    "default": "90"
+  },
+  {
+   "fieldname": "ari_calls_per_minute",
+   "fieldtype": "Int",
+   "label": "ARI calls per minute",
+   "default": "10",
+   "non_negative": 1,
+   "description": "Per endpoint (availability and restrictions count apart). Channex allows 10."
+  },
+  {
+   "fieldname": "ari_batch_seconds",
+   "fieldtype": "Int",
+   "label": "Rate batch window (seconds)",
+   "default": "30",
+   "non_negative": 1,
+   "description": "Rate changes made within this window go out together in one call."
+  },
+  {
+   "fieldname": "last_full_sync",
+   "fieldtype": "Datetime",
+   "label": "Last full sync",
+   "read_only": 1
   },
   {
    "fieldname": "last_push",

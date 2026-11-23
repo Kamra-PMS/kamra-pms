@@ -168,6 +168,7 @@ You do not need to edit `CHANGELOG.md` or the version. Maintainers write the rel
 - Prices, tax and invoice labels come from code. A language model never invents a rate.
 - If your pack leaves out an optional function, Kamra uses a plain default. If it leaves out a country-only integration such as a payment gateway or a tax return export, that country does not get the feature. Kamra never borrows another country's.
 - You can set `NOTICE_LANGUAGES`, `ADULT_AGE`, `MINOR_IDS` and `REGISTRATION_CARD_REQUIRED`. Add `service_code_for`, `tax_split` and `amount_in_words` if your invoices need them. `india/` shows payment gateways and tax returns. `saudi.py` shows e-invoicing.
+- To make **Fetch today's rates** use an official source (a central bank's daily quote) instead of Exchange Rate API, define `market_rates(home)`. `home` is the property currency's ISO code. Return `(rates, as_of)`: `rates` maps each foreign ISO code to how many home-currency units buy 1 of that currency, and `as_of` is the provider's time or `None`. Same contract as `kamra.ledger.market_rates`. The margin, a Manual rate for today, and the hourly cache stay as they are. Leave the function out and the property keeps the open market feed.
 
 ## Troubleshooting
 

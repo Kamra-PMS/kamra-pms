@@ -7,7 +7,7 @@ app_description = (
 	"agents can run the property."
 )
 app_email = "hello@kamrapms.com"
-app_license = "agpl-3.0"
+app_license = "apache-2.0"
 
 # Branding shown in the Desk navbar, app switcher and marketplace listing.
 app_logo_url = "/assets/kamra/kamra-mark.svg"
@@ -79,8 +79,13 @@ scheduler_events = {
 		"45 4 * * *": ["kamra.hosting_enquiry_retention.purge_expired_hosting_enquiries"],
 		# 06:00 and 18:00 - warm the GitHub latest-release cache for the update nag
 		"0 6,18 * * *": ["kamra.health.poll_github_releases"],
-		# every minute - outbound webhook retries that are due (backoff)
-		"* * * * *": ["kamra.webhooks.retry_due"],
+		# every minute - outbound webhook retries that are due (backoff), and
+		# the ARI outbox: what waited for its batch window, pause or retry
+		"* * * * *": ["kamra.webhooks.retry_due", "kamra.channel_ari.enqueue_ari_flushes"],
+		# 06:20 - the ARI outbox's nightly sweep: only differences (the day
+		# entering the 500-day horizon, what a trigger missed); never a full
+		# sync on a timer
+		"20 6 * * *": ["kamra.channel_ari.nightly_sweep"],
 	},
 }
 
@@ -109,6 +114,7 @@ kamra_localization = {
 	"Brasil": "kamra.localization.brazil",
 	"Nicaragua": "kamra.localization.nicaragua",
 	"Germany": "kamra.localization.germany",
+	"Philippines": "kamra.localization.philippines",
 }
 
 # Served single-page app
@@ -264,7 +270,7 @@ _PROPERTY_SCOPED = (
 	"Agent Action Log", "AI Assistant Settings", "Allowance Request", "Banquet Checklist Template",
 	"Banquet Dish", "Banquet Function Task", "Banquet Menu",
 	"Banquet Service Item", "Cancelled Invoice", "Cash Transfer", "Cashier", "Cashier Session", "Cashier Terminal",
-	"Cashier Transaction", "Channel Manager Connection",
+	"Cashier Transaction", "Channel ARI Outbox", "Channel Manager Connection",
 	"Channel Provider Connection", "City Ledger Account", "City Ledger Entry",
 	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
 	"Exchange Transaction", "Experience", "External POS Charge", "Floor", "Folio", "Folio Ledger Entry",
@@ -283,16 +289,23 @@ _PROPERTY_SCOPED = (
 	"WhatsApp Message", "ZATCA Invoice", "ZATCA Settings",
 )
 
+# These hang from a channel connection and have no property field: they are
+# scoped through their connection's property, with the strict scope off too
+# (kamra.authz.connection_query_conditions).
+_CONNECTION_SCOPED = ("Channel ARI State", "Channel Room Mapping")
+
 permission_query_conditions = {
 	"Guest": "kamra.authz.guest_query_conditions",
 	"Itinerary": "kamra.authz.itinerary_query_conditions",
 	**{dt: "kamra.authz.property_query_conditions" for dt in _PROPERTY_SCOPED},
+	**{dt: "kamra.authz.connection_query_conditions" for dt in _CONNECTION_SCOPED},
 }
 
 has_permission = {
 	"Guest": "kamra.authz.guest_has_permission",
 	"Itinerary": "kamra.authz.itinerary_has_permission",
 	**{dt: "kamra.authz.property_has_permission" for dt in _PROPERTY_SCOPED},
+	**{dt: "kamra.authz.connection_has_permission" for dt in _CONNECTION_SCOPED},
 }
 
 # Document Events
@@ -351,6 +364,18 @@ doc_events["Reservation"] = {
 	              "kamra.notifications.on_reservation_update"],
 	"on_trash": "kamra.realtime.notify",
 }
+
+# What moves availability or price queues an ARI change for the connections
+# with an outbox (kamra.channel_ari: only changes, in ranges, under the
+# provider's rate limit). Reservations go through on_reservation_change.
+for _doctype in ("Season", "Rate Plan", "Room Type", "Hurdle Rate", "Rate Guardrail",
+                 "Room", "Room Block", "Channel Room Mapping"):
+	_events = doc_events.setdefault(_doctype, {})
+	for _event in ("on_update", "after_insert", "on_trash"):
+		_current = _events.get(_event) or []
+		_events[_event] = ([_current] if isinstance(_current, str) else list(_current)) + [
+			"kamra.channel_ari.on_ari_source_change"]
+del _doctype, _events, _event, _current
 
 # Scheduled Tasks
 # ---------------

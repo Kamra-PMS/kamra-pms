@@ -9,6 +9,17 @@ Install or upgrade: [Frappe Cloud Marketplace](/self-hosting/frappe-cloud)
 or [self-hosting](/self-hosting/). After upgrade, open
 **Admin → System Health** to confirm the site version.
 
+## New: Apache-2.0
+
+Announced 16 Nov 2026.
+
+Kamra PMS core is moving to the Apache License 2.0. New releases after the
+change are permissive: use, change, host and sell under Apache-2.0, including
+in proprietary products, with attribution. Published AGPL releases stay as
+they are. The free Community product and the [Open Pledge](https://kamrapms.com/open-pledge/)
+do not change. Full note: [Kamra is Apache-2.0](/apache-2.0). Contributor
+vote: [GitHub #591](https://github.com/Kamra-PMS/kamra-pms/issues/591).
+
 ## New: free video course
 
 Released 27 Oct 2026.
@@ -21,7 +32,65 @@ voice and cleaner audio. The first episodes are out now, and the rest follow
 every Monday, Wednesday and Friday.
 [Watch the playlist](https://www.youtube.com/playlist?list=PLcNTRQwzkzAs).
 
-## Current stable: v2.7.10
+## Current stable: v2.8.0
+
+Released 21 Nov 2026.
+[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.8.0).
+
+- **Apache-2.0.** Kamra core moves off AGPL.
+  [What changed](/apache-2.0).
+- **Channex sends only what changed** (thanks
+  [@diegolweb](https://github.com/diegolweb),
+  [#650](https://github.com/Kamra-PMS/kamra-pms/pull/650)). Availability
+  and rates go out as date ranges, at most 10 calls a minute per
+  endpoint. A full sync runs only when you ask for it. STAAH and
+  AioSell keep the hourly push.
+  [Channel manager](/channel-manager)
+- **An in-house guest's own bill stays open** (thanks
+  [@madhukarah](https://github.com/madhukarah),
+  [#648](https://github.com/Kamra-PMS/kamra-pms/pull/648)).
+  **Close & generate invoice** refuses that Guest folio. Use
+  **Settle & continue stay** (`part_settle_folio`).
+  [Close the folio](/billing#close-the-folio-and-print-the-invoice)
+- **A country pack can supply the exchange rates** (thanks
+  [@diegolweb](https://github.com/diegolweb),
+  [#644](https://github.com/Kamra-PMS/kamra-pms/pull/644)).
+  **Fetch today's rates** uses the pack's `market_rates` when the pack
+  defines one. Otherwise the desk still uses Exchange Rate API.
+  [Currency desk](/billing#fetch-todays-rates-online)
+- **Languages.** German, Bahasa Indonesia, Filipino and Simplified
+  Chinese are on the staff app. Simplified Chinese is refined (thanks
+  [@baiyu0616a](https://github.com/baiyu0616a),
+  [#618](https://github.com/Kamra-PMS/kamra-pms/pull/618),
+  [#647](https://github.com/Kamra-PMS/kamra-pms/pull/647)). Missing
+  Spanish strings are filled in (thanks
+  [@diegolweb](https://github.com/diegolweb),
+  [#651](https://github.com/Kamra-PMS/kamra-pms/pull/651)). Bahasa
+  Indonesia is thanks to [@kentrick22](https://github.com/kentrick22),
+  [#625](https://github.com/Kamra-PMS/kamra-pms/pull/625). Hotel Admin
+  can switch languages off under **Settings → Languages**.
+- **Germany and the Philippines.** Germany: 7% MwSt on lodging, 19% on
+  food and services, EUR (requested in
+  [#623](https://github.com/Kamra-PMS/kamra-pms/issues/623) by
+  [@andreasnewuser](https://github.com/andreasnewuser)). Philippines:
+  PhilSys and the other local IDs, GCash and Maya.
+  [Country setup](/country-setup)
+- **Type a night's price** on **New booking**. Revenue Manager and
+  Hotel Admin can set each night under **Rates for these dates**. A
+  typed night does not combine with a rate plan, a voucher, an OTA
+  total or day use.
+  [Make a booking](/reservations#make-a-booking)
+- **Night audit.** **Ask Kamra Agent** uses the property you are
+  auditing. An English screen keeps English dates when the country
+  pack is Thai.
+- **Install.** The Frappe `payments` app requirement is now v16
+  (`>=16.0.0,<17.0.0`), thanks
+  [@ankitxxdevil](https://github.com/ankitxxdevil),
+  [#641](https://github.com/Kamra-PMS/kamra-pms/pull/641).
+
+## Recent stables
+
+### v2.7.10
 
 Released 14 Nov 2026.
 [GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.7.10).
@@ -56,8 +125,6 @@ Released 14 Nov 2026.
   the account menu.
 - **Self-hosting** - Valkey is the default cache and queue; a public
   contract file and a breaking-change check in CI.
-
-## Recent stables
 
 ### v2.7.9
 

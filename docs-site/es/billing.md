@@ -454,6 +454,15 @@ folio y la caja de esa parada. Consulte
    fiscal**.
 3. Pulse **Imprimir factura**, o elija **Guardar como PDF** en el cuadro de impresión.
 
+**Cerrar y generar factura** rechaza el folio del propio huésped mientras
+la estancia está en **Entrada registrada**. Los cargos de esta noche
+necesitan un folio abierto, y cerrarlo detiene la auditoría nocturna de
+todo el alojamiento. Cuando ese folio está pagado y quiere el número
+ahora, pulse **Liquidar y continuar estancia**. Kamra emite la factura y
+abre un folio de huésped nuevo para el resto de la estancia. Cualquier
+otro folio abierto, incluido el de la empresa, sí se cierra cuando su
+saldo es cero. En la salida, **Registrar salida** cierra las facturas.
+
 El título de la factura, las líneas de impuestos y el texto vienen del paquete de país. En
 Arabia Saudí, una cuenta liquidada se imprime como *factura simplificada* con el
 código QR de ZATCA; configure los datos del vendedor una vez en **Configuración → Facturación
@@ -561,7 +570,12 @@ guardarlo otra vez el mismo día lo actualiza.
 En lugar de escribir cada tipo, Finanzas o un Administrador del hotel pueden pulsar
 **Obtener los tipos de hoy** en **Cambio de moneda**. Kamra pide a un servicio en
 línea gratuito ([Exchange Rate API](https://www.exchangerate-api.com), actualizado
-una vez al día) el tipo medio de mercado de cada moneda que acepta, y guarda:
+una vez al día) el tipo medio de mercado de cada moneda que acepta.
+Si el paquete de país define `market_rates`, se usa esa fuente oficial
+en su lugar. Ningún paquete trae una todavía, así que todos los países
+siguen usando Exchange Rate API hasta que su paquete añada la función.
+El margen, un tipo escrito a mano y el resto de este mostrador no
+cambian. Kamra guarda:
 
 - **Compra** = tipo de mercado menos su margen, **Venta** = tipo de mercado más el
   margen.
@@ -588,6 +602,8 @@ propia moneda:
 | Malasia | USD, SGD, EUR, GBP, AUD, CNY, JPY, IDR |
 | Indonesia | USD, SGD, AUD, EUR, JPY, CNY, MYR, SAR |
 | Tailandia | USD, EUR, GBP, CNY, JPY, AUD, SGD, INR |
+| Filipinas | USD, EUR, JPY, KRW, CNY, AUD, SGD, HKD |
+| Alemania | USD, GBP, CHF, PLN, CZK, DKK, SEK, NOK |
 
 Finanzas y el Administrador del hotel pueden obtener los tipos o escribirlos.
 

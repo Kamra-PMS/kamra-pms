@@ -3192,13 +3192,17 @@ def t53():
 	assert day0["available"] >= 0 and day0["rate"] > 0, day0
 
 	pushes = []
-	real_call = channex._call
-	channex._call = lambda c, m, path, payload=None: (
-		pushes.append((path, payload)) or (True, {"data": "ok"}))
+	real_send = channex._send
+	channex._send = lambda c, m, path, params=None, payload=None: (
+		pushes.append((path, payload)) or ({"data": [{"id": "eval-task"}]}, {}))
 	try:
+		# a Channex connection queues a full sync on its ARI outbox; the
+		# worker sends it, one call per kind
+		from kamra import channel_ari
 		out = cm.push_ari(conn.name)
-		assert out["ok"], out
-		assert {p_ for p_, _ in pushes} == {"availability", "restrictions"}
+		assert out["ok"] and out.get("queued"), out
+		sent = channel_ari.flush_outbox(conn.name)
+		assert {p_ for p_, _ in pushes} == {"availability", "restrictions"}, (pushes, sent)
 		before = frappe.db.get_value("Channel Manager Connection",
 		                             conn.name, "last_push_status")
 		assert before and before.startswith("OK"), before
@@ -3249,7 +3253,7 @@ def t53():
 		           room_type_external_id="unknown-room")
 		assert cm._apply_event(conn, bad)["result"] == "unmapped_room"
 	finally:
-		channex._call = real_call
+		channex._send = real_send
 
 
 @check("ticket SLA: priority sets due window")
@@ -7863,7 +7867,8 @@ def t316():
 	# India keeps 18% GST on services; every pack's services rate is one it allows
 	assert services_tax_rate(pack_for_country("India"), P) == 18.0
 	for country in ("India", "Saudi Arabia", "United Arab Emirates", "Malaysia",
-	                "Thailand", "Indonesia", "Brazil", "Germany"):
+	                "Thailand", "Indonesia", "Brazil", "Nicaragua", "Germany",
+	                "Philippines"):
 		# no property: the pack's statutory default (P is an Indian hotel
 		# whose 5% room types would otherwise steer the VAT packs)
 		pack = pack_for_country(country)
@@ -7872,6 +7877,7 @@ def t316():
 	assert services_tax_rate(pack_for_country("Saudi Arabia"), None) == 15.0
 	assert services_tax_rate(pack_for_country("Malaysia"), None) == 8.0
 	assert services_tax_rate(pack_for_country("Germany"), None) == 19.0
+	assert services_tax_rate(pack_for_country("Philippines"), None) == 12.0
 	from kamra import laundry
 	assert not hasattr(laundry, "LAUNDRY_GST"), "laundry still hardcodes a GST rate"
 	# activity-log money follows the property's currency, not a fixed rupee
@@ -8840,7 +8846,10 @@ def t343():
 	res, folio = _settle_stay("E343", "+91 70000 03430")
 	# nothing posted yet, so the empty bill is settled and closes
 	assert abs(float(frappe.db.get_value("Folio", folio, "balance") or 0)) < 0.01
-	api.close_folio(folio)
+	# the desk can no longer close an in-house guest's bill; a bill closed
+	# before that guard (or by a migration) still reaches checkout like this
+	from kamra.folio import close_folio as _close
+	_close(folio)
 	s = api.checkout_context(res.name)
 	codes = [b["code"] for b in s["blockers"]]
 	assert "nights_not_posted" in codes and not s["actions"]["can_checkout"], s["blockers"]
@@ -10546,6 +10555,52 @@ def t_nicaragua_pack():
 		frappe.clear_document_cache("Property", "EVAL Nicaragua Hotel")
 
 
+@check("Philippines pack: 12% VAT, TIN, peso, senior and PWD discount")
+def t_philippines_pack():
+	from decimal import Decimal
+
+	from kamra.api import _apply_country_defaults
+	from kamra.localization import pack_for, supported_countries
+	from kamra.pricing import quote
+
+	sp = "philippines_pack_state"
+	frappe.db.savepoint(sp)
+	try:
+		values = {"property_name": "EVAL Manila Hotel", "country": "Philippines",
+		          "city": "Manila", "rates_include_tax": 0, "room_levy_percent": 0}
+		_apply_country_defaults(values)
+		assert values["currency"] == "PHP", values
+		assert values["timezone"] == "Asia/Manila", values
+		assert values["gst_rate_low"] == 12, values
+		assert "room_levy_label" not in values, values
+		prop = frappe.get_doc({"doctype": "Property", **values}).insert(ignore_permissions=True)
+		rt = frappe.get_doc({
+			"doctype": "Room Type", "property": prop.name,
+			"room_type_code": "STD", "room_type_name": "Standard",
+			"base_price": 1000, "base_occupancy": 2,
+			"adults_capacity": 2, "children_capacity": 1,
+		}).insert(ignore_permissions=True)
+		pack = pack_for(prop.name)
+		assert pack.__name__ == "kamra.localization.philippines", pack.__name__
+		assert "Philippines" in {row["country"] for row in supported_countries()}
+		q = quote(prop.name, rt.name, "2031-06-01", "2031-06-02", 2, 0)
+		assert q["nightly"][0]["gst_rate"] == 12, q
+		assert round(q["tax_amount"], 2) == 120, q
+		assert round(q["amount_after_tax"], 2) == 1120, q
+		assert q["room_levy"] == 0, q
+		assert pack.fnb_tax_rate(prop.name) == 12.0
+		loc = pack.locale(prop)
+		assert (loc["currency"], loc["currency_symbol"], loc["locale"]) == ("PHP", "₱", "en-PH"), loc
+		ctx = pack.invoice_context(prop)
+		assert (ctx["tax_label"], ctx["tax_id_label"]) == ("VAT", "TIN"), ctx
+		sale = pack.senior_pwd_amounts(q["amount_after_tax"])
+		assert (sale["vat_exclusive"], sale["discount"], sale["amount_due"], sale["tax_rate"]) == (
+			Decimal("1000.00"), Decimal("200.00"), Decimal("800.00"), Decimal("0")), sale
+	finally:
+		frappe.db.rollback(save_point=sp)
+		frappe.clear_document_cache("Property", "EVAL Manila Hotel")
+
+
 @check("concurrency: a second booking, villa, OTA delivery, voucher, credit, till and stock count see what the first one wrote")
 def t_concurrency_guards():
 	from frappe.utils import add_days, nowdate
@@ -11434,6 +11489,29 @@ def t_night_prices_refused():
 		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
+@check("folio: the desk cannot invoice an in-house guest's own bill; Settle & continue keeps the stay billable")
+def t_folio_no_close_in_house():
+	from kamra import api
+	from kamra.folio import part_settle, post_room_night
+	res, folio = _in_house("Eval In House Close", "+91 70000 06401", "2036-09-01",
+	                       "2036-09-03", _ledger_room("L6401"))
+	try:
+		api.close_folio(folio)
+		raise AssertionError("closed an in-house guest's bill")
+	except frappe.ValidationError as e:
+		assert "Settle & continue" in str(e), e
+	assert frappe.db.get_value("Folio", folio, "status") == "Open"
+	assert post_room_night(res, "2036-09-01")
+	api.add_folio_payment(folio, "UPI", float(frappe.db.get_value("Folio", folio, "balance")))
+	out = part_settle(folio)
+	# the next night lands on the fresh bill, so the audit keeps posting
+	assert post_room_night(res, "2036-09-02")
+	assert frappe.db.get_value("Folio", out["new_folio"], "status") == "Open"
+	assert frappe.db.get_value("Folio Charge", {
+		"charge_type": "Room", "posting_date": "2036-09-02",
+		"reservation": res.name, "parenttype": "Folio"}, "parent") == out["new_folio"]
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11475,6 +11553,7 @@ def execute():
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
 		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
+		           t_philippines_pack,
 		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
 		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
 		           t_ar_balance_from_entries,
@@ -11482,7 +11561,7 @@ def execute():
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
-		           t_night_prices_refused):
+		           t_night_prices_refused, t_folio_no_close_in_house):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

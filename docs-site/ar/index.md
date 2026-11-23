@@ -36,10 +36,10 @@ features:
     details: استدعِ الدوال نفسها من أنظمتك. نزّل مجموعة Postman وابدأ.
     link: /developers
   - title: الميزات وآخر إصدار
-    details: من الاستقبال إلى المآدب، والمأكولات والمشروبات، وWhatsApp، وحزم الضرائب لكل دولة، مع الجديد في v2.6.20.
+    details: من الاستقبال إلى المآدب، والمأكولات والمشروبات، وWhatsApp، وحزم الضرائب لكل دولة، مع الجديد في v2.8.0.
     link: /ar/features
   - title: التثبيت
-    details: Docker على خادم VPS، أو bench التقليدي، أو سوق Frappe Cloud. التطبيق نفسه كاملا برخصة AGPL.
+    details: Docker على خادم VPS، أو bench التقليدي، أو سوق Frappe Cloud. التطبيق نفسه كاملا برخصة Apache-2.0.
     link: /self-hosting/
 ---
 

@@ -4,8 +4,8 @@ import { login, requestPasswordReset, serverError } from "../lib/api"
 import { asset } from "../lib/asset"
 import { Button } from "../components/ui/button"
 import { getSiteInfo, versionLabel } from "../lib/siteInfo"
-import { LANGS, getLang, setLang, type Lang } from "../lib/dir"
-import { useT, t as translate } from "../lib/i18n"
+import { getLang, setLang, type Lang } from "../lib/dir"
+import { useOfferedLanguages, useT, t as translate } from "../lib/i18n"
 
 
 const inputCls =
@@ -24,6 +24,7 @@ const DEMO_ACCOUNTS = [
 
 export default function Login(props: { onSuccess: () => void }) {
   const { t, lang } = useT()
+  const langs = useOfferedLanguages()
   const [usr, setUsr] = useState("")
   const [pwd, setPwd] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -113,7 +114,7 @@ export default function Login(props: { onSuccess: () => void }) {
               }}
               aria-label={t("Language")}
             >
-              {LANGS.map((l) => (
+              {langs.map((l) => (
                 <option key={l.code} value={l.code}>
                   {l.nativeLabel}
                 </option>

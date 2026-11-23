@@ -11,9 +11,13 @@ create the property selects its *localization pack*, and the pack decides:
 | Guests | the default nationality, the data-protection authority named in the privacy notice, the languages that notice is offered in (India: Hindi, Kannada, Tamil, Telugu, Malayalam, Marathi, Bengali), and whether a child's ID is kept (by default only for foreign nationals; Saudi Arabia: always, for Shomoos) |
 | Invoices | the invoice title and, where the law requires it, e-invoicing (Saudi Arabia: ZATCA) |
 
-Packs today: **India, Indonesia, Malaysia, Saudi Arabia, Thailand, United
-Arab Emirates**. Any other country runs on a simple flat-tax pack with the
-currency you enter.
+Packs today: **Brazil, Germany, India, Indonesia, Malaysia, Nicaragua,
+Philippines, Saudi Arabia, Thailand and the United Arab Emirates**. Any
+other country runs on a simple flat-tax pack with the currency you enter.
+Germany charges 7% MwSt on short-term lodging and 19% on food, drink and
+other guest services. Invoices use MwSt wording and the USt-IdNr. The pack
+does not file DATEV and does not cover the small-business exemption
+(Kleinunternehmer).
 
 ## Choosing the country
 
@@ -32,6 +36,10 @@ currency you enter.
 | Indonesia | KTP, Passport, KITAS, Driving License | Cash, Card (incl. QRIS), Bank Transfer |
 | Thailand | Thai ID Card, Passport, Driving License | Cash, Card, Bank Transfer |
 | Malaysia | MyKad, Passport, Driving License | Cash, Card, Bank Transfer |
+| Philippines | PhilSys National ID, Passport, Driver's License, UMID, SSS, PRC, PhilHealth, Postal ID, Senior Citizen ID, PWD ID, ACR I-Card | Cash, Card (incl. GCash and Maya), Bank Transfer |
+| Brazil | CPF, RG, Passport, Driving License (CNH) | Cash, Card, Bank Transfer |
+| Germany | Personalausweis, Passport, Residence Permit, Driving License | Cash, Card, Bank Transfer |
+| Nicaragua | National ID, Passport, Residence Card, Driving License | Cash, Card, Bank Transfer |
 | Other | Passport, National ID, Driving License | Cash, Card, Bank Transfer |
 
 ## Integrations each pack brings
@@ -44,7 +52,7 @@ buttons are hidden and the API refuses the call.
 | --- | --- | --- | --- |
 | India | Razorpay, Cashfree | GSTR-1 (`gstr1_rows`) | Form C for foreign nationals (named in the privacy notice) |
 | Saudi Arabia | - | - | ZATCA e-invoicing (below); Shomoos guest registration (named in the privacy notice) |
-| Indonesia, Malaysia, Thailand, UAE, Other | - | - | - |
+| Brazil, Germany, Indonesia, Malaysia, Nicaragua, Philippines, Thailand, UAE, Other | - | - | - |
 
 ### India: payment links
 
@@ -69,8 +77,13 @@ link posts to the bill once, however often the gateway retries.
 whether tax applies to it. When the % is above zero the levy is included in
 every quote and posted as its own line with each room night, so the invoice
 shows it and the ledger books it apart from room revenue. Saudi Arabia and
-the UAE pre-fill the name *Municipality fee*; set the rate your
-municipality charges.
+the UAE pre-fill the name *Municipality fee*. Germany pre-fills *City tax*
+(the municipal overnight levy: Übernachtungssteuer, Beherbergungssteuer or
+Kurtaxe). Set the rate your city charges. The Philippines pack does not
+name a local levy.
+City business tax is paid by the hotel, not added to the guest's rate. If
+a city ordinance charges guests a fee, type its name and percent here, or
+post a flat fee as a charge.
 
 ## Saudi Arabia: ZATCA e-invoicing
 

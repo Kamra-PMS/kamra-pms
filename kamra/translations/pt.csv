@@ -64,3 +64,17 @@ Bills still open,Contas ainda abertas
 Use Check out to check a guest out: it makes sure every bill is cleared first.,Use Check-out para dar saída ao hóspede: ele confere antes que todas as contas estejam quitadas.
 Check out,Check-out
 Discounts and allowances,Descontos e abatimentos
+"{0} is not a Kamra language.","{0} não é um idioma do Kamra."
+"{0} is switched off. Turn it on from Languages in Settings.","{0} está desligado. Ative-o em Idiomas nas Definições."
+No room mappings yet - map your room types to the provider's room and rate ids first.,Ainda não há mapeamentos de quartos: primeiro mapeie seus tipos de quarto para os ids de quarto e de tarifa do provedor.
+No room type matches it.,Não corresponde a nenhum tipo de quarto.
+Provider rate plan {0} is already mapped on this connection.,O plano tarifário {0} do provedor já está mapeado nesta conexão.
+"Rate plan {0} adds a fixed amount: on the channels it applies every night, on direct bookings once per stay.","O plano tarifário {0} soma um valor fixo: nos canais, ele se aplica a cada noite; na venda direta, uma vez por estadia."
+"Rate plan {0} belongs to {1}, not to this connection's property {2}.","O plano tarifário {0} pertence a {1}, e não à propriedade {2} desta conexão."
+Rate plan {0} is priced per person; Kamra sends one price per room.,O plano tarifário {0} tem preço por pessoa; o Kamra envia um preço por quarto.
+"Room type {0} belongs to {1}, not to this connection's property {2}.","O tipo de quarto {0} pertence a {1}, não à propriedade {2} desta conexão."
+Several rate plans of this room match no Kamra rate plan: map them by hand.,Vários planos tarifários deste quarto não correspondem a nenhum plano tarifário do Kamra: mapeie-os manualmente.
+The channel manager has {0} rooms of {1}; Kamra has {2}.,O gerenciador de canais tem {0} quartos de {1}; o Kamra tem {2}.
+The channel manager sells in {0}; this property is in {1}.,O gerenciador de canais vende em {0}; esta propriedade está em {1}.
+The channel manager's property time zone is {0}; this property's is {1}.,O fuso horário da propriedade no gerenciador de canais é {0}; o desta propriedade é {1}.
+{0} does not take ARI changes.,{0} não aceita o envio de disponibilidade e tarifas por mudanças.
