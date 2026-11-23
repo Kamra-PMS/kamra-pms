@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **516 endpoints**, generated from the source
+the UI and the AI use. **518 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -5607,7 +5607,13 @@ passes `credit_override_reason`. Agents can't override.
 **POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
 
 Record a company's payment against its city ledger account and clear
-the AR it pays. By default it pays the oldest open bills first;
+the AR it pays.
+
+`withholdings` ([{folio, amount, tax, rate?, certificate_number?,
+certificate_period?}], #521) is tax the company kept back from named
+bills: it clears that part of each bill too and is tracked as tax
+withheld until its certificate arrives (kamra.receivables). `tax` is a
+code from the country pack's withholding taxes. By default it pays the oldest open bills first;
 `allocations` ([{folio, amount}]) names the folios instead. Any excess
 stays on the account as unapplied credit and settles the company's next
 bill. `received_on` is the date the money arrived (the business date
@@ -5633,6 +5639,7 @@ the same bill.
 | `idempotency_key` | no | `None` |
 | `received_on` | no | `None` |
 | `pin` | no | `None` |
+| `withholdings` | no | `None` |
 
 ### `kamra.ledger.decide_city_ledger_payment`
 
@@ -6162,6 +6169,33 @@ re-run - finance is choosing who pays.
 | `folio` | yes |  |
 | `to_account` | yes |  |
 | `reason` | no | `None` |
+
+### `kamra.receivables.record_withholding_certificate`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+The payer's certificate for tax it withheld came in: keep its number
+and period. The amount stays as recorded.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `tax_withheld` | yes |  |
+| `certificate_number` | yes |  |
+| `certificate_period` | no | `None` |
+| `received_on` | no | `None` |
+
+### `kamra.receivables.withheld_tax`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Tax companies withheld from their payments: by default the amounts
+still waiting for a certificate, oldest first, with totals per tax.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `status` | no | `'Awaiting Certificate'` |
+| `account` | no | `None` |
 
 
 ## Accounts payable (vendors, supplier bills, approval, payments)

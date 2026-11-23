@@ -11153,6 +11153,32 @@ def t_ar_received_dispute_aging():
 def _gl(code, gl):
 	frappe.db.set_value("Transaction Code", code, "gl_code", gl)
 
+
+@check("city ledger: a payment less tax the company withheld clears the bill; the tax waits for its certificate (#521)")
+def t_ar_tax_withheld():
+	from kamra.ledger import city_ledger_settle, reverse_city_ledger_payment
+	from kamra.receivables import record_withholding_certificate, withheld_tax
+	corp = _credit_corp("EVAL TDS Corp")
+	acct, f, owed = _ar_bill("Eval TDS", "+91 70000 05211", 21, "L5211", corp, 1000)
+	tds = round(owed * 0.02, 2)
+	pay = city_ledger_settle(acct, round(owed - tds, 2), "Bank Transfer", "EVAL-521",
+	                         withholdings=[{"folio": f, "amount": tds, "tax": "TDS-194C",
+	                                        "rate": 2}])
+	assert pay["unapplied"] == 0 and pay["withheld"][0]["amount"] == tds, pay
+	assert abs(float(frappe.db.get_value("City Ledger Account", acct, "balance"))) < 0.01
+	_assert_company_ar(acct)
+	waiting = [r for r in withheld_tax(P)["rows"] if r["account"] == acct]
+	assert [(r["tax_code"], r["amount"]) for r in waiting] == [("TDS-194C", tds)], waiting
+	_refused(city_ledger_settle, acct, 10, withholdings=[{"folio": f, "amount": 1,
+	                                                      "tax": "TDS-194C"}],
+	         contains="nothing open")
+	record_withholding_certificate(waiting[0]["name"], "EVAL-16A-1", "Q3")
+	assert not [r for r in withheld_tax(P)["rows"] if r["account"] == acct]
+	# a bounced payment brings the withheld part back with it
+	reverse_city_ledger_payment(pay["payment"], reason_code="REV-BOUNCE")
+	assert abs(float(frappe.db.get_value("City Ledger Account", acct, "balance")) - owed) < 0.01
+	_assert_company_ar(acct)
+
 @check("till close: note-by-note count adds up to the counted cash; session read API and MCP tools return the reconciliation")
 def t_cash_count():
 	from kamra import api, cashier
@@ -11558,6 +11584,7 @@ def execute():
 		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
 		           t_ar_balance_from_entries,
 		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging,
+		           t_ar_tax_withheld,
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
