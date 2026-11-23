@@ -416,7 +416,8 @@ def emit_rate_overridden(property: str, data: dict) -> list[str]:
 def emit_approval(event: str, req) -> list[str]:
 	"""approval.requested / approval.decided for an Allowance Request."""
 	return emit(event, req.property, {
-		"approval": req.name, "type": "allowance", "status": req.status,
+		"approval": req.name,
+		"type": "write_off" if req.get("kind") == "Write Off" else "allowance", "status": req.status,
 		"folio": req.folio, "reservation": req.get("reservation"),
 		"amount": _money(req.amount), "tax_rate": float(req.get("gst_rate") or 0),
 		"reason": req.get("reason"), "reason_code": req.get("reason_code"),

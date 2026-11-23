@@ -15291,6 +15291,43 @@
        }
       }
      }
+    },
+    {
+     "name": "write_off_ar_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.receivables.write_off_ar_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.receivables.write_off_ar_bill"
+       ]
+      },
+      "description": "Write off part or all of what a bill still owes on a company's account\nas bad debt, with a reason (an Adjust reason code and/or a note).\n\nAbove the property's allowance approval line (or with a supervisor\nreason code) it becomes a pending request ({\"pending\": True, ...}) that a\nmanager approves with their PIN (kamra.api.decide_allowance), unless the\ncaller is that manager. An AI agent's write-off always waits.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"account\": \"<account>\",\n  \"folio\": \"FOLIO-2026-00001\",\n  \"amount\": 1000,\n  \"reason\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
     }
    ]
   },

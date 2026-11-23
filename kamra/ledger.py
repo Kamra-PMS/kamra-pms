@@ -2451,6 +2451,7 @@ DEFAULT_REASONS = [
 	("VOID-DUP", "Duplicate charge", "Void", 0),
 	("ADJ-COMP", "Complimentary adjustment", "Adjust", 1),
 	("ADJ-RATE", "Rate correction", "Adjust", 0),
+	("ADJ-BADDEBT", "Bad debt - the company will not pay", "Adjust", 0),
 	("RATE-PROMO", "Promotional rate change", "Rate Change", 0),
 	("RATE-MGR", "Manager rate override", "Rate Change", 1),
 	("REF-DEP", "Security deposit refund", "Refund", 0),

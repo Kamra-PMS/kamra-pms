@@ -383,6 +383,20 @@ company disputes. The bill stays on the account, in aging and on the
 statement, marked Disputed, but gets no payment reminders and does not
 count towards the overdue credit block. **Clear dispute** ends it.
 
+**Write off a bill as bad debt** (Finance and Hotel Admin): when a
+company will not pay, press **Write off** on the open bill, enter the
+amount (up to what it still owes) and pick a reason (an Adjust reason
+code such as *Bad debt - the company will not pay*, and/or a note). It
+follows the same approval rules as an allowance: above the property's
+approval line, or with a reason code that needs a supervisor, the
+write-off waits on the company's page and in **Allowance approvals**
+until a manager approves it with their PIN. A manager's own write-off
+posts at once, signed with their PIN. Once posted, the bill, the
+account balance and aging drop by the amount, the account history shows
+a **Write Off** line, and the books post an AR credit to transaction
+code 9110 *Bad Debt Write-off* (map its GL code to your bad-debt
+account). AI agents can ask for a write-off, never approve one.
+
 Aging, reminders and the overdue check count days from the property's
 business date, so they agree with night audit around midnight.
 
