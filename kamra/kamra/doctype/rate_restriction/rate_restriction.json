@@ -1,0 +1,181 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:RR-{#####}",
+ "creation": "2026-11-23 10:00:00.000000",
+ "description": "Stay restrictions per rate plan, room type and dates: min and max nights, closed to arrival, closed to departure, stop-sell. The quote refuses a stay that breaks one, and they go to the channel manager with the rates (#530).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "restriction_name",
+  "rate_plan",
+  "room_type",
+  "start_date",
+  "end_date",
+  "days_of_week",
+  "column_break_a",
+  "min_nights",
+  "max_nights",
+  "closed_to_arrival",
+  "closed_to_departure",
+  "stop_sell",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "restriction_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "rate_plan",
+   "fieldtype": "Link",
+   "label": "Rate Plan",
+   "options": "Rate Plan",
+   "in_list_view": 1,
+   "description": "Blank = every rate plan, and the plain room price."
+  },
+  {
+   "fieldname": "room_type",
+   "fieldtype": "Link",
+   "label": "Room Type",
+   "options": "Room Type",
+   "in_list_view": 1,
+   "description": "Blank = every room type."
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Inclusive."
+  },
+  {
+   "fieldname": "days_of_week",
+   "fieldtype": "Data",
+   "label": "Days of Week",
+   "description": "Comma-separated days (e.g. fri, sat). Blank = all days. Add another restriction for other days."
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "min_nights",
+   "fieldtype": "Int",
+   "label": "Minimum Nights",
+   "description": "Shortest stay for an arrival on these dates. 0 = no minimum."
+  },
+  {
+   "fieldname": "max_nights",
+   "fieldtype": "Int",
+   "label": "Maximum Nights",
+   "description": "Longest stay for an arrival on these dates. 0 = no maximum."
+  },
+  {
+   "fieldname": "closed_to_arrival",
+   "fieldtype": "Check",
+   "label": "Closed to Arrival",
+   "description": "No stay may start on these dates."
+  },
+  {
+   "fieldname": "closed_to_departure",
+   "fieldtype": "Check",
+   "label": "Closed to Departure",
+   "description": "No stay may end on these dates."
+  },
+  {
+   "fieldname": "stop_sell",
+   "fieldtype": "Check",
+   "label": "Stop Sell",
+   "description": "No stay may include a night on these dates."
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-23 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Rate Restriction",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Revenue Manager",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Kamra Agent"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "restriction_name",
+ "track_changes": 1
+}

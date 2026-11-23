@@ -290,3 +290,12 @@ Allowances** screen. See
 [Dashboards](/api-reference#dashboards) and [Reports](/api-reference#reports)
 in the API reference. Agents get the daily picture from the
 `owner_briefing` and `position_briefing` [MCP tools](/mcp-tools#briefings).
+
+A connected app reads the open business date with
+`kamra.reports.business_date` and each closed day's figures with
+`kamra.reports.kpi_snapshots` (from_date, to_date, at most 366 days). The
+night audit writes one snapshot for the date it closes, once: occupancy,
+ADR, RevPAR, revenue by group, collections by mode and the AR balance, the
+same figures the manager flash shows for that date. Later postings dated
+that day do not change it. Dates closed before snapshots existed have none.
+The MCP tools are `business_date` and `kpi_snapshots`.

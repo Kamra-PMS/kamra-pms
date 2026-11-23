@@ -1701,10 +1701,23 @@ def run_night_audit(property: str, business_date: str | None = None,
 	from kamra.business_date import advance_business_date, ensure_business_date
 	ensure_business_date(property)
 	new_bd = advance_business_date(property, business_date)
+	# the closed date's KPI snapshot (#542), after the roll so its figures
+	# are the manager flash's for that date from now on. Never fails the audit.
+	try:
+		from kamra.reports import write_kpi_snapshot
+		write_kpi_snapshot(property, business_date)
+	except Exception:
+		frappe.log_error(title=f"KPI snapshot failed: {property} {business_date}")
 	# reports scheduled "After night audit" go out once this commits
 	frappe.enqueue("kamra.custom_reports.send_after_night_audit",
 	               property=property, business_date=business_date,
 	               enqueue_after_commit=True)
+	from kamra.erpnext_bridge import gl_posting_on
+	if gl_posting_on(property):
+		# the day's journal entry to ERPNext (#228); a failure never blocks
+		frappe.enqueue("kamra.erpnext_bridge.after_night_audit",
+		               property=property, business_date=business_date,
+		               enqueue_after_commit=True)
 
 	from kamra.savings import log_action
 	log_action(

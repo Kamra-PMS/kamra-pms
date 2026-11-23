@@ -69,6 +69,7 @@ EVENTS: dict[str, str] = {
 	"deposit.refunded": "An advance still held for an arrival, or a security deposit, was refunded.",
 	"ar.bill_created": "A bill was moved to a company's city ledger (AR) account.",
 	"ar.payment_recorded": "A company's payment was recorded against its AR account.",
+	"ar.payment_reversed": "A company's payment was reversed (a bounced cheque, the wrong account) and the bills it paid are owed again.",
 	"cashier.session_closed": "A cashier counted the drawer and closed the till.",
 	"group.block_released": "A group's cutoff passed and its unpicked rooms went back on sale.",
 }
@@ -416,7 +417,8 @@ def emit_rate_overridden(property: str, data: dict) -> list[str]:
 def emit_approval(event: str, req) -> list[str]:
 	"""approval.requested / approval.decided for an Allowance Request."""
 	return emit(event, req.property, {
-		"approval": req.name, "type": "allowance", "status": req.status,
+		"approval": req.name,
+		"type": "write_off" if req.get("kind") == "Write Off" else "allowance", "status": req.status,
 		"folio": req.folio, "reservation": req.get("reservation"),
 		"amount": _money(req.amount), "tax_rate": float(req.get("gst_rate") or 0),
 		"reason": req.get("reason"), "reason_code": req.get("reason_code"),
@@ -429,7 +431,7 @@ def emit_approval(event: str, req) -> list[str]:
 
 
 def emit_ar(event: str, property: str, data: dict) -> list[str]:
-	"""ar.bill_created / ar.payment_recorded."""
+	"""ar.bill_created / ar.payment_recorded / ar.payment_reversed."""
 	return emit(event, property, {**data, "currency": _currency(property)})
 
 

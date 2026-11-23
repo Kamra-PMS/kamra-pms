@@ -195,20 +195,20 @@ Fields on Venue Booking or checklist:
 - [x] Notify Finance, HK, F&B, Sales roles
 - [x] Checklist UI on function sheet
 - [x] Tests for send / guest response / checklists / quote chase
-- [ ] `/banquet` board column “Awaiting customer response” (nice-to-have)
-- [ ] Attach generated PDF to the send-mail (follow-up)
+- [x] `/banquet` board column “Awaiting customer response” (nice-to-have)
+- [x] Attach generated PDF to the send-mail (follow-up)
 
 ### Phase 2 — Tasting + payments + Engineering/HR
-- [ ] Food tasting workflow + emails + chef/sales alerts
-- [ ] Property tasting policy (allow, default portions)
-- [ ] Guest balance/advance payment links + reminders
-- [ ] Engineering + HR checklist templates
-- [ ] AV/WiFi sub-checklist
+- [x] Food tasting workflow + emails + chef/sales alerts
+- [x] Property tasting policy (allow, default portions)
+- [x] Guest balance/advance payment links + reminders
+- [x] Engineering + HR checklist templates
+- [x] AV/WiFi sub-checklist
 
 ### Phase 3 — Opera parity extras (no guest portal)
-- [ ] Equipment resource calendar
-- [ ] Property-level deposit rule engine
-- [ ] Weighted pipeline forecasting
+- [x] Equipment resource calendar
+- [x] Property-level deposit rule engine
+- [x] Weighted pipeline forecasting
 - [ ] Catering packages + event templates (multi-event blocks)
 - [ ] Optional e-sign (DocuSign) — signed PDF stored on function, not a portal
 

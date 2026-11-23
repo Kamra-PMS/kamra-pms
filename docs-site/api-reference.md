@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **516 endpoints**, generated from the source
+the UI and the AI use. **562 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -348,6 +348,10 @@ Checkout cleans for rooms with an arrival today jump the queue.
 
 Start or complete a housekeeping task from the phone.
 
+`expected` is the status the phone last saw - sent by a change queued
+during an outage (#228). If the task moved on meanwhile it is refused,
+never applied over someone else's change.
+
 An Inspection is completed by passing it: Done on an inspection is taken
 as Verified, which moves the room to Ready (inspection required by the
 turnover profile) or Inspected - never back to plain Clean. Verifying -
@@ -358,6 +362,7 @@ set_housekeeping_status applies to Inspected / Ready.
 | --- | --- | --- |
 | `task` | yes |  |
 | `status` | yes |  |
+| `expected` | no | `None` |
 
 ### `kamra.api.hk_upload_media`
 
@@ -1049,6 +1054,7 @@ the stay they are for. can_decide says if the caller may approve.
 | `property` | yes |  |
 | `status` | no | `'Pending'` |
 | `folio` | no | `None` |
+| `city_ledger_account` | no | `None` |
 
 ### `kamra.api.allowance_voucher`
 
@@ -1657,12 +1663,14 @@ Change a room's housekeeping status - role, property and DocPerm
 checked (#99): an attendant can mark Clean / Dirty, only a supervisor
 can pass a room or take it out of order, nobody can touch a room of a
 property they aren't assigned to, and removing Write on Room in the
-role permissions actually removes the ability.
+role permissions actually removes the ability. `expected` (a change
+queued offline, #228): refused if the room's status moved on since.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `room` | yes |  |
 | `status` | yes |  |
+| `expected` | no | `None` |
 
 ### `kamra.api.room_board`
 
@@ -1745,6 +1753,21 @@ tape view).
 | `reservation` | yes |  |
 | `from_time` | yes |  |
 | `to_time` | yes |  |
+
+### `kamra.api.occupancy_on_books`
+
+**GET/POST** · roles: `Revenue Manager`
+
+Occupancy on the books per night, start_date to end_date (both
+nights included, at most 90): confirmed and in-house reservations over
+all rooms, as pricing's hurdle tiers see it. Rooms on the books, not a
+forecast.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `start_date` | yes |  |
+| `end_date` | no | `None` |
 
 ### `kamra.api.position_briefing`
 
@@ -2117,6 +2140,8 @@ can proactively reach the guest the moment a room opens.
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
 Create a Group Booking plus one reservation per requested room.
+`stay_details` (as in create_booking, e.g. needs_connecting) goes on
+every room.
 `rooms` = [{"room_type": &lt;name>, "count": 2, "room": &lt;optional>,
 "guest_name": &lt;optional>, "night_prices": &lt;optional>}, ...] (JSON string
 ok). A row's `night_prices` ([{date, price}], as in create_booking) price
@@ -2152,6 +2177,7 @@ room locked to its share.
 | `group_type` | no | `None` |
 | `master_index` | no | `None` |
 | `master_pays` | no | `None` |
+| `stay_details` | no | `None` |
 
 ### `kamra.api.rooming_list_template`
 
@@ -2232,6 +2258,8 @@ is being put in the room now (check-in, walk-in, allocation for today):
 a room whose occupant is still Checked In is then left out until they
 check out - the same rule Reservation.validate_room_vacant enforces.
 
+accessible=1 keeps only rooms marked Accessible (#536).
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -2240,6 +2268,7 @@ check out - the same rule Reservation.validate_room_vacant enforces.
 | `check_out_date` | yes |  |
 | `group_booking` | no | `None` |
 | `ready_now` | no | `0` |
+| `accessible` | no | `0` |
 
 ### `kamra.api.room_blocks`
 
@@ -2357,6 +2386,23 @@ the rooming list, the tied event and the master folio.
 | Param | Required | Default |
 | --- | --- | --- |
 | `group_booking` | yes |  |
+
+### `kamra.api.bulk_stays`
+
+**POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+
+Check in, check out or cancel several stays at once (a group, a busy
+morning). Each stay goes through the same call as one at a time -
+check_in, check_out, cancel_reservation - with its own roles, property
+scope and checks, in its own savepoint: one that fails is rolled back
+and reported with why, and the rest go on. Returns
+{"results": [{"reservation", "done": 1, ...} | {"reservation", "error"}]}.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `action` | yes |  |
+| `reservations` | yes |  |
+| `reason` | no | `'Guest request'` |
 
 ### `kamra.api.set_rooming_names`
 
@@ -2530,7 +2576,7 @@ can offer one-tap paths to billing and editing. One endpoint, all types.
 
 ### `kamra.api.property_locale`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `F&B Manager`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `F&B Manager`, `Kamra Service Account`
 
 Currency, number locale and tax vocabulary for this property, from its
 localization pack. Drives the frontend's money formatting and tax dropdowns
@@ -2946,6 +2992,7 @@ round trip instead of four, and the kitchen gets a single update.
 | `discount_reason` | no | `''` |
 | `guest` | no | `None` |
 | `waiter` | no | `None` |
+| `allow_zero` | no | `0` |
 
 ### `kamra.pos.send_round`
 
@@ -2958,6 +3005,7 @@ and fire_kot in one call and one save.
 | --- | --- | --- |
 | `order` | yes |  |
 | `items` | yes |  |
+| `allow_zero` | no | `0` |
 
 ### `kamra.pos.kitchen_queue`
 
@@ -3888,6 +3936,75 @@ complimentary bags are counted as volume but earn nothing.
 | `days` | no | `30` |
 
 
+## Housekeeping (room status cases, inspection pass rate)
+
+> Each part is behind its Housekeeping setting; switched off, the endpoints refuse or report enabled: false.
+
+### `kamra.housekeeping.room_discrepancies`
+
+**GET/POST** · roles: `Front Desk`, `Housekeeping`, `Hotel Admin`, `Kamra Agent`
+
+Rooms where the front office and housekeeping disagree now (the night
+audit's room status check) that have no open case yet, and the open
+cases with their owner.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.housekeeping.open_room_discrepancy`
+
+**POST** · roles: `Front Desk`, `Housekeeping`, `Hotel Admin`
+
+Open a case for a room the front office and housekeeping disagree on,
+with an owner (default: whoever opens it). One open case per room.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room` | yes |  |
+| `owner` | no | `None` |
+| `note` | no | `''` |
+
+### `kamra.housekeeping.close_room_discrepancy`
+
+**POST** · roles: `Front Desk`, `Housekeeping`, `Hotel Admin`
+
+Close a room status case with what was found (the reason is required).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `case` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.housekeeping.hk_fail_inspection`
+
+**POST** · roles: `Hotel Admin`
+
+A supervisor fails an inspection: the room goes back to Dirty and a
+re-clean is handed to the attendant whose clean failed. The reason is
+kept; it counts against that attendant's pass rate.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `task` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.housekeeping.hk_quality`
+
+**GET/POST** · roles: `Hotel Admin`, `Kamra Agent`
+
+Inspection pass rate and checkout-clean turn time (task made to task
+done, in minutes) by attendant and by room type, over inspections and
+cleans completed between the dates (default: the last 30 days).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+
+
 ## Banquets (functions, quotations, event orders)
 
 ### `kamra.banquet.banquet_catalogue`
@@ -4672,6 +4789,280 @@ to open, and which other spaces it shares its floor with.
 | `venue` | yes |  |
 
 
+## Recreation (gym, pool, spa: visits, memberships, bookings, passes)
+
+> Walk-in and membership money goes in the till with a receipt; a guest's paid access is on the folio.
+
+### `kamra.recreation.desk`
+
+**GET/POST**
+
+Facilities, who is inside, plans and customers for the desk.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.recreation.save_facility`
+
+**POST** · roles: `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `facility_name` | yes |  |
+| `category` | no | `'Gym'` |
+| `capacity` | no | `1` |
+| `access` | no | `'Both'` |
+| `price` | no | `0` |
+| `status` | no | `'Open'` |
+| `opens` | no | `None` |
+| `closes` | no | `None` |
+| `name` | no | `None` |
+
+### `kamra.recreation.save_plan`
+
+**POST** · roles: `Hotel Admin`
+
+`facilities` (a list) is the access the plan gives: those facilities
+only. Leave it and `facility` blank for every facility.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `plan_name` | yes |  |
+| `period` | no | `'Month'` |
+| `price` | no | `0` |
+| `visit_limit` | no | `0` |
+| `facility` | no | `None` |
+| `name` | no | `None` |
+| `facilities` | no | `None` |
+
+### `kamra.recreation.register_customer`
+
+**POST**
+
+An external customer. This is not a hotel guest and not a stay.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `full_name` | yes |  |
+| `phone` | no | `None` |
+
+### `kamra.recreation.sell_membership`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `customer` | yes |  |
+| `plan` | yes |  |
+| `starts_on` | no | `None` |
+| `paid` | no | `1` |
+| `mode` | no | `'Cash'` |
+
+### `kamra.recreation.renew_membership`
+
+**POST**
+
+The same plan again, from the day after this one ends (or today,
+when it has already lapsed).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `membership` | yes |  |
+| `paid` | no | `1` |
+| `mode` | no | `'Cash'` |
+
+### `kamra.recreation.check_in`
+
+**POST**
+
+One person into a facility. In-house guests are a reservation that
+is checked in. External customers are a recreation customer, usually
+on a membership. Capacity and hours are enforced. A walk-in pays by
+`mode` (Cash by default) into the till.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `facility` | yes |  |
+| `reservation` | no | `None` |
+| `customer` | no | `None` |
+| `complimentary` | no | `0` |
+| `mode` | no | `'Cash'` |
+
+### `kamra.recreation.check_out`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `visit` | yes |  |
+
+### `kamra.recreation.revenue`
+
+**GET/POST** · roles: `Finance`
+
+What the desk took on one day: folio, cash and membership fees.
+Cash and membership fees are operational totals. Folio amounts are
+also on the guest bill.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `date` | no | `None` |
+
+### `kamra.recreation.facility_slots`
+
+**GET/POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `facility` | yes |  |
+| `day` | no | `None` |
+
+### `kamra.recreation.book`
+
+**POST**
+
+Book a treatment (with a therapist, in a treatment room) or a pool /
+court session. The end comes from the treatment's minutes or the
+facility's session minutes unless given.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `facility` | yes |  |
+| `starts_at` | yes |  |
+| `reservation` | no | `None` |
+| `customer` | no | `None` |
+| `treatment` | no | `None` |
+| `therapist` | no | `None` |
+| `ends_at` | no | `None` |
+
+### `kamra.recreation.arrive`
+
+**POST**
+
+The booked guest or customer is here: it becomes a visit, paid like
+one (the treatment's price, else the facility's).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `booking` | yes |  |
+| `complimentary` | no | `0` |
+| `mode` | no | `'Cash'` |
+
+### `kamra.recreation.cancel_booking`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `booking` | yes |  |
+| `no_show` | no | `0` |
+
+### `kamra.recreation.bookings`
+
+**GET/POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `day` | no | `None` |
+
+### `kamra.recreation.save_treatment`
+
+**POST** · roles: `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `treatment_name` | yes |  |
+| `duration` | no | `60` |
+| `price` | no | `0` |
+| `facility` | no | `None` |
+| `name` | no | `None` |
+| `disabled` | no | `0` |
+
+### `kamra.recreation.save_therapist`
+
+**POST** · roles: `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `therapist_name` | yes |  |
+| `name` | no | `None` |
+| `disabled` | no | `0` |
+
+### `kamra.recreation.spa_setup`
+
+**GET/POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.recreation.entry_pass`
+
+**GET/POST**
+
+A member's or an in-house guest's pass: the code and its QR (data URI).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `customer` | no | `None` |
+| `reservation` | no | `None` |
+
+### `kamra.recreation.check_in_by_pass`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `facility` | yes |  |
+| `code` | yes |  |
+| `complimentary` | no | `0` |
+
+### `kamra.recreation.receipt`
+
+**GET/POST** · roles: `Finance`
+
+A walk-in's or a membership's receipt: the record's number is the
+receipt number. An operational receipt, not a tax invoice.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.recreation.report`
+
+**GET/POST** · roles: `Finance`
+
+Attendance, memberships, revenue by facility and by customer type,
+and hotel-guest against outside use, for a date range (default: this
+month so far).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+
+### `kamra.recreation.membership_ledger`
+
+**GET/POST** · roles: `Finance`
+
+Everything one customer bought and used, oldest first: each
+membership (and renewal) with its fee, each visit against it with the
+visits left, and what they paid at the desk.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `customer` | yes |  |
+
+
 ## Migration (CSV import)
 
 ### `kamra.migrate.preview_import`
@@ -5229,6 +5620,84 @@ idempotency_key returns the trip without posting again.
 | `idempotency_key` | no | `None` |
 
 
+## AI guest booking (guest.booking scope)
+
+> Only a service account with the guest.booking scope may call these; it sees only the bookings it made.
+
+### `kamra.guest_booking.search`
+
+**GET/POST**
+
+Room types free for the stay, each with the real quoted total per
+meal plan and what is due now under the property's payment policy.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `child_ages` | no | `None` |
+| `voucher_code` | no | `None` |
+
+### `kamra.guest_booking.hold`
+
+**POST**
+
+Book the stay for the guest. Pay-at-hotel properties confirm it at
+once; with an advance due it is held (Pending Payment) until
+hold_expires_on - send the payment link before then.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room_type` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `guest_name` | yes |  |
+| `phone` | yes |  |
+| `email` | no | `''` |
+| `adults` | no | `2` |
+| `children` | no | `0` |
+| `child_ages` | no | `None` |
+| `meal_plan` | no | `''` |
+| `special_requests` | no | `''` |
+| `voucher_code` | no | `''` |
+| `idempotency_key` | no | `''` |
+
+### `kamra.guest_booking.payment_link`
+
+**POST**
+
+A payment link for the advance still due on this booking.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.guest_booking.confirm`
+
+**POST**
+
+Confirm the booking - only once the property's policy is met: the
+advance is paid, or nothing was due now. Never on the model's say-so.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+### `kamra.guest_booking.status`
+
+**GET/POST**
+
+Where a booking this connection made stands.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `reservation` | yes |  |
+
+
 ## Dashboards
 
 ### `kamra.dashboards.property_dashboard`
@@ -5305,6 +5774,32 @@ the day figures, trend, movement and collections cover from_date..date.
 | `date` | no | `None` |
 | `from_date` | no | `None` |
 
+### `kamra.reports.business_date`
+
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Night Auditor`, `Housekeeping`, `Kamra Agent`
+
+The property's open business date (the day the night audit closes
+next) and the calendar date, so a connected app dates what it posts.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.reports.kpi_snapshots`
+
+**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
+
+The daily KPI snapshots of closed business dates from_date..to_date
+(both included, at most 366 days), oldest first. A date with no
+snapshot (not closed yet, or closed before snapshots existed) is
+absent, never estimated.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | yes |  |
+| `to_date` | no | `None` |
+
 ### `kamra.reports.budget_vs_actual`
 
 **GET/POST** · roles: `Finance`, `Revenue Manager`, `Kamra Agent`
@@ -5371,6 +5866,20 @@ breached if it was resolved after due_by, or is still open past due_by.
 | `property` | yes |  |
 | `from_date` | yes |  |
 | `to_date` | yes |  |
+
+### `kamra.reports.booking_link_sources`
+
+**GET/POST** · roles: `Revenue Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+Bookings made from booking links, per source tag (#560): how many,
+room nights and booked value, by the date the booking was made
+(default: the last 90 days). Cancelled bookings are left out.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
 
 
 ## Night audit report (day, MTD, YTD)
@@ -5607,7 +6116,13 @@ passes `credit_override_reason`. Agents can't override.
 **POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
 
 Record a company's payment against its city ledger account and clear
-the AR it pays. By default it pays the oldest open bills first;
+the AR it pays.
+
+`withholdings` ([{folio, amount, tax, rate?, certificate_number?,
+certificate_period?}], #521) is tax the company kept back from named
+bills: it clears that part of each bill too and is tracked as tax
+withheld until its certificate arrives (kamra.receivables). `tax` is a
+code from the country pack's withholding taxes. By default it pays the oldest open bills first;
 `allocations` ([{folio, amount}]) names the folios instead. Any excess
 stays on the account as unapplied credit and settles the company's next
 bill. `received_on` is the date the money arrived (the business date
@@ -5633,6 +6148,7 @@ the same bill.
 | `idempotency_key` | no | `None` |
 | `received_on` | no | `None` |
 | `pin` | no | `None` |
+| `withholdings` | no | `None` |
 
 ### `kamra.ledger.decide_city_ledger_payment`
 
@@ -6163,6 +6679,54 @@ re-run - finance is choosing who pays.
 | `to_account` | yes |  |
 | `reason` | no | `None` |
 
+### `kamra.receivables.write_off_ar_bill`
+
+**POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Write off part or all of what a bill still owes on a company's account
+as bad debt, with a reason (an Adjust reason code and/or a note).
+
+Above the property's allowance approval line (or with a supervisor
+reason code) it becomes a pending request ({"pending": True, ...}) that a
+manager approves with their PIN (kamra.api.decide_allowance), unless the
+caller is that manager. An AI agent's write-off always waits.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `account` | yes |  |
+| `folio` | yes |  |
+| `amount` | yes |  |
+| `reason` | no | `''` |
+| `reason_code` | no | `None` |
+| `pin` | no | `None` |
+
+### `kamra.receivables.record_withholding_certificate`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+The payer's certificate for tax it withheld came in: keep its number
+and period. The amount stays as recorded.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `tax_withheld` | yes |  |
+| `certificate_number` | yes |  |
+| `certificate_period` | no | `None` |
+| `received_on` | no | `None` |
+
+### `kamra.receivables.withheld_tax`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+
+Tax companies withheld from their payments: by default the amounts
+still waiting for a certificate, oldest first, with totals per tax.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `status` | no | `'Awaiting Certificate'` |
+| `account` | no | `None` |
+
 
 ## Accounts payable (vendors, supplier bills, approval, payments)
 
@@ -6294,6 +6858,82 @@ d31_60, d61_90, d90p and their sum `overdue`, plus totals.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+
+## ERPNext bridge (daily journal, supplier bills, HR employee link)
+
+> Opt-in, and only when ERPNext (and Frappe HR for the employee link) is on the same site.
+
+### `kamra.erpnext_bridge.preview_daily_journal`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`
+
+The journal entry a closed business date would post, and the account
+map keys it still needs. Works without ERPNext.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `business_date` | yes |  |
+
+### `kamra.erpnext_bridge.post_daily_journal`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Post a closed business date to ERPNext (night audit does it on its
+own when the setting is on). Refuses while any key is unmapped, so a
+day never posts in part.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `business_date` | yes |  |
+
+### `kamra.erpnext_bridge.reverse_daily_journal`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Cancel a business date's journal entry in ERPNext (it writes the
+reversing GL), so the date can post again after a correction.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `business_date` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.erpnext_bridge.sync_vendor_bills`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Post every approved supplier bill and payment not in ERPNext yet.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.erpnext_bridge.staff_employees`
+
+**GET/POST** · roles: `Hotel Admin`
+
+Kamra staff at this property with the HR Employee each is linked to
+(Employee.user_id), and the Employees not linked to anyone yet.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.erpnext_bridge.link_employee`
+
+**POST** · roles: `Hotel Admin`
+
+Link a staff login to its HR Employee (or unlink with no employee).
+The link is the Employee's own user_id, so HR and Kamra agree.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `user` | yes |  |
+| `employee` | no | `None` |
 
 
 ## Management books (next days of cash, P&L, balance sheet)
@@ -7544,7 +8184,9 @@ or the folio; staff count and price the bag at the door (status
 
 **POST**
 
-Create a Website booking. An existing guest profile is reused when
+Create a Website booking. `source_tag` is the src / utm_source tag of
+the booking link the guest came in on, kept on the reservation when the
+property has booking links on (#560). An existing guest profile is reused when
 both the phone and the full name match; staff verify at check-in.
 The advance owed is computed from the property's
 current payment policy and snapshotted onto the booking.
@@ -7574,6 +8216,7 @@ the sleeping arrangement and agrees the price for them.
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
 | `marketing_consent` | no | `0` |
+| `source_tag` | no | `''` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 

@@ -11,6 +11,7 @@ import { cn } from "../lib/utils"
 import { cur, loadLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import GoLiveImport from "./GoLiveImport"
+import { UsageSetupCard } from "./settings/UsageReportingPage"
 
 
 const inputCls =
@@ -1128,6 +1129,14 @@ export default function Setup() {
                   {t("Open Marketplace → Kamra Enterprise")}
                 </a>
               </div>
+              <UsageSetupCard
+                prefill={{
+                  property_name: prop.property_name,
+                  city: prop.city,
+                  country: prop.country,
+                  room_count: roomTypes.reduce((n, r) => n + r.numbers.split(",").filter((x) => x.trim()).length, 0),
+                }}
+              />
               <GoLiveImport property={createdProperty} embedded />
             </div>
           )}

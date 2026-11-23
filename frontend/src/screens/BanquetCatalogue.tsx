@@ -668,6 +668,7 @@ function ServiceSheet({
                 is_alcohol: s.is_alcohol ? 1 : 0,
                 on_pack_list: s.on_pack_list ? 1 : 0,
                 description: s.description ?? null,
+                stock_qty: Math.max(0, Math.floor(Number(s.stock_qty) || 0)),
               })
             }
           >{translate("Save service")}</Button>
@@ -712,6 +713,15 @@ function ServiceSheet({
               className={inputCls}
               value={s.gst_rate ?? 18}
               onChange={(e) => set("gst_rate", e.target.value)}
+            />
+          </Field>
+          <Field label={translate("Units owned")} hint={translate("0 = not counted. Set it and two confirmed functions can't take more than you own at once.")}>
+            <input
+              type="number"
+              min={0}
+              className={inputCls}
+              value={s.stock_qty ?? 0}
+              onChange={(e) => set("stock_qty", e.target.value)}
             />
           </Field>
         </div>

@@ -13,6 +13,7 @@
   "reference",
   "received_on",
   "allocations",
+  "withholdings",
   "idempotency_key",
   "column_break_a",
   "status",
@@ -81,6 +82,13 @@
    "label": "Allocations",
    "read_only": 1,
    "description": "What the payment clears, as proposed: [{folio, amount}]. Confirming posts exactly this."
+  },
+  {
+   "fieldname": "withholdings",
+   "fieldtype": "Long Text",
+   "label": "Tax Withheld",
+   "read_only": 1,
+   "description": "Tax the company kept back from named bills (JSON), posted as proposed when confirmed."
   },
   {
    "fieldname": "idempotency_key",
@@ -153,7 +161,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-12 10:00:00",
+ "modified": "2026-11-23 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Company Payment Request",

@@ -33,6 +33,9 @@ const Ctor: RecognizerCtor | undefined =
     : ((window as unknown as { SpeechRecognition?: RecognizerCtor }).SpeechRecognition ??
       (window as unknown as { webkitSpeechRecognition?: RecognizerCtor }).webkitSpeechRecognition)
 
+/** Chrome, Edge and Safari. Firefox and most in-app browsers have no mic. */
+export const voiceSupported = Boolean(Ctor)
+
 // the languages a front desk is most likely to speak; the browser hears each
 export const VOICE_LANGS: [string, string][] = [
   ["en-IN", "English (India)"],
@@ -48,6 +51,8 @@ export const VOICE_LANGS: [string, string][] = [
   ["pt-BR", "Português (Brasil)"],
   ["zh-CN", "简体中文"],
   ["fil-PH", "Filipino"],
+  ["vi-VN", "Tiếng Việt"],
+  ["sw-TZ", "Kiswahili"],
 ]
 
 const KEY = "kamra_voice_lang"
@@ -99,7 +104,19 @@ export default function VoiceButton(props: {
   // result, which would refill the box after it was sent
   useImperativeHandle(props.ref, () => ({ stop: () => rec.current?.abort() }), [])
 
-  if (!Ctor) return null
+  if (!Ctor) {
+    return (
+      <button
+        type="button"
+        disabled
+        aria-label={translate("Microphone isn't available in this browser")}
+        title={translate("This browser can't use the microphone. Type instead, or open Kamra in Chrome or Safari.")}
+        className="flex size-9 items-center justify-center rounded-full text-zinc-300"
+      >
+        <Mic className="size-4" />
+      </button>
+    )
+  }
 
   function start() {
     if (!Ctor || props.disabled) return

@@ -1,6 +1,6 @@
 # MCP tool reference
 
-Kamra exposes **170 governed tools** on the hosted MCP
+Kamra exposes **178 governed tools** on the hosted MCP
 endpoint (`/mcp`) and the stdio sidecar (`mcp/kamra_mcp.py`). Every
 call runs as the connected user - **role** permissions apply, tools
 are further filtered by the property's **enabled modules**, prices
@@ -1023,6 +1023,15 @@ floor/ceiling. Always give a reason (it goes in the audit trail).
 Endpoint: `kamra.api.set_room_rate`.
 Mutating - logged to the activity ledger.
 
+### `occupancy_on_books(start_date, end_date)`
+
+Occupancy on the books per night for a date range (both dates
+included, at most 90 nights): confirmed and in-house reservations
+over all rooms. Rooms already sold, not a forecast. Quote the
+figures as returned - never estimate or round them yourself.
+
+Endpoint: `kamra.api.occupancy_on_books`.
+
 ## Briefings
 
 ### `owner_briefing(date)`
@@ -1053,6 +1062,23 @@ outlook. date YYYY-MM-DD; pass from_date for a range ending on date.
 Read-only.
 
 Endpoint: `kamra.reports.manager_flash`.
+
+### `business_date()`
+
+The property's open business date (the day the next night audit
+closes) and today's calendar date. Read-only.
+
+Endpoint: `kamra.reports.business_date`.
+
+### `kpi_snapshots(from_date, to_date)`
+
+Daily KPI snapshots of closed business dates, written once at night
+audit and equal to the manager flash for each date: occupancy, ADR,
+RevPAR, revenue by group, collections by mode and the AR balance.
+from_date..to_date YYYY-MM-DD, both included, at most 366 days. A date
+not yet closed has no snapshot. Read-only.
+
+Endpoint: `kamra.reports.kpi_snapshots`.
 
 ### `night_audit_report(date)`
 
@@ -1608,3 +1634,43 @@ them to the user rather than silently dropping rows.
 
 Endpoint: `kamra.api.import_bookings`.
 Mutating - logged to the activity ledger.
+
+## Channels
+
+### `guest_search_stay(check_in_date, check_out_date, adults, children, child_ages, voucher_code)`
+
+Rooms free for a guest's stay with the real total per meal plan and what is
+due now under the hotel's payment policy. Always search before holding.
+
+Endpoint: `kamra.guest_booking.search`.
+
+### `guest_hold_booking(room_type, check_in_date, check_out_date, guest_name, phone, email, adults, children, child_ages, meal_plan, special_requests, voucher_code, idempotency_key)`
+
+Book the stay for the guest (name and phone required). If nothing is due now the
+hotel confirms it at once; otherwise it is held until hold_expires_on - send
+guest_payment_link before then. Pass an idempotency_key so a retry can't book twice.
+
+Endpoint: `kamra.guest_booking.hold`.
+Mutating - logged to the activity ledger.
+
+### `guest_payment_link(reservation)`
+
+A payment link (the hotel's gateway) for the advance still due on a booking this
+connection made. Paying it confirms the booking.
+
+Endpoint: `kamra.guest_booking.payment_link`.
+Mutating - logged to the activity ledger.
+
+### `guest_confirm_booking(reservation)`
+
+Confirm a held booking - refused until the advance is paid (or nothing was due).
+
+Endpoint: `kamra.guest_booking.confirm`.
+Mutating - logged to the activity ledger.
+
+### `guest_booking_status(reservation)`
+
+Status, dates, total, advance paid and still due, and hold expiry of a booking
+this connection made.
+
+Endpoint: `kamra.guest_booking.status`.

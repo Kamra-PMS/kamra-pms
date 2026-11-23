@@ -25,6 +25,9 @@ and the accessors refuse rather than fall back to another country's:
   verify_tax_id(property, tax_id, business_name) -> dict
   verify_guest_id(property, guest, id_type, consent) -> dict
 
+Optional withholding taxes a company payer deducts from a bill (#521):
+  WITHHOLDING_TAXES = [{"code", "label", "rates": [...]}]
+
 Optional official FX source. Absent means the open market feed
 (kamra.ledger.market_rates):
   market_rates(home) -> (rates, as_of)
@@ -169,15 +172,27 @@ def amount_in_words(pack, prop_doc, amount) -> str:
 # ── front-desk vocabulary: IDs and ways to pay ───────────────────────────
 # A pack declares ID_TYPES / PAYMENT_MODES / DEFAULT_* as module constants.
 # The desk offers Cash, Card and Bank Transfer everywhere. A pack may add
-# its own instant / wallet modes (INSTANT_PAYMENT_MODES, e.g. India's UPI):
-# each must also be a Folio Payment / Cashier Transaction option, and the
-# till keeps them in their own bucket (Cashier Session.system_upi).
+# its own instant / wallet modes (INSTANT_PAYMENT_MODES, e.g. India's UPI,
+# Indonesia's QRIS): each must also be an option on Folio Payment, Cashier
+# Transaction, Banquet Receipt and POS Order, and the till keeps them in
+# their own bucket (Cashier Session.system_upi).
 
 GENERIC_ID_TYPES = ["Passport", "National ID", "Driving License", "Other"]
 GENERIC_PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 # modes that are not a country's: any property may record them
 CORE_PAYMENT_MODES = ("Cash", "Foreign Cash", "Card", "Bank Transfer", "OTA Prepaid",
                       "Company Credit", "Payment Link", "Cheque", "Other")
+
+
+# Tax a company payer withholds from a bill and certifies later (#521):
+# WITHHOLDING_TAXES = [{"code", "label", "rates": [percent, ...]}]. A pack
+# without one still lets Finance record a plain withholding.
+GENERIC_WITHHOLDING_TAXES = [{"code": "WHT", "label": "Tax withheld", "rates": []}]
+
+
+def withholding_taxes(pack) -> list[dict]:
+	return [dict(t) for t in getattr(pack, "WITHHOLDING_TAXES", None)
+	        or GENERIC_WITHHOLDING_TAXES]
 
 
 def id_types(pack) -> list[str]:
@@ -201,10 +216,13 @@ def cash_denominations(pack) -> list[float]:
 
 
 def outlet_payment_modes(pack) -> list[str]:
-	"""What a bill is settled with at an outlet (POS): cash, card and the
-	pack's instant modes."""
+	"""What a bill is settled with at an outlet (POS): cash, card, bank
+	transfer and the pack's instant modes. A restaurant takes a transfer as
+	the front desk does. Whatever a pack adds here must also be an option on
+	POS Order's Payment Mode."""
 	instant = instant_payment_modes(pack)
-	return [m for m in payment_modes(pack) if m in ("Cash", "Card") or m in instant]
+	return [m for m in payment_modes(pack)
+	        if m in ("Cash", "Card", "Bank Transfer") or m in instant]
 
 
 def assert_payment_mode(property: str, mode: str | None) -> None:
@@ -380,9 +398,17 @@ def parse_payment_webhook(gateway: str, payload: bytes, headers: dict,
 	if not provider:
 		return None
 	folio = provider.webhook_folio(payload)
-	if not folio or not frappe.db.exists("Folio", folio):
+	# a banquet milestone link carries "VB:<function>:<term>" (kamra.banquet_ops)
+	banquet = (folio or "").startswith("VB:")
+	if banquet:
+		function = folio[3:].partition(":")[0]
+		property = frappe.db.get_value("Venue Booking", function, "property")
+		if not property:
+			return None
+	elif not folio or not frappe.db.exists("Folio", folio):
 		return None
-	property = frappe.db.get_value("Folio", folio, "property")
+	else:
+		property = frappe.db.get_value("Folio", folio, "property")
 	if gateway not in payment_gateways(pack_for(property)):
 		return None
 	settings = settings_for(property)

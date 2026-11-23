@@ -174,6 +174,18 @@ the details as submitted and verifies them on arrival.
 
 ![The online check-in page: stay summary, ID type and number, ID photo, address proof, contact details and the signature box](/img/booking-engine/checkin.png)
 
+## Share booking links with a source tag
+
+**Booking Engine → Booking links** builds a link to your booking page that
+opens a room type, dates and a plan already picked, with a **source tag**
+(for example `instagram-bio` or `newsletter-nov`). A booking made from the
+link keeps the tag (Reservation → Source Tag). A link with `utm_source`
+and no `src` keeps that instead. The same page lists bookings, room nights
+and booked value per tag over the last 90 days. Link parameters:
+`room=<room type>`, `plan=<meal plan>`, `src=<tag>`, dates in the path
+(`/book/<check-in>/<check-out>/<adults>/<children>`). Switch tags off in
+**Settings → Booking Engine → Booking links with a source tag**.
+
 ## Settings
 
 | Setting | Where | Default | What it does |

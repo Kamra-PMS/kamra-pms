@@ -34,10 +34,11 @@ def check(name):
 			except Exception as e:
 				frappe.db.rollback(save_point=sp)
 				import traceback
-				tail = " | ".join(
-					line.strip()
-					for line in traceback.format_exc().splitlines()[-6:]
-				)
+				lines = traceback.format_exc().splitlines()
+				# the last Kamra frames say where it broke; frappe's own are noise
+				ours = [f"{a.strip()} {b.strip()}" for a, b in zip(lines, lines[1:])
+				        if "/apps/kamra/" in a][-6:]
+				tail = " | ".join(ours + [line.strip() for line in lines[-2:]])
 				RESULTS.append((name, False, f"{type(e).__name__}: {e} [{tail}]"))
 		run.__name__ = name
 		return run
@@ -378,6 +379,85 @@ def t3h():
 	finally:
 		frappe.delete_doc("Season", season.name, force=True,
 		                  ignore_permissions=True)
+
+
+@check("stay restrictions: the quote refuses a stay that breaks one, with the reason (#530)")
+def t530():
+	"""Min / max nights and closed to arrival read the arrival date, closed
+	to departure the departure date, stop-sell every night. A day list
+	overrides by weekday, a plan-only rule leaves the plain price alone, an
+	OTA booking is never refused, and ARI carries the same values."""
+	from decimal import Decimal
+
+	from kamra.channel_ari import _restriction_day
+	from kamra.pricing import day_restrictions, quote, restriction_rules
+
+	plan = frappe.get_doc({"doctype": "Rate Plan", "property": P,
+	                       "rate_plan_name": "Eval Restricted", "code": "EVRST",
+	                       "modifier_type": "Percent", "modifier_value": 0,
+	                       }).insert(ignore_permissions=True).name
+	made = []
+
+	def rule(name, start, end, **kw):
+		made.append(frappe.get_doc({
+			"doctype": "Rate Restriction", "property": P, "restriction_name": name,
+			"room_type": RT, "start_date": start, "end_date": end, **kw,
+		}).insert(ignore_permissions=True).name)
+
+	def refused(ci, co, rate_plan=None, why=""):
+		try:
+			quote(P, RT, ci, co, 2, 0, rate_plan=rate_plan)
+		except frappe.ValidationError as e:
+			assert why in str(e), (ci, co, str(e))
+			return
+		raise AssertionError(f"{ci}..{co} on {rate_plan} was quoted")
+
+	try:
+		rule("EVAL CTA", "2032-03-05", "2032-03-05", closed_to_arrival=1)
+		rule("EVAL Min3 plan", "2032-03-10", "2032-03-10", min_nights=3, rate_plan=plan)
+		# Fridays and Saturdays in the range only: a weekday override
+		rule("EVAL Max1 weekend", "2032-03-01", "2032-03-31", max_nights=1,
+		     days_of_week="fri, sat")
+		rule("EVAL CTD", "2032-03-25", "2032-03-25", closed_to_departure=1)
+		rule("EVAL Stop", "2032-03-28", "2032-03-28", stop_sell=1)
+
+		refused("2032-03-05", "2032-03-06", why="Arrivals are closed")
+		refused("2032-03-10", "2032-03-11", plan, why="at least 3 nights")
+		quote(P, RT, "2032-03-10", "2032-03-11", 2, 0)  # plain price: no plan rule
+		quote(P, RT, "2032-03-10", "2032-03-13", 2, 0, rate_plan=plan)
+		refused("2032-03-12", "2032-03-14", why="at most 1 nights")
+		quote(P, RT, "2032-03-16", "2032-03-18", 2, 0)  # a Tuesday: no max
+		refused("2032-03-23", "2032-03-25", why="Departures are closed")
+		refused("2032-03-27", "2032-03-29", why="closed for sale")
+		quote(P, RT, "2032-03-25", "2032-03-28", 2, 0)  # arrive on the CTD day, leave on the stop-sell day
+		# the channel sync prices the day anyway
+		quote(P, RT, "2032-03-28", "2032-03-29", 2, 0, check_restrictions=False)
+
+		desk = {"doctype": "Reservation", "property": P, "room_type": RT,
+		        "guest": _guest("Eval Restricted", "+91 70000 00530"),
+		        "check_in_date": "2032-03-05", "check_out_date": "2032-03-06",
+		        "adults": 2, "children": 0, "auto_price": 1, "status": "Confirmed"}
+		try:
+			frappe.get_doc(dict(desk)).insert(ignore_permissions=True)
+			raise AssertionError("a desk booking arriving on a closed day was saved")
+		except frappe.ValidationError:
+			pass
+		ota = frappe.get_doc(dict(desk, source="OTA", channel="booking.com")
+		                     ).insert(ignore_permissions=True)
+		frappe.delete_doc("Reservation", ota.name, force=True, ignore_permissions=True)
+
+		rules = restriction_rules(P, RT, plan, "2032-03-01", "2032-03-31")
+		day = _restriction_day(Decimal("100"), day_restrictions(rules, "2032-03-10"))
+		assert day == {"rate": Decimal("100"), "stop_sell": False, "min_stay_arrival": 3,
+		               "max_stay": 0, "closed_to_arrival": False,
+		               "closed_to_departure": False}, day
+		stop = _restriction_day(Decimal("100"), day_restrictions(rules, "2032-03-28"))
+		assert stop["stop_sell"] is True and stop["min_stay_arrival"] == 1, stop
+		assert _restriction_day(None) == {"stop_sell": True}  # no rules: as before
+	finally:
+		for name in made:
+			frappe.delete_doc("Rate Restriction", name, force=True, ignore_permissions=True)
+		frappe.delete_doc("Rate Plan", plan, force=True, ignore_permissions=True)
 
 
 @check("a stay touching a weekend loses the small-group rate throughout")
@@ -10337,6 +10417,48 @@ def _mcp_user(*roles):
 	return EVAL_MCP
 
 
+@check("rooms: allocation gives a connecting pair when asked and an accessible room when needed (#536)")
+def t536():
+	from kamra import api
+	from kamra.allocation import suggest_allocation
+	rt, (r1, r2) = _t300_rooms("T536A")
+	r3, r4 = (frappe.get_doc({
+		"doctype": "Room", "property": P, "room_number": f"T536A{n}",
+		"room_type": rt, "housekeeping_status": "Clean",
+	}).insert(ignore_permissions=True).name for n in (3, 4))
+	# the connecting door is set on one room and kept on both
+	room = frappe.get_doc("Room", r2)
+	room.connects_to = r4
+	room.save(ignore_permissions=True)
+	assert frappe.db.get_value("Room", r4, "connects_to") == r2
+	frappe.db.set_value("Room", r3, "accessible", 1)
+	today, tomorrow = nowdate(), add_days(nowdate(), 1)
+	# accessible rooms can be filtered
+	assert {r["name"] for r in api.available_rooms(P, rt, today, tomorrow,
+	                                               accessible=1)} == {r3}
+	g = _guest("Eval Connecting", "+91 70000 53601")
+	stays = [frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": g, "room_type": rt,
+		"check_in_date": today, "check_out_date": tomorrow, "adults": 2,
+		"auto_price": 1, "needs_connecting": 1,
+	}).insert(ignore_permissions=True).name for _ in (1, 2)]
+	acc = frappe.get_doc({
+		"doctype": "Reservation", "property": P,
+		"guest": _guest("Eval Accessible", "+91 70000 53602"), "room_type": rt,
+		"check_in_date": today, "check_out_date": tomorrow, "adults": 2,
+		"auto_price": 1, "needs_accessible": 1,
+	}).insert(ignore_permissions=True).name
+	plan = {p_["reservation"]: p_ for p_ in suggest_allocation(P, today)["proposals"]}
+	assert {plan[s_]["suggested_room"] for s_ in stays} == {r2, r4}, plan
+	assert all("connects to" in plan[s_]["why"] for s_ in stays), plan
+	assert plan[acc]["suggested_room"] == r3, plan[acc]
+	# unlinking clears both sides
+	room = frappe.get_doc("Room", r2)
+	room.connects_to = None
+	room.save(ignore_permissions=True)
+	assert not frappe.db.get_value("Room", r4, "connects_to")
+
+
 @check("room assignment for arrivals: apply re-checks every pair, skips bad ones with a reason, and repeating it changes nothing")
 def t384():
 	from kamra.allocation import apply_allocation, suggest_allocation
@@ -10829,6 +10951,79 @@ def t_service_account_scope():
 		"revoked key still reaches its scope"
 
 
+@check("AI guest booking: guest scope only, own bookings only, holds expire, confirm needs the advance (#228)")
+def t_ai_guest_booking():
+	from frappe.utils import add_to_date, now_datetime
+
+	from kamra import guest_booking as gb
+	from kamra import service_accounts as sa
+	from kamra.reservation_state import expire_holds
+
+	# scope: the five guest tools and branding, no staff endpoint, no staff role
+	assert sa.scope_tools(["guest.booking"]) == {
+		"guest_search_stay", "guest_hold_booking", "guest_payment_link",
+		"guest_confirm_booking", "guest_booking_status"}
+	assert sa.scope_roles(["guest.booking"]) == {sa.ROLE, "MCP Manage"}, \
+		sa.scope_roles(["guest.booking"])
+	a = sa.create_service_account("EVAL guest assistant A", ["guest.booking"], [P])
+	b = sa.create_service_account("EVAL guest assistant B", ["guest.booking"], [P])
+	frappe.local.cache.pop("kamra_service_accounts", None)
+	frappe.db.set_value("Property", P, {"booking_payment_mode": "Advance percent",
+	                                    "advance_percent": 25})
+	frappe.clear_document_cache("Property", P)
+	try:
+		frappe.set_user(a["user"])  # nosemgrep: frappe-setuser -- acting as the key under test
+		me = sa.account_for()
+		assert sa.refusal(me, "/api/method/kamra.guest_booking.hold") is None
+		for path in ("/api/method/kamra.api.find_reservations",
+		             "/api/method/kamra.api.stay_detail", "/api/resource/Guest"):
+			assert sa.refusal(me, path), f"{path} reachable with the guest scope"
+		rows = gb.search(P, "2031-06-10", "2031-06-11", adults=1)
+		assert any(r["room_type"] == RT and r["quote"] for r in rows), rows
+		held = gb.hold(P, RT, "2031-06-10", "2031-06-11", "Eval AI Guest",
+		               "+919812302281", adults=1, idempotency_key="eval-ai-228")
+		assert held["status"] == "Pending Payment" and held["hold_expires_on"], held
+		assert held["still_due_now"] > 0 and not held["confirmed"], held
+		# the policy, not the model, confirms: refused while the advance is due
+		_refused(gb.confirm, held["reservation"], contains="advance")
+		assert gb.status(held["reservation"])["reservation"] == held["reservation"]
+		frappe.set_user(b["user"])  # nosemgrep: frappe-setuser -- the other key
+		_refused(gb.status, held["reservation"], exc=frappe.DoesNotExistError)
+		_refused(gb.confirm, held["reservation"], exc=frappe.DoesNotExistError)
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+	res = held["reservation"]
+	# paid in full: confirm goes through
+	due = frappe.db.get_value("Reservation", res, "advance_due")
+	frappe.db.set_value("Reservation", res, "advance_paid", due)
+	frappe.set_user(a["user"])  # nosemgrep: frappe-setuser -- acting as the key under test
+	try:
+		assert gb.confirm(res)["confirmed"]
+		second = gb.hold(P, RT, "2031-06-12", "2031-06-13", "Eval AI Guest 2",
+		                 "+919812302282", adults=1)
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+	# an unpaid hold is released when its window passes
+	frappe.db.set_value("Reservation", second["reservation"], "hold_expires_on",
+	                    add_to_date(now_datetime(), minutes=-5))
+	expire_holds()
+	assert frappe.db.get_value("Reservation", second["reservation"], "status") == "Cancelled"
+	# pay at the hotel: the property's policy confirms at once
+	frappe.db.set_value("Property", P, "booking_payment_mode", "Pay at hotel")
+	frappe.clear_document_cache("Property", P)
+	frappe.set_user(a["user"])  # nosemgrep: frappe-setuser -- acting as the key under test
+	try:
+		now = gb.hold(P, RT, "2031-06-14", "2031-06-15", "Eval AI Guest 3",
+		              "+919812302283", adults=1)
+		assert now["confirmed"] and now["still_due_now"] == 0, now
+		_refused(gb.payment_link, now["reservation"], contains="Nothing is due")
+	finally:
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- back to the console user
+	for acct in (a, b):
+		sa.revoke_service_account(acct["name"])
+	frappe.local.cache.pop("kamra_service_accounts", None)
+
+
 @check("app pairing: code works once, scoped key, disconnect stops it")
 def t_app_pairing():
 	from unittest.mock import patch
@@ -11153,6 +11348,32 @@ def t_ar_received_dispute_aging():
 def _gl(code, gl):
 	frappe.db.set_value("Transaction Code", code, "gl_code", gl)
 
+
+@check("city ledger: a payment less tax the company withheld clears the bill; the tax waits for its certificate (#521)")
+def t_ar_tax_withheld():
+	from kamra.ledger import city_ledger_settle, reverse_city_ledger_payment
+	from kamra.receivables import record_withholding_certificate, withheld_tax
+	corp = _credit_corp("EVAL TDS Corp")
+	acct, f, owed = _ar_bill("Eval TDS", "+91 70000 05211", 21, "L5211", corp, 1000)
+	tds = round(owed * 0.02, 2)
+	pay = city_ledger_settle(acct, round(owed - tds, 2), "Bank Transfer", "EVAL-521",
+	                         withholdings=[{"folio": f, "amount": tds, "tax": "TDS-194C",
+	                                        "rate": 2}])
+	assert pay["unapplied"] == 0 and pay["withheld"][0]["amount"] == tds, pay
+	assert abs(float(frappe.db.get_value("City Ledger Account", acct, "balance"))) < 0.01
+	_assert_company_ar(acct)
+	waiting = [r for r in withheld_tax(P)["rows"] if r["account"] == acct]
+	assert [(r["tax_code"], r["amount"]) for r in waiting] == [("TDS-194C", tds)], waiting
+	_refused(city_ledger_settle, acct, 10, withholdings=[{"folio": f, "amount": 1,
+	                                                      "tax": "TDS-194C"}],
+	         contains="nothing open")
+	record_withholding_certificate(waiting[0]["name"], "EVAL-16A-1", "Q3")
+	assert not [r for r in withheld_tax(P)["rows"] if r["account"] == acct]
+	# a bounced payment brings the withheld part back with it
+	reverse_city_ledger_payment(pay["payment"], reason_code="REV-BOUNCE")
+	assert abs(float(frappe.db.get_value("City Ledger Account", acct, "balance")) - owed) < 0.01
+	_assert_company_ar(acct)
+
 @check("till close: note-by-note count adds up to the counted cash; session read API and MCP tools return the reconciliation")
 def t_cash_count():
 	from kamra import api, cashier
@@ -11224,6 +11445,25 @@ def t_gl_stamp():
 	finally:
 		_gl("3000", old_gl)
 		frappe.delete_doc("Transaction Code", cash.name, force=True, ignore_permissions=True)
+
+@check("MCP occupancy_on_books: one figure per night from pricing, Revenue Manager only, at most 90 nights")
+def t_mcp_occupancy_on_books():
+	from kamra.mcp_tools import BY_NAME, call_tool
+	from kamra.pricing import forecast_occupancy
+	spec = BY_NAME["occupancy_on_books"]
+	assert not spec.mutating and spec.inject_property and spec.group == "Revenue", spec
+	out = call_tool(spec, {"start_date": "2036-08-01", "end_date": "2036-08-03"}, P)
+	assert [n["date"] for n in out["nights"]] == ["2036-08-01", "2036-08-02", "2036-08-03"], out
+	for n in out["nights"]:  # numbers come from code, never the model
+		assert n["occupancy_pct"] == forecast_occupancy(P, n["date"]), (n, out)
+	assert len(call_tool(spec, {"start_date": "2036-08-01", "end_date": "2036-10-29"},
+	                     P)["nights"]) == 90
+	_refused(call_tool, spec, {"start_date": "2036-08-01", "end_date": "2036-10-30"}, P,
+	         contains="90 nights")
+	_refused(call_tool, spec, {"start_date": "2036-08-03", "end_date": "2036-08-01"}, P)
+	with _as_user("frontdesk@kamra.local"):
+		_refused(call_tool, spec, {"start_date": "2036-08-01"}, P, exc=frappe.PermissionError)
+
 
 @check("MCP correct_folio_charge: reverses and reposts linked to the original, keeps posted GL codes, replays, refuses roles and room nights")
 def t_mcp_correct():
@@ -11382,6 +11622,90 @@ def t_pos_till_with_tax():
 	took = frappe.db.get_value(
 		"Cashier Transaction", {"pos_order": o, "kind": "Payment"}, "amount")
 	assert printed == 1050.0 and float(took or 0) == printed, (printed, took)
+
+@check("POS: a bill settles by Bank Transfer, and by QRIS in Indonesia; the till keeps both out of the cash drawer")
+def t_pos_outlet_bank_transfer_qris():
+	from kamra import cashier, pos
+	from kamra.localization import outlet_payment_modes, pack_for
+
+	# the doctypes the modes are stored on took the migration, not just the JSON
+	for doctype, field, mode in (("Folio Payment", "mode", "QRIS"),
+	                             ("Cashier Transaction", "mode", "QRIS"),
+	                             ("Banquet Receipt", "mode", "QRIS"),
+	                             ("POS Order", "payment_mode", "QRIS"),
+	                             ("POS Order", "payment_mode", "Bank Transfer")):
+		options = (frappe.get_meta(doctype).get_field(field).options or "").split("\n")
+		assert mode in options, (doctype, field, options)
+
+	# India (the harness property) still has no QRIS; Bank Transfer is there
+	assert outlet_payment_modes(pack_for(P)) == ["Cash", "Card", "UPI", "Bank Transfer"], \
+		outlet_payment_modes(pack_for(P))
+	try:
+		pos._assert_outlet_mode(P, "QRIS")
+	except frappe.ValidationError:
+		pass
+	else:
+		raise AssertionError("QRIS was accepted at an Indian outlet")
+	pos._assert_outlet_mode(P, "Bank Transfer")
+
+	P6 = "EVAL Bali Hotel"  # the Indonesia property t44 creates
+	if not frappe.db.exists("Property", P6):
+		frappe.get_doc({
+			"doctype": "Property", "property_name": P6, "city": "Ubud",
+			"country": "Indonesia",
+		}).insert(ignore_permissions=True)
+	assert outlet_payment_modes(pack_for(P6)) == ["Cash", "Card", "QRIS", "Bank Transfer"], \
+		outlet_payment_modes(pack_for(P6))
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P6, "outlet_name": "Eval Warung",
+		"outlet_type": "Restaurant", "gst_rate": 10,
+	}).insert(ignore_permissions=True).name
+	dish = frappe.get_doc({
+		"doctype": "Menu Item", "property": P6, "outlet": outlet,
+		"item_name": "Eval Nasi Goreng", "category": "Food", "price": 50000,
+		"is_veg": 0, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+	session = cashier.open_session(P6, 0)["name"]
+
+	def bill():
+		o = pos.create_order(outlet, [{"menu_item": dish, "qty": 1}],
+		                     order_type="Takeaway")["order"]
+		return o, pos.bill_data(o)["grand_total"]
+
+	# a mode this country does not have is refused, and the bill stays open
+	o, _ = bill()
+	try:
+		pos.pay_order(o, "UPI")
+	except frappe.ValidationError:
+		pass
+	else:
+		raise AssertionError("UPI was accepted at an Indonesian outlet")
+	assert not frappe.db.get_value("POS Order", o, "paid")
+
+	# each way to pay closes a bill and puts the till's money where it belongs
+	grand = None
+	for mode in ("Cash", "QRIS", "Bank Transfer"):
+		o, grand = bill()
+		pos.pay_order(o, mode)
+		doc = frappe.get_doc("POS Order", o)
+		assert doc.paid and doc.payment_mode == mode, (mode, doc.paid, doc.payment_mode)
+		took = frappe.db.get_value(
+			"Cashier Transaction", {"pos_order": o, "kind": "Payment"},
+			["mode", "amount"], as_dict=True)
+		assert took.mode == mode and float(took.amount) == grand, (mode, took, grand)
+	t = cashier.session_as_dict(session)["totals"]
+	# the open "UPI" bill above never paid, so three bills are on the till
+	assert (t["cash"], t["upi"], t["other"], t["card"]) == (grand, grand, grand, 0), t
+	assert t["expected_cash"] == grand, t  # only the cash is in the drawer
+
+	# a cashier who pressed the wrong mode can move it to either
+	o, grand = bill()
+	pos.pay_order(o, "Cash")
+	pos.change_payment_mode(o, "QRIS")
+	pos.change_payment_mode(o, "Bank Transfer")
+	assert frappe.db.get_value("POS Order", o, "payment_mode") == "Bank Transfer"
+	t = cashier.session_as_dict(session)["totals"]
+	assert (t["cash"], t["upi"], t["other"]) == (grand, grand, grand * 2), t
 
 @check("type capacity: out of order and blocked rooms are not sold to an unassigned stay")
 def t_capacity_rooms_out_of_sale():
@@ -11570,6 +11894,208 @@ def t_rates_include_levy():
 		frappe.clear_document_cache("Property", "EVAL Levy Hotel")
 
 
+@check("night audit: seeded anomalies are flagged with a reason and rows, and wait for history (#558)")
+def t_audit_anomalies():
+	from unittest.mock import patch
+
+	from frappe.utils import add_days as _ad
+
+	from kamra import night_audit as na
+	from kamra.savings import log_action
+	bd, user = "2035-03-31", "frontdesk@kamra.local"
+	day = lambda n: str(_ad(bd, n))  # noqa: E731
+	frappe.db.savepoint("eval_anom")
+	try:
+		_na_reset()
+
+		def res(name, ci, status="Checked Out", channel="EVAL Direct"):
+			frappe.get_doc({"doctype": "Reservation", "name": name, "property": P,
+			                "room_type": RT, "status": status, "check_in_date": ci,
+			                "check_out_date": str(_ad(ci, 1)), "channel": channel,
+			                "source": "Manual", "guest_name": name}).db_insert()
+
+		# rate: a room type that posts ~1000 a night, one night at 5000 today
+		res("EVAL-ANOM-R0", day(-40), "Checked In")
+		folio = frappe.get_doc({"doctype": "Folio", "name": "EVAL-ANOM-F0", "property": P,
+		                        "reservation": "EVAL-ANOM-R0", "folio_type": "Guest",
+		                        "status": "Open"})
+		folio.db_insert()
+		for i, (n, amt) in enumerate([(n, 990 + (n % 3) * 10) for n in range(-30, 0)]
+		                             + [(0, 5000)]):
+			frappe.get_doc({"doctype": "Folio Charge", "name": f"EVAL-ANOM-C{i}",
+			                "parent": folio.name, "parenttype": "Folio",
+			                "parentfield": "charges", "idx": i + 1, "posting_date": day(n),
+			                "charge_type": "Room", "amount": amt, "rate": amt, "qty": 1,
+			                "reservation": "EVAL-ANOM-R0"}).db_insert()
+		# voids: one every other day for 40 days, eight today
+		for n in [*range(-40, 0, 2), *[0] * 8]:
+			name = log_action("void_charge", "Folio", folio.name, P, rationale="eval")
+			frappe.db.sql("UPDATE `tabAgent Action Log` SET actor=%s, creation=%s WHERE name=%s",
+			              (user, f"{day(n)} 12:00:00", name))
+		# allowances: one every other day, five today
+		for i, n in enumerate([*range(-24, 0, 2), *[0] * 5]):
+			req = frappe.get_doc({"doctype": "Allowance Request", "property": P,
+			                      "folio": folio.name, "amount": 10, "reason": "eval",
+			                      "status": "Approved", "requested_by": user,
+			                      "requested_on": f"{day(n)} 12:00:00"})
+			req.flags.kamra_decision = True
+			req.insert(ignore_permissions=True)
+		# tills: a few units over/short for weeks, 900 short today
+		for n in range(-15, 1):
+			frappe.get_doc({"doctype": "Cashier Session", "property": P, "user": user,
+			                "business_date": day(n), "status": "Closed",
+			                "variance": -900 if n == 0 else (n % 6) - 2}
+			               ).insert(ignore_permissions=True, ignore_mandatory=True)
+		# no-shows: half of one agency's recent arrivals, none of direct's
+		for i in range(10):
+			res(f"EVAL-ANOM-NS{i}", day(-2 - i), "No Show" if i % 2 else "Checked Out",
+			    "EVAL NS Agency")
+		for i in range(40):
+			res(f"EVAL-ANOM-D{i}", day(-3 - i * 4))
+
+		with patch.object(na, "_history_days", return_value=5):
+			early = na.check_anomalies(P, bd)
+		assert early["count"] == 0 and not early["ready"], early
+
+		out = na.check_anomalies(P, bd)
+		assert out["ready"] and out["severity"] == "warn", out
+		kinds = {(i["kind"], i["who"]) for i in out["items"]}
+		for want in (("voids", user), ("allowances", user), ("cash_variance", user),
+		             ("rate", "EVAL-ANOM-R0"), ("no_shows", "EVAL NS Agency")):
+			assert want in kinds, (want, out["items"])
+		assert ("no_shows", "EVAL Direct") not in kinds, out["items"]
+		assert all(i["reason"] and i["sources"] for i in out["items"]), out["items"]
+		void = next(i for i in out["items"] if i["kind"] == "voids")
+		assert void["value"] == 8 and len(void["sources"]) == 8, void
+
+		_na_setting("na_anomaly_checks", 0)
+		assert na.check_anomalies(P, bd)["count"] == 0
+	finally:
+		frappe.db.rollback(save_point="eval_anom")
+		_na_reset()
+
+
+@check("check-in before the arrival date moves the arrival to today and bills it")
+def t_early_arrival_check_in():
+	from kamra import api
+	from kamra.business_date import get_business_date
+	day = max(str(get_business_date(P)), nowdate())
+	with _steps_enforced():
+		g = _guest("Eval Early Arrival", "+91 70000 06402")
+		res = _res(g, add_days(day, 2), add_days(day, 4), _ledger_room("L6402"))
+		before = float(res.amount_after_tax or 0)
+		_refused(api.check_in, res.name, exc=api.EarlyArrival, contains="booked to arrive")
+		day_use = _res(g, add_days(day, 3), add_days(day, 3), day_use=1)
+		_refused(api.check_in, day_use.name, early_arrival=1, contains="day-use")
+		ota = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early OTA",
+		                         phone="+91 70000 06403", booked_via="Booking.com",
+		                         ota_ref="EVAL-EA-6403", ota_total=9000)["reservation"]
+		_refused(api.check_in, ota, early_arrival=1, confirm_price=1, contains="fixed price")
+		# a voucher's discount is on the whole stay, so its nights are all re-quoted
+		vou = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early Voucher",
+		                         phone="+91 70000 06404", voucher_code="EVAL10")["reservation"]
+		# an Absolute plan sets the stay's room total, so its nights are all re-quoted too
+		frappe.db.delete("Rate Plan", {"property": P, "code": "EVEAABS"})
+		abs_plan = frappe.get_doc({
+			"doctype": "Rate Plan", "property": P, "rate_plan_name": "Eval Early Absolute",
+			"code": "EVEAABS", "modifier_type": "Absolute", "modifier_value": 5000,
+		}).insert(ignore_permissions=True).name
+		fixed = api.create_booking(P, RT, add_days(day, 2), add_days(day, 4), "Eval Early Plan",
+		                           phone="+91 70000 06405", rate_plan=abs_plan)["reservation"]
+		co = str(res.check_out_date)
+		booked = {str(r.stay_date): (float(r.rate), float(r.gst_rate)) for r in res.night_rates}
+		# today's price moves after booking: the booked nights must not follow it
+		old = frappe.db.get_value("Room Type", RT, "base_price")
+		frappe.db.set_value("Room Type", RT, "base_price", float(old) + 100)
+		try:
+			held = api.amend_stay_preview(res.name, day, co, early_arrival=1)
+			plain = api.amend_stay_preview(res.name, day, co)
+			v_held = api.amend_stay_preview(vou, day, co, early_arrival=1)
+			v_plain = api.amend_stay_preview(vou, day, co)
+			p_held = api.amend_stay_preview(fixed, day, co, early_arrival=1)
+			p_plain = api.amend_stay_preview(fixed, day, co)
+			api.check_in(res.name, early_arrival=1, confirm_price=1)
+		finally:
+			frappe.db.set_value("Room Type", RT, "base_price", old)
+	assert plain["new_amount"] > held["new_amount"], (plain, held)
+	assert v_held["new_amount"] == v_plain["new_amount"], (v_held, v_plain)
+	assert p_held["new_amount"] == p_plain["new_amount"], (p_held, p_plain)
+	res.reload()
+	assert str(res.check_in_date) == day and res.status == "Checked In", res.check_in_date
+	assert res.nights == 4, res.nights
+	# the early nights are on the bill, not spread over the booked price
+	assert float(res.amount_after_tax or 0) > before, (before, res.amount_after_tax)
+	quoted = {n["date"]: float(n["rate"]) for n in plain["nights"]}
+	for r in res.night_rates:
+		night = str(r.stay_date)
+		if night in booked:
+			assert (float(r.rate), float(r.gst_rate)) == booked[night], (night, r.rate, booked)
+		else:  # an added night takes today's quote
+			assert float(r.rate) == quoted[night], (night, r.rate, quoted)
+	assert abs(held["new_amount"] - float(res.amount_after_tax)) < 0.01, (held, res.amount_after_tax)
+
+
+@check("channel manager: an OTA phone or email the Guest would refuse never costs the booking; a JSON webhook reads ?connection=")
+def t_ota_contact_never_drops_booking():
+	from frappe.app import make_form_dict
+	from werkzeug.test import EnvironBuilder
+
+	from kamra import channel_manager as cm
+	from kamra.authz import act_as
+	CP = "EVAL OTA Contact"
+	bed, _v, _rooms = _inv_property(CP, "OCT", rooms=2, with_villa=False)
+	conn = frappe.get_doc({"doctype": "Channel Manager Connection", "property": CP,
+	                       "provider": "Channex", "active": 1,
+	                       "external_property_id": "eval-oct",
+	                       "webhook_secret": "eval-oct-hook"}).insert(ignore_permissions=True)
+	frappe.get_doc({"doctype": "Channel Room Mapping", "connection": conn.name,
+	                "room_type": bed, "external_room_id": "oct-bed"}).insert(ignore_permissions=True)
+	ci, co = add_days(nowdate(), 75), add_days(nowdate(), 76)
+	e = {"event": "book", "ota_ref": "EVAL-OCT-1", "channel": "Booking.com",
+	     "room_type_external_id": "oct-bed", "check_in": ci, "check_out": co,
+	     "adults": 2, "children": 0, "guest_name": "Eval Contact",
+	     "phone": "abc-123", "email": "not-an-email", "total": 0, "nightly": [],
+	     "currency": "", "notes": "Late arrival"}
+	# Frappe validates Data/Phone and Data/Email on the Guest insert: before
+	# this the booking was lost with an InvalidPhoneNumberError
+	out = cm._apply_event(conn, e)
+	assert out["result"] == "booked", out
+	res = frappe.get_doc("Reservation", out["reservation"])
+	g = frappe.db.get_value("Guest", res.guest, ["phone", "email"], as_dict=True)
+	assert not g.phone and not g.email, g
+	notes = res.special_requests or ""
+	assert "abc-123" in notes and "not-an-email" in notes, notes
+	assert notes.index("Late arrival") < notes.index("abc-123"), notes
+	# a modify without a contact keeps the line the booking already had
+	cm._apply_event(conn, dict(e, event="modify", phone="", email="", notes="Baby cot"))
+	notes = frappe.db.get_value("Reservation", res.name, "special_requests") or ""
+	assert "Baby cot" in notes and "abc-123" in notes, notes
+	assert notes.count("could not be saved on the guest profile") == 1, notes
+	# Channex POSTs JSON to the URL Kamra hands out (?connection=...): Frappe
+	# builds the arguments from the body alone, and the call used to 500
+	payload = {"status": "new", "ota_reservation_code": "EVAL-OCT-WH",
+	           "ota_name": "Booking.com", "arrival_date": str(ci),
+	           "departure_date": str(co),
+	           "customer": {"name": "Eval", "surname": "Webhook", "phone": "abc-123",
+	                        "mail": "eval-oct-wh@example.com"},
+	           "rooms": [{"room_type_id": "oct-bed", "occupancy": {"adults": 2}}]}
+	request = EnvironBuilder(method="POST", path="/api/method/kamra.channel_manager.webhook",
+	                         query_string={"connection": conn.name},
+	                         json={"event": "booking", "payload": payload},
+	                         headers={"X-Webhook-Secret": "eval-oct-hook"}).get_request()
+	before = getattr(frappe.local, "request", None), frappe.local.form_dict
+	frappe.local.request = request
+	try:
+		make_form_dict(request)
+		with act_as("Guest"):
+			# what Frappe's handler does: the whitelisted call with form_dict
+			out = cm.webhook(**frappe.form_dict)
+	finally:
+		frappe.local.request, frappe.local.form_dict = before
+	assert out["results"][0]["result"] == "booked", out
+	assert frappe.db.exists("Reservation", {"property": CP, "ota_ref": "EVAL-OCT-WH"})
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -11585,7 +12111,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t3i, t3j, t4,
+		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t530, t3i, t3j, t4,
 		           t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16,
 		           t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28,
 		           t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39, t39b, t39c, t39d,
@@ -11610,17 +12136,22 @@ def execute():
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
-		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
+		           t380, t381, t382, t383, t384, t536, t385, t386, t387, t_nicaragua_pack,
 		           t_philippines_pack,
 		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
-		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
+		           t_app_pairing, t_ai_guest_booking, t_ar_settle_idempotent, t_ar_settle_race,
 		           t_ar_balance_from_entries,
 		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging,
-		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
+		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_occupancy_on_books,
+		           t_mcp_correct, t_mcp_refund,
+		           t_ar_tax_withheld,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
+		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_refused, t_folio_no_close_in_house,
-		           t_rates_include_levy):
+		           t_rates_include_levy,
+		           t_audit_anomalies, t_early_arrival_check_in,
+		           t_ota_contact_never_drops_booking):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

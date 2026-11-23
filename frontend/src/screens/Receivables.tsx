@@ -11,6 +11,7 @@ import { fmtMoney, loadLocale, taxLabel, useLocale } from "../lib/money"
 import { useAuth } from "../lib/auth"
 import { downloadCsv } from "../lib/csv"
 import CityLedgerPayment from "./CityLedgerPayment"
+import AllowanceRequests from "../components/AllowanceRequests"
 import { serverLang, t as translate, useUILanguage } from "../lib/i18n"
 
 // Accounts receivable: the company accounts the hotel bills on credit.
@@ -127,6 +128,7 @@ type PendingPayment = {
 // a Finance step on the account that needs a note, a reason or a PIN
 type Action =
   | { kind: "dispute"; item: OpenItem }
+  | { kind: "writeoff"; item: OpenItem }
   | { kind: "reverse"; payment: Payment }
   | { kind: "confirm" | "reject"; request: PendingPayment }
 
@@ -270,6 +272,7 @@ function AccountList() {
       </div>
       {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
       {notice ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</p> : null}
+      <WithheldTax />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" role="group" aria-label={translate("Show")}>
         {(Object.keys(QUEUES) as Queue[]).map((k) => {
@@ -517,6 +520,9 @@ function AccountPage({ account }: { account: string }) {
       ) : null}
 
       <AgingBar acc={acc} />
+      {/* write-offs waiting for a manager (kamra.receivables.write_off_ar_bill) */}
+      <AllowanceRequests property={getCurrentProperty()} cityLedgerAccount={acc.account} onChanged={load} />
+      <WithheldTax account={acc.account} />
 
       <div role="tablist" aria-label={translate("Account activity")}
         className="inline-flex flex-wrap rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 text-sm">
@@ -563,7 +569,12 @@ function AccountPage({ account }: { account: string }) {
                   {isFinance ? (
                     <>
                       {it.outstanding > 0.005 ? (
-                        <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
+                        <>
+                          <Button variant="outline" onClick={() => setSheet({ transfer: it })}>{translate("Transfer")}</Button>
+                          <Button variant="outline" onClick={() => setSheet({ action: { kind: "writeoff", item: it } })}>
+                            {translate("Write off")}
+                          </Button>
+                        </>
                       ) : null}
                       <Button variant="outline" onClick={() => setSheet({ action: { kind: "dispute", item: it } })}>
                         {it.disputed ? translate("Clear dispute") : translate("Dispute")}
@@ -721,26 +732,33 @@ function AccountAction(props: { acc: Account; action: Action; onClose: () => voi
   useUILanguage()
   const a = props.action
   const [note, setNote] = useState(a.kind === "dispute" ? a.item.dispute_note || "" : "")
-  const [code, setCode] = useState("REV-BOUNCE")
+  const [code, setCode] = useState(a.kind === "writeoff" ? "ADJ-BADDEBT" : "REV-BOUNCE")
+  const [amount, setAmount] = useState(a.kind === "writeoff" ? String(a.item.outstanding) : "")
   const [codes, setCodes] = useState<{ name: string; description: string }[]>([])
   const [pin, setPin] = useState("")
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const clearing = a.kind === "dispute" && !!a.item.disputed
-  const askPin = a.kind === "confirm" || (a.kind === "reverse" && props.acc.cashier_pin_required)
+  // a write-off above the approval line is signed with the manager's PIN,
+  // so the field is always there; the server says when it is needed
+  const askPin = a.kind === "confirm" || a.kind === "writeoff" || (a.kind === "reverse" && props.acc.cashier_pin_required)
+  const pinOptional = a.kind === "writeoff"
 
   useEffect(() => {
-    if (a.kind !== "reverse") return
-    call<{ name: string; description: string }[]>("kamra.ledger.list_reason_codes", { category: "Payment Reversal" })
+    if (a.kind !== "reverse" && a.kind !== "writeoff") return
+    call<{ name: string; description: string }[]>("kamra.ledger.list_reason_codes", {
+      category: a.kind === "writeoff" ? "Adjust" : "Payment Reversal",
+    })
       .then(setCodes)
       .catch(() => setCodes([]))
   }, [a.kind])
 
   const title = a.kind === "dispute" ? (clearing ? translate("Clear the dispute") : translate("Dispute this bill"))
+    : a.kind === "writeoff" ? translate("Write off as bad debt")
     : a.kind === "reverse" ? translate("Reverse payment")
       : a.kind === "confirm" ? translate("Confirm payment") : translate("Reject payment")
 
-  const summary = a.kind === "dispute" ? `${a.item.invoice_number || a.item.folio} · ${fmtMoney(a.item.outstanding)}`
+  const summary = a.kind === "dispute" || a.kind === "writeoff" ? `${a.item.invoice_number || a.item.folio} · ${fmtMoney(a.item.outstanding)}`
     : a.kind === "reverse" ? `${a.payment.reference || a.payment.name} · ${fmtMoney(a.payment.credit)}`
       : `${fmtMoney(a.request.amount)} · ${translate(a.request.mode || "Bank Transfer")}${a.request.reference ? ` · ${a.request.reference}` : ""}`
 
@@ -748,7 +766,9 @@ function AccountAction(props: { acc: Account; action: Action; onClose: () => voi
     a.kind === "confirm" || a.kind === "reject" ? JSON.parse(a.request.allocations || "[]") : []
 
   const needsNote = (a.kind === "dispute" && !clearing) || a.kind === "reject"
-  const ready = !busy && (!needsNote || note.trim()) && (!askPin || pin) && (a.kind !== "reverse" || code)
+  const woAmount = Number(amount)
+  const ready = !busy && (!needsNote || note.trim()) && (!askPin || pinOptional || pin) && (a.kind !== "reverse" || code)
+    && (a.kind !== "writeoff" || (woAmount > 0 && woAmount <= a.item.outstanding + 0.005 && (code || note.trim())))
 
   const submit = async () => {
     setBusy(true)
@@ -759,6 +779,14 @@ function AccountAction(props: { acc: Account; action: Action; onClose: () => voi
           account: props.acc.account, folio: a.item.folio, disputed: clearing ? 0 : 1, note: note.trim(),
         })
         props.onDone(clearing ? translate("Dispute cleared.") : translate("Bill marked as disputed. Reminders pause for it."))
+      } else if (a.kind === "writeoff") {
+        const out = await call<{ pending?: boolean }>("kamra.receivables.write_off_ar_bill", {
+          account: props.acc.account, folio: a.item.folio, amount: woAmount,
+          reason_code: code || undefined, reason: note.trim(), pin: pin || undefined,
+        })
+        props.onDone(out.pending
+          ? translate("Write-off sent for a manager's approval. The bill stays as it is until then.")
+          : translate("Written off. The bill and aging are updated."))
       } else if (a.kind === "reverse") {
         const out = await call<{ balance: number }>("kamra.ledger.reverse_city_ledger_payment", {
           payment: a.payment.name, reason_code: code, reason: note.trim() || undefined, pin: pin || undefined,
@@ -794,6 +822,16 @@ function AccountAction(props: { acc: Account; action: Action; onClose: () => voi
         {a.kind === "reverse" ? (
           <p className="text-zinc-600">{translate("The bills this payment cleared are owed again, and any credit it left on the account is taken back.")}</p>
         ) : null}
+        {a.kind === "writeoff" ? (
+          <>
+            <p className="text-zinc-600">{translate("The amount comes off the bill and the account as bad debt. Above the approval line a manager approves it first.")}</p>
+            <label className="block">
+              <span className="mb-1 block text-zinc-500">{translate("Amount")}</span>
+              <input type="number" min="0" step="0.01" max={a.item.outstanding} className={field}
+                value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </label>
+          </>
+        ) : null}
         {a.kind === "dispute" && !clearing ? (
           <p className="text-zinc-600">{translate("A disputed bill stays on the account and in aging. It gets no payment reminders and does not count towards the overdue credit block.")}</p>
         ) : null}
@@ -807,11 +845,13 @@ function AccountAction(props: { acc: Account; action: Action; onClose: () => voi
             ))}
           </ul>
         ) : null}
-        {a.kind === "reverse" ? (
+        {a.kind === "reverse" || a.kind === "writeoff" ? (
           <label className="block">
             <span className="mb-1 block text-zinc-500">{translate("Reason")}</span>
             <select className={field} value={code} onChange={(e) => setCode(e.target.value)}>
-              {(codes.length ? codes : [{ name: "REV-BOUNCE", description: "Cheque bounced" }]).map((c) => (
+              {(codes.length ? codes : a.kind === "writeoff"
+                ? [{ name: "ADJ-BADDEBT", description: "Bad debt - the company will not pay" }]
+                : [{ name: "REV-BOUNCE", description: "Cheque bounced" }]).map((c) => (
                 <option key={c.name} value={c.name}>{translate(c.description)}</option>
               ))}
             </select>
@@ -825,7 +865,7 @@ function AccountAction(props: { acc: Account; action: Action; onClose: () => voi
         ) : null}
         {askPin ? (
           <label className="block">
-            <span className="mb-1 block text-zinc-500">{translate("Your cashier PIN")}</span>
+            <span className="mb-1 block text-zinc-500">{pinOptional ? translate("Your PIN (if asked)") : translate("Your cashier PIN")}</span>
             <input type="password" inputMode="numeric" autoComplete="off" className={field}
               value={pin} onChange={(e) => setPin(e.target.value)} />
           </label>
@@ -1412,5 +1452,88 @@ function TransferInvoice(props: { acc: Account; item: OpenItem; onClose: () => v
         </label>
       </div>
     </Sheet>
+  )
+}
+
+type Withheld = {
+  name: string; company: string; folio: string; invoice_number?: string | null
+  tax_label: string; rate?: number | null; amount: number; withheld_on?: string | null
+}
+
+/** Tax companies withheld from their payments (TDS and the like) that still
+ *  waits for its certificate (kamra.receivables.withheld_tax, #521). */
+function WithheldTax({ account }: { account?: string }) {
+  useUILanguage()
+  const { roles } = useAuth()
+  const canRecord = roles.some((r) => FINANCE.includes(r))
+  const [data, setData] = useState<{ rows: Withheld[]; total: number } | null>(null)
+  const [open, setOpen] = useState<string | null>(null)
+  const [no, setNo] = useState("")
+  const [period, setPeriod] = useState("")
+  const [err, setErr] = useState<string | null>(null)
+  const load = useCallback(() => {
+    call<{ rows: Withheld[]; total: number }>("kamra.receivables.withheld_tax", { property: getCurrentProperty(), account })
+      .then(setData)
+      .catch(() => setData(null))
+  }, [account])
+  useEffect(load, [load])
+  if (!data?.rows.length) return null
+
+  const save = async (name: string) => {
+    setErr(null)
+    try {
+      await call("kamra.receivables.record_withholding_certificate", {
+        tax_withheld: name, certificate_number: no.trim(), certificate_period: period.trim() || undefined,
+      })
+      setOpen(null); setNo(""); setPeriod("")
+      load()
+    } catch (e) {
+      setErr(serverError(e))
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">
+          {translate("Tax withheld, waiting for a certificate")} · {fmtMoney(data.total)}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        {err ? <p className="text-rose-600">{translate(err)}</p> : null}
+        <ul className="divide-y divide-zinc-100">
+          {data.rows.map((r) => (
+            <li key={r.name} className="py-2">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span>
+                  {account ? null : <b>{r.company} · </b>}
+                  <span className="font-mono text-xs">{r.invoice_number || r.folio}</span>
+                  {" · "}{translate(r.tax_label)}{r.rate ? ` ${r.rate}%` : ""}
+                  {r.withheld_on ? <span className="text-zinc-400"> · {r.withheld_on}</span> : null}
+                </span>
+                <span className="flex items-center gap-2">
+                  <b className="tabular-nums">{fmtMoney(r.amount)}</b>
+                  {canRecord && open !== r.name ? (
+                    <Button variant="outline" onClick={() => { setOpen(r.name); setNo(""); setPeriod("") }}>
+                      {translate("Record certificate")}
+                    </Button>
+                  ) : null}
+                </span>
+              </div>
+              {open === r.name ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <input autoFocus className={field + " max-w-48"} placeholder={translate("Certificate number")}
+                    value={no} onChange={(e) => setNo(e.target.value)} maxLength={140} />
+                  <input className={field + " max-w-48"} placeholder={translate("Period (e.g. Q3 FY2026-27)")}
+                    value={period} onChange={(e) => setPeriod(e.target.value)} maxLength={140} />
+                  <Button disabled={!no.trim()} onClick={() => void save(r.name)}>{translate("Save")}</Button>
+                  <Button variant="ghost" onClick={() => setOpen(null)}>{translate("Cancel")}</Button>
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   )
 }

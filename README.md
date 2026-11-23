@@ -73,9 +73,9 @@ On the [demo](https://demo.kamrapms.com), tap any role to sign in. The guest boo
 
 **AI and MCP**
 - Kamra Agent, the in-app assistant, with action cards to check in, collect or open a folio.
-- 170 MCP tools for Claude, ChatGPT or any MCP client. See [Run your hotel with AI](#run-your-hotel-with-ai).
+- 178 MCP tools for Claude, ChatGPT or any MCP client. See [Run your hotel with AI](#run-your-hotel-with-ai).
 
-The staff UI is in English, German, Spanish, Arabic, Portuguese (Brazil), Indonesian, Filipino and Simplified Chinese. Module by module, with screenshots: [Features](https://kamrapms.com/docs/features).
+The staff UI is in English, German, Spanish, Arabic, Portuguese (Brazil), Indonesian, Filipino, Vietnamese, Swahili and Simplified Chinese. Module by module, with screenshots: [Features](https://kamrapms.com/docs/features).
 
 ---
 

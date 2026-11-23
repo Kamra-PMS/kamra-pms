@@ -61,6 +61,8 @@ READ_ROLES = (*BANQUET_ROLES, "Finance", "Housekeeping")
 REPORT_ROLES = (*BANQUET_ROLES, "Finance")
 
 OPEN = ("Enquiry", "Tentative", "Confirmed")
+# what a function in each stage is likely worth, for the weighted forecast
+PIPELINE_ODDS = {"Enquiry": 0.2, "Tentative": 0.5, "Confirmed": 1.0, "Completed": 1.0}
 DEAD = ("Cancelled", "Lost")
 
 # enquiry -> tentative -> confirmed -> completed, and out at any point.
@@ -138,7 +140,8 @@ def banquet_catalogue(property: str):
 		"Banquet Service Item",
 		filters={"property": property, "disabled": 0},
 		fields=["name", "item_name", "category", "uom", "rate", "gst_rate",
-		        "chargeable", "is_alcohol", "on_pack_list", "description"],
+		        "chargeable", "is_alcohol", "on_pack_list", "description",
+		        "stock_qty"],
 		order_by="category, item_name")
 	venues = frappe.get_all(
 		"Venue", filters={"property": property, "disabled": 0},
@@ -213,7 +216,7 @@ def save_service_item(property: str, item_name: str, category: str,
 		"category": category, "rate": float(rate or 0), "uom": uom,
 	})
 	for field in ("gst_rate", "chargeable", "is_alcohol", "on_pack_list",
-	              "description", "disabled"):
+	              "description", "disabled", "stock_qty"):
 		if field in kw and kw[field] is not None:
 			doc.set(field, kw[field])
 	doc.save()
@@ -352,6 +355,10 @@ def update_function(function: str, fields):
 		"discount_amount", "group_booking", "session",
 		"service_charge_percent", "refundable_deposit",
 		"hall_deal", "minimum_fnb_spend",
+		# tasting asked for, and the engineering & HR brief (#67)
+		"tasting_status", "tasting_pax", "tasting_chef", "tasting_notes",
+		"wifi_ssid", "wifi_password", "speed_test_mbps", "av_notes",
+		"staff_male", "staff_female", "bar_setup",
 	}
 	fields = _map(fields)
 	unknown = set(fields) - editable
@@ -1040,6 +1047,11 @@ def banquet_pipeline(property: str, from_date: str | None = None,
 				float(r.balance_due or 0) for r in rows
 				if r.status in ("Confirmed", "Completed")),
 			"conversion_rate": round(won / decided * 100, 1) if decided else None,
+			# ponytail: fixed stage odds; per-property odds from its own
+			# conversion history when a hotel asks
+			"weighted_value": round(sum(
+				float(r.grand_total or 0) * PIPELINE_ODDS.get(r.status, 0)
+				for r in rows), 2),
 		},
 		"lost_reasons": sorted(
 			({"reason": k, "count": v} for k, v in lost_reasons.items()),
@@ -1055,10 +1067,10 @@ def _function_alerts(doc):
 	event = getdate(doc.event_date)
 	days_out = (event - today).days
 	out = []
-	from kamra.banquet_ops import quote_no_response_alert
-	qnr = quote_no_response_alert(doc)
-	if qnr:
-		out.append(qnr)
+	from kamra.banquet_ops import quote_no_response_alert, tasting_alert
+	for alert in (quote_no_response_alert(doc), tasting_alert(doc)):
+		if alert:
+			out.append(alert)
 	if doc.status in ("Enquiry", "Tentative") and doc.follow_up_date \
 			and getdate(doc.follow_up_date) <= today:
 		out.append({"kind": "follow_up", "urgency": "high",
@@ -1153,6 +1165,14 @@ def run_banquet_reminders():
 		except Exception:
 			frappe.log_error(title="banquet reminders", message=frappe.get_traceback())
 			continue
+		# the guest hears about a milestone falling due, with a pay link
+		for f in board["functions"]:
+			if any(a.get("kind") == "payment_due" for a in f["alerts"]):
+				try:
+					from kamra.banquet_ops import remind_guest_balance
+					remind_guest_balance(frappe.get_doc("Venue Booking", f["function"]))
+				except Exception:
+					frappe.log_error(title="Banquet: guest balance reminder failed")
 		urgent = [f for f in board["functions"]
 		          if any(a["urgency"] == "high" for a in f["alerts"])]
 		if not urgent:

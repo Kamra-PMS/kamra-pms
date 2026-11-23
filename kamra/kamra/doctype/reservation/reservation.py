@@ -451,6 +451,17 @@ class Reservation(Document):
 				title=_("Minimum stay"),
 			)
 
+		# Rate Restrictions (#530), checked when what is sold changes. A
+		# channel booking is never refused here: the channel manager applied
+		# the same restrictions (they go out with ARI), and refusing an OTA
+		# booking loses it.
+		if self.get("source") != "OTA" and (self.is_new() or any(
+				self.has_value_changed(f) for f in (
+					"check_in_date", "check_out_date", "room_type", "rate_plan"))):
+			from kamra.pricing import assert_stay_restrictions
+			assert_stay_restrictions(self.property, self.room_type, self.rate_plan,
+			                         self.check_in_date, self.check_out_date)
+
 	def validate_status_transition(self):
 		if self.is_new():
 			return
@@ -704,8 +715,11 @@ class Reservation(Document):
 		in the house's occupancy. Used by the save path and the amendment
 		previews, so a preview and the save that follows agree."""
 		from kamra.pricing import quote
+		# restrictions are checked in validate_minimum_nights, which knows
+		# whether the stay changed and whether it came from a channel
 		return quote(**self.quote_inputs(),
 		             check_voucher_limits=check_voucher_limits,
+		             check_restrictions=False,
 		             exclude_reservation=None if self.is_new() else self.name)
 
 	def apply_pricing(self):
@@ -839,7 +853,14 @@ class Reservation(Document):
 		from kamra.pricing import room_rate_digits
 		digits = room_rate_digits(self.property)
 		charged = charged_nights(self.name, digits)
-		if not charged:
+		# an early arrival (api.check_in) keeps the nights the stay was booked
+		# for at their booked rate; only the added nights take the new quote
+		booked = {}
+		if self.flags.get("keep_booked_nights"):
+			for r in self.get("night_rates") or []:  # still the booked rows here
+				if str(r.stay_date) not in charged:
+					booked[str(r.stay_date)] = r
+		if not charged and not booked:
 			return out
 		from kamra.settings import get_setting
 		policy = get_setting(self.property, "charged_night_rate_change")
@@ -852,15 +873,24 @@ class Reservation(Document):
 		# credit have to use the same decimals or the difference comes back
 		money = f",.{digits}f"
 		for row in rows:
-			c = charged.get(str(row["stay_date"]))
+			night = str(row["stay_date"])
+			c = charged.get(night)
+			b = booked.get(night)
+			if b:
+				# a booked night is held like a kept charged night, with no folio
+				bb, bg = flt(b.rate), flt(b.gst_rate)
+				c = {"base": bb, "gst_rate": bg, "levy_base": bb * levy_pct,
+				     "levy_tax": bb * levy_pct * bg / 100 if levy_taxed else 0}
+				row["demand_premium_pct"] = flt(b.demand_premium_pct)
 			if not c:
 				continue
-			night = str(row["stay_date"])
 			new, new_gst = flt(row["rate"]), flt(row["gst_rate"])
 			base, gst = c["base"], c["gst_rate"]
 			changed = abs(new - base) >= 0.01 or (correct and abs(new_gst - gst) >= 0.01)
 			action = "kept" if changed else "same"
-			if changed and correct:
+			if b:
+				pass  # never corrected or credited: nothing of it is on a folio
+			elif changed and correct:
 				out["lines"] += [
 					{"night": night, "folio": c["folio"], "amount": -base,
 					 "gst_rate": gst,
@@ -884,7 +914,7 @@ class Reservation(Document):
 			out["base"] += (base - new) + (c["levy_base"] - levy_new)
 			out["tax"] += (base * gst - new * new_gst) / 100 + c["levy_tax"] - (
 				levy_new * new_gst / 100 if levy_taxed else 0)
-			if action != "same":
+			if action != "same" and not b:  # the summary is of nights on the folio
 				out["nights"].append({"date": night, "charged": c["base"],
 				                      "new": round(new, digits), "action": action})
 			row["rate"], row["gst_rate"] = round(base, digits), gst

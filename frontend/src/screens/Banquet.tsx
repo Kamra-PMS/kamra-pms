@@ -20,6 +20,7 @@ import {
 import {
   banquet,
   type AvailabilityVenue,
+  type EquipmentCalendar,
   type BanquetPipeline,
   type FunctionStatus,
   type ReminderRow,
@@ -48,7 +49,7 @@ import {
 import { useT, t as translate } from "../lib/i18n"
 
 
-type Tab = "today" | "pipeline" | "functions"
+type Tab = "today" | "pipeline" | "functions" | "equipment"
 
 interface FunctionRow extends Row {
   customer_name: string
@@ -64,7 +65,15 @@ interface FunctionRow extends Row {
   follow_up_date: string | null
   company: string | null
   sales_owner: string | null
+  quote_sent_on: string | null
+  quote_emailed_on: string | null
+  customer_confirm_outcome: string | null
 }
+
+/** A quote has gone out and the guest hasn't answered yet. */
+const awaiting = (r: FunctionRow) =>
+  (r.status === "Enquiry" || r.status === "Tentative") &&
+  !!(r.quote_emailed_on || r.quote_sent_on) && !r.customer_confirm_outcome
 
 export default function Banquet() {
   const { t } = useT()
@@ -116,6 +125,9 @@ export default function Banquet() {
         "follow_up_date",
         "company",
         "sales_owner",
+        "quote_sent_on",
+        "quote_emailed_on",
+        "customer_confirm_outcome",
       ],
       orderBy: "event_date asc",
       limit: 300,
@@ -135,7 +147,7 @@ export default function Banquet() {
     const q = query.trim().toLowerCase()
     return (rows ?? []).filter(
       (r) =>
-        (!statusFilter || r.status === statusFilter) &&
+        (!statusFilter || (statusFilter === "awaiting" ? awaiting(r) : r.status === statusFilter)) &&
         (!q ||
           r.customer_name?.toLowerCase().includes(q) ||
           r.name.toLowerCase().includes(q) ||
@@ -184,7 +196,9 @@ export default function Banquet() {
           <Stat
             label={t("Still in play")}
             value={inr(pipeline.totals.pipeline_value)}
-            sub={t("Enquiries and tentative holds")}
+            sub={pipeline.totals.weighted_value != null
+              ? t("Enquiries and tentative holds · {v} weighted", { v: inr(pipeline.totals.weighted_value) })
+              : t("Enquiries and tentative holds")}
             tone="text-amber-700"
           />
           <Stat
@@ -211,6 +225,7 @@ export default function Banquet() {
             ["today", t("Needs chasing{urgent}", { urgent: urgent.length ? ` (${urgent.length})` : "" })],
             ["pipeline", t("Month by month")],
             ["functions", t("All functions")],
+            ["equipment", t("Equipment")],
           ] as [Tab, string][]
         ).map(([id, label]) => (
           <button
@@ -279,6 +294,7 @@ export default function Banquet() {
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
                 <option value="">{t("All statuses")}</option>
+                <option value="awaiting">{t("Awaiting guest response")}</option>
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>{translate(s)}</option>
                 ))}
@@ -304,7 +320,8 @@ export default function Banquet() {
                       <th className="py-2 pr-3 text-right font-medium">{t("Pax")}</th>
                       <th className="py-2 pr-3 text-right font-medium">{t("Value")}</th>
                       <th className="py-2 pr-3 text-right font-medium">{t("Due")}</th>
-                      <th className="py-2 font-medium">{t("Status")}</th>
+                      <th className="py-2 pr-3 font-medium">{t("Status")}</th>
+                      <th className="py-2 font-medium">{t("Guest response")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -348,8 +365,15 @@ export default function Banquet() {
                         >
                           {inr(r.balance_due)}
                         </td>
-                        <td className="py-2">
+                        <td className="py-2 pr-3">
                           <StatusPill status={r.status} />
+                        </td>
+                        <td className="py-2 text-xs">
+                          {awaiting(r) ? (
+                            <span className="rounded bg-amber-50 px-1.5 py-0.5 font-medium text-amber-800">{t("Awaiting response")}</span>
+                          ) : r.customer_confirm_outcome ? (
+                            <span className="text-zinc-500">{translate(r.customer_confirm_outcome)}</span>
+                          ) : null}
                         </td>
                       </tr>
                     ))}
@@ -360,6 +384,8 @@ export default function Banquet() {
           </CardContent>
         </Card>
       )}
+
+      {tab === "equipment" && <EquipmentBoard onOpen={(fn) => navigate(`/banquet/${encodeURIComponent(fn)}`)} />}
 
       {enquiry && (
         <EnquirySheet
@@ -924,5 +950,75 @@ function EnquirySheet({
         </Field>
       </div>
     </Sheet>
+  )
+}
+
+/* ── equipment calendar (#67) ─────────────────────────────────────────── */
+
+/** Each item the hotel counts (units owned set in the catalogue), day by
+ *  day: what confirmed and tentative functions have on it. A confirmed
+ *  function can't take more than the hotel owns. */
+function EquipmentBoard({ onOpen }: { onOpen: (fn: string) => void }) {
+  const { t } = useT()
+  const [start, setStart] = useState(today())
+  const [data, setData] = useState<EquipmentCalendar | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    banquet.equipmentCalendar(start, 14).then(setData).catch((e) => setError(serverError(e)))
+  }, [start])
+  if (error) return <ErrorNote error={error} />
+  if (!data) return <Empty>{t("Loading…")}</Empty>
+  const days = data.items[0]?.days.map((d) => d.date) ?? []
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Equipment calendar")}</CardTitle>
+        <input type="date" aria-label={t("From")} className={inputCls + " !w-auto"}
+          value={start} onChange={(e) => setStart(e.target.value || today())} />
+      </CardHeader>
+      <CardContent>
+        {!data.items.length ? (
+          <Empty>{t("No equipment is counted yet - set Units owned on a service in Menus & services.")}</Empty>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-zinc-200 text-left text-zinc-400">
+                  <th className="py-2 pr-3 font-medium">{t("Item")}</th>
+                  {days.map((d) => <th key={d} className="px-1 py-2 text-center font-medium tabular-nums">{d.slice(5)}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((it) => (
+                  <tr key={it.item} className="border-b border-zinc-100">
+                    <td className="py-2 pr-3">
+                      <div className="font-medium">{it.item_name}</div>
+                      <div className="text-zinc-400">{t("{n} owned", { n: it.stock_qty })}</div>
+                    </td>
+                    {it.days.map((d) => {
+                      const used = d.confirmed + d.tentative
+                      return (
+                        <td key={d.date} className="px-1 py-2 text-center">
+                          {used ? (
+                            <button
+                              title={d.functions.map((f) => `${f.customer_name} (${translate(f.status)}) ×${f.qty}`).join("\n")}
+                              onClick={() => d.functions[0] && onOpen(d.functions[0].function)}
+                              className={"rounded px-1.5 py-0.5 tabular-nums " + (d.over
+                                ? "bg-rose-100 text-rose-800"
+                                : used > it.stock_qty ? "bg-amber-100 text-amber-800" : "bg-emerald-50 text-emerald-800")}
+                            >{d.confirmed}{d.tentative ? `+${d.tentative}` : ""}</button>
+                          ) : <span className="text-zinc-300">·</span>}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-2 text-xs text-zinc-400">{t("Confirmed + tentative units booked each day. Amber: tentative holds would need more than you own.")}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

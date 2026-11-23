@@ -106,6 +106,7 @@ its own property.
 | `deposit.refunded` | An advance still held for an arrival, or a security deposit, is refunded. `folio.refunded` fires for the same refund too. |
 | `ar.bill_created` | A bill moves to a company's city ledger account: a checkout to the company or a direct AR invoice. |
 | `ar.payment_recorded` | A company's payment is recorded on its account, with what it paid. |
+| `ar.payment_reversed` | A company's payment is reversed (a bounced cheque, money put on the wrong account). The bills it paid are owed again (`reopened`). |
 | `cashier.session_closed` | A cashier counts the drawer and closes the till. |
 | `group.block_released` | A group's cutoff passes and its unpicked rooms go back on sale. |
 
@@ -226,6 +227,18 @@ On `approval.requested`, `status` is `Pending` and the decision fields are null.
  "applied": [{"folio": "FOL-2026-00311", "amount": 11800.0},
              {"folio": "FOL-2026-00290", "amount": 8200.0}],
  "unapplied": 0.0, "account_balance": 25200.0, "currency": "INR"}
+```
+
+`ar.payment_reversed`
+
+```json
+{"account": "CLA-00004", "company": "Acme Travel", "payment": "CLE-2026-00123",
+ "reversal": "CLE-2026-00131", "posting_date": "2026-11-09",
+ "reference": "UTR 88231", "reason": "REV-BOUNCE: Cheque returned unpaid",
+ "amount": 20000.0,
+ "reopened": [{"folio": "FOL-2026-00311", "amount": 11800.0},
+              {"folio": "FOL-2026-00290", "amount": 8200.0}],
+ "unapplied_removed": 0.0, "account_balance": 45200.0, "currency": "INR"}
 ```
 
 `cashier.session_closed`

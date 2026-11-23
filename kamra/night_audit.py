@@ -61,7 +61,7 @@ BLOCKABLE = {
 ORDER = ("open_tills", "open_pos_bills", "departures_due", "arrivals_pending",
          "rate_variance", "zero_rate", "pos_room_postings", "high_balance",
          "departed_balances", "credit_limit", "overdue_ar", "room_status",
-         "vacant_rooms")
+         "vacant_rooms", "anomalies")
 
 # The End of Day wizard, in Opera's order: (key, title, the checks it shows)
 STEPS = (
@@ -74,7 +74,7 @@ STEPS = (
 	("rates", "Rate check", ("rate_variance", "zero_rate")),
 	("rooms", "Room status", ("room_status", "vacant_rooms")),
 	("cashiers", "Cashier closure", ("open_tills",)),
-	("notes", "Notes", ()),
+	("notes", "Notes", ("anomalies",)),
 	("run", "Post room and tax and roll the business date", ()),
 	("reports", "Print final reports", ()),
 	("finalize", "Finalize", ()),
@@ -662,6 +662,232 @@ def check_vacant_rooms(property: str) -> dict:
 		"/housekeeping-board")
 
 
+# --- statistical anomalies (#558) ---------------------------------------------
+# Patterns that are only unusual against the property's own history. Plain
+# mean / standard deviation from the stdlib: a flag is a value more than
+# ANOMALY_Z deviations above the usual, and always says what the usual is and
+# which rows it is about. Off until the property has MIN_HISTORY_DAYS of
+# posted room nights, so a new property is not flooded with false alarms.
+
+MIN_HISTORY_DAYS = 30
+HISTORY_DAYS = 90      # how far back "usual" looks
+ANOMALY_Z = 3.0
+MIN_SAMPLES = 10       # history points needed before anything is compared
+MIN_COUNT = 3          # fewer voids/allowances in a day is never a spike
+NO_SHOW_WINDOW = 30    # days of no-shows looked at per source
+NO_SHOW_RATIO = 3.0    # a source's no-show rate vs the property's
+
+
+def _spike(value: float, history: list[float], floor: float):
+	"""(mean, sd) when value is an upper outlier of history, else None.
+	floor keeps a flat history (sd 0) from flagging a tiny change."""
+	from statistics import fmean, pstdev
+	if len(history) < MIN_SAMPLES:
+		return None
+	mean = fmean(history)
+	sd = max(pstdev(history), floor)
+	return (mean, sd) if value > mean + ANOMALY_Z * sd else None
+
+
+def _history_days(property: str, bd: str) -> int:
+	first = frappe.db.sql(
+		"""SELECT MIN(fc.posting_date) FROM `tabFolio Charge` fc
+		   JOIN `tabFolio` f ON fc.parent = f.name
+		   WHERE f.property = %s AND fc.charge_type = 'Room'""", property)[0][0]
+	return (getdate(bd) - getdate(first)).days if first else 0
+
+
+def _daily_counts(rows: list, bd: str) -> dict[str, tuple[list, list]]:
+	"""{user: (today's source rows, [count per day over the history])}.
+	rows: (user, day, doctype, name). Days the user did none count as 0,
+	from their first one in the window."""
+	from frappe.utils import add_days
+	start = str(add_days(bd, -HISTORY_DAYS))
+	by_user: dict[str, dict] = {}
+	for user, day, doctype, name in rows:
+		by_user.setdefault(user, {}).setdefault(str(day), []).append(
+			{"doctype": doctype, "name": name})
+	out = {}
+	for user, days in by_user.items():
+		today = days.get(bd, [])
+		if not today:
+			continue
+		first = min(d for d in days if d < bd) if any(d < bd for d in days) else bd
+		hist, day = [], max(first, start)
+		while day < bd:
+			hist.append(len(days.get(day, [])))
+			day = str(add_days(day, 1))
+		out[user] = (today, hist)
+	return out
+
+
+def _count_spikes(kind: str, label: str, rows: list, bd: str) -> list[dict]:
+	"""Users who did far more of `kind` today than they usually do; a user
+	with too little history of their own is compared with everyone's days."""
+	per_user = _daily_counts(rows, bd)
+	everyone = [n for _today, hist in per_user.values() for n in hist]
+	items = []
+	for user, (today, hist) in per_user.items():
+		n = len(today)
+		if n < MIN_COUNT:
+			continue
+		base, whose = (hist, "their") if len(hist) >= MIN_SAMPLES else (everyone, "the property's")
+		hit = _spike(n, base, floor=1.0)
+		if hit:
+			items.append({
+				"kind": kind, "who": user, "value": n,
+				"reason": f"{n} {label} today; {whose} usual is "
+				          f"{hit[0]:.1f} a day (sd {hit[1]:.1f}).",
+				"sources": today})
+	return items
+
+
+def _void_and_allowance_spikes(property: str, bd: str) -> list[dict]:
+	from frappe.utils import add_days
+	since = str(add_days(bd, -HISTORY_DAYS))
+	voids = frappe.db.sql(
+		"""SELECT actor, DATE(creation), reference_doctype, reference_name
+		   FROM `tabAgent Action Log`
+		   WHERE property = %s AND action_type IN ('void_charge', 'pos_void_item')
+		     AND DATE(creation) BETWEEN %s AND %s""", (property, since, bd))
+	allowances = frappe.db.sql(
+		"""SELECT requested_by, DATE(requested_on), 'Allowance Request', name
+		   FROM `tabAllowance Request`
+		   WHERE property = %s AND status = 'Approved'
+		     AND DATE(requested_on) BETWEEN %s AND %s""", (property, since, bd))
+	return (_count_spikes("voids", "voids", voids, bd)
+	        + _count_spikes("allowances", "allowances and discounts", allowances, bd))
+
+
+def _cash_variance_outliers(property: str, bd: str) -> list[dict]:
+	from frappe.utils import add_days
+	rows = frappe.get_all(
+		"Cashier Session",
+		filters={"property": property, "status": "Closed",
+		         "business_date": ("between", [str(add_days(bd, -HISTORY_DAYS)), bd])},
+		fields=["name", "user", "business_date", "variance"], limit_page_length=0)
+	past = [r for r in rows if str(r.business_date) < bd]
+	everyone = [abs(flt(r.variance)) for r in past]
+	items = []
+	for r in rows:
+		if str(r.business_date) != bd or not flt(r.variance):
+			continue
+		x = abs(flt(r.variance))
+		mine = [abs(flt(p.variance)) for p in past if p.user == r.user]
+		# ponytail: sd floor of 1 currency unit; a per-currency floor if
+		# small-unit currencies flag too often
+		for base, whose in ((mine, "this cashier's"), (everyone, "the property's")):
+			hit = _spike(x, base, floor=1.0)
+			if hit:
+				items.append({
+					"kind": "cash_variance", "who": r.user, "value": flt(r.variance),
+					"reason": f"Till over/short by {flt(r.variance):,.2f}; {whose} usual "
+					          f"is {hit[0]:,.2f} (sd {hit[1]:,.2f}).",
+					"sources": [{"doctype": "Cashier Session", "name": r.name}]})
+				break
+	return items
+
+
+def _rate_outliers(property: str, bd: str) -> list[dict]:
+	"""Room nights posted today far above or below what that room type
+	usually posts."""
+	from statistics import fmean, pstdev
+
+	from frappe.utils import add_days
+
+	from kamra.folio import STANDS_ON_ITS_DATE
+	rows = frappe.db.sql(
+		"""SELECT fc.name, fc.parent AS folio, fc.posting_date, fc.amount,
+		          r.room_type, r.name AS reservation
+		   FROM `tabFolio Charge` fc
+		   JOIN `tabFolio` f ON fc.parent = f.name
+		   JOIN `tabReservation` r
+		     ON r.name = COALESCE(NULLIF(fc.reservation, ''), f.reservation)
+		   WHERE f.property = %(p)s AND fc.charge_type = 'Room' AND fc.amount > 0
+		     AND fc.posting_date BETWEEN %(since)s AND %(d)s
+		     AND """ + STANDS_ON_ITS_DATE,
+		{"p": property, "since": str(add_days(bd, -HISTORY_DAYS)), "d": bd},
+		as_dict=True)
+	hist: dict[str, list[float]] = {}
+	for r in rows:
+		if str(r.posting_date) < bd:
+			hist.setdefault(r.room_type, []).append(flt(r.amount))
+	items = []
+	for r in rows:
+		h = hist.get(r.room_type, [])
+		if str(r.posting_date) != bd or len(h) < MIN_SAMPLES:
+			continue
+		mean = fmean(h)
+		# a room type always sold at one price still varies a little
+		sd = max(pstdev(h), 0.05 * mean)
+		if abs(flt(r.amount) - mean) <= ANOMALY_Z * sd:
+			continue
+		items.append({
+			"kind": "rate", "who": r.reservation, "value": flt(r.amount),
+			"reason": f"Room night posted at {flt(r.amount):,.2f}; "
+			          f"{(r.room_type or '').split('-')[-1]} usually posts "
+			          f"{mean:,.2f} (sd {sd:,.2f}).",
+			"sources": [{"doctype": "Folio", "name": r.folio},
+			            {"doctype": "Reservation", "name": r.reservation}]})
+	return items
+
+
+def _no_show_sources(property: str, bd: str) -> list[dict]:
+	"""Sources (travel agent, company, channel) whose recent arrivals no-show
+	far more often than the property's arrivals do."""
+	from frappe.utils import add_days
+	rows = frappe.get_all(
+		"Reservation",
+		filters={"property": property, "status": ("!=", "Cancelled"),
+		         "check_in_date": ("between", [str(add_days(bd, -HISTORY_DAYS * 2)), bd])},
+		fields=["name", "status", "check_in_date", "travel_agent", "company",
+		        "channel", "source"], limit_page_length=0)
+	if not rows:
+		return []
+	base_rate = sum(r.status == "No Show" for r in rows) / len(rows)
+	recent = str(add_days(bd, -NO_SHOW_WINDOW))
+	groups: dict[str, list] = {}
+	for r in rows:
+		if str(r.check_in_date) < recent:
+			continue
+		key = r.travel_agent or r.company or r.channel or r.source
+		if key:
+			groups.setdefault(key, []).append(r)
+	items = []
+	for key, res in groups.items():
+		ns = [r for r in res if r.status == "No Show"]
+		rate = len(ns) / len(res)
+		if len(ns) < MIN_COUNT or rate < NO_SHOW_RATIO * max(base_rate, 0.01):
+			continue
+		items.append({
+			"kind": "no_shows", "who": key, "value": len(ns),
+			"reason": f"{len(ns)} of {len(res)} arrivals from {key} no-showed in "
+			          f"{NO_SHOW_WINDOW} days ({rate:.0%}); the property's rate is "
+			          f"{base_rate:.0%}.",
+			"sources": [{"doctype": "Reservation", "name": r.name} for r in ns]})
+	return items
+
+
+def check_anomalies(property: str, bd: str) -> dict:
+	days = _history_days(property, bd)
+	on = cint(_setting(property, "na_anomaly_checks"))
+	ready = on and days >= MIN_HISTORY_DAYS
+	items = []
+	if ready:
+		items = (_void_and_allowance_spikes(property, bd)
+		         + _cash_variance_outliers(property, bd)
+		         + _rate_outliers(property, bd)
+		         + _no_show_sources(property, bd))
+	# a flag must say why and point at its rows
+	items = [i for i in items if i["reason"] and i["sources"]]
+	return _check(
+		"anomalies", "Unusual against this property's history", "warn", items,
+		"Look at each flag's rows: confirm it was expected, or follow it up "
+		"with the person or source named.", None,
+		enabled=bool(on), history_days=days, min_history_days=MIN_HISTORY_DAYS,
+		ready=bool(ready))
+
+
 def run_checks(property: str, business_date: str | None = None,
                run_at=None) -> list[dict]:
 	"""Every pre-check for the business date, in checklist order."""
@@ -681,6 +907,7 @@ def run_checks(property: str, business_date: str | None = None,
 		check_overdue_ar(property),
 		check_room_status(property),
 		check_vacant_rooms(property),
+		check_anomalies(property, bd),
 	]
 
 

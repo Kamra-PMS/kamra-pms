@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "creation": "2026-11-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "customer",
+  "customer_name",
+  "plan",
+  "plan_name",
+  "starts_on",
+  "ends_on",
+  "status",
+  "visits_used",
+  "amount",
+  "paid",
+  "payment_mode",
+  "renewed_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Recreation Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer name",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "plan",
+   "fieldtype": "Link",
+   "label": "Plan",
+   "options": "Recreation Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plan_name",
+   "fieldtype": "Data",
+   "label": "Plan name"
+  },
+  {
+   "fieldname": "starts_on",
+   "fieldtype": "Date",
+   "label": "Starts",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ends_on",
+   "fieldtype": "Date",
+   "label": "Ends",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nExpired\nCancelled",
+   "default": "Active",
+   "reqd": 1
+  },
+  {
+   "fieldname": "visits_used",
+   "fieldtype": "Int",
+   "label": "Visits used",
+   "default": "0"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "default": "0"
+  },
+  {
+   "fieldname": "paid",
+   "fieldtype": "Check",
+   "label": "Paid",
+   "default": "0",
+   "description": "Recorded when the desk takes the fee. This is an operational receipt, not a guest folio."
+  },
+  {
+   "fieldname": "payment_mode",
+   "fieldtype": "Data",
+   "label": "Paid By"
+  },
+  {
+   "fieldname": "renewed_from",
+   "fieldtype": "Link",
+   "label": "Renewal Of",
+   "options": "Recreation Membership",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-23 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Recreation Membership",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "report": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "report": 1
+  },
+  {
+   "role": "Front Desk",
+   "create": 1,
+   "read": 1,
+   "write": 1,
+   "report": 1
+  },
+  {
+   "role": "F&B Manager",
+   "create": 1,
+   "read": 1,
+   "write": 1,
+   "report": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "format:RM-{#####}",
+ "naming_rule": "Expression",
+ "title_field": "customer_name"
+}

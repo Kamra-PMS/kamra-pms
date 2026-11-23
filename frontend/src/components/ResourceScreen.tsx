@@ -70,6 +70,8 @@ export type FilterSpec = {
   label: string
   /** static options */
   options?: string[]
+  /** what each static option shows, when its value is a code (e.g. "1") */
+  optionLabels?: Record<string, string>
 } & Partial<Omit<OptionSource, "linkDoctype">> & { linkDoctype?: string; optionsFrom?: "Floor" }
 
 type Opt = { value: string; label: string }
@@ -756,7 +758,7 @@ export function ResourceScreen({
                 {f.options
                   ? f.options.map((o) => (
                       <option key={o} value={o}>
-                        {t(o)}
+                        {t(f.optionLabels?.[o] ?? o)}
                       </option>
                     ))
                   : (filterOpts[f.field] ?? []).map((o) => (

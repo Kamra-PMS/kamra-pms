@@ -42,6 +42,18 @@
     "dir": "ltr"
   },
   {
+    "code": "vi",
+    "nativeLabel": "Tiếng Việt",
+    "englishLabel": "Vietnamese",
+    "dir": "ltr"
+  },
+  {
+    "code": "sw",
+    "nativeLabel": "Kiswahili",
+    "englishLabel": "Swahili",
+    "dir": "ltr"
+  },
+  {
     "code": "zh-CN",
     "nativeLabel": "简体中文",
     "englishLabel": "Chinese (Simplified)",

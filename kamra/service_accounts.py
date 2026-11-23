@@ -38,7 +38,9 @@ LAST_USED_EVERY_MINUTES = 5
 
 # Who a scoped endpoint is satisfied by, in order of preference. Never an
 # admin role: an endpoint only admins may call can't be put in a scope.
-_ROLE_PREFERENCE = ("Finance", "Front Desk", "Revenue Manager", "Night Auditor",
+# Prefer the service-account role when an endpoint allows it (guest.booking
+# must not inherit Finance just because property_locale lists staff roles).
+_ROLE_PREFERENCE = (ROLE, "Finance", "Front Desk", "Revenue Manager", "Night Auditor",
                     "Housekeeping", "Kamra Agent")
 
 # The one table of scopes, so what a key can reach is auditable in one place.
@@ -59,7 +61,8 @@ SCOPES: dict[str, dict] = {
 		"tools": ("manager_flash", "night_audit_report", "voids_allowances_report",
 		          "sla_report", "list_report_packs", "run_report_pack",
 		          "list_report_datasets", "list_custom_reports", "run_custom_report",
-		          "profit_and_loss", "balance_sheet", "cash_forecast"),
+		          "profit_and_loss", "balance_sheet", "cash_forecast",
+		          "business_date", "kpi_snapshots"),
 		"rest": ("apps.property_profile", "api.property_locale"),
 	},
 	"cashier.read": {
@@ -80,6 +83,15 @@ SCOPES: dict[str, dict] = {
 		"tools": ("allowance_requests", "booking_requests", "accept_booking_request",
 		          "decline_booking_request"),
 		"rest": ("api.decide_allowance", "cashier.approve_variance"),
+	},
+	# an outside AI assistant booking for a guest (kamra.guest_booking): the
+	# booking engine's search, hold, payment link and confirm, and only the
+	# bookings this key made - no staff data, no other guest
+	"guest.booking": {
+		"label": "Book for guests: search, hold, payment link, confirm",
+		"tools": ("guest_search_stay", "guest_hold_booking", "guest_payment_link",
+		          "guest_confirm_booking", "guest_booking_status"),
+		"rest": ("apps.property_profile", "api.property_locale"),
 	},
 }
 
