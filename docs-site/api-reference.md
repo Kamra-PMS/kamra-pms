@@ -2117,6 +2117,8 @@ can proactively reach the guest the moment a room opens.
 **GET/POST** · roles: `Front Desk`, `Kamra Agent`
 
 Create a Group Booking plus one reservation per requested room.
+`stay_details` (as in create_booking, e.g. needs_connecting) goes on
+every room.
 `rooms` = [{"room_type": &lt;name>, "count": 2, "room": &lt;optional>,
 "guest_name": &lt;optional>, "night_prices": &lt;optional>}, ...] (JSON string
 ok). A row's `night_prices` ([{date, price}], as in create_booking) price
@@ -2152,6 +2154,7 @@ room locked to its share.
 | `group_type` | no | `None` |
 | `master_index` | no | `None` |
 | `master_pays` | no | `None` |
+| `stay_details` | no | `None` |
 
 ### `kamra.api.rooming_list_template`
 
@@ -2232,6 +2235,8 @@ is being put in the room now (check-in, walk-in, allocation for today):
 a room whose occupant is still Checked In is then left out until they
 check out - the same rule Reservation.validate_room_vacant enforces.
 
+accessible=1 keeps only rooms marked Accessible (#536).
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
@@ -2240,6 +2245,7 @@ check out - the same rule Reservation.validate_room_vacant enforces.
 | `check_out_date` | yes |  |
 | `group_booking` | no | `None` |
 | `ready_now` | no | `0` |
+| `accessible` | no | `0` |
 
 ### `kamra.api.room_blocks`
 

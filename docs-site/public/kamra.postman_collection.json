@@ -5045,7 +5045,7 @@
         "kamra.api.create_group_booking"
        ]
       },
-      "description": "Create a Group Booking plus one reservation per requested room.\n`rooms` = [{\"room_type\": <name>, \"count\": 2, \"room\": <optional>,\n\"guest_name\": <optional>, \"night_prices\": <optional>}, ...] (JSON string\nok). A row's `night_prices` ([{date, price}], as in create_booking) price\nthat row's rooms night by night; every row keeps its own.\n\n`master_index` picks the main room (the index of the room as expanded\nby count, default the first): its guest pays what `master_pays` covers\n(a key of folio.COMPANY_BILLING_DEFAULTS, default \"Room only\") for every\nroom on one group bill. If that room could not be booked, the next one\nmade is the main room. Pass neither to keep a plain group.\n\nBooked via an OTA (see create_booking): every room carries the site and\nthe one OTA reference, and the sold total (`ota_total`, tax included) is\nsplit across the rooms in proportion to their rate-card prices, each\nroom locked to its share.",
+      "description": "Create a Group Booking plus one reservation per requested room.\n`stay_details` (as in create_booking, e.g. needs_connecting) goes on\nevery room.\n`rooms` = [{\"room_type\": <name>, \"count\": 2, \"room\": <optional>,\n\"guest_name\": <optional>, \"night_prices\": <optional>}, ...] (JSON string\nok). A row's `night_prices` ([{date, price}], as in create_booking) price\nthat row's rooms night by night; every row keeps its own.\n\n`master_index` picks the main room (the index of the room as expanded\nby count, default the first): its guest pays what `master_pays` covers\n(a key of folio.COMPANY_BILLING_DEFAULTS, default \"Room only\") for every\nroom on one group bill. If that room could not be booked, the next one\nmade is the main room. Pass neither to keep a plain group.\n\nBooked via an OTA (see create_booking): every room carries the site and\nthe one OTA reference, and the sold total (`ota_total`, tax included) is\nsplit across the rooms in proportion to their rate-card prices, each\nroom locked to its share.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"group_name\": \"<group_name>\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"rooms\": \"<rooms>\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"ota_total\": 0\n}",
@@ -5193,10 +5193,10 @@
         "kamra.api.available_rooms"
        ]
       },
-      "description": "Rooms of a type with no overlapping live reservation - the same\nlogic the double-booking guard enforces, exposed as a query. Confirmed\ngroup blocks hold their unsold rooms out of general sale; pass the\ngroup to book against its own block.\n\nA stay may start on another's departure date, so a room whose guest\ndeparts today is \"free\" for a booking. Pass ready_now=1 when the guest\nis being put in the room now (check-in, walk-in, allocation for today):\na room whose occupant is still Checked In is then left out until they\ncheck out - the same rule Reservation.validate_room_vacant enforces.",
+      "description": "Rooms of a type with no overlapping live reservation - the same\nlogic the double-booking guard enforces, exposed as a query. Confirmed\ngroup blocks hold their unsold rooms out of general sale; pass the\ngroup to book against its own block.\n\nA stay may start on another's departure date, so a room whose guest\ndeparts today is \"free\" for a booking. Pass ready_now=1 when the guest\nis being put in the room now (check-in, walk-in, allocation for today):\na room whose occupant is still Checked In is then left out until they\ncheck out - the same rule Reservation.validate_room_vacant enforces.\n\naccessible=1 keeps only rooms marked Accessible (#536).",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"ready_now\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"ready_now\": 0,\n  \"accessible\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

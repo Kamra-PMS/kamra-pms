@@ -10337,6 +10337,48 @@ def _mcp_user(*roles):
 	return EVAL_MCP
 
 
+@check("rooms: allocation gives a connecting pair when asked and an accessible room when needed (#536)")
+def t536():
+	from kamra import api
+	from kamra.allocation import suggest_allocation
+	rt, (r1, r2) = _t300_rooms("T536A")
+	r3, r4 = (frappe.get_doc({
+		"doctype": "Room", "property": P, "room_number": f"T536A{n}",
+		"room_type": rt, "housekeeping_status": "Clean",
+	}).insert(ignore_permissions=True).name for n in (3, 4))
+	# the connecting door is set on one room and kept on both
+	room = frappe.get_doc("Room", r2)
+	room.connects_to = r4
+	room.save(ignore_permissions=True)
+	assert frappe.db.get_value("Room", r4, "connects_to") == r2
+	frappe.db.set_value("Room", r3, "accessible", 1)
+	today, tomorrow = nowdate(), add_days(nowdate(), 1)
+	# accessible rooms can be filtered
+	assert {r["name"] for r in api.available_rooms(P, rt, today, tomorrow,
+	                                               accessible=1)} == {r3}
+	g = _guest("Eval Connecting", "+91 70000 53601")
+	stays = [frappe.get_doc({
+		"doctype": "Reservation", "property": P, "guest": g, "room_type": rt,
+		"check_in_date": today, "check_out_date": tomorrow, "adults": 2,
+		"auto_price": 1, "needs_connecting": 1,
+	}).insert(ignore_permissions=True).name for _ in (1, 2)]
+	acc = frappe.get_doc({
+		"doctype": "Reservation", "property": P,
+		"guest": _guest("Eval Accessible", "+91 70000 53602"), "room_type": rt,
+		"check_in_date": today, "check_out_date": tomorrow, "adults": 2,
+		"auto_price": 1, "needs_accessible": 1,
+	}).insert(ignore_permissions=True).name
+	plan = {p_["reservation"]: p_ for p_ in suggest_allocation(P, today)["proposals"]}
+	assert {plan[s_]["suggested_room"] for s_ in stays} == {r2, r4}, plan
+	assert all("connects to" in plan[s_]["why"] for s_ in stays), plan
+	assert plan[acc]["suggested_room"] == r3, plan[acc]
+	# unlinking clears both sides
+	room = frappe.get_doc("Room", r2)
+	room.connects_to = None
+	room.save(ignore_permissions=True)
+	assert not frappe.db.get_value("Room", r4, "connects_to")
+
+
 @check("room assignment for arrivals: apply re-checks every pair, skips bad ones with a reason, and repeating it changes nothing")
 def t384():
 	from kamra.allocation import apply_allocation, suggest_allocation
@@ -11552,7 +11594,7 @@ def execute():
 		           t360, t361, t362, t363, t364, t365,
 		           t370, t371, t372, t373, t374, t375, t376,
 		           t217, t260, t261, t262, t263, t264,
-		           t380, t381, t382, t383, t384, t385, t386, t387, t_nicaragua_pack,
+		           t380, t381, t382, t383, t384, t536, t385, t386, t387, t_nicaragua_pack,
 		           t_philippines_pack,
 		           t_concurrency_guards, t_safe_deposit_race, t_service_account_scope,
 		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,

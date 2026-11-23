@@ -215,6 +215,8 @@ export function BookingDialog(props: {
     valet_parking: false,
     early_checkin: false,
     late_checkout: false,
+    needs_accessible: false,
+    needs_connecting: false,
   })
   const setX = (
     k: keyof typeof extra,
@@ -683,6 +685,10 @@ export function BookingDialog(props: {
           phone: form.phone || undefined,
           company: form.company || undefined,
           rate_plan: form.rate_plan || undefined,
+          stay_details: {
+            needs_accessible: extra.needs_accessible ? 1 : undefined,
+            needs_connecting: extra.needs_connecting ? 1 : undefined,
+          },
           ...viaArgs,
         })
         if (out.skipped.length > 0) {
@@ -737,6 +743,7 @@ export function BookingDialog(props: {
           valet_parking: extra.valet_parking ? 1 : undefined,
           early_checkin: extra.early_checkin ? 1 : undefined,
           late_checkout: extra.late_checkout ? 1 : undefined,
+          needs_accessible: extra.needs_accessible ? 1 : undefined,
         },
         instructions: extra.special_requests
           ? [
@@ -2287,6 +2294,11 @@ export function BookingDialog(props: {
                                 ["valet_parking", "Valet parking"],
                                 ["early_checkin", "Early check-in"],
                                 ["late_checkout", "Late check-out"],
+                                ["needs_accessible", "Accessible room"],
+                                // a pair of connecting rooms needs a second room
+                                ...(moreRooms.length > 0
+                                  ? [["needs_connecting", "Connecting rooms"] as const]
+                                  : []),
                               ] as const
                             ).map(([k, lbl]) => (
                               <label

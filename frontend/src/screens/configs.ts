@@ -42,6 +42,7 @@ export const roomsConfig: ScreenConfig = {
     { field: "housekeeping_status", label: "Status", options: ["Clean", "Dirty", "Inspected", "Ready", "Out of Order"] },
     { field: "room_type", label: "Room type", linkDoctype: "Room Type", labelField: "room_type_name", propertyScoped: true },
     { field: "floor", label: "Floor", optionsFrom: "Floor" },
+    { field: "accessible", label: "Accessible", options: ["1"], optionLabels: { "1": "Accessible rooms" } },
   ],
   pageSize: 25,
   propertyScoped: true,
@@ -59,6 +60,9 @@ export const roomsConfig: ScreenConfig = {
     { field: "floor", label: "Floor", type: "select", source: floorSource, allowNew: "Add a floor", hint: "Floors are set up in Admin > Floors. Pick one or add a new floor here." },
     { field: "housekeeping_status", label: "Housekeeping status", type: "select", options: ["Clean", "Dirty", "Inspected", "Ready", "Out of Order"] },
     { field: "notes", label: "Notes", type: "data" },
+    { field: "accessible", label: "Accessible room", type: "check", hint: "Allocation gives it to guests who need an accessible room." },
+    { field: "accessibility_features", label: "Accessibility features", type: "data", hint: "For example: roll-in shower, grab bars, wide door.", dependsOn: (d) => !!Number(d.accessible) },
+    { field: "connects_to", label: "Connecting room", type: "link", linkDoctype: "Room", hint: "The room behind the connecting door. Kept on both rooms." },
   ],
 }
 
