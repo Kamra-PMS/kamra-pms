@@ -48,7 +48,7 @@ MAX_MANIFEST_BYTES = 64 * 1024
 # staff roles that may read a property's profile; every read scope's
 # service account carries one of them (scope_roles)
 READ_ROLES = ("Front Desk", "Finance", "Revenue Manager", "Night Auditor",
-              "Housekeeping", "Kamra Agent")
+              "Housekeeping", "Kamra Agent", "Kamra Service Account")
 
 
 # --- trust ------------------------------------------------------------------------

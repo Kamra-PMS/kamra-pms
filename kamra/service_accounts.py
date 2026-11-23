@@ -38,8 +38,10 @@ LAST_USED_EVERY_MINUTES = 5
 
 # Who a scoped endpoint is satisfied by, in order of preference. Never an
 # admin role: an endpoint only admins may call can't be put in a scope.
-_ROLE_PREFERENCE = ("Finance", "Front Desk", "Revenue Manager", "Night Auditor",
-                    "Housekeeping", "Kamra Agent", ROLE)
+# Prefer the service-account role when an endpoint allows it (guest.booking
+# must not inherit Finance just because property_locale lists staff roles).
+_ROLE_PREFERENCE = (ROLE, "Finance", "Front Desk", "Revenue Manager", "Night Auditor",
+                    "Housekeeping", "Kamra Agent")
 
 # The one table of scopes, so what a key can reach is auditable in one place.
 # scope -> label, MCP tool names (their endpoints are callable over REST too)
