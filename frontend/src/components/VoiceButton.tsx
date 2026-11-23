@@ -48,6 +48,7 @@ export const VOICE_LANGS: [string, string][] = [
   ["pt-BR", "Português (Brasil)"],
   ["zh-CN", "简体中文"],
   ["fil-PH", "Filipino"],
+  ["vi-VN", "Tiếng Việt"],
 ]
 
 const KEY = "kamra_voice_lang"
