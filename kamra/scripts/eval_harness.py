@@ -380,6 +380,85 @@ def t3h():
 		                  ignore_permissions=True)
 
 
+@check("stay restrictions: the quote refuses a stay that breaks one, with the reason (#530)")
+def t530():
+	"""Min / max nights and closed to arrival read the arrival date, closed
+	to departure the departure date, stop-sell every night. A day list
+	overrides by weekday, a plan-only rule leaves the plain price alone, an
+	OTA booking is never refused, and ARI carries the same values."""
+	from decimal import Decimal
+
+	from kamra.channel_ari import _restriction_day
+	from kamra.pricing import day_restrictions, quote, restriction_rules
+
+	plan = frappe.get_doc({"doctype": "Rate Plan", "property": P,
+	                       "rate_plan_name": "Eval Restricted", "code": "EVRST",
+	                       "modifier_type": "Percent", "modifier_value": 0,
+	                       }).insert(ignore_permissions=True).name
+	made = []
+
+	def rule(name, start, end, **kw):
+		made.append(frappe.get_doc({
+			"doctype": "Rate Restriction", "property": P, "restriction_name": name,
+			"room_type": RT, "start_date": start, "end_date": end, **kw,
+		}).insert(ignore_permissions=True).name)
+
+	def refused(ci, co, rate_plan=None, why=""):
+		try:
+			quote(P, RT, ci, co, 2, 0, rate_plan=rate_plan)
+		except frappe.ValidationError as e:
+			assert why in str(e), (ci, co, str(e))
+			return
+		raise AssertionError(f"{ci}..{co} on {rate_plan} was quoted")
+
+	try:
+		rule("EVAL CTA", "2032-03-05", "2032-03-05", closed_to_arrival=1)
+		rule("EVAL Min3 plan", "2032-03-10", "2032-03-10", min_nights=3, rate_plan=plan)
+		# Fridays and Saturdays in the range only: a weekday override
+		rule("EVAL Max1 weekend", "2032-03-01", "2032-03-31", max_nights=1,
+		     days_of_week="fri, sat")
+		rule("EVAL CTD", "2032-03-25", "2032-03-25", closed_to_departure=1)
+		rule("EVAL Stop", "2032-03-28", "2032-03-28", stop_sell=1)
+
+		refused("2032-03-05", "2032-03-06", why="Arrivals are closed")
+		refused("2032-03-10", "2032-03-11", plan, why="at least 3 nights")
+		quote(P, RT, "2032-03-10", "2032-03-11", 2, 0)  # plain price: no plan rule
+		quote(P, RT, "2032-03-10", "2032-03-13", 2, 0, rate_plan=plan)
+		refused("2032-03-12", "2032-03-14", why="at most 1 nights")
+		quote(P, RT, "2032-03-16", "2032-03-18", 2, 0)  # a Tuesday: no max
+		refused("2032-03-23", "2032-03-25", why="Departures are closed")
+		refused("2032-03-27", "2032-03-29", why="closed for sale")
+		quote(P, RT, "2032-03-25", "2032-03-28", 2, 0)  # arrive on the CTD day, leave on the stop-sell day
+		# the channel sync prices the day anyway
+		quote(P, RT, "2032-03-28", "2032-03-29", 2, 0, check_restrictions=False)
+
+		desk = {"doctype": "Reservation", "property": P, "room_type": RT,
+		        "guest": _guest("Eval Restricted", "+91 70000 00530"),
+		        "check_in_date": "2032-03-05", "check_out_date": "2032-03-06",
+		        "adults": 2, "children": 0, "auto_price": 1, "status": "Confirmed"}
+		try:
+			frappe.get_doc(dict(desk)).insert(ignore_permissions=True)
+			raise AssertionError("a desk booking arriving on a closed day was saved")
+		except frappe.ValidationError:
+			pass
+		ota = frappe.get_doc(dict(desk, source="OTA", channel="booking.com")
+		                     ).insert(ignore_permissions=True)
+		frappe.delete_doc("Reservation", ota.name, force=True, ignore_permissions=True)
+
+		rules = restriction_rules(P, RT, plan, "2032-03-01", "2032-03-31")
+		day = _restriction_day(Decimal("100"), day_restrictions(rules, "2032-03-10"))
+		assert day == {"rate": Decimal("100"), "stop_sell": False, "min_stay_arrival": 3,
+		               "max_stay": 0, "closed_to_arrival": False,
+		               "closed_to_departure": False}, day
+		stop = _restriction_day(Decimal("100"), day_restrictions(rules, "2032-03-28"))
+		assert stop["stop_sell"] is True and stop["min_stay_arrival"] == 1, stop
+		assert _restriction_day(None) == {"stop_sell": True}  # no rules: as before
+	finally:
+		for name in made:
+			frappe.delete_doc("Rate Restriction", name, force=True, ignore_permissions=True)
+		frappe.delete_doc("Rate Plan", plan, force=True, ignore_permissions=True)
+
+
 @check("a stay touching a weekend loses the small-group rate throughout")
 def t3i():
 	"""Villas that price small midweek parties per head treat a stay that
@@ -11685,7 +11764,7 @@ def execute():
 	frappe.db.savepoint("eval_start")
 	try:
 		RT, ROOM = setup()
-		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t3i, t3j, t4,
+		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t530, t3i, t3j, t4,
 		           t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16,
 		           t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28,
 		           t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39, t39b, t39c, t39d,

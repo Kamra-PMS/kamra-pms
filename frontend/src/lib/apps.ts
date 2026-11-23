@@ -260,6 +260,8 @@ export const APPS: AppDef[] = [
         keywords: ["bar", "best available rate", "base rate", "rack rate", "tariff", "pricing", "price by date"] },
       { to: "/rate-plans", label: "Rate Plans", icon: Tags },
       { to: "/seasons", label: "Seasons", icon: CalendarDays },
+      { to: "/rate-restrictions", label: "Stay restrictions", icon: CalendarDays,
+        keywords: ["min stay", "max stay", "closed to arrival", "CTA", "CTD", "stop sell", "restriction", "LOS"] },
       { to: "/packages", label: "Packages", icon: Package,
         keywords: ["holiday package", "pacote", "carnaval", "reveillon", "special offer", "feriado", "closed package"] },
       { to: "/guardrails", label: "Guardrails", icon: ShieldCheck },

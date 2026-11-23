@@ -285,7 +285,7 @@ _PROPERTY_SCOPED = (
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
 	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Table Reservation",
 	"Print Job",
-	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan",
+	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan", "Rate Restriction",
 	"Reservation",
 	"Long Stay Discount", "Revenue Budget", "Room", "Room Block", "Room Type", "Season",
 	"Security Deposit", "Sellable Unit", "Service Ticket", "Shift Handover", "SOP Template", "Ticket Event",
@@ -372,7 +372,7 @@ doc_events["Reservation"] = {
 # What moves availability or price queues an ARI change for the connections
 # with an outbox (kamra.channel_ari: only changes, in ranges, under the
 # provider's rate limit). Reservations go through on_reservation_change.
-for _doctype in ("Season", "Rate Plan", "Room Type", "Hurdle Rate", "Rate Guardrail",
+for _doctype in ("Season", "Rate Restriction", "Rate Plan", "Room Type", "Hurdle Rate", "Rate Guardrail",
                  "Room", "Room Block", "Channel Room Mapping"):
 	_events = doc_events.setdefault(_doctype, {})
 	for _event in ("on_update", "after_insert", "on_trash"):

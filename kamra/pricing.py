@@ -604,6 +604,83 @@ def stay_season_rules(property: str, check_in, check_out,
 	        "package": pkg.package_name if pkg else None}
 
 
+# ── Stay restrictions (Rate Restriction, #530) ──────────────────────────────
+# Per rate plan, room type and dates, with a day list for day-of-week
+# overrides. Overlapping rules take the strictest value. Min / max nights
+# and closed to arrival read the arrival date (Channex min_stay_arrival),
+# closed to departure the departure date, stop-sell every night stayed.
+
+def restriction_rules(property: str, room_type: str | None, rate_plan: str | None,
+                      start, end, any_plan: bool = False) -> list:
+	"""The enabled Rate Restrictions touching [start, end] for this room type
+	and plan (blank fields on a rule mean every type / every plan).
+	any_plan: every plan's rules (the rate calendar lists them all)."""
+	filters = {"property": property, "disabled": 0,
+	           "start_date": ("<=", end), "end_date": (">=", start)}
+	if room_type:
+		filters["room_type"] = ("in", [room_type, "", None])
+	if not any_plan:
+		filters["rate_plan"] = ("in", [rate_plan or "", "", None])
+	return frappe.get_all(
+		"Rate Restriction", filters=filters,
+		fields=["name", "restriction_name", "rate_plan", "room_type", "start_date",
+		        "end_date", "days_of_week", "min_nights", "max_nights",
+		        "closed_to_arrival", "closed_to_departure", "stop_sell"])
+
+
+def rules_on(rules: list, date) -> list:
+	day = getdate(date)
+	abbr = day.strftime("%a").lower()
+	return [r for r in rules if getdate(r.start_date) <= day <= getdate(r.end_date)
+	        and days_cover(r.days_of_week, abbr)]
+
+
+def day_restrictions(rules: list, date) -> dict:
+	"""The strictest of the rules on one date. max_nights 0 = no maximum."""
+	on = rules_on(rules, date)
+	maxes = [cint(r.max_nights) for r in on if cint(r.max_nights)]
+	return {"min_nights": max([cint(r.min_nights) for r in on], default=0),
+	        "max_nights": min(maxes, default=0),
+	        "closed_to_arrival": any(r.closed_to_arrival for r in on),
+	        "closed_to_departure": any(r.closed_to_departure for r in on),
+	        "stop_sell": any(r.stop_sell for r in on)}
+
+
+def stay_restriction_error(property: str, room_type: str, rate_plan: str | None,
+                           check_in, check_out) -> str | None:
+	"""Why this stay breaks a restriction, or None when it doesn't."""
+	nights = date_diff(check_out, check_in)
+	if nights <= 0:
+		return None  # ponytail: day use is not restricted; add when a property asks
+	rules = restriction_rules(property, room_type, rate_plan, check_in, check_out)
+	if not rules:
+		return None
+	for i in range(nights):
+		d = add_days(check_in, i)
+		if day_restrictions(rules, d)["stop_sell"]:
+			return _("{0} is closed for sale on {1}.").format(
+				rate_plan or _("This room type"), d)
+	arrival = day_restrictions(rules, check_in)
+	if arrival["closed_to_arrival"]:
+		return _("Arrivals are closed on {0}.").format(check_in)
+	if arrival["min_nights"] > nights:
+		return _("A stay arriving on {0} needs at least {1} nights.").format(
+			check_in, arrival["min_nights"])
+	if arrival["max_nights"] and nights > arrival["max_nights"]:
+		return _("A stay arriving on {0} can be at most {1} nights.").format(
+			check_in, arrival["max_nights"])
+	if day_restrictions(rules, check_out)["closed_to_departure"]:
+		return _("Departures are closed on {0}.").format(check_out)
+	return None
+
+
+def assert_stay_restrictions(property: str, room_type: str, rate_plan: str | None,
+                             check_in, check_out) -> None:
+	why = stay_restriction_error(property, room_type, rate_plan, check_in, check_out)
+	if why:
+		frappe.throw(why, title=_("Stay restriction"))
+
+
 def advance_percent(property: str, stay_rules: dict) -> tuple[float, str | None]:
 	"""The advance % a booking owes and the season that set it.
 
@@ -823,6 +900,7 @@ def quote(
 	check_in_time: str | None = None,
 	check_out_time: str | None = None,
 	night_prices=None,
+	check_restrictions: bool = True,
 ) -> dict:
 	# a stay for a company is priced on the plan the company negotiated,
 	# unless the caller named a plan of its own
@@ -834,6 +912,11 @@ def quote(
 	day_use = nights == 0
 	if nights < 0:
 		frappe.throw("Check-out cannot be before check-in.")
+	# the desk, the booking engine and agents all quote here; the channel
+	# sync and stays already on the books pass False
+	if check_restrictions:
+		assert_stay_restrictions(property, room_type, rate_plan,
+		                         check_in_date, check_out_date)
 
 	rt = frappe.get_doc("Room Type", room_type)
 	inclusive = rates_include_tax(property)
