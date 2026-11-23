@@ -189,6 +189,10 @@
    "report": 1,
    "print": 1,
    "role": "Night Auditor"
+  },
+  {
+   "read": 1,
+   "role": "Owner"
   }
  ],
  "row_format": "Dynamic",

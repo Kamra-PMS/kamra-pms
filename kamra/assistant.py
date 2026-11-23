@@ -1349,7 +1349,15 @@ def ask_stream(property: str, messages, lang: str | None = None):
 			if _out_of_credit(resp):
 				return Response(_sse("error", _no_credit()) + _sse("done", {}),
 				                mimetype="text/event-stream")
-			frappe.throw(f"AI provider error ({resp.status_code}): {resp.text[:200]}")
+			# a rejected key or a provider 500 is an SSE error, same as a
+			# credit failure. Throwing here became "check the AI key" for
+			# every failure, including one that had nothing to do with the key.
+			return Response(
+				_sse("error", {"message": _provider_error(resp, 200),
+				               "code": "provider_error",
+				               "status": resp.status_code})
+				+ _sse("done", {}),
+				mimetype="text/event-stream")
 		msg = resp.json()["choices"][0]["message"]
 		calls = msg.get("tool_calls") or []
 		if not calls:

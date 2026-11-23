@@ -45,6 +45,8 @@ ROLES = (
 	 "A service account for a third-party POS: finds in-house rooms and posts room charges, nothing else."),
 	("System Manager", "IT administrator",
 	 "Site administration: developer keys, new properties, every setting."),
+	("Owner", "Unit owner",
+	 "Their own units only: occupancy, bookings and revenue. Guest contact stays off unless an admin turns it on."),
 )
 ROLE_NAMES = tuple(r for r, _l, _d in ROLES)
 IT_ONLY = ("System Manager",)
