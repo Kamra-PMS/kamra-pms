@@ -2960,6 +2960,7 @@ round trip instead of four, and the kitchen gets a single update.
 | `discount_reason` | no | `''` |
 | `guest` | no | `None` |
 | `waiter` | no | `None` |
+| `allow_zero` | no | `0` |
 
 ### `kamra.pos.send_round`
 
@@ -2972,6 +2973,7 @@ and fire_kot in one call and one save.
 | --- | --- | --- |
 | `order` | yes |  |
 | `items` | yes |  |
+| `allow_zero` | no | `0` |
 
 ### `kamra.pos.kitchen_queue`
 

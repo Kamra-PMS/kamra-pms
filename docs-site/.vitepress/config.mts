@@ -68,6 +68,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("Night audit", "Auditoría nocturna", "التدقيق الليلي"), "night-audit"],
       [L("Reports & dashboards", "Informes y paneles", "التقارير ولوحات المعلومات"), "reports"],
       [L("Room Board", "Panel de habitaciones", "لوحة الغرف"), "rooms"],
+      [L("Unit owners", "Propietarios de unidades", "ملاك الوحدات"), "unit-owners"],
       [L("Housekeeping", "Limpieza", "التدبير المنزلي"), "housekeeping"],
       [L("Guest requests", "Solicitudes de huéspedes", "طلبات النزلاء"), "operations"],
       [L("F&B: POS & kitchen", "Alimentos y bebidas: POS y cocina", "الأغذية والمشروبات: نقطة البيع والمطبخ"), "fnb"],

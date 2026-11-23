@@ -7010,7 +7010,7 @@
       "description": "A captain's new bill straight to the kitchen, in one call: what\ncreate_order, apply_discount, confirm_order and fire_kot do one after\nanother, in one request and one transaction. The till waits for one\nround trip instead of four, and the kitchen gets a single update.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"customer_name\": \"A. Customer\",\n  \"discount\": 0,\n  \"discount_reason\": \"\",\n  \"guest\": \"G-00001\"\n}",
+       "raw": "{\n  \"outlet\": \"Your Property-Restaurant\",\n  \"items\": \"<items>\",\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"reservation\": \"RES-2026-00001\",\n  \"customer_name\": \"A. Customer\",\n  \"discount\": 0,\n  \"discount_reason\": \"\",\n  \"guest\": \"G-00001\",\n  \"allow_zero\": 0\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -7047,7 +7047,7 @@
       "description": "Another round on a running bill, straight to the kitchen: add_items\nand fire_kot in one call and one save.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"items\": \"<items>\"\n}",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"items\": \"<items>\",\n  \"allow_zero\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

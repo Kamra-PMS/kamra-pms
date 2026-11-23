@@ -381,6 +381,15 @@ for _doctype in ("Season", "Rate Restriction", "Rate Plan", "Room Type", "Hurdle
 			"kamra.channel_ari.on_ari_source_change"]
 del _doctype, _events, _event, _current
 
+# a unit added to (or moved between) unit types an owner holds joins
+# that owner's scope at once (#639)
+_room = doc_events.setdefault("Room", {})
+for _event in ("after_insert", "on_update"):
+	_current = _room.get(_event) or []
+	_room[_event] = ([_current] if isinstance(_current, str) else list(_current)) + [
+		"kamra.owners.on_room_change"]
+del _room, _event, _current
+
 # Scheduled Tasks
 # ---------------
 

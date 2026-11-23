@@ -1,7 +1,8 @@
 /** Unit owners (#639). Hotel Admin links an owner to units and logins.
  *  The owner signs in and sees only those units: a calendar, occupancy,
- *  bookings, room revenue and a monthly statement. Manage can hold one
- *  of their own units. Guest name and phone stay hidden unless the admin
+ *  bookings, room revenue and a monthly statement. Manage can also hold
+ *  or book one of their own units and set the rate of a unit type they
+ *  own outright. An owner can hold whole unit types. Guest name and phone stay hidden unless the admin
  *  turns Show guest contact on. */
 
 import { useCallback, useEffect, useState } from "react"
@@ -18,12 +19,16 @@ interface OwnerRow {
   show_guest_contact: number
   commission_percent: number
   units: string[]
+  unit_commission?: Record<string, number>
+  room_types?: string[]
   users: string[]
+  costs?: { posting_date: string; room: string | null; description: string; amount: number }[]
 }
 interface RoomRow { name: string; room_number: string }
 interface Desk {
   owners: OwnerRow[]
   rooms: RoomRow[]
+  room_types?: { name: string; room_type_name: string }[]
 }
 interface Booking {
   reservation: string
@@ -50,9 +55,10 @@ interface Portal {
   occupancy_pct: number
   room_nights: number
   revenue: number
-  units: { room: string; room_number: string; occupancy_status: string }[]
+  units: { room: string; room_number: string; occupancy_status: string; revenue?: number }[]
   bookings: Booking[]
   blocks: Hold[]
+  priceable_types?: { room_type: string; name: string }[]
 }
 interface Statement {
   from_date: string
@@ -62,6 +68,9 @@ interface Statement {
   commission: number
   costs: number
   payout: number
+  lines?: { owner_name: string; room_number: string; room_nights: number; revenue: number;
+    commission_percent: number; commission: number }[]
+  cost_lines?: { date: string; description: string; amount: number }[]
 }
 
 const inputCls =
@@ -119,7 +128,11 @@ function DeskPanel() {
   const [show, setShow] = useState(false)
   const [commission, setCommission] = useState("0")
   const [rooms, setRooms] = useState<string[]>([])
+  const [types, setTypes] = useState<string[]>([])
+  const [unitCut, setUnitCut] = useState<Record<string, string>>({})
   const [users, setUsers] = useState("")
+  const [costFor, setCostFor] = useState("")
+  const [cost, setCost] = useState({ date: new Date().toISOString().slice(0, 10), description: "", amount: "" })
 
   const load = useCallback(() => {
     call<Desk>("kamra.owners.desk", { property })
@@ -135,6 +148,8 @@ function DeskPanel() {
     setShow(!!row.show_guest_contact)
     setCommission(String(row.commission_percent ?? 0))
     setRooms(row.units)
+    setTypes(row.room_types ?? [])
+    setUnitCut(Object.fromEntries(Object.entries(row.unit_commission ?? {}).map(([k, v]) => [k, String(v)])))
     setUsers(row.users.join("\n"))
   }
 
@@ -150,12 +165,17 @@ function DeskPanel() {
         show_guest_contact: show ? 1 : 0,
         commission_percent: Number(commission) || 0,
         rooms,
+        room_types: types,
+        unit_commission: Object.fromEntries(Object.entries(unitCut)
+          .filter(([room, v]) => rooms.includes(room) && v !== "").map(([room, v]) => [room, Number(v)])),
         users: users.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean),
       })
       setName("")
       setOwnerName("")
       setUsers("")
       setRooms([])
+      setTypes([])
+      setUnitCut({})
       setShow(false)
       setCommission("0")
       load()
@@ -186,7 +206,7 @@ function DeskPanel() {
         <input className={inputCls} inputMode="decimal" placeholder={t("Commission %")}
           value={commission} onChange={(e) => setCommission(e.target.value)} />
         <p className="text-xs text-zinc-500">
-          {t("A new email is created as a login. Set the password in Staff & Access. Manage can hold their own units. Read only cannot.")}
+          {t("A new email is created as a login. Set the password in Staff & Access. Manage can hold and book their own units and price a unit type they own outright. Read only cannot.")}
         </p>
         <div className="flex flex-wrap gap-2">
           {(desk?.rooms ?? []).map((r) => (
@@ -196,12 +216,32 @@ function DeskPanel() {
                   ? [...rooms, r.name]
                   : rooms.filter((x) => x !== r.name))} />
               {r.room_number}
+              {rooms.includes(r.name) && (
+                <input className="w-14 rounded border border-zinc-200 px-1 text-xs" inputMode="decimal"
+                  placeholder="%" aria-label={t("Commission % for {unit}", { unit: r.room_number })}
+                  value={unitCut[r.name] ?? ""}
+                  onChange={(e) => setUnitCut({ ...unitCut, [r.name]: e.target.value })} />
+              )}
             </label>
           ))}
         </div>
+        {(desk?.room_types ?? []).length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs text-zinc-500">{t("Or whole unit types: every unit of the type, including ones added later.")}</p>
+            <div className="flex flex-wrap gap-2">
+              {(desk?.room_types ?? []).map((rt) => (
+                <label key={rt.name} className="flex items-center gap-1 rounded-full border border-zinc-200 px-2 py-1 text-sm">
+                  <input type="checkbox" checked={types.includes(rt.name)}
+                    onChange={(e) => setTypes(e.target.checked ? [...types, rt.name] : types.filter((x) => x !== rt.name))} />
+                  {rt.room_type_name || rt.name}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <textarea className={inputCls} rows={2} placeholder={t("Login emails, one per line")}
           value={users} onChange={(e) => setUsers(e.target.value)} />
-        <button type="button" disabled={busy || !ownerName}
+        <button type="button" disabled={busy || !ownerName || (!rooms.length && !types.length)}
           onClick={save}
           className="rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-50">
           {name ? t("Save owner") : t("Add owner")}
@@ -209,17 +249,48 @@ function DeskPanel() {
       </div>
       <ul className="space-y-2">
         {(desk?.owners ?? []).map((row) => (
-          <li key={row.name} className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-3 text-sm">
+          <li key={row.name} className="flex flex-wrap items-center justify-between rounded-2xl border border-zinc-200 bg-white p-3 text-sm">
             <div>
               <div className="font-medium">{row.owner_name}</div>
               <div className="text-zinc-500">
-                {t(row.access)} · {row.commission_percent}% · {row.units.length} {t("units")} · {row.users.join(", ")}
+                {t(row.access)} · {row.commission_percent}% · {row.units.length} {t("units")}{row.room_types?.length ? ` + ${row.room_types.length} ${t("unit types")}` : ""} · {row.users.join(", ")}
                 {row.show_guest_contact ? ` · ${t("guest contact on")}` : ""}
               </div>
             </div>
-            <button type="button" className="text-sm text-zinc-700 underline" onClick={() => edit(row)}>
-              {t("Edit")}
-            </button>
+            <div className="flex gap-3">
+              <button type="button" className="text-sm text-zinc-700 underline" onClick={() => edit(row)}>
+                {t("Edit")}
+              </button>
+              <button type="button" className="text-sm text-zinc-700 underline"
+                onClick={() => setCostFor(costFor === row.name ? "" : row.name)}>
+                {t("Add cost")}
+              </button>
+            </div>
+            {costFor === row.name && (
+              <div className="mt-2 flex w-full flex-wrap gap-2">
+                <input type="date" className={inputCls + " max-w-40"} value={cost.date}
+                  onChange={(e) => setCost({ ...cost, date: e.target.value })} />
+                <input className={inputCls + " max-w-60"} placeholder={t("What the cost is for")}
+                  value={cost.description} onChange={(e) => setCost({ ...cost, description: e.target.value })} />
+                <input className={inputCls + " max-w-28"} inputMode="decimal" placeholder={t("Amount")}
+                  value={cost.amount} onChange={(e) => setCost({ ...cost, amount: e.target.value })} />
+                <button type="button" disabled={busy || !cost.description.trim() || !Number(cost.amount)}
+                  className="rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+                  onClick={async () => {
+                    setBusy(true); setError("")
+                    try {
+                      await call("kamra.owners.add_owner_cost", {
+                        owner: row.name, posting_date: cost.date,
+                        description: cost.description.trim(), amount: Number(cost.amount),
+                      })
+                      setCostFor(""); setCost({ ...cost, description: "", amount: "" })
+                      load()
+                    } catch (e) { setError(serverError(e)) } finally { setBusy(false) }
+                  }}>
+                  {t("Save cost")}
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -257,6 +328,8 @@ function PortalPanel() {
   const [holdFrom, setHoldFrom] = useState(iso(1))
   const [holdTo, setHoldTo] = useState(iso(3))
   const [month, setMonth] = useState(iso(0).slice(0, 7))
+  const [book, setBook] = useState({ room: "", from: iso(1), to: iso(3), guest: "", adults: "1" })
+  const [price, setPrice] = useState({ type: "", from: iso(1), to: iso(7), rate: "" })
   const [statement, setStatement] = useState<Statement | null>(null)
 
   const load = useCallback(() => {
@@ -290,6 +363,14 @@ function PortalPanel() {
     const lines = [
       ["from", row.from_date],
       ["to", row.to_date],
+      [],
+      ["unit", "room_nights", "revenue", "commission_percent", "commission"],
+      ...(row.lines ?? []).map((l) => [l.room_number, String(l.room_nights), String(l.revenue),
+        String(l.commission_percent), String(l.commission)]),
+      [],
+      ["cost_date", "description", "amount"],
+      ...(row.cost_lines ?? []).map((c) => [c.date, `"${c.description.replace(/"/g, '""')}"`, String(c.amount)]),
+      [],
       ["room_nights", String(row.room_nights)],
       ["revenue", String(row.revenue)],
       ["commission", String(row.commission)],
@@ -389,10 +470,66 @@ function PortalPanel() {
               </ul>
             </div>
           )}
+          {manage && (
+            <div className="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
+              <h2 className="text-sm font-semibold">{t("Book a unit")}</h2>
+              <p className="text-xs text-zinc-500">
+                {t("A stay in one of your units, priced and checked like a booking at the desk.")}
+              </p>
+              <select className={inputCls} value={book.room} onChange={(e) => setBook({ ...book, room: e.target.value })}>
+                <option value="">{t("Unit")}</option>
+                {data.units.map((unit) => <option key={unit.room} value={unit.room}>{unit.room_number}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <input type="date" className={inputCls} value={book.from} onChange={(e) => setBook({ ...book, from: e.target.value })} />
+                <input type="date" className={inputCls} value={book.to} onChange={(e) => setBook({ ...book, to: e.target.value })} />
+              </div>
+              <div className="flex gap-2">
+                <input className={inputCls} placeholder={t("Guest name")} value={book.guest}
+                  onChange={(e) => setBook({ ...book, guest: e.target.value })} />
+                <input className={inputCls + " max-w-24"} inputMode="numeric" aria-label={t("Adults")}
+                  value={book.adults} onChange={(e) => setBook({ ...book, adults: e.target.value })} />
+              </div>
+              <button type="button" disabled={busy || !book.room || !book.guest.trim()}
+                className="rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+                onClick={() => act(() => call("kamra.owners.book_unit", {
+                  property, room: book.room, check_in_date: book.from, check_out_date: book.to,
+                  guest_name: book.guest.trim(), adults: Number(book.adults) || 1,
+                }))}>
+                {t("Book")}
+              </button>
+            </div>
+          )}
+          {manage && (data.priceable_types ?? []).length > 0 && (
+            <div className="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
+              <h2 className="text-sm font-semibold">{t("Set a rate")}</h2>
+              <p className="text-xs text-zinc-500">
+                {t("For a unit type whose units are all yours. The property's floor and ceiling still apply.")}
+              </p>
+              <select className={inputCls} value={price.type} onChange={(e) => setPrice({ ...price, type: e.target.value })}>
+                <option value="">{t("Unit type")}</option>
+                {(data.priceable_types ?? []).map((rt) => <option key={rt.room_type} value={rt.room_type}>{rt.name}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <input type="date" className={inputCls} value={price.from} onChange={(e) => setPrice({ ...price, from: e.target.value })} />
+                <input type="date" className={inputCls} value={price.to} onChange={(e) => setPrice({ ...price, to: e.target.value })} />
+                <input className={inputCls + " max-w-32"} inputMode="decimal" placeholder={t("Nightly rate")}
+                  value={price.rate} onChange={(e) => setPrice({ ...price, rate: e.target.value })} />
+              </div>
+              <button type="button" disabled={busy || !price.type || !Number(price.rate)}
+                className="rounded-lg bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+                onClick={() => act(() => call("kamra.owners.set_unit_rate", {
+                  property, room_type: price.type, start_date: price.from, end_date: price.to,
+                  rate: Number(price.rate),
+                }))}>
+                {t("Set rate")}
+              </button>
+            </div>
+          )}
           <div className="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
             <h2 className="text-sm font-semibold">{t("Statement")}</h2>
             <p className="text-xs text-zinc-500">
-              {t("Room revenue minus commission. Costs are not itemised yet, and guest names are not on this file.")}
+              {t("Room revenue per unit, minus commission and your costs that month. Guest names are not on this file.")}
             </p>
             <input type="month" className={inputCls} value={month} onChange={(e) => setMonth(e.target.value)} />
             <button type="button" disabled={busy || !month}
