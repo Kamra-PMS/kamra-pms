@@ -913,6 +913,19 @@ def _payment_split(prop, total: float, rules: dict | None = None) -> dict:
 	}
 
 
+_TAG = re.compile(r"[^A-Za-z0-9_.\-]+")
+
+
+def clean_source_tag(property: str, tag: str | None) -> str | None:
+	"""A booking link's tag as stored: letters, digits, _ . - only, at most
+	60 characters; None when booking links are off at the property."""
+	from kamra.settings import get_setting
+	tag = _TAG.sub("-", (tag or "").strip()).strip("-")[:60]
+	if not tag or not cint(get_setting(property, "booking_links")):
+		return None
+	return tag
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limit(limit=10, seconds=3600)
 def book(property: str, room_type: str, check_in_date: str,
@@ -920,8 +933,10 @@ def book(property: str, room_type: str, check_in_date: str,
          email: str = "", adults: int = 2, children: int = 0,
          meal_plan: str = "", special_requests: str = "", addons=None,
          voucher_code: str = "", idempotency_key: str = "", pets: int = 0,
-         child_ages=None, marketing_consent: int = 0):
-	"""Create a Website booking. An existing guest profile is reused when
+         child_ages=None, marketing_consent: int = 0, source_tag: str = ""):
+	"""Create a Website booking. `source_tag` is the src / utm_source tag of
+	the booking link the guest came in on, kept on the reservation when the
+	property has booking links on (#560). An existing guest profile is reused when
 	both the phone and the full name match; staff verify at check-in.
 	The advance owed is computed from the property's
 	current payment policy and snapshotted onto the booking.
@@ -1027,6 +1042,9 @@ def book(property: str, room_type: str, check_in_date: str,
 		}
 		if special_requests:
 			updates["special_requests"] = special_requests
+		tag = clean_source_tag(property, source_tag)
+		if tag:
+			updates["source_tag"] = tag
 		# Instant + pay-at-hotel: if pre-insert peek overestimated advance,
 		# promote Pending Payment → Confirmed.
 		if (

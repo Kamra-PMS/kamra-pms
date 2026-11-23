@@ -524,6 +524,13 @@ export default function PublicBooking() {
   const [mealFilter, setMealFilter] = useState<string | null>(null)
   const [availableOnly, setAvailableOnly] = useState(false)
   const [selected, setSelected] = useState<{ room_type: string; meal_plan: string } | null>(null)
+  // a booking link (#560): ?room=<room type>&plan=<meal plan>&src=<tag>.
+  // The room and plan are picked once, on the first results; the tag goes
+  // with the booking (utm_source when there is no src).
+  const linkRef = useRef(new URLSearchParams(location.search))
+  const linkPick = useRef<{ room: string; plan: string | null } | null>(
+    linkRef.current.get("room") ? { room: linkRef.current.get("room")!, plan: linkRef.current.get("plan") } : null)
+  const sourceTag = linkRef.current.get("src") || linkRef.current.get("utm_source") || ""
   const [lightbox, setLightbox] = useState<{ photos: Photo[]; start: number; title: string } | null>(null)
   const [booking, setBooking] = useState<string | null>(null) // room type name
   const [form, setForm] = useState({ guest_name: "", phone: "", email: "", special_requests: "", marketing_consent: 0 })
@@ -708,6 +715,18 @@ export default function PublicBooking() {
       rows.forEach((r) => (map[r.room_type] = r))
       setResults(map)
       // a selection the new search can no longer sell is dropped
+      const pick = linkPick.current
+      if (pick) {
+        linkPick.current = null
+        const r = map[pick.room]
+        const plans = plansOf(r)
+        const plan = plans.find((p) => p.meal_plan === pick.plan) ?? (pick.plan ? undefined : plans[0])
+        if (canReserve(r) && plan) {
+          setSelected({ room_type: pick.room, meal_plan: plan.meal_plan })
+          setTimeout(() => document.getElementById("stay-results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0)
+          return
+        }
+      }
       setSelected((s) => {
         if (!s) return s
         const r = map[s.room_type]
@@ -757,6 +776,7 @@ export default function PublicBooking() {
           ...form,
           meal_plan: selected.meal_plan,
           voucher_code: appliedVoucher,
+          source_tag: sourceTag || undefined,
           addons: Object.entries(addons)
             .filter(([, qty]) => qty > 0)
             .map(([experience, qty]) => ({ experience, qty })),

@@ -49,6 +49,7 @@ MODULES = [
     ("guest_documents", "Guest documents (photo, ID and address proof images)", "Stored privately and served as data URLs to the desk. A property on Verify & Discard keeps no ID images."),
     ("printing", "Kitchen printers (routing, print stations, print queue)", ""),
     ("laundry", "Laundry (housekeeping)", ""),
+    ("housekeeping", "Housekeeping (room status cases, inspection pass rate)", "Each part is behind its Housekeeping setting; switched off, the endpoints refuse or report enabled: false."),
     ("banquet", "Banquets (functions, quotations, event orders)", ""),
     ("migrate", "Migration (CSV import)", ""),
     ("golive", "Go-live data (companies, opening balances, reconciliation)", ""),

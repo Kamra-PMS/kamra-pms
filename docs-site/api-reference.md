@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **516 endpoints**, generated from the source
+the UI and the AI use. **522 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -3888,6 +3888,75 @@ complimentary bags are counted as volume but earn nothing.
 | `days` | no | `30` |
 
 
+## Housekeeping (room status cases, inspection pass rate)
+
+> Each part is behind its Housekeeping setting; switched off, the endpoints refuse or report enabled: false.
+
+### `kamra.housekeeping.room_discrepancies`
+
+**GET/POST** · roles: `Front Desk`, `Housekeeping`, `Hotel Admin`, `Kamra Agent`
+
+Rooms where the front office and housekeeping disagree now (the night
+audit's room status check) that have no open case yet, and the open
+cases with their owner.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.housekeeping.open_room_discrepancy`
+
+**POST** · roles: `Front Desk`, `Housekeeping`, `Hotel Admin`
+
+Open a case for a room the front office and housekeeping disagree on,
+with an owner (default: whoever opens it). One open case per room.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `room` | yes |  |
+| `owner` | no | `None` |
+| `note` | no | `''` |
+
+### `kamra.housekeeping.close_room_discrepancy`
+
+**POST** · roles: `Front Desk`, `Housekeeping`, `Hotel Admin`
+
+Close a room status case with what was found (the reason is required).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `case` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.housekeeping.hk_fail_inspection`
+
+**POST** · roles: `Hotel Admin`
+
+A supervisor fails an inspection: the room goes back to Dirty and a
+re-clean is handed to the attendant whose clean failed. The reason is
+kept; it counts against that attendant's pass rate.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `task` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.housekeeping.hk_quality`
+
+**GET/POST** · roles: `Hotel Admin`, `Kamra Agent`
+
+Inspection pass rate and checkout-clean turn time (task made to task
+done, in minutes) by attendant and by room type, over inspections and
+cleans completed between the dates (default: the last 30 days).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+
+
 ## Banquets (functions, quotations, event orders)
 
 ### `kamra.banquet.banquet_catalogue`
@@ -5371,6 +5440,20 @@ breached if it was resolved after due_by, or is still open past due_by.
 | `property` | yes |  |
 | `from_date` | yes |  |
 | `to_date` | yes |  |
+
+### `kamra.reports.booking_link_sources`
+
+**GET/POST** · roles: `Revenue Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+Bookings made from booking links, per source tag (#560): how many,
+room nights and booked value, by the date the booking was made
+(default: the last 90 days). Cancelled bookings are left out.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
 
 
 ## Night audit report (day, MTD, YTD)
@@ -7544,7 +7627,9 @@ or the folio; staff count and price the bag at the door (status
 
 **POST**
 
-Create a Website booking. An existing guest profile is reused when
+Create a Website booking. `source_tag` is the src / utm_source tag of
+the booking link the guest came in on, kept on the reservation when the
+property has booking links on (#560). An existing guest profile is reused when
 both the phone and the full name match; staff verify at check-in.
 The advance owed is computed from the property's
 current payment policy and snapshotted onto the booking.
@@ -7574,6 +7659,7 @@ the sleeping arrangement and agrees the price for them.
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
 | `marketing_consent` | no | `0` |
+| `source_tag` | no | `''` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 

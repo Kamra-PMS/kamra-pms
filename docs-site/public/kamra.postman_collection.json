@@ -9541,6 +9541,196 @@
    ]
   },
   {
+   "name": "Housekeeping (room status cases, inspection pass rate)",
+   "item": [
+    {
+     "name": "room_discrepancies",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.housekeeping.room_discrepancies",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.housekeeping.room_discrepancies"
+       ]
+      },
+      "description": "Rooms where the front office and housekeeping disagree now (the night\naudit's room status check) that have no open case yet, and the open\ncases with their owner.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "open_room_discrepancy",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.housekeeping.open_room_discrepancy",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.housekeeping.open_room_discrepancy"
+       ]
+      },
+      "description": "Open a case for a room the front office and housekeeping disagree on,\nwith an owner (default: whoever opens it). One open case per room.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room\": \"Your Property-101\",\n  \"note\": \"\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "close_room_discrepancy",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.housekeeping.close_room_discrepancy",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.housekeeping.close_room_discrepancy"
+       ]
+      },
+      "description": "Close a room status case with what was found (the reason is required).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"case\": \"<case>\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "hk_fail_inspection",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.housekeeping.hk_fail_inspection",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.housekeeping.hk_fail_inspection"
+       ]
+      },
+      "description": "A supervisor fails an inspection: the room goes back to Dirty and a\nre-clean is handed to the attendant whose clean failed. The reason is\nkept; it counts against that attendant's pass rate.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"task\": \"<task>\",\n  \"reason\": \"<reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "hk_quality",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.housekeeping.hk_quality",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.housekeeping.hk_quality"
+       ]
+      },
+      "description": "Inspection pass rate and checkout-clean turn time (task made to task\ndone, in minutes) by attendant and by room type, over inspections and\ncleans completed between the dates (default: the last 30 days).",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Banquets (functions, quotations, event orders)",
    "item": [
     {
@@ -13262,6 +13452,43 @@
        ]
       },
       "description": "Operations SLA health from Service Tickets over a window: overall\nresolution and breach rates, a breakdown by category and by priority,\nand the currently-overdue queue aged by how long it's past its due time.\n\nTime-to-resolve is measured creation -> resolved_on; a ticket counts as\nbreached if it was resolved after due_by, or is still open past due_by.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "booking_link_sources",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.reports.booking_link_sources",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.reports.booking_link_sources"
+       ]
+      },
+      "description": "Bookings made from booking links, per source tag (#560): how many,\nroom nights and booked value, by the date the booking was made\n(default: the last 90 days). Cancelled bookings are left out.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
@@ -18920,10 +19147,10 @@
         "kamra.public_api.book"
        ]
       },
-      "description": "Create a Website booking. An existing guest profile is reused when\nboth the phone and the full name match; staff verify at check-in.\nThe advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves. A party above what the room sleeps,\nwithin the extra guests it allows, is also Requested: the host confirms\nthe sleeping arrangement and agrees the price for them.",
+      "description": "Create a Website booking. `source_tag` is the src / utm_source tag of\nthe booking link the guest came in on, kept on the reservation when the\nproperty has booking links on (#560). An existing guest profile is reused when\nboth the phone and the full name match; staff verify at check-in.\nThe advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves. A party above what the room sleeps,\nwithin the extra guests it allows, is also Requested: the host confirms\nthe sleeping arrangement and agrees the price for them.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0,\n  \"marketing_consent\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0,\n  \"marketing_consent\": 0,\n  \"source_tag\": \"\"\n}",
        "options": {
         "raw": {
          "language": "json"

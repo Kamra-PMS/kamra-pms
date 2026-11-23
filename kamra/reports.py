@@ -610,3 +610,37 @@ def sla_report(property: str, from_date: str, to_date: str):
 		"open_total": len(open_all),
 		"unassigned_open": sum(1 for t in open_all if not t.assigned_to_user),
 	}
+
+
+@frappe.whitelist()
+@require_roles("Revenue Manager", "Hotel Admin", "Front Desk", "Kamra Agent")
+def booking_link_sources(property: str, from_date: str | None = None,
+                         to_date: str | None = None):
+	"""Bookings made from booking links, per source tag (#560): how many,
+	room nights and booked value, by the date the booking was made
+	(default: the last 90 days). Cancelled bookings are left out."""
+	from frappe.utils import date_diff
+
+	from kamra.authz import assert_property_access
+	assert_property_access(property)
+	to_date = str(getdate(to_date or nowdate()))
+	from_date = str(getdate(from_date or add_days(to_date, -90)))
+	if date_diff(to_date, from_date) > 366:
+		frappe.throw("Pick at most a year.")
+	rows = frappe.db.sql(
+		"""SELECT source_tag AS tag, COUNT(*) AS bookings,
+		          COALESCE(SUM(DATEDIFF(check_out_date, check_in_date)), 0) AS room_nights,
+		          COALESCE(SUM(amount_after_tax), 0) AS amount
+		   FROM `tabReservation`
+		   WHERE property = %s AND IFNULL(source_tag, '') != ''
+		     AND status != 'Cancelled' AND DATE(creation) BETWEEN %s AND %s
+		   GROUP BY source_tag ORDER BY bookings DESC, source_tag""",
+		(property, from_date, to_date), as_dict=True)
+	for r in rows:
+		r["amount"] = round(float(r["amount"] or 0), 2)
+		r["room_nights"] = int(r["room_nights"] or 0)
+	from frappe.utils import cint
+
+	from kamra.settings import get_setting
+	return {"from_date": from_date, "to_date": to_date, "rows": rows,
+	        "enabled": bool(cint(get_setting(property, "booking_links")))}

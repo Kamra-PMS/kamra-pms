@@ -21,7 +21,11 @@
   "reservation",
   "reject_reason",
   "breached",
-  "escalation_level"
+  "escalation_level",
+  "completed_on",
+  "clean_task",
+  "inspection_result",
+  "fail_reason"
  ],
  "fields": [
   {
@@ -120,12 +124,42 @@
    "read_only": 1,
    "default": "0",
    "description": "0 = on time, 1 = escalated to supervisor, 2 = escalated to manager."
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "clean_task",
+   "fieldtype": "Link",
+   "label": "Clean Inspected",
+   "options": "Housekeeping Task",
+   "read_only": 1,
+   "depends_on": "eval:doc.task_type=='Inspection'",
+   "description": "The clean this inspection checks (whose attendant it counts for)."
+  },
+  {
+   "fieldname": "inspection_result",
+   "fieldtype": "Select",
+   "label": "Inspection Result",
+   "options": "\nPassed\nFailed",
+   "read_only": 1,
+   "depends_on": "eval:doc.task_type=='Inspection'"
+  },
+  {
+   "fieldname": "fail_reason",
+   "fieldtype": "Small Text",
+   "label": "Why It Failed",
+   "read_only": 1,
+   "depends_on": "eval:doc.inspection_result=='Failed'"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-28 12:51:22.820746",
+ "modified": "2026-11-23 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Housekeeping Task",

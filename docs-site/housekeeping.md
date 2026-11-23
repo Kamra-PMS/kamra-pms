@@ -164,6 +164,33 @@ The front desk sees the photos from the room's latest clean on **Today**
 (the camera button on the room), and on the task in **Housekeeping →
 Tasks**.
 
+### Fail an inspection
+
+A supervisor who finds the room not ready presses **Fail** on the
+inspection and says what failed. The room goes back to Dirty and a
+re-clean is handed to the housekeeper whose clean failed, with the reason
+on it. The failed inspection counts against that housekeeper's pass rate.
+
+## Room status cases
+
+When the front office and housekeeping disagree on a room (the board shows
+Occupied with no guest in house, a guest is in a room the board shows
+Vacant, or an out-of-order room has a guest), the **Housekeeping Board**
+lists it under **Room status cases**. Press **Open case** to give it an
+owner (you, or a housekeeper you pick). One room has one open case at a
+time. Whoever sorts it out presses **Close case** and says what was found;
+the reason stays on the record and on the Activity log. Switch it off in
+**Settings → Housekeeping → Room status cases**.
+
+## Inspection pass rate and turn time
+
+Supervisors see, on the **Housekeeping Board**, each housekeeper's and
+each room type's inspection pass rate over the last 30 days, with the
+average checkout-clean turn time (from the task being made to it being
+done). An inspection counts for the housekeeper whose clean it checked.
+Switch it off in **Settings → Housekeeping → Inspection pass rate and
+turn time**.
+
 ## Assign a room to a housekeeper
 
 Staff take rooms from the **Available** pool themselves. A supervisor can
