@@ -72,6 +72,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("Guest requests", "Solicitudes de huéspedes", "طلبات النزلاء"), "operations"],
       [L("F&B: POS & kitchen", "Alimentos y bebidas: POS y cocina", "الأغذية والمشروبات: نقطة البيع والمطبخ"), "fnb"],
       [L("Banquets & groups", "Banquetes y grupos", "الحفلات والمجموعات"), "banquets"],
+      [L("Recreation: gym, pool, spa", "Recreación: gimnasio, piscina, spa", "الترفيه: النادي الرياضي والمسبح والسبا"), "recreation"],
       [L("Revenue & rates", "Ingresos y tarifas", "الإيرادات والأسعار"), "revenue"],
       [L("Booking engine", "Motor de reservas", "محرك الحجز"), "booking-engine"],
       [L("Settings & staff", "Configuración y personal", "الإعدادات والموظفون"), "settings"],
