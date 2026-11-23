@@ -10,7 +10,7 @@ import {
   Star,
   Wifi,
 } from "lucide-react"
-import { call } from "../lib/api"
+import { amendStayPreview, call, type RepricePreview } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { toFullPath } from "../lib/routing"
 import { fmtMoney, sellsAlcohol } from "../lib/money"
@@ -101,6 +101,8 @@ interface Flow {
   /** Soft-required steps still open — warn, allow check-in, backfill later. */
   pending_backfill: { step: string; title: string; tip: string }[]
   rooms: Room[]
+  /** booked to arrive after today: check-in moves the arrival to this date */
+  early_arrival_to: string | null
   request_presets: { key: string; label: string; priced?: boolean }[]
   ids: {
     ok: boolean
@@ -334,6 +336,8 @@ export default function CheckInDialog(props: {
   const [allowCharges, setAllowCharges] = useState<boolean | null>(null)
   const [chargesReason, setChargesReason] = useState("")
   const [keyMessage, setKeyMessage] = useState<string | null>(null)
+  // an early arrival's new price, from the server's own preview
+  const [early, setEarly] = useState<RepricePreview | null>(null)
 
   const adopt = useCallback((f: Flow) => {
     setFlow(f)
@@ -394,6 +398,23 @@ export default function CheckInDialog(props: {
   )
   const step = flow?.steps.find((s) => s.step_key === nav.current) ?? null
   const roomReady = !!flow && !flow.missing_required.length
+
+  // booked to arrive after today: check-in moves the arrival and re-prices
+  // the stay, so show the new price before the desk confirms
+  const earlyTo = flow?.early_arrival_to
+  const checkOut = flow?.reservation.check_out_date
+  const atConfirm = nav.current === "confirm"
+  useEffect(() => {
+    setEarly(null)
+    if (!earlyTo || !checkOut || !atConfirm) return
+    let live = true
+    amendStayPreview(props.reservation, earlyTo, checkOut)
+      .then((p) => live && setEarly(p))
+      .catch((e) => live && setError(serverError(e)))
+    return () => {
+      live = false
+    }
+  }, [props.reservation, earlyTo, checkOut, atConfirm])
 
   // open on the first visible step still to do (room first when missing)
   const started = useRef(false)
@@ -533,12 +554,16 @@ export default function CheckInDialog(props: {
     try {
       const out = await call<{ room: string | null; keys?: { message: string } }>(
         "kamra.api.check_in",
-        { reservation: props.reservation },
+        {
+          reservation: props.reservation,
+          ...(early ? { early_arrival: 1, confirm_price: early.needs_confirmation ? 1 : 0 } : {}),
+        },
       )
       setFinished({ room: flow?.room.room_number ?? out.room, keys: out.keys ?? null })
     } catch (e) {
+      // reload first: adopting the new flow clears the error
+      await load()
       setError(serverError(e))
-      load()
     } finally {
       setBusy(false)
     }
@@ -636,13 +661,17 @@ export default function CheckInDialog(props: {
           onBack={nav.isFirst ? undefined : nav.back}
           onSkip={optional ? onSkip : undefined}
           onContinue={onContinue}
-          continueDisabled={isConfirm && !!flow?.missing_required.length}
-          disabledReason={t("Assign a room before check-in.")}
+          continueDisabled={isConfirm && (!!flow?.missing_required.length || (!!earlyTo && !early))}
+          disabledReason={flow?.missing_required.length
+            ? t("Assign a room before check-in.")
+            : t("Check-in needs the new price first.")}
           continueLabel={
             busy
               ? t("Saving…")
               : isConfirm
-                ? softPending > 0
+                ? earlyTo
+                  ? t("Move arrival and check in")
+                  : softPending > 0
                   ? flow?.room.room_number
                     ? t("Check in to {room}, finish later", { room: flow.room.room_number })
                     : t("Check in, finish later")
@@ -1149,6 +1178,17 @@ export default function CheckInDialog(props: {
           {isConfirm && (
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-zinc-900">{t("Check-in summary")}</h3>
+              {earlyTo && early && (
+                <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  {t("Booked to arrive {date}. Checking in now moves the arrival to {target}: {n} extra night(s), total {old} → {new}.", {
+                    date: r.check_in_date,
+                    target: earlyTo,
+                    n: Math.round((Date.parse(r.check_in_date) - Date.parse(earlyTo)) / 86400000),
+                    old: fmtMoney(early.current_amount),
+                    new: fmtMoney(early.new_amount),
+                  })}
+                </p>
+              )}
               <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white">
                 {flow.steps
                   .filter((s) => s.relevant && (!EXPRESS_HIDE.has(s.step_key) || s.state === "done"))
