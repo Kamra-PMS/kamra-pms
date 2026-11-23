@@ -7452,6 +7452,7 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		"pickup_note", "departure_mode", "departure_ref", "departure_datetime",
 		"drop_required", "drop_note", "purpose", "extra_beds", "infants",
 		"valet_parking", "early_checkin", "late_checkout",
+		"needs_accessible", "needs_connecting",
 	}
 	if isinstance(stay_details, str):
 		stay_details = frappe.parse_json(stay_details)
@@ -7629,8 +7630,11 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
                          ota_commission_pct: float | None = None,
                          group_type: str | None = None,
                          master_index: int | None = None,
-                         master_pays: str | None = None):
+                         master_pays: str | None = None,
+                         stay_details=None):
 	"""Create a Group Booking plus one reservation per requested room.
+	`stay_details` (as in create_booking, e.g. needs_connecting) goes on
+	every room.
 	`rooms` = [{"room_type": <name>, "count": 2, "room": <optional>,
 	"guest_name": <optional>, "night_prices": <optional>}, ...] (JSON string
 	ok). A row's `night_prices` ([{date, price}], as in create_booking) price
@@ -7724,6 +7728,7 @@ def create_group_booking(property: str, group_name: str, check_in_date: str,
 				ota_total=share,
 				ota_commission_pct=ota_commission_pct,
 				night_prices=spec.get("night_prices"),
+				stay_details=stay_details,
 			)
 			created.append(res["reservation"])
 			if main is None and i >= int(master_index or 0):
@@ -8019,7 +8024,7 @@ def inventory_availability(property: str, check_in_date: str, check_out_date: st
 @require_roles("Front Desk", "Kamra Agent")
 def available_rooms(property: str, room_type: str, check_in_date: str,
                     check_out_date: str, group_booking: str | None = None,
-                    ready_now: int = 0):
+                    ready_now: int = 0, accessible: int = 0):
 	"""Rooms of a type with no overlapping live reservation - the same
 	logic the double-booking guard enforces, exposed as a query. Confirmed
 	group blocks hold their unsold rooms out of general sale; pass the
@@ -8029,7 +8034,9 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	departs today is "free" for a booking. Pass ready_now=1 when the guest
 	is being put in the room now (check-in, walk-in, allocation for today):
 	a room whose occupant is still Checked In is then left out until they
-	check out - the same rule Reservation.validate_room_vacant enforces."""
+	check out - the same rule Reservation.validate_room_vacant enforces.
+
+	accessible=1 keeps only rooms marked Accessible (#536)."""
 	# Prefer Sellable Unit availability when SIUs exist for this type
 	# (ADR-003). Fall back to legacy Room SQL during migration.
 	rooms = None
@@ -8049,6 +8056,10 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	                   for_group=group_booking)
 	if hold:
 		rooms = rooms[:max(0, len(rooms) - hold)]
+	if int(accessible or 0):
+		ok = set(frappe.get_all("Room", pluck="name",
+		                        filters={"property": property, "accessible": 1}))
+		rooms = [r for r in rooms or [] if r["name"] in ok]
 	# Always frappe._dict so callers can use row["name"] or row.name.
 	return [frappe._dict(r) for r in (rooms or [])]
 

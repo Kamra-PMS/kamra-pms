@@ -119,6 +119,8 @@
   "valet_parking",
   "early_checkin",
   "late_checkout",
+  "needs_accessible",
+  "needs_connecting",
   "sb_instructions",
   "instructions",
   "sb_occupants",
@@ -313,8 +315,8 @@
    "label": "Check-out Business Date",
    "read_only": 1,
    "description": "The business date the guest checked out on: a checkout can be undone only until it moves on"
-   },
-   {
+  },
+  {
    "fieldname": "booked_check_out_date",
    "fieldtype": "Date",
    "label": "Booked Check Out",
@@ -931,6 +933,17 @@
    "label": "Late Check-out Requested"
   },
   {
+   "fieldname": "needs_accessible",
+   "fieldtype": "Check",
+   "label": "Needs an Accessible Room"
+  },
+  {
+   "fieldname": "needs_connecting",
+   "fieldtype": "Check",
+   "label": "Wants Connecting Rooms",
+   "description": "Allocation puts two such stays of the same group or guest in a connecting pair."
+  },
+  {
    "fieldname": "sb_instructions",
    "fieldtype": "Section Break",
    "label": "Special instructions"
@@ -945,7 +958,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-29 14:00:00.000000",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Reservation",

@@ -22,6 +22,7 @@ _HIGH_WORDS = ("high floor", "higher floor", "top floor", "upper floor",
                "upper", "highest")
 _LOW_WORDS = ("ground floor", "low floor", "lower floor", "ground-floor",
               "no stairs", "accessible")
+_ACCESS_WORDS = ("accessible", "wheelchair", "disabled access", "mobility")
 _BED_WORDS = ("king", "queen", "twin", "double", "single")
 _QUIET_WORDS = ("quiet", "corner", "away from", "peaceful", "no noise")
 
@@ -30,8 +31,8 @@ def _room_pool(property: str):
 	"""Every room with the attributes allocation cares about, keyed by name."""
 	rooms = frappe.db.sql(
 		"""
-		SELECT r.name, r.room_number, r.floor, r.room_type,
-		       rt.room_type_name, rt.room_view, rt.bed_type
+		SELECT r.name, r.room_number, r.floor, r.room_type, r.accessible,
+		       r.connects_to, rt.room_type_name, rt.room_view, rt.bed_type
 		FROM `tabRoom` r
 		LEFT JOIN `tabRoom Type` rt ON rt.name = r.room_type
 		WHERE r.property = %(p)s
@@ -66,6 +67,10 @@ def _score(prefs: str, vip: bool, room: dict, max_floor, min_floor):
 	if any(w in p for w in _LOW_WORDS) and fl is not None and fl == min_floor:
 		score += 2
 		why.append("ground floor")
+
+	if room.get("accessible") and any(w in p for w in _ACCESS_WORDS):
+		score += 3
+		why.append("accessible room")
 
 	bed = (room.get("bed_type") or "").lower()
 	for w in _BED_WORDS:
@@ -102,7 +107,7 @@ def suggest_allocation(property: str, date: str | None = None):
 		         "check_in_date": d, "room": ("in", ["", None])},
 		fields=["name", "guest", "guest_name", "room_type", "check_in_date",
 		        "check_out_date", "special_requests", "group_booking",
-		        "is_day_use"],
+		        "is_day_use", "needs_accessible", "needs_connecting"],
 		order_by="booking_type desc, creation asc")
 
 	# batch the guest lookups (vip + notes)
@@ -118,7 +123,7 @@ def suggest_allocation(property: str, date: str | None = None):
 	taken: set[str] = set()
 	proposals, unfittable = [], []
 
-	for a in arrivals:
+	def free_for(a):
 		# the room is wanted today: one whose guest has not checked out yet
 		# is not on offer (ready_now), even on that guest's departure date
 		free = available_rooms(property, a.room_type, a.check_in_date,
@@ -126,6 +131,17 @@ def suggest_allocation(property: str, date: str | None = None):
 		                       ready_now=1)
 		cands = [by_name[r["name"]] for r in free
 		         if r["name"] in by_name and r["name"] not in taken]
+		if a.needs_accessible:
+			# a need, not a wish: only accessible rooms, when there is one
+			cands = [r for r in cands if r.accessible] or cands
+		return cands
+
+	paired = _connecting_pairs(arrivals, free_for, taken)
+	for a in arrivals:
+		cands = free_for(a)
+		if a.name in paired:
+			room, partner = paired[a.name]
+			cands = [room] + [r for r in cands if r.name != room.name]
 		if not cands:
 			unfittable.append({"reservation": a.name, "guest_name": a.guest_name,
 			                   "room_type": a.room_type,
@@ -146,6 +162,12 @@ def suggest_allocation(property: str, date: str | None = None):
 			key=lambda x: (x[0][0], -(_as_int(x[1].get("room_number")) or 0)),
 			reverse=True)
 		(best_score, why), room = scored[0]
+		if a.name in paired:
+			room, partner = paired[a.name]
+			best_score, why = _score(prefs, vip, room, cmax, cmin)
+			why = [f"connects to {partner}"] + why
+		if a.needs_accessible and not room.accessible:
+			why = ["no accessible room free"] + why
 		taken.add(room.name)
 
 		# a real choice (>1 candidate) or a preference/VIP match => needs a look
@@ -164,6 +186,31 @@ def suggest_allocation(property: str, date: str | None = None):
 		})
 
 	return {"date": str(d), "proposals": proposals, "unfittable": unfittable}
+
+
+def _connecting_pairs(arrivals, free_for, taken: set[str]) -> dict:
+	"""Stays that asked for connecting rooms (#536), two at a time within a
+	group booking (or the same guest): give each pair two free rooms that
+	connect, one of each stay's type. Returns {reservation: (room, partner
+	room number)}; a pair with no connecting rooms free is left to the
+	normal pick. The rooms are marked taken."""
+	out: dict = {}
+	waiting: dict[str, list] = {}
+	for a in arrivals:
+		if a.needs_connecting:
+			waiting.setdefault(a.group_booking or a.guest or a.name, []).append(a)
+	for stays in waiting.values():
+		for a, b in zip(stays[::2], stays[1::2]):  # noqa: B905 - an odd one out stays unpaired
+			b_free = {r.name: r for r in free_for(b)}
+			pair = next(((ra, b_free[ra.connects_to]) for ra in free_for(a)
+			             if ra.connects_to in b_free and ra.connects_to != ra.name), None)
+			if not pair:
+				continue
+			ra, rb = pair
+			out[a.name] = (ra, rb.room_number)
+			out[b.name] = (rb, ra.room_number)
+			taken.update((ra.name, rb.name))
+	return out
 
 
 @frappe.whitelist(methods=["POST"])
