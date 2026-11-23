@@ -39,7 +39,7 @@ LAST_USED_EVERY_MINUTES = 5
 # Who a scoped endpoint is satisfied by, in order of preference. Never an
 # admin role: an endpoint only admins may call can't be put in a scope.
 _ROLE_PREFERENCE = ("Finance", "Front Desk", "Revenue Manager", "Night Auditor",
-                    "Housekeeping", "Kamra Agent")
+                    "Housekeeping", "Kamra Agent", ROLE)
 
 # The one table of scopes, so what a key can reach is auditable in one place.
 # scope -> label, MCP tool names (their endpoints are callable over REST too)
@@ -80,6 +80,15 @@ SCOPES: dict[str, dict] = {
 		"tools": ("allowance_requests", "booking_requests", "accept_booking_request",
 		          "decline_booking_request"),
 		"rest": ("api.decide_allowance", "cashier.approve_variance"),
+	},
+	# an outside AI assistant booking for a guest (kamra.guest_booking): the
+	# booking engine's search, hold, payment link and confirm, and only the
+	# bookings this key made - no staff data, no other guest
+	"guest.booking": {
+		"label": "Book for guests: search, hold, payment link, confirm",
+		"tools": ("guest_search_stay", "guest_hold_booking", "guest_payment_link",
+		          "guest_confirm_booking", "guest_booking_status"),
+		"rest": ("apps.property_profile", "api.property_locale"),
 	},
 }
 

@@ -29,12 +29,32 @@ Each service account has:
 | `cashier.read` | Cashier shifts and sessions, folios, city ledger and accounts receivable |
 | `finance.read` | Folios and tax invoices (`folio_invoice`), cashier sessions and the session report, city ledger, accounts receivable and invoices on an account, company monthly bills |
 | `approvals.write` | Pending allowances (approve or reject), till variance sign-off, booking requests (accept or decline) |
+| `guest.booking` | Book for a guest from an outside AI assistant: search a stay, hold it, a payment link for the advance, confirm, status. Only the bookings this key made; no staff data |
 
 Every read scope also opens `kamra.apps.property_profile` (see below) and `kamra.api.property_locale` (currency, symbol and number format).
 
 The MCP tools and endpoints behind each scope are listed in one table,
 `SCOPES` in `kamra/service_accounts.py`. An endpoint only an admin may call
 can't be put in a scope.
+
+## Book for guests from an AI assistant
+
+A `guest.booking` key lets an outside AI assistant (a concierge chatbot, a
+travel agent's assistant) book a stay for a guest over MCP. It runs the
+booking engine itself, so availability, prices and the payment policy are
+the hotel's, never the model's:
+
+1. `guest_search_stay`: what is free, with the real total per meal plan and what is due now.
+2. `guest_hold_booking`: books it. With nothing due now (Pay at hotel) the
+   booking is confirmed at once. With an advance due it is **Pending
+   Payment** until `hold_expires_on` (the property's hold minutes); an
+   unpaid hold is released by the hold job.
+3. `guest_payment_link`: the advance still due, through the property's gateway. Paying it confirms the booking.
+4. `guest_confirm_booking`: refused until the advance is paid. `guest_booking_status` shows where it stands.
+
+A key sees only the bookings it made itself, and is throttled per hour
+(searches 120, holds 20, payment links 30). The tools appear only where the
+booking engine module is on.
 
 ## Create a service account
 
