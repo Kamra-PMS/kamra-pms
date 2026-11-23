@@ -237,6 +237,9 @@ function ReservationList(props: {
   rows: ReservationRow[]
   empty: string
   action: (row: ReservationRow) => React.ReactNode
+  /** pick stays for a bulk action (BulkStays) */
+  selected?: string[]
+  onToggle?: (name: string) => void
 }) {
   const { t } = useT()
   if (props.rows.length === 0) {
@@ -246,6 +249,12 @@ function ReservationList(props: {
     <ul className="divide-y divide-zinc-100">
       {props.rows.map((row) => (
         <li key={row.name} className="flex items-center gap-3 py-2.5">
+          {props.onToggle && (
+            <input type="checkbox" className="size-4 shrink-0 accent-brand-600"
+              checked={props.selected?.includes(row.name) ?? false}
+              onChange={() => props.onToggle?.(row.name)}
+              aria-label={t("Select {name}", { name: row.guest_name })} />
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-medium">
@@ -323,6 +332,97 @@ function ReservationList(props: {
         </li>
       ))}
     </ul>
+  )
+}
+
+type BulkAction = "check_in" | "check_out" | "cancel"
+type BulkResult = { reservation: string; done?: number; error?: string }
+
+/** A ReservationList whose stays can be picked and checked in, checked out
+ *  or cancelled together. Each stay goes through the same server call as
+ *  one at a time (kamra.api.bulk_stays); one that fails is listed with why
+ *  and the rest still go through. */
+function BulkStays(props: Omit<React.ComponentProps<typeof ReservationList>, "selected" | "onToggle"> & {
+  actions: { key: BulkAction; label: string; confirm?: string }[]
+  onDone: () => void
+}) {
+  const { t } = useT()
+  const [picked, setPicked] = useState<string[]>([])
+  const [confirming, setConfirming] = useState<BulkAction | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [results, setResults] = useState<(BulkResult & { guest: string })[] | null>(null)
+  const live = picked.filter((n) => props.rows.some((r) => r.name === n))
+  const toggle = (n: string) =>
+    setPicked((cur) => (cur.includes(n) ? cur.filter((x) => x !== n) : [...cur, n]))
+
+  async function run(action: BulkAction) {
+    const guests = Object.fromEntries(props.rows.map((r) => [r.name, r.guest_name]))
+    setBusy(true)
+    setError(null)
+    try {
+      const out = await call<{ results: BulkResult[] }>("kamra.api.bulk_stays", {
+        action, reservations: live,
+      })
+      setResults(out.results.map((r) => ({ ...r, guest: guests[r.reservation] ?? r.reservation })))
+      setPicked([])
+      props.onDone()
+    } catch (e) {
+      setError(serverError(e))
+    } finally {
+      setBusy(false)
+      setConfirming(null)
+    }
+  }
+
+  return (
+    <>
+      {props.rows.length > 1 && (
+        <label className="mb-1 flex items-center gap-2 text-xs text-zinc-500">
+          <input type="checkbox" className="size-4 accent-brand-600"
+            checked={live.length === props.rows.length}
+            onChange={() => setPicked(live.length === props.rows.length ? [] : props.rows.map((r) => r.name))} />
+          {t("Select all")}
+        </label>
+      )}
+      {live.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg bg-zinc-50 px-2 py-1.5 text-sm">
+          <span className="font-medium">{t("{n} selected", { n: live.length })}</span>
+          {props.actions.map((a) => confirming === a.key ? (
+            <span key={a.key} className="flex items-center gap-1.5">
+              <span>{a.confirm}</span>
+              <Button disabled={busy} onClick={() => void run(a.key)}>{busy ? t("Working…") : t("Yes")}</Button>
+              <Button variant="ghost" disabled={busy} onClick={() => setConfirming(null)}>{t("No")}</Button>
+            </span>
+          ) : (
+            <Button key={a.key} variant="outline" disabled={busy}
+              onClick={() => (a.confirm ? setConfirming(a.key) : void run(a.key))}>
+              {busy ? t("Working…") : a.label}
+            </Button>
+          ))}
+          <Button variant="ghost" disabled={busy} onClick={() => setPicked([])}>{t("Clear")}</Button>
+        </div>
+      )}
+      {error && <p className="mb-2 text-sm text-rose-600">{translate(error)}</p>}
+      {results && (
+        <div className="mb-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm">
+          <ul className="space-y-0.5">
+            {results.map((r) => (
+              <li key={r.reservation} className="flex gap-2">
+                <span className="font-medium">{r.guest}</span>
+                {r.error
+                  ? <span className="text-rose-700">{translate(r.error)}</span>
+                  : <span className="text-emerald-700">{t("Done")}</span>}
+              </li>
+            ))}
+          </ul>
+          <button className="mt-1 text-xs font-medium text-brand-700 hover:underline" onClick={() => setResults(null)}>
+            {t("Dismiss")}
+          </button>
+        </div>
+      )}
+      <ReservationList {...props} selected={live} onToggle={toggle} />
+    </>
   )
 }
 
@@ -900,9 +1000,14 @@ export default function Today() {
           <Link to="/in-house?tab=arrivals" className="text-xs font-medium text-brand-700 hover:underline">{t("View all")}</Link>
         </CardHeader>
         <CardContent className="pt-1">
-          <ReservationList
+          <BulkStays
             rows={snap?.arrivals ?? []}
             empty={t("No arrivals expected today.")}
+            onDone={() => void refresh()}
+            actions={[
+              { key: "check_in", label: t("Check in") },
+              { key: "cancel", label: t("Cancel"), confirm: t("Cancel these bookings under the cancellation policy?") },
+            ]}
             action={(row) => (
               <span className="flex items-center gap-1">
                 {snap?.business_date && row.check_in_date <= snap.business_date && (
@@ -934,9 +1039,11 @@ export default function Today() {
           <Link to="/in-house?tab=departures" className="text-xs font-medium text-brand-700 hover:underline">{t("View all")}</Link>
         </CardHeader>
         <CardContent className="pt-1">
-          <ReservationList
+          <BulkStays
             rows={snap?.departures ?? []}
             empty={t("No departures due today.")}
+            onDone={() => void refresh()}
+            actions={[{ key: "check_out", label: t("Check out") }]}
             action={(row) => (
               <Button
                 variant="outline"

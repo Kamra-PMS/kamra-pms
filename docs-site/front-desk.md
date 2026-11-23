@@ -191,6 +191,16 @@ room is free for someone, they are listed and the rest still go in.
 IDs, deposits and the registration card can then be finished room by room
 with **Finish** on each row, while the group is already on its way up.
 
+### Several stays at once from Today
+
+On **Today**, tick the stays under **Arrivals** or **Departures** (or
+**Select all**), then press **Check in**, **Cancel** or **Check out** in
+the bar above the list. Cancel asks you to confirm and applies the
+cancellation policy to each booking. Each stay goes through the same checks
+as it would on its own, for example a room must be assigned to check in.
+When Kamra finishes, it lists every stay with **Done**, or the reason that
+stay didn't go through. One stay that fails never stops the others.
+
 ## Check in a walk-in
 
 For a guest standing at the counter with no booking, use **Walk-in** in

@@ -8530,6 +8530,36 @@ def _each_room(rows: list, fn) -> dict:
 	return {"results": results}
 
 
+BULK_MAX = 100
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Front Desk", "Night Auditor", "Kamra Agent")
+def bulk_stays(action: str, reservations, reason: str = "Guest request"):
+	"""Check in, check out or cancel several stays at once (a group, a busy
+	morning). Each stay goes through the same call as one at a time -
+	check_in, check_out, cancel_reservation - with its own roles, property
+	scope and checks, in its own savepoint: one that fails is rolled back
+	and reported with why, and the rest go on. Returns
+	{"results": [{"reservation", "done": 1, ...} | {"reservation", "error"}]}."""
+	fns = {
+		"check_in": lambda r: check_in(reservation=r.name),
+		"check_out": lambda r: check_out(reservation=r.name),
+		"cancel": lambda r: cancel_reservation(reservation=r.name, reason=reason),
+	}
+	if action not in fns:
+		frappe.throw(_("Pick check in, check out or cancel."))
+	if isinstance(reservations, str):
+		reservations = frappe.parse_json(reservations)
+	names = list(dict.fromkeys(n for n in (reservations or []) if n))
+	if not names:
+		frappe.throw(_("Pick at least one stay."))
+	if len(names) > BULK_MAX:
+		frappe.throw(_("Pick at most {0} stays at a time.").format(BULK_MAX))
+	return _each_room([frappe._dict(name=n) for n in names],
+	                  lambda r: {"done": 1, **(fns[action](r) or {})})
+
+
 @frappe.whitelist(methods=["POST"])
 @require_roles("Front Desk", "Kamra Agent")
 def set_rooming_names(group_booking: str, names):
