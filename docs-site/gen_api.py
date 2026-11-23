@@ -70,6 +70,8 @@ MODULES = [
      "Bills land on the city ledger above; credit control runs on every new invoice."),
     ("payables", "Accounts payable (vendors, supplier bills, approval, payments)",
      "Finance and Hotel Admin enter vendors and bills; only Hotel Admin approves and pays."),
+    ("erpnext_bridge", "ERPNext bridge (daily journal, supplier bills, HR employee link)",
+     "Opt-in, and only when ERPNext (and Frappe HR for the employee link) is on the same site."),
     ("books", "Management books (next days of cash, P&L, balance sheet)",
      "Read-only management views. Not statutory accounts."),
     ("night_audit", "Night audit (End of Day checklist, audit pack)", ""),

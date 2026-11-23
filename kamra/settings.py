@@ -460,6 +460,28 @@ MODULES: tuple[Module, ...] = (
 				       "A payment an AI agent records always waits for a Finance user to confirm it with "
 				       "their PIN, whatever this is set to."),
 			)),
+			Section("erpnext", "ERPNext books",
+			        "Only when ERPNext is installed on this site. Night audit posts one journal entry per "
+			        "business date to the ERPNext ledger, and approved supplier bills and their payments "
+			        "post to the supplier's account. Kamra keeps working without ERPNext.", (
+				S("erpnext_gl_posting", "Post the day to ERPNext at night audit", "check", 0,
+				  hint="On: after each night audit, the day's ledger postings go to ERPNext as one "
+				       "submitted journal entry, once per business date."),
+				S("erpnext_company", "ERPNext company", "text", "",
+				  hint="The ERPNext Company the entries are booked in, exactly as named there."),
+				S("erpnext_cost_center", "Cost center", "text", "",
+				  hint="Optional. Every line of the journal entry gets this ERPNext Cost Center."),
+				S("erpnext_account_map", "Account map", "textarea", "",
+				  hint="One per line: key = ERPNext account. Keys are a GL code or transaction code "
+				       "(revenue, payments), a ledger (Guest, Deposit, AR, Package), Tax, and for supplier "
+				       "bills an expense category, Purchase Tax, Creditors and Pay:<mode> (or Bank). "
+				       "Example: 4000 = Room Revenue - HC"),
+				S("erpnext_purchase_sync", "Post supplier bills to ERPNext", "check", 0,
+				  hint="On: an approved supplier bill posts to the ERPNext supplier's account (the "
+				       "supplier is created when missing), and each payment clears it."),
+				S("erpnext_supplier_group", "Supplier group for new suppliers", "text",
+				  "All Supplier Groups"),
+			)),
 			Section("cashier", "Cashier controls", "", (
 				S("use_cashier_tills", "Take money through cashier tills", "check", 1,
 				  hint="On: staff open their till (with an opening float) before taking or giving back "

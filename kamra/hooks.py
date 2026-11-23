@@ -272,7 +272,7 @@ _PROPERTY_SCOPED = (
 	"Banquet Service Item", "Cancelled Invoice", "Cash Transfer", "Cashier", "Cashier Session", "Cashier Terminal",
 	"Cashier Transaction", "Channel ARI Outbox", "Channel Manager Connection",
 	"Channel Provider Connection", "City Ledger Account", "City Ledger Entry",
-	"Copilot Conversation", "Credit Note", "Discount Voucher", "Exchange Rate",
+	"Copilot Conversation", "Credit Note", "Discount Voucher", "ERPNext Sync Log", "Exchange Rate",
 	"Exchange Transaction", "Experience", "External POS Charge", "Floor", "Folio", "Folio Ledger Entry",
 	"Folio Reprint", "Group Booking", "Holiday Package", "Housekeeping Task", "Hurdle Rate",
 	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kamra Custom Report", "Kamra Notification", "Kitchen Printer",

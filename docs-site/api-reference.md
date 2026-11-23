@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **516 endpoints**, generated from the source
+the UI and the AI use. **522 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -6294,6 +6294,82 @@ d31_60, d61_90, d90p and their sum `overdue`, plus totals.
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
+
+
+## ERPNext bridge (daily journal, supplier bills, HR employee link)
+
+> Opt-in, and only when ERPNext (and Frappe HR for the employee link) is on the same site.
+
+### `kamra.erpnext_bridge.preview_daily_journal`
+
+**GET/POST** · roles: `Finance`, `Hotel Admin`
+
+The journal entry a closed business date would post, and the account
+map keys it still needs. Works without ERPNext.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `business_date` | yes |  |
+
+### `kamra.erpnext_bridge.post_daily_journal`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Post a closed business date to ERPNext (night audit does it on its
+own when the setting is on). Refuses while any key is unmapped, so a
+day never posts in part.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `business_date` | yes |  |
+
+### `kamra.erpnext_bridge.reverse_daily_journal`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Cancel a business date's journal entry in ERPNext (it writes the
+reversing GL), so the date can post again after a correction.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `business_date` | yes |  |
+| `reason` | yes |  |
+
+### `kamra.erpnext_bridge.sync_vendor_bills`
+
+**POST** · roles: `Finance`, `Hotel Admin`
+
+Post every approved supplier bill and payment not in ERPNext yet.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.erpnext_bridge.staff_employees`
+
+**GET/POST** · roles: `Hotel Admin`
+
+Kamra staff at this property with the HR Employee each is linked to
+(Employee.user_id), and the Employees not linked to anyone yet.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.erpnext_bridge.link_employee`
+
+**POST** · roles: `Hotel Admin`
+
+Link a staff login to its HR Employee (or unlink with no employee).
+The link is the Employee's own user_id, so HR and Kamra agree.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `user` | yes |  |
+| `employee` | no | `None` |
 
 
 ## Management books (next days of cash, P&L, balance sheet)

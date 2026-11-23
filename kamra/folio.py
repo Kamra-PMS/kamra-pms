@@ -1707,6 +1707,12 @@ def run_night_audit(property: str, business_date: str | None = None,
 	frappe.enqueue("kamra.custom_reports.send_after_night_audit",
 	               property=property, business_date=business_date,
 	               enqueue_after_commit=True)
+	from kamra.erpnext_bridge import gl_posting_on
+	if gl_posting_on(property):
+		# the day's journal entry to ERPNext (#228); a failure never blocks
+		frappe.enqueue("kamra.erpnext_bridge.after_night_audit",
+		               property=property, business_date=business_date,
+		               enqueue_after_commit=True)
 
 	from kamra.savings import log_action
 	log_action(
