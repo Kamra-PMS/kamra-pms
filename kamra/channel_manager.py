@@ -349,11 +349,17 @@ def on_reservation_change(doc, method=None):
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def webhook(connection: str, **kwargs):
+def webhook(connection: str | None = None, **kwargs):
 	"""One URL per connection:
 	/api/method/kamra.channel_manager.webhook?connection=CMC-00001
 	Authenticated by the connection's webhook secret (X-Webhook-Secret
 	header or `secret` in the payload)."""
+	# A JSON body makes Frappe build the arguments from the body alone
+	# (app.make_form_dict), so the ?connection= of that URL comes from here.
+	connection = connection or (frappe.request.args.get("connection")
+	                            if frappe.request else None)
+	if not connection:
+		frappe.throw("Missing connection.", frappe.ValidationError)
 	conn = frappe.get_doc("Channel Manager Connection", connection)
 	if not conn.active:
 		return {"ok": False, "reason": "connection_inactive"}
@@ -382,6 +388,36 @@ def _room_type_for(connection: str, external_id: str) -> str | None:
 		"room_type")
 
 
+def _storable_phone(phone: str | None) -> bool:
+	"""Whether the Guest's Data/Phone field takes it: the check Frappe runs on
+	insert (document.py, validate_phone_number(data, throw=True))."""
+	return not phone or frappe.utils.validate_phone_number(phone)
+
+
+def _storable_email(email: str | None) -> bool:
+	"""Whether the Guest's Data/Email field takes it: every address Frappe
+	splits out of it must be valid, as it checks on insert."""
+	text = (email or "").strip()
+	return not text or all(frappe.utils.validate_email_address(a)
+	                       for a in frappe.utils.split_emails(text))
+
+
+def _unstorable_contact(phone: str | None, email: str | None,
+                        property: str | None) -> list[str]:
+	"""The OTA contact the guest profile can't hold, exactly as it came (#468
+	follow-up): a phone or an email Frappe would refuse on the Guest insert.
+	It goes to the reservation's notes, so the booking is never lost over it."""
+	from kamra import phone as phone_mod
+	items = []
+	typed = (phone or "").strip()
+	if typed and not _storable_phone(phone_mod.for_property(typed, property)[0]):
+		items.append(typed)
+	mail = (email or "").strip()
+	if not _storable_email(mail):
+		items.append(mail)
+	return items
+
+
 def _find_or_create_guest(name: str, phone: str, email: str,
                           property: str | None = None) -> str:
 	"""The OTA guest's profile. The phone is read with the property's
@@ -390,6 +426,13 @@ def _find_or_create_guest(name: str, phone: str, email: str,
 	from kamra import phone as phone_mod
 	typed = (phone or "").strip()
 	phone, problem = phone_mod.for_property(typed, property)
+	# #468 follow-up: what Frappe would refuse on the Guest insert stays off
+	# the profile (blank) and on the reservation instead - see
+	# _unstorable_contact. The phone is still flagged, without the number.
+	if not _storable_phone(phone):
+		phone, problem = "", phone_mod.INVALID
+	if not _storable_email(email):
+		email = ""
 	for filt in ({"phone": phone_mod.matching(typed, property)} if phone else None,
 	             {"email": email} if email else None):
 		if filt:
@@ -438,6 +481,30 @@ def _locked_live_ota(property: str, ota_ref: str | None):
 		   FOR UPDATE""",
 		(property, ota_ref), as_dict=True)
 	return rows[0] if rows else None
+
+
+_CONTACT_LINE_EN = ("Contact from {0} could not be saved on the guest profile "
+                    "and is kept here: {1}")
+
+
+def _contact_line(channel: str | None, items: list[str]) -> str:
+	"""The notes line that keeps an OTA contact the guest profile can't
+	hold (#468 follow-up)."""
+	return _("Contact from {0} could not be saved on the guest profile and is kept here: {1}"
+	         ).format(channel, ", ".join(items))
+
+
+def _kept_contact_line(notes: str | None) -> str | None:
+	"""The contact line a reservation's notes already carry (#468 follow-up),
+	in English or translated, so a modify without contact keeps it."""
+	shapes = set()
+	for template in (_CONTACT_LINE_EN.format("\0", "\1"), _contact_line("\0", ["\1"])):
+		prefix, _sep, rest = template.partition("\0")
+		shapes.add((prefix, rest.partition("\1")[0]))
+	for line in (notes or "").splitlines():
+		if any(line.startswith(prefix) and middle in line for prefix, middle in shapes):
+			return line
+	return None
 
 
 def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
@@ -497,7 +564,13 @@ def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 		doc.check_out_date = e["check_out"]
 		doc.adults = e.get("adults") or 2
 		doc.children = e.get("children") or 0
-		doc.special_requests = e.get("notes") or None
+		# #468 follow-up: a modify carries the contact line too - the new one
+		# when the channel sends a contact the profile can't hold, else the one
+		# the reservation already had.
+		unstorable = _unstorable_contact(e.get("phone"), e.get("email"), conn.property)
+		contact = (_contact_line(e.get("channel"), unstorable) if unstorable
+		           else _kept_contact_line(doc.special_requests))
+		doc.special_requests = "\n".join(s for s in (e.get("notes"), contact) if s) or None
 		doc.auto_price = 0 if requested_reason or e.get("total") else 1
 		if e.get("total") or requested_reason:
 			doc.amount_after_tax = e.get("total") or 0
@@ -520,6 +593,11 @@ def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 
 	guest = _find_or_create_guest(e.get("guest_name"), e.get("phone"),
 	                              e.get("email"), conn.property)
+	notes = e.get("notes") or ""
+	unstorable = _unstorable_contact(e.get("phone"), e.get("email"), conn.property)
+	if unstorable:
+		# #468 follow-up: what the profile refused stays on the reservation.
+		notes = "\n".join(s for s in (notes, _contact_line(e.get("channel"), unstorable)) if s)
 	doc = frappe.get_doc({
 		"doctype": "Reservation",
 		"property": conn.property,
@@ -533,7 +611,7 @@ def _apply_event(conn, e: dict, requested_reason: str | None = None) -> dict:
 		"status": "Requested" if requested_reason else "Confirmed",
 		"channel": e.get("channel"),
 		"ota_ref": e.get("ota_ref"),
-		"special_requests": e.get("notes") or None,
+		"special_requests": notes or None,
 		# the OTA already sold at its price - keep their number, don't reprice
 		"auto_price": 0 if requested_reason or e.get("total") else 1,
 	})
