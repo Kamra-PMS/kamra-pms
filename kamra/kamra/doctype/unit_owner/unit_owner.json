@@ -11,7 +11,9 @@
   "show_guest_contact",
   "commission_percent",
   "units",
-  "users"
+  "room_types",
+  "users",
+  "costs"
  ],
  "fields": [
   {
@@ -57,8 +59,14 @@
    "fieldname": "units",
    "fieldtype": "Table",
    "label": "Units",
-   "options": "Unit Owner Unit",
-   "reqd": 1
+   "options": "Unit Owner Unit"
+  },
+  {
+   "fieldname": "room_types",
+   "fieldtype": "Table",
+   "label": "Unit Types",
+   "options": "Unit Owner Room Type",
+   "description": "Every unit of these types belongs to this owner too, including units added later."
   },
   {
    "fieldname": "users",
@@ -67,10 +75,17 @@
    "options": "Unit Owner User",
    "reqd": 1,
    "description": "Each address is a login for these units. A new address is created as a user with no welcome mail; set the password in Staff & Access."
+  },
+  {
+   "fieldname": "costs",
+   "fieldtype": "Table",
+   "label": "Costs",
+   "options": "Unit Owner Cost",
+   "description": "Costs charged to the owner (cleaning, repairs, fees); they come off the monthly payout."
   }
  ],
  "links": [],
- "modified": "2026-11-19 12:00:00.000000",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Unit Owner",

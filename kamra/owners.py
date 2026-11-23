@@ -7,12 +7,22 @@ The portal they see is this module: occupancy, bookings and room revenue.
 Guest name and phone stay off unless the admin turns Show guest contact
 on. Identity documents are never returned.
 
+An owner holds units one by one and/or whole unit types (every unit of
+the type, including ones added later). Several logins can belong to one
+owner (the owner and their accountant).
+
 Read only and Manage are stored on the owner record. Role Profiles from
-the unmerged permissions work are not available yet, so this record is
-the switch. Read only is the calendar, occupancy, bookings and the
-monthly statement. Manage can also hold one of their own units out of
-sale, through the same room-block record the desk uses. Neither level
-creates a guest booking, edits a rate, or opens the desk.
+the unmerged permissions work (#421) are not available yet, so this
+record is the switch. Read only is the calendar, occupancy, bookings and
+the monthly statement. Manage can also hold one of their own units out
+of sale, book a stay in one of their own units, and set the rate of a
+unit type they own outright. Bookings and rates go through the desk's
+own functions (create_booking, set_room_rate) as the governed agent
+login, so the clash, capacity, guardrail and hurdle checks all apply.
+Neither level opens the desk.
+
+The monthly statement is room revenue per unit, less commission (the
+unit's own percent, else the owner's) and the owner's costs that month.
 """
 
 from __future__ import annotations
@@ -61,9 +71,7 @@ def sync_user_access(user: str) -> None:
 	for name in links:
 		doc = frappe.get_doc("Unit Owner", name)
 		properties.add(doc.property)
-		for row in doc.units:
-			if row.room:
-				rooms.add(row.room)
+		rooms.update(owned_rooms(doc))
 	user_doc = frappe.get_doc("User", user)
 	held = {r.role for r in user_doc.roles}
 	user_doc.flags.ignore_permissions = True
@@ -118,6 +126,38 @@ def _owner_docs(user: str, property: str) -> list:
 	return docs
 
 
+def owned_rooms(doc) -> list[str]:
+	"""The units this owner record covers: those listed, then every unit of
+	its unit types, in that order, once each."""
+	rooms = [r.room for r in doc.units if r.room]
+	types = [r.room_type for r in doc.get("room_types") or [] if r.room_type]
+	if types:
+		for room in frappe.get_all("Room", filters={"property": doc.property,
+		                                            "room_type": ["in", types]},
+		                           pluck="name", order_by="room_number asc"):
+			if room not in rooms:
+				rooms.append(room)
+	return rooms
+
+
+def on_room_change(doc, method=None):
+	"""A unit added to, or moved into, a unit type an owner holds is theirs
+	at once: re-scope the logins of the owners at that property who hold
+	unit types."""
+	parents = set(frappe.get_all("Unit Owner Room Type", pluck="parent",
+	                             filters={"parenttype": "Unit Owner"}))
+	if not parents:
+		return
+	users = set()
+	for name in frappe.get_all("Unit Owner", pluck="name",
+	                           filters={"property": doc.property,
+	                                    "name": ["in", list(parents)]}):
+		users.update(frappe.get_all("Unit Owner User", pluck="user",
+		                            filters={"parent": name}))
+	for user in users:
+		sync_user_access(user)
+
+
 def _portal(docs: list, property: str, from_date: str, to_date: str) -> dict:
 	rooms = []
 	seen = set()
@@ -129,10 +169,10 @@ def _portal(docs: list, property: str, from_date: str, to_date: str) -> dict:
 		show = show or bool(doc.show_guest_contact)
 		if doc.access == "Manage":
 			access = "Manage"
-		for row in doc.units:
-			if row.room and row.room not in seen:
-				seen.add(row.room)
-				rooms.append(row.room)
+		for room in owned_rooms(doc):
+			if room not in seen:
+				seen.add(room)
+				rooms.append(room)
 	meta = {
 		r.name: r for r in frappe.get_all(
 			"Room", filters={"name": ["in", rooms or ["-1"]]},
@@ -211,7 +251,9 @@ def _portal(docs: list, property: str, from_date: str, to_date: str) -> dict:
 		"mine": row.reason == "Owner",
 	} for row in blocks]
 	revenue = 0.0
+	by_room: dict[str, float] = {}
 	if stays:
+		room_of = {s.name: s.room for s in stays}
 		for row in frappe.get_all(
 			"Folio Charge",
 			filters={
@@ -219,12 +261,15 @@ def _portal(docs: list, property: str, from_date: str, to_date: str) -> dict:
 				"posting_date": ["between", [str(start), str(end)]],
 				"charge_type": ["in", ["Room", "Extra Guests", "Cleaning Fee"]],
 			},
-			fields=["amount"]):
+			fields=["amount", "reservation"]):
 			revenue += float(row.amount or 0)
+			room = room_of.get(row.reservation)
+			by_room[room] = by_room.get(room, 0.0) + float(row.amount or 0)
 	units = [{
 		"room": name,
 		"room_number": (meta.get(name) or {}).get("room_number") or name,
 		"occupancy_status": (meta.get(name) or {}).get("occupancy_status") or "",
+		"revenue": round(by_room.get(name, 0.0), 2),
 	} for name in rooms]
 	occupancy = round(100 * sold / (len(rooms) * span), 1) if rooms and span else 0
 	return {
@@ -252,26 +297,47 @@ def desk(property: str) -> dict:
 		        "commission_percent"],
 		order_by="owner_name asc")
 	for row in owners:
-		row["units"] = frappe.get_all(
-			"Unit Owner Unit", filters={"parent": row.name}, pluck="room")
+		units = frappe.get_all("Unit Owner Unit", filters={"parent": row.name},
+		                       fields=["room", "commission_percent"], order_by="idx asc")
+		row["units"] = [u.room for u in units]
+		row["unit_commission"] = {u.room: u.commission_percent for u in units
+		                          if u.commission_percent}
+		row["room_types"] = frappe.get_all(
+			"Unit Owner Room Type", filters={"parent": row.name}, pluck="room_type")
 		row["users"] = frappe.get_all(
 			"Unit Owner User", filters={"parent": row.name}, pluck="user")
+		row["costs"] = frappe.get_all(
+			"Unit Owner Cost", filters={"parent": row.name},
+			fields=["posting_date", "room", "description", "amount"],
+			order_by="posting_date desc", limit=50)
 	rooms = frappe.get_all(
 		"Room", filters={"property": property},
 		fields=["name", "room_number"], order_by="room_number asc")
-	return {"owners": owners, "rooms": rooms}
+	room_types = frappe.get_all(
+		"Room Type", filters={"property": property},
+		fields=["name", "room_type_name"], order_by="room_type_name asc")
+	return {"owners": owners, "rooms": rooms, "room_types": room_types}
 
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Hotel Admin")
 def save_owner(property: str, owner_name: str, rooms, users,
                access: str = "Read only", show_guest_contact: int = 0,
-               commission_percent: float = 0, name: str | None = None) -> dict:
-	"""Create or update one owner and rescope their logins."""
+               commission_percent: float = 0, name: str | None = None,
+               room_types=None, unit_commission=None) -> dict:
+	"""Create or update one owner and rescope their logins. `room_types`
+	gives the owner every unit of those types; `unit_commission`
+	({room: percent}) overrides the owner's commission for single units.
+	Costs are added with add_owner_cost and kept on a save."""
 	if isinstance(rooms, str):
 		rooms = frappe.parse_json(rooms)
 	if isinstance(users, str):
 		users = frappe.parse_json(users)
+	if isinstance(room_types, str):
+		room_types = frappe.parse_json(room_types)
+	if isinstance(unit_commission, str):
+		unit_commission = frappe.parse_json(unit_commission)
+	unit_commission = unit_commission or {}
 	rooms = [r for r in (rooms or []) if r]
 	label = (owner_name or "").strip()
 	users = [_ensure_login(u, label) for u in (users or []) if u]
@@ -284,7 +350,9 @@ def save_owner(property: str, owner_name: str, rooms, users,
 		"access": access if access in ("Read only", "Manage") else "Read only",
 		"show_guest_contact": 1 if cint(show_guest_contact) else 0,
 		"commission_percent": percent,
-		"units": [{"room": r} for r in rooms],
+		"units": [{"room": r, "commission_percent": flt(unit_commission.get(r)) or None}
+		          for r in rooms],
+		"room_types": [{"room_type": t} for t in (room_types or []) if t],
 		"users": [{"user": u} for u in users],
 	}
 	if name and frappe.db.exists("Unit Owner", name):
@@ -310,7 +378,26 @@ def my_portal(property: str, from_date: str | None = None,
 		frappe.throw(_("You don't have units at this property."), frappe.PermissionError)
 	start = from_date or nowdate()
 	end = to_date or start
-	return _portal(docs, property, start, end)
+	out = _portal(docs, property, start, end)
+	out["priceable_types"] = _priceable_types(docs, property) if out["access"] == "Manage" else []
+	return out
+
+
+def _priceable_types(docs: list, property: str) -> list[dict]:
+	"""Unit types every unit of which this owner manages: the ones whose
+	rate they may set (set_unit_rate)."""
+	mine = set()
+	for doc in docs:
+		if doc.access == "Manage":
+			mine.update(owned_rooms(doc))
+	out = []
+	for rt in frappe.get_all("Room Type", filters={"property": property},
+	                         fields=["name", "room_type_name"]):
+		units = set(frappe.get_all("Room", pluck="name",
+		                           filters={"property": property, "room_type": rt.name}))
+		if units and units <= mine:
+			out.append({"room_type": rt.name, "name": rt.room_type_name or rt.name})
+	return out
 
 
 def _ensure_login(email: str, owner_name: str) -> str:
@@ -344,9 +431,9 @@ def _managed_rooms(user: str, property: str) -> list[str]:
 	for doc in docs:
 		if doc.access != "Manage":
 			continue
-		for row in doc.units:
-			if row.room and row.room not in rooms:
-				rooms.append(row.room)
+		for room in owned_rooms(doc):
+			if room not in rooms:
+				rooms.append(room)
 	if not rooms:
 		frappe.throw(_("This login is read only."), frappe.PermissionError)
 	return rooms
@@ -355,44 +442,79 @@ def _managed_rooms(user: str, property: str) -> list[str]:
 @frappe.whitelist()
 @require_roles(OWNER_ROLE)
 def my_statement(property: str, month: str) -> dict:
-	"""Room revenue, commission and payout for one calendar month.
-	Guest names are not on the statement. Costs are not itemised yet."""
+	"""One calendar month for the signed-in owner: room revenue per unit,
+	commission (the unit's percent, else the owner's), the owner's costs
+	dated in the month, and the payout. Guest names are not on it."""
+	docs = _owner_docs(frappe.session.user, property)
+	if not docs:
+		frappe.throw(_("You don't have units at this property."), frappe.PermissionError)
+	return statement(docs, property, month)
+
+
+def statement(docs: list, property: str, month: str) -> dict:
 	text = (month or "").strip()
 	if len(text) < 7 or text[4] != "-":
 		frappe.throw(_("Pick a month."))
 	start = getdate(text[:7] + "-01")
 	end = getdate(get_last_day(start))
-	docs = _owner_docs(frappe.session.user, property)
-	if not docs:
-		frappe.throw(_("You don't have units at this property."), frappe.PermissionError)
-	lines = []
-	revenue = commission = 0.0
-	nights = 0
+	lines, costs = [], []
 	for doc in docs:
 		part = _portal([doc], property, str(start), str(end))
-		percent = flt(doc.commission_percent)
-		cut = round(part["revenue"] * percent / 100, 2)
-		revenue += part["revenue"]
-		commission += cut
-		nights += part["room_nights"]
-		lines.append({
-			"owner_name": doc.owner_name,
-			"room_nights": part["room_nights"],
-			"revenue": part["revenue"],
-			"commission_percent": percent,
-			"commission": cut,
-			"payout": round(part["revenue"] - cut, 2),
-		})
+		own = {r.room: flt(r.commission_percent) for r in doc.units if r.commission_percent}
+		nights = {}
+		for b in part["bookings"]:
+			arrive = max(getdate(b["check_in"]), start)
+			leave = min(getdate(b["check_out"]), add_days(end, 1))
+			nights[b["room"]] = nights.get(b["room"], 0) + max(0, date_diff(leave, arrive))
+		for unit in part["units"]:
+			percent = own.get(unit["room"], flt(doc.commission_percent))
+			cut = round(unit["revenue"] * percent / 100, 2)
+			lines.append({
+				"owner_name": doc.owner_name, "room": unit["room"],
+				"room_number": unit["room_number"],
+				"room_nights": nights.get(unit["room"], 0),
+				"revenue": unit["revenue"], "commission_percent": percent,
+				"commission": cut,
+			})
+		for c in doc.get("costs") or []:
+			if c.posting_date and start <= getdate(c.posting_date) <= end:
+				costs.append({"owner_name": doc.owner_name, "date": str(c.posting_date),
+				              "room": c.room, "description": c.description,
+				              "amount": round(flt(c.amount), 2)})
+	revenue = round(sum(r["revenue"] for r in lines), 2)
+	commission = round(sum(r["commission"] for r in lines), 2)
+	cost = round(sum(c["amount"] for c in costs), 2)
 	return {
 		"from_date": str(start),
 		"to_date": str(end),
-		"room_nights": nights,
-		"revenue": round(revenue, 2),
-		"commission": round(commission, 2),
-		"costs": 0,
-		"payout": round(revenue - commission, 2),
+		"room_nights": sum(r["room_nights"] for r in lines),
+		"revenue": revenue,
+		"commission": commission,
+		"costs": cost,
+		"payout": round(revenue - commission - cost, 2),
 		"lines": lines,
+		"cost_lines": costs,
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles("Hotel Admin")
+def add_owner_cost(owner: str, posting_date: str, description: str, amount: float,
+                   room: str | None = None) -> dict:
+	"""Charge a cost to an owner (cleaning, a repair, a fee). It comes off
+	the payout of the month it is dated in."""
+	doc = frappe.get_doc("Unit Owner", owner)
+	from kamra.authz import assert_property_access
+	assert_property_access(doc.property)
+	if not (description or "").strip() or not flt(amount):
+		frappe.throw(_("A cost needs a description and an amount."))
+	if room and room not in owned_rooms(doc):
+		frappe.throw(_("{0} is not one of this owner's units.").format(room))
+	doc.append("costs", {"posting_date": posting_date, "room": room or None,
+	                     "description": description.strip()[:140],
+	                     "amount": round(flt(amount), 2)})
+	doc.save()
+	return {"name": doc.name, "costs": len(doc.costs)}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -445,3 +567,69 @@ def release_block(name: str) -> dict:
 	log_action("room_unblock", "Room Block", doc.name, doc.property,
 	           rationale=f"owner released {doc.room}")
 	return {"name": doc.name, "block_status": "Released"}
+
+
+def _room_type_of(room: str) -> str:
+	return frappe.db.get_value("Room", room, "room_type")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(OWNER_ROLE)
+def book_unit(property: str, room: str, check_in_date: str, check_out_date: str,
+              guest_name: str, adults: int = 1, children: int = 0,
+              phone: str | None = None) -> dict:
+	"""A Manage owner books a stay in one of their own units: a guest they
+	found, or their own stay. It is the desk's create_booking, run as the
+	governed agent login, so availability, capacity and pricing apply
+	exactly as at the desk."""
+	if room not in _managed_rooms(frappe.session.user, property):
+		frappe.throw(_("You can only book a unit you manage."), frappe.PermissionError)
+	if not (guest_name or "").strip():
+		frappe.throw(_("Enter the guest's name."))
+	from kamra.api import create_booking
+	from kamra.authz import act_as
+	from kamra.install import AGENT_EMAIL
+	me = frappe.session.user
+	try:
+		with act_as(AGENT_EMAIL):
+			out = create_booking(
+				property=property, room_type=_room_type_of(room),
+				check_in_date=check_in_date, check_out_date=check_out_date,
+				guest_name=guest_name.strip(), phone=phone or None,
+				adults=cint(adults) or 1, children=cint(children),
+				room=room, assign_room=1, booked_by_name=me,
+				booker_relation="Other")
+	except frappe.ValidationError as exc:
+		# the desk's clash message can name another guest
+		if "booked" in str(exc).lower() or "available" in str(exc).lower():
+			frappe.throw(_("That unit is not free for those dates."), frappe.ValidationError)
+		raise
+	from kamra.savings import log_action
+	log_action("owner_booking", "Reservation", out["reservation"],
+	           property, rationale=f"Booked by owner {me}: {room} "
+	                               f"{check_in_date}→{check_out_date}")
+	return {"reservation": out["reservation"], "status": out["status"]}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_roles(OWNER_ROLE)
+def set_unit_rate(property: str, room_type: str, start_date: str, end_date: str,
+                  rate: float, reason: str = "") -> dict:
+	"""A Manage owner sets the nightly rate of a unit type they own outright
+	(every unit of that type is theirs): a rate there prices nobody else's
+	unit. The desk's set_room_rate does it, so the property's guardrails
+	and hurdle rates still bound it."""
+	rooms = set(_managed_rooms(frappe.session.user, property))
+	of_type = set(frappe.get_all("Room", pluck="name",
+	                             filters={"property": property, "room_type": room_type}))
+	if not of_type or not of_type <= rooms:
+		frappe.throw(_("You can set the rate only of a unit type whose units are all yours."),
+		             frappe.PermissionError)
+	from kamra.api import set_room_rate
+	from kamra.authz import act_as
+	from kamra.install import AGENT_EMAIL
+	me = frappe.session.user
+	note = (reason or "").strip()
+	with act_as(AGENT_EMAIL):
+		return set_room_rate(property, room_type, start_date, end_date, flt(rate),
+		                     reason=f"Owner {me}" + (f": {note}" if note else ""))
