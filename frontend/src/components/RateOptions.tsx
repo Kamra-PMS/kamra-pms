@@ -9,8 +9,20 @@ import { cn } from "../lib/utils"
 
 const n0 = (n: number) => Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
+export interface Restriction {
+  name: string
+  rate_plan: string | null
+  min_nights: number
+  max_nights: number
+  closed_to_arrival: boolean
+  closed_to_departure: boolean
+  stop_sell: boolean
+}
+
 export interface NightRate {
   date: string
+  /** the Rate Restrictions on this date, every plan (rate calendar only) */
+  restrictions?: Restriction[]
   bar: number
   after_season: number
   rate: number
@@ -25,11 +37,13 @@ interface PlanRow {
   code: string | null
   room_total: number
   vs_plain: number
+  /** why this stay can't be booked on the plan (a Rate Restriction) */
+  restriction?: string | null
 }
 
 interface Options {
   nights: NightRate[]
-  plain: { room_total: number; amount_after_tax: number }
+  plain: { room_total: number; amount_after_tax: number; restriction?: string | null }
   plans: PlanRow[]
   voucher: { code: string; valid: boolean; discount?: number; kind?: string; value?: number; reason?: string } | null
   /** the figures above (and a typed night price) include tax */
@@ -304,12 +318,14 @@ export function RateOptions({
                 {n0(data.plain.room_total)}
               </span>
             </button>
+            {data.plain.restriction && <p className="px-1 text-xs text-rose-700">{translate(data.plain.restriction)}</p>}
             {data.plans.map((p) => (
               <button
                 key={p.name}
                 type="button"
                 onClick={() => onPickPlan(p.name)}
-                disabled={hasTyped}
+                disabled={hasTyped || !!p.restriction}
+                title={p.restriction ? translate(p.restriction) : undefined}
                 className={cn(
                   "flex w-full items-center justify-between rounded-lg border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50",
                   ratePlan === p.name ? "border-brand-600 bg-brand-50" : "border-zinc-200 hover:bg-zinc-50",
@@ -318,6 +334,7 @@ export function RateOptions({
                 <span>
                   {p.label}
                   {p.code ? <span className="ms-1 text-xs text-zinc-400">{p.code}</span> : null}
+                  {p.restriction ? <span className="block text-start text-xs text-rose-700">{translate(p.restriction)}</span> : null}
                 </span>
                 <span className="tabular-nums">
                   {cur()}

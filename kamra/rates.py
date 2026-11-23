@@ -77,7 +77,8 @@ def rate_calendar(property: str, from_date: str | None = None, days: int = 14,
 	moved it. A room type's own days are read with the same functions the
 	quote uses; nothing here sets a price."""
 	assert_property_access(property)
-	from kamra.pricing import forecast_occupancy, rates_include_tax, small_group_allows_stay
+	from kamra.pricing import (forecast_occupancy, rates_include_tax, restriction_rules,
+	                           rules_on, small_group_allows_stay)
 	start = getdate(from_date) if from_date else getdate(frappe.utils.nowdate())
 	days = max(1, min(int(days or 14), 31))
 	dates = [add_days(start, i) for i in range(days)]
@@ -86,11 +87,20 @@ def rate_calendar(property: str, from_date: str | None = None, days: int = 14,
 	for rt in frappe.get_all("Room Type", filters={"property": property, "disabled": 0},
 	                         pluck="name", order_by="base_price asc"):
 		doc = frappe.get_doc("Room Type", rt)
+		rules = restriction_rules(property, rt, None, dates[0], dates[-1], any_plan=True)
 		nights = []
 		for d in dates:
 			small_ok = small_group_allows_stay(doc, d, add_days(d, 1))
-			nights.append(explain_night(property, doc, d, int(adults), int(children),
-			                            occupancy=occ[str(d)], small_ok=small_ok))
+			night = explain_night(property, doc, d, int(adults), int(children),
+			                      occupancy=occ[str(d)], small_ok=small_ok)
+			# every plan's Rate Restrictions on this date (#530); blank plan = all
+			night["restrictions"] = [{
+				"name": r.restriction_name, "rate_plan": r.rate_plan or None,
+				"min_nights": int(r.min_nights or 0), "max_nights": int(r.max_nights or 0),
+				"closed_to_arrival": bool(r.closed_to_arrival),
+				"closed_to_departure": bool(r.closed_to_departure),
+				"stop_sell": bool(r.stop_sell)} for r in rules_on(rules, d)]
+			nights.append(night)
 		rows.append({"room_type": doc.name, "code": doc.room_type_code,
 		             "name": doc.room_type_name, "base_price": float(doc.base_price or 0),
 		             "nights": nights})
@@ -120,11 +130,15 @@ def rate_options(property: str, room_type: str, check_in_date: str, check_out_da
 
 	def total(rate_plan=None, voucher=None):
 		q = quote(property, room_type, check_in_date, check_out_date, int(adults), int(children),
-		          meal_plan or None, rate_plan, voucher, check_voucher_limits=False)
+		          meal_plan or None, rate_plan, voucher, check_voucher_limits=False,
+		          check_restrictions=False)
 		return {"room_total": q["room_total"], "amount_after_tax": q["amount_after_tax"],
 		        "discount": q.get("discount", 0)}
 
+	from kamra.pricing import stay_restriction_error
 	plain = total()
+	plain["restriction"] = stay_restriction_error(property, room_type, None,
+	                                              check_in_date, check_out_date)
 	plans = []
 	for rp in frappe.get_all("Rate Plan", filters={"property": property, "disabled": 0},
 	                         fields=["name", "rate_plan_name", "code", "modifier_type",
@@ -135,6 +149,9 @@ def rate_options(property: str, room_type: str, check_in_date: str, check_out_da
 			"modifier": f"{rp.modifier_type} {float(rp.modifier_value or 0):g}",
 			"room_total": t["room_total"], "amount_after_tax": t["amount_after_tax"],
 			"vs_plain": round(t["room_total"] - plain["room_total"], 2),
+			# a plan whose stay restrictions this stay breaks: the booking refuses it
+			"restriction": stay_restriction_error(property, room_type, rp.name,
+			                                      check_in_date, check_out_date),
 		})
 	voucher = None
 	if (voucher_code or "").strip():

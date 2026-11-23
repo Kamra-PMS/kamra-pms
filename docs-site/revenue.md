@@ -139,6 +139,47 @@ when no other plan is picked. The form then shows **Company rate: …** in
 **Rate plan**. The plan is saved on the booking, so a later change to the
 company's contract doesn't re-price it.
 
+## Set stay restrictions
+
+A stay restriction limits which stays can be booked on a rate plan, room
+type and dates. Use it for a minimum stay over a festival, a maximum stay
+on a promotional plan, no arrivals on a Saturday, or to stop selling a
+plan for a few days.
+
+1. Open **Revenue → Stay restrictions → New**.
+2. Give it a **Name**, a **Start date** and an **End date (inclusive)**.
+3. Pick a **Rate plan (blank = all)** and a **Room type (blank = all)**.
+   A blank rate plan also covers the standard rate and the booking page.
+4. Optional: **Days of week (e.g. fri, sat)** to apply it only on those
+   days. To ask for something different on other days, add a second
+   restriction for them.
+5. Set one or more:
+   - **Minimum nights** and **Maximum nights**, for a stay that arrives on
+     these dates. `0` means no limit.
+   - **Closed to arrival**: no stay may start on these dates.
+   - **Closed to departure**: no stay may end on these dates.
+   - **Stop-sell**: no stay may include a night on these dates.
+6. Click **Save**.
+
+When restrictions overlap, the strictest one applies. A quote that breaks
+a restriction is refused and says why. That applies on the desk, the
+booking page, the AI assistant and the [MCP tools](/mcp-tools). On the
+desk **New booking** form, a rate plan the stay breaks is greyed out,
+with the reason. Bookings that are already saved keep their dates.
+
+The [rate calendar](#see-the-rate-for-any-date) marks a restricted night
+with **R**. Select the night to see the restrictions.
+
+A [channel manager](/channel-manager) that takes changes (Channex) gets
+the restrictions with the rates: minimum stay on arrival, maximum stay,
+closed to arrival, closed to departure and stop-sell. They are sent only
+once the property has a stay restriction, so restrictions you keep in the
+channel manager itself are not overwritten until then. Kamra does not
+refuse a booking that comes in from a channel.
+
+Season **Minimum nights** still works as before, and is not sent to the
+channel manager.
+
 ## Add meal plans
 
 1. Open **Revenue → Meal Plans → New**.
@@ -336,7 +377,10 @@ guardrail on **Revenue → Guardrails**.
 
 ## For developers
 
-Quotes come from `kamra/pricing.py` (`quote`). Rate changes go through
+Quotes come from `kamra/pricing.py` (`quote`). Stay restrictions are
+the `Rate Restriction` doctype, checked by `pricing.stay_restriction_error`
+inside `quote` and on a reservation save, and sent with ARI by
+`channel_ari.restriction_cells`. Rate changes go through
 `kamra.api.set_room_rate`, which checks guardrails and hurdles. AI agents
 use the `quote`, `booking_options` and `set_room_rate` tools - see
 [MCP tools](/mcp-tools) and the [API reference](/api-reference).

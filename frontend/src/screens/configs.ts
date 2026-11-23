@@ -180,6 +180,40 @@ export const seasonsConfig: ScreenConfig = {
   ],
 }
 
+export const rateRestrictionsConfig: ScreenConfig = {
+  doctype: "Rate Restriction",
+  title: "Stay restrictions",
+  description:
+    "Minimum and maximum nights, closed to arrival, closed to departure and stop-sell, per rate plan, room type and dates. Quotes refuse a stay that breaks one, and they go to the channel manager with your rates. Overlapping rules take the strictest.",
+  propertyScoped: true,
+  orderBy: "start_date asc",
+  columns: [
+    { field: "restriction_name", label: "Name" },
+    { field: "rate_plan", label: "Rate plan" },
+    { field: "room_type", label: "Room type" },
+    { field: "start_date", label: "From" },
+    { field: "end_date", label: "To" },
+    { field: "days_of_week", label: "Days" },
+    { field: "min_nights", label: "Min" },
+    { field: "max_nights", label: "Max" },
+    { field: "disabled", label: "Status", statusCheck: true },
+  ],
+  form: [
+    { field: "restriction_name", label: "Name", type: "data", required: true },
+    { field: "rate_plan", label: "Rate plan (blank = all)", type: "link", linkDoctype: "Rate Plan" },
+    { field: "room_type", label: "Room type (blank = all)", type: "link", linkDoctype: "Room Type" },
+    { field: "start_date", label: "Start date", type: "date", required: true },
+    { field: "end_date", label: "End date (inclusive)", type: "date", required: true },
+    { field: "days_of_week", label: "Days of week (e.g. fri, sat)", type: "data", hint: "Blank = every day. Add another restriction for other days" },
+    { field: "min_nights", label: "Minimum nights", type: "int", hint: "Shortest stay arriving on these dates. 0 = no minimum" },
+    { field: "max_nights", label: "Maximum nights", type: "int", hint: "Longest stay arriving on these dates. 0 = no maximum" },
+    { field: "closed_to_arrival", label: "Closed to arrival", type: "check", hint: "No stay may start on these dates" },
+    { field: "closed_to_departure", label: "Closed to departure", type: "check", hint: "No stay may end on these dates" },
+    { field: "stop_sell", label: "Stop-sell", type: "check", hint: "No stay may include a night on these dates" },
+    { field: "disabled", label: "Disabled", type: "check", hint: "Tick to deactivate; clear to activate" },
+  ],
+}
+
 export const holidayPackagesConfig: ScreenConfig = {
   doctype: "Holiday Package",
   title: "Packages",

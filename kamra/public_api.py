@@ -383,7 +383,7 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 	# MCP / Kamra Agent tool; guests need the same availability math without
 	# role gate, so this calls the same underlying helpers directly.
 	from kamra.api import _available_rooms_raw, _block_hold
-	from kamra.pricing import capacity_overflow, quote
+	from kamra.pricing import capacity_overflow, quote, stay_restriction_error
 	from kamra.siu.availability import has_active_sius, sellable_count
 
 	nights = date_diff(check_out_date, check_in_date)
@@ -433,7 +433,11 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 		if above:
 			row.update(needs_confirmation=True,
 			           confirmation_reason=_over_capacity_note(above))
-		if left:
+		blocked = left and stay_restriction_error(
+			property, rt, None, check_in_date, check_out_date)
+		if blocked:
+			row.update(available=False, reason=blocked)
+		elif left:
 			try:
 				plans = []
 				for mp in meal_plans:

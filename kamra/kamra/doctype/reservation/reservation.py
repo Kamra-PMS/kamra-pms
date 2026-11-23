@@ -451,6 +451,17 @@ class Reservation(Document):
 				title=_("Minimum stay"),
 			)
 
+		# Rate Restrictions (#530), checked when what is sold changes. A
+		# channel booking is never refused here: the channel manager applied
+		# the same restrictions (they go out with ARI), and refusing an OTA
+		# booking loses it.
+		if self.get("source") != "OTA" and (self.is_new() or any(
+				self.has_value_changed(f) for f in (
+					"check_in_date", "check_out_date", "room_type", "rate_plan"))):
+			from kamra.pricing import assert_stay_restrictions
+			assert_stay_restrictions(self.property, self.room_type, self.rate_plan,
+			                         self.check_in_date, self.check_out_date)
+
 	def validate_status_transition(self):
 		if self.is_new():
 			return
@@ -704,8 +715,11 @@ class Reservation(Document):
 		in the house's occupancy. Used by the save path and the amendment
 		previews, so a preview and the save that follows agree."""
 		from kamra.pricing import quote
+		# restrictions are checked in validate_minimum_nights, which knows
+		# whether the stay changed and whether it came from a channel
 		return quote(**self.quote_inputs(),
 		             check_voucher_limits=check_voucher_limits,
+		             check_restrictions=False,
 		             exclude_reservation=None if self.is_new() else self.name)
 
 	def apply_pricing(self):

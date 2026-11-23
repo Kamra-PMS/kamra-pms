@@ -192,7 +192,7 @@ def _one_night_rate(property: str, room_type: str, d, d2) -> float:
 	night cannot be quoted - availability still goes out for that day."""
 	from kamra.pricing import quote
 	try:
-		q = quote(property, room_type, str(d), str(d2), 2, 0)
+		q = quote(property, room_type, str(d), str(d2), 2, 0, check_restrictions=False)
 		return round(float(q["nightly"][0]["rate"]), 2)
 	except Exception:
 		return 0.0

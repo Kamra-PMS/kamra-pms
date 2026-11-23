@@ -12,7 +12,18 @@ import { InfoTip } from "../components/InfoTip"
 import { cur, moneyLocale } from "../lib/money"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
-import type { NightRate } from "../components/RateOptions"
+import type { NightRate, Restriction } from "../components/RateOptions"
+
+/** "Min 2 · No arrival" - what one Rate Restriction asks, in short. */
+function restrictionText(r: Restriction, t: typeof translate) {
+  return [
+    r.stop_sell && t("Stop-sell"),
+    r.closed_to_arrival && t("No arrival"),
+    r.closed_to_departure && t("No departure"),
+    r.min_nights > 0 && t("Min {n} nights", { n: r.min_nights }),
+    r.max_nights > 0 && t("Max {n} nights", { n: r.max_nights }),
+  ].filter(Boolean).join(" · ")
+}
 
 
 const n0 = (n: number) => Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
@@ -120,6 +131,8 @@ export default function RateCalendar() {
                       const up = x.rate > r.base_price
                       const down = x.rate < r.base_price
                       const on = pick?.rt === r.room_type && pick.i === i
+                      const rs = x.restrictions ?? []
+                      const closed = rs.some((z) => z.stop_sell && !z.rate_plan)
                       return (
                         <td key={x.date} className="p-0.5 text-center">
                           <button
@@ -132,9 +145,14 @@ export default function RateCalendar() {
                               down && "bg-sky-50 text-sky-900",
                               !up && !down && "text-zinc-700 hover:bg-zinc-50",
                               on && "ring-2 ring-brand-600",
+                              closed && "line-through opacity-60",
                             )}
+                            title={rs.length ? rs.map((z) => restrictionText(z, t)).join("\n") : undefined}
                           >
                             {n0(x.rate)}
+                            {rs.length > 0 && (
+                              <span className="ms-1 text-[10px] font-semibold text-rose-700" aria-label={t("Restricted")}>R</span>
+                            )}
                             {(x.season || x.demand) && (
                               <span className="ms-1 inline-block size-1.5 rounded-full bg-current align-middle opacity-60" aria-hidden />
                             )}
@@ -154,6 +172,7 @@ export default function RateCalendar() {
         <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded bg-amber-50 ring-1 ring-amber-200" aria-hidden />{t("Above BAR")}</span>
         <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded bg-sky-50 ring-1 ring-sky-200" aria-hidden />{t("Below BAR")}</span>
         <span>{t("A dot means a season or busy-house rule moved it. Select a night to see which.")}</span>
+        <span>{t("R means a stay restriction applies (minimum or maximum nights, closed to arrival or departure, stop-sell).")}</span>
       </div>
 
       {picked && pickedType && (
@@ -182,6 +201,12 @@ export default function RateCalendar() {
               <p className="text-zinc-400">{t("No busy-house rule applies ({p}% full).", { p: Math.round(picked.occupancy) })}</p>
             )}
             <p className="font-semibold">{t("Rate")}: <span className="tabular-nums">{cur()}{n0(picked.rate)}</span></p>
+            {(picked.restrictions ?? []).map((z) => (
+              <p key={`${z.name}-${z.rate_plan}`} className="text-rose-700">
+                {t("Restriction")}: <span className="font-medium">{z.name}</span>
+                {" "}({z.rate_plan || t("all rate plans")}) {restrictionText(z, t)}
+              </p>
+            ))}
           </CardContent>
         </Card>
       )}
@@ -194,6 +219,7 @@ export default function RateCalendar() {
           {[
             ["/room-types", "BAR (base price)", "Set each room type's base rate, extra adult and child prices."],
             ["/seasons", "Seasons", "Raise or lower rates for dates, weekends or festivals."],
+            ["/rate-restrictions", "Stay restrictions", "Minimum and maximum nights, closed to arrival or departure, and stop-sell, per rate plan."],
             ["/settings/revenue", "Busy-house rules", "Raise rates automatically as the house fills (hurdle tiers)."],
             ["/rate-plans", "Rate plans", "Corporate, package or member deals applied to a whole stay."],
             ["/vouchers", "Vouchers", "Discount codes with dates, minimum nights and use limits."],
