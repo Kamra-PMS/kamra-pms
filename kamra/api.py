@@ -5944,6 +5944,35 @@ def set_day_use_times(reservation: str, from_time: str, to_time: str):
 	return set_stay_times(reservation, from_time, to_time)
 
 
+OCCUPANCY_ON_BOOKS_MAX_NIGHTS = 90
+
+
+@frappe.whitelist()
+@require_roles("Revenue Manager")
+def occupancy_on_books(property: str, start_date: str, end_date: str | None = None):
+	"""Occupancy on the books per night, start_date to end_date (both
+	nights included, at most 90): confirmed and in-house reservations over
+	all rooms, as pricing's hurdle tiers see it. Rooms on the books, not a
+	forecast."""
+	from kamra.pricing import forecast_occupancy
+	start = getdate(start_date)
+	end = getdate(end_date or start_date)
+	nights = (end - start).days + 1
+	if nights < 1:
+		frappe.throw(_("The end date is before the start date."))
+	if nights > OCCUPANCY_ON_BOOKS_MAX_NIGHTS:
+		frappe.throw(_("Ask for {0} nights or fewer at a time.").format(
+			OCCUPANCY_ON_BOOKS_MAX_NIGHTS))
+	# ponytail: one count query per night, fine at 90 nights; one grouped
+	# query if the cap ever goes up
+	return {
+		"property": property,
+		"rooms": frappe.db.count("Room", {"property": property}),
+		"nights": [{"date": str(d), "occupancy_pct": forecast_occupancy(property, d)}
+		           for d in (add_days(start, i) for i in range(nights))],
+	}
+
+
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def position_briefing(property: str, date: str | None = None):

@@ -1155,6 +1155,18 @@ TOOLS: tuple[ToolSpec, ...] = (
 		group="Revenue",
 	),
 	_t(
+		"occupancy_on_books",
+		"api.occupancy_on_books",
+		"""Occupancy on the books per night for a date range (both dates
+		included, at most 90 nights): confirmed and in-house reservations
+		over all rooms. Rooms already sold, not a forecast. Quote the
+		figures as returned - never estimate or round them yourself.""",
+		{"start_date": _p("string"), "end_date": _p("string")},
+		required=("start_date",),
+		property=True,
+		group="Revenue",
+	),
+	_t(
 		"owner_briefing",
 		"api.owner_briefing",
 		"""The owner's morning numbers: occupancy, yesterday's revenue/ADR/

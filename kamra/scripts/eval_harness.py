@@ -11225,6 +11225,25 @@ def t_gl_stamp():
 		_gl("3000", old_gl)
 		frappe.delete_doc("Transaction Code", cash.name, force=True, ignore_permissions=True)
 
+@check("MCP occupancy_on_books: one figure per night from pricing, Revenue Manager only, at most 90 nights")
+def t_mcp_occupancy_on_books():
+	from kamra.mcp_tools import BY_NAME, call_tool
+	from kamra.pricing import forecast_occupancy
+	spec = BY_NAME["occupancy_on_books"]
+	assert not spec.mutating and spec.inject_property and spec.group == "Revenue", spec
+	out = call_tool(spec, {"start_date": "2036-08-01", "end_date": "2036-08-03"}, P)
+	assert [n["date"] for n in out["nights"]] == ["2036-08-01", "2036-08-02", "2036-08-03"], out
+	for n in out["nights"]:  # numbers come from code, never the model
+		assert n["occupancy_pct"] == forecast_occupancy(P, n["date"]), (n, out)
+	assert len(call_tool(spec, {"start_date": "2036-08-01", "end_date": "2036-10-29"},
+	                     P)["nights"]) == 90
+	_refused(call_tool, spec, {"start_date": "2036-08-01", "end_date": "2036-10-30"}, P,
+	         contains="90 nights")
+	_refused(call_tool, spec, {"start_date": "2036-08-03", "end_date": "2036-08-01"}, P)
+	with _as_user("frontdesk@kamra.local"):
+		_refused(call_tool, spec, {"start_date": "2036-08-01"}, P, exc=frappe.PermissionError)
+
+
 @check("MCP correct_folio_charge: reverses and reposts linked to the original, keeps posted GL codes, replays, refuses roles and room nights")
 def t_mcp_correct():
 	from kamra import api
@@ -11616,7 +11635,8 @@ def execute():
 		           t_app_pairing, t_ar_settle_idempotent, t_ar_settle_race,
 		           t_ar_balance_from_entries,
 		           t_ar_reverse_payment, t_ar_agent_payment_confirm, t_ar_received_dispute_aging,
-		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_correct, t_mcp_refund,
+		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_occupancy_on_books,
+		           t_mcp_correct, t_mcp_refund,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_refused, t_folio_no_close_in_house,
