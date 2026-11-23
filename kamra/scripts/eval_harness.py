@@ -34,10 +34,11 @@ def check(name):
 			except Exception as e:
 				frappe.db.rollback(save_point=sp)
 				import traceback
-				tail = " | ".join(
-					line.strip()
-					for line in traceback.format_exc().splitlines()[-6:]
-				)
+				lines = traceback.format_exc().splitlines()
+				# the last Kamra frames say where it broke; frappe's own are noise
+				ours = [f"{a.strip()} {b.strip()}" for a, b in zip(lines, lines[1:])
+				        if "/apps/kamra/" in a][-6:]
+				tail = " | ".join(ours + [line.strip() for line in lines[-2:]])
 				RESULTS.append((name, False, f"{type(e).__name__}: {e} [{tail}]"))
 		run.__name__ = name
 		return run
