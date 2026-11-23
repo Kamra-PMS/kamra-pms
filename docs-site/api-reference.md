@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **516 endpoints**, generated from the source
+the UI and the AI use. **538 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2946,6 +2946,7 @@ round trip instead of four, and the kitchen gets a single update.
 | `discount_reason` | no | `''` |
 | `guest` | no | `None` |
 | `waiter` | no | `None` |
+| `allow_zero` | no | `0` |
 
 ### `kamra.pos.send_round`
 
@@ -2958,6 +2959,7 @@ and fire_kot in one call and one save.
 | --- | --- | --- |
 | `order` | yes |  |
 | `items` | yes |  |
+| `allow_zero` | no | `0` |
 
 ### `kamra.pos.kitchen_queue`
 
@@ -4670,6 +4672,280 @@ to open, and which other spaces it shares its floor with.
 | Param | Required | Default |
 | --- | --- | --- |
 | `venue` | yes |  |
+
+
+## Recreation (gym, pool, spa: visits, memberships, bookings, passes)
+
+> Walk-in and membership money goes in the till with a receipt; a guest's paid access is on the folio.
+
+### `kamra.recreation.desk`
+
+**GET/POST**
+
+Facilities, who is inside, plans and customers for the desk.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.recreation.save_facility`
+
+**POST** · roles: `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `facility_name` | yes |  |
+| `category` | no | `'Gym'` |
+| `capacity` | no | `1` |
+| `access` | no | `'Both'` |
+| `price` | no | `0` |
+| `status` | no | `'Open'` |
+| `opens` | no | `None` |
+| `closes` | no | `None` |
+| `name` | no | `None` |
+
+### `kamra.recreation.save_plan`
+
+**POST** · roles: `Hotel Admin`
+
+`facilities` (a list) is the access the plan gives: those facilities
+only. Leave it and `facility` blank for every facility.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `plan_name` | yes |  |
+| `period` | no | `'Month'` |
+| `price` | no | `0` |
+| `visit_limit` | no | `0` |
+| `facility` | no | `None` |
+| `name` | no | `None` |
+| `facilities` | no | `None` |
+
+### `kamra.recreation.register_customer`
+
+**POST**
+
+An external customer. This is not a hotel guest and not a stay.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `full_name` | yes |  |
+| `phone` | no | `None` |
+
+### `kamra.recreation.sell_membership`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `customer` | yes |  |
+| `plan` | yes |  |
+| `starts_on` | no | `None` |
+| `paid` | no | `1` |
+| `mode` | no | `'Cash'` |
+
+### `kamra.recreation.renew_membership`
+
+**POST**
+
+The same plan again, from the day after this one ends (or today,
+when it has already lapsed).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `membership` | yes |  |
+| `paid` | no | `1` |
+| `mode` | no | `'Cash'` |
+
+### `kamra.recreation.check_in`
+
+**POST**
+
+One person into a facility. In-house guests are a reservation that
+is checked in. External customers are a recreation customer, usually
+on a membership. Capacity and hours are enforced. A walk-in pays by
+`mode` (Cash by default) into the till.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `facility` | yes |  |
+| `reservation` | no | `None` |
+| `customer` | no | `None` |
+| `complimentary` | no | `0` |
+| `mode` | no | `'Cash'` |
+
+### `kamra.recreation.check_out`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `visit` | yes |  |
+
+### `kamra.recreation.revenue`
+
+**GET/POST** · roles: `Finance`
+
+What the desk took on one day: folio, cash and membership fees.
+Cash and membership fees are operational totals. Folio amounts are
+also on the guest bill.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `date` | no | `None` |
+
+### `kamra.recreation.facility_slots`
+
+**GET/POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `facility` | yes |  |
+| `day` | no | `None` |
+
+### `kamra.recreation.book`
+
+**POST**
+
+Book a treatment (with a therapist, in a treatment room) or a pool /
+court session. The end comes from the treatment's minutes or the
+facility's session minutes unless given.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `facility` | yes |  |
+| `starts_at` | yes |  |
+| `reservation` | no | `None` |
+| `customer` | no | `None` |
+| `treatment` | no | `None` |
+| `therapist` | no | `None` |
+| `ends_at` | no | `None` |
+
+### `kamra.recreation.arrive`
+
+**POST**
+
+The booked guest or customer is here: it becomes a visit, paid like
+one (the treatment's price, else the facility's).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `booking` | yes |  |
+| `complimentary` | no | `0` |
+| `mode` | no | `'Cash'` |
+
+### `kamra.recreation.cancel_booking`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `booking` | yes |  |
+| `no_show` | no | `0` |
+
+### `kamra.recreation.bookings`
+
+**GET/POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `day` | no | `None` |
+
+### `kamra.recreation.save_treatment`
+
+**POST** · roles: `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `treatment_name` | yes |  |
+| `duration` | no | `60` |
+| `price` | no | `0` |
+| `facility` | no | `None` |
+| `name` | no | `None` |
+| `disabled` | no | `0` |
+
+### `kamra.recreation.save_therapist`
+
+**POST** · roles: `Hotel Admin`
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `therapist_name` | yes |  |
+| `name` | no | `None` |
+| `disabled` | no | `0` |
+
+### `kamra.recreation.spa_setup`
+
+**GET/POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+
+### `kamra.recreation.entry_pass`
+
+**GET/POST**
+
+A member's or an in-house guest's pass: the code and its QR (data URI).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `customer` | no | `None` |
+| `reservation` | no | `None` |
+
+### `kamra.recreation.check_in_by_pass`
+
+**POST**
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `facility` | yes |  |
+| `code` | yes |  |
+| `complimentary` | no | `0` |
+
+### `kamra.recreation.receipt`
+
+**GET/POST** · roles: `Finance`
+
+A walk-in's or a membership's receipt: the record's number is the
+receipt number. An operational receipt, not a tax invoice.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `name` | yes |  |
+
+### `kamra.recreation.report`
+
+**GET/POST** · roles: `Finance`
+
+Attendance, memberships, revenue by facility and by customer type,
+and hotel-guest against outside use, for a date range (default: this
+month so far).
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+
+### `kamra.recreation.membership_ledger`
+
+**GET/POST** · roles: `Finance`
+
+Everything one customer bought and used, oldest first: each
+membership (and renewal) with its fee, each visit against it with the
+visits left, and what they paid at the desk.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `customer` | yes |  |
 
 
 ## Migration (CSV import)

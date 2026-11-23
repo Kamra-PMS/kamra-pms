@@ -50,6 +50,8 @@ MODULES = [
     ("printing", "Kitchen printers (routing, print stations, print queue)", ""),
     ("laundry", "Laundry (housekeeping)", ""),
     ("banquet", "Banquets (functions, quotations, event orders)", ""),
+    ("recreation", "Recreation (gym, pool, spa: visits, memberships, bookings, passes)",
+     "Walk-in and membership money goes in the till with a receipt; a guest's paid access is on the folio."),
     ("migrate", "Migration (CSV import)", ""),
     ("golive", "Go-live data (companies, opening balances, reconciliation)", ""),
     ("inventory", "Inventory & recipes", ""),

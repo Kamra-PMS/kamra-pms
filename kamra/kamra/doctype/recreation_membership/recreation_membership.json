@@ -14,7 +14,9 @@
   "status",
   "visits_used",
   "amount",
-  "paid"
+  "paid",
+  "payment_mode",
+  "renewed_from"
  ],
  "fields": [
   {
@@ -89,10 +91,22 @@
    "label": "Paid",
    "default": "0",
    "description": "Recorded when the desk takes the fee. This is an operational receipt, not a guest folio."
+  },
+  {
+   "fieldname": "payment_mode",
+   "fieldtype": "Data",
+   "label": "Paid By"
+  },
+  {
+   "fieldname": "renewed_from",
+   "fieldtype": "Link",
+   "label": "Renewal Of",
+   "options": "Recreation Membership",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2026-11-19 12:00:00.000000",
+ "modified": "2026-11-23 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Recreation Membership",
