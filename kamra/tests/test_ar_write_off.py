@@ -122,3 +122,13 @@ class ARWriteOffTestCase(cc.CreditControlTestCase):
 		_, folio = self.bill(500)
 		with self.assertRaises(frappe.ValidationError):
 			receivables.write_off_ar_bill(self.account, folio, 50)
+
+	def test_a_pending_write_off_cant_be_turned_into_something_else(self):
+		_, folio = self.bill(500)
+		frappe.set_user(FINANCE)  # nosemgrep: frappe-setuser -- test fixture
+		out = receivables.write_off_ar_bill(self.account, folio, 400, reason="UT")
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		req = frappe.get_doc("Allowance Request", out["request"])
+		req.kind = "Allowance"
+		with self.assertRaisesRegex(frappe.ValidationError, "can't change"):
+			req.save(ignore_permissions=True)
