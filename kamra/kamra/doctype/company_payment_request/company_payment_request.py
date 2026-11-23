@@ -7,7 +7,7 @@ from frappe.model.document import Document
 
 # what was proposed: fixed once the request exists
 _PROPOSED = ("property", "account", "amount", "mode", "reference",
-             "received_on", "allocations", "requested_by")
+             "received_on", "allocations", "withholdings", "requested_by")
 
 
 class CompanyPaymentRequest(Document):

@@ -1039,13 +1039,19 @@ def _post_ar_credit(acc, payment: str, folio: str, amount: float,
 	)
 
 
-def _allocation_plan(account: str, amount: float, allocations=None) -> list[dict]:
+def _allocation_plan(account: str, amount: float, allocations=None,
+                     withheld: dict[str, float] | None = None) -> list[dict]:
 	"""[{folio, amount}] for a payment: oldest bill first by default, or
 	the caller's explicit folios (each within what that folio still owes,
-	all within the payment). Whatever is left stays unapplied. The caller
-	holds the account (_lock_account); the bills come from a locking read."""
-	open_items = {r["folio"]: r for r in locked_account_figures(account)["open_items"]
-	              if r["outstanding"] > 0.005}
+	all within the payment). Whatever is left stays unapplied. `withheld`
+	({folio: tax the payer kept}, #521) comes off what each bill still owes
+	first. The caller holds the account (_lock_account); the bills come
+	from a locking read."""
+	open_items = {}
+	for r in locked_account_figures(account)["open_items"]:
+		owed = round(r["outstanding"] - float((withheld or {}).get(r["folio"]) or 0), 2)
+		if owed > 0.005:
+			open_items[r["folio"]] = {**r, "outstanding": owed}
 	if allocations in (None, "", []):
 		plan, left = [], round(float(amount), 2)
 		for r in open_items.values():
@@ -1117,9 +1123,16 @@ def apply_unapplied_credit(account: str, only_folio: str | None = None,
 def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
                        reference: str | None = None, allocations=None,
                        idempotency_key: str | None = None,
-                       received_on: str | None = None, pin: str | None = None):
+                       received_on: str | None = None, pin: str | None = None,
+                       withholdings=None):
 	"""Record a company's payment against its city ledger account and clear
-	the AR it pays. By default it pays the oldest open bills first;
+	the AR it pays.
+
+	`withholdings` ([{folio, amount, tax, rate?, certificate_number?,
+	certificate_period?}], #521) is tax the company kept back from named
+	bills: it clears that part of each bill too and is tracked as tax
+	withheld until its certificate arrives (kamra.receivables). `tax` is a
+	code from the country pack's withholding taxes. By default it pays the oldest open bills first;
 	`allocations` ([{folio, amount}]) names the folios instead. Any excess
 	stays on the account as unapplied credit and settles the company's next
 	bill. `received_on` is the date the money arrived (the business date
@@ -1151,14 +1164,25 @@ def city_ledger_settle(account: str, amount: float, mode: str = "Bank Transfer",
 	if acc.disabled:
 		frappe.throw("This city ledger account is disabled.")
 	received = _received_on(acc.property, received_on)
-	plan = _allocation_plan(account, amount, allocations)
+	from kamra.receivables import withholding_plan
+	held = withholding_plan(acc, withholdings)
+	plan = _allocation_plan(account, amount, allocations, _held_by_folio(held))
 	if _is_agent():
-		return _request_company_payment(acc, amount, mode, reference, plan, key, received)
+		return _request_company_payment(acc, amount, mode, reference, plan, key,
+		                                received, held)
 	from kamra.settings import get_setting
 	if int(get_setting(acc.property, "city_ledger_payment_pin") or 0):
 		from kamra.authz import verify_supervisor
 		verify_supervisor(acc.property, frappe.session.user, pin)
-	return _post_company_payment(acc, amount, mode, reference, plan, key, received)
+	return _post_company_payment(acc, amount, mode, reference, plan, key, received,
+	                             withheld=held)
+
+
+def _held_by_folio(held: list[dict]) -> dict[str, float]:
+	out: dict[str, float] = {}
+	for h in held:
+		out[h["folio"]] = round(out.get(h["folio"], 0.0) + h["amount"], 2)
+	return out
 
 
 def _received_on(property: str, value) -> str:
@@ -1175,7 +1199,8 @@ def _received_on(property: str, value) -> str:
 
 def _post_company_payment(acc, amount: float, mode: str, reference: str | None,
                           plan: list[dict], key: str | None, received: str,
-                          note: str | None = None) -> dict:
+                          note: str | None = None,
+                          withheld: list[dict] | None = None) -> dict:
 	"""Post a company payment the caller has planned under the account
 	lock: one City Ledger Entry and an AR credit per folio it clears."""
 	bd = get_business_date(acc.property)
@@ -1195,6 +1220,9 @@ def _post_company_payment(acc, amount: float, mode: str, reference: str | None,
 	}).insert(ignore_permissions=True)
 	for a in plan:
 		_post_ar_credit(acc, payment.name, a["folio"], a["amount"], reference=ref)
+	if withheld:
+		from kamra.receivables import post_withholdings
+		withheld = post_withholdings(acc, payment.name, withheld, received)
 	balance = _sync_account_balance(acc.name)
 	applied_total = round(sum(a["amount"] for a in plan), 2)
 	from kamra.webhooks import emit_ar
@@ -1205,6 +1233,8 @@ def _post_company_payment(acc, amount: float, mode: str, reference: str | None,
 		"applied": [{"folio": a["folio"], "amount": round(float(a["amount"]), 2)}
 		            for a in plan],
 		"unapplied": round(amount - applied_total, 2),
+		"withheld": [{"folio": h["folio"], "tax": h["tax"], "amount": h["amount"]}
+		             for h in withheld or []],
 		"account_balance": round(float(acc.balance), 2)})
 	from kamra.savings import log_action
 	log_action("city_ledger_settle", "City Ledger Account", acc.name,
@@ -1219,11 +1249,13 @@ def _post_company_payment(acc, amount: float, mode: str, reference: str | None,
 		"balance": balance,
 		"applied": plan,
 		"unapplied": round(amount - applied_total, 2),
+		"withheld": withheld or [],
 	}
 
 
 def _request_company_payment(acc, amount: float, mode: str, reference: str | None,
-                             plan: list[dict], key: str | None, received: str) -> dict:
+                             plan: list[dict], key: str | None, received: str,
+                             held: list[dict] | None = None) -> dict:
 	"""An agent's company payment: kept as a request, with the bills it
 	would clear frozen, until Finance confirms it. Nothing touches the
 	account or the books."""
@@ -1234,6 +1266,7 @@ def _request_company_payment(acc, amount: float, mode: str, reference: str | Non
 		"property": acc.property, "account": acc.name, "company": acc.company,
 		"amount": amount, "mode": mode, "reference": (reference or "").strip()[:140] or None,
 		"received_on": received, "allocations": json.dumps(plan),
+		"withholdings": json.dumps(held) if held else None,
 		"idempotency_key": key, "status": "Pending",
 		"requested_by": frappe.session.user, "requested_on": now_datetime(),
 		"channel": agent_channel() or "API",
@@ -1305,12 +1338,16 @@ def decide_city_ledger_payment(request: str, approve: int = 1, note: str = "",
 		_lock_account(req.account)
 		acc = frappe.get_doc("City Ledger Account", req.account)
 		proposed = json.loads(req.allocations or "[]")
-		# the same bills and amounts, checked against what they owe now
-		plan = _allocation_plan(req.account, float(req.amount), proposed) if proposed else []
+		# the same bills, amounts and tax withheld, checked against what
+		# they owe now
+		from kamra.receivables import withholding_plan
+		held = withholding_plan(acc, req.get("withholdings"))
+		plan = _allocation_plan(req.account, float(req.amount), proposed,
+		                        _held_by_folio(held)) if proposed else []
 		out = _post_company_payment(
 			acc, float(req.amount), req.mode or "Bank Transfer", req.reference, plan,
 			req.idempotency_key, str(req.received_on or get_business_date(req.property)),
-			note=f"confirmed {req.name} by {me}")
+			note=f"confirmed {req.name} by {me}", withheld=held)
 		req.update({"status": "Confirmed", "payment": out["payment"]})
 	else:
 		if not note:
@@ -1384,6 +1421,8 @@ def reverse_city_ledger_payment(payment: str, reason: str | None = None,
 			transaction_code=_payment_code(),
 			source_doctype="City Ledger Entry", source_name=rev.name)
 		reopened.append({"folio": folio, "amount": amt})
+	from kamra.receivables import reverse_withholdings
+	reverse_withholdings(acc, payment, why)
 	balance = _sync_account_balance(acc.name)
 	from kamra.webhooks import emit_ar
 	emit_ar("ar.payment_reversed", acc.property, {
@@ -1699,6 +1738,7 @@ def city_ledger_account(account: str):
 	# rolling credit: what is owed and what in-house stays will owe use the
 	# limit up, payments free it again (kamra.credit counts the same way)
 	from kamra.credit import in_house_exposure
+	from kamra.receivables import property_withholding_taxes
 	in_house = in_house_exposure(acc.company, acc.property)
 	limit = float(acc.credit_limit or 0)
 	return {
@@ -1721,6 +1761,8 @@ def city_ledger_account(account: str):
 		"payments": payments,
 		"pending_payments": pending,
 		"payment_pin_required": bool(int(get_setting(acc.property, "city_ledger_payment_pin") or 0)),
+		# the taxes a payer may withhold here, for the payment screen (#521)
+		"withholding_taxes": property_withholding_taxes(acc.property),
 		"cashier_pin_required": bool(frappe.db.get_value(
 			"Property", acc.property, "require_cashier_pin")),
 	}

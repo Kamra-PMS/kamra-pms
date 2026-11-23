@@ -272,6 +272,7 @@ function AccountList() {
       </div>
       {err ? <p className="text-sm text-rose-600">{translate(err)}</p> : null}
       {notice ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{notice}</p> : null}
+      <WithheldTax />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" role="group" aria-label={translate("Show")}>
         {(Object.keys(QUEUES) as Queue[]).map((k) => {
@@ -521,6 +522,7 @@ function AccountPage({ account }: { account: string }) {
       <AgingBar acc={acc} />
       {/* write-offs waiting for a manager (kamra.receivables.write_off_ar_bill) */}
       <AllowanceRequests property={getCurrentProperty()} cityLedgerAccount={acc.account} onChanged={load} />
+      <WithheldTax account={acc.account} />
 
       <div role="tablist" aria-label={translate("Account activity")}
         className="inline-flex flex-wrap rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 text-sm">
@@ -1450,5 +1452,88 @@ function TransferInvoice(props: { acc: Account; item: OpenItem; onClose: () => v
         </label>
       </div>
     </Sheet>
+  )
+}
+
+type Withheld = {
+  name: string; company: string; folio: string; invoice_number?: string | null
+  tax_label: string; rate?: number | null; amount: number; withheld_on?: string | null
+}
+
+/** Tax companies withheld from their payments (TDS and the like) that still
+ *  waits for its certificate (kamra.receivables.withheld_tax, #521). */
+function WithheldTax({ account }: { account?: string }) {
+  useUILanguage()
+  const { roles } = useAuth()
+  const canRecord = roles.some((r) => FINANCE.includes(r))
+  const [data, setData] = useState<{ rows: Withheld[]; total: number } | null>(null)
+  const [open, setOpen] = useState<string | null>(null)
+  const [no, setNo] = useState("")
+  const [period, setPeriod] = useState("")
+  const [err, setErr] = useState<string | null>(null)
+  const load = useCallback(() => {
+    call<{ rows: Withheld[]; total: number }>("kamra.receivables.withheld_tax", { property: getCurrentProperty(), account })
+      .then(setData)
+      .catch(() => setData(null))
+  }, [account])
+  useEffect(load, [load])
+  if (!data?.rows.length) return null
+
+  const save = async (name: string) => {
+    setErr(null)
+    try {
+      await call("kamra.receivables.record_withholding_certificate", {
+        tax_withheld: name, certificate_number: no.trim(), certificate_period: period.trim() || undefined,
+      })
+      setOpen(null); setNo(""); setPeriod("")
+      load()
+    } catch (e) {
+      setErr(serverError(e))
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">
+          {translate("Tax withheld, waiting for a certificate")} · {fmtMoney(data.total)}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        {err ? <p className="text-rose-600">{translate(err)}</p> : null}
+        <ul className="divide-y divide-zinc-100">
+          {data.rows.map((r) => (
+            <li key={r.name} className="py-2">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span>
+                  {account ? null : <b>{r.company} · </b>}
+                  <span className="font-mono text-xs">{r.invoice_number || r.folio}</span>
+                  {" · "}{translate(r.tax_label)}{r.rate ? ` ${r.rate}%` : ""}
+                  {r.withheld_on ? <span className="text-zinc-400"> · {r.withheld_on}</span> : null}
+                </span>
+                <span className="flex items-center gap-2">
+                  <b className="tabular-nums">{fmtMoney(r.amount)}</b>
+                  {canRecord && open !== r.name ? (
+                    <Button variant="outline" onClick={() => { setOpen(r.name); setNo(""); setPeriod("") }}>
+                      {translate("Record certificate")}
+                    </Button>
+                  ) : null}
+                </span>
+              </div>
+              {open === r.name ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <input autoFocus className={field + " max-w-48"} placeholder={translate("Certificate number")}
+                    value={no} onChange={(e) => setNo(e.target.value)} maxLength={140} />
+                  <input className={field + " max-w-48"} placeholder={translate("Period (e.g. Q3 FY2026-27)")}
+                    value={period} onChange={(e) => setPeriod(e.target.value)} maxLength={140} />
+                  <Button disabled={!no.trim()} onClick={() => void save(r.name)}>{translate("Save")}</Button>
+                  <Button variant="ghost" onClick={() => setOpen(null)}>{translate("Cancel")}</Button>
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   )
 }

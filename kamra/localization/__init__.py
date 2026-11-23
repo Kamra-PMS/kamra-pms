@@ -25,6 +25,9 @@ and the accessors refuse rather than fall back to another country's:
   verify_tax_id(property, tax_id, business_name) -> dict
   verify_guest_id(property, guest, id_type, consent) -> dict
 
+Optional withholding taxes a company payer deducts from a bill (#521):
+  WITHHOLDING_TAXES = [{"code", "label", "rates": [...]}]
+
 Optional official FX source. Absent means the open market feed
 (kamra.ledger.market_rates):
   market_rates(home) -> (rates, as_of)
@@ -178,6 +181,17 @@ GENERIC_PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 # modes that are not a country's: any property may record them
 CORE_PAYMENT_MODES = ("Cash", "Foreign Cash", "Card", "Bank Transfer", "OTA Prepaid",
                       "Company Credit", "Payment Link", "Cheque", "Other")
+
+
+# Tax a company payer withholds from a bill and certifies later (#521):
+# WITHHOLDING_TAXES = [{"code", "label", "rates": [percent, ...]}]. A pack
+# without one still lets Finance record a plain withholding.
+GENERIC_WITHHOLDING_TAXES = [{"code": "WHT", "label": "Tax withheld", "rates": []}]
+
+
+def withholding_taxes(pack) -> list[dict]:
+	return [dict(t) for t in getattr(pack, "WITHHOLDING_TAXES", None)
+	        or GENERIC_WITHHOLDING_TAXES]
 
 
 def id_types(pack) -> list[str]:
