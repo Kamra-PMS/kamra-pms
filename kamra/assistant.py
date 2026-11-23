@@ -749,6 +749,7 @@ REPLY_LANGS = {
 	"zh-CN": "Simplified Chinese", "zh": "Simplified Chinese",
 	"fil-PH": "Filipino",
 	"vi-VN": "Vietnamese", "vi": "Vietnamese",
+	"sw-TZ": "Swahili",
 }
 
 

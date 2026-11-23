@@ -100,8 +100,12 @@ language = "vi"
 assert.equal(api.t("Phone"), "Số điện thoại")
 assert.equal(api.t("Today"), "Hôm nay")
 assert.equal(api.tn(2, "{n} night", "{n} nights"), "2 đêm")
+language = "sw"
+assert.equal(api.t("Phone"), "Simu")
+assert.equal(api.t("Today"), "Leo")
+assert.equal(api.tn(2, "{n} night", "{n} nights"), "usiku 2")
 language = "unknown"
 assert.equal(api.t("Phone"), "Phone")
 const app = fs.readFileSync(path.join(root, "src/App.tsx"), "utf8")
 assert.ok(!/(?:translate|translateUI|t)\(this\.state\.error\.message\)/.test(app), "Keep raw ErrorBoundary diagnostics intact")
-console.log("i18n checks passed: dictionaries, placeholders, duplicate calls, English/Spanish/Arabic/Portuguese/Indonesian/German/Filipino/Vietnamese and fallback behavior")
+console.log("i18n checks passed: dictionaries, placeholders, duplicate calls, English/Spanish/Arabic/Portuguese/Indonesian/German/Filipino/Vietnamese/Swahili and fallback behavior")

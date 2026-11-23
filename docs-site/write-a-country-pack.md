@@ -35,7 +35,7 @@ This guide is for contributors who want to write a country pack so that the coun
 	| `DEFAULT_NATIONALITY` | The nationality the front desk starts with |
 	| `ID_TYPES` | The ID documents the desk and self check-in accept |
 	| `PAYMENT_MODES` | The ways to pay at the counter, POS and till: **Cash**, **Card**, **Bank Transfer**, plus any of your `INSTANT_PAYMENT_MODES`. Kamra drops any other value. |
-	| `INSTANT_PAYMENT_MODES` | Optional. Your country's own instant or wallet modes (India: `["UPI"]`). The POS settles with them and the till counts them in their own column. Each must already be a payment mode option on Folio Payment and Cashier Transaction. Other countries' properties are refused these modes. |
+	| `INSTANT_PAYMENT_MODES` | Optional. Your country's own instant or wallet modes (India: `["UPI"]`, Indonesia: `["QRIS"]`). The POS settles with them and the till counts them in their own column. Each must already be a payment mode option on Folio Payment, Cashier Transaction, Banquet Receipt and POS Order (Payment Mode). Other countries' properties are refused these modes. |
 5. Write the tax functions
 	```python
 	def calculate_room_tax(property, room_type_doc, nightly_rate) -> Decimal:

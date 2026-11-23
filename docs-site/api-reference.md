@@ -2576,7 +2576,7 @@ can offer one-tap paths to billing and editing. One endpoint, all types.
 
 ### `kamra.api.property_locale`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `F&B Manager`
+**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `F&B Manager`, `Kamra Service Account`
 
 Currency, number locale and tax vocabulary for this property, from its
 localization pack. Drives the frontend's money formatting and tax dropdowns
