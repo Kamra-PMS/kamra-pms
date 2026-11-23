@@ -8998,7 +8998,7 @@ def linked_records(doctype: str, name: str):
 
 @frappe.whitelist()
 @require_roles("Front Desk", "Finance", "Revenue Manager", "Housekeeping", "Kamra Agent",
-               "F&B Manager")
+               "F&B Manager", "Kamra Service Account")
 def property_locale(property: str):
 	"""Currency, number locale and tax vocabulary for this property, from its
 	localization pack. Drives the frontend's money formatting and tax dropdowns
