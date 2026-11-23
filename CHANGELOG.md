@@ -26,6 +26,42 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.8.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.10...v2.8.0) (2026-11-21)
+
+
+### Features
+
+* add Filipino (fil) front-desk locale ([#629](https://github.com/Kamra-PMS/kamra-pms/issues/629)) ([bf76425](https://github.com/Kamra-PMS/kamra-pms/commit/bf7642561e8529d265388cfaf27971140ae197d8))
+* add Philippines localization pack ([#628](https://github.com/Kamra-PMS/kamra-pms/issues/628)) ([33460e0](https://github.com/Kamra-PMS/kamra-pms/commit/33460e078d5cc6cd5e83781ee51957d4d5927525))
+* **booking:** let the desk set each night's price on New booking ([a6c63a6](https://github.com/Kamra-PMS/kamra-pms/commit/a6c63a67ea347518019fbdeabaa3d5b718a5a655))
+* **booking:** set each night's price on New booking ([b4cfd14](https://github.com/Kamra-PMS/kamra-pms/commit/b4cfd14342c73fbd6cd75f6900c6f6cd7db990f7))
+* **channels:** send Channex only what changed, in ranges, under its rate limit (ARI outbox) ([#650](https://github.com/Kamra-PMS/kamra-pms/issues/650)) ([a5c299b](https://github.com/Kamra-PMS/kamra-pms/commit/a5c299bc6315a0f5be3732765d43458b12a9e2da))
+* **fx:** let a country pack supply the official exchange-rate source ([#644](https://github.com/Kamra-PMS/kamra-pms/issues/644)) ([2e470d5](https://github.com/Kamra-PMS/kamra-pms/commit/2e470d5db8b40893f715c06f9bbd48499b9c349a))
+* **i18n:** add Bahasa Indonesia (id) locale ([792aa12](https://github.com/Kamra-PMS/kamra-pms/commit/792aa12a96f93f3fa2d03c00abee4711f51c07f6))
+* **i18n:** add German (de) locale for Today, reservation and folio ([2975e47](https://github.com/Kamra-PMS/kamra-pms/commit/2975e47429bcc6c441269b1ac8972a2c6a4e01f3)), closes [#624](https://github.com/Kamra-PMS/kamra-pms/issues/624)
+* **i18n:** address review: drop English seeds and plural-suffix keys, add id to booking languages ([f5ce6db](https://github.com/Kamra-PMS/kamra-pms/commit/f5ce6db5ee8cd95839f6727a65e282164b28c7e8))
+* **i18n:** first-pass Indonesian for Today, reservation drawer and folio ([34cd62d](https://github.com/Kamra-PMS/kamra-pms/commit/34cd62d9671b9bda62f4b27e1f415fbfe1acc9c0)), closes [#253](https://github.com/Kamra-PMS/kamra-pms/issues/253)
+* **i18n:** German locale + Germany country pack (MwSt, EUR) ([fddee65](https://github.com/Kamra-PMS/kamra-pms/commit/fddee65217bf02e887272d40c4bd82b578c984d5))
+* **i18n:** refine Indonesian wording after native review ([f3c70bf](https://github.com/Kamra-PMS/kamra-pms/commit/f3c70bfc4aac3956ba9a043b1ef752948d085d2c))
+* **i18n:** register Bahasa Indonesia locale (id) ([57d8975](https://github.com/Kamra-PMS/kamra-pms/commit/57d8975e475164f1e7f7c04891e4d7024c4d01e9)), closes [#253](https://github.com/Kamra-PMS/kamra-pms/issues/253)
+* let admins switch UI languages on or off ([#630](https://github.com/Kamra-PMS/kamra-pms/issues/630)) ([086eaa1](https://github.com/Kamra-PMS/kamra-pms/commit/086eaa1ad225edb055fc5ad52857598b36202a35))
+* **localization:** add Germany country pack (MwSt, EUR) ([88549e3](https://github.com/Kamra-PMS/kamra-pms/commit/88549e3062f782bb43c26c987104e1b73c6c8953))
+
+
+### Bug Fixes
+
+* **folio:** don't close an in-house guest's bill from the desk ([#648](https://github.com/Kamra-PMS/kamra-pms/issues/648)) ([2001054](https://github.com/Kamra-PMS/kamra-pms/commit/20010544bcac566797d2d43b7650d3574b7849d7))
+* **i18n:** fill the missing Spanish translations, front desk and server ([#651](https://github.com/Kamra-PMS/kamra-pms/issues/651)) ([e037ac2](https://github.com/Kamra-PMS/kamra-pms/commit/e037ac20868e2edf0a1cad14056a5dec7431f9eb))
+* **i18n:** refine Simplified Chinese PMS translations ([#647](https://github.com/Kamra-PMS/kamra-pms/issues/647)) ([4a144de](https://github.com/Kamra-PMS/kamra-pms/commit/4a144de893dcfcc2d2ac847f0b317787e036b1d9))
+* **localization:** Germany pack always shows € ([71760ff](https://github.com/Kamra-PMS/kamra-pms/commit/71760ff47e83a25f01f7f0d72d4368c5b47e7fa8))
+* **localization:** Germany pack uses € symbol like other flat packs ([e7f9998](https://github.com/Kamra-PMS/kamra-pms/commit/e7f99984de9ea216ff845fa70740983ae927f47e))
+* Night Audit agent property, Thai dates on English screens, marketplace audit note ([#627](https://github.com/Kamra-PMS/kamra-pms/issues/627)) ([1bfea45](https://github.com/Kamra-PMS/kamra-pms/commit/1bfea4565d944e9ce97ea0f44dbedef64edc6249))
+
+
+### Miscellaneous Chores
+
+* relicense Kamra core to Apache-2.0 ([#591](https://github.com/Kamra-PMS/kamra-pms/issues/591)) ([#631](https://github.com/Kamra-PMS/kamra-pms/issues/631)) ([ce8dec8](https://github.com/Kamra-PMS/kamra-pms/commit/ce8dec82bdd136a6995c55b1558e7394860a85b7))
+
 ## [2.7.10](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.9...v2.7.10) (2026-11-14)
 
 
