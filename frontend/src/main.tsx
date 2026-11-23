@@ -24,6 +24,22 @@ setIcon("icon", "kamra-mark.svg", "image/svg+xml")
 setIcon("icon", "favicon-32.png", "image/png")
 setIcon("apple-touch-icon", "apple-touch-180.png")
 
+// Offline (#228): the service worker keeps the app shell and built files
+// (kamra/www/kamra-sw.min.js, served at the site root so it may control
+// /kamra). Production only; the dev server has no /kamra.
+function registerServiceWorker() {
+  if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return
+  if (!location.pathname.startsWith("/kamra")) return
+  navigator.serviceWorker.register("/kamra-sw.min.js", { scope: "/kamra" })
+    .then(() => navigator.serviceWorker.ready)
+    .then((reg) => {
+      const loaded = performance.getEntriesByType("resource").map((e) => e.name)
+      reg.active?.postMessage({ cache: loaded })
+    })
+    .catch(() => undefined) // offline support is a bonus, never a blocker
+}
+registerServiceWorker()
+
 function mount() {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

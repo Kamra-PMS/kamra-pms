@@ -18,7 +18,8 @@
     "booking-defaults:check": "node scripts/booking-defaults-check.mjs",
     "key-notice:check": "node scripts/key-notice-check.mjs",
     "night-prices:check": "node scripts/night-prices-check.mjs",
-    "dates:check": "node scripts/local-dates-check.mjs"
+    "dates:check": "node scripts/local-dates-check.mjs",
+    "offline:check": "node scripts/offline-check.mjs"
   },
   "dependencies": {
     "libphonenumber-js": "^1.13.15",

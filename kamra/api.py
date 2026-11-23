@@ -1155,8 +1155,12 @@ def hk_queue(property: str):
 
 @frappe.whitelist()
 @require_roles("Housekeeping", "Front Desk", "Kamra Agent")
-def hk_update_task(task: str, status: str):
+def hk_update_task(task: str, status: str, expected: str | None = None):
 	"""Start or complete a housekeeping task from the phone.
+
+	`expected` is the status the phone last saw - sent by a change queued
+	during an outage (#228). If the task moved on meanwhile it is refused,
+	never applied over someone else's change.
 
 	An Inspection is completed by passing it: Done on an inspection is taken
 	as Verified, which moves the room to Ready (inspection required by the
@@ -1166,6 +1170,7 @@ def hk_update_task(task: str, status: str):
 	if status not in ("In Progress", "Done", "Verified"):
 		frappe.throw("Status must be In Progress, Done or Verified.")
 	doc = frappe.get_doc("Housekeeping Task", task)
+	_offline_conflict(_("Task {0}").format(task), expected, doc.status, status)
 	if doc.task_type == "Inspection" and status == "Done":
 		status = "Verified"
 	if status == "Verified" and not _is_room_supervisor():
@@ -5568,6 +5573,18 @@ _ROOM_SUPERVISORS = {HK_SUPERVISOR, "Front Desk", "Hotel Admin",
 _ATTENDANT_STATUSES = {"Clean", "Dirty"}
 
 
+def _offline_conflict(what: str, expected: str | None, current: str | None,
+                      wanted: str) -> None:
+	"""A change made offline carries the status it was made from. Someone
+	else changed it meanwhile (and not already to the same thing): refuse,
+	so the later change on the server is never overwritten."""
+	if expected is None or (current or "") == expected or current == wanted:
+		return
+	frappe.throw(_("{0} is {1} now (it was {2} when you changed it offline), so "
+	               "your change to {3} was not applied.").format(
+		what, _(current or "-"), _(expected or "-"), _(wanted)))
+
+
 def _is_room_supervisor() -> bool:
 	return frappe.session.user == "Administrator" or \
 		bool(_ROOM_SUPERVISORS & set(frappe.get_roles()))
@@ -5575,12 +5592,13 @@ def _is_room_supervisor() -> bool:
 
 @frappe.whitelist(methods=["POST"])
 @require_roles("Housekeeping", HK_SUPERVISOR, "Front Desk", "Kamra Agent")
-def set_housekeeping_status(room: str, status: str):
+def set_housekeeping_status(room: str, status: str, expected: str | None = None):
 	"""Change a room's housekeeping status - role, property and DocPerm
 	checked (#99): an attendant can mark Clean / Dirty, only a supervisor
 	can pass a room or take it out of order, nobody can touch a room of a
 	property they aren't assigned to, and removing Write on Room in the
-	role permissions actually removes the ability."""
+	role permissions actually removes the ability. `expected` (a change
+	queued offline, #228): refused if the room's status moved on since."""
 	allowed = {"Clean", "Dirty", "Inspected", "Ready", "Out of Order"}
 	if status not in allowed:
 		frappe.throw(f"Invalid status. Use one of {sorted(allowed)}")
@@ -5595,6 +5613,7 @@ def set_housekeeping_status(room: str, status: str):
 		frappe.throw(
 			_("Only a housekeeping supervisor can set a room to {0}.").format(status),
 			frappe.PermissionError)
+	_offline_conflict(_("Room {0}").format(room), expected, r.housekeeping_status, status)
 	if status == r.housekeeping_status:
 		return {"ok": True, "room": room, "status": status}
 	frappe.db.set_value("Room", room, "housekeeping_status", status)

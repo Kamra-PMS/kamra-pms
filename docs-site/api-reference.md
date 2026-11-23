@@ -348,6 +348,10 @@ Checkout cleans for rooms with an arrival today jump the queue.
 
 Start or complete a housekeeping task from the phone.
 
+`expected` is the status the phone last saw - sent by a change queued
+during an outage (#228). If the task moved on meanwhile it is refused,
+never applied over someone else's change.
+
 An Inspection is completed by passing it: Done on an inspection is taken
 as Verified, which moves the room to Ready (inspection required by the
 turnover profile) or Inspected - never back to plain Clean. Verifying -
@@ -358,6 +362,7 @@ set_housekeeping_status applies to Inspected / Ready.
 | --- | --- | --- |
 | `task` | yes |  |
 | `status` | yes |  |
+| `expected` | no | `None` |
 
 ### `kamra.api.hk_upload_media`
 
@@ -1658,12 +1663,14 @@ Change a room's housekeeping status - role, property and DocPerm
 checked (#99): an attendant can mark Clean / Dirty, only a supervisor
 can pass a room or take it out of order, nobody can touch a room of a
 property they aren't assigned to, and removing Write on Room in the
-role permissions actually removes the ability.
+role permissions actually removes the ability. `expected` (a change
+queued offline, #228): refused if the room's status moved on since.
 
 | Param | Required | Default |
 | --- | --- | --- |
 | `room` | yes |  |
 | `status` | yes |  |
+| `expected` | no | `None` |
 
 ### `kamra.api.room_board`
 
