@@ -1381,6 +1381,14 @@ def reverse_city_ledger_payment(payment: str, reason: str | None = None,
 			source_doctype="City Ledger Entry", source_name=rev.name)
 		reopened.append({"folio": folio, "amount": amt})
 	balance = _sync_account_balance(acc.name)
+	from kamra.webhooks import emit_ar
+	emit_ar("ar.payment_reversed", acc.property, {
+		"account": acc.name, "company": acc.company, "payment": payment,
+		"reversal": rev.name, "posting_date": str(rev.posting_date),
+		"reference": row.reference or None, "reason": why, "amount": amount,
+		"reopened": reopened,
+		"unapplied_removed": round(amount - sum(r["amount"] for r in reopened), 2),
+		"account_balance": round(float(balance), 2)})
 	log_action("city_ledger_payment_reversed", "City Ledger Account", acc.name,
 	           acc.property,
 	           rationale=f"Reversed {acc.company}'s payment {payment} of {amount:,.2f}: {why}")

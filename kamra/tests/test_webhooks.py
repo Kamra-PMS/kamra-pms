@@ -456,6 +456,13 @@ class MoneyEventsTestCase(_WebhookCase):
 		pays = self.fired("ar.payment_recorded")
 		self.assertEqual(len(pays), 1)
 		self.assertEqual((pays[0]["payment"], pays[0]["amount"]), (paid["payment"], 300.0))
+		ledger.reverse_city_ledger_payment(paid["payment"], reason="Cheque bounced")
+		back = self.fired("ar.payment_reversed")
+		self.assertEqual(len(back), 1)
+		self.assertEqual((back[0]["payment"], back[0]["amount"], back[0]["reason"],
+		                  back[0]["reopened"]),
+		                 (paid["payment"], 300.0, "Cheque bounced",
+		                  [{"folio": folio, "amount": 300.0}]))
 
 	def test_cashier_session_closed(self):
 		from kamra import cashier
