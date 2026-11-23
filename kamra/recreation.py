@@ -737,9 +737,15 @@ def receipt(name: str) -> dict:
 		       "date": str(doc.creation)[:16], "amount": flt(doc.amount),
 		       "paid_by": doc.get("payment_mode") or "Cash"}
 	prop = frappe.db.get_value("Property", doc.property,
-	                           ["property_name", "address", "city"], as_dict=True) or {}
-	return {"number": doc.name, "property": prop, **row,
-	        "note": _("Receipt. Not a tax invoice.")}
+	                           ["property_name", "address_line", "city"], as_dict=True) or {}
+	# receipt UI wants `address`; Property stores it as address_line
+	return {"number": doc.name,
+	        "property": {
+	        	"property_name": prop.get("property_name"),
+	        	"address": prop.get("address_line"),
+	        	"city": prop.get("city"),
+	        },
+	        **row, "note": _("Receipt. Not a tax invoice.")}
 
 
 @frappe.whitelist()
