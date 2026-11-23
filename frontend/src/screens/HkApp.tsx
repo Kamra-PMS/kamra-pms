@@ -79,6 +79,8 @@ export default function HkApp() {
   const [busy, setBusy] = useState<string | null>(null)
   const [view, setView] = useState<"mine" | "pool" | "rooms" | "laundry">("mine")
   const [rejecting, setRejecting] = useState<string | null>(null)
+  // a supervisor failing an inspection says why (kamra.housekeeping.hk_fail_inspection)
+  const [failing, setFailing] = useState<string | null>(null)
   const [reason, setReason] = useState("")
   const [logItem, setLogItem] = useState<{ desc: string; condition: string; room: string } | null>(null)
   const [logMsg, setLogMsg] = useState<string | null>(null)
@@ -332,6 +334,15 @@ export default function HkApp() {
                 {t("In progress…")}
               </span>
             )}
+            {task.task_type === "Inspection" && supervisor ? (
+              <button
+                disabled={busy === task.name}
+                onClick={() => { setFailing(task.name); setReason("") }}
+                className="flex-1 rounded-xl border border-rose-300 py-3 text-base font-semibold text-rose-700 active:bg-rose-50"
+              >
+                {t("Fail")}
+              </button>
+            ) : null}
             {task.task_type === "Inspection" ? (
               // an inspection is passed (room → Inspected / Ready), not "done"
               <button
@@ -352,6 +363,38 @@ export default function HkApp() {
               </button>
             )}
           </div>
+          {failing === task.name && (
+            <div className="mt-2 space-y-2">
+              <input
+                autoFocus
+                className="w-full rounded-xl border border-zinc-300 px-3 py-2.5 text-base"
+                placeholder={t("What failed (required)")}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 rounded-xl border border-zinc-300 py-3 text-base font-semibold text-zinc-600"
+                  onClick={() => { setFailing(null); setReason("") }}
+                >
+                  {t("Keep")}
+                </button>
+                <button
+                  disabled={busy === task.name || !reason.trim()}
+                  onClick={() =>
+                    run(task.name, "kamra.housekeeping.hk_fail_inspection", { reason: reason.trim() }).then((ok) => {
+                      if (!ok) return
+                      setFailing(null)
+                      setReason("")
+                    })
+                  }
+                  className="flex-1 rounded-xl bg-rose-600 py-3 text-base font-semibold text-white disabled:opacity-50"
+                >
+                  {t("Fail and re-clean")}
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </li>

@@ -72,6 +72,7 @@ import {
   HandCoins,
   CalendarClock,
   Scale,
+  Link2,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -354,6 +355,7 @@ export const APPS: AppDef[] = [
       { to: "/booking-settings/payments", label: "Payments", icon: Receipt },
       { to: "/booking-settings/faq", label: "FAQ", icon: HelpCircle },
       { to: "/booking-settings/seo", label: "SEO", icon: Search },
+      { to: "/booking-settings/links", label: "Booking links", icon: Link2 },
       { to: "/settings/booking-engine", label: "Settings", icon: SettingsIcon,
         roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"] },
     ],

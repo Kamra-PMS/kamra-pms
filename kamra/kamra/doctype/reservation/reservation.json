@@ -21,6 +21,7 @@
   "pays_own_charges",
   "source",
   "channel",
+  "source_tag",
   "ota_ref",
   "ota_live_key",
   "idempotency_key",
@@ -189,6 +190,14 @@
    "fieldname": "channel",
    "fieldtype": "Data",
    "label": "Channel"
+  },
+  {
+   "fieldname": "source_tag",
+   "fieldtype": "Data",
+   "label": "Source Tag",
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "description": "The tag on the booking link the guest came from (src or utm_source)."
   },
   {
    "fieldname": "ota_ref",
@@ -958,7 +967,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-23 12:00:00.000000",
+ "modified": "2026-11-23 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Reservation",

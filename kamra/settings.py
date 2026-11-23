@@ -305,6 +305,14 @@ MODULES: tuple[Module, ...] = (
 				S("inspect_duration_minutes", "Inspection takes", "number", 30, "turnover", min=5, max=480, unit="min",
 				  hint="The inspection task is due this long after the clean is done."),
 			)),
+			Section("quality", "Room status and inspections", "", (
+				S("hk_discrepancy_cases", "Room status cases", "check", 1,
+				  hint="When the front office and housekeeping disagree on a room, open a case "
+				       "with an owner on the Housekeeping Board and close it with a reason."),
+				S("hk_quality_report", "Inspection pass rate and turn time", "check", 1,
+				  hint="Supervisors can fail an inspection with a reason. The board shows the pass "
+				       "rate and turn time by attendant and room type."),
+			)),
 			Section("laundry", "Laundry", "", (
 				S("laundry_express_multiplier", "Express price", "number", 1.5, min=1, max=5, unit="x regular",
 				  hint="Used when a rate card line leaves its express price blank."),
@@ -534,6 +542,9 @@ MODULES: tuple[Module, ...] = (
 			Section("page", "Booking page", "", (
 				S("booking_engine_enabled", "Public booking page is live", "check", 1, P),
 				S("booking_mode", "Booking mode", "select", "Instant", P, options=("Instant", "Request to Book")),
+				S("booking_links", "Booking links with a source tag", "check", 1,
+				  hint="Share links that open a room type, dates or plan. The link's src (or "
+				       "utm_source) tag is kept on the booking."),
 			)),
 			Section("payment", "Guest payment", "", (
 				S("booking_payment_mode", "Guests pay", "select", "Pay at hotel", P,
