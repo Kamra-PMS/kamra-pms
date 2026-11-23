@@ -79,6 +79,10 @@ scheduler_events = {
 		"45 4 * * *": ["kamra.hosting_enquiry_retention.purge_expired_hosting_enquiries"],
 		# 06:00 and 18:00 - warm the GitHub latest-release cache for the update nag
 		"0 6,18 * * *": ["kamra.health.poll_github_releases"],
+		# 05:35 - the anonymous install heartbeat (#657); off in Settings,
+		# or with KAMRA_TELEMETRY=0 / DO_NOT_TRACK=1 / kamra_telemetry: 0
+		# ponytail: one fixed minute for every install; add jitter if the endpoint sees bursts
+		"35 5 * * *": ["kamra.telemetry.send_heartbeat"],
 		# every minute - outbound webhook retries that are due (backoff), and
 		# the ARI outbox: what waited for its batch window, pause or retry
 		"* * * * *": ["kamra.webhooks.retry_due", "kamra.channel_ari.enqueue_ari_flushes"],

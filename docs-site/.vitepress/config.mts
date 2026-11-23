@@ -102,6 +102,7 @@ const SIDEBAR: { text: ReturnType<typeof L>; collapsed?: boolean; items: [Return
       [L("Frappe Cloud marketplace", "Marketplace de Frappe Cloud", "سوق Frappe Cloud"), "self-hosting/frappe-cloud"],
       [L("ERPNext & Frappe HR", "ERPNext y Frappe HR", "ERPNext و Frappe HR"), "self-hosting/erpnext-hr"],
       [L("Email (SMTP) setup", "Configurar el correo (SMTP)", "إعداد البريد (SMTP)"), "self-hosting/email"],
+      [L("Usage reporting", "Informe de uso", "تقارير الاستخدام"), "self-hosting/usage-reporting"],
     ],
   },
   {
