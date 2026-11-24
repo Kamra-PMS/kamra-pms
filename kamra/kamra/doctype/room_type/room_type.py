@@ -29,9 +29,6 @@ class RoomType(Document):
 		if cleaned != (self.room_type_code or ""):
 			self.room_type_code = cleaned
 
-		if not int(self.max_total_occupants or 0) and int(self.adults_capacity or 0):
-			self.max_total_occupants = self.adults_capacity
-
 		if not (self.listing_slug or "").strip():
 			self.listing_slug = unique_listing_slug(
 				self.property, self.room_type_name, exclude=self.name,

@@ -43,7 +43,12 @@ class PublicBookingTestCase(IntegrationTestCase):
 		data = showcase(self.property)
 		rt = [r for r in data["room_types"] if r["name"] == self.room_type][0]
 		self.assertIn("max_total_occupants", rt)
-		self.assertEqual(rt["max_total_occupants"], 2)
+		self.assertEqual(rt["max_total_occupants"], 0)
+
+		frappe.db.set_value("Room Type", self.room_type, "max_total_occupants", 4)
+		data = showcase(self.property)
+		rt = [r for r in data["room_types"] if r["name"] == self.room_type][0]
+		self.assertEqual(rt["max_total_occupants"], 4)
 
 	def test_free_meal_plan_is_the_room_only_rate(self):
 		ep = frappe.get_doc({"doctype": "Meal Plan", "property": self.property,
