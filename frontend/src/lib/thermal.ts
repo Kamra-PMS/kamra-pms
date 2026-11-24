@@ -1,4 +1,4 @@
-import { t as translate, uiDateLocale } from "./i18n"
+import { t as translate, tn, uiDateLocale } from "./i18n"
 /** 80mm thermal printing for KOT tickets, bills and the laundry docket.
  *
  * Renders the ticket in a hidden iframe with an `@page: 80mm` sheet and a
@@ -225,7 +225,7 @@ export function kotHtml(o: {
     <div class="hr"></div>
     <table class="kt"><tr class="h"><td class="q">${esc(translate("Qty"))}</td><td>${esc(translate("Item"))}</td></tr>${rows}</table>
     <div class="hr"></div>
-    <div class="count">${o.items.length} ${esc(translate("item"))}${o.items.length === 1 ? "" : "s"}</div>
+    <div class="count">${esc(tn(o.items.length, "{n} item", "{n} items"))}</div>
     <div class="hr thick"></div>
     <div class="cut">${esc(translate("- cut -"))}</div>`
 }
@@ -367,7 +367,7 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
     ${itemHead}
     ${items}
     <div class="hr"></div>
-    <div class="count">${n} ${esc(translate("item"))}${n === 1 ? "" : "s"}</div>
+    <div class="count">${esc(tn(n, "{n} item", "{n} items"))}</div>
     <div class="sum">
       ${sum(esc(translate("Subtotal")), b.subtotal)}
       ${b.discount_amount ? sum(esc(translate("Discount")), -b.discount_amount) : ""}

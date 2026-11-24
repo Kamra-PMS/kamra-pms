@@ -70,7 +70,7 @@ const hkTone: Record<HkRoom["housekeeping_status"], string> = {
 }
 
 export default function HkApp() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [auth, setAuth] = useState<"loading" | "anon" | "ok">("loading")
   const [supervisor, setSupervisor] = useState(false)
   // a refused action (taken by someone else, not allowed…) - shown, never swallowed
@@ -440,10 +440,7 @@ export default function HkApp() {
         {view === "mine" && (
           <>
             <p className="mb-3 px-1 text-sm text-zinc-500">
-              {t("{n} task{s} for you - arrivals first", {
-                n: mine.length,
-                s: mine.length === 1 ? "" : "s",
-              })}
+              {tn(mine.length, "{n} task for you - arrivals first", "{n} tasks for you - arrivals first")}
             </p>
             <ul className="space-y-3">
               {mine.map((task) => <TaskCard key={task.name} task={task} />)}

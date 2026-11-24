@@ -202,14 +202,14 @@ function AllergyBadge({ hits }: { hits: string[] }) {
 }
 
 function StationHead({ station, count }: { station: string; count: number }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const Icon = STATION_ICON[station] ?? Utensils
   return (
     <div className="flex items-center gap-2 pt-3">
       <Icon className="size-4 text-zinc-400" />
       <span className="text-xs font-black uppercase tracking-wider text-zinc-500">{t(station)}</span>
       <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500">
-        {t("{n} item{s}", { n: count, s: count === 1 ? "" : "s" })}
+        {tn(count, "{n} item", "{n} items")}
       </span>
     </div>
   )

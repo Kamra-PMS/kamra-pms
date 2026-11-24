@@ -34,7 +34,7 @@ const inr = (n: number) =>
   fmtAmount(n)
 
 export default function CancelPanel({ row, reload }: { row: Row; reload: () => void }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [open, setOpen] = useState(false)
   const [preview, setPreview] = useState<Preview | null>(null)
   const [reason, setReason] = useState(REASONS[0])
@@ -88,10 +88,7 @@ export default function CancelPanel({ row, reload }: { row: Row; reload: () => v
         <div className="space-y-3">
           {preview && (
             <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
-              {t("{n} day{s} before arrival.", {
-                n: preview.days_before_arrival,
-                s: preview.days_before_arrival === 1 ? "" : "s",
-              })}{" "}
+              {tn(preview.days_before_arrival, "{n} day before arrival.", "{n} days before arrival.")}{" "}
               {preview.inside_window && preview.fee_basis !== "None" ? (
                 <>
                   {t("Inside the {days}-day window - the {basis} ({amount}) will be charged.", {

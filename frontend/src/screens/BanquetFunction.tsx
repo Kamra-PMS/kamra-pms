@@ -65,7 +65,7 @@ import {
 import { Steps, stepsFor, type StepId } from "./banquet/Steps"
 import Economics from "./banquet/Economics"
 import MenuComposer from "./banquet/MenuComposer"
-import { t as translate, useUILanguage } from "../lib/i18n"
+import { t as translate, tn, useUILanguage } from "../lib/i18n"
 
 export default function BanquetFunction() {
   useUILanguage()
@@ -185,7 +185,7 @@ export default function BanquetFunction() {
         <Money
           label={translate("Received")}
           value={fn.advance_received}
-          sub={translate("{v0} receipt{v1}", { v0: String(fn.receipts.length), v1: String(fn.receipts.length === 1 ? "" : "s") })}
+          sub={tn(fn.receipts.length, "{n} receipt", "{n} receipts")}
         />
         <Money
           label={translate("Balance")}

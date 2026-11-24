@@ -200,7 +200,7 @@ function ago(ts?: string) {
 const OUTLET_KEY = "kamra_pos_outlet"
 
 export default function POS() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const { ensureUnlocked } = useCashierAuth()
   // pay_order settles Cash, Card and the country's instant modes
   const loc = useLocale()
@@ -1858,7 +1858,7 @@ export default function POS() {
             <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-brand-700">
               {cart.length > 0
                 ? `+ ${cart[0].item_name}${cart[0].qty > 1 ? ` ×${cart[0].qty}` : ""}`
-                : translate("{v0} item{v1}{v2}", { v0: String(Math.round(billItemCount)), v1: String(billItemCount === 1 ? "" : "s"), v2: String(selected && detail ? ` · ${orderLabel(detail)}` : "") })}
+                : tn(Math.round(billItemCount), "{n} item", "{n} items") + (selected && detail ? ` · ${orderLabel(detail)}` : "")}
             </div>
             <div className="text-lg font-bold tabular-nums">{cur()}{inr2(grand)}</div>
           </button>

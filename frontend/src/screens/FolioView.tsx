@@ -272,7 +272,7 @@ function VerifyTaxId({ taxId, name }: { taxId: string; name: string }) {
 }
 
 export default function FolioView() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const { name } = useParams()
   const navigate = useNavigate()
   const [data, setData] = useState<InvoiceData | null>(null)
@@ -898,10 +898,7 @@ export default function FolioView() {
               )}
             </Fact>
             <Fact label={t("Stay")}>
-              {stay.check_in} → {stay.check_out} · {t("{n} night{s}", {
-                n: stay.nights,
-                s: stay.nights === 1 ? "" : "s",
-              })}
+              {stay.check_in} → {stay.check_out} · {tn(stay.nights, "{n} night", "{n} nights")}
             </Fact>
             <Fact label={t("Pax / plan")}>
               {stay.pax || stay.adults || "-"}
@@ -1017,9 +1014,7 @@ export default function FolioView() {
                     <div className="mb-3 rounded-xl border border-brand-200 bg-brand-50/40 p-3 text-sm print:hidden">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">
-                          {t("{n} line{s} · {cur}{amount} selected", {
-                            n: sel.length,
-                            s: sel.length > 1 ? "s" : "",
+                          {tn(sel.length, "{n} line · {cur}{amount} selected", "{n} lines · {cur}{amount} selected", {
                             cur: cur(),
                             amount: inr(selTotal),
                           })}
@@ -1260,7 +1255,7 @@ export default function FolioView() {
                       <td className="py-1">
                         {translate(h.head)}
                         <span className="ml-1.5 text-xs text-zinc-400">
-                          {t("{n} line{s}", { n: h.lines, s: h.lines === 1 ? "" : "s" })}
+                          {tn(h.lines, "{n} line", "{n} lines")}
                         </span>
                       </td>
                       <td className="py-1 text-right text-zinc-500">

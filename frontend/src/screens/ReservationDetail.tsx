@@ -44,7 +44,7 @@ import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
 import StayInstructions from "../components/StayInstructions"
 import { cur, fmtAmount } from "../lib/money"
-import { t as translate, useUILanguage } from "../lib/i18n"
+import { t as translate, tn, useUILanguage } from "../lib/i18n"
 
 const inr = (n: number) =>
   `${cur()}` + fmtAmount(n || 0)
@@ -481,7 +481,7 @@ export default function ReservationDetail({
             <Field label={translate("Nights")} value={d.nights} />
             <Field
               label={translate("Guests")}
-              value={`${d.adults} adult${d.adults === 1 ? "" : "s"}${
+              value={`${tn(d.adults, "{n} adult", "{n} adults")}${
                 d.children ? ` · ${d.children} child` : ""
               }`}
             />
@@ -578,7 +578,7 @@ export default function ReservationDetail({
                 label={translate("History")}
                 value={
                   d.guest.stays > 0
-                    ? `${d.guest.stays} stay${d.guest.stays === 1 ? "" : "s"}${
+                    ? `${tn(d.guest.stays, "{n} stay", "{n} stays")}${
                         d.guest.last_stay ? ` · last ${d.guest.last_stay}` : ""
                       }`
                     : "First stay"
