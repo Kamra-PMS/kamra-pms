@@ -11836,6 +11836,71 @@ def t_folio_no_close_in_house():
 		"reservation": res.name, "parenttype": "Folio"}, "parent") == out["new_folio"]
 
 
+@check("POS: an outlet's levy is added after discount, taxed or not as set, kept once paid, and refused where every bill is e-invoiced")
+def t_pos_outlet_levy():
+	from kamra import pos
+
+	for doctype, field in (("POS Outlet", "levy_percent"), ("POS Outlet", "levy_taxable"),
+	                       ("POS Order", "levy_amount"), ("POS Order", "levy_taxable")):
+		assert frappe.get_meta(doctype).has_field(field), (doctype, field)
+
+	P6 = "EVAL Levy Hotel"
+	if not frappe.db.exists("Property", P6):
+		frappe.get_doc({"doctype": "Property", "property_name": P6, "city": "Ubud",
+		                "country": "Indonesia"}).insert(ignore_permissions=True)
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P6, "outlet_name": "Eval Levy Warung",
+		"outlet_type": "Restaurant", "gst_rate": 10,
+		"levy_label": "Service charge", "levy_percent": 10, "levy_taxable": 1,
+	}).insert(ignore_permissions=True).name
+	nasi, teh = (frappe.get_doc({
+		"doctype": "Menu Item", "property": P6, "outlet": outlet, "item_name": label,
+		"category": "Food", "price": price, "is_veg": 0, "available": 1,
+		"prep_station": "Kitchen"}).insert(ignore_permissions=True).name
+		for label, price in (("Eval Levy Nasi Goreng", 35000), ("Eval Levy Es Teh", 12000)))
+
+	def bill(taxable=1):
+		frappe.db.set_value("POS Outlet", outlet, "levy_taxable", taxable)
+		o = pos.create_order(outlet, [{"menu_item": nasi, "qty": 1},
+		                              {"menu_item": teh, "qty": 2}],
+		                     property=P6, table_no="T1", order_type="Dine In")["order"]
+		pos.apply_discount(o, 9000, "regular")
+		return o
+
+	# 59.000 less 9.000 = 50.000; levy 10% = 5.000; tax 10% on 55.000 (taxed levy) or 50.000
+	o = bill(taxable=1)
+	doc = frappe.get_doc("POS Order", o)
+	assert (doc.levy_amount, doc.order_total) == (5000, 55000), (doc.levy_amount, doc.order_total)
+	b = pos.bill_data(o)
+	assert b["levy"]["amount"] == 5000 and b["taxable"] == 55000 and b["grand_total"] == 60500, b
+	o2 = bill(taxable=0)
+	b2 = pos.bill_data(o2)
+	assert b2["taxable"] == 50000 and b2["grand_total"] == 60000, b2
+
+	# paid, the bill keeps its levy even when the outlet drops it afterwards
+	pos.pay_order(o, "Cash")
+	frappe.db.set_value("POS Outlet", outlet, "levy_percent", 0)
+	paid = frappe.get_doc("POS Order", o)
+	paid.save(ignore_permissions=True)
+	assert (paid.levy_amount, paid.order_total) == (5000, 55000), (paid.levy_amount, paid.order_total)
+
+	# a country that e-invoices every POS bill (Saudi Arabia) takes no levy
+	PS = "EVAL Levy Riyadh"
+	if not frappe.db.exists("Property", PS):
+		frappe.get_doc({"doctype": "Property", "property_name": PS, "city": "Riyadh",
+		                "country": "Saudi Arabia", "currency": "SAR",
+		                "gstin": "310122393500003"}).insert(ignore_permissions=True)
+	try:
+		frappe.get_doc({
+			"doctype": "POS Outlet", "property": PS, "outlet_name": "Eval Levy Majlis",
+			"outlet_type": "Restaurant", "gst_rate": 15, "levy_percent": 10,
+		}).insert(ignore_permissions=True)
+	except frappe.ValidationError:
+		pass
+	else:
+		raise AssertionError("a Saudi outlet was allowed a levy")
+
+
 @check("a price with tax and the levy inside bills to exactly that price; with neither inside nothing changes")
 def t_rates_include_levy():
 	from kamra.api import _apply_country_defaults
@@ -12276,7 +12341,7 @@ def execute():
 		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_refused, t_folio_no_close_in_house,
-		           t_rates_include_levy,
+		           t_rates_include_levy, t_pos_outlet_levy,
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths):
 			fn()

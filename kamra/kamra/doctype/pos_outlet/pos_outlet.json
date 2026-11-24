@@ -13,6 +13,9 @@
   "outlet_type",
   "column_break_a",
   "gst_rate",
+  "levy_label",
+  "levy_percent",
+  "levy_taxable",
   "disabled",
   "kot_mode",
   "logo",
@@ -53,6 +56,26 @@
    "fieldname": "gst_rate",
    "fieldtype": "Percent",
    "label": "GST %"
+  },
+  {
+   "description": "The name printed on the bill, e.g. Service charge. Empty means Service charge.",
+   "fieldname": "levy_label",
+   "fieldtype": "Data",
+   "label": "Levy Name"
+  },
+  {
+   "default": "0",
+   "description": "A percentage added to every bill at this outlet, after any discount (a service charge). 0 means none.",
+   "fieldname": "levy_percent",
+   "fieldtype": "Percent",
+   "label": "Levy Amount %"
+  },
+  {
+   "default": "1",
+   "description": "On: the tax is charged on the bill plus the levy. Off: the tax is charged on the bill only.",
+   "fieldname": "levy_taxable",
+   "fieldtype": "Check",
+   "label": "Tax applies to the levy"
   },
   {
    "default": "0",
@@ -99,7 +122,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-24 12:00:00.000000",
+ "modified": "2026-11-24 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Outlet",

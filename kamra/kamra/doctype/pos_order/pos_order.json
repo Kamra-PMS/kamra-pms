@@ -20,6 +20,10 @@
   "items",
   "sb_totals",
   "order_total",
+  "levy_label",
+  "levy_percent",
+  "levy_taxable",
+  "levy_amount",
   "column_break_b",
   "posted_to_folio",
   "notes",
@@ -132,6 +136,31 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Order Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "levy_label",
+   "fieldtype": "Data",
+   "label": "Levy Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "levy_percent",
+   "fieldtype": "Percent",
+   "label": "Levy %",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "levy_taxable",
+   "fieldtype": "Check",
+   "label": "Tax Applies To The Levy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "levy_amount",
+   "fieldtype": "Currency",
+   "label": "Levy",
    "read_only": 1
   },
   {
@@ -347,7 +376,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-24 15:00:00.000000",
+ "modified": "2026-11-25 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order",

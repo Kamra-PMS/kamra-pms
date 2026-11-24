@@ -49,7 +49,8 @@ def outlets(property: str):
 	rows = frappe.get_all(
 		"POS Outlet", filters={"property": property, "disabled": 0},
 		fields=["name", "outlet_name", "outlet_type", "gst_rate", "kot_mode",
-		        "logo", "receipt_design"],
+		        "logo", "receipt_design", "levy_label", "levy_percent",
+		        "levy_taxable"],
 		order_by="outlet_name")
 	for r in rows:
 		r["auto_kot"] = 1 if _auto_kot(property, r.kot_mode) else 0
@@ -255,20 +256,25 @@ def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
 		"Folio Charge",
 		filters={"parenttype": "Folio", "description": ("like", f"%({doc.name})%"),
 		         "reservation": doc.reservation},
-		fields=["name", "parent", "idx", "posting_date", "is_alcohol", "amount"])
+		fields=["name", "parent", "idx", "posting_date", "is_alcohol", "amount"],
+		order_by="idx")
 	if not rows:
 		frappe.throw(_("Couldn't find this bill on the room's folio. It may have "
 		              "been moved or voided already."))
 	# split on the folio, or partly allowed off: moving one piece would
-	# leave the rest on the wrong guest
-	if len(rows) != 1 or abs(float(rows[0].amount or 0) - float(doc.order_total or 0)) > 0.009:
+	# leave the rest on the wrong guest. The bill's lines are its items and,
+	# when the outlet has a levy, the levy line: together they are the total.
+	expected = 2 if float(doc.levy_amount or 0) > 0 else 1
+	if len(rows) != expected or abs(sum(float(r.amount or 0) for r in rows)
+	                                - float(doc.order_total or 0)) > 0.009:
 		frappe.throw(_("This bill was split or changed on the folio, so it can't be "
 		              "moved in one go. Move its lines from the folio instead."))
 	row = rows[0]
 	# an allowance carries no link to its charge: one posted after this bill
 	# on the same folio may be against it, and would stay with the wrong guest
 	if frappe.db.exists("Folio Charge", {"parenttype": "Folio", "parent": row.parent,
-	                                     "charge_type": "Allowance", "idx": (">", row.idx)}):
+	                                     "charge_type": "Allowance",
+	                                     "idx": (">", max(int(r.idx) for r in rows))}):
 		frappe.throw(_("An allowance was posted on this folio after the bill. Reverse "
 		              "the allowance first, then move the bill."))
 	if frappe.db.get_value("Folio", row.parent, "status") == "Closed":
@@ -286,7 +292,7 @@ def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
 		frappe.get_doc("Reservation", new_res), "Food & Beverage",
 		is_alcohol=bool(row.is_alcohol)))
 	from kamra.webhooks import emit_folio_posted
-	for line in move_charges(src, dst, [row.name], reservation=new_res):
+	for line in move_charges(src, dst, [r.name for r in rows], reservation=new_res):
 		emit_folio_posted(dst, line)
 	doc.db_set({"room": new_room, "reservation": new_res,
 	            "guest": _bill_guest(new_res, None)}, update_modified=False)
@@ -715,6 +721,9 @@ def order_detail(order: str):
 		"paid": doc.paid, "payment_mode": doc.payment_mode,
 		"discount_amount": doc.discount_amount, "discount_reason": doc.discount_reason,
 		"subtotal": doc.subtotal, "order_total": doc.order_total,
+		# what the outlet's levy added to this bill (the tax base follows levy_taxable)
+		"levy_label": doc.levy_label, "levy_percent": doc.levy_percent,
+		"levy_taxable": doc.levy_taxable, "levy_amount": doc.levy_amount,
 		"kot_fired": doc.kot_fired, "notes": doc.notes,
 		"items": [
 			{"row": it.name, "menu_item": it.menu_item, "item_name": it.item_name,
@@ -2076,12 +2085,21 @@ def _outlet_history(outlet: str, order: str | None, g, stay) -> dict:
 	}
 
 
+def _bill_tax_base(doc) -> float:
+	"""What the outlet's tax is charged on: the bill after discount, plus the
+	levy when the levy is taxed. An untaxed levy stays outside the base."""
+	total = float(doc.order_total or 0)
+	if doc.get("levy_taxable") is not None and not int(doc.levy_taxable):
+		return total - float(doc.get("levy_amount") or 0)
+	return total
+
+
 def _bill_tax(doc) -> tuple[float, float]:
 	"""The outlet's tax rate on this bill and the tax amount, as the bill
 	prints it. The guest pays order_total plus this tax."""
 	rate = frappe.db.get_value("POS Outlet", doc.outlet, "gst_rate")
 	rate = 0.0 if doc.nc else float(5 if rate is None else rate)
-	return rate, round(float(doc.order_total or 0) * rate / 100, 2)
+	return rate, round(_bill_tax_base(doc) * rate / 100, 2)
 
 
 @frappe.whitelist()
@@ -2095,7 +2113,7 @@ def bill_data(order: str):
 		as_dict=True)
 	property_name = frappe.db.get_value(
 		"Property", doc.property, "property_name") or doc.property
-	taxable = float(doc.order_total or 0)
+	taxable = _bill_tax_base(doc)
 	gst_rate, gst_amount = _bill_tax(doc)
 	# the tax is named and split the country's way (CGST+SGST in India,
 	# a single VAT line in the Gulf)
@@ -2133,7 +2151,10 @@ def bill_data(order: str):
 		"subtotal": doc.subtotal, "discount_amount": doc.discount_amount,
 		"taxable": taxable, "gst_rate": gst_rate,
 		"cgst": round(gst_amount / 2, 2), "sgst": round(gst_amount / 2, 2),
-		"grand_total": round(taxable + gst_amount, 2),
+		"grand_total": round(float(doc.order_total or 0) + gst_amount, 2),
+		# the outlet's levy as charged on this bill (None when there is none)
+		"levy": {"label": doc.levy_label or "", "percent": doc.levy_percent,
+		         "amount": doc.levy_amount} if float(doc.levy_amount or 0) else None,
 		"paid": doc.paid, "payment_mode": doc.payment_mode,
 		"nc": doc.nc, "nc_authorized_by": doc.nc_authorized_by,
 		"nc_note": doc.nc_note,
