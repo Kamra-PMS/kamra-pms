@@ -12096,6 +12096,48 @@ def t_ota_contact_never_drops_booking():
 	assert frappe.db.exists("Reservation", {"property": CP, "ota_ref": "EVAL-OCT-WH"})
 
 
+@check("card payments keep their network: validated, stamped on the row and the till, split in the report")
+def t_card_network():
+	from kamra import cashier
+	from kamra.card_network import NETWORKS
+
+	for doctype in ("Folio Payment", "POS Order", "Cashier Transaction"):
+		options = frappe.get_meta(doctype).get_field("card_network").options or ""
+		assert [o for o in options.split("\n") if o] == NETWORKS, (doctype, options)
+	g = _guest("Eval Card Network", "+91 70000 00077")
+	res = _res(g, "2031-03-01", "2031-03-02", ROOM)
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	post_room_night(res, "2031-03-01")
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
+	for network, last4 in (("Bitcoin", None), ("Visa", "12ab"), ("Visa", "123")):
+		try:
+			api.add_folio_payment(folio, "Card", 10, card_network=network, card_last4=last4)
+		except frappe.ValidationError:
+			continue
+		raise AssertionError(f"card details {network!r}/{last4!r} were accepted")
+	api.add_folio_payment(folio, "Card", 100, reference="slip-1", card_network="RuPay", card_last4="4321")
+	api.add_folio_payment(folio, "Card", 40, reference="slip-2", card_network="Visa")
+	api.add_folio_payment(folio, "Cash", 25, reference="rcpt-1", card_network="Visa")
+	api.add_folio_payment(folio, "Card", 15, reference="old-caller")  # no network: still accepted
+	rows = {r.reference: r for r in frappe.get_all(
+		"Folio Payment", filters={"parent": folio},
+		fields=["reference", "mode", "card_network", "card_last4"])}
+	assert (rows["slip-1"].card_network, rows["slip-1"].card_last4) == ("RuPay", "4321"), rows["slip-1"]
+	assert (rows["slip-2"].card_network, rows["slip-2"].card_last4) == ("Visa", None), rows["slip-2"]
+	assert not rows["rcpt-1"].card_network, "a cash payment kept a card network"
+	assert not rows["old-caller"].card_network
+	# the till keeps the same network, so the split matches the Card total
+	txn = frappe.db.get_value("Cashier Transaction", {"folio": folio, "reference": "slip-1"},
+	                          ["card_network", "card_last4"], as_dict=True)
+	if txn:
+		assert (txn.card_network, txn.card_last4) == ("RuPay", "4321"), txn
+		summary = cashier.cash_summary_v2(P)
+		card_total = sum(m["total"] for m in summary["modes"] if m["mode"] == "Card")
+		split = summary["card_networks"]
+		assert abs(sum(r["total"] for r in split) - card_total) < 0.01, (split, card_total)
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12151,7 +12193,7 @@ def execute():
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy,
 		           t_audit_anomalies, t_early_arrival_check_in,
-		           t_ota_contact_never_drops_booking):
+		           t_ota_contact_never_drops_booking, t_card_network):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

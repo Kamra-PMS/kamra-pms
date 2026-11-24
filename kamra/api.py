@@ -854,7 +854,9 @@ def _deposit_reservation(reservation: str):
 @require_roles("Front Desk", "Finance", "Kamra Agent")
 def record_advance(reservation: str, amount: float, mode: str = "Cash",
                    reference: str | None = None, pin: str | None = None,
-                   idempotency_key: str | None = None):
+                   idempotency_key: str | None = None,
+                   card_network: str | None = None,
+                   card_last4: str | None = None):
 	"""Take a deposit / advance on a booking before arrival (#114). Opens
 	the guest folio early so the money sits on the stay from day one and
 	the balance at check-in is right; recorded through add_folio_payment,
@@ -894,7 +896,8 @@ def record_advance(reservation: str, amount: float, mode: str = "Cash",
 	folio = open_folio(res)
 	add_folio_payment(folio, mode, amount,
 	                  reference=reference or f"deposit:{res.name}", pin=pin,
-	                  kind="Advance", idempotency_key=key)
+	                  kind="Advance", idempotency_key=key,
+	                  card_network=card_network, card_last4=card_last4)
 	frappe.db.set_value("Reservation", res.name, "advance_paid",
 	                    float(res.advance_paid or 0) + amount)
 	res.reload()
@@ -1623,7 +1626,9 @@ def _pin_guard(folio: str, pin=None):
 def add_folio_payment(folio: str, mode: str, amount: float,
                       reference: str | None = None, pin: str | None = None,
                       kind: str = "Payment", currency: str | None = None,
-                      idempotency_key: str | None = None):
+                      idempotency_key: str | None = None,
+                      card_network: str | None = None,
+                      card_last4: str | None = None):
 	"""Record money received on the stay ledger. kind labels WHY it came
 	in - Payment (against the bill), Advance (collected before/at
 	check-in) or Security Deposit (held, refundable). Refunds go through
@@ -1634,7 +1639,11 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	bank transfer); the server converts it at today's buy rate, posts the
 	home amount and keeps the foreign amount and rate on the row.
 	A retry with the same idempotency_key returns the folio without
-	posting again."""
+	posting again.
+
+	card_network / card_last4: for a Card payment, the network from the card
+	machine slip (Visa, RuPay, ...) and optionally the last 4 digits. Kept on
+	the payment and the till entry so collections can be split by network."""
 	if kind not in ("Payment", "Advance", "Security Deposit"):
 		frappe.throw("kind must be Payment, Advance or Security Deposit.")
 	if float(amount) <= 0:
@@ -1651,6 +1660,8 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	doc = frappe.get_doc("Folio", folio)
 	from kamra.localization import assert_payment_mode
 	assert_payment_mode(doc.property, mode)
+	from kamra.card_network import clean as clean_card
+	card_network, card_last4 = clean_card(mode, card_network, card_last4)
 	from kamra.business_date import get_business_date
 	from kamra.cashier import record_cashier_txn, require_open_session
 	from kamra.ledger import fx_to_home, home_currency, payment_rate, round_cents
@@ -1694,6 +1705,8 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 		"mode": mode,
 		"amount": float(amount),
 		"reference": reference,
+		"card_network": card_network,
+		"card_last4": card_last4,
 		"currency": currency,
 		**(fx or {}),  # an FX row keeps the foreign currency, amount and rate
 		"idempotency_key": key,
@@ -1706,7 +1719,8 @@ def add_folio_payment(folio: str, mode: str, amount: float,
 	           if fx else None)
 	record_cashier_txn(
 		doc.property, "Payment", mode, float(amount),
-		folio=doc.name, reference=reference, notes=fx_note, session=sess)
+		folio=doc.name, reference=reference, notes=fx_note, session=sess,
+		card_network=card_network, card_last4=card_last4)
 	try:
 		from kamra.ledger import record_payment_ledger
 		record_payment_ledger(doc, pay.as_dict(), session=sess)
@@ -1747,7 +1761,7 @@ def add_folio_payments(payments, pin: str | None = None):
 	part by cash, part by card, part by UPI.
 
 	`payments` is a list of {folio, mode, amount, reference?, kind?,
-	idempotency_key?}. Each row is posted exactly as add_folio_payment
+	idempotency_key?, card_network?, card_last4?}. Each row is posted exactly as add_folio_payment
 	posts it (till, ledger, activity log), and all rows share one
 	transaction, so if any row is refused none is kept and the folio is
 	never left half-paid. Returns the folios touched and how many rows
@@ -1775,6 +1789,8 @@ def add_folio_payments(payments, pin: str | None = None):
 				pin=pin, kind=row.get("kind") or "Payment",
 				currency=row.get("currency"),
 				idempotency_key=row.get("idempotency_key"),
+				card_network=row.get("card_network"),
+				card_last4=row.get("card_last4"),
 			)
 			if row["folio"] not in folios:
 				folios.append(row["folio"])
@@ -2799,7 +2815,9 @@ def set_pays_own_charges(reservation: str, value: int = 1):
 def settle_group_bill(group_booking: str, mode: str | None = None,
                       amount: float | None = None, to_city_ledger: int = 0,
                       reference: str | None = None, pin: str | None = None,
-                      credit_override_reason: str | None = None):
+                      credit_override_reason: str | None = None,
+                      card_network: str | None = None,
+                      card_last4: str | None = None):
 	"""Settle the group's master bill: take a payment on it (`mode`, and
 	`amount`, default the whole balance) or, for a group whose company has
 	credit, move the balance to the city ledger. The bill closes (and is
@@ -2824,7 +2842,8 @@ def settle_group_bill(group_booking: str, mode: str | None = None,
 		if not mode:
 			frappe.throw(_("Choose how the group bill is paid."))
 		add_folio_payment(folio, mode, flt(amount) or balance,
-		                  reference=reference, pin=pin)
+		                  reference=reference, pin=pin,
+		                  card_network=card_network, card_last4=card_last4)
 	balance = round(flt(frappe.db.get_value("Folio", folio, "balance")), 2)
 	out = {"folio": folio, "balance": balance, "closed": False}
 	if abs(balance) <= 0.009:
@@ -4779,6 +4798,8 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
             payment_mode: str | None = None, payment_amount: float = 0,
             payment_reference: str | None = None, pin: str | None = None,
             idempotency_key: str | None = None,
+            payment_card_network: str | None = None,
+            payment_card_last4: str | None = None,
             check_in_time: str | None = None,
             check_out_time: str | None = None,
             blacklist_override_reason: str | None = None,
@@ -4905,7 +4926,8 @@ def walk_in(property: str, room_type: str, room: str, check_out_date: str,
 	if amount:
 		add_folio_payment(folio, payment_mode, amount,
 		                  reference=payment_reference, pin=pin,
-		                  kind="Advance")
+		                  kind="Advance", card_network=payment_card_network,
+		                  card_last4=payment_card_last4)
 
 	return {
 		"reservation": reservation,

@@ -24,6 +24,7 @@ import { cn } from "../lib/utils"
 import { cur, moneyLocale, useLocale } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { docsUrl } from "../components/InfoTip"
+import { cardArgs } from "../lib/cardNetwork"
 
 
 const inr = (n: unknown) =>
@@ -612,12 +613,12 @@ export default function POS() {
       })
     }
   }
-  async function settle(mode: string) {
+  async function settle(mode: string, card?: { network?: string; last4?: string }) {
     if (!selected) return
     const order = selected
     await act(async () => {
       await ensureUnlocked()
-      await call("kamra.pos.pay_order", { order, mode })
+      await call("kamra.pos.pay_order", { order, mode, ...cardArgs(mode, card?.network, card?.last4) })
       await sendBill(order)
       newOrder()
     })

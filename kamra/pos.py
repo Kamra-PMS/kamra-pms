@@ -1233,10 +1233,12 @@ def _assert_outlet_mode(property: str, mode: str) -> None:
 
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
-def pay_order(order: str, mode: str, pin: str | None = None):
+def pay_order(order: str, mode: str, pin: str | None = None,
+              card_network: str | None = None, card_last4: str | None = None):
 	"""Settle a bill at the outlet (walk-ins, takeaway - or a guest who'd
 	rather pay now than post to the room). Records the payment mode and
-	closes the order without touching any folio. Posts into the open
+	closes the order without touching any folio. For a Card payment,
+	card_network / card_last4 record the network from the slip. Posts into the open
 	cashier session so FO + POS cash reconcile together."""
 	doc = frappe.get_doc("POS Order", order)
 	_assert_outlet_mode(doc.property, mode)
@@ -1260,15 +1262,20 @@ def pay_order(order: str, mode: str, pin: str | None = None):
 		if "Kamra Agent" not in frappe.get_roles() and \
 		   frappe.session.user != "Administrator":
 			raise
+	from kamra.card_network import clean as clean_card
+	card_network, card_last4 = clean_card(mode, card_network, card_last4)
 	doc.paid = 1
 	doc.payment_mode = mode
+	doc.card_network = card_network
+	doc.card_last4 = card_last4
 	doc.status = "Delivered"
 	doc.save()
 	_flag_cleaning_if_freed(doc)
 	# the till takes what the guest paid: the bill with its tax
 	record_cashier_txn(
 		prop, "Payment", mode, round(float(doc.order_total or 0) + _bill_tax(doc)[1], 2),
-		pos_order=doc.name, reference=f"POS {doc.name}", session=sess)
+		pos_order=doc.name, reference=f"POS {doc.name}", session=sess,
+		card_network=card_network, card_last4=card_last4)
 	# a paid outlet bill is a (simplified) tax invoice where the pack says so
 	from kamra import localization as loc
 	loc.on_pos_bill_paid(
@@ -1316,12 +1323,14 @@ def change_payment_mode(order: str, mode: str, reason: str = "",
 		record_cashier_txn(
 			doc.property, "Payment", old or "Cash", -amt, pos_order=doc.name,
 			reference=f"POS {doc.name}", notes=f"Mode corrected to {mode}: {why}",
-			session=sess)
+			session=sess, card_network=doc.card_network, card_last4=doc.card_last4)
 		record_cashier_txn(
 			doc.property, "Payment", mode, amt, pos_order=doc.name,
 			reference=f"POS {doc.name}", notes=f"Mode corrected from {old}: {why}",
 			session=sess)
 	doc.db_set("payment_mode", mode)
+	# the card details belonged to the old mode: a corrected bill has none until recorded again
+	doc.db_set({"card_network": None, "card_last4": None})
 	doc.add_comment("Comment", _("Payment mode changed from {0} to {1}: {2}").format(
 		old, mode, why))
 	return {"ok": True, "order": doc.name, "mode": mode, "was": old}
