@@ -918,7 +918,7 @@ Always required,Always required,مطلوب دائما,Siempre obligatorio,Sempre
 Amenities,Amenities,المرافق,Comodidades,Comodidades,设施,components/RoomDrawer.tsx; screens/PublicBooking.tsx,,translated
 Amenities (one per line),Amenities (one per line),المرافق (واحد في كل سطر),Servicios e instalaciones (uno por línea),Amenidades (uma por linha),设施（每行一项）,components/RoomTypeMedia.tsx,,translated
 American,American,أمريكي,Estadounidense,Americano,美式,,,translated
-Amount,Amount,المبلغ,Importe,Montante,金额,components/AgentGuide.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/RoomStayPanels.tsx; components/SecurityDepositPanel.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CRS.tsx; screens/CashierTill.tsx; screens/GroupQuotation.tsx; screens/PettyCash.tsx; screens/Receivables.tsx; screens/UnitOwners.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
+Amount,Amount,المبلغ,Importe,Montante,金额,components/AgentGuide.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/RoomStayPanels.tsx; components/SecurityDepositPanel.tsx; lib/thermal.ts; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CRS.tsx; screens/CashierTill.tsx; screens/GroupQuotation.tsx; screens/PettyCash.tsx; screens/Receivables.tsx; screens/UnitOwners.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
 Amount ({cur}),Amount ({cur}),مبلغ ({cur}),Importe ({cur}),Valor ({cur}),金额（{cur}）,components/FolioDiscount.tsx,cur,translated
 Amount (before tax),Amount (before tax),المبلغ (قبل الضريبة),Importe (antes de impuestos),Montante (antes de impostos),金额（税前）,components/RoomStayPanels.tsx,,translated
 Amount (held {amt}),Amount (held {amt}),المبلغ (المحتجز {amt}),Importe (retenido: {amt}),Montante (detido {amt}),金额（已收 {amt}）,components/SecurityDepositPanel.tsx,amt,translated
@@ -1196,6 +1196,7 @@ Beverage,Beverage,المشروبات,Bebidas,Bebida,饮品,,,translated
 Beverages,Beverages,المشروبات,Bebidas,Bebidas,饮品,../../kamra/settings.py,,translated
 bill,bill,الفاتورة,cuenta,fatura,账单,screens/POS.tsx,,translated
 Bill,Bill,فاتورة,Cuenta,Fatura,账单,components/CheckOutDialog.tsx; components/GroupControl.tsx; screens/CityLedgerPayment.tsx; screens/POS.tsx; screens/Payables.tsx; screens/Receivables.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
+BILL,BILL,,,,,lib/thermal.ts,,needs_translation
 Bill {total} · paid {paid},Bill {total} · paid {paid},الفاتورة {total} · المدفوع {paid},Cuenta: {total} · pagado: {paid},Fatura {total} · paga {paid},账单 {total} · 已付 {paid},components/RoomStayPanels.tsx,total paid,translated
 Bill {v0} approved.,Bill {v0} approved.,تمت الموافقة على الفاتورة {v0}.,Factura {v0} aprobada.,Fatura {v0} aprovada.,账单 {v0} 已批准。,screens/Payables.tsx,v0,translated
 Bill {v0} entered. It waits for approval.,Bill {v0} entered. It waits for approval.,تم إدخال الفاتورة {v0}. وهي بانتظار الموافقة.,Factura {v0} registrada. Espera aprobación.,Fatura {v0} lançada. Aguarda aprovação.,账单 {v0} 已录入，等待批准。,screens/Payables.tsx,v0,translated
@@ -1212,7 +1213,7 @@ bill printer,bill printer,طابعة الفواتير,impresora de cuentas,impre
 Bill printer,Bill printer,طابعة الفواتير,Impresora de cuentas,Impressora de faturas,账单打印机,screens/CashierBoard.tsx,,translated
 Bill to,Bill to,فوترة إلى,Facturar a,Faturar para,付款方,screens/FolioView.tsx; screens/Receivables.tsx,,translated
 "Bill, KOT, table, room, name or phone","Bill, KOT, table, room, name or phone",فاتورة، تذكرة مطبخ، طاولة، غرفة، اسم أو هاتف,"Cuenta, comanda, mesa, habitación, nombre o teléfono","Fatura, comanda, mesa, quarto, nome ou telefone",账单、厨房单、桌台、客房、姓名或电话,screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
-Bill:,Bill:,الفاتورة:,Cuenta:,Fatura:,账单：,lib/thermal.ts,,translated
+Bill:,Bill:,الفاتورة:,Cuenta:,Fatura:,账单：,,,translated
 Bill's room,Bill's room,غرفة الفاتورة,Habitación de la cuenta,Quarto da fatura,账单所属客房,,,translated
 Billed,Billed,مفوتر,Facturado,Faturado,已开票,screens/BanquetFunction.tsx,,translated
 "Billed at 12% or more, so the {v0} paid on the cost side is claimable as input credit - the margin above nets it off.","Billed at 12% or more, so the {v0} paid on the cost side is claimable as input credit - the margin above nets it off.",مفوتر بنسبة 12% أو أكثر، لذا يمكن المطالبة بمبلغ {v0} المدفوع على التكاليف كرصيد ضريبة مدخلات، والهامش أعلاه يخصمه.,"La facturación aplica una tasa del 12 % o superior, por lo que el {v0} pagado en los costos puede deducirse como crédito fiscal. El margen mostrado ya lo descuenta.","Faturado em 12% ou mais, portanto, o {v0} pago no lado do custo pode ser reivindicado como crédito de insumo - a margem acima o compensa.",按 12% 及以上开票，故成本侧支付的 {v0} 可作为进项抵扣 - 上方毛利已将其扣除。,screens/banquet/Economics.tsx,v0,translated
@@ -1495,7 +1496,8 @@ Cashier till,Cashier till,صندوق أمين الصندوق,Caja del cajero,Cai
 Cashier total,Cashier total,إجمالي الصراف,Total del cajero,Total do caixa,收银合计,screens/AuditPack.tsx,,translated
 Cashier unlocked - money actions are open for {n} minutes.,Cashier unlocked - money actions are open for {n} minutes.,تم فتح أمين الصندوق - إجراءات المال مفتوحة لمدة {n} دقيقة.,Caja desbloqueada: las operaciones de cobro y caja estarán habilitadas durante {n} minutos.,Caixa desbloqueada - as ações de dinheiro ficam abertas por {n} minutos.,收银已解锁 - 资金操作开放 {n} 分钟。,screens/FolioView.tsx,n,translated
 Cashier unlocked - money actions are open for 15 minutes.,Cashier unlocked - money actions are open for 15 minutes.,تم فتح أمين الصندوق - إجراءات المال مفتوحة لمدة 15 دقيقة.,Caja desbloqueada: las operaciones de cobro y caja estarán habilitadas durante 15 minutos.,Caixa desbloqueada - as ações com dinheiro ficam abertas por 15 minutos.,收银已解锁 - 资金操作开放 15 分钟。,,,translated
-Cashier: {name},Cashier: {name},أمين الصندوق: {name},Cajero: {name},Caixa: {name},收银员：{name},lib/thermal.ts; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,name,translated
+Cashier:,Cashier:,,,,,lib/thermal.ts,,needs_translation
+Cashier: {name},Cashier: {name},أمين الصندوق: {name},Cajero: {name},Caixa: {name},收银员：{name},screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,name,translated
 Categories,Categories,الفئات,Categorías,Categorias,分类,screens/POS.tsx,,translated
 Categories with occupancy-based pricing.,Categories with occupancy-based pricing.,فئات بأسعار حسب الإشغال.,Categorías con tarifas según la ocupación.,Categorias com preços baseados na ocupação.,按入住人数定价的房型。,,,translated
 Category,Category,الفئة,Categoría,Categoria,分类,components/RoomDrawer.tsx; screens/BanquetCatalogue.tsx; screens/BookingEngine.tsx; screens/GoLiveImport.tsx; screens/Inventory.tsx; screens/MenuImport.tsx; screens/OpsSLA.tsx; screens/Payables.tsx; screens/PettyCash.tsx; screens/Recreation.tsx; screens/Setup.tsx; screens/Tickets.tsx,,translated
@@ -1792,7 +1794,7 @@ Collected upfront; the rest is paid at the hotel.,Collected upfront; the rest is
 Collections,Collections,التحصيلات,Cobros,Recebimentos,收款,screens/Dashboard.tsx; screens/Reports.tsx,,translated
 Collections by mode,Collections by mode,التحصيل حسب طريقة الدفع,Cobros por medio de pago,Recebimentos por forma de pagamento,按支付方式统计收款,screens/AuditPack.tsx,,translated
 Column mapping,Column mapping,ربط الأعمدة,Correspondencia de columnas,Mapeamento de colunas,列映射,screens/MenuImport.tsx,,translated
-Columns,Columns,الأعمدة,Columnas,Colunas,列,components/ResourceScreen.tsx; components/ui/data-table.tsx; screens/Guests.tsx; screens/Reports.tsx,,translated
+Columns,Columns,الأعمدة,Columnas,Colunas,列,components/OutletExtras.tsx; components/ResourceScreen.tsx; components/ui/data-table.tsx; screens/Guests.tsx; screens/Reports.tsx,,translated
 Commercial Registration (CRN),Commercial Registration (CRN),السجل التجاري (CRN),Registro mercantil (CRN),Registro Comercial (CRN),商业登记号（CRN）,,,translated
 Commission,Commission,العمولة,Comisión,Comissão,佣金,screens/RevenueReports.tsx; screens/UnitOwners.tsx,,translated
 Commission %,Commission %,العمولة %,Comisión (%),Comissão %,佣金 %,components/BookingDialog.tsx; screens/UnitOwners.tsx,,translated
@@ -2059,6 +2061,7 @@ Date of issue,Date of issue,تاريخ الإصدار,Fecha de emisión,Data de 
 date range,date range,نطاق التواريخ,rango de fechas,intervalo de datas,日期范围,,,translated
 Date ranges that lift or set nightly rates. Highest priority wins. Toggle Disabled to activate or pause a season.,Date ranges that lift or set nightly rates. Highest priority wins. Toggle Disabled to activate or pause a season.,نطاقات تواريخ ترفع الأسعار الليلية أو تحددها. الأولوية الأعلى تُطبَّق. بدّل معطّل لتفعيل الموسم أو إيقافه مؤقتاً.,Rangos de fechas que aumentan o fijan las tarifas por noche. Se aplica la prioridad más alta. Use Desactivado para activar o pausar una temporada.,Intervalos de datas que aumentam ou definem tarifas noturnas. A prioridade mais alta vence. Alterne Desativado para ativar ou pausar uma temporada.,用于上调或设定每晚房价的日期区间。优先级最高者生效。切换「已停用」可启用或暂停季节价。,,,translated
 Date stuck,Date stuck,التاريخ متوقف,Fecha sin actualizar,Data travada,营业日未推进,screens/EndOfDay.tsx; screens/EndOfDayWizard.tsx,,translated
+Date:,Date:,,,,,lib/thermal.ts,,needs_translation
 Dated,Dated,بتاريخ,Fecha,Datado,日期,screens/BanquetDocument.tsx,,translated
 Dates,Dates,التواريخ,Fechas,Datas,日期,screens/PublicBooking.tsx,,translated
 dates read as {format},dates read as {format},تُقرأ التواريخ كـ {format},fechas leídas como {format},datas lidas como {format},日期按 {format} 读取,screens/GoLiveImport.tsx,format,translated
@@ -2168,6 +2171,8 @@ Deposits,Deposits,العربون والتأمينات,Anticipos y depósitos de 
 Deposits & payment links,Deposits & payment links,العربون وروابط الدفع,Depósitos y enlaces de pago,Depósitos e links de pagamento,押金与支付链接,,,translated
 Description,Description,الوصف,Descripción,Descrição,说明,components/CheckOutDialog.tsx; components/RoomTypeMedia.tsx; screens/BanquetCatalogue.tsx; screens/FolioView.tsx; screens/Ledgers.tsx; screens/Receivables.tsx,,translated
 Description (shown to guests),Description (shown to guests),الوصف (يظهر للضيوف),Descripción (visible para los huéspedes),Descrição (mostrada aos hóspedes),说明（展示给宾客）,,,translated
+Design A,Design A,,,,,components/OutletExtras.tsx,,needs_translation
+Design B,Design B,,,,,components/OutletExtras.tsx,,needs_translation
 Desk,Desk,مكتب الاستقبال,Recepción,Recepção,前台,screens/Recreation.tsx,,translated
 Dessert,Dessert,حلوى,Postre,Sobremesa,甜点,../../kamra/settings.py,,translated
 Desserts,Desserts,الحلويات,Postres,Sobremesas,甜点,../../kamra/settings.py,,translated
@@ -3091,6 +3096,7 @@ How many rooms does the group need? These rooms are kept for the group until the
 How much did they pay?,How much did they pay?,,,,支付了多少？,components/AgentGuide.tsx,,needs_translation
 How much?,How much?,,,,多少？,components/AgentGuide.tsx,,needs_translation
 How room keys are issued at check-in and cancelled at check-out.,How room keys are issued at check-in and cancelled at check-out.,كيفية إصدار مفاتيح الغرف عند تسجيل الوصول وإلغائها عند المغادرة.,Emisión de llaves al registrar la llegada y cancelación al registrar la salida.,Como as chaves do quarto são emitidas no check-in e canceladas no check-out.,入住时制作房卡、退房时注销房卡的方式。,,,translated
+How the items print on this outlet's bills. Everything else on the receipt is the same in both. Pick one. The samples use example food and plain numbers; your real bills use your own currency.,How the items print on this outlet's bills. Everything else on the receipt is the same in both. Pick one. The samples use example food and plain numbers; your real bills use your own currency.,,,,,components/OutletExtras.tsx,,needs_translation
 How the price moved,How the price moved,كيف تغير السعر,Evolución del precio,Como o preço mudou,价格变动过程,screens/BanquetFunction.tsx,,translated
 How the till works,How the till works,كيف يعمل الصندوق,Cómo funciona la caja,Como funciona o caixa,钱箱使用说明,screens/CashierTill.tsx,,translated
 How to clear this,How to clear this,كيفية حل ذلك,Cómo resolverlo,Como solucionar esta pendência,如何处理此项,screens/EndOfDayWizard.tsx,,translated
@@ -3284,6 +3290,7 @@ Item name,Item name,اسم البند,Nombre del artículo,Nome do item,项目�
 Item Name,Item Name,اسم البند,Nombre del artículo,Nome do item,项目名称,,,translated
 Item Tax %,Item Tax %,ضريبة البند %,Impuesto del artículo (%),% de imposto sobre itens,项目税率 %,,,translated
 Item Total,Item Total,إجمالي البند,Total del artículo,Total de itens,项目合计,,,translated
+"Item, Qty, Rate and Amount in columns. Easy to scan when prices are short.","Item, Qty, Rate and Amount in columns. Easy to scan when prices are short.",,,,,components/OutletExtras.tsx,,needs_translation
 Items,Items,العناصر,Artículos,Itens,项目,screens/POS.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
 Items by menu,Items by menu,الأصناف حسب القائمة,Artículos por menú,Itens por cardápio,按菜单统计项目,,,translated
 Items found on property; track storage and returns.,Items found on property; track storage and returns.,أغراض عُثر عليها في العقار، تتبع التخزين والإرجاع.,Objetos encontrados en el alojamiento; seguimiento de custodia y devoluciones.,Itens encontrados na propriedade; rastrear armazenamento e devoluções.,酒店内拾获的物品；跟踪存放与归还。,,,translated
@@ -3744,6 +3751,7 @@ Name,Name,الاسم,Nombre,Nome,名称,components/CheckInDialog.tsx; screens/Ca
 Name (Deluxe),Name (Deluxe),الاسم (ديلوكس),Nombre (De lujo),Nome (Deluxe),名称（豪华房）,screens/Setup.tsx,,translated
 "Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.","Name each till, tie it to an outlet, and choose the printer that prints its bills. Without terminals everyone uses the Default till.",سمِّ كل صندوق، واربطه بمنفذ، واختر الطابعة التي تطبع فواتيره. بدون أجهزة طرفية يستخدم الجميع الصندوق الافتراضي.,"Asigne un nombre a cada caja, vincúlela con un punto de venta y elija la impresora que imprimirá sus cuentas. Si no hay terminales, todos usan la caja predeterminada.","Dê um nome para cada caixa, vincule a um ponto de venda e escolha a impressora de faturas. Sem terminais cadastrados, todos usam o Caixa Padrão.",为各钱箱命名、关联营业点，并选择打印其账单的打印机。未设置终端时所有人使用默认钱箱。,screens/CashierBoard.tsx,,translated
 "Name each till, tie it to an outlet. Without any, everyone uses the Default till.","Name each till, tie it to an outlet. Without any, everyone uses the Default till.",سمِّ كل صندوق واربطه بمنفذ. إن لم يوجد أي صندوق، يستخدم الجميع الصندوق الافتراضي.,"Asigne un nombre a cada caja y vincúlela a un punto de venta. Si no configura ninguna, todos usarán la caja predeterminada.","Dê um nome a cada caixa e amarre-a a um ponto de venda. Sem nenhum, todos usam o caixa padrão.",为各钱箱命名并关联营业点。未设置时所有人使用默认钱箱。,../../kamra/onboarding.py,,translated
+"Name on its own line, then quantity x rate and the amount. Stays tidy when prices have many digits.","Name on its own line, then quantity x rate and the amount. Stays tidy when prices have many digits.",,,,,components/OutletExtras.tsx,,needs_translation
 Name or phone…,Name or phone…,الاسم أو الهاتف…,Nombre o teléfono…,Nome ou telefone…,姓名或电话…,screens/Guests.tsx,,translated
 "Name the guest for each room, one by one or from Excel. Rooms left empty stay held for the group and can be named later.","Name the guest for each room, one by one or from Excel. Rooms left empty stay held for the group and can be named later.",,"Asigne el huésped de cada habitación, una por una o desde Excel. Las habitaciones que queden vacías siguen retenidas para el grupo y se pueden completar después.","Identifique o hóspede de cada quarto, um a um ou importando do Excel. Quartos sem nome permanecem bloqueados para o grupo e podem ser preenchidos depois.",逐间或从 Excel 填写各客房的宾客姓名。留空的客房继续为团队保留，可稍后填写。,components/GroupBookingDialog.tsx,,needs_translation
 Name the main room's guest to continue.,Name the main room's guest to continue.,,Indique el huésped de la habitación principal para continuar.,Identifique o hóspede do quarto principal para continuar.,请填写主客房宾客姓名后继续。,components/GroupBookingDialog.tsx,,needs_translation
@@ -4480,6 +4488,7 @@ Order items,Order items,عناصر الطلب,Artículos del pedido,Encomendar i
 Order to pickup minutes,Order to pickup minutes,دقائق من الطلب إلى الاستلام,Minutos del pedido a la recogida,Minutos do pedido à retirada,下单至取餐（分钟）,,,translated
 Order to start minutes,Order to start minutes,دقائق من الطلب إلى البدء,Minutos del pedido al inicio,Minutos do pedido ao início,下单至起菜（分钟）,,,translated
 Order type,Order type,نوع الطلب,Tipo de pedido,Tipo de pedido,订单类型,screens/pos/OrderHistory.tsx,,translated
+Order:,Order:,,,,,lib/thermal.ts,,needs_translation
 Ordered,Ordered,طُلب,Pedido,Encomendado,已下单,screens/Kitchen.tsx,,translated
 Ordered {time},Ordered {time},طُلب {time},Pedido {time},Pedido {time},{time} 已下单,screens/pos/PosSidePanel.tsx,time,translated
 Ordered at,Ordered at,وقت الطلب,Pedido a las,Pedido às,下单时间,,,translated
@@ -4579,7 +4588,7 @@ Page {n},Page {n},صفحة {n},Página {n},Página {n},第 {n} 页,components/Re
 Page not found.,Page not found.,الصفحة غير موجودة.,Página no encontrada.,Página não encontrada.,页面未找到。,App.tsx,,translated
 Page Slug Prefix,Page Slug Prefix,بادئة رابط الصفحة,Prefijo de la ruta pública,Prefixo de slug de página,页面路径前缀,screens/BookingEngine.tsx,,translated
 Paid,Paid,مدفوع,Pagado,Pago,已付款,components/CheckOutDialog.tsx; components/RoomDrawer.tsx; screens/FolioView.tsx; screens/InHouse.tsx; screens/Payables.tsx; screens/Receivables.tsx; screens/Recreation.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/Today.tsx; screens/pos/PosSidePanel.tsx,,translated
-PAID,PAID,مدفوع,PAGADO,PAGO,已付款,lib/thermal.ts,,translated
+PAID,PAID,مدفوع,PAGADO,PAGO,已付款,,,translated
 Paid {amount},Paid {amount},المدفوع {amount},Pagado {amount},Pago {amount},已付 {amount},screens/CRS.tsx,amount,translated
 Paid {cur},Paid {cur},مدفوع {cur},Pagado {cur},Pago {cur},已付 {cur},screens/Billing.tsx,cur,translated
 Paid {paid}. It goes against the fee.,Paid {paid}. It goes against the fee.,المدفوع {paid}. يُخصم من الرسوم.,Pagado {paid}. Se aplica al cargo.,Pago {paid}. Vai para a taxa.,已付 {paid}，将抵扣取消费。,components/NoShowDialog.tsx,paid,translated
@@ -4911,6 +4920,7 @@ Print this receipt,Print this receipt,طباعة هذا الإيصال,Imprimir 
 Print void slips in the kitchen,Print void slips in the kitchen,طباعة قسائم الإلغاء في المطبخ,Imprimir anulaciones en cocina,Imprimir boletos anulados na cozinha,在厨房打印作废单,,,translated
 Print voucher,Print voucher,طباعة القسيمة,Imprimir vale,Imprimir comprovante,打印凭证,components/AllowanceRequests.tsx; screens/AllowanceVoucher.tsx; screens/FolioView.tsx; screens/VoidAllowanceReport.tsx,,translated
 Printed,Printed,مطبوع,Impreso,Impresso,已打印,screens/BanquetDocument.tsx,,translated
+"Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best. No logo: the outlet and hotel name print instead.","Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best. No logo: the outlet and hotel name print instead.",,,,,components/OutletExtras.tsx,,needs_translation
 Printed from the audit pack of {when},Printed from the audit pack of {when},مطبوع من حزمة التدقيق بتاريخ {when},Impreso desde el paquete de auditoría de {when},Impresso a partir do pacote de auditoria de {when},打印自 {when} 的夜审报表包,screens/AuditPack.tsx,when,translated
 Printed on allowance vouchers they approve.,Printed on allowance vouchers they approve.,يُطبع على قسائم خصم التسوية التي يوافق عليها.,Se imprime en los vales de bonificación que apruebe.,Impresso nos comprovantes de abatimento que essa pessoa aprovar.,打印在其批准的减免凭证上。,screens/settings/AccessPages.tsx,,translated
 Printed on invoices. Add it when you have it.,Printed on invoices. Add it when you have it.,يُطبع على الفواتير. أضفه عند توفره.,Se imprime en las facturas. Agréguelo cuando esté disponible.,Impresso nas faturas. Adicione quando tiver.,打印在发票上。取得后填写。,../../kamra/onboarding.py,,translated
@@ -5091,6 +5101,9 @@ Rebuild pack,Rebuild pack,إعادة بناء الحزمة,Reconstruir paquete,R
 Rebuild pack to print,Rebuild pack to print,أعد إنشاء الحزمة للطباعة,Regenerar el paquete de informes para imprimir,Regerar pacote para impressão,重建报表包以打印,screens/AuditPack.tsx,,translated
 Recall,Recall,استدعاء,Recuperar,Lembre-se,撤回,screens/Kitchen.tsx,,translated
 Receipt,Receipt,إيصال,Recibo,Recibo,收据,screens/BanquetFunction.tsx; screens/Recreation.tsx,,translated
+RECEIPT,RECEIPT,,,,,lib/thermal.ts,,needs_translation
+Receipt design,Receipt design,,,,,components/OutletExtras.tsx,,needs_translation
+Receipt logo,Receipt logo,,,,,components/OutletExtras.tsx,,needs_translation
 Receipt no,Receipt no,رقم الإيصال,N.º de recibo,Número do recibo,收据编号,,,translated
 Receipts,Receipts,الإيصالات,Recibos,Receitas,收据,screens/BanquetFunction.tsx,,translated
 receivable,receivable,مستحقات,por cobrar,a receber,应收,screens/Dashboard.tsx,,translated
@@ -5689,7 +5702,8 @@ SEO,SEO,تحسين محركات البحث,SEO,SEO,SEO,,,translated
 Served,Served,المقدَّم,Servido,Servido,已上菜,screens/banquet/Economics.tsx,,translated
 Served as,Served as,طريقة التقديم,Forma de servicio,Atuou como,上菜方式,screens/BanquetCatalogue.tsx,,translated
 Served by,Served by,قدّمه,Atendido por,Atendido por,上菜人,,,translated
-Served by: {name},Served by: {name},قدّمه: {name},Atendido por: {name},Atendido por: {name},上菜人：{name},lib/thermal.ts; screens/Kitchen.tsx; screens/pos/PosSidePanel.tsx,name,translated
+Served by:,Served by:,,,,,lib/thermal.ts,,needs_translation
+Served by: {name},Served by: {name},قدّمه: {name},Atendido por: {name},Atendido por: {name},上菜人：{name},screens/Kitchen.tsx; screens/pos/PosSidePanel.tsx,name,translated
 Server date,Server date,تاريخ الخادم,Fecha del servidor,Data do servidor,服务器日期,,,translated
 Server work {ms} ms - fine.,Server work {ms} ms - fine.,عمل الخادم {ms} ms، جيد.,Tiempo de procesamiento del servidor: {ms} ms. Adecuado.,Trabalho do servidor {ms} ms - tudo bem.,服务端处理 {ms} 毫秒 - 正常。,screens/settings/cards.tsx,ms,translated
 Server work {ms} ms - slow. The server is busy or under-sized.,Server work {ms} ms - slow. The server is busy or under-sized.,عمل الخادم {ms} ms، بطيء. الخادم مشغول أو موارده غير كافية.,Tiempo de procesamiento del servidor: {ms} ms. Es lento. El servidor está sobrecargado o tiene recursos insuficientes.,Trabalho do servidor {ms} ms - lento. O servidor está ocupado ou subdimensionado.,服务端处理 {ms} 毫秒 - 较慢。服务器繁忙或配置偏低。,screens/settings/cards.tsx,ms,translated
@@ -5919,6 +5933,7 @@ Split folio,Split folio,تقسيم الفاتورة,Dividir folio,extrato dividi
 Splits the event order,Splits the event order,يقسّم أمر المناسبة حسب القسم,Divide la orden del evento por sección,Divide a ordem dos eventos,拆分宴会执行单,screens/BanquetCatalogue.tsx,,translated
 "Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices. Uploads save automatically.","Square, 512×512px · PNG or SVG with a transparent background. Shown on the booking page and invoices. Uploads save automatically.",مربعة، 512×512px · PNG أو SVG بخلفية شفافة. تظهر في صفحة الحجز والفواتير. يُحفظ الرفع تلقائيًا.,"Formato cuadrado de 512 × 512 px, PNG o SVG con fondo transparente. Aparece en la página de reservas y las facturas. Se guarda automáticamente.","Quadrado, 512×512px · PNG ou SVG com fundo transparente. Mostrado na página de reservas e faturas. Os uploads são salvos automaticamente.",正方形 512×512px · 透明背景 PNG 或 SVG。显示在预订页与发票上。上传后自动保存。,screens/BookingEngine.tsx,,translated
 "Square, 512px+ - PNG or SVG with transparency looks best.","Square, 512px+ - PNG or SVG with transparency looks best.",مربعة، 512px أو أكثر. يُفضَّل PNG أو SVG بخلفية شفافة.,Formato cuadrado de al menos 512 px. Se recomienda PNG o SVG con transparencia.,"Quadrado, 512px+ - PNG ou SVG com transparência fica melhor.",正方形，512px 以上 - 推荐带透明通道的 PNG 或 SVG。,,,translated
+Stacked,Stacked,,,,,components/OutletExtras.tsx,,needs_translation
 Staff,Staff,الموظفون,Personal,Equipe,员工,screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
 Staff & access,Staff & access,الموظفون والصلاحيات,Personal y acceso,Pessoal e acesso,员工与权限,,,translated
 Staff & Access,Staff & Access,الموظفون والصلاحيات,Personal y acceso,Pessoal e Acesso,员工与权限,,,translated
@@ -6136,7 +6151,7 @@ Tasks,Tasks,المهام,Tareas,Tarefas,任务,,,translated
 Tasks by attendant,Tasks by attendant,المهام حسب العامل,Tareas por camarera,Tarefas por atendente,按保洁员统计任务,,,translated
 Tasks by type,Tasks by type,المهام حسب النوع,Tareas por tipo,Tarefas por tipo,按类型统计任务,,,translated
 Tasting done,Tasting done,,,,,screens/BanquetFunction.tsx,,needs_translation
-Tax,Tax,الضريبة,Impuestos,Imposto,税,components/RoomStayPanels.tsx; screens/CityLedgerPayment.tsx,,translated
+Tax,Tax,الضريبة,Impuestos,Imposto,税,components/OutletExtras.tsx; components/RoomStayPanels.tsx; screens/CityLedgerPayment.tsx,,translated
 Tax %,Tax %,الضريبة %,Impuesto (%),% de imposto,税率 %,screens/CurrencyDesk.tsx,,translated
 Tax applies to the levy,Tax applies to the levy,تُطبّق الضريبة على الرسم,Aplicar impuesto a la tasa de alojamiento,O imposto aplica-se à taxa,该附加费需计税,,,translated
 Tax Id,Tax Id,الرقم الضريبي,Identificación fiscal,Identificação Fiscal,税号,,,translated

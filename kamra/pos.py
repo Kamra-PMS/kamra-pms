@@ -48,7 +48,8 @@ def outlets(property: str):
 	setting, so the till never has to know where the answer came from."""
 	rows = frappe.get_all(
 		"POS Outlet", filters={"property": property, "disabled": 0},
-		fields=["name", "outlet_name", "outlet_type", "gst_rate", "kot_mode"],
+		fields=["name", "outlet_name", "outlet_type", "gst_rate", "kot_mode",
+		        "logo", "receipt_design"],
 		order_by="outlet_name")
 	for r in rows:
 		r["auto_kot"] = 1 if _auto_kot(property, r.kot_mode) else 0
@@ -2090,7 +2091,8 @@ def bill_data(order: str):
 	live lines, the discount, and the CGST/SGST split at the outlet's rate."""
 	doc = frappe.get_doc("POS Order", order)
 	outlet = frappe.db.get_value(
-		"POS Outlet", doc.outlet, ["outlet_name"], as_dict=True)
+		"POS Outlet", doc.outlet, ["outlet_name", "logo", "receipt_design"],
+		as_dict=True)
 	property_name = frappe.db.get_value(
 		"Property", doc.property, "property_name") or doc.property
 	taxable = float(doc.order_total or 0)
@@ -2114,6 +2116,9 @@ def bill_data(order: str):
 		             if doc.paid else None,
 		"order": doc.name, "kot_no": doc.kot_no, "status": doc.status,
 		"property_name": property_name, "outlet_name": outlet.outlet_name,
+		# the outlet's receipt logo (a file URL, or None) and how the items print
+		"logo": outlet.logo or None,
+		"receipt_design": outlet.receipt_design or "Stacked",
 		"order_type": doc.order_type, "table_no": doc.table_no,
 		"room_no": (doc.room or "").split("-")[-1] if doc.room else None,
 		"customer_name": doc.customer_name,
