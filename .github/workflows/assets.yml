@@ -1,0 +1,21 @@
+name: Pre-build assets
+
+# Marketplace get-app OOMs rebuilding the Vite SPA; Pilot downloads these
+# prebuilt archives from the assets-<branch> release instead.
+
+on:
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: assets-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  assets:
+    name: Pre-build assets
+    uses: frappe/pilot/.github/workflows/app-assets.yml@develop
+    with:
+      frappe-branch: version-16
+    permissions:
+      contents: write
