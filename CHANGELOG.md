@@ -26,6 +26,25 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.8.1](https://github.com/Kamra-PMS/kamra-pms/compare/v2.8.0...v2.8.1) (2026-11-23)
+
+
+### Features
+
+* add Swahili (sw) locale ([#656](https://github.com/Kamra-PMS/kamra-pms/issues/656)) ([1459074](https://github.com/Kamra-PMS/kamra-pms/commit/14590744203aa3e8b8d473686eb9b77174d5fa10))
+* **mcp:** AI guest booking through a guest.booking scope ([#674](https://github.com/Kamra-PMS/kamra-pms/issues/674)) ([c34ebc8](https://github.com/Kamra-PMS/kamra-pms/commit/c34ebc8a63d018c056fff57f795d4d84ba233dcd))
+* **pos:** QRIS for Indonesia, and Bank Transfer at the restaurant till ([#660](https://github.com/Kamra-PMS/kamra-pms/issues/660)) ([999a2f6](https://github.com/Kamra-PMS/kamra-pms/commit/999a2f61f045faea04276be05f3a9e01eafb8388))
+* **pricing:** Displayed rates include the levy, and exact room rates when prices include tax ([#664](https://github.com/Kamra-PMS/kamra-pms/issues/664)) ([f1f7200](https://github.com/Kamra-PMS/kamra-pms/commit/f1f72004c9cb09bb0a1e9f42d6ef8ef6a1290fb5))
+* **webhooks:** ar.payment_reversed when a company payment is reversed ([#528](https://github.com/Kamra-PMS/kamra-pms/issues/528)) ([#662](https://github.com/Kamra-PMS/kamra-pms/issues/662)) ([829abb5](https://github.com/Kamra-PMS/kamra-pms/commit/829abb59c1746e7da7d251b6c6deb5fd07a4c21e))
+
+
+### Bug Fixes
+
+* **api:** insert Season without DocPerm on set_room_rate ([#685](https://github.com/Kamra-PMS/kamra-pms/issues/685)) ([5e903fe](https://github.com/Kamra-PMS/kamra-pms/commit/5e903fe6ad1691f43eef485c9dee5b165679fee9))
+* **channels:** never lose an OTA booking over a phone or email Frappe refuses ([#686](https://github.com/Kamra-PMS/kamra-pms/issues/686)) ([aa50294](https://github.com/Kamra-PMS/kamra-pms/commit/aa50294d76781bd17e54339cbf368b67df171095))
+* **front-desk:** an early arrival moves the stay to today and bills it ([#649](https://github.com/Kamra-PMS/kamra-pms/issues/649)) ([578a19b](https://github.com/Kamra-PMS/kamra-pms/commit/578a19bcb62b2b884fadc24a363155321063deae))
+* **today:** show out-of-service rooms on the Today room board ([#616](https://github.com/Kamra-PMS/kamra-pms/issues/616)) ([8242f52](https://github.com/Kamra-PMS/kamra-pms/commit/8242f523ab9bb4b5b77dee086e8c5d5db247e912))
+
 ## [2.8.0](https://github.com/Kamra-PMS/kamra-pms/compare/v2.7.10...v2.8.0) (2026-11-21)
 
 
