@@ -4,20 +4,13 @@
 
 import type { ReactNode } from "react"
 import type { FunctionStatus } from "../../lib/api"
-import { cur, locale, moneyLocale } from "../../lib/money"
+import { cur, fmtAmount, locale } from "../../lib/money"
 import { t as translate, useUILanguage, uiDateLocale } from "../../lib/i18n"
 
-export const inr = (n: unknown) =>
-  cur() +
-  Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+export const inr = (n: unknown) => cur() + fmtAmount(n || 0)
 
-/** Money with paise - totals on paper, where rounding would be noticed. */
-export const inrExact = (n: unknown) =>
-  cur() +
-  Number(n || 0).toLocaleString(moneyLocale(), {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+/** Money with the currency's own decimals - totals on paper, where rounding would be noticed. */
+export const inrExact = (n: unknown) => cur() + fmtAmount(n || 0)
 
 export const STATUSES: FunctionStatus[] = [
   "Enquiry",

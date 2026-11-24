@@ -21,16 +21,12 @@ import { printThermal, kotHtml, billHtml, PRINT_DIALOG_EVENT, type BillData, typ
 import { useFloorFullscreen } from "../lib/kiosk"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
-import { cur, moneyLocale, useLocale } from "../lib/money"
+import { cur, fmtAmount, moneyDigits, useLocale } from "../lib/money"
+import { addUp } from "../lib/addUp"
 import { useT, t as translate } from "../lib/i18n"
 import { docsUrl } from "../components/InfoTip"
 import { cardArgs } from "../lib/cardNetwork"
 
-
-const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
-const inr2 = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 interface MenuItem {
   name: string
@@ -493,6 +489,16 @@ export default function POS() {
   const taxable = billed + (levyTaxed ? levyAmt : 0)
   const gstAmt = taxable * gstRate / 100
   const grand = billed + levyAmt + gstAmt
+  // the figures as printed on the bill: the lines add up to the subtotal, and a Rounding row
+  // appears only when the printed pieces still miss the printed total (see lib/addUp.ts)
+  const fig = addUp({
+    digits: moneyDigits(),
+    lines: selected && detail ? detail.items.filter((i) => !i.voided).map((i) => i.amount)
+      : cart.map((l) => l.qty * l.price),
+    discount: selected && detail ? detail.discount_amount : disc,
+    levy: levyAmt, taxes: [gstAmt], total: grand,
+  })
+  const showRounding = fig.rounding !== 0 && !(selected && detail?.nc)
 
   function printSavedKot(t: KotTicket, reprint = false) {
     printThermal(`KOT #${t.kot_no}`, kotHtml({
@@ -943,7 +949,7 @@ export default function POS() {
                             </div>
                             <div className="truncate text-[10px] opacity-70">
                               {tile.bills > 0
-                                ? <>{cur()}{inr(tile.order_total)}{tile.guests ? <> · <Users className="inline size-2.5" />{tile.guests}</> : null}</>
+                                ? <>{cur()}{fmtAmount(tile.order_total)}{tile.guests ? <> · <Users className="inline size-2.5" />{tile.guests}</> : null}</>
                                 : tile.state === "reserved" ? `${t("Res")} ${tile.res_time} · ${tile.res_guest || ""}`
                                   : tile.state === "cleaning" ? t("Cleaning")
                                     : tile.seats ? t("{n} seats", { n: tile.seats }) : " "}
@@ -1005,7 +1011,7 @@ export default function POS() {
                         {t.orders.map((b) => (
                           <button key={b.order} onClick={() => openTab(b.order)}
                             className={"flex w-full items-center justify-between rounded-lg border px-2 py-1 text-xs transition " + TILE[b.state]}>
-                            <span>{translate(b.label)}</span><span className="tabular-nums">{cur()}{inr(b.order_total)}</span>
+                            <span>{translate(b.label)}</span><span className="tabular-nums">{cur()}{fmtAmount(b.order_total)}</span>
                           </button>
                         ))}
                         <button onClick={() => newOrder(t.table)}
@@ -1026,7 +1032,7 @@ export default function POS() {
                       <button key={o.name} onClick={() => openTab(o.name)}
                         className={"rounded-lg border px-2 py-1 text-xs transition " +
                           (selected === o.name ? "border-brand-600 bg-brand-50 font-semibold text-brand-700" : "border-zinc-200 bg-white hover:border-brand-400")}>
-                        {translate(o.label)} <span className="tabular-nums text-zinc-400">{cur()}{inr(o.order_total)}</span>
+                        {translate(o.label)} <span className="tabular-nums text-zinc-400">{cur()}{fmtAmount(o.order_total)}</span>
                       </button>
                     ))}
                   </div>
@@ -1054,7 +1060,7 @@ export default function POS() {
                                 title={t("Not sent to the kitchen for {mins} min", { mins: o.age_min ?? 0 })}>
                                 {ago(o.creation)}
                               </span>
-                              <span className="tabular-nums text-amber-800">{cur()}{inr(o.order_total)}</span>
+                              <span className="tabular-nums text-amber-800">{cur()}{fmtAmount(o.order_total)}</span>
                             </span>
                           </button>
                         </li>
@@ -1077,7 +1083,7 @@ export default function POS() {
                             <span className="font-semibold text-sky-900">
                               {translate(o.label)}{o.kot_no ? translate(" · KOT {v0}", { v0: String(o.kot_no) }) : ""}
                             </span>
-                            <span className="tabular-nums text-sky-800">{cur()}{inr(o.order_total)}</span>
+                            <span className="tabular-nums text-sky-800">{cur()}{fmtAmount(o.order_total)}</span>
                           </button>
                         </li>
                       ))}
@@ -1106,7 +1112,7 @@ export default function POS() {
                         <span className="ml-1 text-zinc-400">· {translate(r.order_type)}</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5 tabular-nums">
-                        <span className="font-semibold">{cur()}{inr(r.order_total)}</span>
+                        <span className="font-semibold">{cur()}{fmtAmount(r.order_total)}</span>
                         {r.nc ? <span className="rounded bg-amber-50 px-1 text-[10px] font-bold text-amber-700">{translate("NC")}</span>
                           : r.paid ? <span className="rounded bg-emerald-50 px-1 text-[10px] font-medium text-emerald-700">{translate(r.payment_mode)}</span>
                             : r.status === "Cancelled" ? <span className="rounded bg-rose-50 px-1 text-[10px] font-medium text-rose-600">✕</span>
@@ -1216,7 +1222,7 @@ export default function POS() {
                           )}>
                           <span className="min-w-0 flex-1 truncate font-medium">{translate(o.label)}</span>
                           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{translate(hint)}</span>
-                          <span className="shrink-0 tabular-nums text-xs font-semibold text-zinc-700">{cur()}{inr(o.order_total)}</span>
+                          <span className="shrink-0 tabular-nums text-xs font-semibold text-zinc-700">{cur()}{fmtAmount(o.order_total)}</span>
                         </button>
                       )
                     })
@@ -1469,7 +1475,7 @@ export default function POS() {
                             <button key={b.order} type="button" onClick={() => { setChooser(null); void openTab(b.order) }}
                               className={"flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-xs transition " + TILE[b.state]}>
                               <span className="font-medium">{translate(b.label)}</span>
-                              <span className="tabular-nums">{cur()}{inr(b.order_total)}</span>
+                              <span className="tabular-nums">{cur()}{fmtAmount(b.order_total)}</span>
                             </button>
                           ))}
                           <button type="button" onClick={() => { setChooser(null); newOrder(tile.table) }}
@@ -1575,7 +1581,7 @@ export default function POS() {
                         <div className="min-w-0 flex-1">
                           <div className="text-base font-bold leading-snug text-zinc-900">{l.item_name}</div>
                           <div className="mt-1 text-sm font-semibold tabular-nums text-brand-700">
-                            {cur()}{inr(l.price)} × {l.qty} = {cur()}{inr(l.qty * l.price)}
+                            {cur()}{fmtAmount(l.price)} × {l.qty} = {cur()}{fmtAmount(l.qty * l.price)}
                           </div>
                         </div>
                         <button type="button" onClick={() => setQty(l.menu_item, -l.qty)} aria-label={t("Remove")}
@@ -1653,7 +1659,7 @@ export default function POS() {
                             </div>
                           </div>
                           <div className="flex shrink-0 items-center gap-1">
-                            <span className="text-base font-bold tabular-nums text-zinc-900">{cur()}{inr(it.amount)}</span>
+                            <span className="text-base font-bold tabular-nums text-zinc-900">{cur()}{fmtAmount(it.amount)}</span>
                             {!splitMode && !it.voided && detail.status !== "Delivered" && detail.status !== "Cancelled" && (
                               it.kot_status === "New" ? (
                                 <button type="button" title={t("Remove (not sent to the kitchen)")}
@@ -1703,7 +1709,7 @@ export default function POS() {
           <div className="border-t border-zinc-200 bg-white px-3 py-2">
             <div className="mb-2 flex items-end justify-between gap-2">
               <div className="min-w-0 text-[11px] leading-snug text-zinc-500">
-                <div>{t("Subtotal")} {cur()}{inr2(billed)}{levyAmt ? <> · {levyLabel} {cur()}{inr2(levyAmt)}</> : null}{gstAmt ? <> · {loc.tax_label} {cur()}{inr2(gstAmt)}</> : null}</div>
+                <div>{t("Subtotal")} {cur()}{fmtAmount(fig.subtotal - fig.discount)}{levyAmt ? <> · {levyLabel} {cur()}{fmtAmount(fig.levy)}</> : null}{gstAmt ? <> · {loc.tax_label} {cur()}{fmtAmount(fig.taxes[0])}</> : null}{showRounding ? <> · {t("Rounding")} {cur()}{fmtAmount(fig.rounding)}</> : null}</div>
                 {discOpen ? (
                   <span className="mt-1 flex items-center gap-1">
                     <input autoFocus className={inputCls + " !w-24 !py-0.5 text-xs"} placeholder={translate(`${cur()}`)} inputMode="numeric"
@@ -1716,14 +1722,14 @@ export default function POS() {
                     className="mt-0.5 inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
                     <Tag className="size-3" />
                     {(selected && detail ? detail.discount_amount : disc) > 0
-                      ? `−${cur()}${inr(selected && detail ? detail.discount_amount : disc)}`
+                      ? `−${cur()}${fmtAmount(selected && detail ? detail.discount_amount : disc)}`
                       : t("Discount")}
                   </button>
                 )}
               </div>
               <div className="text-right">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{t("Total")}</div>
-                <div className="text-[1.65rem] font-bold tabular-nums leading-none text-zinc-900">{cur()}{inr2(grand)}</div>
+                <div className="text-[1.65rem] font-bold tabular-nums leading-none text-zinc-900">{cur()}{fmtAmount(grand)}</div>
               </div>
             </div>
 
@@ -1843,7 +1849,7 @@ export default function POS() {
       {settling && selected && detail && (
         <SettleSheet
           subtitle={translate(orderLabel(detail))}
-          grandLabel={`${cur()}${inr2(grand)}`}
+          grandLabel={`${cur()}${fmtAmount(grand)}`}
           zeroLabel={`${cur()}0`}
           modes={posModes}
           busy={busy}
@@ -1876,7 +1882,7 @@ export default function POS() {
                 ? `+ ${cart[0].item_name}${cart[0].qty > 1 ? ` ×${cart[0].qty}` : ""}`
                 : translate("{v0} item{v1}{v2}", { v0: String(Math.round(billItemCount)), v1: String(billItemCount === 1 ? "" : "s"), v2: String(selected && detail ? ` · ${orderLabel(detail)}` : "") })}
             </div>
-            <div className="text-lg font-bold tabular-nums">{cur()}{inr2(grand)}</div>
+            <div className="text-lg font-bold tabular-nums">{cur()}{fmtAmount(grand)}</div>
           </button>
           <Button variant="outline" className="h-11" onClick={() => setMobilePane("bill")}>{t("View bill")}</Button>
           <Button className="h-11" disabled={busy || (selected ? !detail : cart.length === 0)} onClick={proceedToPay}>
@@ -1981,7 +1987,7 @@ function RunningStrip({
               (selected === o.name ? " ring-2 ring-brand-600 ring-offset-1" : "")}>
             <span className="min-w-0 truncate text-xs font-bold">{translate(o.label)}</span>
             <span className="shrink-0 text-[10px] font-semibold tabular-nums opacity-80">
-              {cur()}{inr(o.order_total)}
+              {cur()}{fmtAmount(o.order_total)}
             </span>
             <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-wide opacity-70 sm:inline">{tag}</span>
           </button>
@@ -2019,7 +2025,7 @@ function MenuCard({ it, onAdd }: { it: MenuItem; onAdd: () => void }) {
           <span className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-900">{it.item_name}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-bold tabular-nums text-zinc-800">{cur()}{inr(it.price)}</span>
+          <span className="text-sm font-bold tabular-nums text-zinc-800">{cur()}{fmtAmount(it.price)}</span>
           <span className="grid size-8 place-items-center rounded-full bg-brand-50 text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white">
             <Plus className="size-3.5" />
           </span>

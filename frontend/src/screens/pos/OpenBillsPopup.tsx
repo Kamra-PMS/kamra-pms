@@ -7,17 +7,9 @@ import { useEffect } from "react"
 import { Clock, Maximize2, X, XCircle } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { cn } from "../../lib/utils"
-import { cur, moneyLocale } from "../../lib/money"
+import { cur, fmtAmount } from "../../lib/money"
 import { useT, t as translate } from "../../lib/i18n"
 
-
-const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
-const inr2 = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
 
 export interface OpenBillRow {
   name: string
@@ -165,7 +157,7 @@ export default function OpenBillsPopup({
                       </span>
                       <span className="mt-1 text-sm font-semibold tabular-nums text-zinc-800">
                         {cur()}
-                        {inr(o.order_total)}
+                        {fmtAmount(o.order_total)}
                         {o.kot_no ? translate(" · KOT {v0}", { v0: String(o.kot_no) }) : ""}
                         {o.items ? ` · ${o.items}` : ""}
                       </span>
@@ -195,7 +187,7 @@ export default function OpenBillsPopup({
                   <div className="text-right">
                     <div className="text-2xl font-semibold tabular-nums text-zinc-900">
                       {cur()}
-                      {inr2(grand)}
+                      {fmtAmount(grand)}
                     </div>
                   </div>
                 </div>
@@ -235,7 +227,7 @@ export default function OpenBillsPopup({
                         <div className="flex shrink-0 items-center gap-2">
                           <span className="text-base font-semibold tabular-nums text-zinc-800">
                             {cur()}
-                            {inr(it.amount)}
+                            {fmtAmount(it.amount)}
                           </span>
                           {!it.voided && it.kot_status === "New" && onRemove && (
                             <button
@@ -274,7 +266,7 @@ export default function OpenBillsPopup({
                   </Button>
                   <Button className="h-12 flex-1 text-base font-semibold" disabled={busy} onClick={onSettle}>
                     {t("Settle")} · {cur()}
-                    {inr2(grand)}
+                    {fmtAmount(grand)}
                   </Button>
                 </div>
               </>
