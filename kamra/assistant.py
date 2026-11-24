@@ -526,7 +526,8 @@ TOOLS = {
 		"balance) or to_city_ledger=1 for a company with credit. Closes it at 0.",
 		{"group_booking": {"type": "string"}, "mode": {"type": "string"},
 		 "amount": {"type": "number"}, "to_city_ledger": {"type": "integer"},
-		 "reference": {"type": "string"}}, False, True),
+		 "reference": {"type": "string"},
+		 "card_network": {"type": "string"}, "card_last4": {"type": "string"}}, False, True),
 	"pickup_group_room": (
 		"pickup_group_room",
 		"Name a guest into a group's room block (creates their reservation "
@@ -581,7 +582,8 @@ TOOLS = {
 		"the stay's open guest folio is used.",
 		{"folio": {"type": "string"}, "reservation": {"type": "string"},
 		 "mode": {"type": "string"},
-		 "amount": {"type": "number"}, "reference": {"type": "string"}}, False, True),
+		 "amount": {"type": "number"}, "reference": {"type": "string"},
+		 "card_network": {"type": "string"}, "card_last4": {"type": "string"}}, False, True),
 	"record_advance": (
 		"record_advance",
 		"Record an advance a guest paid BEFORE arrival (bank transfer, cash, "
@@ -590,7 +592,8 @@ TOOLS = {
 		"reference: ask staff for it first. Use record_payment once the guest "
 		"is in house.",
 		{"reservation": {"type": "string"}, "amount": {"type": "number"},
-		 "mode": {"type": "string"}, "reference": {"type": "string"}},
+		 "mode": {"type": "string"}, "reference": {"type": "string"},
+		 "card_network": {"type": "string"}, "card_last4": {"type": "string"}},
 		False, True),
 	"petty_cash_report": (
 		"cashier.petty_cash_report",

@@ -6592,5 +6592,12 @@
   "Never": "Nunca",
   "Rates and restrictions": "Tarifas y restricciones",
   "Send it": "Enviarla",
-  "The last full sync went out on {date} at {time}. The channel manager admits one a day: send another anyway?": "La última sincronización completa salió el {date} a las {time}. El gestor de canales admite una al día: ¿desea enviar otra de todos modos?"
+  "The last full sync went out on {date} at {time}. The channel manager admits one a day: send another anyway?": "La última sincronización completa salió el {date} a las {time}. El gestor de canales admite una al día: ¿desea enviar otra de todos modos?",
+  "Card type": "Tipo de tarjeta",
+  "Card type (from the card machine slip)": "Tipo de tarjeta (del comprobante del terminal)",
+  "Choose card type": "Elija el tipo de tarjeta",
+  "Last 4 (optional)": "Últimos 4 (opcional)",
+  "Last 4 digits of the card (optional)": "Últimos 4 dígitos de la tarjeta (opcional)",
+  "Choose the card type for the Card payment.": "Elija el tipo de tarjeta para el pago con tarjeta.",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Escriba exactamente los últimos 4 dígitos de la tarjeta, o déjelos en blanco."
 }

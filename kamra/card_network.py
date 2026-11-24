@@ -23,12 +23,15 @@ def clean(mode, network, last4):
 	caller that sends no network is still accepted, so existing integrations
 	keep working; the screens ask for the network themselves.
 	"""
-	network = (network or "").strip()
-	last4 = (last4 or "").strip()
+	network = network.strip() if isinstance(network, str) else ""
+	last4 = last4.strip() if isinstance(last4, str) else ""
 	if (mode or "") != "Card" or not network:
 		return None, None
-	if network not in NETWORKS:
+	# "visa", "VISA" and "Visa" are the same network; the stored value is the listed spelling
+	by_lower = {n.lower(): n for n in NETWORKS}
+	if network.lower() not in by_lower:
 		frappe.throw(_("Card network must be one of: {0}.").format(", ".join(NETWORKS)))
-	if last4 and not re.fullmatch(r"\d{4}", last4):
+	network = by_lower[network.lower()]
+	if last4 and not re.fullmatch(r"[0-9]{4}", last4):
 		frappe.throw(_("Give exactly the last 4 digits of the card, or leave it empty."))
 	return network, last4 or None

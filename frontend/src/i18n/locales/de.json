@@ -362,5 +362,12 @@
   "Commission": "Provision",
   "Costs": "Kosten",
   "Payout": "Auszahlung",
-  "Download statement": "Abrechnung herunterladen"
+  "Download statement": "Abrechnung herunterladen",
+  "Card type": "Kartentyp",
+  "Card type (from the card machine slip)": "Kartentyp (vom Beleg des Kartenterminals)",
+  "Choose card type": "Kartentyp wählen",
+  "Last 4 (optional)": "Letzte 4 (optional)",
+  "Last 4 digits of the card (optional)": "Letzte 4 Ziffern der Karte (optional)",
+  "Choose the card type for the Card payment.": "Wählen Sie den Kartentyp für die Kartenzahlung.",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Geben Sie genau die letzten 4 Ziffern der Karte ein oder lassen Sie das Feld leer."
 }

@@ -1457,6 +1457,8 @@ Captured picture,Captured picture,الصورة الملتقطة,Imagen capturada
 Card,Card,بطاقة,Tarjeta,Cartão,银行卡,screens/CashierShiftReport.tsx; screens/CashierTill.tsx,,translated
 Card slip / transfer ref (optional),Card slip / transfer ref (optional),إيصال البطاقة / مرجع التحويل (اختياري),Comprobante de tarjeta o referencia de transferencia (opcional),Ref. de boleto/transferência do cartão (opcional),刷卡单 / 转账参考号（可选）,components/BookingDialog.tsx; components/DepositPanel.tsx; components/SecurityDepositPanel.tsx,,translated
 Card slip / UTR (optional),Card slip / UTR (optional),إيصال البطاقة / رقم المرجع (اختياري),Comprobante de tarjeta o referencia UTR (opcional),Comprovante de cartão / UTR (opcional),刷卡单 / UTR（可选）,,,translated
+Card type,Card type,نوع البطاقة,Tipo de tarjeta,Tipo de cartão,卡类型,components/CardNetworkPicker.tsx,,translated
+Card type (from the card machine slip),Card type (from the card machine slip),نوع البطاقة (من إيصال جهاز البطاقات),Tipo de tarjeta (del comprobante del terminal),Tipo de cartão (do comprovante da maquininha),卡类型（见刷卡小票）,components/CardNetworkPicker.tsx,,translated
 carried,carried,مُرحّل,del día anterior,transportado,结转,screens/pos/PosSidePanel.tsx,,translated
 carried over,carried over,مرحّلة من يوم سابق,del día anterior,transportado,结转,screens/pos/OrderHistory.tsx,,translated
 Carried over,Carried over,مُرحّل من اليوم السابق,Pendiente del día anterior,Transferido,结转,screens/GoLiveImport.tsx,,translated
@@ -1662,11 +1664,13 @@ Choose a housekeeper…,Choose a housekeeper…,اختر موظف التدبير
 Choose a listing,Choose a listing,اختر خياراً,Elige una opción,Escolha uma listagem,选择房源,screens/PublicListing.tsx,,translated
 Choose a new password,Choose a new password,اختر كلمة مرور جديدة,Elige una contraseña nueva,Escolha uma senha nova,设置新密码,screens/UpdatePassword.tsx,,translated
 Choose an outlet…,Choose an outlet…,اختر منفذاً…,Seleccione un punto de venta…,Escolha um ponto de venda…,选择营业点…,screens/MenuImport.tsx,,translated
+Choose card type,Choose card type,اختر نوع البطاقة,Elija el tipo de tarjeta,Escolha o tipo de cartão,选择卡类型,components/CardNetworkPicker.tsx,,translated
 Choose columns and press Preview.,Choose columns and press Preview.,اختر الأعمدة ثم اضغط معاينة.,Elija columnas y pulse Vista previa.,Escolha colunas e pressione Visualizar.,选择列后点击预览。,screens/Reports.tsx,,translated
 Choose each child's age; this determines the price.,Choose each child's age; this determines the price.,اختر عمر كل طفل، فهو يحدد السعر.,Indica la edad de cada menor; la tarifa depende de la edad.,Escolha a idade de cada criança; isso determina o preço.,选择每位儿童的年龄，用于定价。,components/ChildAges.tsx; screens/PublicBooking.tsx,,translated
 Choose from list,Choose from list,اختر من القائمة,Elegir de la lista,Escolher da lista,从列表选择,components/ResourceScreen.tsx,,translated
 Choose Save as PDF in the print dialog,Choose Save as PDF in the print dialog,اختر الحفظ بصيغة PDF في نافذة الطباعة,Elija Guardar como PDF en el cuadro de diálogo de impresión,Escolha Salvar como PDF na caixa de diálogo de impressão,在打印对话框中选择「另存为 PDF」,screens/AuditPack.tsx,,translated
 Choose the {v0},Choose the {v0},اختر {v0},Seleccione {v0},Escolha o {v0},选择 {v0},screens/banquet/MenuComposer.tsx,v0,translated
+Choose the card type for the Card payment.,Choose the card type for the Card payment.,اختر نوع البطاقة لدفعة البطاقة.,Elija el tipo de tarjeta para el pago con tarjeta.,Escolha o tipo de cartão para o pagamento com cartão.,请为刷卡付款选择卡类型。,,,translated
 choose the dishes →,choose the dishes →,اختر الأطباق ←,seleccionar los platos →,escolha os pratos →,选择菜品 →,screens/BanquetFunction.tsx,,translated
 "Choose the dishes, or cost the services","Choose the dishes, or cost the services",اختر الأطباق، أو حدّد تكلفة الخدمات,Seleccione los platos o defina el costo de los servicios,"Escolha os pratos, ou custeie os serviços",选择菜品，或核算服务成本,,,translated
 Choose the menu,Choose the menu,اختر القائمة,Seleccione el menú,Escolha o cardápio,选择菜单,screens/banquet/MenuComposer.tsx,,translated
@@ -2809,6 +2813,7 @@ Give a discount,Give a discount,منح خصم,Dar un descuento,Dar um desconto,�
 Give a discount before collecting,Give a discount before collecting,منح خصم قبل التحصيل,Dar un descuento antes de cobrar,Dar um desconto antes de cobrar,收款前给予折扣,components/CheckOutDialog.tsx,,translated
 Give a reason for acknowledging this check.,Give a reason for acknowledging this check.,اذكر سببا لإقرار هذا الفحص.,Indique un motivo para autorizar esta comprobación.,Dê uma razão para reconhecer esta verificação.,确认此检查需填写原因。,,,translated
 Give discount,Give discount,منح الخصم,Dar descuento,Dar desconto,给予折扣,components/FolioDiscount.tsx,,translated
+"Give exactly the last 4 digits of the card, or leave them empty.","Give exactly the last 4 digits of the card, or leave them empty.",أدخل آخر 4 أرقام من البطاقة بالضبط، أو اتركها فارغة.,"Escriba exactamente los últimos 4 dígitos de la tarjeta, o déjelos en blanco.",Informe exatamente os últimos 4 dígitos do cartão ou deixe em branco.,请准确填写卡号后4位，或留空。,,,translated
 Give room numbers ({v0}),Give room numbers ({v0}),,Asignar números de habitación ({v0}),Atribuir números de quartos ({v0}),分配房号（{v0}）,components/GroupControl.tsx,v0,needs_translation
 Give the guest the cancellation number.,Give the guest the cancellation number.,أعطِ الضيف رقم الإلغاء.,Proporciona al huésped el número de cancelación.,Forneça ao hóspede o número de cancelamento.,将取消编号告知宾客。,components/CancelPanel.tsx,,translated
 GL code,GL code,رمز حساب الأستاذ العام,Cuenta contable,Conta contábil,总账科目代码,,,translated
@@ -3390,6 +3395,8 @@ Last {days} days,Last {days} days,آخر {days} أيام,Últimos {days} días,�
 Last {n} days,Last {n} days,آخر {n} يومًا,Últimos {n} días,Últimos {n} dias,最近 {n} 天,components/RoomInsights.tsx,n,translated
 Last 14 days,Last 14 days,آخر 14 يوماً,Últimos 14 días,Últimos 14 dias,最近 14 天,screens/Reports.tsx,,translated
 Last 30 days,Last 30 days,آخر 30 يومًا,Últimos 30 días,Últimos 30 dias,最近 30 天,screens/pos/OrderHistory.tsx,,translated
+Last 4 (optional),Last 4 (optional),آخر 4 أرقام (اختياري),Últimos 4 (opcional),Últimos 4 (opcional),后4位（可选）,components/CardNetworkPicker.tsx,,translated
+Last 4 digits of the card (optional),Last 4 digits of the card (optional),آخر 4 أرقام من البطاقة (اختياري),Últimos 4 dígitos de la tarjeta (opcional),Últimos 4 dígitos do cartão (opcional),卡号后4位（可选）,components/CardNetworkPicker.tsx,,translated
 Last 7 days,Last 7 days,آخر 7 أيام,Últimos 7 días,Últimos 7 dias,最近 7 天,screens/pos/OrderHistory.tsx,,translated
 Last active {date},Last active {date},آخر نشاط {date},Última actividad: {date},Último ativo {date},最近活跃 {date},,date,translated
 Last closed {d},Last closed {d},آخر إغلاق {d},Último cierre: {d},Último fechado {d},最近关闭 {d},screens/EndOfDay.tsx,d,translated

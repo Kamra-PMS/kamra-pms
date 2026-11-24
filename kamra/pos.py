@@ -1288,15 +1288,20 @@ def pay_order(order: str, mode: str, pin: str | None = None,
 @frappe.whitelist(methods=["POST"])
 @require_roles(*POS_ROLES)
 def change_payment_mode(order: str, mode: str, reason: str = "",
-                        pin: str | None = None):
+                        pin: str | None = None,
+                        card_network: str | None = None,
+                        card_last4: str | None = None):
 	"""Correct the tender on a bill that was settled with the wrong mode (Card
 	pressed for Cash). The till keeps its history: a reversing entry for the
 	old mode and a new entry for the right one, same till session, with a
 	comment on the bill. Only while that till is still open - once it is
 	counted and closed, the day's cash is final and a manager must correct it
-	from the till screens."""
+	from the till screens. Changing to Card can carry the card network (and
+	last 4) from the slip; the old mode's card details always go with it."""
 	doc = frappe.get_doc("POS Order", order)
 	_assert_outlet_mode(doc.property, mode)
+	from kamra.card_network import clean as clean_card
+	new_network, new_last4 = clean_card(mode, card_network, card_last4)
 	if not doc.paid or doc.status == "Cancelled":
 		frappe.throw(_("Only a bill that was paid at the outlet can change its payment mode."))
 	if doc.posted_to_folio or doc.nc:
@@ -1327,10 +1332,10 @@ def change_payment_mode(order: str, mode: str, reason: str = "",
 		record_cashier_txn(
 			doc.property, "Payment", mode, amt, pos_order=doc.name,
 			reference=f"POS {doc.name}", notes=f"Mode corrected from {old}: {why}",
-			session=sess)
+			session=sess, card_network=new_network, card_last4=new_last4)
 	doc.db_set("payment_mode", mode)
-	# the card details belonged to the old mode: a corrected bill has none until recorded again
-	doc.db_set({"card_network": None, "card_last4": None})
+	# the old mode's card details go; a bill corrected to Card carries the ones just given
+	doc.db_set({"card_network": new_network, "card_last4": new_last4})
 	doc.add_comment("Comment", _("Payment mode changed from {0} to {1}: {2}").format(
 		old, mode, why))
 	return {"ok": True, "order": doc.name, "mode": mode, "was": old}

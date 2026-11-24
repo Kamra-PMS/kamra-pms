@@ -14,7 +14,7 @@ export function cardProblem(mode: string, network?: string, last4?: string): str
   if (!isCard(mode)) return ""
   if (!network) return "Choose the card type for the Card payment."
   const l = (last4 ?? "").trim()
-  if (l && !/^\d{4}$/.test(l)) return "Give exactly the last 4 digits of the card, or leave them empty."
+  if (l && !/^[0-9]{4}$/.test(l)) return "Give exactly the last 4 digits of the card, or leave them empty."
   return ""
 }
 

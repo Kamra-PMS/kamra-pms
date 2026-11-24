@@ -1914,12 +1914,21 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 		if "Kamra Agent" not in frappe.get_roles() and \
 		   frappe.session.user != "Administrator":
 			raise
+	# a card refund keeps the card network (and last 4) of the payment it undoes, so the
+	# by-network collections net out instead of showing Visa +100 and "Not recorded" -100
+	card_network = card_last4 = None
+	if refund_of and mode == "Card":
+		orig = next((p for p in doc.payments if p.name == refund_of), None)
+		if orig and orig.mode == "Card":
+			card_network, card_last4 = orig.get("card_network"), orig.get("card_last4")
 	doc.append("payments", {
 		"posting_date": bd,
 		"payment_kind": "Refund",
 		"mode": mode,
 		"amount": -float(amount),
 		"reference": str(reason_text)[:140],
+		"card_network": card_network,
+		"card_last4": card_last4,
 		"currency": currency,
 		"refund_of": refund_of,
 		"idempotency_key": idempotency_key,
@@ -1930,7 +1939,8 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 	pay = doc.payments[-1]
 	record_cashier_txn(
 		doc.property, "Refund", mode, -float(amount),
-		folio=doc.name, reference=str(reason_text)[:140], session=sess)
+		folio=doc.name, reference=str(reason_text)[:140], session=sess,
+		card_network=card_network, card_last4=card_last4)
 	try:
 		from kamra.ledger import record_payment_ledger
 		record_payment_ledger(doc, pay.as_dict(), session=sess, ledger=ledger)

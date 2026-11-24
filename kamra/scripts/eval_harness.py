@@ -12096,7 +12096,7 @@ def t_ota_contact_never_drops_booking():
 	assert frappe.db.exists("Reservation", {"property": CP, "ota_ref": "EVAL-OCT-WH"})
 
 
-@check("card payments keep their network: validated, stamped on the row and the till, split in the report")
+@check("card payments keep their network: validated, stamped on the row and the till, kept on a refund, split in the report")
 def t_card_network():
 	from kamra import cashier
 	from kamra.card_network import NETWORKS
@@ -12104,25 +12104,29 @@ def t_card_network():
 	for doctype in ("Folio Payment", "POS Order", "Cashier Transaction"):
 		options = frappe.get_meta(doctype).get_field("card_network").options or ""
 		assert [o for o in options.split("\n") if o] == NETWORKS, (doctype, options)
+	# dates no other check holds, so the room is free
 	g = _guest("Eval Card Network", "+91 70000 00077")
-	res = _res(g, "2031-03-01", "2031-03-02", ROOM)
+	res = _res(g, "2033-02-01", "2033-02-02", ROOM)
 	res.status = "Checked In"
 	res.save(ignore_permissions=True)
-	post_room_night(res, "2031-03-01")
+	post_room_night(res, "2033-02-01")
 	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
-	for network, last4 in (("Bitcoin", None), ("Visa", "12ab"), ("Visa", "123")):
+	# the till half must run: open a till if none is open, as the night audit checks do
+	if not frappe.db.get_value("Cashier Session", {"property": P, "status": "Open"}):
+		_na_till()
+	for network, last4 in (("Bitcoin", None), ("Visa", "12ab"), ("Visa", "123"), ("Visa", "\u0661\u0662\u0663\u0664")):
 		try:
 			api.add_folio_payment(folio, "Card", 10, card_network=network, card_last4=last4)
 		except frappe.ValidationError:
 			continue
 		raise AssertionError(f"card details {network!r}/{last4!r} were accepted")
-	api.add_folio_payment(folio, "Card", 100, reference="slip-1", card_network="RuPay", card_last4="4321")
+	api.add_folio_payment(folio, "Card", 100, reference="slip-1", card_network="rupay", card_last4="4321")
 	api.add_folio_payment(folio, "Card", 40, reference="slip-2", card_network="Visa")
 	api.add_folio_payment(folio, "Cash", 25, reference="rcpt-1", card_network="Visa")
 	api.add_folio_payment(folio, "Card", 15, reference="old-caller")  # no network: still accepted
 	rows = {r.reference: r for r in frappe.get_all(
 		"Folio Payment", filters={"parent": folio},
-		fields=["reference", "mode", "card_network", "card_last4"])}
+		fields=["name", "reference", "mode", "card_network", "card_last4"])}
 	assert (rows["slip-1"].card_network, rows["slip-1"].card_last4) == ("RuPay", "4321"), rows["slip-1"]
 	assert (rows["slip-2"].card_network, rows["slip-2"].card_last4) == ("Visa", None), rows["slip-2"]
 	assert not rows["rcpt-1"].card_network, "a cash payment kept a card network"
@@ -12130,12 +12134,22 @@ def t_card_network():
 	# the till keeps the same network, so the split matches the Card total
 	txn = frappe.db.get_value("Cashier Transaction", {"folio": folio, "reference": "slip-1"},
 	                          ["card_network", "card_last4"], as_dict=True)
-	if txn:
-		assert (txn.card_network, txn.card_last4) == ("RuPay", "4321"), txn
-		summary = cashier.cash_summary_v2(P)
-		card_total = sum(m["total"] for m in summary["modes"] if m["mode"] == "Card")
-		split = summary["card_networks"]
-		assert abs(sum(r["total"] for r in split) - card_total) < 0.01, (split, card_total)
+	assert txn, "no till entry was written: the till half of the check did not run"
+	assert (txn.card_network, txn.card_last4) == ("RuPay", "4321"), txn
+	# a refund of that card payment keeps its network, on the row and in the till
+	api.refund_folio_payment(folio, amount=40, reason="eval refund", payment_row=rows["slip-1"].name)
+	refund = frappe.get_all("Folio Payment", filters={"parent": folio, "payment_kind": "Refund"},
+	                        fields=["amount", "mode", "card_network", "card_last4"])[0]
+	assert refund.mode == "Card" and float(refund.amount) == -40, refund
+	assert (refund.card_network, refund.card_last4) == ("RuPay", "4321"), refund
+	rtxn = frappe.db.get_value("Cashier Transaction", {"folio": folio, "kind": "Refund"},
+	                           ["card_network", "card_last4"], as_dict=True)
+	assert rtxn and (rtxn.card_network, rtxn.card_last4) == ("RuPay", "4321"), rtxn
+	summary = cashier.cash_summary_v2(P)
+	card_total = sum(m["total"] for m in summary["modes"] if m["mode"] == "Card")
+	split = summary["card_networks"]
+	assert abs(sum(r["total"] for r in split) - card_total) < 0.01, (split, card_total)
+	assert not [r for r in split if r["network"] == "Not recorded" and r["total"] < 0], split
 
 
 def execute():
