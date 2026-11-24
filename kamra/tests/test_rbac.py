@@ -47,7 +47,8 @@ OTHER = "TEST RBAC Other"
 SOP = ("SOP Template", "read_sops")
 TICKETS = ("Service Ticket", "handle_requests")
 
-BASELINE = json.load(open(os.path.join(os.path.dirname(__file__), "rbac_baseline.json")))
+with open(os.path.join(os.path.dirname(__file__), "rbac_baseline.json")) as _f:
+	BASELINE = json.load(_f)
 BUILTIN = ("Front Desk", "Finance", "Revenue Manager", "Night Auditor", "Housekeeping",
            "Housekeeping Supervisor", "F&B Manager", "Kamra Agent", "POS Integrator",
            "Hotel Admin", "System Manager")
@@ -153,13 +154,13 @@ class RbacTestCase(IntegrationTestCase):
 	def test_no_endpoint_uses_a_fixed_role_list(self):
 		"""require_roles is legacy (a hotel can't change it): every endpoint
 		in Kamra uses require_perm, and every gated one is introspectable."""
-		import kamra
-		root = os.path.dirname(kamra.__file__)
-		for mod in pkgutil.walk_packages(kamra.__path__, "kamra."):
+		root = os.path.dirname(authz.__file__)  # the kamra package dir
+		for mod in pkgutil.walk_packages([root], "kamra."):
 			if mod.name.startswith(_SKIP) or mod.ispkg:
 				continue
 			path = os.path.join(root, *mod.name.split(".")[1:]) + ".py"
-			tree = ast.parse(open(path).read())
+			with open(path) as f:
+				tree = ast.parse(f.read())
 			for node in ast.walk(tree):
 				if isinstance(node, ast.FunctionDef):
 					for dec in node.decorator_list:
@@ -340,7 +341,8 @@ class RbacTestCase(IntegrationTestCase):
 		front = os.path.join(os.path.dirname(__file__), "../../frontend/src")
 		gates = set()
 		for rel in ("lib/apps.ts", "screens/ReportsHub.tsx"):
-			src = open(os.path.join(front, rel)).read()
+			with open(os.path.join(front, rel)) as f:
+				src = f.read()
 			gates |= set(re.findall(r'perm: \["([^"]+)", "([^"]+)"\]', src))
 		self.assertIn(("Folio Ledger Entry", "export_books"), gates)
 		for dt, pt in gates:

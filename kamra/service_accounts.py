@@ -28,7 +28,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, now_datetime
 
-from kamra.authz import require_it_admin, restricted_properties, require_roles
+from kamra.authz import require_it_admin, restricted_properties
 
 ROLE = "Kamra Service Account"
 # every service account user lives on this domain, so telling one apart
