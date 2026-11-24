@@ -9,7 +9,7 @@ import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { InfoTip } from "../components/InfoTip"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import type { NightRate, Restriction } from "../components/RateOptions"
@@ -26,7 +26,7 @@ function restrictionText(r: Restriction, t: typeof translate) {
 }
 
 
-const n0 = (n: number) => Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+const n0 = (n: number) => fmtAmount(n ?? 0)
 
 interface Calendar {
   from: string

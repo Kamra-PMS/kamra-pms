@@ -7,7 +7,7 @@ import { listResource, type Row } from "../lib/resource"
 import { auditHistory, type RunRow } from "../lib/eod"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { cur, fmtMoney, moneyLocale } from "../lib/money"
+import { cur, fmtMoney, moneyLocale, fmtAmount } from "../lib/money"
 import { DataTable } from "../components/ui/data-table"
 import { useT, uiDateLocale } from "../lib/i18n"
 import {
@@ -18,7 +18,7 @@ import {
 } from "../components/ui/card"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n ?? 0)
 
 const fmtDate = (d: unknown) =>
   d

@@ -4,11 +4,11 @@ import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
-import { moneyLocale } from "../lib/money"
+import { fmtAmount } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n ?? 0)
 
 type FolioRow = {
   name: string

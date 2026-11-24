@@ -40,7 +40,7 @@ import CheckInDialog from "../components/CheckInDialog"
 import NoShowDialog from "../components/NoShowDialog"
 import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
 import RoomDrawer, { type RoomTab } from "../components/RoomDrawer"
@@ -72,7 +72,7 @@ const hkTone: Record<RoomRow["housekeeping_status"], string> = {
 }
 
 const inr0 = (n: number) =>
-  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 /** Group rooms held but not picked up: a lighter step of the brand ramp. */
 const HELD_SHADE = "color-mix(in oklab, var(--color-brand-600) 35%, var(--color-brand-50))"

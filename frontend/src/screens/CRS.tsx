@@ -8,14 +8,14 @@ import { serverError } from "../lib/resource"
 import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
-import { cur, moneyLocale, useLocale } from "../lib/money"
+import { cur, useLocale, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { shiftDate } from "../lib/stay"
 
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n ?? 0)
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +

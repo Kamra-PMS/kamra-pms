@@ -10,7 +10,7 @@ import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { serverError } from "../lib/resource"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
 
@@ -40,7 +40,7 @@ type BookingRequest = {
 type InboxData = { holds_inventory: boolean; count: number; requests: BookingRequest[] }
 
 const money0 = (n: number) =>
-  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 /** Request-to-Book inbox on Today: stays waiting for the host's yes / no.
  * A request holds no room until it is accepted, so "rooms free" is live

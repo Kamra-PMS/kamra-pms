@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react"
 import { call, getCurrentProperty } from "../lib/api"
 import { InfoTip } from "./InfoTip"
-import { cur, moneyDigits, moneyLocale } from "../lib/money"
+import { cur, moneyDigits, fmtAmount } from "../lib/money"
 import { isOverride, maxPriceDigits, parsePrice, splitRoomTotal } from "../lib/nightPrices"
 import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 
 
-const n0 = (n: number) => Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+const n0 = (n: number) => fmtAmount(n ?? 0)
 
 export interface Restriction {
   name: string

@@ -18,14 +18,14 @@ import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { fmtDay } from "./AuditPack"
 import { downloadCsv } from "../lib/csv"
 
 
 const amount = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n ?? 0)
 
 function Count({ label, n, warn }: { label: string; n: number; warn?: boolean }) {
   const { t } = useT()

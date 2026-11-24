@@ -9,7 +9,7 @@ import {
   type BookingOptions,
 } from "../lib/api"
 import { serverError } from "../lib/resource"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT } from "../lib/i18n"
 import { Button } from "./ui/button"
 import PhoneInput from "./PhoneInput"
@@ -74,7 +74,7 @@ const ymd = (x: Date) =>
   `${x.getFullYear()}-${`${x.getMonth() + 1}`.padStart(2, "0")}-${`${x.getDate()}`.padStart(2, "0")}`
 
 const money = (n: number) =>
-  `${cur()}${Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })}`
+  `${cur()}${fmtAmount(n)}`
 
 function addDay(d: string) {
   const x = new Date(`${d}T00:00:00`)
