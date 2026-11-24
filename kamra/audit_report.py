@@ -26,7 +26,7 @@ from __future__ import annotations
 import frappe
 from frappe.utils import add_days, date_diff, flt, getdate
 
-from kamra.authz import require_perm, require_roles
+from kamra.authz import require_perm
 from kamra.folio import NOT_VOIDED, STANDS_ON_ITS_DATE
 
 FOLIO_SKIP = ("Opening Balance", "Room Levy")

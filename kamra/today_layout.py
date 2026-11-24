@@ -45,11 +45,6 @@ DEFAULT_LAYOUT = {
 	"hidden": ["open_tasks"],
 }
 
-# anyone who can open the desk may keep their own layout
-_ANY_STAFF = ("Front Desk", "Night Auditor", "Housekeeping", "Finance",
-              "Revenue Manager", "Kamra Agent")
-
-
 def normalize(layout) -> dict:
 	"""A clean layout from whatever was stored or sent. Never raises."""
 	if isinstance(layout, str):

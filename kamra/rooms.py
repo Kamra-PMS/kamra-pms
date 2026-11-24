@@ -18,7 +18,7 @@ from frappe import _
 from frappe.utils import add_days, cint, date_diff, get_datetime, getdate, nowdate
 
 from kamra.api import HK_SUPERVISOR, _is_room_supervisor, _stay_balances
-from kamra.authz import ADMIN, assert_property_access, require_perm, require_roles
+from kamra.authz import ADMIN, assert_property_access, require_perm
 from kamra.floors import floors_for
 
 # who may look at rooms: the desk, housekeeping supervisors, night audit,

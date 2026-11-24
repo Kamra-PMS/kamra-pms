@@ -108,7 +108,7 @@ class AgentReportAccessTestCase(AuditTestCase):
 			self.assertFalse(desk & money, pack)
 			self.assertIn("qty", desk)
 		self.assertIn("covers", columns("Front Desk", "fnb"))
-		self.assertTrue({"grand_total", "amount"} <= columns("Finance", "fnb"))
+		self.assertLessEqual({"grand_total", "amount"}, columns("Finance", "fnb"))
 
 	def test_housekeeping_pack_runs_every_section(self):
 		email = "ut.reports.housekeeping@test.local"
