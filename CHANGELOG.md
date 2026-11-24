@@ -26,6 +26,20 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.8.2](https://github.com/Kamra-PMS/kamra-pms/compare/v2.8.1...v2.8.2) (2026-11-24)
+
+
+### Features
+
+* **rbac:** access control on Frappe's own permission system ([#421](https://github.com/Kamra-PMS/kamra-pms/issues/421)) ([ac334a3](https://github.com/Kamra-PMS/kamra-pms/commit/ac334a31f139f37b459ddcccae9b116afd2db6f3))
+* record the card network on card payments and split card collections by network ([#694](https://github.com/Kamra-PMS/kamra-pms/issues/694)) ([1193cda](https://github.com/Kamra-PMS/kamra-pms/commit/1193cdaf08210225663764f69bd2d4ef0668a192))
+
+
+### Bug Fixes
+
+* clear three GitHub Code Quality findings ([#689](https://github.com/Kamra-PMS/kamra-pms/issues/689)) ([7a9fc83](https://github.com/Kamra-PMS/kamra-pms/commit/7a9fc8337ffa079395ee5c83a3d6ed6ba2655f62))
+* **rooms:** expose max_total_occupants in room type config and format booking engine capacity ([#692](https://github.com/Kamra-PMS/kamra-pms/issues/692)) ([ac9765f](https://github.com/Kamra-PMS/kamra-pms/commit/ac9765fd24feb1f4b7ab9c333beab04bfb509c3b))
+
 ## [2.8.1](https://github.com/Kamra-PMS/kamra-pms/compare/v2.8.0...v2.8.1) (2026-11-23)
 
 
