@@ -73,7 +73,7 @@ function BillPreview({ design, bits }: { design: Design; bits: Bits }) {
 function DesignCard({ design, bits, selected, onPick }: {
   design: Design; bits: Bits; selected: boolean; onPick: () => void
 }) {
-  const a = design === "Stacked"
+  const a = design === "Columns"   // Design A is the original columns layout, Design B the stacked one
   return (
     <div role="radio" aria-checked={selected} tabIndex={0} onClick={onPick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick() } }}
@@ -84,12 +84,12 @@ function DesignCard({ design, bits, selected, onPick }: {
       <div className="flex items-center gap-2">
         <span className={cn("size-5 shrink-0 rounded-full border-2", selected ? "border-brand-600 bg-brand-600 ring-2 ring-inset ring-white" : "border-zinc-400")} />
         <span className="text-base font-semibold text-zinc-900">{a ? t("Design A") : t("Design B")}</span>
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{a ? t("Stacked") : t("Columns")}</span>
+        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{a ? t("Columns") : t("Stacked")}</span>
         {selected && <Check className="ml-auto size-5 rounded-full bg-brand-600 p-1 text-white" aria-hidden />}
       </div>
       <p className="mt-2 min-h-10 text-sm leading-relaxed text-zinc-600">
-        {a ? t("Name on its own line, then quantity x rate and the amount. Stays tidy when prices have many digits.")
-          : t("Item, Qty, Rate and Amount in columns. Easy to scan when prices are short.")}
+        {a ? t("Item, Qty, Rate and Amount in columns. Easy to scan when prices are short.")
+          : t("Name on its own line, then quantity x rate and the amount. Stays tidy when prices have many digits.")}
       </p>
       <BillPreview design={design} bits={bits} />
     </div>
@@ -170,8 +170,8 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
               {t("How the items print on this outlet's bills. Everything else on the receipt is the same in both. Pick one. The samples use example food and plain numbers; your real bills use your own currency.")}
             </p>
             <div role="radiogroup" aria-label={t("Receipt design")} className="grid gap-4 pt-2 sm:grid-cols-2">
-              <DesignCard design="Stacked" bits={bits} selected={bits.design === "Stacked"} onPick={() => pick("Stacked")} />
               <DesignCard design="Columns" bits={bits} selected={bits.design === "Columns"} onPick={() => pick("Columns")} />
+              <DesignCard design="Stacked" bits={bits} selected={bits.design === "Stacked"} onPick={() => pick("Stacked")} />
             </div>
           </div>
         </>

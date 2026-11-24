@@ -76,11 +76,11 @@
   },
   {
    "default": "Columns",
-   "description": "How the items print on the bill: Stacked (name on its own line, then quantity x rate and the amount) or Columns (Item, Qty, Rate and Amt).",
+   "description": "How the items print on the bill: Columns (Item, Qty, Rate and Amt) or Stacked (name on its own line, then quantity x rate and the amount).",
    "fieldname": "receipt_design",
    "fieldtype": "Select",
    "label": "Receipt Design",
-   "options": "Stacked\nColumns"
+   "options": "Columns\nStacked"
   },
   {
    "fieldname": "tables",
