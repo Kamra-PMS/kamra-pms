@@ -7033,5 +7033,6 @@
   "{n} folio": "bili {n}",
   "{n} folios": "bili {n}",
   "{n} no-show": "hakufika {n}",
-  "{n} no-shows": "hakufika {n}"
+  "{n} no-shows": "hakufika {n}",
+  "Rounding": "Kukadiria"
 }
