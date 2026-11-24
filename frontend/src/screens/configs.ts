@@ -95,6 +95,7 @@ export const roomTypesConfig: ScreenConfig = {
     { field: "children_within_base_occupancy", label: "Children count towards base occupancy", type: "check", hint: "Only guests beyond the base occupancy are charged, children included" },
     { field: "adults_capacity", label: "Max adults", type: "int" },
     { field: "children_capacity", label: "Max children", type: "int" },
+    { field: "max_total_occupants", label: "Max total occupants", type: "int", hint: "Overall capacity of the room (adults + children combined, e.g. 4 people total). Blank = no combined limit (Max adults and Max children apply separately)" },
     { field: "max_extra_beds", label: "Guests allowed above capacity", type: "int", hint: "Only for a single unit with no second room to split into. 0 = never over capacity; the price is agreed on each booking" },
     { field: "small_group_max_adults", label: "Small-group threshold (adults)", type: "int", hint: "Below this many adults, price per person instead of the house rate. Blank or 0 = off" },
     { field: "small_group_price_per_adult", label: "Small-group price / adult", type: "currency", dependsOn: (d) => Number(d.small_group_max_adults) > 0 },

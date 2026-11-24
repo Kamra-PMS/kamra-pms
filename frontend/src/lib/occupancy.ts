@@ -10,6 +10,7 @@
 export interface RoomCapacity {
   adults_capacity: number
   children_capacity: number
+  max_total_occupants?: number
   /** Beds the house will add to a let room by arrangement. */
   max_extra_beds?: number
 }
