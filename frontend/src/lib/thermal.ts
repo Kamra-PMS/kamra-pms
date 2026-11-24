@@ -288,7 +288,7 @@ export interface BillData {
   cashier?: string | null
   /** the outlet's receipt logo (a file URL), printed at the top when set */
   logo?: string | null
-  /** how the item lines print: stacked (default) or in columns */
+  /** how the item lines print: in columns (the default) or stacked */
   receipt_design?: "Stacked" | "Columns" | null
   items: { item_name: string; qty: number; rate: number; amount: number }[]
   subtotal: number
@@ -332,7 +332,7 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
     { label: "CGST", rate: b.gst_rate / 2, amount: b.cgst },
     { label: "SGST", rate: b.gst_rate / 2, amount: b.sgst },
   ]
-  const columns = b.receipt_design === "Columns"
+  const columns = b.receipt_design !== "Stacked"   // Columns is the default
   // the item header row (bold) and the thick rule under it; the columns design has them inside its table
   const itemHead = columns ? "" :
     `<div class="row hd"><span>${esc(translate("Item"))}</span><span>${esc(translate("Amount"))}</span></div><div class="hr thick"></div>`

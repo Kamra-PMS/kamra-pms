@@ -75,7 +75,7 @@
    "label": "Receipt Logo"
   },
   {
-   "default": "Stacked",
+   "default": "Columns",
    "description": "How the items print on the bill: Stacked (name on its own line, then quantity x rate and the amount) or Columns (Item, Qty, Rate and Amt).",
    "fieldname": "receipt_design",
    "fieldtype": "Select",

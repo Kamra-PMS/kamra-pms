@@ -2118,7 +2118,7 @@ def bill_data(order: str):
 		"property_name": property_name, "outlet_name": outlet.outlet_name,
 		# the outlet's receipt logo (a file URL, or None) and how the items print
 		"logo": outlet.logo or None,
-		"receipt_design": outlet.receipt_design or "Stacked",
+		"receipt_design": outlet.receipt_design or "Columns",
 		"order_type": doc.order_type, "table_no": doc.table_no,
 		"room_no": (doc.room or "").split("-")[-1] if doc.room else None,
 		"customer_name": doc.customer_name,

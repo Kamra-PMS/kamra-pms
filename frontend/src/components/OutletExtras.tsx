@@ -115,7 +115,7 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
           fields: ["name", "property_name"], filters: [["name", "=", String(o.property)]], limit: 1,
         }) : []
         if (live && o) setBits({
-          logo: String(o.logo ?? ""), design: o.receipt_design === "Columns" ? "Columns" : "Stacked",
+          logo: String(o.logo ?? ""), design: o.receipt_design === "Stacked" ? "Stacked" : "Columns",
           outlet: String(o.outlet_name ?? ""), hotel: String(p?.property_name ?? ""),
         })
       } catch (e) {
