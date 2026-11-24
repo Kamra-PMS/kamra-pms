@@ -15,6 +15,8 @@
   "gst_rate",
   "disabled",
   "kot_mode",
+  "logo",
+  "receipt_design",
   "tables",
   "waiters"
  ],
@@ -67,6 +69,20 @@
    "description": "Auto-accept and print: sending an order prints the KOT and shows it on the kitchen display as started. Kitchen presses Start: the pass accepts each ticket and each till chooses whether to print. Use F&B setting follows Settings > F&B."
   },
   {
+   "description": "Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best.",
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Receipt Logo"
+  },
+  {
+   "default": "Columns",
+   "description": "How the items print on the bill: Columns (Item, Qty, Rate and Amt) or Stacked (name on its own line, then quantity x rate and the amount).",
+   "fieldname": "receipt_design",
+   "fieldtype": "Select",
+   "label": "Receipt Design",
+   "options": "Columns\nStacked"
+  },
+  {
    "fieldname": "tables",
    "fieldtype": "Small Text",
    "label": "Tables",
@@ -83,7 +99,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-12 10:00:00.000000",
+ "modified": "2026-11-24 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Outlet",
