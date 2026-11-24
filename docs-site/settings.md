@@ -83,8 +83,6 @@ checks the role's permissions on the server. IT can create roles and
 change what each role may do in Desk (Role Permission Manager): see
 [Roles and access](/roles-and-access).
 
-![The roles matrix: apps each role opens and settings each role may change](/img/settings/roles.png)
-
 | Role | Day to day |
 | --- | --- |
 | Hotel Admin | Runs the property: every app, all settings, staff and access |

@@ -16,7 +16,7 @@ from Frappe Cloud.
 - **Category:** Hospitality (use **Other** if Hospitality is absent — do
   **not** leave it on E-Commerce; the live page still shows E-Commerce)
 - **Public listing (live):** https://frappecloud.com/marketplace/apps/kamra
-- **Stable release to publish:** `main` / **v2.6.16**
+- **Stable release to publish:** `main` / **v2.8.2**
 
 ---
 
@@ -236,7 +236,7 @@ In https://frappecloud.com/dashboard → **Marketplace** → **Kamra**:
 4. **Screenshots** — the 13 files above, in that order, with captions
    (confirm all are uploaded; the public page should show more than the logo).
 5. **Links** — Support + Privacy are mandatory; fill the rest too.
-6. **Releases** — create / select the `main` release at **v2.6.16** and
+6. **Releases** — create / select the `main` release at **v2.8.2** and
    click **Publish** (or submit for approval if the dashboard still gates it).
 7. If a previous request is **Rejected**, cancel it and publish a new
    one from current `main`.
@@ -246,7 +246,7 @@ In https://frappecloud.com/dashboard → **Marketplace** → **Kamra**:
 ### Support ticket (paste — category / release update)
 
 ```
-Subject: Marketplace listing for Kamra (kamra) — category + v2.6.16 release
+Subject: Marketplace listing for Kamra (kamra) — category + v2.8.2 release
 
 Hi Frappe Cloud team,
 
@@ -255,14 +255,14 @@ Please:
 
 1. Change the category from E-Commerce to Hospitality (or Other if
    Hospitality is not available).
-2. Approve / publish the latest App Release from main at v2.6.16
+2. Approve / publish the latest App Release from main at v2.8.2
    (Frappe v16, Apache-2.0, required_apps = payments).
 
 Offline install checks and CI on main are green. Registry PR for
-v2.6.16 is open against frappe/marketplace.
+v2.8.2 is open against frappe/marketplace.
 
 Repo: https://github.com/Kamra-PMS/kamra-pms
-Branch / tag: main / v2.6.16
+Branch / tag: main / v2.8.2
 Demo: https://demo.kamrapms.com
 Docs: https://kamrapms.com/docs/
 Support: https://kamrapms.com/support
@@ -286,9 +286,9 @@ by PR. Kamra's entry is `apps.json` (category `Applications`) plus
 
 ```json
 {
-  "version": "2.6.16",
+  "version": "2.8.2",
   "branch": "main",
-  "commit": "e3341b8f5795795f041e95c31fa98e0603f15db7",
+  "commit": "28402b89979b85097cbacec24496aaf68ffb32c4",
   "frappe_core": ">=16.0.0-dev,<17.0.0",
   "dependencies": { "payments": ">=0.0.1,<1.0.0" },
   "channel": "stable"
@@ -297,7 +297,7 @@ by PR. Kamra's entry is `apps.json` (category `Applications`) plus
 
 From 2.8.0 the payments dependency is `>=16.0.0,<17.0.0` (Frappe v16
 payments, [#641](https://github.com/Kamra-PMS/kamra-pms/pull/641)). Put that
-range on the 2.8.0 registry row. The sample above is the 2.6.16 shape.
+range on the 2.8.0 registry row. The sample above is the 2.8.2 shape.
 
 The registry CI reads `version` from the `__version__` line verbatim and
 rejects symlinks that point outside the repo, so keep the release-please
