@@ -18,7 +18,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, date_diff, getdate, now_datetime, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.pos import _full_name, _served_by
 from kamra.crs import assert_property_access
 
@@ -571,6 +571,8 @@ PACKS: dict[str, dict] = {
 			 "columns": ["outlet", "qty", "wait_minutes", "cook_minutes",
 			             "pass_minutes", "total_minutes"], "group_by": ["outlet"]},
 		],
+		# money columns; the front desk sees the counts only
+		"money": ("grand_total", "amount"),
 	},
 	"engineering": {
 		"label": "Engineering pack",
@@ -608,6 +610,7 @@ PACKS: dict[str, dict] = {
 			 "columns": ["name", "order_type", "status", "turnaround_hours", "qty"],
 			 "group_by": ["name"]},
 		],
+		"money": ("amount",),
 	},
 	"hotel_manager": {
 		"label": "Hotel Manager pack",
@@ -632,9 +635,14 @@ PACKS: dict[str, dict] = {
 def _pack_sections(property: str, pack_id: str) -> list[dict]:
 	"""The sections of a pack this user may run on this property."""
 	from kamra.dashboards import sees_figures
-	if PACKS[pack_id].get("figures") and not sees_figures():
+	pack = PACKS[pack_id]
+	figures = sees_figures()
+	if pack.get("figures") and not figures:
 		return []
-	return [s for s in PACKS[pack_id]["sections"]
+	money = () if figures else pack.get("money", ())
+	return [dict(s, columns=[c for c in s["columns"] if c not in money])
+	        if money and s.get("columns") else s
+	        for s in pack["sections"]
 	        if _dataset_allowed(DATASETS[s["dataset"]])
 	        and _module_enabled(property, DATASETS[s["dataset"]].get("module"))]
 
@@ -1600,8 +1608,7 @@ def _pack_html(pack: dict, lang: str = "en") -> str:
 # ---------------------------------------------------------------------------
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def list_report_datasets(property: str):
 	"""Whitelisted datasets the current user may run on this property."""
 	assert_property_access(property)
@@ -1624,8 +1631,7 @@ def list_report_datasets(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def list_report_packs(property: str):
 	"""Department packs with the sections this user may run here."""
 	assert_property_access(property)
@@ -1640,8 +1646,7 @@ def list_report_packs(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def run_report_pack(property: str, pack: str, from_date: str | None = None,
                     to_date: str | None = None, format: str | None = "json",
                     lang: str | None = "en", compare: int | str | None = 1):
@@ -1681,8 +1686,7 @@ def run_report_pack(property: str, pack: str, from_date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def list_custom_reports(property: str):
 	"""Saved reports visible to this user on the property."""
 	assert_property_access(property)
@@ -1733,8 +1737,7 @@ def _assert_can_edit_doc(doc):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def get_custom_report(name: str, property: str | None = None):
 	"""Full saved definition for the builder."""
 	doc = _load_report(name, property)
@@ -1765,8 +1768,7 @@ def get_custom_report(name: str, property: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def save_custom_report(
 	property: str,
 	title: str,
@@ -1843,8 +1845,7 @@ def save_custom_report(
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def delete_custom_report(name: str, property: str | None = None):
 	"""Delete a saved report the user can edit."""
 	doc = _load_report(name, property)
@@ -1855,8 +1856,7 @@ def delete_custom_report(name: str, property: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Revenue Manager",
-               "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def run_custom_report(
 	property: str,
 	dataset: str | None = None,
@@ -1927,8 +1927,7 @@ def _filename(payload: dict, ext: str) -> str:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "System Manager", "Front Desk",
-               "Revenue Manager", "Housekeeping", "Kamra Agent", "Night Auditor", "F&B Manager")
+@require_perm("Kamra Custom Report", "run_reports")
 def email_custom_report(
 	property: str,
 	recipients: str,

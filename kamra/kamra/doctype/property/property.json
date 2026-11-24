@@ -381,7 +381,7 @@
    "default": "7500",
    "fieldname": "gst_slab_threshold",
    "fieldtype": "Currency",
-   "label": "Slab Threshold (\u20b9/night)"
+   "label": "Slab Threshold (₹/night)"
   },
   {
    "default": "5",
@@ -474,7 +474,7 @@
    "fieldname": "hero_image",
    "fieldtype": "Attach Image",
    "label": "Hero Image",
-   "description": "1920\u00d71080px (16:9 landscape), JPG or WebP under 2 MB. The big photo at the top of the booking page."
+   "description": "1920×1080px (16:9 landscape), JPG or WebP under 2 MB. The big photo at the top of the booking page."
   },
   {
    "fieldname": "star_category",
@@ -499,7 +499,7 @@
    "label": "Property Amenities (public)"
   },
   {
-   "description": "Square, 512\u00d7512px. PNG or SVG with a transparent background. Shown on the booking page and invoices.",
+   "description": "Square, 512×512px. PNG or SVG with a transparent background. Shown on the booking page and invoices.",
    "fieldname": "logo_url",
    "fieldtype": "Attach Image",
    "label": "Logo"
@@ -708,7 +708,7 @@
    "fieldname": "og_image",
    "fieldtype": "Attach Image",
    "label": "OG Image",
-   "description": "Exactly 1200\u00d7630px, JPG or PNG. What WhatsApp, Google and social previews show when the booking page is shared."
+   "description": "Exactly 1200×630px, JPG or PNG. What WhatsApp, Google and social previews show when the booking page is shared."
   },
   {
    "fieldname": "page_slug",
@@ -775,7 +775,31 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "configure": 1,
+   "edit_settings": 1,
+   "go_live": 1,
+   "upload_images": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "verify_tax_id": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1,
+   "app_front_desk": 1,
+   "app_housekeeping": 1,
+   "app_operations": 1,
+   "app_fnb": 1,
+   "app_events": 1,
+   "app_revenue": 1,
+   "app_finance": 1,
+   "app_booking_engine": 1,
+   "app_admin": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "create": 1,
@@ -786,61 +810,171 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "configure": 1,
+   "edit_settings": 1,
+   "go_live": 1,
+   "upload_images": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "verify_tax_id": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1,
+   "app_front_desk": 1,
+   "app_housekeeping": 1,
+   "app_operations": 1,
+   "app_fnb": 1,
+   "app_events": 1,
+   "app_revenue": 1,
+   "app_finance": 1,
+   "app_booking_engine": 1,
+   "app_admin": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Front Desk"
+   "role": "Front Desk",
+   "upload_images": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "verify_tax_id": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_locale": 1,
+   "view_snapshot": 1,
+   "app_front_desk": 1,
+   "app_housekeeping": 1,
+   "app_operations": 1,
+   "app_fnb": 1,
+   "app_events": 1,
+   "app_finance": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Finance"
+   "role": "Finance",
+   "edit_settings": 1,
+   "go_live": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "verify_tax_id": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1,
+   "app_fnb": 1,
+   "app_finance": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Revenue Manager"
+   "role": "Revenue Manager",
+   "edit_settings": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "view_dashboard": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1,
+   "app_events": 1,
+   "app_revenue": 1,
+   "app_booking_engine": 1,
+   "view_modules": 1,
+   "view_settings": 1,
+   "view_flash": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Housekeeping"
+   "role": "Housekeeping",
+   "use_console": 1,
+   "use_settings": 1,
+   "view_locale": 1,
+   "app_housekeeping": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Kamra Agent"
+   "role": "Kamra Agent",
+   "upload_images": 1,
+   "use_console": 1,
+   "view_briefing": 1,
+   "view_dashboard": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_performance": 1,
+   "view_snapshot": 1,
+   "view_modules": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Housekeeping Supervisor"
+   "role": "Housekeeping Supervisor",
+   "edit_settings": 1,
+   "use_console": 1,
+   "use_settings": 1,
+   "view_locale": 1,
+   "app_housekeeping": 1,
+   "view_modules": 1,
+   "view_settings": 1
   },
   {
    "read": 1,
    "report": 1,
    "print": 1,
-   "role": "Night Auditor"
+   "role": "Night Auditor",
+   "use_console": 1,
+   "view_flash": 1,
+   "view_locale": 1,
+   "view_snapshot": 1,
+   "app_front_desk": 1,
+   "app_finance": 1,
+   "view_modules": 1,
+   "view_dashboard": 1
   },
   {
    "read": 1,
    "report": 1,
    "print": 1,
-   "role": "F&B Manager"
+   "role": "F&B Manager",
+   "view_modules": 1,
+   "view_settings": 1,
+   "edit_settings": 1,
+   "view_locale": 1,
+   "app_fnb": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "role": "Kamra Service Account",
+   "view_locale": 1
   },
   {
    "read": 1,

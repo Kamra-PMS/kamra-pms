@@ -180,7 +180,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-29 12:00:00",
+ "modified": "2026-10-31 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Vendor Bill",
@@ -201,7 +201,11 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "email": 1
+   "email": 1,
+   "view_payables": 1,
+   "enter_bills": 1,
+   "pay_bills": 1,
+   "approve_bills": 1
   },
   {
    "role": "Hotel Admin",
@@ -209,7 +213,11 @@
    "export": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "view_payables": 1,
+   "enter_bills": 1,
+   "pay_bills": 1,
+   "approve_bills": 1
   },
   {
    "role": "Finance",
@@ -217,12 +225,17 @@
    "export": 1,
    "print": 1,
    "report": 1,
-   "email": 1
+   "email": 1,
+   "view_payables": 1,
+   "enter_bills": 1,
+   "pay_bills": 1
   },
   {
    "role": "Kamra Agent",
    "read": 1,
-   "report": 1
+   "report": 1,
+   "view_payables": 1,
+   "enter_bills": 1
   }
  ]
 }

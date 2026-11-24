@@ -17,7 +17,7 @@ from frappe import _
 from frappe.query_builder import Case, Order
 from frappe.utils import add_to_date, get_datetime, now_datetime, time_diff_in_seconds
 
-from kamra.authz import assert_property_access, require_roles
+from kamra.authz import assert_property_access, require_perm
 
 OPS_ROLES = ("Front Desk", "Housekeeping", "Housekeeping Supervisor",
              "Hotel Admin", "Kamra Agent")
@@ -54,7 +54,7 @@ def _minutes_left(due_by) -> int | None:
 
 
 @frappe.whitelist()
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def tickets_search(property: str, view: str = "open", category: str | None = None,
                    priority: str | None = None, q: str | None = None,
                    assignee: str | None = None, older_than_days: int = 0,
@@ -132,7 +132,7 @@ def tickets_search(property: str, view: str = "open", category: str | None = Non
 
 
 @frappe.whitelist()
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def ticket_detail(ticket: str):
 	"""One ticket in full: its fields, SLA, and the timeline."""
 	doc = frappe.get_doc("Service Ticket", ticket)
@@ -179,7 +179,7 @@ def ticket_detail(ticket: str):
 
 
 @frappe.whitelist()
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def ticket_assignees(property: str):
 	"""Staff a ticket can be handed to."""
 	assert_property_access(property)
@@ -200,7 +200,7 @@ def ticket_assignees(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def assign_ticket(ticket: str, user: str | None = None, note: str | None = None):
 	"""Hand a ticket to someone, or clear the assignee (user empty)."""
 	doc = frappe.get_doc("Service Ticket", ticket)
@@ -220,14 +220,14 @@ def assign_ticket(ticket: str, user: str | None = None, note: str | None = None)
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def claim_ticket(ticket: str):
 	"""Take a ticket yourself."""
 	return assign_ticket(ticket, frappe.session.user)
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def start_ticket(ticket: str):
 	"""Begin work: moves it to In Progress and, if nobody has it, gives it to you."""
 	doc = frappe.get_doc("Service Ticket", ticket)
@@ -242,7 +242,7 @@ def start_ticket(ticket: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def add_ticket_note(ticket: str, note: str):
 	"""A comment on the timeline (what was tried, who was called)."""
 	if not (note or "").strip():
@@ -254,7 +254,7 @@ def add_ticket_note(ticket: str, note: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def resolve_ticket(ticket: str, resolution_note: str | None = None, close: int = 0):
 	"""Mark a ticket solved, recording who did it and what was done."""
 	doc = frappe.get_doc("Service Ticket", ticket)
@@ -271,7 +271,7 @@ def resolve_ticket(ticket: str, resolution_note: str | None = None, close: int =
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*OPS_ROLES)
+@require_perm("Service Ticket", "work_requests")
 def reopen_ticket(ticket: str, reason: str):
 	"""A solved ticket that came back. Needs a reason; it is kept in the timeline."""
 	if len((reason or "").strip()) < 3:

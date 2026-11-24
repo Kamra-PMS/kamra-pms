@@ -124,7 +124,12 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "update_rooms": 1,
+   "view_availability": 1,
+   "view_board": 1,
+   "view_rooms": 1,
+   "view_tape": 1
   },
   {
    "create": 1,
@@ -135,7 +140,12 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "update_rooms": 1,
+   "view_availability": 1,
+   "view_board": 1,
+   "view_rooms": 1,
+   "view_tape": 1
   },
   {
    "create": 1,
@@ -144,7 +154,12 @@
    "read": 1,
    "report": 1,
    "role": "Front Desk",
-   "write": 1
+   "write": 1,
+   "update_rooms": 1,
+   "view_availability": 1,
+   "view_board": 1,
+   "view_rooms": 1,
+   "view_tape": 1
   },
   {
    "email": 1,
@@ -152,21 +167,25 @@
    "read": 1,
    "report": 1,
    "role": "Housekeeping",
-   "write": 1
+   "write": 1,
+   "update_rooms": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Revenue Manager"
+   "role": "Revenue Manager",
+   "view_availability": 1,
+   "view_rooms": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Finance"
+   "role": "Finance",
+   "view_rooms": 1
   },
   {
    "email": 1,
@@ -174,7 +193,12 @@
    "read": 1,
    "report": 1,
    "role": "Kamra Agent",
-   "write": 1
+   "write": 1,
+   "update_rooms": 1,
+   "view_availability": 1,
+   "view_board": 1,
+   "view_rooms": 1,
+   "view_tape": 1
   },
   {
    "email": 1,
@@ -182,13 +206,17 @@
    "read": 1,
    "report": 1,
    "role": "Housekeeping Supervisor",
-   "write": 1
+   "write": 1,
+   "update_rooms": 1,
+   "view_board": 1,
+   "view_rooms": 1
   },
   {
    "read": 1,
    "report": 1,
    "print": 1,
-   "role": "Night Auditor"
+   "role": "Night Auditor",
+   "view_rooms": 1
   },
   {
    "read": 1,

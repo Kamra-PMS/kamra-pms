@@ -1,0 +1,10 @@
+{
+ "creation": "2026-10-30 12:32:21.000000",
+ "doc_type": "Property",
+ "doctype": "Permission Type",
+ "modified": "2026-10-30 12:32:21.000000",
+ "modified_by": "Administrator",
+ "name": "property_view_flash",
+ "owner": "Administrator",
+ "perm_type": "view_flash"
+}

@@ -51,7 +51,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-20 10:00:00.000000",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "SOP Template",
@@ -63,18 +63,28 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
-   "write": 1
+   "write": 1,
+   "configure": 1,
+   "read_sops": 1
   },
   {
    "create": 1,
    "read": 1,
    "report": 1,
    "role": "Hotel Admin",
-   "write": 1
+   "write": 1,
+   "configure": 1,
+   "read_sops": 1
   },
   {
    "read": 1,
-   "role": "Front Desk"
+   "role": "Front Desk",
+   "read_sops": 1
+  },
+  {
+   "role": "Kamra Agent",
+   "read_sops": 1,
+   "select": 1
   }
  ],
  "row_format": "Dynamic",

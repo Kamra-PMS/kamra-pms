@@ -32,7 +32,7 @@ Content-Type: application/json
 
 ### `kamra.api.enabled_modules`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**GET/POST** · permission: `Property: view_modules` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`, `F&B Manager`
 
 Which parts of Kamra this property runs. Empty setting = all of
 them, so an existing property keeps working untouched.
@@ -43,7 +43,7 @@ them, so an existing property keeps working untouched.
 
 ### `kamra.api.set_enabled_modules`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Turn parts of the product on or off for one property.
 
@@ -92,13 +92,13 @@ once here and stored hashed thereafter.
 
 ### `kamra.api.upload_room_image`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Hotel Admin`, `System Manager`
+**GET/POST** · permission: `Property: upload_images` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Uploads an image file for room types / properties to public files.
 
 ### `kamra.api.set_room_rate`
 
-**GET/POST** · roles: `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Rate Plan: set_rates` · default roles: `System Manager`, `Hotel Admin`, `Revenue Manager`, `Kamra Agent`
 
 Set the nightly rate for a room type over a date range - bounded by
 the owner's Rate Guardrails (PRD FR-30). This is the Revenue Agent's
@@ -119,7 +119,7 @@ Guardrails still clamp the rate; the change is recorded in the action log.
 
 ### `kamra.api.owner_briefing`
 
-**GET/POST**
+**GET/POST** · permission: `Rate Plan: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Deterministic numbers for the owner's morning briefing (PRD FR-70).
 An LLM turns this into prose; it never invents the figures.
@@ -159,7 +159,7 @@ it (auto_price off); others are priced by the engine.
 
 ### `kamra.api.registration_card`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Everything the printed GRC (guest registration card) needs.
 
@@ -169,7 +169,7 @@ Everything the printed GRC (guest registration card) needs.
 
 ### `kamra.api.cash_summary`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Cashier Session: view_cash_summary` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `Night Auditor`, `Revenue Manager`
 
 Cashier reconciliation: what the system says was collected today,
 per payment mode - the number the drawer must match at shift close.
@@ -185,7 +185,7 @@ payments for properties that have not opened a till yet.
 
 ### `kamra.api.record_advance`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Take a deposit / advance on a booking before arrival (#114). Opens
 the guest folio early so the money sits on the stay from day one and
@@ -207,7 +207,7 @@ same key returns the first result instead of posting again.
 
 ### `kamra.api.deposit_payment_link`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 A payment link for the booking deposit - the deposit still due by
 default, or any amount the desk agrees with the guest. Paid through the
@@ -220,7 +220,7 @@ gateway, it posts to the folio as an Advance (settle_payment_link).
 
 ### `kamra.api.simulate_payment_link`
 
-**POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`
+**POST** · permission: `Security Deposit: refund_deposit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`
 
 Test mode only: act as the gateway and mark the outstanding link
 paid - for demos and training, never on a live gateway.
@@ -231,7 +231,7 @@ paid - for demos and training, never on a live gateway.
 
 ### `kamra.api.security_deposit`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 The stay's refundable security (damage) deposit: policy amount, what
 is held, withheld and refunded, its history and which actions are open.
@@ -242,7 +242,7 @@ is held, withheld and refunded, its history and which actions are open.
 
 ### `kamra.api.collect_security_deposit`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Take a refundable security deposit (villas: the damage deposit). Lands
 on the guest folio as a Security Deposit payment and in the Deposit
@@ -263,7 +263,7 @@ returns the first result instead of posting again.
 
 ### `kamra.api.waive_security_deposit`
 
-**POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Waive the property's security deposit for this stay (reason required).
 Refused once money has been taken - refund it instead.
@@ -275,7 +275,7 @@ Refused once money has been taken - refund it instead.
 
 ### `kamra.api.withhold_security_deposit`
 
-**POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`
+**POST** · permission: `Security Deposit: refund_deposit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`
 
 Keep all or part of the held deposit against damage (reason required).
 The withheld part posts as a damage charge on the guest folio and moves
@@ -291,7 +291,7 @@ from the Deposit ledger to the Guest ledger to pay it.
 
 ### `kamra.api.refund_security_deposit`
 
-**POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`
+**POST** · permission: `Security Deposit: refund_deposit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`
 
 Refund what is still held (all of it by default) through the folio
 refund path - till, folio and a Deposit-ledger debit. Cashier PIN.
@@ -306,7 +306,7 @@ refund path - till, folio and a Deposit-ledger debit. Cashier PIN.
 
 ### `kamra.api.release_access_instructions`
 
-**GET/POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -315,7 +315,7 @@ refund path - till, folio and a Deposit-ledger debit. Cashier PIN.
 
 ### `kamra.api.confirm_pending_reservation`
 
-**GET/POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Mark Held / Pending Payment / Requested as Confirmed (host or payment).
 
@@ -325,7 +325,7 @@ Mark Held / Pending Payment / Requested as Confirmed (host or payment).
 
 ### `kamra.api.folio_payment_link`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -333,7 +333,7 @@ Mark Held / Pending Payment / Requested as Confirmed (host or payment).
 
 ### `kamra.api.hk_queue`
 
-**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 The housekeeper's phone view: prioritized task queue + room board.
 Checkout cleans for rooms with an arrival today jump the queue.
@@ -344,7 +344,7 @@ Checkout cleans for rooms with an arrival today jump the queue.
 
 ### `kamra.api.hk_update_task`
 
-**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Start or complete a housekeeping task from the phone.
 
@@ -366,7 +366,7 @@ set_housekeeping_status applies to Inspected / Ready.
 
 ### `kamra.api.hk_upload_media`
 
-**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Attach a completion photo/video (proof of clean) to a housekeeping task.
 
@@ -380,7 +380,7 @@ closes and drops out of the live queue.
 
 ### `kamra.api.hk_delete_media`
 
-**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Remove a completion photo/video from a housekeeping task.
 
@@ -391,7 +391,7 @@ Remove a completion photo/video from a housekeeping task.
 
 ### `kamra.api.hk_task_media`
 
-**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Completion photos/videos attached to one housekeeping task (newest first).
 
@@ -401,7 +401,7 @@ Completion photos/videos attached to one housekeeping task (newest first).
 
 ### `kamra.api.hk_room_media`
 
-**GET/POST** · roles: `Housekeeping`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Room: update_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Photos/videos from the room's LATEST cleaning only - so the front desk
 sees just the most recent clean, not older cycles. Lets reception confirm a
@@ -413,7 +413,7 @@ room is genuinely guest-ready.
 
 ### `kamra.api.hk_staff`
 
-**GET/POST** · roles: `Housekeeping Supervisor`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Housekeeping Task: supervise` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Who a supervisor can hand a housekeeping task to at this property.
 
@@ -423,7 +423,7 @@ Who a supervisor can hand a housekeeping task to at this property.
 
 ### `kamra.api.hk_assign_task`
 
-**POST** · roles: `Front Desk`, `Housekeeping`, `Kamra Agent`
+**POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 A supervisor hands a task to a specific housekeeper (awaits accept).
 Attendants take work from the pool with hk_claim_task; handing a task to
@@ -437,7 +437,7 @@ housekeeper who can work this property.
 
 ### `kamra.api.hk_claim_task`
 
-**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 A housekeeper takes an unassigned task from the pool for themselves.
 
@@ -447,7 +447,7 @@ A housekeeper takes an unassigned task from the pool for themselves.
 
 ### `kamra.api.hk_accept_task`
 
-**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 The assigned housekeeper accepts the task handed to them.
 
@@ -457,7 +457,7 @@ The assigned housekeeper accepts the task handed to them.
 
 ### `kamra.api.hk_reject_task`
 
-**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Housekeeping Task: do_housekeeping` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Decline a task - it drops back into the pool for someone else,
 keeping the reason on record.
@@ -469,7 +469,7 @@ keeping the reason on record.
 
 ### `kamra.api.hk_log_item`
 
-**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Room: update_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 A floor housekeeper logs a lost/found/missing/damaged item from the
 phone. Lands in the Lost & Found register for the desk to reconcile.
@@ -483,7 +483,7 @@ phone. Lands in the Lost & Found register for the desk to reconcile.
 
 ### `kamra.api.hk_post_consumable`
 
-**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Room: update_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Housekeeping posts what they find in the room - minibar consumption or
 laundry - onto the in-house guest's folio. Scoped to those two types so
@@ -498,7 +498,7 @@ the floor can't touch discounts, allowances or room charges.
 
 ### `kamra.api.create_ticket`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Service Ticket: handle_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Create a guest-request ticket. This is also the agent tool for
 'guest wants towels / AC is broken' - PRD FR-42.
@@ -517,7 +517,7 @@ Create a guest-request ticket. This is also the agent tool for
 
 ### `kamra.api.tickets_list`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Service Ticket: handle_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -526,7 +526,7 @@ Create a guest-request ticket. This is also the agent tool for
 
 ### `kamra.api.advance_ticket`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Service Ticket: handle_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -536,7 +536,7 @@ Create a guest-request ticket. This is also the agent tool for
 
 ### `kamra.api.get_folio`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Folio: view_folio` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Folio for a reservation - opens one if the guest is checked in.
 
@@ -546,7 +546,7 @@ Folio for a reservation - opens one if the guest is checked in.
 
 ### `kamra.api.add_folio_charge`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -561,7 +561,7 @@ Folio for a reservation - opens one if the guest is checked in.
 
 ### `kamra.api.add_folio_payment`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Record money received on the stay ledger. kind labels WHY it came
 in - Payment (against the bill), Advance (collected before/at
@@ -607,7 +607,7 @@ were posted.
 
 ### `kamra.api.refund_folio_payment`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Give money back on an open folio - a held security deposit at
 checkout, or an over-collected advance. Stored as a negative ledger
@@ -632,7 +632,7 @@ refund instead of paying out twice.
 
 ### `kamra.api.set_actual_times`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Correct the recorded arrival/departure moments - early check-ins
 and late checkouts should show what actually happened, not just when
@@ -646,7 +646,7 @@ the button was pressed. Early/late charges stay explicit folio lines.
 
 ### `kamra.api.void_folio_charge`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Remove a wrong charge line from an open folio (the bill-correction
 path): the line stays and a signed reversal line with the reason and
@@ -688,7 +688,7 @@ idempotency_key returns the first correction.
 
 ### `kamra.api.post_stay_charge`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Post a charge to a stay letting the billing rules pick the folio -
 corporate room/meals land on the Company folio, alcohol and anything
@@ -705,7 +705,7 @@ unruled lands on the guest. The agent-facing way to post charges.
 
 ### `kamra.api.set_billing_rules`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Replace a company's billing rules. rules = [{charge_type, pay_by}].
 
@@ -716,7 +716,7 @@ Replace a company's billing rules. rules = [{charge_type, pay_by}].
 
 ### `kamra.api.get_billing_rules`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -724,7 +724,7 @@ Replace a company's billing rules. rules = [{charge_type, pay_by}].
 
 ### `kamra.api.company_billing_default`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 What this company pays when it has no billing rules: the property's
 `default_company_billing` for a credit company, nothing otherwise.
@@ -737,7 +737,7 @@ What this company pays when it has no billing rules: the property's
 
 ### `kamra.api.add_occupant_names`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Add the other people staying to the stay's occupant register by name
 (at booking, before anyone's ID is seen). Names already on the register
@@ -750,7 +750,7 @@ are left as they are; age and ID are filled at check-in.
 
 ### `kamra.api.update_occupants`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Replace the stay's occupant register.
 occupants = [{full_name, age, gender, nationality, id_type, id_number, phone,
@@ -767,7 +767,7 @@ country's register needs them (see localization.minor_id_kept).
 
 ### `kamra.api.split_folio`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -776,7 +776,7 @@ country's register needs them (see localization.minor_id_kept).
 
 ### `kamra.api.delete_folio`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Remove an empty split/extra folio created by mistake.
 
@@ -789,7 +789,7 @@ charges and no payments - money is never dropped this way.
 
 ### `kamra.api.transfer_folio_charge`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -799,7 +799,7 @@ charges and no payments - money is never dropped this way.
 
 ### `kamra.api.transfer_folio_charges`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Move charge lines off one open folio, ledger and all. Give one target:
 to_folio (another folio of the same stay or group), to_company=1 (the
@@ -819,7 +819,7 @@ reason). A retry with the same idempotency_key returns the first move.
 
 ### `kamra.api.split_folio_charge`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Split one charge line between two folios - by percent or amount.
 
@@ -833,7 +833,7 @@ Split one charge line between two folios - by percent or amount.
 
 ### `kamra.api.open_guest_bills`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 A separate bill for each guest sharing the room: one Extra folio per
 other occupant (or per name given), invoiced in that guest's name. The
@@ -846,7 +846,7 @@ main guest keeps the Guest folio.
 
 ### `kamra.api.share_folio_charges`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Share charge lines (room nights) between the guests' bills: evenly,
 or by a percent per other bill (`shares`); the source keeps the rest.
@@ -860,7 +860,7 @@ or by a percent per other bill (`shares`); the source keeps the rest.
 
 ### `kamra.api.change_stay_company`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Change (or remove) the company a stay bills to, mid-stay or at
 check-out. Charges posted from now on route by the new company's
@@ -881,7 +881,7 @@ why go on the record.
 
 ### `kamra.api.reservation_folios`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 All folios of a stay (guest + splits) with balances - plus the
 group master folio when the stay belongs to a group, so charges can
@@ -893,7 +893,7 @@ be moved between a guest's bill and the company's consolidated one.
 
 ### `kamra.api.group_master_folio`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Group Booking: bill_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Get-or-create the group's consolidated company folio.
 
@@ -903,7 +903,7 @@ Get-or-create the group's consolidated company folio.
 
 ### `kamra.api.group_folios`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Group Booking: bill_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 The whole group's billing picture: the master folio plus every
 member reservation's folios, with balances.
@@ -914,7 +914,7 @@ member reservation's folios, with balances.
 
 ### `kamra.api.set_group_master`
 
-**POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+**POST** · permission: `Group Booking: manage_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Make this room the group's main room: its guest pays for the group.
 An open group bill moves with it (re-anchored to the new main room).
@@ -926,7 +926,7 @@ An open group bill moves with it (re-anchored to the new main room).
 
 ### `kamra.api.set_pays_own_charges`
 
-**POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+**POST** · permission: `Reservation: plan_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Kamra Agent`
 
 Opt a group room out of the main room's bill (or back in). Affects new
 charges only; move lines already posted with transfer_folio_charges.
@@ -938,7 +938,7 @@ charges only; move lines already posted with transfer_folio_charges.
 
 ### `kamra.api.settle_group_bill`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: bill_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Settle the group's master bill: take a payment on it (`mode`, and
 `amount`, default the whole balance) or, for a group whose company has
@@ -958,7 +958,7 @@ house: the reply warns, and their later charges open a new group bill.
 
 ### `kamra.api.close_folio`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Close a settled folio and issue its invoice number.
 
@@ -975,7 +975,7 @@ guest is in house.
 
 ### `kamra.api.post_allowance`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Write off part of a bill against a specific folio, with a reason.
 
@@ -1025,7 +1025,7 @@ lines without posting.
 
 ### `kamra.api.decide_allowance`
 
-**POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`
+**POST** · permission: `Folio: handle_allowances` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`
 
 Approve or reject a pending allowance. The approver is the signed-in
 manager, or, on the spot at the desk, a manager who picks their name
@@ -1044,7 +1044,7 @@ AI agents never decide.
 
 ### `kamra.api.allowance_requests`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Allowances waiting for a manager (or decided ones, by status), with
 the stay they are for. can_decide says if the caller may approve.
@@ -1058,7 +1058,7 @@ the stay they are for. can_decide says if the caller may approve.
 
 ### `kamra.api.allowance_voucher`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`
+**GET/POST** · permission: `Folio: handle_allowances` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`
 
 The printable allowance voucher for a posted allowance, by request
 name or serial: who asked, the manager who approved it with their PIN,
@@ -1070,7 +1070,7 @@ and what it took off the bill. Rejected or waiting requests have none.
 
 ### `kamra.api.allowance_approvers`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`
+**GET/POST** · permission: `Folio: handle_allowances` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`
 
 Managers who can approve an allowance on the spot here (role from
 the property setting, cashier PIN set). Names only.
@@ -1081,7 +1081,7 @@ the property setting, cashier PIN set). Names only.
 
 ### `kamra.api.part_settle_folio`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Interim invoice mid-stay: freeze the paid folio, open a fresh one.
 
@@ -1092,7 +1092,7 @@ Interim invoice mid-stay: freeze the paid folio, open a fresh one.
 
 ### `kamra.api.cancel_invoice`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Void an invoice into the register and reopen the folio for correction.
 
@@ -1104,7 +1104,7 @@ Void an invoice into the register and reopen the folio for correction.
 
 ### `kamra.api.folio_invoice`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Everything the bill needs to print itself.
 
@@ -1141,7 +1141,7 @@ Statement fields (stable for integrations):
 
 ### `kamra.api.run_night_audit`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Close the current business date. Refused while a blocking pre-check
 (kamra.night_audit.night_audit_precheck) has items, unless each is
@@ -1156,7 +1156,7 @@ listed in `acknowledge` (check keys) with a `note` giving the reason.
 
 ### `kamra.api.gstr1_rows`
 
-**GET/POST**
+**GET/POST** · permission: `Night Audit Run: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Invoice-level rows for a GSTR-1 style export (v0: B2C summary).
 Filter by property - each GSTIN files its own return. The return is the
@@ -1171,7 +1171,7 @@ only the user's India properties are included.
 
 ### `kamra.api.guests_with_stats`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Guest list with stay stats - the CRM index.
 
@@ -1181,7 +1181,7 @@ Guest list with stay stats - the CRM index.
 
 ### `kamra.api.guest_search`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Typeahead for attaching a booking to an existing profile.
 
@@ -1191,7 +1191,7 @@ Typeahead for attaching a booking to an existing profile.
 
 ### `kamra.api.guest_alert`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Is the guest a booking would attach to blacklisted? The desk asks
 before booking so the warning shows up front, not as a refusal at the
@@ -1205,7 +1205,7 @@ create_booking reuses only when the typed name matches too).
 
 ### `kamra.api.set_guest_blacklist`
 
-**POST**
+**POST** · permission: `Guest: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Blacklist a guest, or lift it. Hotel Admin only; a reason is required
 either way and lands in the activity log with the before/after.
@@ -1218,7 +1218,7 @@ either way and lands in the activity log with the before/after.
 
 ### `kamra.api.merge_guests`
 
-**GET/POST**
+**GET/POST** · permission: `Guest: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Merge a duplicate profile into the surviving one: every linked
 document is repointed, missing contact fields are copied over, and
@@ -1232,7 +1232,7 @@ lines and totals.
 
 ### `kamra.api.anonymize_guest`
 
-**GET/POST**
+**GET/POST** · permission: `Guest: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Right to erasure (DPDP s.12): see kamra.privacy.erase_guest. Stays
 and bills stay for the books. Irreversible.
@@ -1243,7 +1243,7 @@ and bills stay for the books. Irreversible.
 
 ### `kamra.api.guest_journey`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 One guest's full story: profile, stats, chronological timeline.
 This is the CRM detail view - and the context an AI concierge loads
@@ -1262,7 +1262,7 @@ User Permissions, so a property-restricted user sees only theirs.
 
 ### `kamra.api.front_desk_snapshot`
 
-**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`, `Finance`, `Revenue Manager`
+**GET/POST** · permission: `Property: view_snapshot` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`, `Night Auditor`
 
 Everything the front desk needs for one day, in one call.
 
@@ -1273,7 +1273,7 @@ Everything the front desk needs for one day, in one call.
 
 ### `kamra.api.find_reservations`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
+**GET/POST** · permission: `Reservation: view_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`
 
 Search reservations by guest name, room number, or reference - optionally
 filtered by status. The way to resolve a room number or a name to an actual
@@ -1288,7 +1288,7 @@ reservation before acting on it.
 
 ### `kamra.api.find_invoices`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Folio: find_invoices` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Revenue Manager`
 
 Resolve an invoice number (or partial) to its folio and stay, so the
 command palette can jump straight from 'INV-KDP-26-00042' to the bill.
@@ -1301,7 +1301,7 @@ command palette can jump straight from 'INV-KDP-26-00042' to the bill.
 
 ### `kamra.api.stay_instructions`
 
-**GET/POST** · roles: `Front Desk`, `Housekeeping`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: follow_instructions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 The special instructions on a stay (a VIP amenity, a 6am wake-up, a
 no-feather pillow) - each for one department, Open until someone marks
@@ -1313,7 +1313,7 @@ it Done.
 
 ### `kamra.api.add_stay_instruction`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Add an instruction to a stay for one department. Written as its own
 child row so it never re-saves (and re-validates) the whole booking.
@@ -1326,7 +1326,7 @@ child row so it never re-saves (and re-validates) the whole booking.
 
 ### `kamra.api.set_stay_instruction_status`
 
-**POST** · roles: `Front Desk`, `Housekeeping`, `Kamra Agent`
+**POST** · permission: `Reservation: follow_instructions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Mark one instruction Done (stamping who and when), or reopen it.
 
@@ -1338,7 +1338,7 @@ Mark one instruction Done (stamping who and when), or reopen it.
 
 ### `kamra.api.reservation_detail`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
+**GET/POST** · permission: `Reservation: view_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`
 
 Everything about one booking in a single call - stay, money, guest,
 booker and the actions currently available. Powers the reservation drawer.
@@ -1349,7 +1349,7 @@ booker and the actions currently available. Powers the reservation drawer.
 
 ### `kamra.api.upload_id_document`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Capture the guest's ID at the counter, when they never uploaded one.
 
@@ -1365,7 +1365,7 @@ fixes it in the same breath instead of turning the guest away.
 
 ### `kamra.api.id_document_image`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 The ID scan as a data URL, for the desk to eyeball.
 
@@ -1385,7 +1385,7 @@ every role the app actually grants.
 
 ### `kamra.api.verify_precheckin`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 The desk has held the document against the human and agrees.
 
@@ -1401,7 +1401,7 @@ moment this lands; that guard was clearly written for this.
 
 ### `kamra.api.checkin_context`
 
-**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: check_in_out` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Everything the check-in flow needs in one round trip: how complete
 the guest's registration is, the assigned room - or the allocator's
@@ -1413,7 +1413,7 @@ suggestion plus every room the desk may hand over instead.
 
 ### `kamra.api.check_in`
 
-**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: check_in_out` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Check the guest in: the last step of the guided check-in.
 
@@ -1431,7 +1431,7 @@ in the Keys step.
 
 ### `kamra.api.walk_in`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Walk-in in one step: book, register the ID, check into the chosen
 room and take the money - the counter flow that used to be four screens.
@@ -1490,7 +1490,7 @@ books nights at the desk's own prices, as in create_booking.
 
 ### `kamra.api.upload_occupant_id`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 ID document (kind "id") or face photo (kind "photo") for one
 occupant on the stay register. Same security pipeline as every ID
@@ -1507,7 +1507,7 @@ rules find it. Checkout discards the ID, never the photo.
 
 ### `kamra.api.upload_guest_document`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 The desk captures or replaces a guest's document while preparing
 the GRC - walk-ins, or a newer copy over last visit's. kind is 'id'
@@ -1521,7 +1521,7 @@ or 'address'; stored privately, one current copy per slot.
 
 ### `kamra.api.cancellation_preview`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 What cancelling right now would cost - shown before confirming.
 
@@ -1531,7 +1531,7 @@ What cancelling right now would cost - shown before confirming.
 
 ### `kamra.api.cancel_reservation`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Cancel a booking, applying the property's cancellation policy:
 free outside the window, else the configured fee lands on the folio.
@@ -1551,7 +1551,7 @@ The cancellation is recorded in the action log.
 
 ### `kamra.api.cancellation_letter`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Everything the printable cancellation confirmation needs.
 
@@ -1561,7 +1561,7 @@ Everything the printable cancellation confirmation needs.
 
 ### `kamra.api.checkout_context`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Folio: view_folio` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Everything the guided check-out needs in one round trip, without
 changing anything: each folio with its lines and invoice, as it will
@@ -1598,7 +1598,7 @@ the desk checks the guest in again or cancels the booking.
 
 ### `kamra.api.reinstate_checkout`
 
-**POST** · roles: `Front Desk`, `Finance`
+**POST** · permission: `Reservation: reinstate_checkout` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`
 
 Undo a checkout made by mistake, the same business day: before the
 night audit runs. Each bill closed at checkout has its invoice
@@ -1616,7 +1616,7 @@ when someone else is in the room, or when the company has paid.
 
 ### `kamra.api.check_out`
 
-**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: check_in_out` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Check a guest out. What the company pays moves to the city ledger,
 after the property's credit control: a warning comes back in
@@ -1639,7 +1639,7 @@ under "All Nights" every booked night is billed as before.
 
 ### `kamra.api.early_departure`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 A guest in house is leaving before the booked date: shorten the stay
 to today through the amend path (availability, channel manager and
@@ -1657,7 +1657,7 @@ needs Finance or a Hotel Admin. checkout_context shows the plan
 
 ### `kamra.api.set_housekeeping_status`
 
-**POST** · roles: `Housekeeping`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Room: update_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Change a room's housekeeping status - role, property and DocPerm
 checked (#99): an attendant can mark Clean / Dirty, only a supervisor
@@ -1674,7 +1674,7 @@ queued offline, #228): refused if the room's status moved on since.
 
 ### `kamra.api.room_board`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Room: view_board` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Every room at a glance for the housekeeping supervisor: status,
 occupancy, who is in it, and its open task - the board the desk has,
@@ -1686,7 +1686,7 @@ inside the Housekeeping module (#99).
 
 ### `kamra.api.availability_calendar`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Room: view_tape` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Per room-type, per date: rooms available and the 2-adult rate.
 Powers the calendar view and, later, the agent's availability tool.
@@ -1699,7 +1699,7 @@ Powers the calendar view and, later, the agent's availability tool.
 
 ### `kamra.api.tape_chart`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Room: view_tape` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Rooms × dates grid with reservation bars - the front desk's home.
 
@@ -1711,7 +1711,7 @@ Rooms × dates grid with reservation bars - the front desk's home.
 
 ### `kamra.api.send_precheckin_link`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Send the guest their self check-in link (mints a token if needed). Sends
 over a connected channel when there is one; otherwise returns the link for
@@ -1725,7 +1725,7 @@ a link nobody was sent is not marked.
 
 ### `kamra.api.set_stay_times`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Set the planned arrival (ETA) and departure (ETD) times for any stay.
 These drive the hotel-position view on the tape chart: back-to-back
@@ -1743,7 +1743,7 @@ On a day-use stay the times also re-price an hourly or block rate plan
 
 ### `kamra.api.set_day_use_times`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Set planned check-in/out times for a day-use booking (drives the hourly
 tape view).
@@ -1771,7 +1771,7 @@ forecast.
 
 ### `kamra.api.position_briefing`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_briefing` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 The GM / front-desk position briefing - what Kamra Agent reads out
 at the morning meeting: today's occupancy against the overbooking
@@ -1786,7 +1786,7 @@ back-to-back conflicts, the demand tier pricing is applying, and a
 
 ### `kamra.api.hurdle_rates`
 
-**GET/POST**
+**GET/POST** · permission: `Hurdle Rate: manage_hurdles` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Revenue Manager`
 
 The demand tiers: at each occupancy threshold, the premium applied
 and the minimum sell rate enforced. A row with a room type applies to
@@ -1798,7 +1798,7 @@ that type only and beats the property-wide row at the same threshold.
 
 ### `kamra.api.save_hurdle_rate`
 
-**POST**
+**POST** · permission: `Hurdle Rate: manage_hurdles` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Revenue Manager`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1811,7 +1811,7 @@ that type only and beats the property-wide row at the same threshold.
 
 ### `kamra.api.delete_hurdle_rate`
 
-**POST**
+**POST** · permission: `Hurdle Rate: manage_hurdles` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Revenue Manager`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -1819,7 +1819,7 @@ that type only and beats the property-wide row at the same threshold.
 
 ### `kamra.api.tape_chart_hourly`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Room: view_tape` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Single-day, rooms x hours. Day-use bookings sit at their planned times;
 an overnight stay covering this day shows as a full-width occupied band.
@@ -1831,7 +1831,7 @@ an overnight stay covering this day shows as a full-width occupied band.
 
 ### `kamra.api.venue_calendar`
 
-**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Venues × dates with their bookings - the banquet/function diary. Shows
 each venue's schedule so you can see availability and spot conflicts.
@@ -1844,7 +1844,7 @@ each venue's schedule so you can see availability and spot conflicts.
 
 ### `kamra.api.move_reservation`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Room move / upgrade - mid-stay or before arrival. Overlap guard re-runs.
 One writer for the tape chart, the reservation drawer and the GRC (#113).
@@ -1871,7 +1871,7 @@ Manager / admins only).
 
 ### `kamra.api.room_move_preview`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 What a move would do to the bill before the desk confirms it: a
 same-type swap keeps the price (and the locked nightly rates); an
@@ -1888,7 +1888,7 @@ confirm_price=1.
 
 ### `kamra.api.movable_rooms`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Every room the booking could move into - across ALL room types, so the
 front desk can upgrade (Standard -> Suite) as well as swap same-type. Each
@@ -1903,7 +1903,7 @@ booking's current type is listed first.
 
 ### `kamra.api.amend_stay_preview`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 What new dates would do to the bill, before anything changes: the
 current and new totals and the new nightly rates, priced by the engine
@@ -1921,7 +1921,7 @@ allowance) or credited (credit_total, posted by Kamra).
 
 ### `kamra.api.amend_stay`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Extend / shorten a stay; the overlap guard validates the new window.
 
@@ -1942,7 +1942,7 @@ the property's rate-change policy keeps them or credits them
 
 ### `kamra.api.correct_charged_nights`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `Folio: correct_charges` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Correct the rate of nights already charged, for a hotel that fixed a
 wrong tariff: each charged night whose rate differs from today's quote
@@ -1964,7 +1964,7 @@ lists the nights without changing anything. Not an agent tool.
 
 ### `kamra.api.set_late_arrival`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Flag (or unflag) a confirmed arrival as arriving late, optionally with
 the ETA the guest gave. With the property's late-arrival protection on,
@@ -1979,7 +1979,7 @@ a no-show; the next audit decides.
 
 ### `kamra.api.booking_options`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Rate Plan: quote` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Everything the booking form needs to render its dropdowns.
 
@@ -1989,7 +1989,7 @@ Everything the booking form needs to render its dropdowns.
 
 ### `kamra.api.get_quote`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Rate Plan: quote` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Price a stay. With a company and no rate plan, the company's
 negotiated plan applies - the same plan create_booking stores.
@@ -2021,7 +2021,7 @@ refused.
 
 ### `kamra.api.create_booking`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 One-call booking: attach to an existing guest profile when given,
 else reuse a profile whose phone and full name both match (a
@@ -2104,7 +2104,7 @@ total or group block rate with typed nights is refused.
 
 ### `kamra.api.waitlist`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Revenue Manager`
+**GET/POST** · permission: `Reservation: plan_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Kamra Agent`
 
 All waitlisted stays for the property, by arrival date.
 
@@ -2114,7 +2114,7 @@ All waitlisted stays for the property, by arrival date.
 
 ### `kamra.api.promote_waitlist`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Promote a waitlisted stay to Confirmed when a room is free for its
 dates. Assigns the first free room; the overlap guard validates it.
@@ -2125,7 +2125,7 @@ dates. Assigns the first free room; the overlap guard validates it.
 
 ### `kamra.api.waitlist_ready`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Waitlisted stays that CAN now be accommodated - a room is free for
 their dates. This is the signal the voice/WhatsApp agent watches so it
@@ -2137,7 +2137,7 @@ can proactively reach the guest the moment a room opens.
 
 ### `kamra.api.create_group_booking`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Create a Group Booking plus one reservation per requested room.
 `stay_details` (as in create_booking, e.g. needs_connecting) goes on
@@ -2181,7 +2181,7 @@ room locked to its share.
 
 ### `kamra.api.rooming_list_template`
 
-**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Hotel Admin`
+**GET/POST** · permission: `Group Booking: rooming_template` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`
 
 An Excel rooming list for the group booking screen to paste or
 upload: Name, Phone, Room type (a dropdown of this property's room
@@ -2193,7 +2193,7 @@ types) and Other guests, with a sheet explaining how to fill it.
 
 ### `kamra.api.create_group_with_rooming_list`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 The desk's group flow: group -> room blocks -> rooming list ->
 reservations. A Confirmed group holds `blocks` ([{room_type,
@@ -2230,7 +2230,7 @@ group is made, so a refusal leaves nothing behind.
 
 ### `kamra.api.inventory_availability`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Revenue Manager`, `Hotel Admin`
+**GET/POST** · permission: `Room: view_availability` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Kamra Agent`
 
 Sellable Unit availability (ADR-003). Prefer this over ad-hoc room SQL.
 
@@ -2245,7 +2245,7 @@ Sellable Unit availability (ADR-003). Prefer this over ad-hoc room SQL.
 
 ### `kamra.api.available_rooms`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Rooms of a type with no overlapping live reservation - the same
 logic the double-booking guard enforces, exposed as a query. Confirmed
@@ -2272,7 +2272,7 @@ accessible=1 keeps only rooms marked Accessible (#536).
 
 ### `kamra.api.room_blocks`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Room Block: manage_blocks` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Rooms held out of sale (house use, VIP, maintenance).
 
@@ -2283,7 +2283,7 @@ Rooms held out of sale (house use, VIP, maintenance).
 
 ### `kamra.api.create_room_block`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Room Block: manage_blocks` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Hold a room out of sale for a date range. Refused if the room is
 already booked in that window (move the guest first).
@@ -2299,7 +2299,7 @@ already booked in that window (move the guest first).
 
 ### `kamra.api.release_room_block`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Room Block: manage_blocks` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Free a held room before its end date (the room returns to sale).
 
@@ -2309,7 +2309,7 @@ Free a held room before its end date (the room returns to sale).
 
 ### `kamra.api.cashier_pin_status`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `F&B Manager`
+**GET/POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Night Auditor`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
 
 Does this property demand a PIN on money actions, and does the
 signed-in user have one set yet? Includes unlock / lockout state.
@@ -2320,7 +2320,7 @@ signed-in user have one set yet? Includes unlock / lockout state.
 
 ### `kamra.api.set_cashier_pin`
 
-**POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `F&B Manager`
+**POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Night Auditor`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
 
 Set or change your own cashier PIN (4-8 digits). Changing an existing
 PIN needs the current one  -  unless must_reset was set by an admin.
@@ -2332,7 +2332,7 @@ PIN needs the current one  -  unless must_reset was set by an admin.
 
 ### `kamra.api.reset_cashier_pin`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Cashier Session: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Admin reset: wipe the user's PIN and force re-enrollment.
 
@@ -2342,7 +2342,7 @@ Admin reset: wipe the user's PIN and force re-enrollment.
 
 ### `kamra.api.verify_cashier_pin`
 
-**POST** · roles: `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `F&B Manager`
+**POST** · permission: `Cashier Session: use_pin` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Night Auditor`, `Housekeeping`, `Housekeeping Supervisor`, `Revenue Manager`, `F&B Manager`
 
 PinPad unlock: validate PIN and open a 15-minute sliding window.
 
@@ -2353,7 +2353,7 @@ PinPad unlock: validate PIN and open a 15-minute sliding window.
 
 ### `kamra.api.group_price_preview`
 
-**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Group Booking: manage_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 The price of a block before it is booked (New group booking).
 
@@ -2366,7 +2366,7 @@ The price of a block before it is booked (New group booking).
 
 ### `kamra.api.group_quotation`
 
-**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Group Booking: manage_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 The group's quotation / proforma: the hotel, the group, its rooms per
 type and night with the rate and tax, the total, the deposit asked and
@@ -2378,7 +2378,7 @@ the terms (cutoff, allowed shortfall, who pays). Nothing is posted.
 
 ### `kamra.api.group_detail`
 
-**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Group Booking: manage_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Everything Group Rooms Control needs: the block, per-type pickup,
 the rooming list, the tied event and the master folio.
@@ -2406,7 +2406,7 @@ and reported with why, and the rest go on. Returns
 
 ### `kamra.api.set_rooming_names`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Name the rooms of a group from the rooming list.
 `names` = [{"reservation": ..., "guest_name": ..., "phone": ...}, ...].
@@ -2421,7 +2421,7 @@ unchanged are skipped.
 
 ### `kamra.api.group_assign_rooms`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Give every confirmed room of the group that has no room number a
 free room of its type (the picked ones, or all).
@@ -2433,7 +2433,7 @@ free room of its type (the picked ones, or all).
 
 ### `kamra.api.group_cancel`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Cancel the group's confirmed rooms (the picked ones, or all), each
 under the cancellation policy. When no active room is left the group
@@ -2449,7 +2449,7 @@ room has already stayed.
 
 ### `kamra.api.group_amend_dates`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Move the group's rooms (the picked ones, or all) to new dates. Each
 stay is re-quoted as amend_stay does, so pass confirm_price=1 once the
@@ -2470,7 +2470,7 @@ the whole change is refused.
 
 ### `kamra.api.group_check_in`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Check in a group's arrivals in one go. Rooms still unassigned get
 the same suggestion the tape chart makes; then each stay goes through
@@ -2486,7 +2486,7 @@ check-in. `reservations` limits it to some of the group.
 
 ### `kamra.api.save_group_blocks`
 
-**POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+**POST** · permission: `Group Booking: manage_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Set the room block (list of {room_type, rooms_blocked, block_rate,
 nightly_counts}) and optionally the cutoff/status, allowed shortfall %
@@ -2505,7 +2505,7 @@ unchanged; a new Rooms Blocked makes every night that number.
 
 ### `kamra.api.pickup_group_room`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Name a guest into the block: creates a reservation on the group's
 dates against its held inventory. Every call books a room (a block is
@@ -2524,7 +2524,7 @@ retry safe.
 
 ### `kamra.api.create_group_block`
 
-**POST** · roles: `Front Desk`, `Revenue Manager`, `Kamra Agent`
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 One call drafts the whole piece of MICE business: the group, its room
 block, and (optionally) the banquet event - the agent wedge: an inquiry
@@ -2548,7 +2548,7 @@ agent turns "30 rooms + a 200-pax wedding on Dec 12" into a proposal.
 
 ### `kamra.api.my_connector_credentials`
 
-**POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`
+**POST** · permission: `Property: use_settings` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 Personal MCP credentials for connecting Claude (or any MCP client)
 AS YOURSELF. The key acts with exactly your roles - Frappe enforces the
@@ -2563,7 +2563,7 @@ Platform-wide / service keys stay on the Developers page (IT admin).
 
 ### `kamra.api.linked_records`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`
+**GET/POST** · permission: `Property: use_settings` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 The connective tissue: for any record, everything it's attached to -
 guest, reservation(s), folio(s), company, group, event - so every screen
@@ -2576,7 +2576,7 @@ can offer one-tap paths to billing and editing. One endpoint, all types.
 
 ### `kamra.api.property_locale`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `F&B Manager`, `Kamra Service Account`
+**GET/POST** · permission: `Property: view_locale` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`, `F&B Manager`
 
 Currency, number locale and tax vocabulary for this property, from its
 localization pack. Drives the frontend's money formatting and tax dropdowns
@@ -2589,7 +2589,7 @@ integrations (gateways, tax return, ID checks) this property has.
 
 ### `kamra.api.verify_tax_id`
 
-**POST** · roles: `Front Desk`, `Finance`
+**POST** · permission: `Property: verify_tax_id` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`
 
 Check a buyer's tax ID before the invoice goes out, where the
 property's country pack offers it.
@@ -2602,7 +2602,7 @@ property's country pack offers it.
 
 ### `kamra.api.verify_guest_id`
 
-**POST** · roles: `Front Desk`
+**POST** · permission: `Guest: verify_id` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`
 
 Read the guest's ID document on file into the profile, where the
 property's country pack offers it. consent: the desk confirms the guest
@@ -2617,7 +2617,7 @@ was told.
 
 ### `kamra.api.zatca_settings`
 
-**GET/POST** · roles: `Finance`
+**GET/POST** · permission: `Night Audit Run: e_invoicing` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 The property's ZATCA (Saudi e-invoicing) settings, created from the
 property on first use, plus what is still missing for a valid invoice
@@ -2629,7 +2629,7 @@ and where the invoice chain stands.
 
 ### `kamra.api.zatca_invoice_xml`
 
-**GET/POST** · roles: `Finance`
+**GET/POST** · permission: `Night Audit Run: e_invoicing` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 The UBL XML behind an issued invoice or credit note - for the
 accountant, an auditor or a ZATCA query.
@@ -2650,7 +2650,7 @@ data for the setup wizard and Settings.
 
 ### `kamra.api.pending_deposit_refunds`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Security Deposit: view_refunds` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Returns a list of checked-out reservations with pending security deposit refunds
 for NEFT processing (e.g. Tuesday/Saturday payout batches).
@@ -2664,7 +2664,7 @@ for NEFT processing (e.g. Tuesday/Saturday payout batches).
 
 ### `kamra.booking_requests.booking_requests`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Pending Request-to-Book stays (status Requested), oldest first, each
 with whether it can be accepted right now. Requests hold no inventory
@@ -2676,7 +2676,7 @@ until accepted - rooms_free is live availability, not a reservation.
 
 ### `kamra.booking_requests.accept_booking_request`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Accept a Request-to-Book stay: confirm it and take the inventory,
 assigning a free room of its type (or `room`). Every booking rule runs
@@ -2691,7 +2691,7 @@ refused with the reason; decline it instead.
 
 ### `kamra.booking_requests.decline_booking_request`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Decline a Request-to-Book stay with a reason (required). The stay is
 cancelled with no cancellation fee - a request was never confirmed - and
@@ -2709,7 +2709,7 @@ An OTA request must also be declined on the OTA's side.
 
 ### `kamra.pos.outlets`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Open outlets, each with `auto_kot` already resolved against the F&B
 setting, so the till never has to know where the answer came from.
@@ -2720,7 +2720,7 @@ setting, so the till never has to know where the answer came from.
 
 ### `kamra.pos.pos_menu`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The digital menu for an outlet: available items grouped by category.
 
@@ -2730,7 +2730,7 @@ The digital menu for an outlet: available items grouped by category.
 
 ### `kamra.pos.in_house_rooms`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Rooms with a checked-in guest, for the till's room picker: only these
 can take a room charge. "101 · Guest Name". `room_charges_allowed` is the
@@ -2742,7 +2742,7 @@ check-in's decision; a blocked room is shown but cannot be charged.
 
 ### `kamra.pos.charge_to_room`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Point a running bill (a dine-in table, say) at an in-house guest's
 room, so Deliver posts it to their folio through the same controller
@@ -2755,7 +2755,7 @@ path as room service - billing rules and the alcohol rule included.
 
 ### `kamra.pos.move_room_bill`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 A bill charged to the wrong room: move it to the right one, the same
 business day it was posted. The charge leaves the first guest's folio
@@ -2772,7 +2772,7 @@ than that day it is a correction for Finance (allowance, then repost).
 
 ### `kamra.pos.create_order`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Captain takes an order. A room (room service, or a dine-in guest
 charging to their room) must have a checked-in stay: it is resolved now
@@ -2803,7 +2803,7 @@ attach_customer); a room bill takes the in-house guest by itself.
 
 ### `kamra.pos.open_orders`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Every running tab at an outlet - the tables/rooms being served right
 now, so a captain can juggle several at once. A bill nobody has sent to
@@ -2816,7 +2816,7 @@ setting's limit, so a forgotten order is sent or cancelled.
 
 ### `kamra.pos.table_map`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The table view a captain starts from: every table at the outlet with
 its live state - vacant, running (open bill), fired (KOT in the kitchen)
@@ -2830,7 +2830,7 @@ them all and shows the most urgent state.
 
 ### `kamra.pos.reserve_table`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Reserve a table - it shows as Reserved on the map from an hour
 before the time until it's seated, cancelled or marked a no-show.
@@ -2847,7 +2847,7 @@ before the time until it's seated, cancelled or marked a no-show.
 
 ### `kamra.pos.set_reservation`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Seat / cancel / no-show a table reservation.
 
@@ -2858,7 +2858,7 @@ Seat / cancel / no-show a table reservation.
 
 ### `kamra.pos.mark_table_clean`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Housekeeping done - the table goes back to vacant on the map.
 
@@ -2869,7 +2869,7 @@ Housekeeping done - the table goes back to vacant on the map.
 
 ### `kamra.pos.recent_orders`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The outlet's latest bills, newest first - open or settled - so a
 captain can jump back to a running bill or reprint a settled one.
@@ -2881,7 +2881,7 @@ captain can jump back to a running bill or reprint a settled one.
 
 ### `kamra.pos.split_order`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Split a bill: move the chosen lines to a new bill on the same table
 (or a named one) - separate bills for two parties sharing a table, or
@@ -2896,7 +2896,7 @@ the two bills conserve the original total.
 
 ### `kamra.pos.order_detail`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 One order's full contents - to load a running tab back into the till,
 or to look at a closed one from the orders list. `kitchen_lines` counts
@@ -2909,7 +2909,7 @@ cancel the bill alone; after that a supervisor approves.
 
 ### `kamra.pos.add_items`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Add rounds to a running tab - new lines are priced from the menu and
 start as New (a later fire_kot sends them to the kitchen).
@@ -2921,7 +2921,7 @@ start as New (a later fire_kot sends them to the kitchen).
 
 ### `kamra.pos.confirm_order`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Captain confirmation for a Placed order that has no captain yet
 (legacy guest QR). Sets the captain and moves Placed -> Confirmed.
@@ -2932,7 +2932,7 @@ Captain confirmation for a Placed order that has no captain yet
 
 ### `kamra.pos.apply_discount`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The guest-discount popup - a captain grants a discount with a reason.
 
@@ -2944,7 +2944,7 @@ The guest-discount popup - a captain grants a discount with a reason.
 
 ### `kamra.pos.fire_kot`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Send the order to the kitchen: new lines become Fired and show on the
 kitchen display. Stamps the KOT number (a daily sequence per outlet) and
@@ -2966,7 +2966,7 @@ response tells the till to print.
 
 ### `kamra.pos.send_order`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 A captain's new bill straight to the kitchen, in one call: what
 create_order, apply_discount, confirm_order and fire_kot do one after
@@ -2996,7 +2996,7 @@ round trip instead of four, and the kitchen gets a single update.
 
 ### `kamra.pos.send_round`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Another round on a running bill, straight to the kitchen: add_items
 and fire_kot in one call and one save.
@@ -3009,7 +3009,7 @@ and fire_kot in one call and one save.
 
 ### `kamra.pos.kitchen_queue`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The kitchen display: fired orders the kitchen still has work on. Scope
 to one outlet (each restaurant's own kitchen) and/or one station.
@@ -3037,7 +3037,7 @@ hour over drinks must not hand the kitchen a ticket that is already red.
 
 ### `kamra.pos.mark_prepared`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Kitchen marks one line (or every cooking line) prepared. Voided lines
 are never swept up by "all ready" - that food is cancelled, not cooked.
@@ -3049,7 +3049,7 @@ are never swept up by "all ready" - that food is cancelled, not cooked.
 
 ### `kamra.pos.accept_ticket`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The kitchen takes the ticket on. Until a ticket is accepted the floor
 has no evidence anyone has seen it - a KOT can print to an empty pass.
@@ -3060,7 +3060,7 @@ has no evidence anyone has seen it - a KOT can print to an empty pass.
 
 ### `kamra.pos.recall_prepared`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Undo a mark-prepared: the line goes back to Fired and reappears on the
 display. A mis-tap on a greasy touchscreen must not be one-way.
@@ -3072,7 +3072,7 @@ display. A mis-tap on a greasy touchscreen must not be one-way.
 
 ### `kamra.pos.mark_picked_up`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 A waiter takes food from the pass: one prepared line, or every
 prepared line still waiting there. Stamps picked_up_at; kot_status stays
@@ -3085,7 +3085,7 @@ Prepared so nothing that reads it changes.
 
 ### `kamra.pos.set_waiter`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Name who serves this bill (a steward may have no login). Blank
 clears it, and the bill shows the captain instead.
@@ -3097,7 +3097,7 @@ clears it, and the bill shows the captain instead.
 
 ### `kamra.pos.waiters`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Till suggestions: the outlet's active staff list first, then other
 names typed as waiter here in the last 60 days, most used first.
@@ -3108,7 +3108,7 @@ names typed as waiter here in the last 60 days, most used first.
 
 ### `kamra.pos.outlet_waiters`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The outlet's waiter list (active and not), and whether this user
 may change it.
@@ -3119,7 +3119,7 @@ may change it.
 
 ### `kamra.pos.save_outlet_waiter`
 
-**POST**
+**POST** · permission: `POS Outlet: manage_waiters` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Add a name to the outlet's waiter list, or set it active / inactive.
 A name already on the list (any case) is updated, never doubled.
@@ -3132,7 +3132,7 @@ A name already on the list (any case) is updated, never doubled.
 
 ### `kamra.pos.acknowledge_void`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The chef has seen that a fired line was cancelled and can stop cooking
 it; drop it from the display. The void itself stays on the order.
@@ -3144,7 +3144,7 @@ it; drop it from the display. The void itself stays on the order.
 
 ### `kamra.pos.deliver_order`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Order served - moves to Delivered, which posts it to the room folio
 (controller) when there's a linked stay.
@@ -3155,7 +3155,7 @@ Order served - moves to Delivered, which posts it to the room folio
 
 ### `kamra.pos.pay_order`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Settle a bill at the outlet (walk-ins, takeaway - or a guest who'd
 rather pay now than post to the room). Records the payment mode and
@@ -3170,7 +3170,7 @@ cashier session so FO + POS cash reconcile together.
 
 ### `kamra.pos.change_payment_mode`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Correct the tender on a bill that was settled with the wrong mode (Card
 pressed for Cash). The till keeps its history: a reversing entry for the
@@ -3188,7 +3188,7 @@ from the till screens.
 
 ### `kamra.pos.mark_nc`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Mark a bill NC (no charge / complimentary). Needs who authorized it
 (captain, chef, GM, management…) and takes a free-text reference (the
@@ -3205,7 +3205,7 @@ never touches a folio. `undo=1` lifts it.
 
 ### `kamra.pos.cancel_order`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Cancel an open bill with a reason. Nothing sent to the kitchen yet: the
 captain (or an agent) cancels alone. Items already sent: every live line
@@ -3225,7 +3225,7 @@ on the bill and in the activity log; the table is freed.
 
 ### `kamra.pos.void_item`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Void one line with a reason. The line stays on the order (struck
 through, amount zero) so the KOT-vs-bill audit holds up. A line the
@@ -3243,7 +3243,7 @@ prints a VOID slip; a line never sent is simpler to remove_item.
 
 ### `kamra.pos.remove_item`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Take a line off a bill before it goes to the kitchen: a mis-tap or a
 change of mind. No reason and no approval, because nothing was cooked.
@@ -3257,7 +3257,7 @@ line (cancel the bill instead).
 
 ### `kamra.pos.void_approvers`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Who can approve a void at this outlet's till: enabled Hotel Admin,
 Finance and F&B Manager users with access to the property and a cashier PIN set. Names
@@ -3269,7 +3269,7 @@ only.
 
 ### `kamra.pos.orders_list`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The outlet's bills for a day, or a range of up to a year, newest
 first: open (not sent to the kitchen), sent, paid, posted to a room, NC,
@@ -3297,7 +3297,7 @@ Looking at today also brings in bills still open from earlier days
 
 ### `kamra.pos.orders_export`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 The outlet's bill history as CSV for a day or up to a year: every
 bill with its state, payment mode, amount, discount, who it was for and
@@ -3317,7 +3317,7 @@ except to a supervisor, as on the till. Returns {filename, csv, rows}.
 
 ### `kamra.pos.find_customer`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Find a guest profile for a bill by phone (4+ digits) or name (3+
 letters): the same guest records the front desk uses. Each match says
@@ -3331,7 +3331,7 @@ Phones show their last digits only.
 
 ### `kamra.pos.attach_customer`
 
-**POST**
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Say who a walk-in bill is for: an existing guest profile (`guest`),
 or a name and phone. A phone that matches a profile reuses it; otherwise
@@ -3351,7 +3351,7 @@ customer off the bill. A room bill is always for its in-house guest.
 
 ### `kamra.pos.guest_panel`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Who a bill is for, without leaving the till. For a room bill: the
 in-house guest, room, stay dates and whether the stay can take room
@@ -3370,7 +3370,7 @@ yet.
 
 ### `kamra.pos.bill_data`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 Everything the thermal bill print needs: outlet and property names,
 live lines, the discount, and the CGST/SGST split at the outlet's rate.
@@ -3381,7 +3381,7 @@ live lines, the discount, and the CGST/SGST split at the outlet's rate.
 
 ### `kamra.pos.outlet_dashboard`
 
-**GET/POST**
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 One shift at a glance: what the outlet sold, what's still open, the
 exceptions that need a manager's eye (NC, voids, cancellations), and how
@@ -3395,7 +3395,7 @@ fast the kitchen is turning tickets. Defaults to today.
 
 ### `kamra.pos.speed_check`
 
-**GET/POST** · roles: `Hotel Admin`, `Finance`
+**GET/POST** · permission: `POS Order: manage_outlet` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Why does the POS feel slow here? Times what a till and a kitchen
 display ask for on every refresh and reports the server's set-up, so
@@ -3415,7 +3415,7 @@ times how long it takes to arrive, which proves live updates work.
 
 ### `kamra.onboarding.setup_checklist`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_briefing` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 What is set up and what is still to do, for the Finish setup screen.
 Only items that matter for the modules this property runs.
@@ -3431,7 +3431,7 @@ Only items that matter for the modules this property runs.
 
 ### `kamra.rates.rate_calendar`
 
-**GET/POST**
+**GET/POST** · permission: `Rate Plan: view_rates` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Kamra Agent`
 
 Every room type's rate for each of the next `days` dates, with what
 moved it. A room type's own days are read with the same functions the
@@ -3447,7 +3447,7 @@ quote uses; nothing here sets a price.
 
 ### `kamra.rates.rate_options`
 
-**GET/POST**
+**GET/POST** · permission: `Rate Plan: view_rates` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Kamra Agent`
 
 For the booking dialog: this stay night by night (BAR, season,
 demand), the whole stay under each active rate plan against the plain
@@ -3469,7 +3469,7 @@ rate, and what the voucher would do. Each total is a real quote.
 
 ### `kamra.tickets.tickets_search`
 
-**GET/POST**
+**GET/POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Tickets for a property with the filters a supervisor needs.
 
@@ -3490,7 +3490,7 @@ data does, and older_than_days narrows to the ones still open past that.
 
 ### `kamra.tickets.ticket_detail`
 
-**GET/POST**
+**GET/POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 One ticket in full: its fields, SLA, and the timeline.
 
@@ -3500,7 +3500,7 @@ One ticket in full: its fields, SLA, and the timeline.
 
 ### `kamra.tickets.ticket_assignees`
 
-**GET/POST**
+**GET/POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Staff a ticket can be handed to.
 
@@ -3510,7 +3510,7 @@ Staff a ticket can be handed to.
 
 ### `kamra.tickets.assign_ticket`
 
-**POST**
+**POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Hand a ticket to someone, or clear the assignee (user empty).
 
@@ -3522,7 +3522,7 @@ Hand a ticket to someone, or clear the assignee (user empty).
 
 ### `kamra.tickets.claim_ticket`
 
-**POST**
+**POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Take a ticket yourself.
 
@@ -3532,7 +3532,7 @@ Take a ticket yourself.
 
 ### `kamra.tickets.start_ticket`
 
-**POST**
+**POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Begin work: moves it to In Progress and, if nobody has it, gives it to you.
 
@@ -3542,7 +3542,7 @@ Begin work: moves it to In Progress and, if nobody has it, gives it to you.
 
 ### `kamra.tickets.add_ticket_note`
 
-**POST**
+**POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 A comment on the timeline (what was tried, who was called).
 
@@ -3553,7 +3553,7 @@ A comment on the timeline (what was tried, who was called).
 
 ### `kamra.tickets.resolve_ticket`
 
-**POST**
+**POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 Mark a ticket solved, recording who did it and what was done.
 
@@ -3565,7 +3565,7 @@ Mark a ticket solved, recording who did it and what was done.
 
 ### `kamra.tickets.reopen_ticket`
 
-**POST**
+**POST** · permission: `Service Ticket: work_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`
 
 A solved ticket that came back. Needs a reason; it is kept in the timeline.
 
@@ -3620,7 +3620,7 @@ Everything up to now counts as read for this person.
 
 ### `kamra.id_scan.read_id_scan`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Turn what an ID scanner (or a camera reading a QR) sent into guest
 fields: name, ID type and number, date of birth, age, gender,
@@ -3639,7 +3639,7 @@ only: nothing is saved until the desk saves the guest.
 
 ### `kamra.guest_documents.save_guest_file`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Keep a photo, ID image or address proof on the profile, replacing the
 previous one. A property on Verify & Discard keeps no ID images, so only
@@ -3653,7 +3653,7 @@ the photo is accepted there (the check-in ID step verifies and discards).
 
 ### `kamra.guest_documents.guest_file`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 One of the profile's images as a data URL.
 
@@ -3664,7 +3664,7 @@ One of the profile's images as a data URL.
 
 ### `kamra.guest_documents.remove_guest_file`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Guest: handle_guests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3676,7 +3676,7 @@ One of the profile's images as a data URL.
 
 ### `kamra.printing.print_bill`
 
-**POST**
+**POST** · permission: `Kitchen Printer: print_tickets` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Send a bill to the station set up to print bills. No bill printer
 configured: nothing is queued and the till prints from its own device,
@@ -3689,7 +3689,7 @@ exactly as before.
 
 ### `kamra.printing.claim_jobs`
 
-**POST**
+**POST** · permission: `Kitchen Printer: print_tickets` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 A print station asks for its printer's work. Hands over every queued
 job (and any claimed one nobody confirmed within a minute) and marks
@@ -3701,7 +3701,7 @@ them Printing. The station prints them and calls ack_jobs.
 
 ### `kamra.printing.ack_jobs`
 
-**POST**
+**POST** · permission: `Kitchen Printer: print_tickets` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 The station's answer. Printed jobs are done; failed ones move to the
 printer's fallback, or stay Failed for a reprint.
@@ -3715,7 +3715,7 @@ printer's fallback, or stay Failed for a reprint.
 
 ### `kamra.printing.printers`
 
-**GET/POST**
+**GET/POST** · permission: `Kitchen Printer: print_tickets` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Every printer with its routes and whether it's online - for the
 F&B Printers screen and for a kitchen screen choosing what to print for.
@@ -3726,7 +3726,7 @@ F&B Printers screen and for a kitchen screen choosing what to print for.
 
 ### `kamra.printing.save_printer`
 
-**POST**
+**POST** · permission: `Kitchen Printer: configure_printers` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Add or change a printer and its routes. Logged to the Activity log.
 
@@ -3738,7 +3738,7 @@ Add or change a printer and its routes. Logged to the Activity log.
 
 ### `kamra.printing.delete_printer`
 
-**POST**
+**POST** · permission: `Kitchen Printer: configure_printers` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3746,7 +3746,7 @@ Add or change a printer and its routes. Logged to the Activity log.
 
 ### `kamra.printing.test_print`
 
-**POST**
+**POST** · permission: `Kitchen Printer: configure_printers` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Queue a test page on one printer.
 
@@ -3756,7 +3756,7 @@ Queue a test page on one printer.
 
 ### `kamra.printing.reprint`
 
-**POST**
+**POST** · permission: `Kitchen Printer: print_tickets` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Print a job again - on its own printer or another one.
 
@@ -3767,7 +3767,7 @@ Print a job again - on its own printer or another one.
 
 ### `kamra.printing.order_print_status`
 
-**GET/POST**
+**GET/POST** · permission: `Kitchen Printer: print_tickets` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Where an order's tickets went and whether they printed - for the till.
 
@@ -3780,7 +3780,7 @@ Where an order's tickets went and whether they printed - for the till.
 
 ### `kamra.laundry.laundry_rates`
 
-**GET/POST** · roles: `Finance`
+**GET/POST** · permission: `Laundry Order: view_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Housekeeping`, `Housekeeping Supervisor`
 
 The property's laundry price list (the card the attendant quotes
 from). Grouped by item for the pickers.
@@ -3791,7 +3791,7 @@ from). Grouped by item for the pickers.
 
 ### `kamra.laundry.save_laundry_rate`
 
-**POST**
+**POST** · permission: `Laundry Order: price_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Add or edit one line of the rate card.
 
@@ -3807,7 +3807,7 @@ Add or edit one line of the rate card.
 
 ### `kamra.laundry.delete_laundry_rate`
 
-**POST**
+**POST** · permission: `Laundry Order: delete_rates` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3815,7 +3815,7 @@ Add or edit one line of the rate card.
 
 ### `kamra.laundry.import_laundry_rates`
 
-**POST**
+**POST** · permission: `Laundry Order: price_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Bulk-load or bulk-update the rate card from a CSV - the same file
 the Export button produces (item, service, rate, express rate).
@@ -3829,7 +3829,7 @@ created, nothing is deleted. Headers are matched tolerantly.
 
 ### `kamra.laundry.request_pickup`
 
-**POST**
+**POST** · permission: `Laundry Order: handle_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Housekeeping`, `Housekeeping Supervisor`
 
 Log that a guest wants laundry picked up - it lands on the floor
 team's queue. Items are counted at the door, not here. A House order
@@ -3846,7 +3846,7 @@ team's queue. Items are counted at the door, not here. A House order
 
 ### `kamra.laundry.collect_laundry`
 
-**POST**
+**POST** · permission: `Laundry Order: handle_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Housekeeping`, `Housekeeping Supervisor`
 
 The attendant counts the bag with the guest. Prices come from the
 rate card (express uses the express column, or 1.5x). Pass `order` to
@@ -3867,7 +3867,7 @@ walk-up (uniforms / linen) needs no room or guest and is never billed.
 
 ### `kamra.laundry.laundry_status`
 
-**POST**
+**POST** · permission: `Laundry Order: handle_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Housekeeping`, `Housekeeping Supervisor`
 
 Move the bag along: Collected -> In Process -> Ready.
 
@@ -3878,7 +3878,7 @@ Move the bag along: Collected -> In Process -> Ready.
 
 ### `kamra.laundry.return_items`
 
-**POST**
+**POST** · permission: `Laundry Order: handle_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Housekeeping`, `Housekeeping Supervisor`
 
 Tick items back in as they return from the laundry. rows =
 {child_row_name: returned_qty} - counts, not deltas.
@@ -3890,7 +3890,7 @@ Tick items back in as they return from the laundry. rows =
 
 ### `kamra.laundry.deliver_laundry`
 
-**POST**
+**POST** · permission: `Laundry Order: handle_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Housekeeping`, `Housekeeping Supervisor`
 
 Hand the bag back and bill the stay. If pieces are still pending, a
 shortage note is required - the discrepancy is recorded, never silent.
@@ -3903,7 +3903,7 @@ Posting rides the governed agent path (HK can only bill laundry).
 
 ### `kamra.laundry.cancel_laundry`
 
-**POST**
+**POST** · permission: `Laundry Order: handle_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Housekeeping`, `Housekeeping Supervisor`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -3912,7 +3912,7 @@ Posting rides the governed agent path (HK can only bill laundry).
 
 ### `kamra.laundry.laundry_board`
 
-**GET/POST** · roles: `Finance`
+**GET/POST** · permission: `Laundry Order: view_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Housekeeping`, `Housekeeping Supervisor`
 
 Everything the floor and the desk need at a glance: open bags by
 status with piece counts and what's still pending, plus the last few
@@ -3924,7 +3924,7 @@ delivered ones for reprints/queries.
 
 ### `kamra.laundry.laundry_revenue`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Laundry Order: price_laundry` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Delivered-laundry revenue over the last N days, with a per-service
 breakdown. Only billed guest orders count as revenue; House and
@@ -4009,7 +4009,7 @@ cleans completed between the dates (default: the last 30 days).
 
 ### `kamra.banquet.banquet_catalogue`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 What the property sells: the menu packages (with their courses) and
 the service list. This is the picker behind every line item.
@@ -4020,7 +4020,7 @@ the service list. This is the picker behind every line item.
 
 ### `kamra.banquet.save_banquet_menu`
 
-**POST**
+**POST** · permission: `Banquet Menu: edit_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`
 
 Add or edit one menu package. Courses replace wholesale - the grid
 the user is looking at is the truth.
@@ -4035,7 +4035,7 @@ the user is looking at is the truth.
 
 ### `kamra.banquet.delete_banquet_menu`
 
-**POST**
+**POST** · permission: `Banquet Menu: delete_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4043,7 +4043,7 @@ the user is looking at is the truth.
 
 ### `kamra.banquet.save_service_item`
 
-**POST**
+**POST** · permission: `Banquet Menu: edit_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`
 
 Add or edit one service - a projector, an LED wall, a DJ, a podium,
 a stage, a decor package, bar service. `chargeable = 0` marks the ones
@@ -4061,7 +4061,7 @@ and the pack list.
 
 ### `kamra.banquet.delete_service_item`
 
-**POST**
+**POST** · permission: `Banquet Menu: delete_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4069,7 +4069,7 @@ and the pack list.
 
 ### `kamra.banquet.create_enquiry`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Open a function sheet from an enquiry. The hall's rack rental goes on
 as the first line (that's the number the conversation starts from), and
@@ -4102,7 +4102,7 @@ are ignored. Custom Hours, or no session with times, keeps the times.
 
 ### `kamra.banquet.function_sheet`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 One function, everything about it - the sheet the banquet screen
 renders and Kamra Agent reads.
@@ -4113,7 +4113,7 @@ renders and Kamra Agent reads.
 
 ### `kamra.banquet.update_function`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Edit the sheet's own fields (not its tables - those have their own
 calls, because each one means something different).
@@ -4125,7 +4125,7 @@ calls, because each one means something different).
 
 ### `kamra.banquet.linkable_groups`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 Group bookings this function could ride: same property, not
 cancelled, staying within a month either side of the event.
@@ -4136,7 +4136,7 @@ cancelled, staying within a month either side of the event.
 
 ### `kamra.banquet.link_group`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Tie a function to a group booking so its bill can ride the group's
 master folio (post_to_folio), or untie it (group_booking empty).
@@ -4148,7 +4148,7 @@ master folio (post_to_folio), or untie it (group_booking empty).
 
 ### `kamra.banquet.set_status`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Move the function along its pipeline. Confirming takes the hall -
 the controller refuses a clash with another confirmed function.
@@ -4162,7 +4162,7 @@ the controller refuses a clash with another confirmed function.
 
 ### `kamra.banquet.add_menu`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Put a menu package on the function. Left alone the quantity follows
 the pax rule (guaranteed, or actual if more turned up) and the price is
@@ -4179,7 +4179,7 @@ the package's own plate price - pass `rate` when it's been negotiated.
 
 ### `kamra.banquet.add_service`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Put a service on the function - projector, LED wall, DJ, podium,
 stage, decor, laptop, bar. The catalogue decides whether it's chargeable
@@ -4196,7 +4196,7 @@ by default; pass `chargeable` to override for this function.
 
 ### `kamra.banquet.save_items`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Replace the line grid wholesale - what the user is looking at is the
 truth. Rows keep their catalogue links so the event order can still
@@ -4209,7 +4209,7 @@ print a menu's courses.
 
 ### `kamra.banquet.remove_item`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4218,7 +4218,7 @@ print a menu's courses.
 
 ### `kamra.banquet.negotiate`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 The price moves. `rows` is {line_row_name: new_rate} - or pass
 `venue_rental` to move just the hall - and `discount_amount` is the
@@ -4237,7 +4237,7 @@ after, so the fourth revision of a wedding quote can be explained.
 
 ### `kamra.banquet.save_open_items`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 What is still unsettled while the price is being agreed - the
 sangeet stage, whether the bar is on consumption, who pays for the
@@ -4250,7 +4250,7 @@ extra generator. Each carries what agreeing it would do to the price.
 
 ### `kamra.banquet.set_payment_terms`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 The schedule the customer signs up to. A term stated as a percentage
 follows the quote as it moves; one stated as an amount is a number both
@@ -4264,7 +4264,7 @@ sides agreed and stays put.
 
 ### `kamra.banquet.default_payment_terms`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 The usual three-milestone schedule, dated off this function: an
 advance to hold the hall, a second call before the date, the rest on
@@ -4280,7 +4280,7 @@ come from Settings -> Banquets & Groups.
 
 ### `kamra.banquet.record_receipt`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 Money in against the function. Pass `settle_term` to tick off the
 payment-term row it pays, so the schedule and the ledger agree.
@@ -4297,7 +4297,7 @@ payment-term row it pays, so the schedule and the ledger agree.
 
 ### `kamra.banquet.assign_green_room`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Hold a changing room for the wedding party. The controller puts a
 Room Block on it so it genuinely leaves the sellable inventory; pass
@@ -4314,7 +4314,7 @@ Room Block on it so it genuinely leaves the sellable inventory; pass
 
 ### `kamra.banquet.venue_availability`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 Which halls are free for these dates and hours. A confirmed function
 takes the hall; a tentative one is shown as a soft hold you can still
@@ -4332,7 +4332,7 @@ sell over. Halls too small for the pax are flagged, not hidden.
 
 ### `kamra.banquet.banquet_calendar`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 The function diary - halls down the side, days across the top, every
 function in its cell with what it's worth and what's still owed.
@@ -4347,7 +4347,7 @@ Multi-day functions appear on each of their days.
 
 ### `kamra.banquet.banquet_pipeline`
 
-**GET/POST** · roles: `Hotel Admin`
+**GET/POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 The sales view: where the business is by month and by status, what
 converted, what died and why. Dated on the event, not the enquiry -
@@ -4362,7 +4362,7 @@ a banquet team's month is the month the function happens.
 
 ### `kamra.banquet.banquet_reminders`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 Everything across the property that needs chasing - the banquet
 team's morning list.
@@ -4374,7 +4374,7 @@ team's morning list.
 
 ### `kamra.banquet.banquet_document`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 The paper. One shape for every document so the front end can print
 them all the same way:
@@ -4392,7 +4392,7 @@ them all the same way:
 
 ### `kamra.banquet.generate_quote`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Stamp a quotation. Bumps the version, dates it, and snapshots what
 it was worth - so 'the price we sent on the 3rd' is answerable.
@@ -4405,7 +4405,7 @@ it was worth - so 'the price we sent on the 3rd' is answerable.
 
 ### `kamra.banquet.generate_beo`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Issue the banquet event order - the sheet the banquet, kitchen and
 AV teams run the day from. Only a confirmed function gets one; the
@@ -4417,7 +4417,7 @@ teams shouldn't be preparing for business that isn't sold.
 
 ### `kamra.banquet.generate_invoice`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 Raise the tax invoice for a function.
 
@@ -4431,7 +4431,7 @@ have to agree on what it was called.
 
 ### `kamra.banquet.post_to_folio`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 Push the chargeable lines onto a bill. A function tied to a group
 rides the group's master folio; otherwise pass one explicitly.
@@ -4447,7 +4447,7 @@ settled separately instead of failing the whole post.
 
 ### `kamra.banquet.close_out`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 Hand the hall back. The last ritual of a function, and the one that
 usually happens on a WhatsApp message and a scrap of paper: walk the
@@ -4469,7 +4469,7 @@ three people remembering to do three things.
 
 ### `kamra.banquet.reopen_function`
 
-**POST**
+**POST** · permission: `Venue Booking: reopen_function` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Revenue Manager`
 
 Reopen a closed (Completed) function so its sheet can be corrected.
 It goes back to Confirmed; receipts, refunds and the damage line stay
@@ -4483,7 +4483,7 @@ reason, and lands on the activity log.
 
 ### `kamra.banquet.receipt_document`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 One receipt, as a document the customer can keep. Every advance a
 banquet office takes needs a piece of paper against it - this is that
@@ -4496,7 +4496,7 @@ piece of paper.
 
 ### `kamra.banquet.menu_card`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 The menu the customer signs off - what will actually be served,
 course by course, with nothing about money on it. The kitchen and the
@@ -4508,7 +4508,7 @@ customer read the same sheet, which is the whole point.
 
 ### `kamra.banquet.month_availability`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 Every hall × every session, across a whole month.
 
@@ -4524,7 +4524,7 @@ side split by session, days across the top, and what's in each cell.
 
 ### `kamra.banquet.banquet_register`
 
-**GET/POST** · roles: `Hotel Admin`
+**GET/POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 The listings a banquet office runs the week on - the same five books
 every hall has kept on paper forever, dated and totalled:
@@ -4544,7 +4544,7 @@ every hall has kept on paper forever, dated and totalled:
 
 ### `kamra.banquet.dish_library`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 Every dish the banquet kitchen can produce, with what it costs to
 make. This is the picker behind menu building and the spine of margin.
@@ -4556,7 +4556,7 @@ make. This is the picker behind menu building and the spine of margin.
 
 ### `kamra.banquet.save_dish`
 
-**POST**
+**POST** · permission: `Banquet Menu: edit_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`
 
 Add or edit a dish. The recipe is what makes it cost something -
 without one the dish is free, and so is the margin it reports.
@@ -4570,7 +4570,7 @@ without one the dish is free, and so is the margin it reports.
 
 ### `kamra.banquet.delete_dish`
 
-**POST**
+**POST** · permission: `Banquet Menu: delete_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4578,7 +4578,7 @@ without one the dish is free, and so is the margin it reports.
 
 ### `kamra.banquet.recost_dishes`
 
-**POST**
+**POST** · permission: `Banquet Menu: edit_catalogue` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`
 
 Ingredient prices moved - re-cost every dish. Run it after a delivery
 or a price revision, so quotes stop being priced off last season's
@@ -4590,7 +4590,7 @@ onions.
 
 ### `kamra.banquet.menu_cost`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 What one plate of this menu costs to make, and what it earns.
 
@@ -4605,7 +4605,7 @@ before anyone has booked it.
 
 ### `kamra.banquet.menu_choices`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 The course-by-course picker for one menu on one function: what the
 course offers, how many the guest may take, and what's chosen so far.
@@ -4617,7 +4617,7 @@ course offers, how many the guest may take, and what's chosen so far.
 
 ### `kamra.banquet.compose_menu`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Record what the customer actually chose - "one soup of these two, the
 paneer not the mushroom".
@@ -4635,7 +4635,7 @@ upgrade is a price change and should be visible as one.
 
 ### `kamra.banquet.kitchen_indent`
 
-**GET/POST** · roles: `Housekeeping`
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 What the kitchen has to buy and pull for this function.
 
@@ -4650,7 +4650,7 @@ what's actually on the shelf.
 
 ### `kamra.banquet.issue_indent`
 
-**POST** · roles: `Housekeeping`
+**POST** · permission: `Venue Booking: issue_indent` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 Pull the indent off the shelf. Writes real stock movements through
 the same single writer the restaurant uses, so the store room reflects
@@ -4664,7 +4664,7 @@ a banquet the way it reflects a table.
 
 ### `kamra.banquet.record_consumption`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 What was actually served, against what was quoted.
 
@@ -4680,7 +4680,7 @@ rows = {line_row_name: actual_qty}.
 
 ### `kamra.banquet.add_supplementary`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Something ordered on the night that wasn't on the quote - another
 round at the bar, twenty extra plates, a second cake. It bills on top
@@ -4701,7 +4701,7 @@ agreed.
 
 ### `kamra.banquet.function_economics`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 The P&L of one function: what it sold, what it cost, what the input
 credit is worth, and what's left - plus where the quote and the night
@@ -4713,7 +4713,7 @@ disagreed.
 
 ### `kamra.banquet.link_customer`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Tie the function to a real guest record instead of a name in a box.
 
@@ -4728,7 +4728,7 @@ sees the same person the front desk does.
 
 ### `kamra.banquet.customer_profile`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 Everything the banquet office should know before picking up the
 phone: what this client has run with us, what they spent, what they
@@ -4742,7 +4742,7 @@ usually book, and what's still owed.
 
 ### `kamra.banquet.quote_advisor`
 
-**GET/POST** · roles: `Finance`
+**GET/POST** · permission: `Venue Booking: bill_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`
 
 Would this function make money at the price we're about to send?
 
@@ -4761,7 +4761,7 @@ the cost actually sits.
 
 ### `kamra.banquet.offer_amenities`
 
-**POST**
+**POST** · permission: `Venue Booking: manage_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Revenue Manager`
 
 Put the hall's chargeable extras on the function.
 
@@ -4779,7 +4779,7 @@ where most of them actually sit while a wedding is being agreed.
 
 ### `kamra.banquet.venue_detail`
 
-**GET/POST**
+**GET/POST** · permission: `Venue Booking: view_functions` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`
 
 One hall in full: what it holds, what it comes with, what it costs
 to open, and which other spaces it shares its floor with.
@@ -5067,7 +5067,7 @@ visits left, and what they paid at the desk.
 
 ### `kamra.migrate.preview_import`
 
-**POST**
+**POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Dry run: how the file's columns map, which date convention was
 detected, and every row that would be skipped - nothing is written.
@@ -5080,7 +5080,7 @@ detected, and every row that would be skipped - nothing is written.
 
 ### `kamra.migrate.run_import`
 
-**POST**
+**POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Import the file (see _run_import). Migrated stays are not new
 business, so they never reach outbound webhook subscribers.
@@ -5096,7 +5096,7 @@ business, so they never reach outbound webhook subscribers.
 
 ### `kamra.golive.csv_template`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`
+**GET/POST** · permission: `Property: go_live` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 The header row of one of Kamra's go-live CSV templates.
 
@@ -5106,7 +5106,7 @@ The header row of one of Kamra's go-live CSV templates.
 
 ### `kamra.golive.preview_companies`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Property: go_live` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Dry run of the companies file: column mapping, which companies are
 new and which already exist (they are updated, never duplicated).
@@ -5118,7 +5118,7 @@ new and which already exist (they are updated, never duplicated).
 
 ### `kamra.golive.run_companies`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Property: go_live` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Create or update each company (an upsert, so a re-run changes
 nothing) and, for a company on credit, its city ledger account at this
@@ -5131,7 +5131,7 @@ property with the credit limit.
 
 ### `kamra.golive.preview_opening`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Property: go_live` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Dry run of the opening-balance file: what each row matched, totals
 per category, what is already posted (a re-run skips it) and every row
@@ -5144,7 +5144,7 @@ that can't be posted. Nothing is written.
 
 ### `kamra.golive.run_opening`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Property: go_live` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Post the opening balances. Each item is posted once: a re-run of the
 same file finds it in Kamra and skips it (and says so). Company bills
@@ -5157,7 +5157,7 @@ go in before company credits, so a credit settles the oldest bill.
 
 ### `kamra.golive.reconcile`
 
-**POST** · roles: `Finance`
+**POST** · permission: `Property: go_live` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Counts and totals in each go-live file against what is now in Kamra,
 per category. `ready` is true only when every category matches and no
@@ -5199,7 +5199,7 @@ problem are skipped and listed; the rest go in.
 
 ### `kamra.inventory.ingredients`
 
-**GET/POST**
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 The ingredient master - the picker behind the recipe editor.
 
@@ -5210,7 +5210,7 @@ The ingredient master - the picker behind the recipe editor.
 
 ### `kamra.inventory.menu_recipe`
 
-**GET/POST**
+**GET/POST** · permission: `Menu Item: view_recipes` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 One dish's recipe, with each line's unit and what the dish's own outlet
 has on hand right now - so the editor can say "you have 0.4 kg left".
@@ -5221,7 +5221,7 @@ has on hand right now - so the editor can say "you have 0.4 kg left".
 
 ### `kamra.inventory.recipe_overview`
 
-**GET/POST**
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Every dish and whether it has a recipe yet. Dishes without one are not
 a problem to be nagged about - most menus will only ever cost their big
@@ -5233,7 +5233,7 @@ movers - but you cannot decide that without seeing the list.
 
 ### `kamra.inventory.save_recipe`
 
-**POST** · roles: `Finance`, `F&B Manager`, `Hotel Admin`
+**POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Replace a dish's recipe wholesale. An empty list is valid and means
 "this dish never touches inventory" - the optional in the requirement.
@@ -5245,7 +5245,7 @@ Replace a dish's recipe wholesale. An empty list is valid and means
 
 ### `kamra.inventory.save_ingredient`
 
-**POST**
+**POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Create or update one ingredient.
 
@@ -5262,7 +5262,7 @@ Create or update one ingredient.
 
 ### `kamra.inventory.delete_ingredient`
 
-**POST**
+**POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Refuse if it is on a recipe or has history - deleting it would orphan a
 recipe or punch a hole in the ledger. Deactivate instead.
@@ -5273,7 +5273,7 @@ recipe or punch a hole in the ledger. Deactivate instead.
 
 ### `kamra.inventory.receive_stock`
 
-**POST**
+**POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Goods in. rows = [{ingredient, qty, cost_per_unit?}]. One batch_id ties
 the delivery together, which is why this needs no Stock Receipt doctype:
@@ -5289,7 +5289,7 @@ a receipt is just its ledger rows plus a supplier and an invoice number.
 
 ### `kamra.inventory.adjust_stock`
 
-**POST**
+**POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 The stock take, and the escape hatch for everything this module cannot
 know. rows = [{ingredient, counted_qty}] - COUNTS, not deltas, exactly
@@ -5309,7 +5309,7 @@ shortage guard makes when it refuses to deliver a short bag unexplained.
 
 ### `kamra.inventory.record_wastage`
 
-**POST**
+**POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Stock destroyed OUTSIDE a sale: a crate of tomatoes rots, a bottle
 breaks. No POS line exists, so only a real ledger row can say it happened.
@@ -5328,7 +5328,7 @@ a Wastage row too would deduct it twice. Use wastage_report() for those.
 
 ### `kamra.inventory.stock_list`
 
-**GET/POST**
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Everything this outlet holds. Stock is per outlet, so there is no such
 thing as a merged total across outlets and this never offers one.
@@ -5341,7 +5341,7 @@ thing as a merged total across outlets and this never offers one.
 
 ### `kamra.inventory.ingredient_ledger`
 
-**GET/POST**
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Where did my paneer go? Newest first, each row carrying the balance it
 produced, so the history explains the number on the shelf.
@@ -5355,7 +5355,7 @@ produced, so the history explains the number on the shelf.
 
 ### `kamra.inventory.low_stock`
 
-**GET/POST**
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Everything at or under par, out, or negative - and, for each, the
 dishes that use it. That last part is what makes the flag actionable:
@@ -5369,7 +5369,7 @@ it. We flag and offer; a human decides. Nothing is ever auto-86'd.
 
 ### `kamra.inventory.wastage_report`
 
-**GET/POST**
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 Food that was cooked and then binned: lines voided after they fired.
 
@@ -5388,7 +5388,7 @@ destroyed outside a sale, so SUM(qty_change) always equals reality.
 
 ### `kamra.inventory.set_menu_availability`
 
-**POST** · roles: `Finance`, `F&B Manager`, `Hotel Admin`
+**POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 86 a dish, or put it back. This is the ONLY thing that ever pulls an
 item off the menu for stock reasons, and a human has to press it.
@@ -5406,7 +5406,7 @@ someone who can walk over and look at the shelf.
 
 ### `kamra.inventory.set_par_level`
 
-**POST**
+**POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Where LOW starts for this ingredient at this outlet. Zero = no par.
 
@@ -5422,7 +5422,7 @@ Where LOW starts for this ingredient at this outlet. Zero = no par.
 
 ### `kamra.menu_import.preview_menu_import`
 
-**POST**
+**POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Dry run: how the columns map, what would be created vs updated, and
 every row that would be skipped. Nothing is written.
@@ -5435,7 +5435,7 @@ every row that would be skipped. Nothing is written.
 
 ### `kamra.menu_import.run_menu_import`
 
-**POST**
+**POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 Import the file. Upserts by (property, outlet, item_name): a dish
 already on that outlet's menu is updated (price/flags), never duplicated.
@@ -5450,7 +5450,7 @@ One bad row never aborts the batch.
 
 ### `kamra.menu_import.menu_template`
 
-**GET/POST**
+**GET/POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
 The CSV headers + one sample row, so the file starts out right.
 
@@ -5462,7 +5462,7 @@ The CSV headers + one sample row, so the file starts out right.
 
 ### `kamra.crs.crs_search`
 
-**GET/POST** · roles: `Front Desk`, `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: plan_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Kamra Agent`
 
 Find a room across the chain: for every property the user can access,
 the room types with space for these dates and their all-in rate.
@@ -5476,7 +5476,7 @@ the room types with space for these dates and their all-in rate.
 
 ### `kamra.crs.quote_itinerary`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Price a multi-property trip before booking it: each leg priced by
 get_quote (the same engine create_booking uses), rooms free per leg,
@@ -5492,7 +5492,7 @@ check_out_date, adults?, children?, meal_plan?, rate_plan?}].
 
 ### `kamra.crs.create_itinerary`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Book a trip across properties in one go: one reservation per leg
 (each a normal booking at its own property, with its own folio) under
@@ -5517,7 +5517,7 @@ or per leg with record_advance.
 
 ### `kamra.crs.add_itinerary_leg`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Add one more stay to an existing trip. It can't overlap a live leg.
 
@@ -5535,7 +5535,7 @@ Add one more stay to an existing trip. It can't overlap a live leg.
 
 ### `kamra.crs.get_itinerary`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**GET/POST** · permission: `Itinerary: view_trips` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 A trip with its legs in date order: each leg's property, dates,
 status, price, advance paid and deposit still due, plus the combined
@@ -5547,7 +5547,7 @@ total (live legs) - what the combined confirmation prints.
 
 ### `kamra.crs.list_itineraries`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**GET/POST** · permission: `Itinerary: view_trips` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Recent trips the user can work with (every leg at a property they
 may access), newest first, with their legs and status.
@@ -5559,7 +5559,7 @@ may access), newest first, with their legs and status.
 
 ### `kamra.crs.cancel_itinerary_preview`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 What cancelling the whole trip would cost now: each leg's own
 cancellation_preview (its property's policy) and the total fee. Legs
@@ -5571,7 +5571,7 @@ already checked in or finished can't be cancelled and are listed apart.
 
 ### `kamra.crs.cancel_itinerary`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Cancel every confirmed leg of a trip, each through cancel_reservation
 so its own property's policy and fee apply (waive_fee=1 waives them all,
@@ -5587,7 +5587,7 @@ cancel_reservation on it.
 
 ### `kamra.crs.trip_advance_preview`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**GET/POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 How one advance for the whole trip would be split across its legs,
 before taking it: each leg's advance % and amount still due, and its
@@ -5601,7 +5601,7 @@ the guest or staff, then call record_trip_advance with the same amount.
 
 ### `kamra.crs.record_trip_advance`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Take one advance for the whole trip. The payment is split as
 trip_advance_preview shows and each share is recorded through
@@ -5702,7 +5702,7 @@ Where a booking this connection made stands.
 
 ### `kamra.dashboards.property_dashboard`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Night Auditor`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_dashboard` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`, `Night Auditor`
 
 Everything one hotel's dashboard needs, by department. The year on
 year comparison is heavy, so only the Dashboard screen asks for it.
@@ -5715,7 +5715,7 @@ year comparison is heavy, so only the Dashboard screen asks for it.
 
 ### `kamra.dashboards.portfolio_dashboard`
 
-**GET/POST** · roles: `Finance`, `Revenue Manager`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_performance` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Revenue Manager`, `Kamra Agent`
 
 The chain's central view: headline metrics rolled up across every
 property the signed-in user may access, plus a per-property table.
@@ -5726,7 +5726,7 @@ property the signed-in user may access, plus a per-property table.
 
 ### `kamra.dashboards.owner_snapshot`
 
-**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_flash` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Revenue Manager`, `Kamra Agent`, `Night Auditor`
 
 The owner's phone view of one hotel: the flash for a day (or
 from_date..date), what guests and companies still owe (as of now), and
@@ -5746,7 +5746,7 @@ property's business date, never the phone's clock.
 
 ### `kamra.reports.void_allowance_report`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`
+**GET/POST** · permission: `Folio: audit_voids` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Audit trail of every void, allowance (with the manager who approved
 it, when one had to) and invoice cancellation on a property, plus
@@ -5762,7 +5762,7 @@ cannot drift from what actually happened.
 
 ### `kamra.reports.manager_flash`
 
-**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_flash` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Revenue Manager`, `Kamra Agent`, `Night Auditor`
 
 The daily flash: yesterday's performance, month to date, today's
 movement, collections by mode, and the 7-day outlook. With from_date,
@@ -5802,7 +5802,7 @@ absent, never estimated.
 
 ### `kamra.reports.budget_vs_actual`
 
-**GET/POST** · roles: `Finance`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_performance` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Revenue Manager`, `Kamra Agent`
 
 Monthly target vs actual: room revenue, occupancy %, ADR, RevPAR - with
 variance. period is 'YYYY-MM' (defaults to the current month).
@@ -5823,7 +5823,7 @@ of Day, so a zero is explained rather than mysterious.
 
 ### `kamra.reports.save_budget`
 
-**POST** · roles: `Revenue Manager`, `Hotel Admin`, `Finance`
+**POST** · permission: `Revenue Budget: set_budget` · default roles: `System Manager`, `Hotel Admin`, `Revenue Manager`, `Finance`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5836,7 +5836,7 @@ of Day, so a zero is explained rather than mysterious.
 
 ### `kamra.reports.contribution`
 
-**GET/POST** · roles: `Finance`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_performance` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Revenue Manager`, `Kamra Agent`
 
 Who brings the business: revenue + room nights + share + the
 commission paid for it (travel agent or OTA), grouped by booking source,
@@ -5852,7 +5852,7 @@ by = source | company | travel_agent | channel.
 
 ### `kamra.reports.sla_report`
 
-**GET/POST** · roles: `Front Desk`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Service Ticket: handle_requests` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Operations SLA health from Service Tickets over a window: overall
 resolution and breach rates, a breakdown by category and by priority,
@@ -5888,7 +5888,7 @@ room nights and booked value, by the date the booking was made
 
 ### `kamra.audit_report.night_audit_report`
 
-**GET/POST** · roles: `Finance`, `Revenue Manager`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Property: view_flash` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Revenue Manager`, `Kamra Agent`, `Night Auditor`
 
 The night audit report for a business date (default: the last one
 closed): rooms, food and beverage separately, each outlet, banquets,
@@ -5907,7 +5907,7 @@ year to date, plus each ledger's balance brought and carried forward.
 
 ### `kamra.custom_reports.list_report_datasets`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**GET/POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Whitelisted datasets the current user may run on this property.
 
@@ -5917,7 +5917,7 @@ Whitelisted datasets the current user may run on this property.
 
 ### `kamra.custom_reports.list_report_packs`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**GET/POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Department packs with the sections this user may run here.
 
@@ -5927,7 +5927,7 @@ Department packs with the sections this user may run here.
 
 ### `kamra.custom_reports.run_report_pack`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**GET/POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Run a department pack (id from list_report_packs) for a date range.
 format=json (sections of rows) or html (one printable page).
@@ -5945,7 +5945,7 @@ compare=1 (default) adds this-vs-previous totals on each section.
 
 ### `kamra.custom_reports.list_custom_reports`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**GET/POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Saved reports visible to this user on the property.
 
@@ -5955,7 +5955,7 @@ Saved reports visible to this user on the property.
 
 ### `kamra.custom_reports.get_custom_report`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**GET/POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Full saved definition for the builder.
 
@@ -5966,7 +5966,7 @@ Full saved definition for the builder.
 
 ### `kamra.custom_reports.save_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Create or update a saved custom report definition. lang (en, es, ar)
 is the language its scheduled emails go out in.
@@ -5990,7 +5990,7 @@ is the language its scheduled emails go out in.
 
 ### `kamra.custom_reports.delete_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Delete a saved report the user can edit.
 
@@ -6001,7 +6001,7 @@ Delete a saved report the user can edit.
 
 ### `kamra.custom_reports.run_custom_report`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**GET/POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Run a saved report or an ad-hoc definition. format=json|csv|html.
 compare=1 adds this-vs-previous totals for number columns.
@@ -6023,7 +6023,7 @@ compare=1 adds this-vs-previous totals for number columns.
 
 ### `kamra.custom_reports.email_custom_report`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `System Manager`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
+**POST** · permission: `Kamra Custom Report: run_reports` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `Kamra Agent`, `Night Auditor`, `F&B Manager`
 
 Run a report and email it (CSV or HTML attachment).
 
@@ -6047,7 +6047,7 @@ Run a report and email it (CSV or HTML attachment).
 
 ### `kamra.ledger.ledger_balances`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_ledgers` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Four-ledger trial balance for a property (optionally as-of a date).
 
@@ -6073,7 +6073,7 @@ For AR the company the bill is billed to comes with it.
 
 ### `kamra.ledger.journal_by_transaction_code`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_ledgers` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Ledger postings summed by transaction code: for one business date, or
 from_date to to_date (both inclusive) when a range is given.
@@ -6087,7 +6087,7 @@ from_date to to_date (both inclusive) when a range is given.
 
 ### `kamra.ledger.financial_activity`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_financials` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6097,7 +6097,7 @@ from_date to to_date (both inclusive) when a range is given.
 
 ### `kamra.ledger.city_ledger_transfer`
 
-**POST** · roles: `Finance`, `Front Desk`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Move a folio's unpaid balance to the company's city ledger. Runs the
 property's credit control: over the credit limit or with overdue bills
@@ -6113,7 +6113,7 @@ passes `credit_override_reason`. Agents can't override.
 
 ### `kamra.ledger.city_ledger_settle`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**POST** · permission: `City Ledger Account: settle_account` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 Record a company's payment against its city ledger account and clear
 the AR it pays.
@@ -6202,7 +6202,7 @@ it stays on the account, in aging and on statements, flagged.
 
 ### `kamra.ledger.city_ledger_aging`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_ledgers` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Every company's AR at the property, aged by due date (not_due,
 d1_30, d31_60, d61_90, d90p and their sum `overdue`). The invoice-age
@@ -6226,7 +6226,7 @@ adjustment and payment (with the bills it cleared).
 
 ### `kamra.ledger.city_ledger_account`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Account: view_account` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`
 
 One company's city ledger: balance, aging, each open bill (oldest
 first) and recent payments - what the payment screen needs.
@@ -6237,7 +6237,7 @@ first) and recent payments - what the payment screen needs.
 
 ### `kamra.ledger.force_advance_bill`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Post future room (+ meal) charges ahead of night audit.
 
@@ -6251,7 +6251,7 @@ nights: 'tonight' | 'entire' | integer string of nights.
 
 ### `kamra.ledger.generate_proforma`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6260,7 +6260,7 @@ nights: 'tonight' | 'entire' | integer string of nights.
 
 ### `kamra.ledger.issue_credit_note`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**POST** · permission: `Folio: issue_credit_note` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6271,7 +6271,7 @@ nights: 'tonight' | 'entire' | integer string of nights.
 
 ### `kamra.ledger.record_folio_reprint`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6281,7 +6281,7 @@ nights: 'tonight' | 'entire' | integer string of nights.
 
 ### `kamra.ledger.folio_history`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_ledgers` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6293,7 +6293,7 @@ nights: 'tonight' | 'entire' | integer string of nights.
 
 ### `kamra.ledger.batch_post_charge`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 Post the same charge to many folios (group / event).
 
@@ -6307,7 +6307,7 @@ Post the same charge to many folios (group / event).
 
 ### `kamra.ledger.batch_print_folios`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6315,7 +6315,7 @@ Post the same charge to many folios (group / event).
 
 ### `kamra.ledger.quick_checkout`
 
-**POST** · roles: `Front Desk`, `Night Auditor`, `Kamra Agent`
+**POST** · permission: `Reservation: check_in_out` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Check out and close the guest folio in one step. check_out settles the
 stay the one way: the company's folio (Company, or the group master)
@@ -6330,7 +6330,7 @@ the company.
 
 ### `kamra.ledger.group_checkout`
 
-**POST** · roles: `Front Desk`, `Kamra Agent`
+**POST** · permission: `Group Booking: book_group` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Quick-checkout every Checked In reservation on a group, or only the
 `reservations` picked on the rooming list.
@@ -6343,7 +6343,7 @@ Quick-checkout every Checked In reservation on a group, or only the
 
 ### `kamra.ledger.list_exchange_rates`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**GET/POST** · permission: `Exchange Rate: use_currency_desk` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6351,7 +6351,7 @@ Quick-checkout every Checked In reservation on a group, or only the
 
 ### `kamra.ledger.upsert_exchange_rate`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `Exchange Rate: set_rates` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Set today's (business date) rate for one foreign currency. Rates are
 home-currency units per 1 foreign unit. A rate typed in here is Manual
@@ -6369,7 +6369,7 @@ leaves it alone.
 
 ### `kamra.ledger.fetch_exchange_rates`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `Exchange Rate: set_rates` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Fetch today's market rates for the property's listed currencies
 (Settings, Finance, Exchange rates) and store them for the business
@@ -6382,7 +6382,7 @@ already set for today is kept.
 
 ### `kamra.ledger.currency_calculator`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**GET/POST** · permission: `Exchange Rate: use_currency_desk` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6393,7 +6393,7 @@ already set for today is kept.
 
 ### `kamra.ledger.post_exchange`
 
-**POST** · roles: `Front Desk`, `Finance`, `Kamra Agent`
+**POST** · permission: `Folio: bill` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6407,7 +6407,7 @@ already set for today is kept.
 
 ### `kamra.ledger.folio_in_currency`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Folio: view_folio` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 A folio's total and balance shown in another currency, at today's
 rate. Display only: the bill and tax invoice stay in home currency.
@@ -6419,7 +6419,7 @@ rate. Display only: the bill and tax invoice stay in home currency.
 
 ### `kamra.ledger.exchange_history`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Exchange Rate: use_currency_desk` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6428,7 +6428,7 @@ rate. Display only: the bill and tax invoice stay in home currency.
 
 ### `kamra.ledger.list_reason_codes`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `F&B Manager`, `Kamra Agent`
+**GET/POST** · permission: `Reason Code: view_codes` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -6441,7 +6441,7 @@ rate. Display only: the bill and tax invoice stay in home currency.
 
 ### `kamra.credit.company_credit_status`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Corporate Account: view_credit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`, `Revenue Manager`
 
 The credit check for billing `amount` more to a company, without
 doing anything: what the booking dialog shows before a company stay is
@@ -6455,7 +6455,7 @@ booked. `applies` is False for a company not on credit.
 
 ### `kamra.credit.checkout_credit_preview`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+**GET/POST** · permission: `Folio: view_folio` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Before check-out: the credit check for each company the stay's bills
 would move to, so the desk can warn, or ask Finance / a Hotel Admin to
@@ -6471,7 +6471,7 @@ what check-out will move, and nothing is written.
 
 ### `kamra.credit.company_credit_terms`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Hotel Admin`, `Revenue Manager`
+**GET/POST** · permission: `Corporate Account: view_terms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`
 
 A company's credit terms at one property: limit, credit days and
 what it owes (for the corporate account editor).
@@ -6483,7 +6483,7 @@ what it owes (for the corporate account editor).
 
 ### `kamra.credit.set_company_credit_terms`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `Corporate Account: set_credit` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Set a company's credit limit (0 = no limit) and payment terms at one
 property: `use_default_credit_days` 1 follows the property's default
@@ -6504,7 +6504,7 @@ before / after.
 
 ### `kamra.statements.company_statement`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`
+**GET/POST** · permission: `City Ledger Account: send_statements` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 One company's statement at its property: open bills with invoice
 date, due date, days overdue and amounts, unapplied credit, recent
@@ -6519,7 +6519,7 @@ printable page (print or save as PDF from the browser).
 
 ### `kamra.statements.email_company_statement`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `City Ledger Account: send_statements` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Email a company its statement (HTML attachment). Without recipients
 it goes to the company's billing contact email.
@@ -6550,7 +6550,7 @@ skipped and named; the sending runs in the background.
 
 ### `kamra.statements.company_monthly_bill`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_financials` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 A company's month-end bill: every bill of the month with its invoice
 number, taxable value and tax, the company's payments, and the balance
@@ -6565,7 +6565,7 @@ brought and carried forward. format=html returns the printable page.
 
 ### `kamra.statements.email_monthly_bill`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `City Ledger Account: send_statements` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Email a company its month-end bill (HTML attachment). Without
 recipients it goes to the company's billing contact email.
@@ -6584,7 +6584,7 @@ recipients it goes to the company's billing contact email.
 
 ### `kamra.receivables.ar_accounts`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Account: view_account` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`
 
 Every AR account at the property with its contact and position - the
 receivables list. Aging and balance come from city_ledger_aging so the
@@ -6607,7 +6607,7 @@ cancelled with a balance (a no-show fee, a bill left open).
 
 ### `kamra.receivables.save_ar_account`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `City Ledger Account: manage_accounts` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Open a company's AR account at a property, or edit it (`account`).
 One open account per company per property - checkout bills into it.
@@ -6635,7 +6635,7 @@ account it opened instead of failing.
 
 ### `kamra.receivables.create_ar_invoice`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**POST** · permission: `City Ledger Account: settle_account` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 Bill a company directly, without a stay. `lines` is
 [{charge_type, description, amount, qty, gst_rate}]: amount is the unit
@@ -6653,7 +6653,7 @@ balance.
 
 ### `kamra.receivables.ar_invoice`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Account: view_account` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`
 
 One AR bill's lines and totals, whether it came from a stay or was
 raised on the account - what the invoice drawer shows and prints.
@@ -6664,7 +6664,7 @@ raised on the account - what the invoice drawer shows and prints.
 
 ### `kamra.receivables.transfer_ar_invoice`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `City Ledger Account: manage_accounts` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Move what is still owed on one bill to another company's account at
 the same property. What was already paid stays with the first account;
@@ -6734,7 +6734,7 @@ still waiting for a certificate, oldest first, with totals per tax.
 
 ### `kamra.payables.vendors`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Vendor Bill: view_payables` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 Every vendor at the property with what the hotel still owes them,
 aged by due date - the payables list.
@@ -6746,7 +6746,7 @@ aged by due date - the payables list.
 
 ### `kamra.payables.save_vendor`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `Vendor: manage_vendors` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Add a supplier at the property, or edit one (`vendor`). Names are
 unique per property, so a bill can name its vendor by name.
@@ -6767,7 +6767,7 @@ unique per property, so a bill can name its vendor by name.
 
 ### `kamra.payables.create_vendor_bill`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**POST** · permission: `Vendor Bill: enter_bills` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 Enter a supplier's bill. `amount` is before tax; the tax is
 amount x `tax_rate` %. The due date is the bill date plus the vendor's
@@ -6788,7 +6788,7 @@ Hotel Admin to approve it.
 
 ### `kamra.payables.approve_vendor_bill`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Vendor Bill: approve_bills` · default roles: `System Manager`, `Hotel Admin`
 
 Approve a bill so it can be paid.
 
@@ -6798,7 +6798,7 @@ Approve a bill so it can be paid.
 
 ### `kamra.payables.pay_vendor_bill`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `Vendor Bill: pay_bills` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Record a payment against an approved bill: all of it or part. It
 can't be more than the bill still owes. This records the payment; it
@@ -6814,7 +6814,7 @@ does not move money in a till (cash from the till is petty cash).
 
 ### `kamra.payables.cancel_vendor_bill`
 
-**POST** · roles: `Finance`, `Hotel Admin`
+**POST** · permission: `Vendor Bill: pay_bills` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Cancel a bill entered by mistake. A bill with payments on it can't
 be cancelled.
@@ -6826,7 +6826,7 @@ be cancelled.
 
 ### `kamra.payables.vendor_bill`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Vendor Bill: view_payables` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 One bill with its payments.
 
@@ -6836,7 +6836,7 @@ One bill with its payments.
 
 ### `kamra.payables.vendor_bills`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Vendor Bill: view_payables` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 Bills at the property, most urgent first. `status` is "open"
 (not paid or cancelled, the default), "all", or one status.
@@ -6850,7 +6850,7 @@ Bills at the property, most urgent first. `status` is "open"
 
 ### `kamra.payables.payables_aging`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Vendor Bill: view_payables` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 What the hotel owes each vendor, aged by due date: not_due, d1_30,
 d31_60, d61_90, d90p and their sum `overdue`, plus totals.
@@ -6942,7 +6942,7 @@ The link is the Employee's own user_id, so HR and Kamra agree.
 
 ### `kamra.books.cash_forecast`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_financials` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 Money expected in and out over the next `days` days (5, 15 or 30;
 default 5), day by day from today, with a running position and
@@ -6963,7 +6963,7 @@ Read-only.
 
 ### `kamra.books.profit_and_loss`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_financials` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 A management P&L for the period, before tax: revenue by department
 (rooms, food and beverage, banquets, other, less allowances) and
@@ -6980,7 +6980,7 @@ paid outside Kamra are not in it.
 
 ### `kamra.books.balance_sheet`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `City Ledger Entry: view_financials` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`
 
 What is owed to the hotel and what it owes, as of a date (default
 today): guest ledger and city ledger against advance deposits and
@@ -6999,7 +6999,7 @@ the bank, fixed assets, loans and equity are not in Kamra.
 
 ### `kamra.night_audit.night_audit_precheck`
 
-**GET/POST**
+**GET/POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 The night audit checklist for the property's current business date.
 Read-only. Each check: key, title, severity (block | warn | info),
@@ -7014,7 +7014,7 @@ acknowledged with a reason (run_night_audit acknowledge=[keys], note).
 
 ### `kamra.night_audit.night_audit_pack`
 
-**GET/POST**
+**GET/POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 The saved audit pack of one Night Audit Run. Missing packs answer
 has_pack: false with a message; rebuild_audit_pack can recreate them.
@@ -7025,7 +7025,7 @@ has_pack: false with a message; rebuild_audit_pack can recreate them.
 
 ### `kamra.night_audit.rebuild_audit_pack`
 
-**POST**
+**POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Rebuild and save the printable audit pack for a completed run.
 Use when the automatic night left has_pack false, or to refresh the
@@ -7037,7 +7037,7 @@ pack. Does not re-post charges or roll the business date.
 
 ### `kamra.night_audit.recover_stuck_business_date`
 
-**POST** · roles: `Finance`, `Hotel Admin`, `Night Auditor`, `Kamra Agent`
+**POST** · permission: `Night Audit Run: recover_date` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Advance the business date when a completed audit exists for the
 current date but the roll did not stick. Never re-posts room nights.
@@ -7048,7 +7048,7 @@ current date but the roll did not stick. Never re-posts room nights.
 
 ### `kamra.night_audit.night_audit_history`
 
-**GET/POST**
+**GET/POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Night Audit Runs of a property, newest first, with whether each has a
 saved audit pack. from_date/to_date narrow it to business dates in that
@@ -7063,7 +7063,7 @@ range (a year of nights fits under the cap).
 
 ### `kamra.night_audit.night_audit_schedule`
 
-**GET/POST** · roles: `Finance`, `Hotel Admin`, `Night Auditor`
+**GET/POST** · permission: `Night Audit Run: schedule_audit` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Night Auditor`
 
 The automatic night audit at a glance: on or off, the next run on the
 property clock (None = manual only), the business date and the last 30
@@ -7075,7 +7075,7 @@ runs, scheduled and manual, from the Night Audit Log.
 
 ### `kamra.night_audit.eod_session`
 
-**POST**
+**POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Open (or resume) End of Day for the property's current business date:
 the draft run that keeps the wizard's progress, every pre-check and
@@ -7089,7 +7089,7 @@ the step list with each step's status (pending, done, blocked). With
 
 ### `kamra.night_audit.eod_progress`
 
-**POST**
+**POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Save the wizard's place: the current step (1-based), a step's status
 (`key` + `status`: done | skipped | pending) and the manager notes.
@@ -7105,7 +7105,7 @@ A blocked step cannot be marked done - acknowledge it first.
 
 ### `kamra.night_audit.eod_acknowledge`
 
-**POST**
+**POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Acknowledge a blocking check with a reason so End of Day can go on.
 Who and when are recorded on the run and in the Activity log.
@@ -7132,7 +7132,7 @@ the property's default for it (refund or keep).
 
 ### `kamra.night_audit.eod_mark_no_show`
 
-**POST**
+**POST** · permission: `Reservation: check_in_out` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Mark an arrival that did not come a No Show now - from Today, the
 reservation or End of Day - with the property's no-show fee policy
@@ -7164,7 +7164,7 @@ deposit, with a reason. Same roles as a folio refund.
 
 ### `kamra.night_audit.eod_overview`
 
-**GET/POST**
+**GET/POST** · permission: `Night Audit Run: run_audit` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Manage End of Day: one row per property the user can access - the
 business date, the property's local time, arrivals and departures
@@ -7175,7 +7175,7 @@ pending, open cashiers and POS bills, and the number of blockers.
 
 ### `kamra.agents_api.activity_feed`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Agent Action Log: view_activity` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Revenue Manager`
 
 The one ledger: every action anyone took - human or AI - newest first.
 actor_kind filters to "human" or "agent".
@@ -7190,7 +7190,7 @@ actor_kind filters to "human" or "agent".
 
 ### `kamra.agents_api.activity_detail`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Kamra Agent`
+**GET/POST** · permission: `Agent Action Log: view_activity` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Revenue Manager`
 
 Everything one ledger row knows  -  including the before/after
 snapshots that are too heavy for the feed.
@@ -7201,7 +7201,7 @@ snapshots that are too heavy for the feed.
 
 ### `kamra.agents_api.staff_sign_ins`
 
-**GET/POST** · roles: `Hotel Admin`, `Finance`, `System Manager`
+**GET/POST** · permission: `Agent Action Log: view_sign_ins` · default roles: `System Manager`, `Hotel Admin`, `Finance`
 
 Who signed in to and out of Kamra, newest first: Frappe's own Login /
 Logout records (Activity Log), limited to this property's staff. Only
@@ -7220,7 +7220,7 @@ the attempt worked. IP addresses are left out.
 
 ### `kamra.settings.menu_masters`
 
-**GET/POST** · roles: `Finance`, `Front Desk`, `Night Auditor`, `F&B Manager`, `Kamra Agent`
+**GET/POST** · permission: `Menu Item: view_menu_lists` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`, `Night Auditor`
 
 Allergen tags, prep stations, courses and category suggestions for
 the Menu form and kitchen display. Edited under Settings → F&B → Menu
@@ -7232,7 +7232,7 @@ master lists.
 
 ### `kamra.settings.settings_schema`
 
-**GET/POST** · roles: `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `F&B Manager`
+**GET/POST** · permission: `Property: view_settings` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Housekeeping Supervisor`, `F&B Manager`
 
 Every settings page this user may see for the property, with current
 values. Pages they can't change come back read-only (can_edit=False).
@@ -7243,7 +7243,7 @@ values. Pages they can't change come back read-only (can_edit=False).
 
 ### `kamra.settings.save_settings`
 
-**POST** · roles: `Finance`, `Revenue Manager`, `Housekeeping Supervisor`, `F&B Manager`
+**POST** · permission: `Property: edit_settings` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Revenue Manager`, `Housekeeping Supervisor`, `F&B Manager`
 
 Change some settings on one module page. Validates every key against
 the registry, refuses keys from another module, and writes one
@@ -7257,7 +7257,7 @@ Activity log row with the before/after values.
 
 ### `kamra.settings.set_module_enabled`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Switch one module on or off for the property.
 
@@ -7302,7 +7302,7 @@ after the list was last saved.
 
 ### `kamra.rooms.rooms_board`
 
-**GET/POST**
+**GET/POST** · permission: `Room: view_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`
 
 Every room of the property as a tile: housekeeping status, who is in
 it, who arrives or leaves today, whether it is out of service, and its
@@ -7314,7 +7314,7 @@ open housekeeping task. One call, a fixed number of queries.
 
 ### `kamra.rooms.room_detail`
 
-**GET/POST**
+**GET/POST** · permission: `Room: view_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`
 
 Everything about one room right now: what it is, its status, who is
 in it (with the balance), who arrives next, whether it is held out of
@@ -7326,7 +7326,7 @@ service, and its open housekeeping work.
 
 ### `kamra.rooms.room_availability`
 
-**GET/POST**
+**GET/POST** · permission: `Room: view_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`
 
 This room, night by night: booked (by whom), held out of service, or
 free. Same overlap rules as the tape chart and the block guard (the
@@ -7340,7 +7340,7 @@ check-out night is free; a day-use stay holds its own date).
 
 ### `kamra.rooms.room_history`
 
-**GET/POST**
+**GET/POST** · permission: `Room: view_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`
 
 Who stayed in this room lately (nights, room revenue), who cleaned
 and checked it and when, its service tickets, and the guests moved in
@@ -7353,7 +7353,7 @@ or out of it.
 
 ### `kamra.rooms.room_insights`
 
-**GET/POST**
+**GET/POST** · permission: `Room: view_rooms` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Revenue Manager`, `Finance`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`
 
 Per-room numbers for the last `days` nights (7, 30, 90, 180 or 365,
 up to yesterday): room nights sold and occupancy, room revenue posted to
@@ -7397,7 +7397,7 @@ Add rooms.
 
 ### `kamra.today_layout.get_today_layout`
 
-**GET/POST**
+**GET/POST** · permission: `Property: use_console` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`
 
 The layout this person sees on Today, and where it came from
 ("user", "property" or "default").
@@ -7408,7 +7408,7 @@ The layout this person sees on Today, and where it came from
 
 ### `kamra.today_layout.save_today_layout`
 
-**POST**
+**POST** · permission: `Property: use_console` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`
 
 Save this person's own Today layout.
 
@@ -7419,7 +7419,7 @@ Save this person's own Today layout.
 
 ### `kamra.today_layout.reset_today_layout`
 
-**POST**
+**POST** · permission: `Property: use_console` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Revenue Manager`, `Housekeeping`, `Kamra Agent`, `Housekeeping Supervisor`, `Night Auditor`
 
 Drop this person's own layout: back to the hotel default.
 
@@ -7429,7 +7429,7 @@ Drop this person's own layout: back to the hotel default.
 
 ### `kamra.today_layout.save_today_layout_default`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Hotel Admin: the layout everyone at this property sees until they
 customise their own. Pass no layout to go back to the built-in one.
@@ -7444,7 +7444,7 @@ customise their own. Pass no layout to go back to the built-in one.
 
 ### `kamra.sop.get_sop`
 
-**GET/POST** · roles: `Front Desk`, `Kamra Agent`, `Hotel Admin`
+**GET/POST** · permission: `SOP Template: read_sops` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 Return evaluated SOP steps for a procedure.
 
@@ -7459,7 +7459,7 @@ omitted, steps return as todo with template tips only.
 
 ### `kamra.sop.list_sops`
 
-**GET/POST** · roles: `Hotel Admin`, `System Manager`, `Front Desk`, `Kamra Agent`
+**GET/POST** · permission: `SOP Template: read_sops` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
 
 List SOP templates for the settings editor.
 
@@ -7469,7 +7469,7 @@ List SOP templates for the settings editor.
 
 ### `kamra.sop.get_sop_template`
 
-**GET/POST** · roles: `Hotel Admin`, `System Manager`
+**GET/POST** · permission: `SOP Template: configure` · default roles: `System Manager`, `Hotel Admin`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -7477,7 +7477,7 @@ List SOP templates for the settings editor.
 
 ### `kamra.sop.save_sop_template`
 
-**POST** · roles: `Hotel Admin`, `System Manager`
+**POST** · permission: `SOP Template: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Create or update an SOP template and its steps.
 
@@ -7492,7 +7492,7 @@ Create or update an SOP template and its steps.
 
 ### `kamra.sop.seed_sop_templates`
 
-**POST** · roles: `Hotel Admin`, `System Manager`
+**POST** · permission: `SOP Template: configure` · default roles: `System Manager`, `Hotel Admin`
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -7505,7 +7505,7 @@ Create or update an SOP template and its steps.
 
 ### `kamra.checkin.checkin_flow`
 
-**GET/POST**
+**GET/POST** · permission: `Reservation: check_in_out` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`, `Night Auditor`
 
 Everything the guided check-in shows, in one round trip: the steps
 (required or optional, done, skipped or to do, and who did them), plus
@@ -7517,7 +7517,7 @@ what each step screen needs.
 
 ### `kamra.checkin.check_in_readiness`
 
-**GET/POST** · roles: `Front Desk`, `Night Auditor`, `Finance`, `Hotel Admin`, `Kamra Agent`
+**GET/POST** · permission: `Folio: view_folio` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `Night Auditor`
 
 Read-only: which check-in steps are done, whether check_in would go
 through now (room assigned), and which soft-required steps are still
@@ -7530,7 +7530,7 @@ steps for it.
 
 ### `kamra.checkin.complete_checkin_step`
 
-**POST**
+**POST** · permission: `Reservation: guided_check_in` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Night Auditor`
 
 The desk marks a step done (a confirm-only step, or the review of
 what the guest sent online). Refused while what the step stands for is
@@ -7544,7 +7544,7 @@ not true yet - an ID still missing, a deposit not taken.
 
 ### `kamra.checkin.skip_checkin_step`
 
-**POST**
+**POST** · permission: `Reservation: guided_check_in` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Night Auditor`
 
 Skip a step to finish later. Only the room cannot be skipped.
 
@@ -7556,7 +7556,7 @@ Skip a step to finish later. Only the room cannot be skipped.
 
 ### `kamra.checkin.save_guest_details`
 
-**POST**
+**POST** · permission: `Reservation: guided_check_in` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Night Auditor`
 
 Correct the primary guest's contact and ID details at the desk, or
 keep what an ID scan read. Only what is passed changes; an ID type must
@@ -7578,7 +7578,7 @@ be one the country recognises.
 
 ### `kamra.checkin.confirm_billing`
 
-**POST**
+**POST** · permission: `Reservation: guided_check_in` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Night Auditor`
 
 The desk confirms who pays (OTA, guest, company, group).
 
@@ -7590,7 +7590,7 @@ The desk confirms who pays (OTA, guest, company, group).
 
 ### `kamra.checkin.assign_checkin_room`
 
-**POST**
+**POST** · permission: `Reservation: guided_check_in` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Night Auditor`
 
 Keep the assigned room, or put the guest in another free room of
 the booked type. Upgrades and downgrades (a different type, maybe a
@@ -7604,7 +7604,7 @@ move_reservation), which also records who assigned the room.
 
 ### `kamra.checkin.sign_registration_card`
 
-**POST**
+**POST** · permission: `Reservation: guided_check_in` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Night Auditor`
 
 The guest signs the registration card on screen (stored like the
 online signature) or on the printed card (on_paper=1).
@@ -7617,7 +7617,7 @@ online signature) or on the printed card (on_paper=1).
 
 ### `kamra.checkin.issue_keys`
 
-**POST**
+**POST** · permission: `Reservation: guided_check_in` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Night Auditor`
 
 Record the keys handed to the guest, and who handed them. With a
 connected lock system the keys are made by it as soon as the guest is
@@ -7632,7 +7632,7 @@ encodes the cards at the encoder and notes the card numbers here.
 
 ### `kamra.checkin.log_checkin_requests`
 
-**POST**
+**POST** · permission: `Reservation: guided_check_in` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Night Auditor`
 
 Quick requests at check-in become service tickets (one each); a free
 note is kept on the step and, if given alone, raised as one ticket.
@@ -7648,7 +7648,7 @@ airport drop) to the stay, by the hotel's tax rules and billing rules.
 
 ### `kamra.checkin.set_room_charges`
 
-**POST** · roles: `Front Desk`, `Night Auditor`, `Finance`, `Hotel Admin`
+**POST** · permission: `Reservation: set_room_charges` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Night Auditor`
 
 May the guest charge outlets, laundry and minibar to the room? POS,
 laundry and minibar postings check this flag. Changeable later in the
@@ -7665,13 +7665,13 @@ stay by the desk or finance (logged).
 
 ### `kamra.staff.staff_roles`
 
-**GET/POST**
+**GET/POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 The roles a person can hold, and whether the caller may hand each out.
 
 ### `kamra.staff.list_staff`
 
-**GET/POST**
+**GET/POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Everyone with a Kamra role who can reach this property.
 
@@ -7681,7 +7681,7 @@ Everyone with a Kamra role who can reach this property.
 
 ### `kamra.staff.save_staff`
 
-**POST**
+**POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Add a person, or change an existing person's roles, property access,
 job title and whether they can sign in. Your own record: name only.
@@ -7699,7 +7699,7 @@ job title and whether they can sign in. Your own record: name only.
 
 ### `kamra.staff.role_matrix`
 
-**GET/POST**
+**GET/POST** · permission: `Property: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Per role, the settings pages it may change (admins: all of them).
 
@@ -7710,13 +7710,13 @@ Per role, the settings pages it may change (admins: all of them).
 
 ### `kamra.webhooks.webhook_events`
 
-**GET/POST** · roles: `Hotel Admin`
+**GET/POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 The events a webhook can subscribe to.
 
 ### `kamra.webhooks.list_webhooks`
 
-**GET/POST** · roles: `Hotel Admin`
+**GET/POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 This property's webhook subscriptions (never the secrets).
 
@@ -7726,7 +7726,7 @@ This property's webhook subscriptions (never the secrets).
 
 ### `kamra.webhooks.save_webhook`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Create or update a subscription. A new one gets a signing secret,
 returned once in `secret` - store it on the receiving side now.
@@ -7742,7 +7742,7 @@ returned once in `secret` - store it on the receiving side now.
 
 ### `kamra.webhooks.rotate_webhook_secret`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Issue a new signing secret (returned once); the old one stops working.
 
@@ -7753,7 +7753,7 @@ Issue a new signing secret (returned once); the old one stops working.
 
 ### `kamra.webhooks.delete_webhook`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Remove a subscription and its delivery log.
 
@@ -7764,7 +7764,7 @@ Remove a subscription and its delivery log.
 
 ### `kamra.webhooks.webhook_deliveries`
 
-**GET/POST** · roles: `Hotel Admin`
+**GET/POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 The delivery log, newest first.
 
@@ -7777,7 +7777,7 @@ The delivery log, newest first.
 
 ### `kamra.webhooks.delivery_detail`
 
-**GET/POST** · roles: `Hotel Admin`
+**GET/POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 One delivery with the exact payload that was (or will be) sent.
 
@@ -7787,7 +7787,7 @@ One delivery with the exact payload that was (or will be) sent.
 
 ### `kamra.webhooks.resend_delivery`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Send a delivery again now - same event id, so the receiver can tell
 it is the same event.
@@ -7798,7 +7798,7 @@ it is the same event.
 
 ### `kamra.webhooks.send_test_event`
 
-**POST** · roles: `Hotel Admin`
+**POST** · permission: `Outbound Webhook: configure` · default roles: `System Manager`, `Hotel Admin`
 
 Send a signed `ping` to one endpoint right now and report the result.
 
@@ -7814,7 +7814,7 @@ Send a signed `ping` to one endpoint right now and report the result.
 
 ### `kamra.pos_interface.pos_room_lookup`
 
-**GET/POST**
+**GET/POST** · permission: `Folio: post_from_pos` · default roles: `System Manager`, `Hotel Admin`, `Kamra Agent`, `POS Integrator`
 
 In-house stays matching a room number and/or the guest's last name.
 Only checked-in guests, only this property, only what a cashier needs to
@@ -7829,7 +7829,7 @@ Ask with a room or a last name (2+ letters) - never the whole list.
 
 ### `kamra.pos_interface.pos_post_room_charge`
 
-**POST**
+**POST** · permission: `Folio: post_from_pos` · default roles: `System Manager`, `Hotel Admin`, `Kamra Agent`, `POS Integrator`
 
 Post one POS ticket to an in-house guest's bill.
 

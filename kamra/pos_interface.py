@@ -25,7 +25,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt
 
-from kamra.authz import act_as, require_roles
+from kamra.authz import act_as, require_perm
 from kamra.install import AGENT_EMAIL
 
 POS_INTEGRATOR = "POS Integrator"
@@ -51,7 +51,7 @@ def _resolve_room(property: str, room: str) -> str | None:
 
 
 @frappe.whitelist()
-@require_roles(*ROLES)
+@require_perm("Folio", "post_from_pos")
 def pos_room_lookup(property: str, room: str | None = None,
                     last_name: str | None = None) -> list:
 	"""In-house stays matching a room number and/or the guest's last name.
@@ -100,7 +100,7 @@ def _result(rec, duplicate: bool) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*ROLES)
+@require_perm("Folio", "post_from_pos")
 def pos_post_room_charge(property: str, ticket_id: str, amount: float,
                          description: str, room: str | None = None,
                          reservation: str | None = None,

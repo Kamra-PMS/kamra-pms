@@ -53,9 +53,9 @@ export default function BookingRequests({
   onChanged?: () => void
 }) {
   const { t } = useT()
-  const { roles } = useAuth()
+  const { allowed } = useAuth()
   // a role without the inbox does not ask for it (the server says 403)
-  const canSee = roles.some((r) => INBOX_ROLES.includes(r))
+  const canSee = allowed("Reservation", "handle_stays", INBOX_ROLES)
   const [data, setData] = useState<InboxData | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [declining, setDeclining] = useState<string | null>(null)

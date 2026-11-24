@@ -79,6 +79,8 @@ import { useEffect, useState } from "react"
 
 import { call } from "./api"
 
+import { hasPerm, type Can } from "./can"
+
 /** "Night audit" is what most hotels call End of Day; EOD is what they type. */
 const EOD_KEYWORDS = ["End of day", "EOD", "Close the day", "Roll the date"]
 
@@ -91,7 +93,9 @@ export interface AppNavItem {
   href?: string // external (Frappe Desk, HK mobile app) - opens a new tab
   label: string
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  roles?: string[] // per-item gate on top of the app's gate
+  roles?: string[] // per-item gate on top of the app's gate (fallback when `perm` is set)
+  /** [doctype, permission type] that shows this item (Role Permission Manager) */
+  perm?: [string, string]
   /** Sidebar section label within an app (e.g. Cashier / Billing / Books). */
   group?: string
   /** Other words search (Ctrl/Cmd+K) finds this page by. */
@@ -107,7 +111,9 @@ export interface AppDef {
   /** @deprecated kept for callers; all apps share APP_TILE */
   tint: string
   description: string
-  roles: string[] // any of these roles can see the app
+  /** fallback only: the app shows when the user holds Property: app_<id>
+   *  (Role Permission Manager); these were its defaults */
+  roles: string[]
   items: AppNavItem[]
   /** extra route prefixes that belong to this app (detail pages etc.) */
   extraPrefixes?: string[]
@@ -133,21 +139,21 @@ export const APPS: AppDef[] = [
       { to: "/in-house", label: "In House", icon: BedDouble,
         keywords: ["Arrivals", "Departures", "In-house guests", "Who is in", "Due out"] },
       { to: "/reservations", label: "Reservations", icon: ClipboardList },
-      { to: "/tape", label: "Tape Chart", icon: LayoutGrid },
+      { to: "/tape", label: "Tape Chart", icon: LayoutGrid, perm: ["Room", "view_tape"] },
       { to: "/room-board", label: "Room Board", icon: DoorOpen,
         keywords: ["Rooms", "Room status", "Out of order", "Room history"] },
-      { to: "/guests", label: "Guest History", icon: Users,
+      { to: "/guests", label: "Guest History", icon: Users, perm: ["Guest", "handle_guests"],
         keywords: ["Guests", "Guest profiles", "Past guests"] },
       { to: "/billing", label: "Billing", icon: Receipt,
         keywords: ["Folios", "Bills", "Invoices"] },
       { to: "/end-of-day", label: "Night Audit", icon: MoonStar,
         keywords: EOD_KEYWORDS },
-      { to: "/calendar", label: "Calendar", icon: CalendarDays },
-      { to: "/crs", label: "Central Reservations", icon: Search },
-      { to: "/room-blocks", label: "Room Blocks", icon: Lock },
+      { to: "/calendar", label: "Calendar", icon: CalendarDays , perm: ["Room", "view_tape"] },
+      { to: "/crs", label: "Central Reservations", icon: Search , perm: ["Itinerary", "view_trips"] },
+      { to: "/room-blocks", label: "Room Blocks", icon: Lock , perm: ["Room Block", "manage_blocks"] },
       { to: "/recreation", label: "Recreation", icon: Dumbbell,
         keywords: ["Gym", "Pool", "Spa", "Membership", "Walk-in"] },
-      { to: "/groups", label: "Group Booking", icon: Users,
+      { to: "/groups", label: "Group Booking", icon: Users, perm: ["Group Booking", "book_group"],
         keywords: ["Groups", "Group bookings", "Rooming list", "Blocks"] },
       { to: "/reports", label: "Reports", icon: ChartLine },
       { to: "/settings/front-desk", label: "Settings", icon: SettingsIcon,
@@ -169,10 +175,12 @@ export const APPS: AppDef[] = [
       // the board is oversight - supervisors and the desk; attendants work
       // from their task list and the phone app
       { to: "/housekeeping-board", label: "Housekeeping Board", icon: LayoutGrid,
+        perm: ["Room", "view_board"],
         keywords: ["Room status", "Dirty rooms", "Assign rooms", "HK board"],
         roles: ["Housekeeping Supervisor", "Front Desk", "Hotel Admin",
                 "System Manager", "Administrator"] },
       { to: "/room-board", label: "Room Board", icon: DoorOpen,
+        perm: ["Room", "view_board"],
         roles: ["Housekeeping Supervisor", "Front Desk", "Hotel Admin",
                 "System Manager", "Administrator"],
         keywords: ["Rooms", "Room history", "Who cleaned", "Room insights"] },
@@ -240,9 +248,9 @@ export const APPS: AppDef[] = [
       { to: "/banquet-diary", label: "Function Diary", icon: CalendarDays },
       { to: "/banquet-registers", label: "Registers", icon: ScrollText },
       { to: "/banquet-catalogue", label: "Menus & Services", icon: UtensilsCrossed },
-      { to: "/events", label: "All Functions", icon: ListChecks },
+      { to: "/events", label: "All Functions", icon: ListChecks, perm: ["Venue", "read"] },
       { to: "/groups", label: "Groups & Blocks", icon: Users },
-      { to: "/venues", label: "Halls & Venues", icon: Landmark },
+      { to: "/venues", label: "Halls & Venues", icon: Landmark, perm: ["Venue", "read"] },
       { to: "/settings/events", label: "Settings", icon: SettingsIcon,
         roles: ["Revenue Manager", "Hotel Admin", "System Manager", "Administrator"] },
     ],
@@ -304,7 +312,8 @@ export const APPS: AppDef[] = [
       { to: "/cashier/sessions", label: "Sessions", icon: Clock, group: "Cashier" },
       { to: "/cashier/petty-cash", label: "Petty Cash", icon: Banknote, group: "Cashier" },
       { to: "/shifts", label: "Shift Handover", icon: Clock, group: "Cashier" },
-      { to: "/cashier/fx", label: "Currency Desk", icon: Calculator, group: "Cashier" },
+      { to: "/cashier/fx", label: "Currency Desk", icon: Calculator, group: "Cashier",
+        perm: ["Exchange Rate", "use_currency_desk"] },
       // Billing
       { to: "/end-of-day", label: "Night Audit", icon: MoonStar, group: "Billing",
         keywords: EOD_KEYWORDS },
@@ -314,9 +323,11 @@ export const APPS: AppDef[] = [
       { to: "/billing", label: "Billing", icon: Receipt, group: "Billing" },
       { to: "/folio-history", label: "Folio History", icon: History, group: "Billing" },
       { to: "/allowances", label: "Allowances to approve", icon: ListChecks, group: "Billing",
+        perm: ["Folio", "bill"],
         keywords: ["Allowance approval", "Write-off", "Manager approval"] },
       // Books
       { to: "/receivables", label: "Receivables", icon: Building2, group: "Books",
+        perm: ["City Ledger Account", "view_account"],
         keywords: ["AR", "Accounts receivable", "City ledger", "Direct bill", "Company invoice"] },
       { to: "/ledgers", label: "Books check", icon: BookOpen, group: "Books",
         keywords: ["Ledgers", "Trial balance", "Journal", "Reconciliation"] },
@@ -336,7 +347,8 @@ export const APPS: AppDef[] = [
         keywords: ["Void reason", "Refund reason", "Allowance"],
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
       { to: "/reports", label: "Reports", icon: ChartLine, group: "Books" },
-      { to: "/accounting-export", label: "Accounting Export", icon: FileSpreadsheet, group: "Books" },
+      { to: "/accounting-export", label: "Accounting Export", icon: FileSpreadsheet, group: "Books",
+        perm: ["Folio Ledger Entry", "export_books"] },
       { to: "/settings/finance", label: "Settings", icon: SettingsIcon, group: "Books",
         roles: ["Finance", "Hotel Admin", "System Manager", "Administrator"] },
     ],
@@ -470,12 +482,21 @@ export function appForPath(pathname: string, among: AppDef[] = APPS, keep?: stri
  *  property must actually run it. Roles alone were never enough - Front
  *  Desk unlocks both F&B and Banquets, so a serviced-apartment operator
  *  had no way to not see them. */
-export function visibleApps(roles: string[], modules?: string[]): AppDef[] {
+export function visibleApps(roles: string[], modules?: string[], can: Can = null): AppDef[] {
   return APPS.filter(
     (a) =>
-      a.roles.some((r) => roles.includes(r)) &&
-      (a.always || !modules?.length || modules.includes(a.id)),
+      hasPerm(can, roles, "Property", appPerm(a.id), a.roles) &&
+      (!modules?.length || modules.includes(a.id)),
   )
+}
+
+/** The Property permission type that opens an app: app_front_desk, ... */
+export const appPerm = (id: string) => `app_${id.replace(/-/g, "_")}`
+
+/** Is this menu item for this user? Its permission, else its role list. */
+export function itemVisible(item: AppNavItem, roles: string[], can: Can = null): boolean {
+  if (item.perm) return hasPerm(can, roles, item.perm[0], item.perm[1], item.roles)
+  return !item.roles || item.roles.some((r) => roles.includes(r))
 }
 
 /** A connected app from the App Registry (kamra.apps.my_apps): an add-on on
