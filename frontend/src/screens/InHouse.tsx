@@ -11,7 +11,7 @@ import CheckOutDialog from "../components/CheckOutDialog"
 import type { ShellContext } from "../AppShell"
 import { cn } from "../lib/utils"
 import { shiftDate } from "../lib/stay"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 
@@ -32,7 +32,7 @@ const iso = (d: Date) => {
 // "" for a bad ?date= in the URL rather than an Invalid Date crash
 const shift = shiftDate
 const money = (n: number) =>
-  `${cur()}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })}`
+  `${cur()}${fmtAmount(n || 0)}`
 const short = (d: string) =>
   new Date(d + "T00:00:00").toLocaleDateString(uiDateLocale(undefined), {
     day: "numeric",

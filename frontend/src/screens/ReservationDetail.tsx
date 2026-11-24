@@ -43,11 +43,11 @@ import RoomChangeDialog from "../components/RoomChangeDialog"
 import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
 import StayInstructions from "../components/StayInstructions"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 const inr = (n: number) =>
-  `${cur()}` + Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  `${cur()}` + fmtAmount(n || 0)
 
 const STATUS_TONE: Record<string, string> = {
   Waitlist: "bg-amber-100 text-amber-800",

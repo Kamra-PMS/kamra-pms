@@ -32,7 +32,7 @@ import {
   CardTitle,
 } from "../components/ui/card"
 import { cn } from "../lib/utils"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 /** Guest profile hub - the person is the center, stays hang off them.
@@ -96,7 +96,7 @@ interface Journey {
 }
 
 const inr = (n: number) =>
-  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 const eventIcon = {
   booking: CalendarPlus,

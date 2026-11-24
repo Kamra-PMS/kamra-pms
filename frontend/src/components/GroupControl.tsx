@@ -8,7 +8,7 @@ import { serverError, type Row } from "../lib/resource"
 import LinkedRecords from "./LinkedRecords"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
-import { cur, moneyLocale, useLocale } from "../lib/money"
+import { cur, useLocale, fmtAmount } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 import { useCashierAuth } from "../lib/cashierAuth"
 import CheckInDialog from "./CheckInDialog"
@@ -135,7 +135,7 @@ function summarize(results: RoomResult[], doneLabel: string): string {
 
 const short = (rt: string) => rt.split("-").pop() ?? rt
 const inr = (n: number) =>
-  `${cur()}` + Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  `${cur()}` + fmtAmount(n || 0)
 const todayLocal = () => {
   const x = new Date()
   return `${x.getFullYear()}-${`${x.getMonth() + 1}`.padStart(2, "0")}-${`${x.getDate()}`.padStart(2, "0")}`

@@ -23,7 +23,7 @@ import {
 
 import type { BookingOptions, ReservationRow, Snapshot } from "../lib/api"
 import { t as translate } from "../lib/i18n"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import type { BookingInitial } from "../AppShell"
 import type { AgentCard } from "./AgentCards"
 
@@ -169,7 +169,7 @@ export const menuChoices = (): Choice[] =>
 export const startOver = (): Choice => ({ label: translate("Start over"), goto: "menu" })
 
 const money = (n: number) =>
-  `${cur()}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })}`
+  `${cur()}${fmtAmount(n || 0)}`
 
 const isoDay = (offset = 0) => {
   const d = new Date()

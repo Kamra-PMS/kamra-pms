@@ -3,11 +3,11 @@ import { Link } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Badge } from "../components/ui/badge"
-import { moneyLocale } from "../lib/money"
+import { fmtAmount } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n ?? 0)
 
 type Row = {
   name: string

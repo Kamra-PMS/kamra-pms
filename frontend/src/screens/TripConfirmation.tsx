@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
-import { moneyLocale } from "../lib/money"
+import { fmtAmount } from "../lib/money"
 import { useT } from "../lib/i18n"
 import type { Itinerary } from "./CRS"
 
@@ -12,7 +12,7 @@ import type { Itinerary } from "./CRS"
  * date order with its own hotel, booking number and price. */
 
 const amt = (sym: string, n: number) =>
-  `${sym}${Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })}`
+  `${sym}${fmtAmount(n)}`
 
 export default function TripConfirmation() {
   const { t } = useT()

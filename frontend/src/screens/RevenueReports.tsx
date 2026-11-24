@@ -5,12 +5,12 @@ import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { getLang } from "../lib/dir"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 const inr = (n: number) =>
-  Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n || 0)
 
 interface BvaRow {
   metric: string

@@ -4,7 +4,7 @@ import { Mail, Plus, Printer, Trash2 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, serverLang, t as translate } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
 
@@ -101,7 +101,7 @@ interface Flash {
 }
 
 const inr = (n: number) =>
-  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)

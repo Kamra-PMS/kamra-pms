@@ -19,12 +19,12 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card"
-import { moneyLocale, useLocale } from "../lib/money"
+import { useLocale, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n ?? 0)
 
 type Terminal = {
   name: string

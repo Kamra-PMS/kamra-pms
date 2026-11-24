@@ -18,7 +18,7 @@ import {
 } from "../lib/api"
 import { pickDefaultRoomType } from "../lib/bookingDefaults"
 import { Button } from "./ui/button"
-import { cur, moneyLocale, useLocale } from "../lib/money"
+import { cur, useLocale, fmtAmount } from "../lib/money"
 import { isPhoneComplete } from "../lib/phone"
 import { nightsBetween, parseDate, shiftDate } from "../lib/stay"
 import { typedNights, type NightPrice } from "../lib/nightPrices"
@@ -104,7 +104,7 @@ function todayLocal() {
 }
 
 const inr = (n: number) =>
-  n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 export function BookingDialog(props: {
   initial: {

@@ -9,11 +9,14 @@ import { call, getCurrentProperty } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { StatCard } from "../components/ui/stat-card"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount, moneyLocale } from "../lib/money"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 
 
 const inr = (n: unknown) =>
+  fmtAmount(n ?? 0)
+/** A count (rooms, covers), not money: whole numbers whatever the currency. */
+const count = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 interface PropDash {
@@ -205,7 +208,7 @@ export default function Dashboard() {
                   [t("Revenue"), `${cur()}${inr(prop.statistics.mtd_revenue)}`],
                   [t("ADR"), `${cur()}${inr(prop.statistics.adr)}`],
                   [t("RevPAR"), `${cur()}${inr(prop.statistics.revpar)}`],
-                  [t("Rooms sold"), inr(prop.statistics.rooms_sold_mtd)],
+                  [t("Rooms sold"), count(prop.statistics.rooms_sold_mtd)],
                 ].map(([k, v]) => (
                   <div key={String(k)}>
                     <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">{translate(k)}</div>
@@ -337,7 +340,7 @@ function Comparison({ data }: { data: NonNullable<PropDash["comparison"]> }) {
     revpar: t("RevPAR"),
   }
   const show = (v: number | undefined, kind: string) =>
-    v == null ? "" : kind === "pct" ? `${v}%` : kind === "money" ? `${cur()}${inr(v)}` : inr(v)
+    v == null ? "" : kind === "pct" ? `${v}%` : kind === "money" ? `${cur()}${inr(v)}` : count(v)
   const range = (a: string, b: string) => (a === b ? a : t("{from} to {to}", { from: a, to: b }))
   return (
     <Card>

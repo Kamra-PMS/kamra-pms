@@ -3,7 +3,7 @@ import { Columns3, Download, Search, Star } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { call } from "../lib/api"
 import { Badge } from "../components/ui/badge"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT } from "../lib/i18n"
 import {
   Card,
@@ -26,7 +26,7 @@ interface GuestRow {
 }
 
 const inr = (n: number) =>
-  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 // id, header, CSV value; the cell renders below
 const COLUMNS = [
