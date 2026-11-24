@@ -45,6 +45,10 @@ interface Outlet {
   outlet_name: string
   gst_rate: number
   auto_kot?: 0 | 1
+  /** the outlet's levy (a service charge), added to every bill after discount */
+  levy_label?: string | null
+  levy_percent?: number | null
+  levy_taxable?: number | null
 }
 interface OpenOrder {
   name: string
@@ -152,6 +156,11 @@ interface Detail {
   discount_amount: number
   subtotal: number
   order_total: number
+  /** what the outlet's levy added to this bill (order_total already includes it) */
+  levy_label?: string | null
+  levy_percent?: number | null
+  levy_taxable?: number | null
+  levy_amount?: number | null
   items: OrderItem[]
   guest?: string | null
   reservation?: string | null
@@ -473,10 +482,17 @@ export default function POS() {
           ? `${d.order_type}${d.customer_name ? ` · ${d.customer_name.split(" ")[0]}` : ""}`
           : (d.name || "Bill")
 
-  // what the bill panel is pricing right now
-  const taxable = selected && detail ? Number(detail.order_total || 0) : newSubtotal - disc
+  // what the bill panel is pricing right now: the items after discount, the outlet's
+  // levy on top, and the tax on the items plus the levy when the levy is taxed
+  const levyAmt = selected && detail ? Number(detail.levy_amount || 0)
+    : Number(outletDoc?.levy_percent) > 0 && newSubtotal - disc > 0
+      ? Math.round((newSubtotal - disc) * Number(outletDoc?.levy_percent)) / 100 : 0
+  const levyLabel = (selected && detail ? detail.levy_label : outletDoc?.levy_label) || t("Service charge")
+  const levyTaxed = (selected && detail ? detail.levy_taxable : outletDoc?.levy_taxable) !== 0
+  const billed = selected && detail ? Number(detail.order_total || 0) - levyAmt : newSubtotal - disc
+  const taxable = billed + (levyTaxed ? levyAmt : 0)
   const gstAmt = taxable * gstRate / 100
-  const grand = taxable + gstAmt
+  const grand = billed + levyAmt + gstAmt
 
   function printSavedKot(t: KotTicket, reprint = false) {
     printThermal(`KOT #${t.kot_no}`, kotHtml({
@@ -1687,7 +1703,7 @@ export default function POS() {
           <div className="border-t border-zinc-200 bg-white px-3 py-2">
             <div className="mb-2 flex items-end justify-between gap-2">
               <div className="min-w-0 text-[11px] leading-snug text-zinc-500">
-                <div>{t("Subtotal")} {cur()}{inr2(taxable)}{gstAmt ? <> · {loc.tax_label} {cur()}{inr2(gstAmt)}</> : null}</div>
+                <div>{t("Subtotal")} {cur()}{inr2(billed)}{levyAmt ? <> · {levyLabel} {cur()}{inr2(levyAmt)}</> : null}{gstAmt ? <> · {loc.tax_label} {cur()}{inr2(gstAmt)}</> : null}</div>
                 {discOpen ? (
                   <span className="mt-1 flex items-center gap-1">
                     <input autoFocus className={inputCls + " !w-24 !py-0.5 text-xs"} placeholder={translate(`${cur()}`)} inputMode="numeric"

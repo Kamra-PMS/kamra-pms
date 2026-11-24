@@ -788,6 +788,12 @@ export const outletsConfig: ScreenConfig = {
     { field: "outlet_name", label: "Outlet name", type: "data", required: true },
     { field: "outlet_type", label: "Type", type: "select", options: ["Restaurant", "Room Service", "Bar", "Spa", "Shop", "Other"] },
     { field: "gst_rate", label: "Tax %", type: "float" },
+    { field: "levy_label", label: "Levy name", type: "data", ownRow: true,
+      hint: "Printed on the bill, for example Service charge. Empty means Service charge." },
+    { field: "levy_percent", label: "Levy amount %", type: "float", ownRow: true,
+      hint: "Added to every bill at this outlet, after any discount. 0 means no levy." },
+    { field: "levy_taxable", label: "Tax applies to the levy", type: "switch", ownRow: true, defaultValue: 1,
+      hint: "On: tax is charged on the bill plus the levy. Off: tax is charged on the bill only." },
     { field: "disabled", label: "Disabled", type: "check" },
     {
       field: "kot_mode",

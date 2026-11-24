@@ -293,6 +293,8 @@ export interface BillData {
   items: { item_name: string; qty: number; rate: number; amount: number }[]
   subtotal: number
   discount_amount: number
+  /** the outlet's levy (a service charge) as charged on this bill; none when absent */
+  levy?: { label: string; percent: number; amount: number } | null
   taxable: number
   gst_rate: number
   cgst: number
@@ -371,6 +373,7 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
     <div class="sum">
       ${sum(esc(translate("Subtotal")), b.subtotal)}
       ${b.discount_amount ? sum(esc(translate("Discount")), -b.discount_amount) : ""}
+      ${b.levy ? sum(`${esc(b.levy.label || translate("Service charge"))} ${b.levy.percent}%`, b.levy.amount) : ""}
       ${taxParts.map((p) => sum(`${esc(p.label)} @ ${p.rate}%`, p.amount)).join("")}
       ${sum(esc(translate("TOTAL")), b.grand_total)}
     </div>

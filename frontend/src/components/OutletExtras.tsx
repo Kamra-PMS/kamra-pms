@@ -33,9 +33,10 @@ function sampleBill(design: Design, bits: Bits): BillData {
     order_type: "Dine In", table_no: "T3", room_no: null, customer_name: null, customer_phone: null,
     delivery_address: null, captain: null, served_by: "Rina", cashier: null,
     logo: bits.logo || null, receipt_design: design,
-    items: SAMPLE_ITEMS, subtotal: 60, discount_amount: 0, taxable: 60,
-    gst_rate: 8, cgst: 2.4, sgst: 2.4, tax_parts: [{ label: t("Tax"), rate: 8, amount: 4.8 }],
-    grand_total: 64.8, paid: 1, payment_mode: "Cash", nc: 0, nc_authorized_by: null, nc_note: null,
+    items: SAMPLE_ITEMS, subtotal: 60, discount_amount: 0,
+    levy: { label: "", percent: 10, amount: 6 }, taxable: 66,
+    gst_rate: 8, cgst: 2.64, sgst: 2.64, tax_parts: [{ label: t("Tax"), rate: 8, amount: 5.28 }],
+    grand_total: 71.28, paid: 1, payment_mode: "Cash", nc: 0, nc_authorized_by: null, nc_note: null,
   }
 }
 
