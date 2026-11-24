@@ -107,6 +107,7 @@ interface Showcase {
     base_price: number
     adults_capacity: number
     children_capacity: number
+    max_total_occupants?: number
     bed_type: string | null
     room_view: string | null
     amenities: string[]
@@ -1347,9 +1348,11 @@ export default function PublicBooking() {
                             <ul className="mt-2 space-y-1 text-sm text-zinc-600">
                               <li className="flex items-center gap-2">
                                 <Users className="size-4 shrink-0 text-zinc-400" aria-hidden />
-                                {rt.children_capacity > 0
-                                  ? tn(rt.children_capacity, "Sleeps {adults} adults and {n} child", "Sleeps {adults} adults and {n} children", { adults: rt.adults_capacity })
-                                  : t("Up to {n} adults", { n: rt.adults_capacity })}
+                                {rt.max_total_occupants
+                                  ? t("Up to {n} guests", { n: rt.max_total_occupants })
+                                  : rt.children_capacity > 0
+                                    ? tn(rt.children_capacity, "Sleeps {adults} adults and {n} child", "Sleeps {adults} adults and {n} children", { adults: rt.adults_capacity })
+                                    : t("Up to {n} adults", { n: rt.adults_capacity })}
                               </li>
                               {rt.bed_type && (
                                 <li className="flex items-center gap-2">

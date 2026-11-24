@@ -6785,8 +6785,8 @@ def booking_options(property: str):
 		"room_types": frappe.get_all(
 			"Room Type", filters={"property": property, "disabled": 0},
 			fields=["name", "room_type_code", "room_type_name", "base_price",
-			        "adults_capacity", "children_capacity", "room_category",
-			        "max_extra_beds"],
+			        "adults_capacity", "children_capacity", "max_total_occupants",
+			        "room_category", "max_extra_beds"],
 			# cheapest first; name breaks ties so the dialog default is stable (#549)
 			order_by="base_price asc, room_type_name asc",
 		),
