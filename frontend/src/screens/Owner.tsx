@@ -7,7 +7,7 @@ import { Link, useOutletContext } from "react-router-dom"
 import { ChevronRight, FileText } from "lucide-react"
 import { call, getCurrentProperty, myProperties, setCurrentProperty, type PropertyRow } from "../lib/api"
 import { serverError } from "../lib/resource"
-import { cur, useLocale, fmtAmount } from "../lib/money"
+import { cur, moneyLocale, useLocale } from "../lib/money"
 import { getLang } from "../lib/dir"
 import { useRealtime } from "../lib/realtime"
 import { useAuth } from "../lib/auth"
@@ -55,7 +55,7 @@ interface PortfolioRow {
 type Period = "today" | "yesterday" | "month"
 
 const money = (n: unknown) =>
-  cur() + fmtAmount(n ?? 0)
+  cur() + Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
 
 const day = (d: string, opts: Intl.DateTimeFormatOptions) =>
   new Date(d + "T00:00:00").toLocaleDateString(getLang(), opts)

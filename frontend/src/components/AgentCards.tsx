@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from "react-router-dom"
 import { BedDouble, CalendarDays, Receipt, ShieldCheck } from "lucide-react"
 
 import { call, reservationDetail, type ReservationDetail } from "../lib/api"
-import { cur, fmtAmount } from "../lib/money"
+import { cur, moneyLocale } from "../lib/money"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import { serverError } from "../lib/resource"
 import { Badge } from "./ui/badge"
@@ -28,7 +28,7 @@ export type AgentCard =
     }
 
 const money = (n: number) =>
-  `${cur()}${fmtAmount(n || 0)}`
+  `${cur()}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })}`
 
 const day = (d?: string | null) =>
   d
