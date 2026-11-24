@@ -2,7 +2,13 @@
 // Pure helpers, so the dialog stays small: totals, what is wrong, and how the
 // lines are shared across the folios that owe money.
 
-export type PayLine = { id: string; mode: string; amount: string; reference: string; key: string }
+import { cardArgs, cardProblem } from "./cardNetwork"
+
+// network / last4 apply to a Card line only: the card type from the machine slip.
+export type PayLine = {
+  id: string; mode: string; amount: string; reference: string; key: string
+  network?: string; last4?: string
+}
 
 export const SPLIT_EPS = 0.009
 export const MAX_LINES = 20
@@ -30,6 +36,8 @@ export function splitProblem(lines: PayLine[], due: number, msg: (s: string) => 
     if (!l.mode) return msg("Choose a payment mode on every line.")
     if (!(lineAmount(l) > 0)) return msg("Every line needs an amount above zero.")
     if (!isCash(l.mode) && !l.reference.trim()) return msg("Enter a reference on every non-cash line.")
+    const card = cardProblem(l.mode, l.network, l.last4)
+    if (card) return msg(card)
   }
   const { left } = splitTotals(lines, due)
   if (left > SPLIT_EPS) return msg("The lines do not cover the balance yet.")
@@ -44,6 +52,8 @@ export type PaymentRow = {
   reference?: string
   kind: "Payment"
   idempotency_key: string
+  card_network?: string
+  card_last4?: string
 }
 
 // Share the lines across the folios that owe, in order, splitting a line where
@@ -61,6 +71,7 @@ export function allocate(lines: PayLine[], owed: { folio: string; amount: number
         rows.push({
           folio: need[f].folio, mode: line.mode, amount: take, kind: "Payment",
           reference: line.reference.trim() || undefined,
+          ...cardArgs(line.mode, line.network, line.last4),
           idempotency_key: `${line.key}:${need[f].folio}`,
         })
       }

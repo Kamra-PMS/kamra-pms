@@ -11,6 +11,8 @@ import { useCashierAuth } from "../lib/cashierAuth"
 import { cur, useLocale, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { Button } from "./ui/button"
+import { CardNetworkPicker } from "./CardNetworkPicker"
+import { cardArgs, cardProblem, isCard } from "../lib/cardNetwork"
 
 
 export interface DepositState {
@@ -43,6 +45,7 @@ export default function DepositPanel(props: {
   const [mode, setMode] = useState<"record" | "link" | null>(null)
   const [amount, setAmount] = useState(String(deposit.due || ""))
   const [payMode, setPayMode] = useState(loc.payment_modes[0] ?? "Cash")
+  const [card, setCard] = useState<{ network?: string; last4?: string }>({})
   const [reference, setReference] = useState("")
   // one key per "Take advance": a retry after a lost response replays
   const [advKey, setAdvKey] = useState(newIdempotencyKey)
@@ -72,11 +75,13 @@ export default function DepositPanel(props: {
         mode: payMode,
         reference: reference.trim() || undefined,
         idempotency_key: advKey,
+        ...cardArgs(payMode, card.network, card.last4),
       })
       setAdvKey(newIdempotencyKey())
       props.onChanged(r.deposit)
       setMode(null)
       setReference("")
+      setCard({})
     } catch (e) {
       setError(serverError(e))
     } finally {
@@ -237,6 +242,9 @@ export default function DepositPanel(props: {
                   </button>
                 ))}
               </div>
+              {isCard(payMode) && (
+                <CardNetworkPicker network={card.network} last4={card.last4} onChange={(patch) => setCard((c) => ({ ...c, ...patch }))} />
+              )}
               {payMode !== "Cash" && (
                 <input
                   className={inputCls}
@@ -246,7 +254,7 @@ export default function DepositPanel(props: {
                 />
               )}
               <div className="flex gap-2">
-                <Button disabled={busy || !(Number(amount) > 0)} onClick={record}>
+                <Button disabled={busy || !(Number(amount) > 0) || !!cardProblem(payMode, card.network, card.last4)} onClick={record}>
                   {busy ? t("Saving…") : t("Record {amt}", { amt: fmt(Number(amount) || 0) })}
                 </Button>
                 <Button variant="ghost" onClick={() => setMode(null)}>

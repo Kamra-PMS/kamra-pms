@@ -12096,6 +12096,133 @@ def t_ota_contact_never_drops_booking():
 	assert frappe.db.exists("Reservation", {"property": CP, "ota_ref": "EVAL-OCT-WH"})
 
 
+@check("card payments keep their network: validated, stamped on the row and the till, kept on a refund, split in the report")
+def t_card_network():
+	from kamra import api, cashier
+	from kamra.folio import post_room_night
+	from kamra.card_network import NETWORKS
+
+	for doctype in ("Folio Payment", "POS Order", "Cashier Transaction"):
+		options = frappe.get_meta(doctype).get_field("card_network").options or ""
+		assert [o for o in options.split("\n") if o] == NETWORKS, (doctype, options)
+	# dates no other check holds, so the room is free
+	g = _guest("Eval Card Network", "+91 70000 00077")
+	res = _res(g, "2033-02-01", "2033-02-02", ROOM)
+	res.status = "Checked In"
+	res.save(ignore_permissions=True)
+	post_room_night(res, "2033-02-01")
+	folio = frappe.db.get_value("Folio", {"reservation": res.name, "folio_type": "Guest"})
+	# the till half must run: open a till if none is open, as the night audit checks do
+	if not frappe.db.get_value("Cashier Session", {"property": P, "status": "Open"}):
+		_na_till()
+	for network, last4 in (("Bitcoin", None), ("Visa", "12ab"), ("Visa", "123"), ("Visa", "\u0661\u0662\u0663\u0664")):
+		try:
+			api.add_folio_payment(folio, "Card", 10, card_network=network, card_last4=last4)
+		except frappe.ValidationError:
+			continue
+		raise AssertionError(f"card details {network!r}/{last4!r} were accepted")
+	api.add_folio_payment(folio, "Card", 100, reference="slip-1", card_network="rupay", card_last4="4321")
+	api.add_folio_payment(folio, "Card", 40, reference="slip-2", card_network="Visa")
+	api.add_folio_payment(folio, "Cash", 25, reference="rcpt-1", card_network="Visa")
+	api.add_folio_payment(folio, "Card", 15, reference="old-caller")  # no network: still accepted
+	rows = {r.reference: r for r in frappe.get_all(
+		"Folio Payment", filters={"parent": folio},
+		fields=["name", "reference", "mode", "card_network", "card_last4"])}
+	assert (rows["slip-1"].card_network, rows["slip-1"].card_last4) == ("RuPay", "4321"), rows["slip-1"]
+	assert (rows["slip-2"].card_network, rows["slip-2"].card_last4) == ("Visa", None), rows["slip-2"]
+	assert not rows["rcpt-1"].card_network, "a cash payment kept a card network"
+	assert not rows["old-caller"].card_network
+	# the till keeps the same network, so the split matches the Card total
+	txn = frappe.db.get_value("Cashier Transaction", {"folio": folio, "reference": "slip-1"},
+	                          ["card_network", "card_last4"], as_dict=True)
+	assert txn, "no till entry was written: the till half of the check did not run"
+	assert (txn.card_network, txn.card_last4) == ("RuPay", "4321"), txn
+	# a refund needs money to give back: cover the bill and over-collect a little
+	api.add_folio_payment(folio, "Cash", float(frappe.db.get_value("Folio", folio, "balance")) + 100,
+	                      reference="cover")
+	# a refund of that card payment keeps its network, on the row and in the till
+	api.refund_folio_payment(folio, amount=40, reason="eval refund", payment_row=rows["slip-1"].name)
+	refund = frappe.get_all("Folio Payment", filters={"parent": folio, "payment_kind": "Refund"},
+	                        fields=["amount", "mode", "card_network", "card_last4"])[0]
+	assert refund.mode == "Card" and float(refund.amount) == -40, refund
+	assert (refund.card_network, refund.card_last4) == ("RuPay", "4321"), refund
+	rtxn = frappe.db.get_value("Cashier Transaction", {"folio": folio, "kind": "Refund"},
+	                           ["card_network", "card_last4"], as_dict=True)
+	assert rtxn and (rtxn.card_network, rtxn.card_last4) == ("RuPay", "4321"), rtxn
+	summary = cashier.cash_summary_v2(P)
+	card_total = sum(m["total"] for m in summary["modes"] if m["mode"] == "Card")
+	split = summary["card_networks"]
+	assert abs(sum(r["total"] for r in split) - card_total) < 0.01, (split, card_total)
+	assert not [r for r in split if r["network"] == "Not recorded" and r["total"] < 0], split
+	# a refund not tied to one payment line: unrecorded when two networks were used, kept when one was
+	api.refund_folio_payment(folio, amount=10, mode="Card", reason="eval loose refund")
+	loose = frappe.get_all("Folio Payment", filters={"parent": folio, "payment_kind": "Refund", "refund_of": ("is", "not set")},
+	                       fields=["card_network"])
+	assert loose and not loose[0].card_network, loose
+	g2 = _guest("Eval Card Network 2", "+91 70000 00078")
+	res2 = _res(g2, "2033-02-05", "2033-02-06", ROOM)
+	res2.status = "Checked In"
+	res2.save(ignore_permissions=True)
+	post_room_night(res2, "2033-02-05")
+	folio2 = frappe.db.get_value("Folio", {"reservation": res2.name, "folio_type": "Guest"})
+	api.add_folio_payment(folio2, "Card", 30, reference="one-card", card_network="Visa", card_last4="1234")
+	api.add_folio_payment(folio2, "Cash", float(frappe.db.get_value("Folio", folio2, "balance")) + 50, reference="cover2")
+	api.refund_folio_payment(folio2, amount=10, mode="Card", reason="eval loose refund 2")
+	only = frappe.get_all("Folio Payment", filters={"parent": folio2, "payment_kind": "Refund"},
+	                      fields=["card_network", "card_last4"])[0]
+	assert (only.card_network, only.card_last4) == ("Visa", "1234"), only
+
+
+@check("card network reaches the MCP and assistant tools and the POS bill; correcting a bill's mode keeps or drops it")
+def t_card_network_agent_paths():
+	from kamra import assistant, cashier, pos
+	from kamra.mcp_tools import BY_NAME, call_tool
+
+	both = ("card_network", "card_last4")
+	for tool in ("record_payment", "pos_pay_order", "settle_group_bill"):
+		missing = [k for k in both if k not in BY_NAME[tool].parameters]
+		assert not missing, (tool, "MCP tool lacks", missing)
+	for tool in ("record_payment", "record_advance", "settle_group_bill"):
+		missing = [k for k in both if k not in assistant.TOOLS[tool][2]]
+		assert not missing, (tool, "assistant tool lacks", missing)
+
+	# the MCP tool stamps the network on the payment row
+	_res_, folio = _in_house("Eval MCP Card", "+91 70000 05632", "2036-08-01", "2036-08-02",
+	                         _ledger_room("F5632"))
+	if not frappe.db.get_value("Cashier Session", {"property": P, "status": "Open"}):
+		_na_till()
+	spec = BY_NAME["record_payment"]
+	call_tool(spec, {"folio": folio, "mode": "Card", "amount": 50, "reference": "mcp-card",
+	                 "card_network": "mastercard", "card_last4": "1111"}, P)
+	row = frappe.get_all("Folio Payment", filters={"parent": folio, "reference": "mcp-card"},
+	                     fields=["card_network", "card_last4"])[0]
+	assert (row.card_network, row.card_last4) == ("Mastercard", "1111"), row
+	_refused(call_tool, spec, {"folio": folio, "mode": "Card", "amount": 5, "reference": "mcp-bad",
+	                           "card_network": "Bitcoin"}, P, exc=frappe.ValidationError)
+
+	# a POS bill paid by Card through the MCP tool, then corrected
+	outlet, dish = _eval_bill_outlet("Eval CardNet")
+	o = pos.create_order(outlet, [{"menu_item": dish, "qty": 1}], order_type="Takeaway")["order"]
+	call_tool(BY_NAME["pos_pay_order"], {"order": o, "mode": "Card", "card_network": "JCB",
+	                                     "card_last4": "9999"}, P)
+	bill = lambda: frappe.db.get_value("POS Order", o, ["payment_mode", "card_network", "card_last4"],
+	                                   as_dict=True)
+	assert (bill().payment_mode, bill().card_network, bill().card_last4) == ("Card", "JCB", "9999"), bill()
+	pos.change_payment_mode(o, "Cash", reason="eval pressed Card for Cash")
+	assert (bill().payment_mode, bill().card_network, bill().card_last4) == ("Cash", None, None), bill()
+	reversal = frappe.db.get_value("Cashier Transaction",
+	                               {"pos_order": o, "mode": "Card", "amount": ("<", 0)},
+	                               ["card_network", "card_last4"], as_dict=True)
+	assert reversal and (reversal.card_network, reversal.card_last4) == ("JCB", "9999"), reversal
+	pos.change_payment_mode(o, "Card", reason="eval and back", card_network="visa", card_last4="4242")
+	assert (bill().payment_mode, bill().card_network, bill().card_last4) == ("Card", "Visa", "4242"), bill()
+	newest = frappe.db.get_value("Cashier Transaction", {"pos_order": o, "mode": "Card", "amount": (">", 0)},
+	                             ["card_network"], order_by="creation desc")
+	assert newest == "Visa", newest
+	pos.change_payment_mode(o, "UPI", reason="eval to UPI")
+	assert (bill().card_network, bill().card_last4) == (None, None), bill()
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12151,7 +12278,7 @@ def execute():
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy,
 		           t_audit_anomalies, t_early_arrival_check_in,
-		           t_ota_contact_never_drops_booking):
+		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

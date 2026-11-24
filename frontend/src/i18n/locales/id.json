@@ -348,5 +348,12 @@
   "Night of {date}: {from} to {to}": "Malam {date}: {from} ke {to}",
   "Click a room to change its status or open it": "Klik kamar untuk mengubah statusnya atau membukanya",
   "Housekeeping: {status} · click to change": "Housekeeping: {status} · klik untuk mengubah",
-  "Tap again to confirm": "Ketuk lagi untuk konfirmasi"
+  "Tap again to confirm": "Ketuk lagi untuk konfirmasi",
+  "Card type": "Jenis kartu",
+  "Card type (from the card machine slip)": "Jenis kartu (dari struk mesin kartu)",
+  "Choose card type": "Pilih jenis kartu",
+  "Last 4 (optional)": "4 digit terakhir (opsional)",
+  "Last 4 digits of the card (optional)": "4 digit terakhir kartu (opsional)",
+  "Choose the card type for the Card payment.": "Pilih jenis kartu untuk pembayaran kartu.",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Isi tepat 4 digit terakhir kartu, atau kosongkan."
 }

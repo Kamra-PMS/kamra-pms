@@ -3126,6 +3126,8 @@
   "Matches": "Correspondências",
   "Max adults": "Máximo de adultos",
   "Max children": "Máximo de crianças",
+  "Max total occupants": "Capacidade total máxima",
+  "Overall capacity of the room (adults + children combined, e.g. 4 people total). Blank = no combined limit (Max adults and Max children apply separately)": "Capacidade total do quarto (adultos + crianças combinados, ex. 4 pessoas no total). Em branco = sem limite combinado (Máximo de adultos e Máximo de crianças valem separadamente)",
   "Max guests (base)": "Máximo de hóspedes (base)",
   "Max uses": "Max usa",
   "Max uses (0 = unlimited)": "Máximo de usos (0 = ilimitado)",
@@ -6594,5 +6596,12 @@
   "Never": "Nunca",
   "Rates and restrictions": "Tarifas e restrições",
   "Send it": "Enviar",
-  "The last full sync went out on {date} at {time}. The channel manager admits one a day: send another anyway?": "A última sincronização completa saiu no dia {date} às {time}. O gerenciador de canais aceita uma por dia: enviar outra mesmo assim?"
+  "The last full sync went out on {date} at {time}. The channel manager admits one a day: send another anyway?": "A última sincronização completa saiu no dia {date} às {time}. O gerenciador de canais aceita uma por dia: enviar outra mesmo assim?",
+  "Card type": "Tipo de cartão",
+  "Card type (from the card machine slip)": "Tipo de cartão (do comprovante da maquininha)",
+  "Choose card type": "Escolha o tipo de cartão",
+  "Last 4 (optional)": "Últimos 4 (opcional)",
+  "Last 4 digits of the card (optional)": "Últimos 4 dígitos do cartão (opcional)",
+  "Choose the card type for the Card payment.": "Escolha o tipo de cartão para o pagamento com cartão.",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Informe exatamente os últimos 4 dígitos do cartão ou deixe em branco."
 }

@@ -15,6 +15,8 @@ import { StepFlowFooter, StepFlowHeader, useStepFlow, type FlowStep } from "./St
 import TillCard, { type TillState } from "./TillCard"
 import ChangeCompany from "./ChangeCompany"
 import FolioDiscount from "./FolioDiscount"
+import { CardNetworkPicker } from "./CardNetworkPicker"
+import { cardArgs, cardProblem, isCard } from "../lib/cardNetwork"
 
 
 /* Guided check-out, one stay at a time:
@@ -307,6 +309,7 @@ export default function CheckOutDialog(props: {
   const [lateDesc, setLateDesc] = useState("")
   const [lateRate, setLateRate] = useState("")
   const [outletModes, setOutletModes] = useState<Record<string, string>>({})
+  const [outletCards, setOutletCards] = useState<Record<string, { network?: string; last4?: string }>>({})
   const [companyOk, setCompanyOk] = useState(false)
   const [changingCompany, setChangingCompany] = useState(false)
   const [override, setOverride] = useState("")
@@ -596,7 +599,8 @@ export default function CheckOutDialog(props: {
 
   function payAtOutlet(b: PendingBill) {
     return run(async () => {
-      await call("kamra.pos.pay_order", { order: b.name, mode: outletModes[b.name] || b.pay_modes[0] })
+      const m = outletModes[b.name] || b.pay_modes[0]
+      await call("kamra.pos.pay_order", { order: b.name, mode: m, ...cardArgs(m, outletCards[b.name]?.network, outletCards[b.name]?.last4) })
     })
   }
 
@@ -966,7 +970,13 @@ export default function CheckOutDialog(props: {
                                 >
                                   {b.pay_modes.map((m) => <option key={m} value={m}>{t(m)}</option>)}
                                 </select>
-                                <Button variant="ghost" disabled={busy || !ctx.till.open} onClick={() => void payAtOutlet(b)}>
+                                {isCard(outletModes[b.name] || b.pay_modes[0]) && (
+                                  <CardNetworkPicker network={outletCards[b.name]?.network} last4={outletCards[b.name]?.last4}
+                                    onChange={(patch) => setOutletCards((c) => ({ ...c, [b.name]: { ...c[b.name], ...patch } }))} />
+                                )}
+                                <Button variant="ghost"
+                                  disabled={busy || !ctx.till.open || !!cardProblem(outletModes[b.name] || b.pay_modes[0], outletCards[b.name]?.network)}
+                                  onClick={() => void payAtOutlet(b)}>
                                   {t("Settle separately")}
                                 </Button>
                               </>
@@ -1292,6 +1302,11 @@ export default function CheckOutDialog(props: {
                           disabled={payLines.length < 2} onClick={() => removeLine(l.id)}>
                           &times;<span className="sr-only">{i + 1}</span>
                         </button>
+                        {isCard(l.mode) && (
+                          <div className="col-span-full">
+                            <CardNetworkPicker network={l.network} last4={l.last4} onChange={(patch) => updateLine(l.id, patch)} />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

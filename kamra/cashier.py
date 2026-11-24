@@ -231,6 +231,8 @@ def record_cashier_txn(
 	notes: str | None = None,
 	session: str | None = None,
 	outlet: str | None = None,
+	card_network: str | None = None,
+	card_last4: str | None = None,
 ) -> str | None:
 	"""Append a Cashier Transaction. Returns session name (or None)."""
 	from kamra.localization import assert_payment_mode
@@ -249,6 +251,8 @@ def record_cashier_txn(
 	if not sess:
 		return None
 	bd = get_business_date(property)
+	from kamra.card_network import clean as clean_card
+	card_network, card_last4 = clean_card(mode, card_network, card_last4)
 	frappe.get_doc({
 		"doctype": "Cashier Transaction",
 		"session": sess,
@@ -261,6 +265,8 @@ def record_cashier_txn(
 		"pos_order": pos_order,
 		"outlet": outlet or frappe.db.get_value("Cashier Session", sess, "outlet"),
 		"reference": (reference or "")[:140] or None,
+		"card_network": card_network,
+		"card_last4": card_last4,
 		"notes": notes,
 		"posted_by": frappe.session.user,
 		"posted_at": now_datetime(),
@@ -813,6 +819,23 @@ def session_report(session: str):
 	return d
 
 
+def _card_networks(property: str, date, to) -> list[dict]:
+	"""Card money received, split by card network. Card payments taken without
+	a network (older records, or a caller that sends none) count as "Not recorded"."""
+	rows = frappe.db.sql(
+		"""
+		SELECT COALESCE(NULLIF(card_network, ''), 'Not recorded') AS network,
+		       COUNT(*) AS txns, COALESCE(SUM(amount), 0) AS total
+		FROM `tabCashier Transaction`
+		WHERE property = %(property)s AND business_date BETWEEN %(date)s AND %(to)s
+		  AND mode = 'Card' AND kind NOT IN ('Paid Out', 'Drop', 'Petty Cash')
+		GROUP BY network ORDER BY total DESC
+		""",
+		{"property": property, "date": date, "to": to}, as_dict=True,
+	)
+	return [{"network": r.network, "txns": int(r.txns), "total": float(r.total)} for r in rows]
+
+
 @frappe.whitelist()
 @require_perm("Cashier Session", "view_cash_summary")
 def cash_summary_v2(property: str, date: str | None = None,
@@ -846,6 +869,7 @@ def cash_summary_v2(property: str, date: str | None = None,
 			"date": date,
 			"modes": modes,
 			"grand_total": float(sum(m["total"] for m in modes)),
+			"card_networks": _card_networks(property, date, to),
 			"source": "cashier",
 		}
 	# Fallback: folio payments (legacy) — inline to avoid circular import

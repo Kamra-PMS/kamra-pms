@@ -6768,5 +6768,12 @@
   "Prices set by hand cannot be combined with a rate plan or a voucher.": "Bei zilizowekwa kwa mkono haziwezi kuunganishwa na mpango wa bei au vocha.",
   "Room total": "Jumla ya chumba",
   "The OTA total sets the price, so nights cannot be priced one by one.": "Jumla ya OTA ndiyo huweka bei, kwa hiyo usiku hauwezi kupangiwa bei mmoja mmoja.",
-  "Type a price to set a night by hand. Up and down arrows move between nights; Alt+Backspace returns a night to BAR.": "Andika bei ili kuweka usiku kwa mkono. Mishale ya juu na chini husogea kati ya usiku; Alt+Backspace hurudisha usiku kwenye BAR."
+  "Type a price to set a night by hand. Up and down arrows move between nights; Alt+Backspace returns a night to BAR.": "Andika bei ili kuweka usiku kwa mkono. Mishale ya juu na chini husogea kati ya usiku; Alt+Backspace hurudisha usiku kwenye BAR.",
+  "Card type": "Aina ya kadi",
+  "Card type (from the card machine slip)": "Aina ya kadi (kutoka kwenye risiti ya mashine ya kadi)",
+  "Choose card type": "Chagua aina ya kadi",
+  "Last 4 (optional)": "Nambari 4 za mwisho (hiari)",
+  "Last 4 digits of the card (optional)": "Tarakimu 4 za mwisho za kadi (hiari)",
+  "Choose the card type for the Card payment.": "Chagua aina ya kadi kwa malipo ya kadi.",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Weka tarakimu 4 za mwisho za kadi kwa usahihi, au iache wazi."
 }

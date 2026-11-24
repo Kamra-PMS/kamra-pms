@@ -15,6 +15,8 @@ import { cn } from "../lib/utils"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import type { RoomDetail } from "../lib/rooms"
+import { CardNetworkPicker } from "./CardNetworkPicker"
+import { cardArgs, cardProblem, isCard } from "../lib/cardNetwork"
 
 
 const inputCls =
@@ -253,7 +255,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
     gst_rate: "0",
     is_alcohol: false,
   })
-  const [pay, setPay] = useState({ folio: "", mode: locale().payment_modes[0] ?? "Cash", amount: "", reference: "" })
+  const [pay, setPay] = useState({ folio: "", mode: locale().payment_modes[0] ?? "Cash", amount: "", reference: "", network: "", last4: "" })
   // one key per Collect press: a retry after a lost response replays (#550)
   const [payKey, setPayKey] = useState(newIdempotencyKey)
 
@@ -516,6 +518,11 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
               ))}
             </select>
           </label>
+          {isCard(pay.mode) && (
+            <div className="sm:col-span-2">
+              <CardNetworkPicker size="md" network={pay.network} last4={pay.last4} onChange={(patch) => setPay({ ...pay, ...patch })} />
+            </div>
+          )}
           <label className="block text-sm text-zinc-600">
             {t("Amount")}
             <input
@@ -536,7 +543,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
         </div>
         <Button
           className="min-h-11 px-4"
-          disabled={busy || !pay.folio || !(Number(pay.amount) > 0)}
+          disabled={busy || !pay.folio || !(Number(pay.amount) > 0) || !!cardProblem(pay.mode, pay.network, pay.last4)}
           onClick={() =>
             act(async () => {
               await call("kamra.api.add_folio_payment", {
@@ -545,10 +552,11 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
                 kind: "Payment",
                 amount: Number(pay.amount),
                 reference: pay.reference || undefined,
+                ...cardArgs(pay.mode, pay.network, pay.last4),
                 idempotency_key: payKey,
               })
               setPayKey(newIdempotencyKey())
-              setPay({ ...pay, amount: "", reference: "" })
+              setPay({ ...pay, amount: "", reference: "", network: "", last4: "" })
             }, t("Payment recorded."))
           }
         >

@@ -6470,5 +6470,12 @@
   "Show statement": "عرض الكشف",
   "Costs": "التكاليف",
   "Payout": "الصافي",
-  "Download statement": "تنزيل الكشف"
+  "Download statement": "تنزيل الكشف",
+  "Card type": "نوع البطاقة",
+  "Card type (from the card machine slip)": "نوع البطاقة (من إيصال جهاز البطاقات)",
+  "Choose card type": "اختر نوع البطاقة",
+  "Last 4 (optional)": "آخر 4 أرقام (اختياري)",
+  "Last 4 digits of the card (optional)": "آخر 4 أرقام من البطاقة (اختياري)",
+  "Choose the card type for the Card payment.": "اختر نوع البطاقة لدفعة البطاقة.",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "أدخل آخر 4 أرقام من البطاقة بالضبط، أو اتركها فارغة."
 }
