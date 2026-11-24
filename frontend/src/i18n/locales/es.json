@@ -2832,7 +2832,7 @@
   "Max adults": "Máximo de adultos",
   "Max children": "Máximo de menores",
   "Max total occupants": "Ocupación total máxima",
-  "Overall capacity of the room (adults + children combined, e.g. 4 people total). Blank = defaults to Max adults.": "Capacidad total de la habitación (adultos + niños combinados, ej. 4 personas en total). En blanco = por defecto Máximo de adultos.",
+  "Overall capacity of the room (adults + children combined, e.g. 4 people total). Blank = no combined limit (Max adults and Max children apply separately)": "Capacidad total de la habitación (adultos + niños combinados, ej. 4 personas en total). En blanco = sin límite combinado (Máximo de adultos y Máximo de niños se aplican por separado)",
   "Max guests (base)": "Capacidad base de huéspedes",
   "Max uses": "Máximo de usos",
   "Max uses (0 = unlimited)": "Máximo de usos (0 = ilimitado)",
