@@ -49,7 +49,7 @@ function Balance({ row }: { row: ReservationRow }) {
 }
 
 export default function InHouse() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const navigate = useNavigate()
   const { refreshKey } = useOutletContext<ShellContext>()
   const [params, setParams] = useSearchParams()
@@ -241,7 +241,7 @@ export default function InHouse() {
                     </td>
                     <td className="hidden px-3 py-2.5 text-zinc-600 sm:table-cell">
                       {short(row.check_in_date)} - {short(row.check_out_date)}
-                      <span className="text-zinc-400"> · {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })}</span>
+                      <span className="text-zinc-400"> · {tn(row.nights, "{n} night", "{n} nights")}</span>
                     </td>
                     <td className="hidden px-3 py-2.5 md:table-cell">
                       <Badge tone={row.source === "OTA" ? "indigo" : row.source === "AI Agent" ? "brand" : "zinc"}>

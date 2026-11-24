@@ -526,7 +526,7 @@ function ReadIdButton({ guest, idType, idTypes, onDone }: {
 
 export default function RegistrationCard() {
   const { name } = useParams()
-  const { t } = useT()
+  const { t, tn } = useT()
   const loc = useLocale()
   const [d, setD] = useState<Grc | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -714,7 +714,7 @@ export default function RegistrationCard() {
               <Row
                 label={t("Guests")}
                 value={
-                  t("{n} adult{s}", { n: r.adults, s: r.adults === 1 ? "" : "s" }) +
+                  tn(r.adults, "{n} adult", "{n} adults") +
                   (r.children ? ` + ${t("{n} child", { n: r.children })}` : "")
                 }
               />

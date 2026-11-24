@@ -1211,7 +1211,7 @@ export function BookingDialog(props: {
                                 )}
                                 <span className="ml-auto text-xs text-zinc-400">
                                   {h.phone ? `${h.phone} · ` : ""}
-                                  {h.stays} {t("stay{s}", { s: h.stays === 1 ? "" : "s" })}
+                                  {tn(h.stays, "{n} stay", "{n} stays")}
                                 </span>
                               </button>
                             </li>
@@ -1221,10 +1221,7 @@ export function BookingDialog(props: {
                     </div>
                     {profile && (
                       <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
-                        {t("Returning guest · {n} stay{s}", {
-                          n: profile.stays,
-                          s: profile.stays === 1 ? "" : "s",
-                        })}
+                        {tn(profile.stays, "Returning guest · {n} stay", "Returning guest · {n} stays")}
                         <button
                           type="button"
                           aria-label={t("Detach profile")}
@@ -2440,7 +2437,7 @@ export function BookingDialog(props: {
                         {roomTypeName} ·{" "}
                         {quote.day_use
                           ? t("Day use {from}-{to}", { from: slot.from, to: slot.to })
-                          : translate("{v0} night{v1}", { v0: String(quote.nights), v1: String(quote.nights === 1 ? "" : "s") })}
+                          : tn(quote.nights, "{n} night", "{n} nights")}
                       </span>
                       <span className="shrink-0 tabular-nums">
                         {cur()}
