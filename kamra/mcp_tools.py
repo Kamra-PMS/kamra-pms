@@ -85,6 +85,19 @@ IDEMPOTENCY_KEY_PARAM = _p(
 	"second identical room on purpose.",
 )
 
+CARD_NETWORK_PARAM = _p(
+	"string",
+	description="For a Card payment: the card network from the card machine slip "
+	"(Visa, Mastercard, RuPay, American Express, Diners Club, Discover, JCB, "
+	"UnionPay, Maestro, Mir, Elo or Other). Ask staff for it; leave it out for "
+	"any other mode.",
+)
+CARD_LAST4_PARAM = _p(
+	"string",
+	description="Optional: the last 4 digits of the card, digits only. Never "
+	"send a full card number.",
+)
+
 PAYMENT_KEY_PARAM = _p(
 	"string",
 	description="Optional unique key for this payment (e.g. a UUID), new for "
@@ -864,6 +877,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 			               "foreign money received. Leave out for the "
 			               "hotel's own currency."),
 			"idempotency_key": PAYMENT_KEY_PARAM,
+			"card_network": CARD_NETWORK_PARAM,
+			"card_last4": CARD_LAST4_PARAM,
 		},
 		required=("folio", "mode", "amount"),
 		mutating=True,
@@ -1663,6 +1678,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"amount": _p("number"),
 			"to_city_ledger": _p("boolean"),
 			"reference": _p("string"),
+			"card_network": CARD_NETWORK_PARAM,
+			"card_last4": CARD_LAST4_PARAM,
 		},
 		required=("group_booking",),
 		mutating=True,
@@ -2140,7 +2157,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"pos.pay_order",
 		"""Settle a POS check. mode: a payment mode the property offers (Cash, Card, ...) or Room Charge.
 		Confirm the total with staff before calling.""",
-		{"order": _p("string"), "mode": _p("string")},
+		{"order": _p("string"), "mode": _p("string"),
+		 "card_network": CARD_NETWORK_PARAM, "card_last4": CARD_LAST4_PARAM},
 		required=("order", "mode"),
 		mutating=True,
 		group="F&B",

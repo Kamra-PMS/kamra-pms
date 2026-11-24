@@ -8,6 +8,8 @@ import { BedDouble, Gift, X } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { cn } from "../../lib/utils"
 import { useT, t as translate } from "../../lib/i18n"
+import { CardNetworkPicker } from "../../components/CardNetworkPicker"
+import { cardProblem, isCard } from "../../lib/cardNetwork"
 
 
 export interface SettleRoom {
@@ -63,7 +65,7 @@ export default function SettleSheet({
   onNcBy: (v: string) => void
   onNcNote: (v: string) => void
   onSheetNc: (v: boolean) => void
-  onSettle: (mode: string) => void
+  onSettle: (mode: string, card?: { network?: string; last4?: string }) => void
   onSettleDeliver: () => void
   onChargeToRoom: () => void
   onSettleNc: () => void
@@ -83,6 +85,8 @@ export default function SettleSheet({
   }, [onClose])
 
   const [pendingMode, setPendingMode] = useState<string | null>(null) // tender picked, not yet confirmed
+  const [card, setCard] = useState<{ network?: string; last4?: string }>({})
+  const cardIssue = pendingMode ? cardProblem(pendingMode, card.network, card.last4) : ""
   const roomNo = room?.split("-").pop() || ""
   const roomBlocked =
     !!room &&
@@ -173,8 +177,11 @@ export default function SettleSheet({
                   </Button>
                 ))}
               </div>
+              {pendingMode && isCard(pendingMode) && (
+                <CardNetworkPicker network={card.network} last4={card.last4} onChange={(patch) => setCard((c) => ({ ...c, ...patch }))} />
+              )}
               {pendingMode && (
-                <Button className="h-14 w-full text-base" disabled={busy} onClick={() => onSettle(pendingMode)}>
+                <Button className="h-14 w-full text-base" disabled={busy || !!cardIssue} onClick={() => onSettle(pendingMode, card)}>
                   {t("Confirm {mode} · {amount}", { mode: pendingMode, amount: grandLabel })}
                 </Button>
               )}

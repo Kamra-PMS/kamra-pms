@@ -13,6 +13,8 @@ import { t as translate, useUILanguage } from "../lib/i18n"
 import { useCashierAuth } from "../lib/cashierAuth"
 import CheckInDialog from "./CheckInDialog"
 import CheckOutDialog from "./CheckOutDialog"
+import { CardNetworkPicker } from "./CardNetworkPicker"
+import { cardArgs, cardProblem, isCard } from "../lib/cardNetwork"
 
 /** One group, in the order the desk works it. A "What to do next" box
  *  follows the group's stage (quotation, before arrival, arrival day, in
@@ -164,11 +166,11 @@ export default function GroupControl({
   const [blocks, setBlocks] = useState<BlockDraft[]>([])
   const [cutoff, setCutoff] = useState("")
   const [terms, setTerms] = useState({ attrition_pct: "", deposit_due: "" })
-  const [deposit, setDeposit] = useState<{ amount: string; mode: string } | null>(null)
+  const [deposit, setDeposit] = useState<{ amount: string; mode: string; network?: string; last4?: string } | null>(null)
   // one key per Take deposit press; reused on retry (#550)
   const [depositKey, setDepositKey] = useState(newIdempotencyKey)
   const [pick, setPick] = useState({ room_type: "", guest_name: "", phone: "" })
-  const [settle, setSettle] = useState<{ mode: string; amount: string; cityLedger: boolean } | null>(null)
+  const [settle, setSettle] = useState<{ mode: string; amount: string; cityLedger: boolean; network?: string; last4?: string } | null>(null)
   const [checkingIn, setCheckingIn] = useState<string | null>(null)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
   // rooms checked in by the group button that still have steps to finish
@@ -251,11 +253,12 @@ export default function GroupControl({
     })
 
   /** an advance for the whole group, paid into the group bill */
-  const takeDeposit = (amount: number, mode: string) =>
+  const takeDeposit = (amount: number, mode: string, card?: { network?: string; last4?: string }) =>
     act(async () => {
       const { folio } = await call<{ folio: string }>("kamra.api.group_master_folio", { group_booking: name })
       await call("kamra.api.add_folio_payment", {
         folio, mode, amount, kind: "Advance", idempotency_key: depositKey,
+        ...cardArgs(mode, card?.network, card?.last4),
       })
       setDepositKey(newIdempotencyKey())
       setDeposit(null)
@@ -1014,7 +1017,13 @@ export default function GroupControl({
                       onChange={(e) => setDeposit({ ...deposit, mode: e.target.value })}>
                       {loc.payment_modes.map((m) => <option key={m} value={m}>{translate(m)}</option>)}
                     </select>
-                    <Button disabled={busy || !(Number(deposit.amount) > 0)} onClick={() => takeDeposit(Number(deposit.amount), deposit.mode)}>
+                    {isCard(deposit.mode) && (
+                      <div className="basis-full">
+                        <CardNetworkPicker network={deposit.network} last4={deposit.last4} onChange={(patch) => setDeposit({ ...deposit, ...patch })} />
+                      </div>
+                    )}
+                    <Button disabled={busy || !(Number(deposit.amount) > 0) || !!cardProblem(deposit.mode, deposit.network, deposit.last4)}
+                      onClick={() => takeDeposit(Number(deposit.amount), deposit.mode, deposit)}>
                       {translate("Receive")}
                     </Button>
                     <Button variant="outline" onClick={() => setDeposit(null)}>{translate("Cancel")}</Button>
@@ -1058,10 +1067,15 @@ export default function GroupControl({
                         </select>
                         <input type="number" className={`${inputSm} w-32`} value={settle.amount}
                           onChange={(e) => setSettle({ ...settle, amount: e.target.value })} />
+                        {isCard(settle.mode) && (
+                          <div className="basis-full">
+                            <CardNetworkPicker network={settle.network} last4={settle.last4} onChange={(patch) => setSettle({ ...settle, ...patch })} />
+                          </div>
+                        )}
                       </>
                     )}
                     <Button
-                      disabled={busy}
+                      disabled={busy || (!settle.cityLedger && !!cardProblem(settle.mode, settle.network, settle.last4))}
                       onClick={() =>
                         act(async () => {
                           const out = await call<{ closed: boolean; invoice_number?: string; warning?: string }>(
@@ -1071,6 +1085,7 @@ export default function GroupControl({
                               mode: settle.cityLedger ? null : settle.mode,
                               amount: settle.cityLedger ? null : Number(settle.amount) || null,
                               to_city_ledger: settle.cityLedger ? 1 : 0,
+                              ...(settle.cityLedger ? {} : cardArgs(settle.mode, settle.network, settle.last4)),
                             },
                           )
                           setSettle(null)
