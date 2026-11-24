@@ -1917,10 +1917,21 @@ def _refund_folio_payment(folio: str, amount: float, mode: str, reason: str,
 	# a card refund keeps the card network (and last 4) of the payment it undoes, so the
 	# by-network collections net out instead of showing Visa +100 and "Not recorded" -100
 	card_network = card_last4 = None
-	if refund_of and mode == "Card":
-		orig = next((p for p in doc.payments if p.name == refund_of), None)
-		if orig and orig.mode == "Card":
-			card_network, card_last4 = orig.get("card_network"), orig.get("card_last4")
+	if mode == "Card":
+		if refund_of:
+			orig = next((p for p in doc.payments if p.name == refund_of), None)
+			if orig and orig.mode == "Card":
+				card_network, card_last4 = orig.get("card_network"), orig.get("card_last4")
+		else:
+			# a refund not tied to one payment line (the folio screen's Refund box): keep the
+			# network when every card payment on the folio used the same one, otherwise leave it
+			# unrecorded rather than guess
+			cards = [p for p in doc.payments if p.mode == "Card" and float(p.amount or 0) > 0]
+			nets = {p.get("card_network") for p in cards}
+			if cards and len(nets) == 1 and None not in nets and "" not in nets:
+				last = cards[-1]
+				card_network = last.get("card_network")
+				card_last4 = last.get("card_last4") if len({p.get("card_last4") for p in cards}) == 1 else None
 	doc.append("payments", {
 		"posting_date": bd,
 		"payment_kind": "Refund",

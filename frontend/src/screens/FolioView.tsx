@@ -1807,6 +1807,8 @@ export default function FolioView() {
                       ...cardArgs(payment.mode, payment.network, payment.last4),
                       idempotency_key: paymentKey,
                     }))
+                    // the card details belong to that payment: the next one starts blank
+                    setPayment((p) => ({ ...p, network: "", last4: "" }))
                     setPaymentKey(newIdempotencyKey())
                   })
                 }
