@@ -59,6 +59,10 @@ jobs:
         run: npm run night-prices:check
         working-directory: frontend
 
+      - name: Check the figures printed on a POS bill add up
+        run: npm run addup:check
+        working-directory: frontend
+
       - name: Check the offline cache and queue
         run: npm run offline:check
         working-directory: frontend
