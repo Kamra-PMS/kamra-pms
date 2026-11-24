@@ -36,7 +36,7 @@ features:
     details: Call the same methods from your stack. Download the Postman collection and go.
     link: /developers
   - title: Features & latest release
-    details: Front desk through banquets, F&B, WhatsApp and country tax packs - plus what's new in v2.8.0.
+    details: Front desk through banquets, F&B, WhatsApp and country tax packs - plus what's new in v2.8.2.
     link: /features
   - title: Free video course
     details: 27 short episodes from first sign-in to night audit, reports and AI agents. Chapters and captions on every video.

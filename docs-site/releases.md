@@ -32,7 +32,39 @@ voice and cleaner audio. The first episodes are out now, and the rest follow
 every Monday, Wednesday and Friday.
 [Watch the playlist](https://www.youtube.com/playlist?list=PLcNTRQwzkzAs).
 
-## Current stable: v2.8.0
+## Current stable: v2.8.2
+
+Released 24 Nov 2026.
+[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.8.2).
+
+- **Access control on Frappe's own permissions**
+  ([#421](https://github.com/Kamra-PMS/kamra-pms/issues/421)).
+  Desk actions and API calls check DocPerm permission types. Custom
+  roles and Role Permission Manager work like the rest of the Frappe
+  desk. [Roles and access](/roles-and-access)
+- **Card network on payments**
+  ([#694](https://github.com/Kamra-PMS/kamra-pms/issues/694)).
+  Card collections record Visa, Mastercard and the other networks, and
+  can be split by network in reports.
+- **Room-type capacity on the booking engine**
+  ([#692](https://github.com/Kamra-PMS/kamra-pms/issues/692)).
+  Room type config exposes max total occupants; the public booking page
+  formats that capacity clearly.
+- **Code Quality.** Three GitHub Code Quality findings cleared
+  ([#689](https://github.com/Kamra-PMS/kamra-pms/issues/689)).
+
+## v2.8.1
+
+Released 23 Nov 2026.
+[GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.8.1).
+
+- Swahili staff UI. AI guest booking through a `guest.booking` MCP scope.
+  QRIS and Bank Transfer at the restaurant till. Displayed rates include
+  the levy. Webhook `ar.payment_reversed`.
+- Fixes: OTA bookings survive bad phone/email; early arrival moves the
+  stay to today; out-of-service rooms show on the Today room board.
+
+## v2.8.0
 
 Released 21 Nov 2026.
 [GitHub release](https://github.com/Kamra-PMS/kamra-pms/releases/tag/v2.8.0).
