@@ -971,6 +971,13 @@
   },
   {
    "read": 1,
+   "report": 1,
+   "print": 1,
+   "role": "Kamra Service Account",
+   "view_locale": 1
+  },
+  {
+   "read": 1,
    "role": "Owner"
   }
  ],
