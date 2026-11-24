@@ -1071,5 +1071,12 @@
   "Refund by": "I-refund sa",
   "starts later": "magsisimula mamaya",
   "Identity": "Pagkakakilanlan",
-  "ID picture": "Larawan ng ID"
+  "ID picture": "Larawan ng ID",
+  "Card type": "Uri ng card",
+  "Card type (from the card machine slip)": "Uri ng card (mula sa slip ng card machine)",
+  "Choose card type": "Pumili ng uri ng card",
+  "Last 4 (optional)": "Huling 4 (opsyonal)",
+  "Last 4 digits of the card (optional)": "Huling 4 digit ng card (opsyonal)",
+  "Choose the card type for the Card payment.": "Piliin ang uri ng card para sa bayad gamit ang card.",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Ilagay nang eksakto ang huling 4 digit ng card, o iwanang walang laman."
 }

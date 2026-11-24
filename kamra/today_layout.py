@@ -18,7 +18,7 @@ import json
 import frappe
 from frappe import _
 
-from kamra.authz import ADMIN, assert_property_access, require_roles
+from kamra.authz import ADMIN, assert_property_access, require_perm
 
 USER_KEY = "kamra_today_layout"
 PROPERTY_KEY = "today_layout"
@@ -101,7 +101,7 @@ def _is_admin() -> bool:
 
 
 @frappe.whitelist()
-@require_roles(*_ANY_STAFF)
+@require_perm("Property", "use_console")
 def get_today_layout(property: str | None = None) -> dict:
 	"""The layout this person sees on Today, and where it came from
 	("user", "property" or "default")."""
@@ -126,7 +126,7 @@ def get_today_layout(property: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*_ANY_STAFF)
+@require_perm("Property", "use_console")
 def save_today_layout(layout, property: str | None = None) -> dict:
 	"""Save this person's own Today layout."""
 	clean = normalize(layout)
@@ -135,7 +135,7 @@ def save_today_layout(layout, property: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*_ANY_STAFF)
+@require_perm("Property", "use_console")
 def reset_today_layout(property: str | None = None) -> dict:
 	"""Drop this person's own layout: back to the hotel default."""
 	frappe.defaults.clear_user_default(USER_KEY)
@@ -143,7 +143,7 @@ def reset_today_layout(property: str | None = None) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Hotel Admin")
+@require_perm("Property", "configure")
 def save_today_layout_default(property: str, layout=None) -> dict:
 	"""Hotel Admin: the layout everyone at this property sees until they
 	customise their own. Pass no layout to go back to the built-in one."""

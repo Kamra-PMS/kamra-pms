@@ -25,7 +25,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, date_diff, getdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 
 def permitted_properties() -> set[str]:
@@ -43,7 +43,7 @@ def assert_property_access(property: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Revenue Manager", "Hotel Admin", "Kamra Agent")
+@require_perm("Reservation", "plan_stays")
 def crs_search(check_in_date: str, check_out_date: str,
                adults: int = 2, children: int = 0):
 	"""Find a room across the chain: for every property the user can access,
@@ -196,7 +196,7 @@ def _sum(rows: list[dict], key: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def quote_itinerary(legs, adults: int = 2, children: int = 0,
                     company: str | None = None):
 	"""Price a multi-property trip before booking it: each leg priced by
@@ -292,7 +292,7 @@ def _savepoint(fn):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def create_itinerary(legs, guest_name: str | None = None,
                      phone: str | None = None, guest: str | None = None,
                      adults: int = 2, children: int = 0,
@@ -344,7 +344,7 @@ def create_itinerary(legs, guest_name: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def add_itinerary_leg(itinerary: str, property: str, room_type: str,
                       check_in_date: str, check_out_date: str,
                       adults: int = 2, children: int = 0,
@@ -410,7 +410,7 @@ def _legs_of(names: list[str]) -> dict[str, list[dict]]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Itinerary", "view_trips")
 def get_itinerary(itinerary: str):
 	"""A trip with its legs in date order: each leg's property, dates,
 	status, price, advance paid and deposit still due, plus the combined
@@ -464,7 +464,7 @@ def get_itinerary(itinerary: str):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Itinerary", "view_trips")
 def list_itineraries(search: str | None = None, limit: int = 50):
 	"""Recent trips the user can work with (every leg at a property they
 	may access), newest first, with their legs and status."""
@@ -491,7 +491,7 @@ def list_itineraries(search: str | None = None, limit: int = 50):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def cancel_itinerary_preview(itinerary: str):
 	"""What cancelling the whole trip would cost now: each leg's own
 	cancellation_preview (its property's policy) and the total fee. Legs
@@ -512,7 +512,7 @@ def cancel_itinerary_preview(itinerary: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Kamra Agent")
+@require_perm("Reservation", "handle_stays")
 def cancel_itinerary(itinerary: str, reason: str = "Guest request",
                      note: str | None = None, waive_fee: int = 0):
 	"""Cancel every confirmed leg of a trip, each through cancel_reservation
@@ -602,7 +602,7 @@ def _trip_advance(itinerary: str, amount=None) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def trip_advance_preview(itinerary: str, amount: float | None = None):
 	"""How one advance for the whole trip would be split across its legs,
 	before taking it: each leg's advance % and amount still due, and its
@@ -612,7 +612,7 @@ def trip_advance_preview(itinerary: str, amount: float | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Folio", "bill")
 def record_trip_advance(itinerary: str, amount: float, mode: str = "Cash",
                         reference: str | None = None, pin: str | None = None,
                         idempotency_key: str | None = None):

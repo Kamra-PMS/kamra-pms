@@ -1023,7 +1023,13 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "bill_functions": 1,
+   "configure": 1,
+   "issue_indent": 1,
+   "manage_functions": 1,
+   "reopen_function": 1,
+   "view_functions": 1
   },
   {
    "create": 1,
@@ -1034,7 +1040,13 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "bill_functions": 1,
+   "configure": 1,
+   "issue_indent": 1,
+   "manage_functions": 1,
+   "reopen_function": 1,
+   "view_functions": 1
   },
   {
    "create": 1,
@@ -1043,7 +1055,11 @@
    "read": 1,
    "report": 1,
    "role": "Front Desk",
-   "write": 1
+   "write": 1,
+   "bill_functions": 1,
+   "issue_indent": 1,
+   "manage_functions": 1,
+   "view_functions": 1
   },
   {
    "create": 1,
@@ -1052,7 +1068,39 @@
    "read": 1,
    "report": 1,
    "role": "Kamra Agent",
-   "write": 1
+   "write": 1,
+   "bill_functions": 1,
+   "issue_indent": 1,
+   "manage_functions": 1,
+   "view_functions": 1
+  },
+  {
+   "role": "Finance",
+   "bill_functions": 1,
+   "reopen_function": 1,
+   "view_functions": 1,
+   "select": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "bill_functions": 1,
+   "issue_indent": 1,
+   "manage_functions": 1,
+   "reopen_function": 1,
+   "view_functions": 1,
+   "select": 1
+  },
+  {
+   "role": "Housekeeping",
+   "issue_indent": 1,
+   "view_functions": 1,
+   "select": 1
+  },
+  {
+   "role": "Housekeeping Supervisor",
+   "issue_indent": 1,
+   "view_functions": 1,
+   "select": 1
   }
  ],
  "row_format": "Dynamic",

@@ -11,7 +11,7 @@ from typing import Any
 import frappe
 from frappe.utils import now_datetime
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.business_date import ensure_business_date, get_business_date
 from kamra.business_date import report_range_end as _range_end
 from kamra.settings import get_setting
@@ -231,6 +231,8 @@ def record_cashier_txn(
 	notes: str | None = None,
 	session: str | None = None,
 	outlet: str | None = None,
+	card_network: str | None = None,
+	card_last4: str | None = None,
 ) -> str | None:
 	"""Append a Cashier Transaction. Returns session name (or None)."""
 	from kamra.localization import assert_payment_mode
@@ -249,6 +251,8 @@ def record_cashier_txn(
 	if not sess:
 		return None
 	bd = get_business_date(property)
+	from kamra.card_network import clean as clean_card
+	card_network, card_last4 = clean_card(mode, card_network, card_last4)
 	frappe.get_doc({
 		"doctype": "Cashier Transaction",
 		"session": sess,
@@ -261,6 +265,8 @@ def record_cashier_txn(
 		"pos_order": pos_order,
 		"outlet": outlet or frappe.db.get_value("Cashier Session", sess, "outlet"),
 		"reference": (reference or "")[:140] or None,
+		"card_network": card_network,
+		"card_last4": card_last4,
 		"notes": notes,
 		"posted_by": frappe.session.user,
 		"posted_at": now_datetime(),
@@ -302,7 +308,7 @@ def _session_view(name: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def open_session(property: str, opening_float: float | None = None,
                  terminal: str | None = None, cashier_terminal: str | None = None):
 	"""Open the caller's till for the current business date.
@@ -371,7 +377,7 @@ def open_session(property: str, opening_float: float | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def current_session(property: str, cashier_terminal: str | None = None):
 	"""Caller's open session, or null. With several open, the newest unless
 	`cashier_terminal` names one."""
@@ -405,7 +411,7 @@ def current_session(property: str, cashier_terminal: str | None = None):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def my_till(property: str):
 	"""Read-only: does taking money here need a till, is the caller's open,
 	and may the caller open one (open_session). The check-in, walk-in and
@@ -414,7 +420,7 @@ def my_till(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def close_session(session: str, counted_cash: float | None = None,
                   notes: str | None = None, pin: str | None = None,
                   cash_count=None):
@@ -536,7 +542,7 @@ def _sync_shift_handover(sess) -> None:
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def post_paid_out(property: str, amount: float, reason: str,
                   payee: str | None = None, pin: str | None = None):
 	"""Cash leaving the drawer (vendor / guest paid-out)."""
@@ -557,7 +563,7 @@ def post_paid_out(property: str, amount: float, reason: str,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def cash_drop(property: str, amount: float, location: str | None = None,
               pin: str | None = None, to_terminal: str | None = None):
 	"""Move cash from the till to a drop safe / general cashier.
@@ -600,7 +606,7 @@ def cash_drop(property: str, amount: float, location: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def post_petty_cash(property: str, amount: float, payee: str, category: str,
                     reason: str, pin: str | None = None):
 	if float(amount) <= 0:
@@ -635,7 +641,7 @@ def post_petty_cash(property: str, amount: float, payee: str, category: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def petty_cash_report(property: str, limit: int = 50):
 	"""Vouchers and totals for one property only — never mixed across hotels."""
 	from kamra.authz import assert_property_access
@@ -681,7 +687,7 @@ def petty_cash_report(property: str, limit: int = 50):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Cashier Session", "set_float")
 def set_petty_cash_float(property: str, amount: float):
 	"""Set this property's standing petty-cash imprest (per hotel, not shared)."""
 	from kamra.authz import assert_property_access
@@ -695,7 +701,7 @@ def set_petty_cash_float(property: str, amount: float):
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def list_sessions(property: str, business_date: str | None = None,
                   status: str | None = None, to_date: str | None = None,
                   limit: int = 100):
@@ -731,7 +737,7 @@ def list_sessions(property: str, business_date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def session_report(session: str):
 	"""One till session for a reconciliation: the session and its totals,
 	system vs counted per method, the note-by-note count, every receipt
@@ -813,9 +819,25 @@ def session_report(session: str):
 	return d
 
 
+def _card_networks(property: str, date, to) -> list[dict]:
+	"""Card money received, split by card network. Card payments taken without
+	a network (older records, or a caller that sends none) count as "Not recorded"."""
+	rows = frappe.db.sql(
+		"""
+		SELECT COALESCE(NULLIF(card_network, ''), 'Not recorded') AS network,
+		       COUNT(*) AS txns, COALESCE(SUM(amount), 0) AS total
+		FROM `tabCashier Transaction`
+		WHERE property = %(property)s AND business_date BETWEEN %(date)s AND %(to)s
+		  AND mode = 'Card' AND kind NOT IN ('Paid Out', 'Drop', 'Petty Cash')
+		GROUP BY network ORDER BY total DESC
+		""",
+		{"property": property, "date": date, "to": to}, as_dict=True,
+	)
+	return [{"network": r.network, "txns": int(r.txns), "total": float(r.total)} for r in rows]
+
+
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Revenue Manager",
-               "Kamra Agent")
+@require_perm("Cashier Session", "view_cash_summary")
 def cash_summary_v2(property: str, date: str | None = None,
                     to_date: str | None = None):
 	"""Unified FO + POS cash for a business date, or date..to_date
@@ -847,6 +869,7 @@ def cash_summary_v2(property: str, date: str | None = None,
 			"date": date,
 			"modes": modes,
 			"grand_total": float(sum(m["total"] for m in modes)),
+			"card_networks": _card_networks(property, date, to),
 			"source": "cashier",
 		}
 	# Fallback: folio payments (legacy) — inline to avoid circular import
@@ -869,7 +892,7 @@ def cash_summary_v2(property: str, date: str | None = None,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def shift_report(property: str, business_date: str | None = None,
                  to_date: str | None = None):
 	"""Per-cashier totals for a business date, or business_date..to_date."""
@@ -916,7 +939,7 @@ def _terminal_row(t: dict) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def terminals(property: str, include_disabled: int = 0):
 	"""A property's configured tills. Sessions opened without a terminal are
 	the Default till and are not listed here."""
@@ -932,7 +955,7 @@ def terminals(property: str, include_disabled: int = 0):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*TERMINAL_EDITORS)
+@require_perm("Cashier Session", "manage_cash_office")
 def save_terminal(property: str, terminal_name: str, kind: str = "Front Desk",
                   outlet: str | None = None, bill_printer: str | None = None,
                   default_float: float = 0, disabled: int = 0,
@@ -1093,7 +1116,7 @@ def assert_transfer_keeps_safe_solvent(doc) -> None:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Night Auditor", "Kamra Agent")
+@require_perm("Cashier Session", "view_tills")
 def tills_board(property: str):
 	"""Every till right now: who holds it, what should be in it, what is on
 	its way to the cash office. The Default till (sessions opened without a
@@ -1134,7 +1157,7 @@ def tills_board(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Cashier Session", "operate_till")
 def receive_transfer(transfer: str, pin: str | None = None):
 	"""The cash office confirms a drop arrived."""
 	t = frappe.get_doc("Cash Transfer", transfer)
@@ -1154,7 +1177,7 @@ def receive_transfer(transfer: str, pin: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("Cashier Session", "manage_cash_office")
 def bank_deposit(cash_office: str, amount: float, notes: str | None = None,
                  pin: str | None = None):
 	"""Cash leaves the safe for the bank."""
@@ -1184,7 +1207,7 @@ def bank_deposit(cash_office: str, amount: float, notes: str | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Finance", "Hotel Admin")
+@require_perm("Cashier Session", "manage_cash_office")
 def approve_variance(session: str, note: str | None = None):
 	"""A manager signs off a till that closed over or short."""
 	doc = frappe.get_doc("Cashier Session", session)

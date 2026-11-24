@@ -1,0 +1,10 @@
+{
+ "creation": "2026-10-31 12:00:00.000000",
+ "doc_type": "Vendor Bill",
+ "doctype": "Permission Type",
+ "modified": "2026-10-31 12:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "vendor_bill_enter_bills",
+ "owner": "Administrator",
+ "perm_type": "enter_bills"
+}

@@ -104,8 +104,8 @@ function Modal({ title, onClose, children }: {
 
 export default function Inventory() {
   useUILanguage()
-  const { roles } = useAuth()
-  const canWrite = roles.some((r) => WRITE_ROLES.includes(r))
+  const { allowed } = useAuth()
+  const canWrite = allowed("Ingredient", "manage_stock", WRITE_ROLES)
 
   const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
   const [outlet, setOutlet] = useState("")

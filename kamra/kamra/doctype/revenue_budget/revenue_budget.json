@@ -4,30 +4,97 @@
  "creation": "2026-07-07 00:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": ["property", "period", "column_break_a", "room_revenue_target",
-                 "occupancy_target", "adr_target", "revpar_target"],
+ "field_order": [
+  "property",
+  "period",
+  "column_break_a",
+  "room_revenue_target",
+  "occupancy_target",
+  "adr_target",
+  "revpar_target"
+ ],
  "fields": [
-  {"fieldname": "property", "fieldtype": "Link", "label": "Property", "options": "Property", "reqd": 1, "in_list_view": 1},
-  {"fieldname": "period", "fieldtype": "Data", "label": "Month (YYYY-MM)", "reqd": 1, "in_list_view": 1, "description": "e.g. 2026-07"},
-  {"fieldname": "column_break_a", "fieldtype": "Column Break"},
-  {"fieldname": "room_revenue_target", "fieldtype": "Currency", "label": "Room Revenue Target"},
-  {"fieldname": "occupancy_target", "fieldtype": "Percent", "label": "Occupancy % Target"},
-  {"fieldname": "adr_target", "fieldtype": "Currency", "label": "ADR / ARR Target"},
-  {"fieldname": "revpar_target", "fieldtype": "Currency", "label": "RevPAR Target"}
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "period",
+   "fieldtype": "Data",
+   "label": "Month (YYYY-MM)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "e.g. 2026-07"
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "room_revenue_target",
+   "fieldtype": "Currency",
+   "label": "Room Revenue Target"
+  },
+  {
+   "fieldname": "occupancy_target",
+   "fieldtype": "Percent",
+   "label": "Occupancy % Target"
+  },
+  {
+   "fieldname": "adr_target",
+   "fieldtype": "Currency",
+   "label": "ADR / ARR Target"
+  },
+  {
+   "fieldname": "revpar_target",
+   "fieldtype": "Currency",
+   "label": "RevPAR Target"
+  }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-07-07 00:00:00",
+ "modified": "2026-10-30 12:32:21.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Revenue Budget",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
-  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
-  {"role": "Hotel Admin", "read": 1, "write": 1, "create": 1, "delete": 1},
-  {"role": "Revenue Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
-  {"role": "Finance", "read": 1, "write": 1, "create": 1}
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "set_budget": 1
+  },
+  {
+   "role": "Hotel Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "set_budget": 1
+  },
+  {
+   "role": "Revenue Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "set_budget": 1
+  },
+  {
+   "role": "Finance",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "set_budget": 1
+  }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",

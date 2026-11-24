@@ -15,6 +15,8 @@
   "pos_order",
   "outlet",
   "reference",
+  "card_network",
+  "card_last4",
   "posted_by",
   "posted_at",
   "notes"
@@ -86,6 +88,24 @@
    "label": "Reference"
   },
   {
+   "fieldname": "card_network",
+   "fieldtype": "Select",
+   "label": "Card Network",
+   "options": "\nVisa\nMastercard\nRuPay\nAmerican Express\nDiners Club\nDiscover\nJCB\nUnionPay\nMaestro\nMir\nElo\nOther",
+   "description": "Set when the mode is Card, from the card machine slip.",
+   "no_copy": 1,
+   "search_index": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "card_last4",
+   "fieldtype": "Data",
+   "label": "Card Last 4 Digits",
+   "length": 4,
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "posted_by",
    "fieldtype": "Link",
    "label": "Posted By",
@@ -113,7 +133,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-23 12:00:00.000000",
+ "modified": "2026-11-24 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Cashier Transaction",

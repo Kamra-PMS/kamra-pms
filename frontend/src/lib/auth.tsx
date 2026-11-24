@@ -10,6 +10,7 @@ import {
 import { useNavigate } from "react-router-dom"
 
 import { isNetworkError, logout, whoami } from "./api"
+import { hasPerm, type Can } from "./can"
 
 // Single source of auth truth for the app. Any component reads it via useAuth();
 // route guards (RequireAuth) redirect based on it, so the URL always reflects
@@ -20,6 +21,10 @@ interface AuthValue {
   status: Status
   user: string | null
   roles: string[]
+  /** Frappe permission types per doctype (null = older server) */
+  can: Can
+  /** May this user do `ptype` on `doctype`? Role list = fallback only. */
+  allowed: (doctype: string, ptype: string, fallbackRoles?: string[]) => boolean
   refresh: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -36,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>("loading")
   const [user, setUser] = useState<string | null>(null)
   const [roles, setRoles] = useState<string[]>([])
+  const [can, setCan] = useState<Can>(null)
   const navigate = useNavigate()
   const statusRef = useRef<Status>("loading")
   statusRef.current = status
@@ -55,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setStatus("authed")
         setUser(w.full_name || w.user)
         setRoles(w.roles)
+        setCan(w.can ?? null)
       }
     } catch (e) {
       // an unreachable server is NOT a sign-out: keep the session and let
@@ -96,8 +103,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate("/login", { replace: true })
   }, [navigate])
 
+  const allowed = useCallback(
+    (doctype: string, ptype: string, fallbackRoles: string[] = []) =>
+      hasPerm(can, roles, doctype, ptype, fallbackRoles),
+    [can, roles],
+  )
+
   return (
-    <AuthCtx.Provider value={{ status, user, roles, refresh, signOut }}>
+    <AuthCtx.Provider value={{ status, user, roles, can, allowed, refresh, signOut }}>
       {children}
     </AuthCtx.Provider>
   )

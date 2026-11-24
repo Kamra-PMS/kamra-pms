@@ -9,7 +9,7 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
-from kamra.authz import assert_property_access, require_roles
+from kamra.authz import assert_property_access, require_perm
 
 STATIONS = ("Kitchen", "Tandoor", "Grill", "Fryer", "Bar")
 OUTLET_TYPES = ("Restaurant", "Room Service", "Bar", "Spa", "Other")
@@ -72,7 +72,7 @@ def _modules(property: str) -> set[str]:
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("Property", "view_briefing")
 def setup_checklist(property: str) -> dict:
 	"""What is set up and what is still to do, for the Finish setup screen.
 	Only items that matter for the modules this property runs."""

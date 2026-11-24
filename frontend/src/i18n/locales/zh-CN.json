@@ -6704,5 +6704,12 @@
   "Complimentary adjustment": "免单调整",
   "Amount must be positive.": "金额必须大于 0。",
   "Charge amount must be more than zero. To reduce a bill, post an allowance or void the charge.": "入账金额必须大于 0。如需扣减账单，请录入减免或作废该笔收费。",
-  "There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.": "该账单暂无间夜记录。折扣仅可抵扣已入账间夜，请在夜审后或宾客退房结账时操作。"
+  "There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.": "该账单暂无间夜记录。折扣仅可抵扣已入账间夜，请在夜审后或宾客退房结账时操作。",
+  "Card type": "卡类型",
+  "Card type (from the card machine slip)": "卡类型（见刷卡小票）",
+  "Choose card type": "选择卡类型",
+  "Last 4 (optional)": "后4位（可选）",
+  "Last 4 digits of the card (optional)": "卡号后4位（可选）",
+  "Choose the card type for the Card payment.": "请为刷卡付款选择卡类型。",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "请准确填写卡号后4位，或留空。"
 }

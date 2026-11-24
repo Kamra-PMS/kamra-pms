@@ -37,6 +37,8 @@
   "accepted_at",
   "paid",
   "payment_mode",
+  "card_network",
+  "card_last4",
   "guests",
   "customer_name",
   "customer_phone",
@@ -239,6 +241,24 @@
    "read_only": 1
   },
   {
+   "fieldname": "card_network",
+   "fieldtype": "Select",
+   "label": "Card Network",
+   "options": "\nVisa\nMastercard\nRuPay\nAmerican Express\nDiners Club\nDiscover\nJCB\nUnionPay\nMaestro\nMir\nElo\nOther",
+   "description": "Set when the mode is Card, from the card machine slip.",
+   "no_copy": 1,
+   "search_index": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "card_last4",
+   "fieldtype": "Data",
+   "label": "Card Last 4 Digits",
+   "length": 4,
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "guests",
    "fieldtype": "Int",
    "label": "Guests"
@@ -327,7 +347,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-23 12:00:00.000000",
+ "modified": "2026-11-24 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order",
@@ -344,7 +364,10 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "manage_outlet": 1,
+   "take_orders": 1,
+   "approve_voids": 1
   },
   {
    "create": 1,
@@ -355,7 +378,10 @@
    "report": 1,
    "role": "Hotel Admin",
    "share": 1,
-   "write": 1
+   "write": 1,
+   "manage_outlet": 1,
+   "take_orders": 1,
+   "approve_voids": 1
   },
   {
    "create": 1,
@@ -364,14 +390,18 @@
    "read": 1,
    "report": 1,
    "role": "Front Desk",
-   "write": 1
+   "write": 1,
+   "take_orders": 1
   },
   {
    "email": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Finance"
+   "role": "Finance",
+   "manage_outlet": 1,
+   "take_orders": 1,
+   "approve_voids": 1
   },
   {
    "create": 1,
@@ -380,7 +410,8 @@
    "read": 1,
    "report": 1,
    "role": "Kamra Agent",
-   "write": 1
+   "write": 1,
+   "take_orders": 1
   },
   {
    "read": 1,
@@ -395,7 +426,9 @@
    "read": 1,
    "report": 1,
    "write": 1,
-   "role": "F&B Manager"
+   "role": "F&B Manager",
+   "approve_voids": 1,
+   "take_orders": 1
   }
  ],
  "row_format": "Dynamic",

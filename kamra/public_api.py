@@ -11,7 +11,7 @@ import frappe
 from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, date_diff
 
-from kamra.authz import act_as
+from kamra.authz import act_as, require_roles
 from kamra.booking_slugs import resolve_public_slug, slugify
 from kamra.install import AGENT_EMAIL
 
@@ -37,6 +37,7 @@ def _room_type_payload(rt) -> dict:
 		"base_occupancy": rt.base_occupancy,
 		"adults_capacity": rt.adults_capacity,
 		"children_capacity": rt.children_capacity,
+		"max_total_occupants": int(rt.get("max_total_occupants") or 0),
 		"bed_type": rt.bed_type,
 		"room_view": rt.room_view,
 		"room_category": rt.get("room_category"),

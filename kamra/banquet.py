@@ -43,7 +43,7 @@ from frappe.utils import (
 	nowdate,
 )
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 from kamra.localization import money_text
 from kamra.settings import get_setting
 
@@ -120,7 +120,7 @@ def _map(value) -> dict:
 # ══ the catalogue ════════════════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def banquet_catalogue(property: str):
 	"""What the property sells: the menu packages (with their courses) and
 	the service list. This is the picker behind every line item."""
@@ -153,7 +153,7 @@ def banquet_catalogue(property: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Menu"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Menu"})
 def save_banquet_menu(property: str, menu_name: str, rate_per_pax: float,
                       courses=None, name: str | None = None, **kw):
 	"""Add or edit one menu package. Courses replace wholesale - the grid
@@ -185,19 +185,19 @@ def save_banquet_menu(property: str, menu_name: str, rate_per_pax: float,
 				"choice_of": int(c.get("choice_of") or 0),
 				"is_live_counter": 1 if c.get("is_live_counter") else 0,
 			})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "name": doc.name}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Menu"})
+@require_perm("Banquet Menu", "delete_catalogue", scope={"name": "Banquet Menu"})
 def delete_banquet_menu(name: str):
-	frappe.delete_doc("Banquet Menu", name)
+	frappe.delete_doc("Banquet Menu", name, ignore_permissions=True)
 	return {"ok": True}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Service Item"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Service Item"})
 def save_service_item(property: str, item_name: str, category: str,
                       rate: float = 0, uom: str = "Per Event",
                       name: str | None = None, **kw):
@@ -219,21 +219,21 @@ def save_service_item(property: str, item_name: str, category: str,
 	              "description", "disabled", "stock_qty"):
 		if field in kw and kw[field] is not None:
 			doc.set(field, kw[field])
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "name": doc.name}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Service Item"})
+@require_perm("Banquet Menu", "delete_catalogue", scope={"name": "Banquet Service Item"})
 def delete_service_item(name: str):
-	frappe.delete_doc("Banquet Service Item", name)
+	frappe.delete_doc("Banquet Service Item", name, ignore_permissions=True)
 	return {"ok": True}
 
 
 # ══ prospecting ══════════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def create_enquiry(property: str, venue: str, event_date: str,
                    customer_name: str, event_type: str = "Wedding",
                    attendees: int = 0, customer_phone: str | None = None,
@@ -298,7 +298,7 @@ def create_enquiry(property: str, venue: str, event_date: str,
 				"chargeable": 1,
 				"gst_rate": float(v.gst_rate or 18),
 			})
-	doc.insert()
+	doc.insert(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_enquiry", "Venue Booking", doc.name, property,
 	           minutes_saved=6,
@@ -309,7 +309,7 @@ def create_enquiry(property: str, venue: str, event_date: str,
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def function_sheet(function: str):
 	"""One function, everything about it - the sheet the banquet screen
 	renders and Kamra Agent reads."""
@@ -339,7 +339,7 @@ def function_sheet(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def update_function(function: str, fields):
 	"""Edit the sheet's own fields (not its tables - those have their own
 	calls, because each one means something different)."""
@@ -373,7 +373,7 @@ def update_function(function: str, fields):
 		_set_group_link(doc, group)
 	for k, v in fields.items():
 		doc.set(k, v)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "grand_total": doc.grand_total,
 	        "balance_due": doc.balance_due}
 
@@ -416,7 +416,7 @@ def _set_group_link(doc, group: str | None):
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def linkable_groups(function: str):
 	"""Group bookings this function could ride: same property, not
 	cancelled, staying within a month either side of the event."""
@@ -443,7 +443,7 @@ def linkable_groups(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def link_group(function: str, group_booking: str | None = None):
 	"""Tie a function to a group booking so its bill can ride the group's
 	master folio (post_to_folio), or untie it (group_booking empty)."""
@@ -454,7 +454,7 @@ def link_group(function: str, group_booking: str | None = None):
 	if group == was:
 		return {"ok": True, "group_booking": was, "unchanged": True}
 	_set_group_link(doc, group)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_group_link", "Venue Booking", doc.name, doc.property,
 	           rationale=(f"{doc.customer_name}: tied to group {group}"
@@ -466,7 +466,7 @@ def link_group(function: str, group_booking: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def set_status(function: str, status: str, reason: str | None = None,
                tentative_until: str | None = None):
 	"""Move the function along its pipeline. Confirming takes the hall -
@@ -498,7 +498,7 @@ def set_status(function: str, status: str, reason: str | None = None,
 	if status == "Enquiry":
 		doc.lost_reason = None
 	doc.status = status
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_status", "Venue Booking", doc.name, doc.property,
 	           rationale=f"{doc.customer_name}: {was} → {status}"
@@ -517,7 +517,7 @@ def set_status(function: str, status: str, reason: str | None = None,
 # ══ building the function ════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def add_menu(function: str, menu: str, qty=None, rate=None, chargeable: int = 1,
              notes: str | None = None):
 	"""Put a menu package on the function. Left alone the quantity follows
@@ -542,12 +542,12 @@ def add_menu(function: str, menu: str, qty=None, rate=None, chargeable: int = 1,
 		"gst_rate": float(m.gst_rate or 0),
 		"notes": notes,
 	})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return _line_result(doc)
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def add_service(function: str, service_item: str, qty=None, rate=None,
                 chargeable=None, notes: str | None = None):
 	"""Put a service on the function - projector, LED wall, DJ, podium,
@@ -577,12 +577,12 @@ def add_service(function: str, service_item: str, qty=None, rate=None,
 		"gst_rate": float(s.gst_rate or 0),
 		"notes": notes,
 	})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return _line_result(doc)
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def save_items(function: str, items):
 	"""Replace the line grid wholesale - what the user is looking at is the
 	truth. Rows keep their catalogue links so the event order can still
@@ -613,17 +613,17 @@ def save_items(function: str, items):
 			"gst_rate": float(r.get("gst_rate") or 0),
 			"notes": r.get("notes"),
 		})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return _line_result(doc)
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def remove_item(function: str, row: str):
 	doc = _fn(function)
 	_guard_closed(doc)
 	doc.set("items", [r for r in doc.items if r.name != row])
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return _line_result(doc)
 
 
@@ -639,7 +639,7 @@ def _line_result(doc):
 # ══ negotiation ══════════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def negotiate(function: str, rows=None, discount_amount=None,
               note: str | None = None, venue_rental=None):
 	"""The price moves. `rows` is {line_row_name: new_rate} - or pass
@@ -675,7 +675,7 @@ def negotiate(function: str, rows=None, discount_amount=None,
 				f"Discount {float(doc.discount_amount or 0):,.0f}"
 				f"→{float(discount_amount):,.0f}")
 		doc.discount_amount = float(discount_amount)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	after = float(doc.grand_total or 0)
 	_snapshot(doc, note or (", ".join(changes) if changes
 	                        else _("Reviewed, no change")))
@@ -706,7 +706,7 @@ def _snapshot(doc, note: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def save_open_items(function: str, rows):
 	"""What is still unsettled while the price is being agreed - the
 	sangeet stage, whether the bar is on consumption, who pays for the
@@ -725,7 +725,7 @@ def save_open_items(function: str, rows):
 			"price_impact": float(r.get("price_impact") or 0),
 			"status": r.get("status") or "Open",
 		})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	open_rows = [o for o in doc.open_items if o.status == "Open"]
 	return {"ok": True, "open": len(open_rows),
 	        "impact": sum(float(o.price_impact or 0) for o in open_rows)}
@@ -734,7 +734,7 @@ def save_open_items(function: str, rows):
 # ══ terms and money ══════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def set_payment_terms(function: str, terms, note: str | None = None):
 	"""The schedule the customer signs up to. A term stated as a percentage
 	follows the quote as it moves; one stated as an amount is a number both
@@ -755,7 +755,7 @@ def set_payment_terms(function: str, terms, note: str | None = None):
 		})
 	if note is not None:
 		doc.payment_terms_note = note
-	doc.save()
+	doc.save(ignore_permissions=True)
 	scheduled = sum(float(t.amount or 0) for t in doc.payment_terms)
 	return {"ok": True, "terms": len(doc.payment_terms),
 	        "scheduled": scheduled,
@@ -763,7 +763,7 @@ def set_payment_terms(function: str, terms, note: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def default_payment_terms(function: str, advance_percent: float | None = None,
                           interim_percent: float | None = None,
                           interim_days_before: int | None = None):
@@ -792,7 +792,7 @@ def default_payment_terms(function: str, advance_percent: float | None = None,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
                    kind: str = "Advance", reference: str | None = None,
                    receipt_date: str | None = None, settle_term: str | None = None):
@@ -820,7 +820,7 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 		term.status = "Received"
 		term.received_on = rd
 		term.reference = reference or term.reference
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_receipt", "Venue Booking", doc.name, doc.property,
 	           rationale=f"{kind} {money_text(doc.property, round(float(amount)))} ({mode}) for "
@@ -831,7 +831,7 @@ def record_receipt(function: str, amount: float, mode: str = "Bank Transfer",
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def assign_green_room(function: str, room: str | None = None,
                       from_date: str | None = None, to_date: str | None = None,
                       complimentary: int = 1, rate: float = 0):
@@ -861,7 +861,7 @@ def assign_green_room(function: str, room: str | None = None,
 			"chargeable": 0 if int(complimentary or 0) else 1,
 			"notes": "green-room",
 		})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "green_room": doc.green_room,
 	        "block": doc.green_room_block, "grand_total": doc.grand_total}
 
@@ -869,7 +869,7 @@ def assign_green_room(function: str, room: str | None = None,
 # ══ availability and the diary ═══════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def venue_availability(property: str, event_date: str,
                        end_date: str | None = None,
                        start_time: str | None = None,
@@ -907,7 +907,7 @@ def venue_availability(property: str, event_date: str,
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def banquet_calendar(property: str, start_date: str | None = None,
                      days: int = 31, status: str | None = None):
 	"""The function diary - halls down the side, days across the top, every
@@ -960,7 +960,7 @@ def banquet_calendar(property: str, start_date: str | None = None,
 # ══ month-wise tracking ══════════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*REPORT_ROLES, "Hotel Admin")
+@require_perm("Venue Booking", "bill_functions")
 def banquet_pipeline(property: str, from_date: str | None = None,
                      to_date: str | None = None, months: int = 6):
 	"""The sales view: where the business is by month and by status, what
@@ -1120,7 +1120,7 @@ def _function_alerts(doc):
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def banquet_reminders(property: str, days: int = 30):
 	"""Everything across the property that needs chasing - the banquet
 	team's morning list."""
@@ -1215,7 +1215,7 @@ _DOC_KINDS = ("quote", "contract", "beo", "pack_list", "invoice")
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def banquet_document(function: str, kind: str = "quote"):
 	"""The paper. One shape for every document so the front end can print
 	them all the same way:
@@ -1476,7 +1476,7 @@ def _pack_list(doc):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def generate_quote(function: str, valid_days: int = 15,
                    note: str | None = None):
 	"""Stamp a quotation. Bumps the version, dates it, and snapshots what
@@ -1490,7 +1490,7 @@ def generate_quote(function: str, valid_days: int = 15,
 		doc.quote_number = make_autoname(f"QTN-{str(doc.event_date)[:4]}-.#####")
 	doc.quote_sent_on = nowdate()
 	doc.quote_valid_till = add_days(nowdate(), int(valid_days or 15))
-	doc.save()
+	doc.save(ignore_permissions=True)
 	_snapshot(doc, note or _("Quote v{0} issued").format(doc.quote_version))
 	from kamra.savings import log_action
 	log_action("banquet_quote", "Venue Booking", doc.name, doc.property,
@@ -1502,7 +1502,7 @@ def generate_quote(function: str, valid_days: int = 15,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def generate_beo(function: str):
 	"""Issue the banquet event order - the sheet the banquet, kitchen and
 	AV teams run the day from. Only a confirmed function gets one; the
@@ -1514,7 +1514,7 @@ def generate_beo(function: str):
 	if not doc.beo_number:
 		doc.beo_number = f"BEO-{str(doc.event_date)[:4]}-{doc.name.split('-')[-1]}"
 	doc.beo_generated_on = now_datetime()
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_beo", "Venue Booking", doc.name, doc.property,
 	           minutes_saved=25,
@@ -1524,7 +1524,7 @@ def generate_beo(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def generate_invoice(function: str):
 	"""Raise the tax invoice for a function.
 
@@ -1542,7 +1542,7 @@ def generate_invoice(function: str):
 		doc.invoice_number = make_autoname(
 			f"BINV-{str(doc.event_date)[:4]}-.#####")
 		doc.invoice_date = nowdate()
-		doc.save()
+		doc.save(ignore_permissions=True)
 		from kamra.savings import log_action
 		log_action("banquet_invoice", "Venue Booking", doc.name, doc.property,
 		           minutes_saved=10,
@@ -1563,7 +1563,7 @@ _FOLIO_CHARGE_TYPE = {
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def post_to_folio(function: str, folio: str | None = None):
 	"""Push the chargeable lines onto a bill. A function tied to a group
 	rides the group's master folio; otherwise pass one explicitly.
@@ -1621,7 +1621,7 @@ def post_to_folio(function: str, folio: str | None = None):
 		         "{0}").format(", ".join(d["item_name"] for d in deferred))
 		doc.internal_notes = ((doc.internal_notes + "\n")
 		                      if doc.internal_notes else "") + note
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_billed", "Venue Booking", doc.name, doc.property,
 	           minutes_saved=15,
@@ -1638,7 +1638,7 @@ def post_to_folio(function: str, folio: str | None = None):
 # ══ the close-out ════════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def close_out(function: str, damage_amount: float = 0,
               damage_note: str | None = None, refund_deposit: int = 1,
               refund_mode: str = "Bank Transfer",
@@ -1703,7 +1703,7 @@ def close_out(function: str, damage_amount: float = 0,
 			"notes": "damage-recovery",
 		})
 	doc.status = "Completed"
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_close_out", "Venue Booking", doc.name, doc.property,
 	           minutes_saved=10,
@@ -1750,7 +1750,7 @@ REOPEN_ROLES = ("Revenue Manager", "Finance", "Hotel Admin")
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*REOPEN_ROLES)
+@require_perm("Venue Booking", "reopen_function")
 def reopen_function(function: str, reason: str):
 	"""Reopen a closed (Completed) function so its sheet can be corrected.
 	It goes back to Confirmed; receipts, refunds and the damage line stay
@@ -1771,7 +1771,7 @@ def reopen_function(function: str, reason: str):
 	note = _("Reopened by {0}: {1}").format(frappe.session.user, reason)
 	doc.internal_notes = ((doc.internal_notes + "\n")
 	                      if doc.internal_notes else "") + note
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	log_action("banquet_reopen", "Venue Booking", doc.name, doc.property,
 	           rationale=f"{doc.customer_name}: Completed → Confirmed ({reason})",
@@ -1782,7 +1782,7 @@ def reopen_function(function: str, reason: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def receipt_document(function: str, receipt: str):
 	"""One receipt, as a document the customer can keep. Every advance a
 	banquet office takes needs a piece of paper against it - this is that
@@ -1835,7 +1835,7 @@ def receipt_document(function: str, receipt: str):
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def menu_card(function: str):
 	"""The menu the customer signs off - what will actually be served,
 	course by course, with nothing about money on it. The kitchen and the
@@ -1881,7 +1881,7 @@ def menu_card(function: str):
 # ══ the month at a glance ════════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def month_availability(property: str, month: str | None = None):
 	"""Every hall × every session, across a whole month.
 
@@ -1955,7 +1955,7 @@ _REGISTERS = ("functions", "quotations", "enquiries", "receipts", "sales")
 
 
 @frappe.whitelist()
-@require_roles(*REPORT_ROLES, "Hotel Admin")
+@require_perm("Venue Booking", "bill_functions")
 def banquet_register(property: str, register: str = "functions",
                      from_date: str | None = None, to_date: str | None = None):
 	"""The listings a banquet office runs the week on - the same five books
@@ -2085,7 +2085,7 @@ def _dish_cost(doc) -> float:
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def dish_library(property: str, course_type: str | None = None):
 	"""Every dish the banquet kitchen can produce, with what it costs to
 	make. This is the picker behind menu building and the spine of margin."""
@@ -2107,7 +2107,7 @@ def dish_library(property: str, course_type: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Dish"})
+@require_perm("Banquet Menu", "edit_catalogue", scope={"name": "Banquet Dish"})
 def save_dish(property: str, dish_name: str, recipe=None,
               name: str | None = None, **kw):
 	"""Add or edit a dish. The recipe is what makes it cost something -
@@ -2130,20 +2130,20 @@ def save_dish(property: str, dish_name: str, recipe=None,
 			                      "qty": float(r["qty"]),
 			                      "note": r.get("note")})
 	doc.cost_per_portion = _dish_cost(doc)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "name": doc.name,
 	        "cost_per_portion": doc.cost_per_portion}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES, scope={"name": "Banquet Dish"})
+@require_perm("Banquet Menu", "delete_catalogue", scope={"name": "Banquet Dish"})
 def delete_dish(name: str):
-	frappe.delete_doc("Banquet Dish", name)
+	frappe.delete_doc("Banquet Dish", name, ignore_permissions=True)
 	return {"ok": True}
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*CATALOGUE_ROLES)
+@require_perm("Banquet Menu", "edit_catalogue")
 def recost_dishes(property: str):
 	"""Ingredient prices moved - re-cost every dish. Run it after a delivery
 	or a price revision, so quotes stop being priced off last season's
@@ -2156,7 +2156,7 @@ def recost_dishes(property: str):
 		now = _dish_cost(doc)
 		if abs(now - was) > 0.001:
 			doc.cost_per_portion = now
-			doc.save()
+			doc.save(ignore_permissions=True)
 			changed.append({"dish": doc.dish_name, "was": was, "now": now})
 	return {"ok": True, "recosted": len(changed), "changes": changed[:50]}
 
@@ -2194,7 +2194,7 @@ def _dish_options(menu_doc) -> dict:
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def menu_cost(menu: str, pax: int = 0):
 	"""What one plate of this menu costs to make, and what it earns.
 
@@ -2237,7 +2237,7 @@ def menu_cost(menu: str, pax: int = 0):
 # ══ what the customer chose ══════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def menu_choices(function: str, menu: str):
 	"""The course-by-course picker for one menu on one function: what the
 	course offers, how many the guest may take, and what's chosen so far."""
@@ -2276,7 +2276,7 @@ def menu_choices(function: str, menu: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def compose_menu(function: str, menu: str, picks):
 	"""Record what the customer actually chose - "one soup of these two, the
 	paneer not the mushroom".
@@ -2321,7 +2321,7 @@ def compose_menu(function: str, menu: str, picks):
 			row.cost_rate = round(per_pax, 4)
 
 	_sync_supplement(doc, menu, supplement)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True,
 	        "chosen": len([s for s in doc.selections if s.banquet_menu == menu]),
 	        "cost_per_pax": round(per_pax, 2),
@@ -2349,7 +2349,7 @@ def _sync_supplement(doc, menu: str, per_pax: float):
 # ══ the kitchen ══════════════════════════════════════════════════════════
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES, "Housekeeping")
+@require_perm("Venue Booking", "view_functions")
 def kitchen_indent(function: str):
 	"""What the kitchen has to buy and pull for this function.
 
@@ -2436,7 +2436,7 @@ def kitchen_indent(function: str):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES, "Housekeeping")
+@require_perm("Venue Booking", "issue_indent")
 def issue_indent(function: str, outlet: str, rows=None):
 	"""Pull the indent off the shelf. Writes real stock movements through
 	the same single writer the restaurant uses, so the store room reflects
@@ -2471,7 +2471,7 @@ def issue_indent(function: str, outlet: str, rows=None):
 # ══ during the event ═════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def record_consumption(function: str, rows=None, pax_actual: int | None = None):
 	"""What was actually served, against what was quoted.
 
@@ -2492,7 +2492,7 @@ def record_consumption(function: str, rows=None, pax_actual: int | None = None):
 		if float(line.qty or 0) != float(qty):
 			changes.append(f"{line.item_name} {line.qty:g}→{float(qty):g}")
 		line.actual_qty = float(qty)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	from kamra.savings import log_action
 	if changes:
 		log_action("banquet_consumption", "Venue Booking", doc.name,
@@ -2504,7 +2504,7 @@ def record_consumption(function: str, rows=None, pax_actual: int | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def add_supplementary(function: str, item_name: str, qty: float, rate: float,
                       item_type: str = "Food & Beverage",
                       uom: str = "Unit", cost_rate: float = 0,
@@ -2524,14 +2524,14 @@ def add_supplementary(function: str, item_name: str, qty: float, rate: float,
 		"chargeable": 1, "is_supplementary": 1,
 		"is_alcohol": 1 if int(is_alcohol or 0) else 0, "notes": notes,
 	})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "grand_total": doc.grand_total,
 	        "supplementary_total": sum(
 		        float(r.total or 0) for r in doc.items if r.is_supplementary)}
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def function_economics(function: str):
 	"""The P&L of one function: what it sold, what it cost, what the input
 	credit is worth, and what's left - plus where the quote and the night
@@ -2585,7 +2585,7 @@ def function_economics(function: str):
 # ══ the customer ═════════════════════════════════════════════════════════
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def link_customer(function: str, guest: str | None = None):
 	"""Tie the function to a real guest record instead of a name in a box.
 
@@ -2601,7 +2601,7 @@ def link_customer(function: str, guest: str | None = None):
 			or doc.customer_name
 	else:
 		doc.customer = _find_or_create_guest(doc)
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "customer": doc.customer,
 	        "customer_name": doc.customer_name}
 
@@ -2628,7 +2628,7 @@ def _find_or_create_guest(doc):
 
 
 @frappe.whitelist()
-@require_roles(*REPORT_ROLES)
+@require_perm("Venue Booking", "bill_functions")
 def customer_profile(property: str, guest: str | None = None,
                      phone: str | None = None):
 	"""Everything the banquet office should know before picking up the
@@ -2701,7 +2701,7 @@ def _margins(property: str | None) -> tuple[float, float]:
 
 
 @frappe.whitelist()
-@require_roles(*BANQUET_ROLES, "Finance")
+@require_perm("Venue Booking", "bill_functions")
 def quote_advisor(function: str, at_discount: float | None = None):
 	"""Would this function make money at the price we're about to send?
 
@@ -2807,7 +2807,7 @@ def _verdict(pct: float, uncosted: bool, cost,
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles(*BANQUET_ROLES)
+@require_perm("Venue Booking", "manage_functions")
 def offer_amenities(function: str, amenities=None, as_open_items: int = 0):
 	"""Put the hall's chargeable extras on the function.
 
@@ -2846,7 +2846,7 @@ def offer_amenities(function: str, amenities=None, as_open_items: int = 0):
 				"list_rate": float(a.rate or 0), "rate": float(a.rate or 0),
 				"chargeable": 1, "notes": "hall-amenity",
 			})
-	doc.save()
+	doc.save(ignore_permissions=True)
 	return {"ok": True, "added": len(picked),
 	        "as_open_items": bool(int(as_open_items or 0)),
 	        "grand_total": doc.grand_total}
@@ -2861,7 +2861,7 @@ _AMENITY_TYPE = {
 
 
 @frappe.whitelist()
-@require_roles(*READ_ROLES)
+@require_perm("Venue Booking", "view_functions")
 def venue_detail(venue: str):
 	"""One hall in full: what it holds, what it comes with, what it costs
 	to open, and which other spaces it shares its floor with."""

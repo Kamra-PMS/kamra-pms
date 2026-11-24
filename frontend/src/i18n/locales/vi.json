@@ -6762,5 +6762,12 @@
   "ZATCA: still needed for valid e-invoices - {fields}.": "ZATCA: vẫn cần để hóa đơn điện tử hợp lệ - {fields}.",
   "Zero balance: use Quick check out above, or Check out on the row.": "Số dư bằng 0: dùng Trả phòng nhanh ở trên, hoặc Trả phòng trên dòng.",
   "Zero-rate and complimentary rooms": "Phòng giá bằng 0 và phòng miễn phí",
-  "Zero-rated on purpose": "Cố ý đặt giá bằng 0"
+  "Zero-rated on purpose": "Cố ý đặt giá bằng 0",
+  "Card type": "Loại thẻ",
+  "Card type (from the card machine slip)": "Loại thẻ (trên biên lai máy quẹt thẻ)",
+  "Choose card type": "Chọn loại thẻ",
+  "Last 4 (optional)": "4 số cuối (không bắt buộc)",
+  "Last 4 digits of the card (optional)": "4 chữ số cuối của thẻ (không bắt buộc)",
+  "Choose the card type for the Card payment.": "Chọn loại thẻ cho khoản thanh toán bằng thẻ.",
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Nhập đúng 4 chữ số cuối của thẻ hoặc để trống."
 }

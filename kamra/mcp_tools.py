@@ -2,7 +2,7 @@
 
 Each tool wraps a governed Kamra API endpoint. Money and availability stay
 in the PMS; the model only calls these tools. Visibility is the intersection
-of (1) the signed-in user's Frappe roles via `require_roles` / `_kamra_roles`
+of (1) the signed-in user's Frappe permissions via `require_perm` / `_kamra_perm`
 and (2) the property's `enabled_modules` (tool `module` must be on).
 """
 
@@ -83,6 +83,19 @@ IDEMPOTENCY_KEY_PARAM = _p(
 	f"and party size) made in the last {AGENT_DUPLICATE_WINDOW_MINUTES} "
 	"minutes is returned instead of booking twice; pass a new key to book a "
 	"second identical room on purpose.",
+)
+
+CARD_NETWORK_PARAM = _p(
+	"string",
+	description="For a Card payment: the card network from the card machine slip "
+	"(Visa, Mastercard, RuPay, American Express, Diners Club, Discover, JCB, "
+	"UnionPay, Maestro, Mir, Elo or Other). Ask staff for it; leave it out for "
+	"any other mode.",
+)
+CARD_LAST4_PARAM = _p(
+	"string",
+	description="Optional: the last 4 digits of the card, digits only. Never "
+	"send a full card number.",
 )
 
 PAYMENT_KEY_PARAM = _p(
@@ -864,6 +877,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 			               "foreign money received. Leave out for the "
 			               "hotel's own currency."),
 			"idempotency_key": PAYMENT_KEY_PARAM,
+			"card_network": CARD_NETWORK_PARAM,
+			"card_last4": CARD_LAST4_PARAM,
 		},
 		required=("folio", "mode", "amount"),
 		mutating=True,
@@ -1663,6 +1678,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 			"amount": _p("number"),
 			"to_city_ledger": _p("boolean"),
 			"reference": _p("string"),
+			"card_network": CARD_NETWORK_PARAM,
+			"card_last4": CARD_LAST4_PARAM,
 		},
 		required=("group_booking",),
 		mutating=True,
@@ -2140,7 +2157,8 @@ TOOLS: tuple[ToolSpec, ...] = (
 		"pos.pay_order",
 		"""Settle a POS check. mode: a payment mode the property offers (Cash, Card, ...) or Room Charge.
 		Confirm the total with staff before calling.""",
-		{"order": _p("string"), "mode": _p("string")},
+		{"order": _p("string"), "mode": _p("string"),
+		 "card_network": CARD_NETWORK_PARAM, "card_last4": CARD_LAST4_PARAM},
 		required=("order", "mode"),
 		mutating=True,
 		group="F&B",
@@ -2730,7 +2748,16 @@ def resolve_endpoint(dotted: str):
 
 
 def tool_allowed(spec: ToolSpec, roles: set[str] | None = None) -> bool:
+	"""The endpoint's own gate: for the signed-in user, Frappe's permission
+	check on the endpoint's (doctype, permission type) - so Role Permission
+	Manager edits change the tool list too; for an explicit role set (tests,
+	previews), whether any of those roles holds that permission."""
 	fn = resolve_endpoint(spec.dotted)
+	perm = getattr(fn, "_kamra_perm", None)
+	if roles is None and perm:
+		import frappe
+
+		return frappe.has_permission(*perm, ignore_share_permissions=True)
 	allowed = getattr(fn, "_kamra_roles", None)
 	if not allowed:
 		return True

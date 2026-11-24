@@ -80,6 +80,7 @@ interface Showcase {
     base_price: number
     adults_capacity: number
     children_capacity: number
+    max_total_occupants?: number
     bed_type: string | null
     room_view: string | null
     amenities: string[]
@@ -499,7 +500,7 @@ export default function PublicListing() {
               {!isSite && primary && (
                 <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-zinc-600">
                   <Users className="size-4" aria-hidden />
-                  {t("Up to {n} guests", { n: primary.adults_capacity })}
+                  {t("Up to {n} guests", { n: primary.max_total_occupants || primary.adults_capacity })}
                   {primary.bed_type ? ` · ${t("{type} bed", { type: primary.bed_type })}` : ""}
                   {primary.room_view ? ` · ${primary.room_view}` : ""}
                 </p>
@@ -561,7 +562,7 @@ export default function PublicListing() {
                               {rt.room_type_name}
                             </h3>
                             <p className="mt-1 text-sm text-zinc-500">
-                              {t("Up to {n} guests", { n: rt.adults_capacity })} · {t("From {amount} per night", { amount: `${cur()}${inr(rt.base_price)}` })}
+                              {t("Up to {n} guests", { n: rt.max_total_occupants || rt.adults_capacity })} · {t("From {amount} per night", { amount: `${cur()}${inr(rt.base_price)}` })}
                             </p>
                             {rt.description && (
                               <p className="mt-2 line-clamp-2 text-sm text-zinc-600">

@@ -73,6 +73,8 @@ export interface RoleInfo {
   label: string
   description: string
   assignable: boolean
+  /** the hotel's own role, created in Desk */
+  custom?: boolean
 }
 
 export interface StaffRow {

@@ -159,7 +159,10 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "export": 1
+   "export": 1,
+   "configure": 1,
+   "sync_channels": 1,
+   "view_channels": 1
   },
   {
    "role": "Hotel Admin",
@@ -171,7 +174,10 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "export": 1
+   "export": 1,
+   "configure": 1,
+   "sync_channels": 1,
+   "view_channels": 1
   },
   {
    "role": "Revenue Manager",
@@ -183,7 +189,9 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "export": 1
+   "export": 1,
+   "sync_channels": 1,
+   "view_channels": 1
   },
   {
    "role": "Front Desk",
@@ -195,7 +203,8 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "export": 1
+   "export": 1,
+   "view_channels": 1
   },
   {
    "role": "Kamra Agent",
@@ -207,7 +216,9 @@
    "print": 1,
    "report": 1,
    "share": 1,
-   "export": 1
+   "export": 1,
+   "sync_channels": 1,
+   "view_channels": 1
   }
  ],
  "sort_field": "modified",
@@ -215,5 +226,6 @@
  "links": [],
  "actions": [],
  "states": [],
- "allow_rename": 0
+ "allow_rename": 0,
+ "modified": "2026-10-30 12:32:21.000000"
 }

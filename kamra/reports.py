@@ -10,7 +10,7 @@ import json
 import frappe
 from frappe.utils import add_days, getdate, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm, require_roles
 from kamra.folio import STANDS_ON_ITS_DATE
 
 
@@ -104,7 +104,7 @@ def _day_stats(property: str, date: str, total_rooms: int) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin")
+@require_perm("Folio", "audit_voids")
 def void_allowance_report(
 	property: str,
 	from_date: str | None = None,
@@ -193,7 +193,7 @@ def movement_counts(property: str, start: str, date: str) -> dict:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Revenue Manager", "Night Auditor", "Kamra Agent")
+@require_perm("Property", "view_flash")
 def manager_flash(property: str, date: str | None = None,
                   from_date: str | None = None):
 	"""The daily flash: yesterday's performance, month to date, today's
@@ -293,6 +293,7 @@ def write_kpi_snapshot(property: str, date: str) -> str:
 			"figures": json.dumps(f, default=str),
 		}).insert(ignore_permissions=True)
 	except frappe.DuplicateEntryError:
+		# Two workers raced after the exists check; keep the first snapshot.
 		pass
 	return key
 
@@ -389,7 +390,7 @@ def _month_bounds(period: str):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Revenue Manager", "Kamra Agent")
+@require_perm("Property", "view_performance")
 def budget_vs_actual(property: str, period: str | None = None):
 	"""Monthly target vs actual: room revenue, occupancy %, ADR, RevPAR - with
 	variance. period is 'YYYY-MM' (defaults to the current month).
@@ -498,7 +499,7 @@ def budget_vs_actual(property: str, period: str | None = None):
 
 
 @frappe.whitelist(methods=["POST"])
-@require_roles("Revenue Manager", "Hotel Admin", "Finance")
+@require_perm("Revenue Budget", "set_budget")
 def save_budget(property: str, period: str, room_revenue_target: float = 0,
                 occupancy_target: float = 0, adr_target: float = 0,
                 revpar_target: float = 0):
@@ -518,7 +519,7 @@ def save_budget(property: str, period: str, room_revenue_target: float = 0,
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Revenue Manager", "Kamra Agent")
+@require_perm("Property", "view_performance")
 def contribution(property: str, from_date: str, to_date: str,
                  by: str = "source"):
 	"""Who brings the business: revenue + room nights + share + the
@@ -552,7 +553,7 @@ def contribution(property: str, from_date: str, to_date: str,
 
 
 @frappe.whitelist()
-@require_roles("Front Desk", "Hotel Admin", "Kamra Agent")
+@require_perm("Service Ticket", "handle_requests")
 def sla_report(property: str, from_date: str, to_date: str):
 	"""Operations SLA health from Service Tickets over a window: overall
 	resolution and breach rates, a breakdown by category and by priority,

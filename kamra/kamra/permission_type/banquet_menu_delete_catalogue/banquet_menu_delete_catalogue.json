@@ -1,0 +1,10 @@
+{
+ "creation": "2026-11-01 12:00:00.000000",
+ "doc_type": "Banquet Menu",
+ "doctype": "Permission Type",
+ "modified": "2026-11-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "banquet_menu_delete_catalogue",
+ "owner": "Administrator",
+ "perm_type": "delete_catalogue"
+}

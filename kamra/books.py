@@ -25,7 +25,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, date_diff, flt, get_first_day, getdate, nowdate
 
-from kamra.authz import require_roles
+from kamra.authz import require_perm
 
 FOLIO_SKIP = ("Opening Balance", "Room Levy")
 NOT_FOLIO = """IFNULL(fc.description, '') NOT LIKE '%%(ORD-%%'
@@ -60,7 +60,7 @@ def _company_credit(company: str | None) -> bool:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_financials")
 def cash_forecast(property: str, days: int = 5, opening: float | None = None):
 	"""Money expected in and out over the next `days` days (5, 15 or 30;
 	default 5), day by day from today, with a running position and
@@ -271,7 +271,7 @@ def _dates(from_date, to_date):
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_financials")
 def profit_and_loss(property: str, from_date: str, to_date: str):
 	"""A management P&L for the period, before tax: revenue by department
 	(rooms, food and beverage, banquets, other, less allowances) and
@@ -341,7 +341,7 @@ def payables_at(property: str, as_of) -> float:
 
 
 @frappe.whitelist()
-@require_roles("Finance", "Hotel Admin", "Kamra Agent")
+@require_perm("City Ledger Entry", "view_financials")
 def balance_sheet(property: str, as_of: str | None = None):
 	"""What is owed to the hotel and what it owes, as of a date (default
 	today): guest ledger and city ledger against advance deposits and
