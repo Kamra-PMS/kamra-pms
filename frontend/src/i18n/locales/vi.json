@@ -6996,7 +6996,7 @@
   "Need a role that isn't here, or a change to what a role may do? IT creates roles and sets their permissions in Desk (Role Permission Manager). See Roles and access in the docs.": "Cần một vai trò chưa có ở đây, hoặc muốn thay đổi quyền của một vai trò? Bộ phận IT tạo vai trò và đặt quyền trong Desk (Role Permission Manager). Xem Vai trò và quyền truy cập trong tài liệu.",
   "Order:": "Đơn:",
   "Overall capacity of the room (adults + children combined, e.g. 4 people total). Blank = no combined limit (Max adults and Max children apply separately)": "Sức chứa tổng của phòng (người lớn + trẻ em cộng lại, ví dụ tổng 4 người). Để trống = không giới hạn tổng (Số người lớn tối đa và Số trẻ em tối đa áp dụng riêng)",
-  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best. No logo: the outlet and hotel name print instead.": "In ở đầu hóa đơn của điểm bán này, kích thước nhỏ cố định để tiết kiệm giấy. Đẹp nhất: đen trên nền trắng, PNG, từ 512px. Không có logo: in tên điểm bán và tên khách sạn thay thế.",
+  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Upload a PNG or paste an https link; black on white, 512px or wider looks best. No logo: the outlet and hotel name print instead.": "In ở đầu hóa đơn của điểm bán này, kích thước nhỏ cố định để tiết kiệm giấy. Tải lên tệp PNG hoặc dán liên kết https; đẹp nhất là đen trên nền trắng, rộng từ 512px. Không có logo: in tên điểm bán và tên khách sạn thay thế.",
   "RECEIPT": "BIÊN LAI",
   "Receipt design": "Mẫu biên lai",
   "Receipt logo": "Logo biên lai",
@@ -7035,6 +7035,8 @@
   "{n} no-show": "{n} no-show",
   "{n} no-shows": "{n} no-show",
   "Rounding": "Làm tròn",
-  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "Mã vạch số đơn được in ở cuối hóa đơn của điểm bán này, để tìm hóa đơn bằng cách quét. Các mẫu phía trên thay đổi theo công tắc này.",
-  "Print a barcode on the bill": "In mã vạch trên hóa đơn"
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "Mã vạch số đơn được in ở cuối hóa đơn của điểm bán này, để tìm hóa đơn bằng cách quét. Các mẫu phía dưới thay đổi theo công tắc này.",
+  "Print a barcode on the bill": "In mã vạch trên hóa đơn",
+  "Upload a PNG, or paste an https link": "Tải lên tệp PNG, hoặc dán liên kết https",
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Dùng nút Tải lên, hoặc dán liên kết bắt đầu bằng https://. Liên kết http thường không được chấp nhận."
 }

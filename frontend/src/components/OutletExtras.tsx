@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Check } from "lucide-react"
 
 import { listResource, serverError, updateResource, type Row } from "../lib/resource"
-import { billHtml, fitLogos, thermalDocument, ticketAssetsReady, type BillData } from "../lib/thermal"
+import { billHtml, fitLogos, logoSrc, thermalDocument, ticketAssetsReady, type BillData } from "../lib/thermal"
 import { t, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import ImageField from "./ImageField"
@@ -105,6 +105,8 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
   const outlet = String(row.name)
   const [bits, setBits] = useState<Bits | null>(null)
   const [error, setError] = useState<string | null>(null)
+  /** A refused logo is explained next to the logo field, not at the bottom of the dialog. */
+  const [logoError, setLogoError] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
@@ -129,21 +131,31 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
     return () => { live = false; clearTimeout(timer.current) }
   }, [outlet])
 
-  const save = useCallback(async (data: Record<string, unknown>) => {
+  const save = useCallback(async (data: Record<string, unknown>, report: (message: string | null) => void = setError) => {
     try {
-      setError(null)
+      report(null)
       await updateResource("POS Outlet", outlet, data)
       reload()
     } catch (e) {
-      setError(serverError(e))
+      report(serverError(e))
     }
   }, [outlet, reload])
 
   const setLogo = (logo: string, now: boolean) => {
     setBits((b) => (b ? { ...b, logo } : b))
+    setLogoError(null)
     clearTimeout(timer.current)
-    if (now) void save({ logo })
-    else timer.current = setTimeout(() => void save({ logo }), 600)
+    // Typing or pasting waits for a pause before it is checked, so a half-typed link is not
+    // refused. A link the bill would not print is not sent: the same rule the server applies.
+    const commit = () => {
+      if (logo.trim() && !logoSrc(logo)) {
+        setLogoError(t("Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted."))
+        return
+      }
+      void save({ logo }, setLogoError)
+    }
+    if (now) commit()
+    else timer.current = setTimeout(commit, 600)
   }
   const toggleBarcode = () => {
     const next = !(bits?.barcode ?? true)
@@ -163,13 +175,14 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
             <div className="min-w-0">
               <div className="text-sm font-medium text-zinc-800">{t("Receipt logo")}</div>
               <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
-                {t("Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best. No logo: the outlet and hotel name print instead.")}
+                {t("Printed at the top of this outlet's bills, at a fixed small size to save paper. Upload a PNG or paste an https link; black on white, 512px or wider looks best. No logo: the outlet and hotel name print instead.")}
               </p>
             </div>
             <div className="min-w-0">
               <ImageField hint="" value={bits.logo} onChange={(v) => setLogo(v, false)} onUploaded={(v) => setLogo(v, true)}
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp" placeholder={t("Upload a PNG, or paste an https link")}
                 attach={{ doctype: "POS Outlet", docname: outlet, fieldname: "logo" }} />
+              {logoError && <p role="alert" className="mt-1 text-xs text-rose-600">{t(logoError)}</p>}
             </div>
           </div>
 
@@ -178,21 +191,19 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
             <p className="max-w-2xl text-xs leading-relaxed text-zinc-500">
               {t("How the items print on this outlet's bills. Everything else on the receipt is the same in both. Pick one. The samples use example food and plain numbers; your real bills use your own currency.")}
             </p>
-            <div role="radiogroup" aria-label={t("Receipt design")} className="grid gap-4 pt-2 sm:grid-cols-2">
+            {/* above the samples, so flipping it shows the change without scrolling */}
+            <div className="flex items-start justify-between gap-4 py-2">
+              <div className="min-w-0">
+                <label htmlFor="outlet-print-barcode" className="text-sm font-medium text-zinc-800">{t("Print a barcode on the bill")}</label>
+                <p className="mt-0.5 max-w-2xl text-xs leading-relaxed text-zinc-500">
+                  {t("A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.")}
+                </p>
+              </div>
+              <Switch id="outlet-print-barcode" on={bits.barcode} onToggle={toggleBarcode} />
+            </div>
+            <div role="radiogroup" aria-label={t("Receipt design")} className="grid gap-4 pt-1 sm:grid-cols-2">
               <DesignCard design="Columns" bits={bits} selected={bits.design === "Columns"} onPick={() => pick("Columns")} />
               <DesignCard design="Stacked" bits={bits} selected={bits.design === "Stacked"} onPick={() => pick("Stacked")} />
-            </div>
-          </div>
-
-          <div className="grid gap-x-8 gap-y-2 border-t border-zinc-200 pt-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-            <div className="min-w-0">
-              <label htmlFor="outlet-print-barcode" className="text-sm font-medium text-zinc-800">{t("Print a barcode on the bill")}</label>
-              <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
-                {t("A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.")}
-              </p>
-            </div>
-            <div className="min-w-0">
-              <Switch id="outlet-print-barcode" on={bits.barcode} onToggle={toggleBarcode} />
             </div>
           </div>
         </>

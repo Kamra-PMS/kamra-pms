@@ -6996,7 +6996,7 @@
   "Name on its own line, then quantity x rate and the amount. Stays tidy when prices have many digits.": "الاسم في سطر مستقل، ثم الكمية × السعر والمبلغ. يبقى مرتباً عندما تكون الأسعار طويلة.",
   "Order:": "الطلب:",
   "Overall capacity of the room (adults + children combined, e.g. 4 people total). Blank = no combined limit (Max adults and Max children apply separately)": "السعة الإجمالية للغرفة (البالغون + الأطفال معاً، مثلاً 4 أشخاص إجمالاً). فارغ = بلا حد إجمالي (ينطبق الحد الأقصى للبالغين والأطفال كلٌّ على حدة)",
-  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best. No logo: the outlet and hotel name print instead.": "يُطبع أعلى فواتير هذا المنفذ بحجم صغير ثابت لتوفير الورق. الأفضل: أسود على أبيض، PNG، بعرض 512 بكسل أو أكثر. بدون شعار: يُطبع اسم المنفذ والفندق بدلاً منه.",
+  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Upload a PNG or paste an https link; black on white, 512px or wider looks best. No logo: the outlet and hotel name print instead.": "يُطبع أعلى فواتير هذا المنفذ بحجم صغير ثابت لتوفير الورق. ارفع ملف PNG أو الصق رابط https؛ الأفضل أسود على أبيض بعرض 512 بكسل أو أكثر. بدون شعار: يُطبع اسم المنفذ والفندق بدلاً منه.",
   "RECEIPT": "إيصال",
   "Receipt design": "تصميم الإيصال",
   "Receipt logo": "شعار الإيصال",
@@ -7035,6 +7035,8 @@
   "{n} no-show": "{n} لم يحضر",
   "{n} no-shows": "{n} لم يحضر",
   "Rounding": "التقريب",
-  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "يُطبع باركود لرقم الطلب أسفل فواتير هذا المنفذ، حتى يمكن العثور على الفاتورة بمسحه ضوئياً. تتبع النماذج أعلاه هذا المفتاح.",
-  "Print a barcode on the bill": "طباعة باركود على الفاتورة"
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "يُطبع باركود لرقم الطلب أسفل فواتير هذا المنفذ، حتى يمكن العثور على الفاتورة بمسحه ضوئياً. تتبع النماذج أدناه هذا المفتاح.",
+  "Print a barcode on the bill": "طباعة باركود على الفاتورة",
+  "Upload a PNG, or paste an https link": "ارفع ملف PNG أو الصق رابط https",
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "استخدم زر «رفع»، أو الصق رابطاً يبدأ بـ https://. روابط http العادية غير مقبولة."
 }

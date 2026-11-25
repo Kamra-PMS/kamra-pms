@@ -6996,7 +6996,7 @@
   "Need a role that isn't here, or a change to what a role may do? IT creates roles and sets their permissions in Desk (Role Permission Manager). See Roles and access in the docs.": "需要这里没有的角色，或要调整某个角色的权限？由 IT 在 Desk（Role Permission Manager）中创建角色并设置权限。详见文档中的「角色与访问」。",
   "Order:": "订单：",
   "Overall capacity of the room (adults + children combined, e.g. 4 people total). Blank = no combined limit (Max adults and Max children apply separately)": "房间总容量（成人与儿童合计，例如共 4 人）。留空 = 不限合计人数（最多成人数和最多儿童数分别适用）",
-  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best. No logo: the outlet and hotel name print instead.": "打印在此营业点账单顶部，尺寸固定且较小以节省纸张。黑白、PNG、512px 以上效果最佳。没有 Logo 时，改为打印营业点和酒店名称。",
+  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Upload a PNG or paste an https link; black on white, 512px or wider looks best. No logo: the outlet and hotel name print instead.": "打印在此营业点账单顶部，尺寸固定且较小以节省纸张。上传 PNG 或粘贴 https 链接；黑白、宽度 512px 以上效果最佳。没有 Logo 时，改为打印营业点和酒店名称。",
   "RECEIPT": "收据",
   "Receipt design": "小票样式",
   "Receipt logo": "小票 Logo",
@@ -7035,6 +7035,8 @@
   "{n} no-show": "{n} 个未到店",
   "{n} no-shows": "{n} 个未到店",
   "Rounding": "舍入差额",
-  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "此营业点的账单底部会打印订单号条码，扫码即可找到账单。上方示例会随此开关变化。",
-  "Print a barcode on the bill": "在账单上打印条码"
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "此营业点的账单底部会打印订单号条码，扫码即可找到账单。下方示例会随此开关变化。",
+  "Print a barcode on the bill": "在账单上打印条码",
+  "Upload a PNG, or paste an https link": "上传 PNG 或粘贴 https 链接",
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "请使用“上传”按钮，或粘贴以 https:// 开头的链接。不接受普通的 http 链接。"
 }

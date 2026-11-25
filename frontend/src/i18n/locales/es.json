@@ -6996,7 +6996,7 @@
   "Move arrival and check in": "Mover la llegada y registrar la entrada",
   "Name on its own line, then quantity x rate and the amount. Stays tidy when prices have many digits.": "El nombre en su propia línea y luego cantidad x precio y el importe. Queda ordenado cuando los precios tienen muchos dígitos.",
   "Order:": "Pedido:",
-  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best. No logo: the outlet and hotel name print instead.": "Se imprime en la parte superior de las cuentas de este punto de venta, con un tamaño pequeño fijo para ahorrar papel. Queda mejor en negro sobre blanco, PNG, de 512 px o más. Sin logotipo: se imprimen el nombre del punto de venta y del hotel.",
+  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Upload a PNG or paste an https link; black on white, 512px or wider looks best. No logo: the outlet and hotel name print instead.": "Se imprime en la parte superior de las cuentas de este punto de venta, con un tamaño pequeño fijo para ahorrar papel. Suba un PNG o pegue un enlace https; queda mejor en negro sobre blanco, de 512 px o más de ancho. Sin logotipo: se imprimen el nombre del punto de venta y del hotel.",
   "RECEIPT": "RECIBO",
   "Receipt design": "Diseño del recibo",
   "Receipt logo": "Logotipo del recibo",
@@ -7035,6 +7035,8 @@
   "{n} no-show": "{n} no presentado",
   "{n} no-shows": "{n} no presentados",
   "Rounding": "Redondeo",
-  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "Al pie de las cuentas de este punto de venta se imprime un código de barras con el número de pedido, para encontrar la cuenta escaneándolo. Los ejemplos de arriba siguen este interruptor.",
-  "Print a barcode on the bill": "Imprimir un código de barras en la cuenta"
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "Al pie de las cuentas de este punto de venta se imprime un código de barras con el número de pedido, para encontrar la cuenta escaneándolo. Los ejemplos de abajo siguen este interruptor.",
+  "Print a barcode on the bill": "Imprimir un código de barras en la cuenta",
+  "Upload a PNG, or paste an https link": "Suba un PNG o pegue un enlace https",
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Use el botón Subir o pegue un enlace que empiece por https://. No se aceptan enlaces http simples."
 }

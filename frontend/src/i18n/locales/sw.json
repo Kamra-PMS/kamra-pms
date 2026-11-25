@@ -6996,7 +6996,7 @@
   "Need a role that isn't here, or a change to what a role may do? IT creates roles and sets their permissions in Desk (Role Permission Manager). See Roles and access in the docs.": "Unahitaji jukumu ambalo halipo hapa, au kubadilisha anachoweza kufanya mwenye jukumu? IT huunda majukumu na kuweka ruhusa zake kwenye Desk (Role Permission Manager). Angalia Majukumu na ufikiaji kwenye nyaraka.",
   "Order:": "Oda:",
   "Overall capacity of the room (adults + children combined, e.g. 4 people total). Blank = no combined limit (Max adults and Max children apply separately)": "Uwezo wa jumla wa chumba (watu wazima + watoto pamoja, mfano watu 4 kwa jumla). Tupu = hakuna kikomo cha jumla (Kiwango cha juu cha watu wazima na cha watoto vinatumika kila kimoja peke yake)",
-  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best. No logo: the outlet and hotel name print instead.": "Huchapishwa juu ya bili za kituo hiki, kwa ukubwa mdogo usiobadilika ili kuokoa karatasi. Nyeusi juu ya nyeupe, PNG, 512px au zaidi huonekana vizuri zaidi. Bila nembo: jina la kituo na la hoteli huchapishwa badala yake.",
+  "Printed at the top of this outlet's bills, at a fixed small size to save paper. Upload a PNG or paste an https link; black on white, 512px or wider looks best. No logo: the outlet and hotel name print instead.": "Huchapishwa juu ya bili za kituo hiki, kwa ukubwa mdogo usiobadilika ili kuokoa karatasi. Pakia PNG au bandika kiungo cha https; nyeusi juu ya nyeupe, upana wa 512px au zaidi huonekana vizuri zaidi. Bila nembo: jina la kituo na la hoteli huchapishwa badala yake.",
   "RECEIPT": "RISITI",
   "Receipt design": "Muundo wa risiti",
   "Receipt logo": "Nembo ya risiti",
@@ -7035,6 +7035,8 @@
   "{n} no-show": "hakufika {n}",
   "{n} no-shows": "hakufika {n}",
   "Rounding": "Kukadiria",
-  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "Msimbopau wa namba ya oda huchapishwa chini ya bili za kituo hiki, ili bili ipatikane kwa kuuskani. Mifano iliyo juu hufuata swichi hii.",
-  "Print a barcode on the bill": "Chapisha msimbopau kwenye bili"
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "Msimbopau wa namba ya oda huchapishwa chini ya bili za kituo hiki, ili bili ipatikane kwa kuuskani. Mifano iliyo chini hufuata swichi hii.",
+  "Print a barcode on the bill": "Chapisha msimbopau kwenye bili",
+  "Upload a PNG, or paste an https link": "Pakia PNG, au bandika kiungo cha https",
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Tumia kitufe cha Pakia, au bandika kiungo kinachoanza na https://. Viungo vya kawaida vya http havikubaliwi."
 }
