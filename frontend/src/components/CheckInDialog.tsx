@@ -836,6 +836,7 @@ export default function CheckInDialog(props: {
                 reservation={r.name}
                 guest={flow.guest.name}
                 guestName={flow.guest.full_name}
+                guestPhone={flow.guest.phone}
                 guestHasPhoto={flow.guest.has_photo}
                 adults={flow.reservation.adults}
                 children={flow.reservation.children}

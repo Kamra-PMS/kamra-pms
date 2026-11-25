@@ -120,6 +120,39 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 		self.assertEqual(frappe.db.get_value("Folio", folio, "guest_name"), "Bob Arrived")
 		self.assertEqual(frappe.db.get_value("Security Deposit", deposit, "guest"), new)
 
+	def test_a_service_ticket_pos_order_and_recreation_visit_of_the_booking_follow_too(self):
+		ticket = frappe.get_doc({"doctype": "Service Ticket", "property": self.property,
+			"subject": "Extra pillows", "category": "Front Desk", "reservation": self.name,
+			"guest": self.alice}).insert(ignore_permissions=True).name
+		outlet = frappe.get_doc({"doctype": "POS Outlet", "property": self.property,
+			"outlet_name": "Test Cafe " + frappe.generate_hash(length=5),
+			"outlet_type": "Restaurant"}).insert(ignore_permissions=True).name
+		order = frappe.get_doc({"doctype": "POS Order", "property": self.property, "outlet": outlet,
+			"reservation": self.name, "guest": self.alice}).insert(ignore_permissions=True).name
+		facility = frappe.get_doc({"doctype": "Recreation Facility", "property": self.property,
+			"facility_name": "Test Gym"}).insert(ignore_permissions=True).name
+		visit = frappe.get_doc({"doctype": "Recreation Visit", "property": self.property,
+			"facility": facility, "who": "Alice Original", "status": "In",
+			"started_at": frappe.utils.now_datetime(), "payment_mode": "Folio",
+			"reservation": self.name, "guest": self.alice}).insert(ignore_permissions=True).name
+		# a ticket from a DIFFERENT stay of Alice's must not move
+		other_stay = create_booking(self.property, self.room_type, str(add_days(nowdate(), 30)),
+		                            str(add_days(nowdate(), 31)), "Alice Original",
+		                            phone="+256 700 000 001")["reservation"]
+		other_ticket = frappe.get_doc({"doctype": "Service Ticket", "property": self.property,
+			"subject": "Other stay", "category": "Front Desk", "reservation": other_stay,
+			"guest": self.alice}).insert(ignore_permissions=True).name
+		out = self.swap()
+		new = out["guest"]
+		for doctype, name in (("Service Ticket", ticket), ("POS Order", order),
+		                      ("Recreation Visit", visit)):
+			with self.subTest(doctype):
+				self.assertEqual(frappe.db.get_value(doctype, name, "guest"), new)
+		self.assertEqual(frappe.db.get_value("Service Ticket", other_ticket, "guest"), self.alice)
+		self.assertEqual(out["moved"].get("Service Ticket"), 1)
+		self.assertEqual(out["moved"].get("POS Order"), 1)
+		self.assertEqual(out["moved"].get("Recreation Visit"), 1)
+
 	def test_money_stays_where_it_was(self):
 		from kamra.folio import open_folio
 		folio = open_folio(self.res())
@@ -149,6 +182,45 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 		self.assertFalse(res.precheckin_signature)
 		self.assertFalse(res.precheckin_consent)
 		self.assertFalse(frappe.db.exists("Reservation", {"precheckin_token": "oldtoken" + "x" * 24}))
+
+	def _store_id_scan(self):
+		import base64
+		import io
+
+		from PIL import Image
+
+		from kamra.id_documents import store_id_document
+		buf = io.BytesIO()
+		Image.new("RGB", (320, 200), "white").save(buf, format="PNG")
+		url = store_id_document(
+			self.res(), "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode(), "Guest")
+		return url
+
+	def test_the_id_scan_the_old_guest_uploaded_is_deleted_with_its_fields(self):
+		from kamra.id_documents import _existing
+		url = self._store_id_scan()
+		self.assertTrue(_existing(self.name))
+		self.assertEqual(self.res().id_document, url)
+		self.swap()
+		res = self.res()
+		self.assertFalse(res.id_document)
+		self.assertFalse(res.id_document_source)
+		self.assertFalse(res.id_document_on)
+		# not "discarded after verification": the new guest has no scan yet, so the desk is asked for one
+		self.assertEqual(res.id_document_discarded, 0)
+		self.assertEqual(_existing(self.name), [])
+		self.assertFalse(frappe.db.exists("File", {"file_url": url}))
+
+	def test_if_the_scan_cannot_be_deleted_the_guest_is_not_changed(self):
+		from unittest.mock import patch
+		self._store_id_scan()
+		frappe.db.savepoint("before_swap")
+		# discard_id_document logs and carries on when Frappe cannot delete the file
+		with patch("kamra.id_documents.discard_id_document", return_value=0):
+			with self.assertRaisesRegex(frappe.ValidationError, "could not be removed"):
+				self.swap()
+		frappe.db.rollback(save_point="before_swap")  # what the request does with an error
+		self.assertEqual(self.res().guest, self.alice)
 
 	def test_the_change_is_commented_and_logged(self):
 		self.swap(reason="Different Bob arrived")
@@ -199,6 +271,54 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 			change_booking_guest(self.name, guest=banned, blacklist_override_reason="I say so")
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
 		self.assertEqual(self.res().guest, self.alice)
+
+	# -- a desk limited to one hotel ---------------------------------------
+
+	def _other_hotel_booking(self):
+		other = frappe.get_doc({"doctype": "Property",
+			"property_name": "TEST OTHER HOTEL " + frappe.generate_hash(length=8),
+			"country": "Uganda", "currency": "UGX"}).insert(ignore_permissions=True).name
+		rt = frappe.get_doc({"doctype": "Room Type", "property": other, "room_type_code": "STD",
+			"room_type_name": "Standard", "base_price": 1000,
+			"adults_capacity": 2}).insert(ignore_permissions=True).name
+		frappe.get_doc({"doctype": "Room", "property": other, "room_type": rt,
+			"room_number": "201"}).insert(ignore_permissions=True)
+		name = create_booking(other, rt, self.ci, self.co, "Dora Elsewhere",
+		                      phone="+256 700 000 007")["reservation"]
+		return name, frappe.db.get_value("Reservation", name, "guest")
+
+	def _limit_desk_to_this_hotel(self):
+		frappe.get_doc({"doctype": "User Permission", "user": self.desk, "allow": "Property",
+			"for_value": self.property}).insert(ignore_permissions=True)
+		frappe.clear_cache(user=self.desk)
+
+	def test_a_desk_limited_to_one_hotel_cannot_move_a_booking_to_a_guest_of_another(self):
+		other_booking, dora = self._other_hotel_booking()
+		self._limit_desk_to_this_hotel()
+		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
+		# Dora has only ever stayed at the other hotel
+		with self.assertRaises(frappe.PermissionError):
+			change_booking_guest(self.name, guest=dora)
+		# and the other hotel's booking is not theirs to move
+		with self.assertRaises(frappe.PermissionError):
+			change_booking_guest(other_booking, guest=self.alice)
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
+		self.assertEqual(self.res().guest, self.alice)
+		self.assertEqual(frappe.db.get_value("Reservation", other_booking, "guest"), dora)
+
+	def test_the_same_desk_may_pick_a_guest_who_stayed_here_or_is_new_to_the_chain(self):
+		self._limit_desk_to_this_hotel()
+		local = create_booking(self.property, self.room_type, str(add_days(nowdate(), 30)),
+		                       str(add_days(nowdate(), 31)), "Erin Local",
+		                       phone="+256 700 000 004")["reservation"]
+		erin = frappe.db.get_value("Reservation", local, "guest")
+		unseen = frappe.get_doc({"doctype": "Guest", "first_name": "Frank", "last_name": "Unseen",
+			"phone": "+256700000005"}).insert(ignore_permissions=True).name
+		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
+		change_booking_guest(self.name, guest=erin)
+		change_booking_guest(self.name, guest=unseen)
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
+		self.assertEqual(self.res().guest, unseen)
 
 	# -- who may ----------------------------------------------------------
 

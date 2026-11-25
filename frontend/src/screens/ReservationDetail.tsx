@@ -846,6 +846,7 @@ export default function ReservationDetail({
         <ChangeGuestDialog
           reservation={d.name}
           guestName={d.guest?.full_name ?? ""}
+          guestPhone={d.guest?.phone}
           onClose={() => setChangingGuest(false)}
           onDone={() => {
             setChangingGuest(false)

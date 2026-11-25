@@ -3956,7 +3956,8 @@ def change_booking_guest(reservation: str, guest: str | None = None,
 	else changes: the old profile and its other stays are untouched, folio
 	lines and totals stay, the ID documents and photos stay with the old
 	profile, and WhatsApp messages already sent stay with the person they went
-	to. A pre-check-in link or form the old guest already used is cleared, so
+	to. A pre-check-in link or form the old guest already used is cleared, and
+	so is the ID scan they uploaded for this booking (the file is deleted), so
 	their link stops working and the new guest starts again.
 
 	Refused once the guest has checked in, checked out or the booking is
@@ -4008,6 +4009,20 @@ def change_booking_guest(reservation: str, guest: str | None = None,
 		            "precheckin_verified_by": None, "precheckin_verified_on": None})
 	res.precheckin_link_sent = None
 	res.save()
+
+	# the ID scan the old guest uploaded for this booking leaves with them: the
+	# file and its fields (the scan hangs off the booking, so it would otherwise
+	# stay on the new person's stay)
+	from kamra.id_documents import DOC_FIELD, _existing, discard_id_document
+	if res.get(DOC_FIELD) or _existing(res.name):
+		discard_id_document(res.name)
+		if _existing(res.name):  # discard_id_document logs and carries on; here the move must not
+			frappe.throw(_("The old guest's ID scan could not be removed, so the guest was not "
+			               "changed. Try again."))
+		# not "discarded after verification": the new guest has no scan yet
+		frappe.db.set_value("Reservation", res.name, {
+			"id_document_source": None, "id_document_on": None, "id_document_discarded": 0,
+		}, update_modified=False)
 
 	moved = {}
 	for doctype in _BOOKING_GUEST_DOCS if old else ():

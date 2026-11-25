@@ -65,11 +65,12 @@ const inputCls =
 
 type Shot = { who: "main" } | { who: number; kind: "id" | "photo" }
 
-export default function CheckInGuests({ reservation, guest, guestName, guestHasPhoto,
+export default function CheckInGuests({ reservation, guest, guestName, guestPhone, guestHasPhoto,
   adults, children, occupants, idTypes, onChanged, onMainRead: fillMain }: {
   reservation: string
   guest: string | null
   guestName: string
+  guestPhone?: string | null
   guestHasPhoto: boolean
   adults: number
   children: number
@@ -294,6 +295,7 @@ export default function CheckInGuests({ reservation, guest, guestName, guestHasP
         <ChangeGuestDialog
           reservation={reservation}
           guestName={guestName}
+          guestPhone={guestPhone}
           onClose={() => setChangingGuest(false)}
           onDone={() => {
             setChangingGuest(false)
