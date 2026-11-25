@@ -11,7 +11,7 @@ import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { cur, instantLabel, moneyLocale } from "../lib/money"
+import { cur, fmtAmount, instantLabel, moneyLocale } from "../lib/money"
 import { useT, t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { downloadCsv } from "../lib/csv"
@@ -19,11 +19,7 @@ import { downloadCsv } from "../lib/csv"
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const money = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+const money = (n: unknown) => fmtAmount(n)
 
 export const fmtDay = (d: unknown) =>
   d

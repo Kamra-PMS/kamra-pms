@@ -38,7 +38,7 @@ import { CHECK_FIXES } from "../lib/eodFixes"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import { AuditPackView, sessionCols, DataTable, fmtDay } from "./AuditPack"
@@ -47,7 +47,7 @@ import { AuditPackView, sessionCols, DataTable, fmtDay } from "./AuditPack"
 const money = (n: unknown) =>
   n === null || n === undefined || n === ""
     ? "-"
-    : Number(n).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : fmtAmount(n)
 
 interface Column {
   key: string

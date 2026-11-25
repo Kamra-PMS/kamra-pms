@@ -7033,5 +7033,6 @@
   "{n} folio": "{n} 个客账",
   "{n} folios": "{n} 个客账",
   "{n} no-show": "{n} 个未到店",
-  "{n} no-shows": "{n} 个未到店"
+  "{n} no-shows": "{n} 个未到店",
+  "Rounding": "舍入差额"
 }

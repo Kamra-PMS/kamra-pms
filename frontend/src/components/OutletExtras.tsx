@@ -46,7 +46,7 @@ const SCALE = 0.68
 function BillPreview({ design, bits }: { design: Design; bits: Bits }) {
   const ref = useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = useState(520)
-  const doc = thermalDocument("Bill", billHtml(sampleBill(design, bits), { fmt: sampleFmt, symbol: "" }))
+  const doc = thermalDocument("Bill", billHtml(sampleBill(design, bits), { fmt: sampleFmt, symbol: "", digits: 2 }))
 
   useEffect(() => {
     const frame = ref.current

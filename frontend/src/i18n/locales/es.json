@@ -7033,5 +7033,6 @@
   "{n} folio": "{n} folio",
   "{n} folios": "{n} folios",
   "{n} no-show": "{n} no presentado",
-  "{n} no-shows": "{n} no presentados"
+  "{n} no-shows": "{n} no presentados",
+  "Rounding": "Redondeo"
 }

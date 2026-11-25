@@ -7033,5 +7033,6 @@
   "{n} folio": "{n} extrato",
   "{n} folios": "{n} extratos",
   "{n} no-show": "{n} não comparecimento",
-  "{n} no-shows": "{n} não comparecimentos"
+  "{n} no-shows": "{n} não comparecimentos",
+  "Rounding": "Arredondamento"
 }
