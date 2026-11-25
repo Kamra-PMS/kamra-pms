@@ -7034,5 +7034,7 @@
   "{n} folios": "{n} folio",
   "{n} no-show": "{n} no-show",
   "{n} no-shows": "{n} no-show",
-  "Rounding": "Làm tròn"
+  "Rounding": "Làm tròn",
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "Mã vạch số đơn được in ở cuối hóa đơn của điểm bán này, để tìm hóa đơn bằng cách quét. Các mẫu phía trên thay đổi theo công tắc này.",
+  "Print a barcode on the bill": "In mã vạch trên hóa đơn"
 }

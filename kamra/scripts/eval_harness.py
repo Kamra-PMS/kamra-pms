@@ -11901,6 +11901,46 @@ def t_pos_outlet_levy():
 		raise AssertionError("a Saudi outlet was allowed a levy")
 
 
+@check("POS outlet: the receipt logo takes only an uploaded file or an https link, and the bill's barcode is on unless the outlet turns it off")
+def t_pos_outlet_receipt():
+	from kamra import pos
+
+	PR = "EVAL Receipt Hotel"
+	if not frappe.db.exists("Property", PR):
+		frappe.get_doc({"doctype": "Property", "property_name": PR, "city": "Ubud",
+		                "country": "Indonesia"}).insert(ignore_permissions=True)
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": PR, "outlet_name": "Eval Receipt Warung",
+		"outlet_type": "Restaurant", "gst_rate": 10,
+	}).insert(ignore_permissions=True)
+	assert int(outlet.print_barcode) == 1, outlet.print_barcode      # on by default
+
+	for ok in ("/files/logo.png", "/private/files/logo.png", "https://example.com/logo.png", ""):
+		doc = frappe.get_doc("POS Outlet", outlet.name)
+		doc.logo = ok
+		doc.save(ignore_permissions=True)
+	for bad in ("javascript:alert(1)", "http://example.com/logo.png", "data:image/svg+xml;base64,PHN2Zz4=",
+	            "//example.com/logo.png", "/files/../etc/passwd", '/files/x.png" onerror="y',
+	            "/files/%2e%2e/etc/passwd", "/files/%2E%2E/x.png"):
+		doc = frappe.get_doc("POS Outlet", outlet.name)
+		doc.logo = bad
+		try:
+			doc.save(ignore_permissions=True)
+		except frappe.ValidationError:
+			continue
+		raise AssertionError(f"a receipt logo of {bad!r} was accepted")
+
+	dish = frappe.get_doc({
+		"doctype": "Menu Item", "property": PR, "outlet": outlet.name, "item_name": "Eval Receipt Nasi",
+		"category": "Food", "price": 35000, "is_veg": 0, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+	order = pos.create_order(outlet.name, [{"menu_item": dish, "qty": 1}], property=PR,
+	                         table_no="T1", order_type="Dine In")["order"]
+	assert pos.bill_data(order)["barcode"] == 1, pos.bill_data(order)["barcode"]
+	frappe.db.set_value("POS Outlet", outlet.name, "print_barcode", 0)
+	assert pos.bill_data(order)["barcode"] == 0, pos.bill_data(order)["barcode"]
+
+
 @check("a price with tax and the levy inside bills to exactly that price; with neither inside nothing changes")
 def t_rates_include_levy():
 	from kamra.api import _apply_country_defaults
@@ -12341,7 +12381,7 @@ def execute():
 		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_refused, t_folio_no_close_in_house,
-		           t_rates_include_levy, t_pos_outlet_levy,
+		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths):
 			fn()
