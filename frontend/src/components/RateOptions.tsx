@@ -69,6 +69,7 @@ export function RateOptions({
   onNightPrices,
   canSetPrice,
   lockedNote,
+  showPlans = true,
 }: {
   roomType: string
   checkIn: string
@@ -86,6 +87,8 @@ export function RateOptions({
   canSetPrice: boolean
   /** why the prices cannot be typed, when it is not a missing right */
   lockedNote?: string
+  /** list the rate plans (a booking's main room); an added room has none of its own */
+  showPlans?: boolean
 }) {
   const { t } = useT()
   const [data, setData] = useState<Options | null>(null)
@@ -308,7 +311,7 @@ export function RateOptions({
         <p className="text-xs text-zinc-400">{t("No season or demand rule applies: every night is at BAR.")}</p>
       )}
 
-      {data.plans.length > 0 && (
+      {showPlans && data.plans.length > 0 && (
         <div>
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">{t("Rate plans")}</p>
           <div className="space-y-1">

@@ -431,6 +431,13 @@ export function BookingDialog(props: {
       const keep = Object.fromEntries(Object.entries(p).filter(([d]) => stayKey.split(",").includes(d)))
       return Object.keys(keep).length === Object.keys(p).length ? p : keep
     })
+    // ... and from every added room, whose nights are its own
+    const nights = stayKey.split(",")
+    setMoreRooms((rs) =>
+      rs.some((r) => r.night_prices?.some((x) => !nights.includes(x.date)))
+        ? rs.map((r) => (r.night_prices ? { ...r, night_prices: r.night_prices.filter((x) => nights.includes(x.date)) } : r))
+        : rs,
+    )
   }, [stayKey])
   const nightPricesParam = nightPricesArg.length ? { night_prices: nightPricesArg } : {}
 
@@ -2004,6 +2011,29 @@ export function BookingDialog(props: {
                     >
                       <Trash2 className="size-4" aria-hidden />
                     </button>
+                    {canSetPrice && r.room_type && !badDate && (
+                      <div className="w-full">
+                        <RateOptions
+                          roomType={r.room_type}
+                          checkIn={form.check_in_date}
+                          checkOut={checkOut}
+                          adults={r.adults}
+                          children={r.children}
+                          mealPlan={r.meal_plan || undefined}
+                          ratePlan=""
+                          onPickPlan={() => {}}
+                          showPlans={false}
+                          nightPrices={Object.fromEntries((r.night_prices ?? []).map((x) => [x.date, x.price]))}
+                          onNightPrices={(typed) =>
+                            setMoreRooms((rs) =>
+                              rs.map((x, j) => (j === i ? { ...x, night_prices: typedNights(typed, stayNights) } : x)),
+                            )
+                          }
+                          canSetPrice={!form.rate_plan && !form.voucher_code}
+                          lockedNote={t("Prices set by hand cannot be combined with a rate plan or a voucher.")}
+                        />
+                      </div>
+                    )}
                   </div>
                   )
                 })}

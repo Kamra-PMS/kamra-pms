@@ -6470,18 +6470,25 @@ def _check_night_prices(property: str, room_type: str, check_in_date: str,
 	return typed
 
 
-def _record_night_prices(doc, typed: dict) -> None:
+def _record_night_prices(doc, typed: dict, before: dict | None = None) -> None:
 	"""Leave the trail for a booking priced night by night: a comment on the
-	reservation, the action log, and the rate.overridden webhook (scope night)."""
+	reservation, the action log, and the rate.overridden webhook (scope night).
+	`before` ({date: price it had}) is given when a saved stay is re-priced."""
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	from kamra.webhooks import emit_rate_overridden
 	typed_text = ", ".join(f"{d} {float(p):,.2f}" for d, p in sorted(typed.items()))
-	doc.add_comment("Comment", _("Hand-set nightly prices: {0}. The other nights are at the rate card.")
-	                .format(typed_text))
+	if before:
+		changed = ", ".join(f"{d} {float(before[d]):,.2f} → {float(p):,.2f}"
+		                    for d, p in sorted(typed.items()) if d in before)
+		doc.add_comment("Comment", _("Nightly prices changed: {0}. The other nights keep their price.")
+		                .format(changed))
+	else:
+		doc.add_comment("Comment", _("Hand-set nightly prices: {0}. The other nights are at the rate card.")
+		                .format(typed_text))
 	log_action(
 		"set_night_prices", "Reservation", doc.name, doc.property,
-		rationale=(f"Hand-set nightly prices on {doc.room_type} "
+		rationale=(f"{'Re-priced nights' if before else 'Hand-set nightly prices'} on {doc.room_type} "
 		           f"{doc.check_in_date}→{doc.check_out_date}: "
 		           + ", ".join(f"{d} {money_text(doc.property, float(p))}"
 		                       for d, p in sorted(typed.items()))
@@ -6493,6 +6500,164 @@ def _record_night_prices(doc, typed: dict) -> None:
 		"nights": [{"date": d, "price": float(p)} for d, p in sorted(typed.items())],
 		"amount_after_tax": round(float(doc.amount_after_tax or 0), 2),
 		"reason": None})
+
+
+def _require_night_prices_right() -> None:
+	"""Typing a night's price is for the people who set room rates."""
+	if not _can_set_rate():
+		frappe.throw(_("Only a Revenue Manager or Hotel Admin can set nightly prices."),
+		             frappe.PermissionError)
+
+
+def _stay_prices_blocker(res) -> str | None:
+	"""Why the nights of a saved booking cannot be priced by hand (None when
+	they can): what already refuses typed nights on a new booking, and the
+	states a saved booking can be in. A long-stay discount or a holiday
+	package is only known once the stay is quoted, so the save refuses those
+	with their own reason."""
+	from kamra.group_blocks import group_rate
+	from kamra.pricing import negotiated_rate_plan
+	if res.status not in ("Confirmed", "Checked In"):
+		return _("Prices can be changed on a confirmed or in-house booking only.")
+	if str(res.check_in_date) == str(res.check_out_date):
+		return _("A day-use stay is priced by its time slot, not night by night.")
+	if not res.get("night_rates"):
+		return _("This booking has no nightly rates to change.")
+	if not cint(res.get("auto_price")) and not any(
+			flt(r.get("hand_price")) > 0 for r in res.night_rates):
+		return _("This booking is priced as a whole (an OTA total, or an amount typed "
+		         "by the desk), not night by night.")
+	for found, what in (
+		(res.get("voucher"), _("a voucher")),
+		(res.get("rate_plan"), _("a rate plan")),
+		(negotiated_rate_plan(res.property, res.get("company")),
+		 _("the company's negotiated rate plan")),
+		(flt(res.get("agreed_rate")) > 0, _("an agreed rate")),
+		(group_rate(res.get("group_booking"), res.room_type) > 0, _("the group's block rate")),
+	):
+		if found:
+			return _("This booking has {0}, so its nights cannot be priced one by one.").format(what)
+	return None
+
+
+def _night_price(res, row) -> float:
+	"""What the guest pays for a locked night, in the basis the rates screen
+	shows (tax and the levy inside when the property's rates include them):
+	the figure the desk typed, else the locked rate put back together."""
+	if flt(row.get("hand_price")) > 0:
+		return flt(row.hand_price)
+	from kamra.pricing import room_displayed_rate
+	return float(round(room_displayed_rate(res.property, row.rate, row.gst_rate), 2))
+
+
+@frappe.whitelist()
+@require_perm("Reservation", "view_stays")
+def stay_rates(reservation: str) -> dict:
+	"""The nights of a booking for the desk's price box on the reservation
+	page: what the guest pays for each night now (`price`, tax and the levy
+	inside when the property's rates include them), the rate card's price for
+	that date today (`rate`), whether the night is already on the bill
+	(`posted`: its price is closed) and whether the desk typed it (`hand_set`).
+	`editable` is false, with `why_not`, when something else sets the
+	booking's price; `can_set` says whether the caller may change it (a
+	Revenue Manager or Hotel Admin, as on a new booking). Not an agent tool."""
+	from kamra.crs import assert_property_access
+	from kamra.folio import charged_nights
+	from kamra.pricing import rates_include_levy, rates_include_tax, room_rate_digits
+	res = frappe.get_doc("Reservation", reservation)
+	assert_property_access(res.property)
+	charged = charged_nights(res.name, room_rate_digits(res.property))
+	card: dict = {}
+	try:  # only a hint beside each night: the booking's own prices show without it
+		from kamra.rates import rate_options
+		opts = rate_options(res.property, res.room_type, str(res.check_in_date),
+		                    str(res.check_out_date), adults=res.adults,
+		                    children=res.children, meal_plan=res.get("meal_plan"))
+		card = {str(n["date"]): n["rate"] for n in opts.get("nights") or []}
+	except frappe.ValidationError:
+		pass
+	nights = []
+	for r in sorted(res.get("night_rates") or [], key=lambda x: str(x.stay_date)):
+		d, price = str(r.stay_date), _night_price(res, r)
+		nights.append({"date": d, "price": price, "rate": card.get(d, price),
+		               "posted": d in charged, "hand_set": flt(r.get("hand_price")) > 0})
+	why = _stay_prices_blocker(res)
+	return {"reservation": res.name, "status": res.status,
+	        "can_set": _can_set_rate(), "editable": not why, "why_not": why,
+	        "tax_inclusive": rates_include_tax(res.property),
+	        "levy_inclusive": rates_include_levy(res.property), "nights": nights}
+
+
+def _price_stay_nights(res, night_prices) -> tuple[dict, dict]:
+	"""Put the desk's new nightly prices on a saved booking, in memory: the
+	typed nights take the typed price and every other night that is not on the
+	bill yet keeps the rate it was booked at (without that the re-quote would
+	give it today's rate card). Nights already on the bill are never typed -
+	the property's rate-change policy holds them. Returns the typed nights and
+	the price each had before."""
+	from kamra.folio import charged_nights
+	from kamra.pricing import normalize_night_prices, room_rate_digits
+	why = _stay_prices_blocker(res)
+	if why:
+		frappe.throw(why, title=_("Prices cannot be changed"))
+	typed = normalize_night_prices(night_prices, res.check_in_date, res.check_out_date)
+	if not typed:
+		frappe.throw(_("Send the nights to change as [{date, price}]."))
+	charged = charged_nights(res.name, room_rate_digits(res.property))
+	rows = {str(r.stay_date): r for r in res.night_rates}
+	for d in sorted(typed):
+		if d in charged:
+			frappe.throw(_("The night of {0} is already on the bill, so its price cannot be "
+			               "changed here.").format(d))
+		if d not in rows:
+			frappe.throw(_("{0} is not a night of this booking.").format(d))
+	before = {d: _night_price(res, rows[d]) for d in typed}
+	res.flags.hold_nights = {d for d, r in rows.items()
+	                         if d not in typed and d not in charged and flt(r.hand_price) <= 0}
+	for d, price in typed.items():
+		rows[d].hand_price = float(price)
+	res.auto_price = 0
+	return typed, before
+
+
+@frappe.whitelist()
+@require_perm("Reservation", "plan_stays")
+def stay_prices_preview(reservation: str, night_prices=None) -> dict:
+	"""What new nightly prices ([{date, price}], the nights to change) would do
+	to a booking's bill, before anything changes: the current and new totals
+	and the new nightly rates, priced by the same code the save runs. Nights
+	not listed keep their rate. set_stay_prices needs confirm_price=1 when the
+	total changes. A Revenue Manager or Hotel Admin only. Not an agent tool."""
+	from kamra.crs import assert_property_access
+	_require_night_prices_right()
+	res = frappe.get_doc("Reservation", reservation)
+	assert_property_access(res.property)
+	_price_stay_nights(res, night_prices)
+	return _reprice_preview(res)
+
+
+@frappe.whitelist()
+@require_perm("Reservation", "plan_stays")
+def set_stay_prices(reservation: str, night_prices=None, confirm_price: int = 0) -> dict:
+	"""Change the price of some nights of a confirmed or in-house booking
+	([{date, price}], tax included when the property's rates include tax, as
+	in create_booking). The nights listed take the typed price; every other
+	night keeps the rate it was booked at. A night already on the bill cannot
+	be changed here. The change is logged and commented on the booking. Call
+	stay_prices_preview first, show the new price, and pass confirm_price=1;
+	without it a change in the total is refused. A Revenue Manager or Hotel
+	Admin only. Not an agent tool."""
+	from kamra.crs import assert_property_access
+	_require_night_prices_right()
+	res = frappe.get_doc("Reservation", reservation)
+	assert_property_access(res.property)
+	typed, before = _price_stay_nights(res, night_prices)
+	old_amount = float(res.amount_after_tax or 0)
+	_require_price_confirmation(_reprice_preview(res), confirm_price)
+	res.save(ignore_permissions=True)  # the role was checked above; a Revenue Manager has no write
+	_record_night_prices(res, typed, before)
+	return {"ok": True, "previous_amount": old_amount,
+	        "amount_after_tax": float(res.amount_after_tax or 0)}
 
 
 def _move_price(res, new_type: str | None, rate_mode: str,
