@@ -4,7 +4,7 @@
     set_housekeeping_status, which checks role, property and DocPerm. */
 
 import { useCallback, useEffect, useState } from "react"
-import { BedDouble, LogOut, RefreshCw, User, UserPlus } from "lucide-react"
+import { BedDouble, Lock, LogOut, RefreshCw, User, UserPlus } from "lucide-react"
 import { call, getCurrentProperty, setHousekeepingStatus } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
@@ -30,6 +30,8 @@ interface BoardRoom {
   /** a same-day (hourly) stay - the room turns today, at etd */
   day_use?: boolean
   etd?: string | null
+  /** held out of service today (a Room Block), as the Room Board shows it */
+  block?: { reason: string | null; to_date: string } | null
   task: {
     name: string
     type: string
@@ -59,7 +61,9 @@ const dot: Record<HkStatus, string> = {
   "Out of Order": "bg-rose-500",
 }
 
-type Filter = "All" | HkStatus | "Due out" | "Has task"
+type Filter = "All" | HkStatus | "Out of service" | "Due out" | "Has task"
+
+const isBlocked = (r: BoardRoom) => r.occupancy_status !== "Occupied" && !!r.block
 
 export default function HousekeepingBoard() {
   const { t } = useT()
@@ -157,12 +161,19 @@ export default function HousekeepingBoard() {
   ) as Record<HkStatus, number>
   const dueOut = rooms.filter((r) => r.due_out).length
   const withTask = rooms.filter((r) => r.task).length
+  const outOfService = rooms.filter(isBlocked).length
   const shown = rooms.filter(
     (r) =>
       (floor === "All" || r.floor === floor) &&
       (type === "All" || r.room_type === type) &&
       (filter === "All" ||
-        (filter === "Due out" ? r.due_out : filter === "Has task" ? !!r.task : r.housekeeping_status === filter)),
+        (filter === "Due out"
+          ? r.due_out
+          : filter === "Has task"
+            ? !!r.task
+            : filter === "Out of service"
+              ? isBlocked(r)
+              : r.housekeeping_status === filter)),
   )
   const groups = floor === "All" && floors.length ? floors : [floor === "All" ? "" : floor]
   const choices = canSupervise ? STATUSES : ATTENDANT
@@ -198,6 +209,9 @@ export default function HousekeepingBoard() {
             ...STATUSES.filter((s) => s !== "Ready" || counts.Ready > 0 || filter === "Ready").map(
               (s) => [s, counts[s], dot[s]],
             ),
+            ...(outOfService > 0 || filter === "Out of service"
+              ? [["Out of service", outOfService, "bg-rose-500"]]
+              : []),
             ["Due out", dueOut, "bg-violet-500"],
             ["Has task", withTask, "bg-zinc-700"],
           ] as [Filter, number, string][]
@@ -287,13 +301,14 @@ export default function HousekeepingBoard() {
                         className={cn(
                           "w-full rounded-lg border px-3 py-2.5 text-left transition-colors",
                           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
-                          tone[r.housekeeping_status],
+                          isBlocked(r) ? tone["Out of Order"] : tone[r.housekeeping_status],
                           busy === r.name && "opacity-60",
                         )}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-base font-semibold">{r.room_number}</span>
                           <span className="flex items-center gap-1">
+                            {isBlocked(r) && <Lock className="size-3.5" aria-hidden />}
                             {r.due_out && (
                               <LogOut className="size-3.5 text-violet-600" aria-label={t("Due out")} />
                             )}
@@ -303,8 +318,11 @@ export default function HousekeepingBoard() {
                           </span>
                         </div>
                         <div className="mt-0.5 text-[11px] font-medium uppercase tracking-wide opacity-80">
-                          {t(r.housekeeping_status)}
+                          {isBlocked(r) ? t("Out of service") : t(r.housekeeping_status)}
                         </div>
+                        {isBlocked(r) && r.block?.reason && (
+                          <div className="mt-1 truncate text-xs opacity-80">{t(r.block.reason)}</div>
+                        )}
                         {r.guest_name && (
                           <div className="mt-1 truncate text-xs opacity-80">{r.guest_name}</div>
                         )}

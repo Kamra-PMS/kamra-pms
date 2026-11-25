@@ -5762,9 +5762,20 @@ def room_board(property: str):
 		"User", filters={"name": ("in", list({t.assigned_to_user for t in
 		                                      tasks.values() if t.assigned_to_user}))},
 		fields=["name", "full_name"])} if tasks else {}
+	# a room held out of service today (Room Blocks), as the Room Board shows it
+	today = getdate(nowdate())
+	blocks = {}
+	for b in frappe.get_all(
+			"Room Block",
+			filters={"property": property, "block_status": "Active",
+			         "from_date": ("<=", today), "to_date": (">", today)},
+			fields=["room", "reason", "to_date"], order_by="from_date asc"):
+		blocks.setdefault(b.room, b)
 	for r in rooms:
 		stay = in_house.get(r.name)
 		r["guest_name"] = stay.guest_name if stay else None
+		b = blocks.get(r.name)
+		r["block"] = {"reason": b.reason, "to_date": str(b.to_date)} if b else None
 		# Day-use is due only once its planned ETD has passed; overnight
 		# stays stay date-based (checkout date ≤ today).
 		from kamra.day_use import is_due_out as _is_due_out
