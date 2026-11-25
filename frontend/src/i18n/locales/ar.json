@@ -7033,5 +7033,8 @@
   "{n} folio": "{n} فاتورة",
   "{n} folios": "{n} فاتورة",
   "{n} no-show": "{n} لم يحضر",
-  "{n} no-shows": "{n} لم يحضر"
+  "{n} no-shows": "{n} لم يحضر",
+  "Rounding": "التقريب",
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "يُطبع باركود لرقم الطلب أسفل فواتير هذا المنفذ، حتى يمكن العثور على الفاتورة بمسحه ضوئياً. تتبع النماذج أعلاه هذا المفتاح.",
+  "Print a barcode on the bill": "طباعة باركود على الفاتورة"
 }

@@ -7033,5 +7033,8 @@
   "{n} folio": "{n} extrato",
   "{n} folios": "{n} extratos",
   "{n} no-show": "{n} não comparecimento",
-  "{n} no-shows": "{n} não comparecimentos"
+  "{n} no-shows": "{n} não comparecimentos",
+  "Rounding": "Arredondamento",
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "Um código de barras com o número do pedido é impresso no fim das contas deste ponto de venda, para encontrar a conta escaneando-o. Os exemplos acima seguem esta opção.",
+  "Print a barcode on the bill": "Imprimir um código de barras na conta"
 }

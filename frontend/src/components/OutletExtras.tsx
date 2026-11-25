@@ -7,12 +7,14 @@ import { t, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
 import ImageField from "./ImageField"
 import OutletWaiters from "./OutletWaiters"
+import { Switch } from "./ui/switch"
 
 type Design = "Stacked" | "Columns"
 
 interface Bits {
   logo: string
   design: Design
+  barcode: boolean
   outlet: string
   hotel: string
 }
@@ -32,7 +34,7 @@ function sampleBill(design: Design, bits: Bits): BillData {
     order: "ORD-2026-00042", kot_no: 17, property_name: bits.hotel, outlet_name: bits.outlet,
     order_type: "Dine In", table_no: "T3", room_no: null, customer_name: null, customer_phone: null,
     delivery_address: null, captain: null, served_by: "Rina", cashier: null,
-    logo: bits.logo || null, receipt_design: design,
+    logo: bits.logo || null, receipt_design: design, barcode: bits.barcode,
     items: SAMPLE_ITEMS, subtotal: 60, discount_amount: 0,
     levy: { label: "", percent: 10, amount: 6 }, taxable: 66,
     gst_rate: 8, cgst: 2.64, sgst: 2.64, tax_parts: [{ label: t("Tax"), rate: 8, amount: 5.28 }],
@@ -46,7 +48,7 @@ const SCALE = 0.68
 function BillPreview({ design, bits }: { design: Design; bits: Bits }) {
   const ref = useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = useState(520)
-  const doc = thermalDocument("Bill", billHtml(sampleBill(design, bits), { fmt: sampleFmt, symbol: "" }))
+  const doc = thermalDocument("Bill", billHtml(sampleBill(design, bits), { fmt: sampleFmt, symbol: "", digits: 2 }))
 
   useEffect(() => {
     const frame = ref.current
@@ -110,13 +112,14 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
     void (async () => {
       try {
         const [o] = await listResource("POS Outlet", {
-          fields: ["name", "outlet_name", "property", "logo", "receipt_design"], filters: [["name", "=", outlet]], limit: 1,
+          fields: ["name", "outlet_name", "property", "logo", "receipt_design", "print_barcode"], filters: [["name", "=", outlet]], limit: 1,
         })
         const [p] = o ? await listResource("Property", {
           fields: ["name", "property_name"], filters: [["name", "=", String(o.property)]], limit: 1,
         }) : []
         if (live && o) setBits({
           logo: String(o.logo ?? ""), design: o.receipt_design === "Stacked" ? "Stacked" : "Columns",
+          barcode: o.print_barcode == null ? true : Boolean(Number(o.print_barcode)),
           outlet: String(o.outlet_name ?? ""), hotel: String(p?.property_name ?? ""),
         })
       } catch (e) {
@@ -142,6 +145,11 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
     if (now) void save({ logo })
     else timer.current = setTimeout(() => void save({ logo }), 600)
   }
+  const toggleBarcode = () => {
+    const next = !(bits?.barcode ?? true)
+    setBits((b) => (b ? { ...b, barcode: next } : b))
+    void save({ print_barcode: next ? 1 : 0 })
+  }
   const pick = (design: Design) => {
     setBits((b) => (b ? { ...b, design } : b))
     void save({ receipt_design: design })
@@ -160,7 +168,7 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
             </div>
             <div className="min-w-0">
               <ImageField hint="" value={bits.logo} onChange={(v) => setLogo(v, false)} onUploaded={(v) => setLogo(v, true)}
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                accept="image/png,image/jpeg,image/webp"
                 attach={{ doctype: "POS Outlet", docname: outlet, fieldname: "logo" }} />
             </div>
           </div>
@@ -173,6 +181,18 @@ export default function OutletExtras({ row, reload }: { row: Row; reload: () => 
             <div role="radiogroup" aria-label={t("Receipt design")} className="grid gap-4 pt-2 sm:grid-cols-2">
               <DesignCard design="Columns" bits={bits} selected={bits.design === "Columns"} onPick={() => pick("Columns")} />
               <DesignCard design="Stacked" bits={bits} selected={bits.design === "Stacked"} onPick={() => pick("Stacked")} />
+            </div>
+          </div>
+
+          <div className="grid gap-x-8 gap-y-2 border-t border-zinc-200 pt-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            <div className="min-w-0">
+              <label htmlFor="outlet-print-barcode" className="text-sm font-medium text-zinc-800">{t("Print a barcode on the bill")}</label>
+              <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
+                {t("A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.")}
+              </p>
+            </div>
+            <div className="min-w-0">
+              <Switch id="outlet-print-barcode" on={bits.barcode} onToggle={toggleBarcode} />
             </div>
           </div>
         </>

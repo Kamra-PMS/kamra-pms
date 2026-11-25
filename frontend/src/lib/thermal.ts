@@ -8,10 +8,16 @@ import { t as translate, tn, uiDateLocale } from "./i18n"
  * common 72mm printable width, so nothing is clipped at the edge.
  */
 
-import { cur, moneyLocale } from "./money"
+import { cur, fmtAmount, moneyDigits, moneyLocale } from "./money"
+import { addUp } from "./addUp"
 import { code128Svg } from "./code128"
 import inconsolataLatin from "../assets/fonts/inconsolata-latin.woff2?inline"
 import inconsolataVietnamese from "../assets/fonts/inconsolata-vietnamese.woff2?inline"
+
+/** The logo prints inside a box of at most 16 mm high and 60 mm wide, keeping its shape:
+ *  a square logo is 16 x 16, a wide one keeps 16 mm until it reaches 60 mm, then shrinks. */
+export const LOGO_MAX_H_MM = 16
+export const LOGO_MAX_W_MM = 60
 
 // Inconsolata (SIL OFL 1.1, see assets/fonts/OFL.txt): one variable font per script, weights 200-900.
 const FONT_FACE = `
@@ -40,7 +46,8 @@ const CSS = `${FONT_FACE}
   .num { text-align: right; white-space: nowrap }
   .cut { text-align: center; font-size: 11px; margin-top: 10px; letter-spacing: 0.2em }
   /* the bill: solid rules, thin and thick, and a rounded box for the total */
-  .logo img { display: block; margin: 0 auto; filter: grayscale(1) contrast(1.4) }
+  .logo img { display: block; margin: 0 auto; filter: grayscale(1) contrast(1.4);
+              max-height: ${LOGO_MAX_H_MM}mm; max-width: ${LOGO_MAX_W_MM}mm; object-fit: contain }
   .brand { font-weight: 800; font-size: 21px; letter-spacing: .06em; text-transform: uppercase; line-height: 1.15 }
   .oname { font-weight: 800; font-size: 17px; letter-spacing: .14em; text-transform: uppercase; margin-top: 4px; line-height: 1.15 }
   .hname { font-size: 12px; margin-top: 1px }
@@ -95,13 +102,18 @@ const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string))
 
-const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+/** Only an uploaded file or an https link may print as the logo: a javascript: or data: URL, a plain
+ *  http one or a path with .. in it is ignored, and the outlet name prints instead. */
+export const logoSrc = (u: unknown): string => {
+  const s = String(u ?? "").trim()
+  const allowed = /^(\/files\/|\/private\/files\/|https:\/\/)[^\s"'<>\\]+$/.test(s)
+  // check the decoded path too, so /files/%2e%2e/x cannot step out of /files/
+  let decoded: string
+  try { decoded = decodeURIComponent(s) } catch { return "" }
+  const noDotDot = (p: string) => !p.split("/").includes("..")
+  return allowed && noDotDot(s) && noDotDot(decoded) ? s : ""
+}
 
-/** The logo prints inside a box of at most 16 mm high and 60 mm wide, keeping its shape:
- *  a square logo is 16 x 16, a wide one keeps 16 mm until it reaches 60 mm, then shrinks. */
-export const LOGO_MAX_H_MM = 16
-export const LOGO_MAX_W_MM = 60
 export function logoSizeMm(naturalWidth: number, naturalHeight: number) {
   const ratio = naturalWidth / naturalHeight
   let height = LOGO_MAX_H_MM
@@ -265,7 +277,7 @@ export function laundryDocketHtml(o: {
     <div class="hr"></div>
     <table class="kt"><tr class="h"><td class="q">${esc(translate("Qty"))}</td><td>${esc(translate("Item"))}</td></tr>${rows}</table>
     <div class="hr"></div>
-    <div class="sum"><span class="l">${esc(translate("Total"))}</span><span class="v">${cur()}${inr(o.total)}</span></div>
+    <div class="sum"><span class="l">${esc(translate("Total"))}</span><span class="v">${cur()}${fmtAmount(o.total)}</span></div>
     <div class="hr thick"></div>
     <div class="c sm">${esc(translate("Counted with the guest. Billed to the room."))}</div>`
 }
@@ -290,6 +302,8 @@ export interface BillData {
   logo?: string | null
   /** how the item lines print: in columns (the default) or stacked */
   receipt_design?: "Stacked" | "Columns" | null
+  /** the outlet's "print a barcode" switch: the barcode prints unless this is 0 or false */
+  barcode?: boolean | number | null
   items: { item_name: string; qty: number; rate: number; amount: number }[]
   subtotal: number
   discount_amount: number
@@ -316,24 +330,34 @@ export interface BillData {
 export interface BillOptions {
   fmt?: (n: number) => string
   symbol?: string
+  /** decimals `fmt` prints with; the property currency's own when not given */
+  digits?: number
 }
 
 export function billHtml(b: BillData, opts: BillOptions = {}) {
-  const f = opts.fmt ?? inr
+  const f = opts.fmt ?? fmtAmount
   const sym = opts.symbol ?? cur()
   const when = new Date().toLocaleString(uiDateLocale(moneyLocale()), {
     day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   })
   const label = b.table_no ? translate("Table {n}", { n: String(b.table_no) })
     : b.room_no ? translate("Room {n}", { n: String(b.room_no) }) : translate(b.order_type || "Counter")
-  const head = (b.logo
-    ? `<div class="logo"><img src="${esc(b.logo)}" alt=""></div><div class="c oname">${esc(b.outlet_name)}</div>`
+  const logo = logoSrc(b.logo)
+  const head = (logo
+    ? `<div class="logo"><img src="${esc(logo)}" alt=""></div><div class="c oname">${esc(b.outlet_name)}</div>`
     : `<div class="c brand">${esc(b.outlet_name)}</div>`) +
     `<div class="c hname">${esc(b.property_name)}</div>`
+  // the printed figures add up: lines, then subtotal = their sum, and a Rounding line only
+  // when the printed pieces still miss the printed total (see lib/addUp.ts)
   const taxParts = b.tax_parts ?? [
     { label: "CGST", rate: b.gst_rate / 2, amount: b.cgst },
     { label: "SGST", rate: b.gst_rate / 2, amount: b.sgst },
   ]
+  const fig = addUp({
+    digits: opts.digits ?? moneyDigits(), lines: b.items.map((it) => it.amount),
+    discount: b.discount_amount, levy: b.levy?.amount, taxes: taxParts.map((p) => p.amount),
+    total: b.grand_total,
+  })
   const columns = b.receipt_design !== "Stacked"   // Columns is the default
   // the item header row (bold) and the thick rule under it; the columns design has them inside its table
   const itemHead = columns ? "" :
@@ -341,16 +365,16 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
   const items = columns
     ? `<table class="tbl"><tr class="h"><td>${esc(translate("Item"))}</td><td class="q">${esc(translate("Qty"))}</td>` +
       `<td class="r">${esc(translate("Rate"))}</td><td class="a">${esc(translate("Amt"))}</td></tr>` +
-      b.items.map((it) =>
+      b.items.map((it, i) =>
         `<tr><td class="nm">${esc(it.item_name)}</td><td class="q">${Math.round(it.qty)}</td>` +
-        `<td class="r">${f(it.rate)}</td><td class="a">${f(it.amount)}</td></tr>`).join("") + `</table>`
-    : b.items.map((it) =>
+        `<td class="r">${f(it.rate)}</td><td class="a">${f(fig.lines[i])}</td></tr>`).join("") + `</table>`
+    : b.items.map((it, i) =>
       `<div class="it"><div class="n">${esc(it.item_name)}</div><div class="row"><span>${Math.round(it.qty)} x ${f(it.rate)}</span>` +
-      `<span class="a num">${f(it.amount)}</span></div></div>`).join("")
+      `<span class="a num">${f(fig.lines[i])}</span></div></div>`).join("")
   const sum = (l: string, v: number) => `<span class="l">${l}</span><span class="v">${f(v)}</span>`
   const n = b.items.length
   const customer = [b.customer_name, b.customer_phone].filter(Boolean).join(" · ")
-  const barcode = code128Svg(b.order)
+  const barcode = b.barcode === 0 || b.barcode === false ? "" : code128Svg(b.order)
   const served = b.served_by || ""
   // the total in a rounded box at the top: "BILL / RECEIPT <order> TOTAL", then the amount. A country that
   // requires a legal title on the bill (ZATCA) puts it in the box in place of BILL / RECEIPT.
@@ -358,7 +382,7 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
   const box = `<div class="box">` +
     (b.statutory ? `<div class="legal">${esc(b.statutory.title)}</div><div class="legal" dir="rtl">${esc(b.statutory.title_ar)}</div>` : "") +
     `<div class="cap">${caption}</div>` +
-    `<div class="big">${esc(sym)}${/\w$/.test(sym) ? " " : ""}${f(b.grand_total)}</div></div>`
+    `<div class="big">${esc(sym)}${/\w$/.test(sym) ? " " : ""}${f(fig.total)}</div></div>`
   return `
     ${head}
     ${box}
@@ -371,18 +395,19 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
     <div class="hr"></div>
     <div class="count">${esc(tn(n, "{n} item", "{n} items"))}</div>
     <div class="sum">
-      ${sum(esc(translate("Subtotal")), b.subtotal)}
-      ${b.discount_amount ? sum(esc(translate("Discount")), -b.discount_amount) : ""}
-      ${b.levy ? sum(`${esc(b.levy.label || translate("Service charge"))} ${b.levy.percent}%`, b.levy.amount) : ""}
-      ${taxParts.map((p) => sum(`${esc(p.label)} @ ${p.rate}%`, p.amount)).join("")}
-      ${sum(esc(translate("TOTAL")), b.grand_total)}
+      ${sum(esc(translate("Subtotal")), fig.subtotal)}
+      ${b.discount_amount ? sum(esc(translate("Discount")), -fig.discount) : ""}
+      ${b.levy ? sum(`${esc(b.levy.label || translate("Service charge"))} ${b.levy.percent}%`, fig.levy) : ""}
+      ${taxParts.map((p, i) => sum(`${esc(p.label)} @ ${p.rate}%`, fig.taxes[i])).join("")}
+      ${fig.rounding !== 0 && !b.nc ? sum(esc(translate("Rounding")), fig.rounding) : ""}
+      ${sum(esc(translate("TOTAL")), fig.total)}
     </div>
-    ${b.paid && b.payment_mode && !b.nc ? `<div class="hr"></div><div class="sum">${sum(esc(translate(b.payment_mode)), b.grand_total)}</div>` : ""}
+    ${b.paid && b.payment_mode && !b.nc ? `<div class="hr"></div><div class="sum">${sum(esc(translate(b.payment_mode)), fig.total)}</div>` : ""}
     <div class="hr thick"></div>
     ${b.nc ? `<div class="nc">${esc(translate("COMPLIMENTARY - NO CHARGE"))}</div>` +
       `<div class="c sm">${esc(translate("auth:"))} ${esc(b.nc_authorized_by || "-")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
-    ${b.statutory ? `<div class="c"><img src="${b.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div>` +
-      `<div class="c sm">ICV ${b.statutory.icv}</div>` : ""}
+    ${b.statutory ? `<div class="c"><img src="${esc(b.statutory.qr_image)}" alt="QR" style="width:120px;height:120px"/></div>` +
+      `<div class="c sm">ICV ${esc(b.statutory.icv)}</div>` : ""}
     <div class="thanks">${esc(translate("Thank you. See you again."))}</div>
     ${barcode ? `<div class="bc">${barcode}</div>` : ""}
     <div class="foot">
