@@ -160,6 +160,23 @@ def _recipes_of(menu_items) -> dict:
 	return out
 
 
+def _option_recipes_of(options) -> dict:
+	"""choice -> [(ingredient, qty_per_dish), ...]. What a choice (Extra shot,
+	Oat milk) takes off the shelf on top of the dish's own recipe: the same
+	lines a recipe has, kept on the Menu Modifier Option."""
+	ids = [o for o in options if o]
+	if not ids:
+		return {}
+	out = {}
+	for r in frappe.get_all(
+		"Menu Item Ingredient",
+		filters={"parent": ["in", ids], "parenttype": "Menu Modifier Option"},
+		fields=["parent", "ingredient", "qty"], order_by="idx asc",
+	):
+		out.setdefault(r.parent, []).append((r.ingredient, float(r.qty or 0)))
+	return out
+
+
 def consume_for_lines(order, lines) -> list:
 	"""Take a fired order's recipes off the outlet's stock. Called from
 	fire_kot with the lines it just fired - never from a doc hook, see below.
@@ -204,10 +221,17 @@ def consume_for_lines(order, lines) -> list:
 		return []
 
 	recipes = _recipes_of({it["menu_item"] for it in todo})
+	# a choice can take stock too (Extra shot: 18 g of beans): the dish's own
+	# recipe and its choices are one movement per ingredient, summed
+	extras = _option_recipes_of({o for it in todo for o in it.get("modifiers") or ()})
 	need = {}
 	for it in todo:
+		qty = float(it.get("qty") or 1)
 		for ing, per in recipes.get(it["menu_item"], ()):
-			need[ing] = need.get(ing, 0.0) + per * float(it.get("qty") or 1)
+			need[ing] = need.get(ing, 0.0) + per * qty
+		for opt in it.get("modifiers") or ():
+			for ing, per in extras.get(opt, ()):
+				need[ing] = need.get(ing, 0.0) + per * qty
 	if not need:
 		return []  # nothing fired here has a recipe. Silence is correct.
 

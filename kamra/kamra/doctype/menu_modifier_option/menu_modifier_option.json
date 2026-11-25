@@ -1,0 +1,143 @@
+{
+ "actions": [],
+ "creation": "2026-11-25 22:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "field_order": [
+  "property",
+  "modifier_group",
+  "option_name",
+  "column_break_a",
+  "price",
+  "sort_order",
+  "section_stock",
+  "ingredients"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "modifier_group",
+   "fieldtype": "Link",
+   "label": "Group",
+   "options": "Menu Modifier Group",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "option_name",
+   "fieldtype": "Data",
+   "label": "Choice",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "label": "Adds to the price",
+   "default": "0",
+   "in_list_view": 1,
+   "description": "Added to the dish's price for each one sold. 0 = free."
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Order",
+   "default": "0"
+  },
+  {
+   "fieldname": "section_stock",
+   "fieldtype": "Section Break",
+   "label": "Stock"
+  },
+  {
+   "fieldname": "ingredients",
+   "fieldtype": "Table",
+   "label": "Uses",
+   "options": "Menu Item Ingredient",
+   "description": "What one of these takes off the outlet's stock when the dish is fired to the kitchen, on top of the dish's own recipe. Optional."
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-25 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Menu Modifier Option",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "format:MMO-{#####}",
+ "title_field": "option_name",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "write": 1,
+   "role": "F&B Manager"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Kamra Agent"
+  }
+ ],
+ "track_changes": 1
+}

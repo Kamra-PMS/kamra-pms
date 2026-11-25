@@ -877,6 +877,8 @@ export const menuItemsConfig: ScreenConfig = {
       optionsFrom: "allergens",
       options: ["Egg", "Dairy", "Nuts", "Peanuts", "Gluten", "Soy", "Shellfish", "Fish", "Sesame", "Sulphites"],
       hint: "Edit the list under Settings → F&B → Menu master lists. Matched against the guest allergy note on the kitchen display." },
+    { field: "modifier_groups", label: "Choices", type: "choice_groups",
+      hint: "The groups this dish asks about when it goes on the bill: milk, ice, extras. A group belongs to one outlet. Make and edit groups under Menu → Choices." },
     { field: "is_veg", label: "Vegetarian", type: "check" },
     { field: "is_alcohol", label: "Alcohol", type: "check", dependsOn: sellsAlcohol,
       hint: "Alcohol always bills the guest folio, never the company" },

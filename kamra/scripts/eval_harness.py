@@ -12328,6 +12328,56 @@ def t_card_network_agent_paths():
 	assert (bill().card_network, bill().card_last4) == (None, None), bill()
 
 
+@check("menu choices: the server prices and judges them, the line and the kitchen keep them, stock follows them")
+def t_menu_modifiers():
+	from kamra import inventory, menu_modifiers as mm, pos
+	outlet, dish = _eval_bill_outlet("Eval Choices")
+	beans = frappe.get_doc({"doctype": "Ingredient", "property": P, "ingredient_name": "Eval Choice Beans",
+	                        "uom": "g", "is_active": 1}).insert(ignore_permissions=True).name
+	inventory.receive_stock(P, outlet, [{"ingredient": beans, "qty": 500}])
+	ice = mm.save_modifier_group(outlet, "Ice", [{"option_name": "Normal"}, {"option_name": "Less"}],
+	                             items=[dish], required=1, sort_order=1)["name"]
+	extras = mm.save_modifier_group(
+		outlet, "Extras", [{"option_name": "Shot", "price": 60,
+		                    "ingredients": [{"ingredient": beans, "qty": 18}]},
+		                   {"option_name": "Caramel", "price": 50}],
+		items=[dish], multi=1, max_choices=1, sort_order=2)["name"]
+	pick = lambda g, n: frappe.db.get_value("Menu Modifier Option", {"modifier_group": g, "option_name": n}, "name")
+
+	# a compulsory group left open, and more than the limit, are refused before anything is written
+	for picks, why in (([], "choose Ice"),
+	                   ([pick(ice, "Normal"), pick(extras, "Shot"), pick(extras, "Caramel")], "at most 1")):
+		try:
+			pos.create_order(outlet, [{"menu_item": dish, "qty": 1, "modifiers": picks}], table_no="C1")
+		except frappe.ValidationError as e:
+			assert why in str(e), (why, e)
+		else:
+			raise AssertionError(f"choices accepted that should be refused: {why}")
+
+	# the till sends ids only; the line is the dish plus the choices, and keeps its own copy
+	o = pos.send_order(outlet, [{"menu_item": dish, "qty": 2, "rate": 1,
+	                             "modifiers": [pick(ice, "Less"), pick(extras, "Shot")]}],
+	                   property=P, table_no="C1")
+	line = frappe.get_doc("POS Order", o["order"]).items[0]
+	assert (line.rate, line.modifier_total, line.amount) == (360, 60, 720), (line.rate, line.modifier_total, line.amount)  # the dish is 300
+	assert o["fired_items"][0]["modifiers"] == ["Less", "Shot"], o["fired_items"]
+	kds = [q for q in pos.kitchen_queue(P, outlet) if q["name"] == o["order"]][0]
+	assert kds["items"][0]["modifiers"] == ["Less", "Shot"], kds["items"]
+	assert pos.bill_data(o["order"])["items"][0]["modifiers"] == ["Less", "Shot"]
+	assert frappe.db.get_value("Ingredient Stock", f"{outlet}::{beans}", "qty_on_hand") == 500 - 36, "the choice took no stock"
+
+	# editing the price, then deleting the group, leaves the bill as it was sold
+	frappe.db.set_value("Menu Modifier Option", pick(extras, "Shot"), "price", 999)
+	frappe.db.set_value("Menu Item", dish, "price", 999)
+	mm.delete_modifier_group(extras)
+	pos.add_items(o["order"], [{"menu_item": dish, "qty": 1, "modifiers": [pick(ice, "Normal")]}])
+	rows = frappe.get_doc("POS Order", o["order"]).items
+	assert (rows[0].rate, rows[0].amount) == (360, 720), "a later price change re-priced a line already on the bill"
+	assert [c["name"] for c in mm.load(rows[0].modifiers)] == ["Less", "Shot"]
+	assert not frappe.db.exists("Menu Modifier Group", extras)
+	assert not frappe.db.count("Menu Modifier Option", {"modifier_group": extras})
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12383,7 +12433,8 @@ def execute():
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
-		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths):
+		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
+		           t_menu_modifiers):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

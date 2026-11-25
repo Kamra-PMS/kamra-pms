@@ -24,6 +24,8 @@ interface KotItem {
   item_name: string
   qty: number
   instructions: string | null
+  /** the choices ticked for the dish (milk, ice, extras), by name */
+  modifiers?: string[]
   kot_status: string
   state: LineState
   course: string
@@ -273,6 +275,12 @@ function Line({ it, order, busy, onAction, big }: {
           </span>
           {!done && <AllergyBadge hits={it.allergy_hits} />}
         </div>
+        {!!it.modifiers?.length && (
+          <div className={cn("mt-0.5 flex flex-wrap gap-x-2 font-bold", big ? "text-base" : "text-xs",
+            done ? "text-zinc-400" : "text-zinc-700")}>
+            {it.modifiers.map((m) => <span key={m}>+ {m}</span>)}
+          </div>
+        )}
         {it.instructions && (
           <div className={cn("mt-0.5 font-bold", big ? "text-base" : "text-xs",
             done ? "text-zinc-400" : "text-rose-600")}>
