@@ -6634,15 +6634,26 @@ def _price_stay_nights(res, night_prices) -> tuple[dict, dict]:
 def stay_prices_preview(reservation: str, night_prices=None) -> dict:
 	"""What new nightly prices ([{date, price}], the nights to change) would do
 	to a booking's bill, before anything changes: the current and new totals
-	and the new nightly rates, priced by the same code the save runs. Nights
-	not listed keep their rate. set_stay_prices needs confirm_price=1 when the
-	total changes. A Revenue Manager or Hotel Admin only. Not an agent tool."""
+	and the new nightly rates, priced by the same code the save runs, plus
+	what the guest has paid so far (`paid`) and what is left after the change
+	(`new_balance`, below zero when the guest has paid more than the new
+	total). Nights not listed keep their rate. set_stay_prices wants the new
+	total back as expected_total. A Revenue Manager or Hotel Admin only. Not an
+	agent tool."""
 	from kamra.crs import assert_property_access
 	_require_night_prices_right()
 	res = frappe.get_doc("Reservation", reservation)
 	assert_property_access(res.property)
 	_price_stay_nights(res, night_prices)
-	return _reprice_preview(res)
+	out = _reprice_preview(res)
+	# what the guest has paid on this stay so far (the guest folio's payments, else
+	# the advance taken with the booking) and what is left after the change; below
+	# zero when the guest has paid more than the new total
+	folio = _guest_folio_sums([res.name]).get(res.name)
+	paid = float(folio.paid) if folio else float(res.get("advance_paid") or 0)
+	out["paid"] = round(paid, 2)
+	out["new_balance"] = round(out["new_amount"] - paid, 2)
+	return out
 
 
 @frappe.whitelist()

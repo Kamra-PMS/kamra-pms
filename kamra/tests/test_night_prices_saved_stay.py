@@ -210,6 +210,31 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		self.assertEqual(self.hand(), [0, 0, 0])
 		self.assertEqual(self.res().auto_price, 1)
 
+	def test_the_preview_shows_what_the_guest_has_paid_and_what_is_left(self):
+		typed = [{"date": self.d2, "price": 1500}]
+		pv = stay_prices_preview(self.name, typed)
+		self.assertEqual(pv["paid"], 0)
+		self.assertAlmostEqual(pv["new_balance"], 3500, places=1)
+		# an advance taken with the booking
+		frappe.db.set_value("Reservation", self.name, "advance_paid", 1000)
+		pv = stay_prices_preview(self.name, typed)
+		self.assertEqual(pv["paid"], 1000)
+		self.assertAlmostEqual(pv["new_balance"], 2500, places=1)
+		# the guest folio's payments count once there is a folio
+		from kamra.folio import open_folio
+		folio = open_folio(self.res())
+		frappe.db.set_value("Folio", folio.name if hasattr(folio, "name") else folio,
+		                    "payments_total", 800)
+		pv = stay_prices_preview(self.name, typed)
+		self.assertEqual(pv["paid"], 800)
+		self.assertAlmostEqual(pv["new_balance"], 2700, places=1)
+		# a price cut below what was paid leaves the guest in credit
+		cut = [{"date": d, "price": 100} for d in (self.ci, self.d2, self.d3)]
+		pv = stay_prices_preview(self.name, cut)
+		self.assertAlmostEqual(pv["new_amount"], 300, places=1)
+		self.assertAlmostEqual(pv["new_balance"], -500, places=1)
+		self.assertEqual(self.hand(), [0, 0, 0])  # a preview writes nothing
+
 	# -- the nights are recorded in the property's currency -------------------
 
 	def test_the_comment_reads_in_the_property_currency(self):

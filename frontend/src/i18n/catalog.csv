@@ -354,6 +354,7 @@
 {n} seats,{n} seats,{n} مقاعد,Asientos: {n},{n} assentos,{n} 个座位,screens/POS.tsx,n,translated
 {n} selected,{n} selected,{n} محدد,{n} seleccionados,{n} selecionado(s),已选 {n} 项,screens/Today.tsx,n,translated
 {n} selected · {v0} owed,{n} selected · {v0} owed,{n} محددة · {v0} مستحق,{n} seleccionadas · {v0} por cobrar,{n} selecionadas · {v0} em aberto,已选 {n} 项 · 欠款 {v0},screens/Receivables.tsx,n v0,translated
+{n} set,{n} set,,,,,components/BookingDialog.tsx,n,needs_translation
 {n} stay,{n} stay,{n} إقامة,{n} estancia,{n} estadia,{n} 次住宿,components/BookingDialog.tsx; screens/ReservationDetail.tsx,n,translated
 {n} staying,{n} staying,{n} مقيم,Huéspedes alojados: {n},{n} ficando,{n} 位在住,screens/Today.tsx,n,translated
 {n} stays,{n} stays,{n} إقامة,{n} estancias,{n} estadias,{n} 次住宿,components/BookingDialog.tsx; screens/ReservationDetail.tsx,n,translated
@@ -1529,6 +1530,7 @@ Change dates,Change dates,تغيير التواريخ,Cambiar fechas,Alterar dat
 Change dates or guests,Change dates or guests,تغيير التواريخ أو الضيوف,Cambiar fechas o huéspedes,Alterar datas ou hóspedes,修改日期或宾客,screens/PublicBooking.tsx,,translated
 Change dates or room (re-prices),Change dates or room (re-prices),تغيير التواريخ أو الغرفة (يعيد التسعير),Cambiar fechas o habitación (recalcula el precio),Alterar datas ou quarto (re-preços),修改日期或客房（重新计价）,,,translated
 "Change it in Settings, Finance. Saving rules here replaces the default for this company.","Change it in Settings, Finance. Saving rules here replaces the default for this company.",غيّره من الإعدادات، المالية. حفظ القواعد هنا يستبدل الإعداد الافتراضي لهذه الشركة.,"Puede cambiarla en Configuración, Finanzas. Guardar reglas aquí reemplaza la configuración predeterminada para esta empresa.","Altere-o em Configurações, Finanças. Salvar regras aqui substitui o padrão desta empresa.",在设置 → 财务中修改。此处保存规则将替换该公司的默认值。,components/BillingRulesEditor.tsx,,translated
+Change nightly prices,Change nightly prices,,,,,components/StayRates.tsx,,needs_translation
 Change of plans,Change of plans,تغيير الخطط,Cambio de planes,Mudança de planos,计划变更,,,translated
 Change password,Change password,تغيير كلمة المرور,Cambiar contraseña,Alterar senha,修改密码,AppShell.tsx; screens/UpdatePassword.tsx,,translated
 Change room,Change room,تغيير الغرفة,Cambiar de habitación,Mudar de quarto,换房,components/RoomChangeDialog.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx,,translated
@@ -1647,7 +1649,8 @@ Checking in…,Checking in…,جارٍ تسجيل الوصول…,Registrando en
 Checking out frees the room for housekeeping and records who checked the guest out.,Checking out frees the room for housekeeping and records who checked the guest out.,تسجيل المغادرة يحرر الغرفة للتدبير المنزلي ويسجل اسم من أنهى مغادرة الضيف.,"Al registrar la salida, la habitación queda disponible para limpieza y se guarda quién atendió al huésped.",O check-out libera o quarto para limpeza e registra quem fez o check-out do hóspede.,退房会释放客房供清洁，并记录退房操作人。,components/CheckOutDialog.tsx,,translated
 Checking out…,Checking out…,جارٍ تسجيل المغادرة…,Registrando la salida…,Verificando…,办理退房中…,components/CheckOutDialog.tsx,,translated
 Checking price,Checking price,جارٍ التحقق من السعر,Consultando precio,Verificando preço,查询价格,components/RoomChangeDialog.tsx; screens/TapeChart.tsx,,translated
-Checking…,Checking…,جارٍ التحقق…,Comprobando…,Verificando…,检查中…,components/PinPad.tsx; components/StayRates.tsx; screens/Banquet.tsx; screens/BanquetDiary.tsx; screens/FolioView.tsx; screens/GoLiveImport.tsx; screens/PublicListing.tsx; screens/settings/cards.tsx,,translated
+Checking the new total…,Checking the new total…,,,,,components/StayRates.tsx,,needs_translation
+Checking…,Checking…,جارٍ التحقق…,Comprobando…,Verificando…,检查中…,components/PinPad.tsx; screens/Banquet.tsx; screens/BanquetDiary.tsx; screens/FolioView.tsx; screens/GoLiveImport.tsx; screens/PublicListing.tsx; screens/settings/cards.tsx,,translated
 checkout clean,checkout clean,تنظيف بعد المغادرة,limpieza por salida,limpeza de check-out,退房清洁,,,translated
 Checkout Clean,Checkout Clean,تنظيف بعد المغادرة,Limpieza por salida,Limpeza de check-out,退房清洁,,,translated
 Checkout cleans,Checkout cleans,تنظيفات بعد المغادرة,Limpiezas por salida,Limpezas de check-out,退房清洁,components/HkQuality.tsx,,translated
@@ -3840,6 +3843,7 @@ New room's rate,New room's rate,سعر الغرفة الجديدة,Tarifa de la 
 New service,New service,خدمة جديدة,Nuevo servicio,Novo serviço,新建服务,screens/BanquetCatalogue.tsx,,translated
 New service ticket {name},New service ticket {name},تذكرة خدمة جديدة {name},Nueva solicitud de servicio {name},Novo chamado de serviço {name},新服务工单 {name},components/NotificationHost.tsx,name,translated
 New ticket,New ticket,تذكرة جديدة,Nueva solicitud de servicio,Novo chamado,新建工单,screens/Tickets.tsx,,translated
+"New total {to}, was {from}, {diff}","New total {to}, was {from}, {diff}",,,,,components/StayRates.tsx,to from diff,needs_translation
 New trip,New trip,رحلة جديدة,Nuevo viaje,Nova viagem,新建行程,screens/CRS.tsx,,translated
 New vendor,New vendor,مورد جديد,Nuevo proveedor,Novo fornecedor,新建供应商,screens/Payables.tsx,,translated
 New voucher,New voucher,قسيمة جديدة,Nuevo vale,Novo comprovante,新建优惠券,screens/PettyCash.tsx,,translated
@@ -4620,6 +4624,8 @@ Paid out,Paid out,مدفوع للخارج,Egreso de caja,Pago,现金支出,scree
 Paid Out,Paid Out,مدفوع للخارج,Salida de efectivo,Pago,现金支出,,,translated
 Paid outs,Paid outs,مدفوعات للخارج,Egresos de caja,Pagamentos,现金支出,screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/ManagementBooks.tsx,,translated
 Paid so far,Paid so far,المدفوع حتى الآن,Pagado hasta ahora,Pago até agora,已付金额,components/CheckInDialog.tsx; components/GroupControl.tsx,,translated
+"Paid so far {paid}, which is {credit} more than the new total.","Paid so far {paid}, which is {credit} more than the new total.",,,,,components/StayRates.tsx,paid credit,needs_translation
+Paid so far {paid}. Still to pay after this change: {balance}.,Paid so far {paid}. Still to pay after this change: {balance}.,,,,,components/StayRates.tsx,paid balance,needs_translation
 PAN,PAN,PAN,PAN,PAN,永久账号（PAN）,,,translated
 "Paneer tikka, Hara bhara kebab, Corn seekh","Paneer tikka, Hara bhara kebab, Corn seekh",بانير تكا، هارا بهارا كباب، سيخ الذرة,"Paneer tikka, hara bhara kebab, brochetas de maíz","Paneer tikka, Hara bhara kebab, Corn seekh",奶酪串、菠菜蔬菜饼、玉米串,screens/BanquetCatalogue.tsx,,translated
 Paper width,Paper width,عرض الورق,Ancho del papel,Largura do papel,纸张宽度,screens/KitchenPrinters.tsx,,translated
@@ -5361,7 +5367,6 @@ Reverse payment,Reverse payment,عكس الدفعة,Revertir pago,Estornar pagam
 Reversed,Reversed,معكوسة,Revertido,Estornado,已冲正,screens/Receivables.tsx,,translated
 Review,Review,مراجعة,Revisar,Revisão,审核,screens/TapeChart.tsx,,translated
 Review and close,Review and close,مراجعة وإغلاق,Revisar y cerrar,Revisar e fechar,审核并日结,screens/EndOfDay.tsx,,translated
-Review change,Review change,,,,,components/StayRates.tsx,,needs_translation
 Review payment,Review payment,مراجعة الدفعة,Revisar pago,Rever o pagamento,审核收款,screens/CityLedgerPayment.tsx,,translated
 Review the bill,Review the bill,مراجعة الفاتورة,Revisar la cuenta,Revisar a fatura,审核账单,,,translated
 Revision,Revision,المراجعة,Revisión,Revisão,修订,screens/BanquetDocument.tsx,,translated
@@ -5548,13 +5553,15 @@ Sales by tender,Sales by tender,المبيعات حسب وسيلة الدفع,Ve
 Sales follow-up,Sales follow-up,متابعة المبيعات,Seguimiento de ventas,Acompanhamento de vendas,销售跟进,,,translated
 Sales Ledger Amount,Sales Ledger Amount,مبلغ دفتر المبيعات,Importe de ventas en el libro contable,Valor do livro de vendas,销售分类账金额,,,translated
 Sales summary,Sales summary,ملخص المبيعات,Resumen de ventas,Resumo de vendas,销售汇总,,,translated
+Same as room 1,Same as room 1,,,,,components/RateOptions.tsx,,needs_translation
+Same price every night,Same price every night,,,,,components/StayRates.tsx,,needs_translation
 Same type,Same type,نفس النوع,Mismo tipo,Mesmo tipo,同房型,components/RoomChangeDialog.tsx,,translated
 Sandbox,Sandbox,بيئة الاختبار,Entorno de pruebas,Caixa de areia,沙箱,,,translated
 Sangeet stage - who pays?,Sangeet stage - who pays?,مسرح حفل السانجيت: من يدفع؟,Escenario para la celebración: ¿quién paga?,Palco Sangeet - quem paga?,婚前音乐会舞台 - 谁付费？,screens/BanquetFunction.tsx,,translated
 Saudi Arabia,Saudi Arabia,المملكة العربية السعودية,Arabia Saudita,Arábia Saudita,沙特阿拉伯,,,translated
 Saudi Arabia (FATOORA): seller details for every invoice XML.,Saudi Arabia (FATOORA): seller details for every invoice XML.,المملكة العربية السعودية (فاتورة FATOORA): بيانات البائع لكل فاتورة XML.,Arabia Saudita (FATOORA): datos del emisor para el XML de cada factura.,Arábia Saudita (FATOORA): detalhes do vendedor para cada fatura XML.,沙特阿拉伯（FATOORA）：每张发票 XML 的销售方信息。,,,translated
 Saudi Arabia (FATOORA). Seller details printed in every invoice XML.,Saudi Arabia (FATOORA). Seller details printed in every invoice XML.,المملكة العربية السعودية (فاتورة FATOORA). بيانات البائع مطبوعة في كل فاتورة XML.,Arabia Saudita (FATOORA). Datos del emisor incluidos en el XML de cada factura.,Arábia Saudita (FATOORA). Detalhes do vendedor impressos em cada XML da fatura.,沙特阿拉伯（FATOORA）。销售方信息打印在每张发票 XML 中。,screens/settings/cards.tsx,,translated
-Save,Save,حفظ,Guardar,Salvar,保存,components/EditableNationality.tsx; components/ResourceScreen.tsx; screens/BanquetFunction.tsx; screens/CashierBoard.tsx; screens/CurrencyDesk.tsx; screens/Laundry.tsx; screens/Receivables.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
+Save,Save,حفظ,Guardar,Salvar,保存,components/EditableNationality.tsx; components/ResourceScreen.tsx; components/StayRates.tsx; screens/BanquetFunction.tsx; screens/CashierBoard.tsx; screens/CurrencyDesk.tsx; screens/Laundry.tsx; screens/Receivables.tsx; screens/RegistrationCard.tsx; screens/Reports.tsx; screens/settings/AccessPages.tsx; screens/settings/WebhooksPage.tsx; screens/settings/cards.tsx,,translated
 Save & reprice,Save & reprice,حفظ وإعادة التسعير,Guardar y recalcular precio,Economize e reavalie,保存并重新计价,screens/BanquetFunction.tsx,,translated
 Save addresses,Save addresses,حفظ العناوين,Guardar direcciones,Salvar endereços,保存地址,screens/settings/McpAccessPage.tsx,,translated
 Save and attach,Save and attach,حفظ وربط,Guardar y adjuntar,Salve e anexe,保存并附上,screens/pos/PosSidePanel.tsx,,translated
@@ -5570,12 +5577,12 @@ Save guests,Save guests,حفظ الضيوف,Guardar huéspedes,Salvar hóspedes,
 Save imprest,Save imprest,حفظ السلفة المستديمة,Guardar fondo fijo de caja chica,Salvar adiantamento,保存定额备用金,screens/PettyCash.tsx,,translated
 Save menu,Save menu,حفظ القائمة,Guardar menú,Salvar menu,保存菜单,screens/BanquetCatalogue.tsx,,translated
 Save names ({v0}),Save names ({v0}),حفظ الأسماء ({v0}),Guardar nombres ({v0}),Salvar nomes ({v0}),保存姓名（{v0}）,components/GroupControl.tsx,v0,translated
+Save new total {amount},Save new total {amount},,,,,components/StayRates.tsx,amount,needs_translation
 Save note,Save note,حفظ الملاحظة,Guardar nota,Salvar nota,保存备注,screens/ReservationDetail.tsx,,translated
 Save notes,Save notes,حفظ الملاحظات,Guardar notas,Salvar notas,保存备注,screens/GuestJourney.tsx,,translated
 Save owner,Save owner,حفظ المالك,Guardar propietario,Salvar proprietário,保存业主,screens/UnitOwners.tsx,,translated
 Save password,Save password,حفظ كلمة المرور,Guardar contraseña,Guardar senha,保存密码,screens/UpdatePassword.tsx,,translated
 Save photos & details,Save photos & details,حفظ الصور والتفاصيل,Guardar fotos y detalles,Salvar fotos e detalhes,保存照片与详情,components/RoomTypeMedia.tsx,,translated
-Save prices,Save prices,,,,,components/StayRates.tsx,,needs_translation
 Save printer,Save printer,حفظ الطابعة,Guardar impresora,Salvar impressora,保存打印机,screens/KitchenPrinters.tsx,,translated
 Save recipe,Save recipe,حفظ الوصفة,Guardar receta,Salvar receita,保存配方,screens/RecipeManager.tsx,,translated
 Save register,Save register,حفظ السجل,Guardar registro,Salvar registro,保存登记簿,screens/RegistrationCard.tsx,,translated
@@ -5749,6 +5756,7 @@ Set by hand,Set by hand,,,,,components/StayRates.tsx,,needs_translation
 "Set each room type's base rate, extra adult and child prices.","Set each room type's base rate, extra adult and child prices.",حدّد السعر الأساسي لكل نوع غرفة وأسعار البالغ والطفل الإضافيين.,Configure la tarifa base de cada tipo de habitación y los precios de adultos y menores adicionales.,"Defina a tarifa base de cada tipo de quarto, preços extras para adultos e crianças.",设置各房型基础房价、额外成人及儿童加人价。,,,translated
 Set for corporate business - it also decides which folio the bill lands on.,Set for corporate business - it also decides which folio the bill lands on.,للأعمال الشركاتية - يحدد أيضاً أي فاتورة تستلم الفاتورة.,Configure las condiciones para empresas; también determinan a qué folio se carga la cuenta.,Definido para negócios corporativos - ele também decide em qual extrato a fatura vai parar.,用于公司客户业务，同时决定账单计入哪个客账。,screens/Banquet.tsx,,translated
 Set from the country you chose.,Set from the country you chose.,مضبوطة حسب الدولة التي اخترتها.,Se configuran según el país seleccionado.,Defina a partir do país que você escolheu.,由你选择的国家决定。,../../kamra/onboarding.py,,translated
+Set nightly prices,Set nightly prices,,,,,components/BookingDialog.tsx,,needs_translation
 Set on,Set on,تاريخ التحديد,Fijado el,Definida em,设置于,screens/CurrencyDesk.tsx,,translated
 Set PIN,Set PIN,تعيين الرمز,Establecer PIN,Definir PIN,设置 PIN,components/PinPad.tsx; screens/FolioView.tsx,,translated
 Set rate,Set rate,تحديد سعر الصرف,Establecer tipo de cambio,Definir taxa,设置房价,screens/CurrencyDesk.tsx; screens/UnitOwners.tsx,,translated
@@ -6247,7 +6255,6 @@ The bill against what's already been received.,The bill against what's already b
 The bills stay where they are posted.,The bills stay where they are posted.,تبقى الفواتير حيث رُحّلت.,Las cuentas permanecen en los folios donde se registraron.,As faturas permanecem nos extratos onde foram lançadas.,账单保持在各自入账处。,,,translated
 "The bills this payment cleared are owed again, and any credit it left on the account is taken back.","The bills this payment cleared are owed again, and any credit it left on the account is taken back.",تعود الفواتير التي سددتها هذه الدفعة مستحقة من جديد، ويُسحب أي رصيد دائن تركته في الحساب.,"Las facturas que saldó este pago vuelven a quedar pendientes, y se retira cualquier saldo a favor que dejó en la cuenta.","As faturas que este pagamento quitou voltam a ficar em aberto, e qualquer crédito que ele deixou na conta é retirado.",该笔收款已核销的账单将恢复为欠款，其在账户中留下的贷方余额也将被撤回。,screens/Receivables.tsx,,translated
 The booking ended without a stay - nothing is owed.,The booking ended without a stay - nothing is owed.,انتهى الحجز دون إقامة، ولا يوجد مبلغ مستحق.,La reserva terminó sin estancia y no hay saldo pendiente.,A reserva terminou sem estadia - nada é devido.,预订未产生住宿即结束 - 无欠款。,screens/ReservationDetail.tsx,,translated
-The booking total changes from {from} to {to} ({diff}).,The booking total changes from {from} to {to} ({diff}).,,,,,components/StayRates.tsx,from to diff,needs_translation
 The browser could not open the print view.,The browser could not open the print view.,تعذّر على المتصفح فتح عرض الطباعة.,El navegador no pudo abrir la vista de impresión.,O navegador não conseguiu abrir a visualização de impressão.,浏览器无法打开打印视图。,,,translated
 The business date is ahead of the server date. The audit for it can run once that day has started.,The business date is ahead of the server date. The audit for it can run once that day has started.,تاريخ العمل يسبق تاريخ الخادم. يمكن تشغيل التدقيق له عندما يبدأ ذلك اليوم.,La fecha operativa es posterior a la fecha del servidor. La auditoría puede ejecutarse cuando comience esa fecha.,A data operacional está à frente da data do servidor. O fechamento pode ser executado assim que o dia começar.,营业日晚于服务器日期，须待该营业日开始后才能运行夜审。,screens/EndOfDayWizard.tsx,,translated
 The cashier has gone home: a manager counts the drawer with the envelope and closes it.,The cashier has gone home: a manager counts the drawer with the envelope and closes it.,غادر أمين الصندوق: يعدّ المدير الدرج مع الظرف ويغلقه.,"Si el cajero ya se retiró, un gerente debe contar el efectivo junto con el sobre y cerrar la sesión.",O caixa foi para casa: um gerente conta a gaveta com o envelope e fecha-a.,收银员已下班：由经理根据现金信封清点钱箱并结班。,,,translated
