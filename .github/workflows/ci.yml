@@ -71,6 +71,10 @@ jobs:
         run: npm run bill:check
         working-directory: frontend
 
+      - name: Check amounts in another currency use that currency's decimals
+        run: npm run money:check
+        working-directory: frontend
+
       - name: Check the food-order basket survives a typed done
         run: npm run agent-order:check
         working-directory: frontend
