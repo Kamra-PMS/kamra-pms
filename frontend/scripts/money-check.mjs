@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-/** Checks for fmtAmount (lib/money.ts): an amount in another currency than the property's own
- *  (a stay at another property on a trip) is printed with that currency's decimals. Pure Node:
- *  money.ts is bundled with small stand-ins for React, the API client and the language module. */
+/** Checks for fmtAmount (lib/money.ts) and tripMoney (lib/tripMoney.ts): an amount in another currency
+ *  than the property's own (a stay at another property on a trip) is printed with that currency's
+ *  decimals, and a trip's figures take their currency from the right stay. Pure Node: both are bundled with small stand-ins for React, the API client and the language module. */
 import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
@@ -17,7 +17,7 @@ const stubs = {
 }
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "money-check-"))
 await build({
-  entryPoints: { money: lib + "money.ts" }, bundle: true, format: "esm", platform: "node", outdir: dir, logLevel: "silent",
+  entryPoints: { money: lib + "money.ts", tripMoney: lib + "tripMoney.ts" }, bundle: true, format: "esm", platform: "node", outdir: dir, logLevel: "silent",
   plugins: [{
     name: "stand-ins",
     setup(b) {
@@ -29,6 +29,7 @@ await build({
 // money.ts remembers the locale in localStorage when there is one; there is none here
 Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true })
 const { fmtAmount, fmtMoney, adoptUiLocale } = await import(pathToFileURL(path.join(dir, "money.js")).href)
+const { tripMoney } = await import(pathToFileURL(path.join(dir, "tripMoney.js")).href)
 
 // a property that keeps its books in rupees
 adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
@@ -46,6 +47,21 @@ assert.equal(fmtAmount(1234.5, "ZZZ"), "1,234.50", "an unknown code falls back t
 assert.equal(fmtAmount(1234.5, "not a code"), "1,234.50", "so does one that is not a code at all")
 assert.equal(fmtAmount(undefined, "IDR"), "0")
 assert.equal(fmtMoney(5000), "₹5,000.00", "fmtMoney still uses the property's currency")
+
+// a trip's header and confirmation: the symbol and code come from the stays the figures add up
+const idr = (status) => ({ status, currency: "IDR", currency_symbol: "Rp" })
+const usd = (status) => ({ status, currency: "USD", currency_symbol: "$" })
+const header = (legs, n = 5000) => { const { live } = tripMoney(legs); return `${live.sym}${fmtAmount(n, live.code)}` }
+assert.equal(header([idr("Confirmed"), idr("Confirmed")]), "Rp5,000", "an all-rupiah trip seen from a rupee desk: no cents")
+assert.equal(header([usd("Cancelled"), idr("Confirmed")]), "Rp5,000", "a cancelled first stay in dollars does not label the live total")
+assert.equal(header([usd("Cancelled"), idr("Checked In"), idr("Held")]), "Rp5,000", "Checked In and Held are live")
+assert.equal(header([usd("No Show"), idr("Pending Payment")]), "Rp5,000", "a no-show is not live")
+assert.equal(tripMoney([usd("Cancelled"), idr("Confirmed")]).held.code, "USD", "the advance held on cancelled stays takes the cancelled stay's currency")
+assert.equal(tripMoney([usd("Cancelled"), idr("Confirmed")]).held.sym, "$")
+assert.equal(tripMoney([idr("Confirmed")]).held.code, "IDR", "with none cancelled it falls back to the first stay")
+assert.deepEqual(tripMoney([usd("Cancelled")]).live, { sym: "$", code: "USD" }, "with no live stay it falls back to the first stay")
+assert.deepEqual(tripMoney([]).live, { sym: "", code: undefined }, "no stays, no symbol")
+assert.deepEqual(tripMoney([{ status: "Confirmed" }]).live, { sym: "", code: undefined }, "a stay without a currency prints with the property's own")
 
 // a property that keeps its books in rupiah, with a stay in dollars on the same trip
 adoptUiLocale({ currency: "IDR", locale: "id-ID", currency_symbol: "Rp" })

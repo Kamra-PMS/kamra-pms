@@ -9,6 +9,7 @@ import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { cur, useLocale, fmtAmount } from "../lib/money"
+import { tripMoney } from "../lib/tripMoney"
 import { useT, t as translate } from "../lib/i18n"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { shiftDate } from "../lib/stay"
@@ -554,7 +555,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
     } catch (e) { setError(serverError(e)) } finally { setBusy(false) }
   }
 
-  const sym = d?.legs[0]?.currency_symbol ?? ""
+  const { live, held } = tripMoney(d?.legs ?? [])
   const canAdvance = d?.legs.some((l) => ["Confirmed", "Pending Payment", "Held"].includes(l.status))
   const cancellable = d?.legs.some((l) => l.status === "Confirmed")
   return (
@@ -586,15 +587,15 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
             {d.total != null && (
               <span className="text-sm text-zinc-600">
                 {t("Total {amount} · advance paid {paid}", {
-                  amount: `${sym}${inr(d.total)}`, paid: `${sym}${inr(d.advance_paid ?? 0)}` })}
+                  amount: `${live.sym}${inr(d.total, live.code)}`, paid: `${live.sym}${inr(d.advance_paid ?? 0, live.code)}` })}
                 {(d.advance_due ?? 0) > 0 && (
                   <span className="text-amber-700">
-                    {" · "}{t("advance due {amount}", { amount: `${sym}${inr(d.advance_due)}` })}
+                    {" · "}{t("advance due {amount}", { amount: `${live.sym}${inr(d.advance_due, live.code)}` })}
                   </span>
                 )}
                 {(d.advance_held_cancelled ?? 0) > 0 && (
                   <span>
-                    {" · "}{t("still held on cancelled stays {amount}", { amount: `${sym}${inr(d.advance_held_cancelled)}` })}
+                    {" · "}{t("still held on cancelled stays {amount}", { amount: `${held.sym}${inr(d.advance_held_cancelled, held.code)}` })}
                   </span>
                 )}
               </span>

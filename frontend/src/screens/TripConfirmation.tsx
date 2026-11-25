@@ -5,6 +5,7 @@ import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
 import { fmtAmount } from "../lib/money"
+import { tripMoney } from "../lib/tripMoney"
 import { useT } from "../lib/i18n"
 import type { Itinerary } from "./CRS"
 
@@ -28,8 +29,7 @@ export default function TripConfirmation() {
 
   if (error) return <p className="py-10 text-center text-rose-600">{t(error)}</p>
   if (!d) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
-  const sym = d.legs[0]?.currency_symbol ?? ""
-  const code = d.legs[0]?.currency   // the trip totals only exist when every stay is in one currency
+  const { sym, code } = tripMoney(d.legs).live
 
   return (
     <div className="mx-auto max-w-2xl">
