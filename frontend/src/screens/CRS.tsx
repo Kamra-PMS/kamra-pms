@@ -14,8 +14,8 @@ import { useCashierAuth } from "../lib/cashierAuth"
 import { shiftDate } from "../lib/stay"
 
 
-const inr = (n: unknown) =>
-  fmtAmount(n ?? 0)
+const inr = (n: unknown, currency?: string | null) =>
+  fmtAmount(n ?? 0, currency)
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +
@@ -61,6 +61,8 @@ interface QuotedLeg extends TripLeg {
   available: number
   amount_after_tax: number
   currency_symbol: string
+  /** the stay's own currency code: its decimals, not the property's */
+  currency?: string | null
   advance_percent: number
   advance_due: number
 }
@@ -94,6 +96,7 @@ export interface Itinerary {
 interface AdvancePlan {
   amount: number
   currency_symbol: string
+  currency?: string | null
   advance_due: number
   unpaid: number
   legs: { reservation: string; property_name: string; check_in_date: string;
@@ -106,7 +109,7 @@ interface TripRow {
   legs: { reservation: string; property: string; check_in_date: string; check_out_date: string; status: string }[]
 }
 interface CancelPreview {
-  legs: { reservation: string; property: string; estimated_fee: number; fee_basis: string; currency_symbol: string }[]
+  legs: { reservation: string; property: string; estimated_fee: number; fee_basis: string; currency_symbol: string; currency?: string | null }[]
   not_cancellable: { reservation: string; status: string }[]
   total_fee: number | null
 }
@@ -315,7 +318,7 @@ export default function CRS() {
                     <span className="font-medium">{leg.property_name}</span>
                     <span className="text-zinc-500">{leg.room_type_name} · {leg.check_in_date} → {leg.check_out_date}</span>
                     {q && q.available < 1 && <Badge tone="rose">{t("No room free")}</Badge>}
-                    <span className="ml-auto font-medium">{q ? `${q.currency_symbol}${inr(q.amount_after_tax)}` : "…"}</span>
+                    <span className="ml-auto font-medium">{q ? `${q.currency_symbol}${inr(q.amount_after_tax, q.currency)}` : "…"}</span>
                     <Button variant="ghost" aria-label={t("Remove stay")}
                       onClick={() => setTrip(trip.filter((_, j) => j !== i))}>
                       <X className="size-4" />
@@ -328,7 +331,7 @@ export default function CRS() {
               <span>{t("Trip total, taxes in")}</span>
               <span>
                 {tripQuote?.total != null
-                  ? `${tripQuote.legs[0]?.currency_symbol ?? ""}${inr(tripQuote.total)}`
+                  ? `${tripQuote.legs[0]?.currency_symbol ?? ""}${inr(tripQuote.total, tripQuote.legs[0]?.currency)}`
                   : tripQuote ? t("Each stay is billed in its own currency") : "…"}
               </span>
             </div>
@@ -336,7 +339,7 @@ export default function CRS() {
               <div className="flex justify-between text-sm text-zinc-600">
                 <span>{t("Advance due at booking ({pcts})", {
                   pcts: tripQuote!.legs.map((l) => `${l.advance_percent}%`).join(", ") })}</span>
-                <span>{`${tripQuote!.legs[0]?.currency_symbol ?? ""}${inr(tripQuote!.advance_due)}`}</span>
+                <span>{`${tripQuote!.legs[0]?.currency_symbol ?? ""}${inr(tripQuote!.advance_due, tripQuote!.legs[0]?.currency)}`}</span>
               </div>
             )}
             <div className="grid gap-3 sm:grid-cols-3">
@@ -609,9 +612,9 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
                 <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-zinc-600">
                   <span>{l.check_in_date} → {l.check_out_date}</span>
                   <span>{l.room_type_name}{l.room ? ` · ${l.room}` : ""}</span>
-                  <span>{l.currency_symbol}{inr(l.amount_after_tax)}</span>
-                  {l.advance_paid > 0 && <span>{t("Paid {amount}", { amount: `${l.currency_symbol}${inr(l.advance_paid)}` })}</span>}
-                  {l.deposit_due > 0 && <span className="text-amber-700">{t("Advance due {amount} ({pct}%)", { amount: `${l.currency_symbol}${inr(l.deposit_due)}`, pct: String(l.advance_percent) })}</span>}
+                  <span>{l.currency_symbol}{inr(l.amount_after_tax, l.currency)}</span>
+                  {l.advance_paid > 0 && <span>{t("Paid {amount}", { amount: `${l.currency_symbol}${inr(l.advance_paid, l.currency)}` })}</span>}
+                  {l.deposit_due > 0 && <span className="text-amber-700">{t("Advance due {amount} ({pct}%)", { amount: `${l.currency_symbol}${inr(l.deposit_due, l.currency)}`, pct: String(l.advance_percent) })}</span>}
                   {l.cancellation_number && <span>{l.cancellation_number}</span>}
                 </div>
                 <button className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline"
@@ -642,8 +645,8 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
                   {adv.plan.legs.map((l) => (
                     <div key={l.reservation} className="flex justify-between gap-2">
                       <span>{l.property_name} · {l.check_in_date} · {t("due {amount} ({pct}%)", {
-                        amount: `${adv.plan!.currency_symbol}${inr(l.advance_due)}`, pct: String(l.advance_percent) })}</span>
-                      <span className="font-medium">{adv.plan!.currency_symbol}{inr(l.share)}</span>
+                        amount: `${adv.plan!.currency_symbol}${inr(l.advance_due, adv.plan!.currency)}`, pct: String(l.advance_percent) })}</span>
+                      <span className="font-medium">{adv.plan!.currency_symbol}{inr(l.share, adv.plan!.currency)}</span>
                     </div>
                   ))}
                 </>
@@ -651,7 +654,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setAdv(null)}>{t("Close")}</Button>
                 <Button disabled={busy || !adv.plan || Number(adv.amount) !== adv.plan.amount} onClick={takeAdvance}>
-                  {adv.plan ? t("Take {amount}", { amount: `${adv.plan.currency_symbol}${inr(adv.plan.amount)}` }) : t("Take advance")}
+                  {adv.plan ? t("Take {amount}", { amount: `${adv.plan.currency_symbol}${inr(adv.plan.amount, adv.plan.currency)}` }) : t("Take advance")}
                 </Button>
               </div>
             </div>
@@ -662,7 +665,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
               {preview.legs.map((l) => (
                 <div key={l.reservation} className="flex justify-between">
                   <span>{l.property} · {l.reservation}</span>
-                  <span>{l.estimated_fee > 0 ? `${l.currency_symbol}${inr(l.estimated_fee)}` : t("No fee")}</span>
+                  <span>{l.estimated_fee > 0 ? `${l.currency_symbol}${inr(l.estimated_fee, l.currency)}` : t("No fee")}</span>
                 </div>
               ))}
               {preview.not_cancellable.length > 0 && (
@@ -678,7 +681,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
                 <Button variant="outline" onClick={() => setPreview(null)}>{t("Keep trip")}</Button>
                 <Button disabled={busy} onClick={cancelTrip}>
                   {preview.total_fee
-                    ? t("Cancel trip, fees {amount}", { amount: `${preview.legs[0]?.currency_symbol ?? ""}${inr(preview.total_fee)}` })
+                    ? t("Cancel trip, fees {amount}", { amount: `${preview.legs[0]?.currency_symbol ?? ""}${inr(preview.total_fee, preview.legs[0]?.currency)}` })
                     : t("Cancel trip")}
                 </Button>
               </div>

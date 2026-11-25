@@ -20,7 +20,8 @@
     "night-prices:check": "node scripts/night-prices-check.mjs",
     "agent-order:check": "node scripts/agent-order-check.mjs",
     "dates:check": "node scripts/local-dates-check.mjs",
-    "offline:check": "node scripts/offline-check.mjs"
+    "offline:check": "node scripts/offline-check.mjs",
+    "money:check": "node scripts/money-check.mjs"
   },
   "dependencies": {
     "libphonenumber-js": "^1.13.15",
