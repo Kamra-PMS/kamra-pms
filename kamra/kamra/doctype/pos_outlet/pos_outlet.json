@@ -20,6 +20,7 @@
   "kot_mode",
   "logo",
   "receipt_design",
+  "print_barcode",
   "tables",
   "waiters"
  ],
@@ -106,6 +107,13 @@
    "options": "Columns\nStacked"
   },
   {
+   "default": "1",
+   "description": "Print a barcode of the order number at the bottom of this outlet's bills.",
+   "fieldname": "print_barcode",
+   "fieldtype": "Check",
+   "label": "Print Barcode"
+  },
+  {
    "fieldname": "tables",
    "fieldtype": "Small Text",
    "label": "Tables",
@@ -122,7 +130,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-24 13:00:00.000000",
+ "modified": "2026-11-25 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Outlet",
