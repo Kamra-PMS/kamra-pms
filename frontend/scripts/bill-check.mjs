@@ -107,12 +107,13 @@ const laundry = laundryDocketHtml({ property_name: EVIL, order: EVIL, room_no: E
 assert.ok(!/<img/i.test(laundry), "the laundry docket escapes everything")
 
 // ---- the logo: an uploaded file or an https link only ---------------------------------------
-for (const ok of ["/files/logo.png", "/private/files/logo.png", "https://example.com/logo.png"]) {
+for (const ok of ["/files/logo.png", "/private/files/logo.png", "https://example.com/logo.png", "/files/my%20logo.png"]) {
   const html = billHtml(bill({ logo: ok }))
   assert.ok(html.includes(`<div class="logo"><img src="${ok}"`), `${ok} is printed as the logo`)
 }
 for (const bad of ["", "http://example.com/logo.png", "javascript:alert(1)", "data:image/svg+xml;base64,PHN2Zz4=",
-  "//example.com/logo.png", "/files/../etc/passwd", '/files/x.png" onerror="y', "/files/a b.png", "ftp://example.com/x.png"]) {
+  "//example.com/logo.png", "/files/../etc/passwd", '/files/x.png" onerror="y', "/files/a b.png", "ftp://example.com/x.png",
+  "/files/%2e%2e/etc/passwd", "/files/%2E%2E/x.png", "/files/%zz.png"]) {
   const html = billHtml(bill({ logo: bad }))
   assert.ok(!html.includes('class="logo"') && !/<img/i.test(html), `${JSON.stringify(bad)} is not printed as a logo`)
   assert.ok(html.includes('class="c brand">Warung<'), "the outlet name prints instead")

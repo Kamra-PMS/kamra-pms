@@ -102,17 +102,16 @@ const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string))
 
-/** The logo prints inside a box of at most 16 mm high and 60 mm wide, keeping its shape:
- *  a square logo is 16 x 16, a wide one keeps 16 mm until it reaches 60 mm, then shrinks. */
-export const LOGO_MAX_H_MM = 16
-export const LOGO_MAX_W_MM = 60
-
 /** Only an uploaded file or an https link may print as the logo: a javascript: or data: URL, a plain
  *  http one or a path with .. in it is ignored, and the outlet name prints instead. */
 export const logoSrc = (u: unknown): string => {
   const s = String(u ?? "").trim()
   const allowed = /^(\/files\/|\/private\/files\/|https:\/\/)[^\s"'<>\\]+$/.test(s)
-  return allowed && !s.split("/").includes("..") ? s : ""
+  // check the decoded path too, so /files/%2e%2e/x cannot step out of /files/
+  let decoded: string
+  try { decoded = decodeURIComponent(s) } catch { return "" }
+  const noDotDot = (p: string) => !p.split("/").includes("..")
+  return allowed && noDotDot(s) && noDotDot(decoded) ? s : ""
 }
 
 export function logoSizeMm(naturalWidth: number, naturalHeight: number) {

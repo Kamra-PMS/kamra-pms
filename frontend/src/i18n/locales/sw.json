@@ -7034,5 +7034,7 @@
   "{n} folios": "bili {n}",
   "{n} no-show": "hakufika {n}",
   "{n} no-shows": "hakufika {n}",
-  "Rounding": "Kukadiria"
+  "Rounding": "Kukadiria",
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "Msimbopau wa namba ya oda huchapishwa chini ya bili za kituo hiki, ili bili ipatikane kwa kuuskani. Mifano iliyo juu hufuata swichi hii.",
+  "Print a barcode on the bill": "Chapisha msimbopau kwenye bili"
 }

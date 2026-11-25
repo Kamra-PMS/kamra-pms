@@ -11920,7 +11920,8 @@ def t_pos_outlet_receipt():
 		doc.logo = ok
 		doc.save(ignore_permissions=True)
 	for bad in ("javascript:alert(1)", "http://example.com/logo.png", "data:image/svg+xml;base64,PHN2Zz4=",
-	            "//example.com/logo.png", "/files/../etc/passwd", '/files/x.png" onerror="y'):
+	            "//example.com/logo.png", "/files/../etc/passwd", '/files/x.png" onerror="y',
+	            "/files/%2e%2e/etc/passwd", "/files/%2E%2E/x.png"):
 		doc = frappe.get_doc("POS Outlet", outlet.name)
 		doc.logo = bad
 		try:

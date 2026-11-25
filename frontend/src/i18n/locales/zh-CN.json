@@ -7034,5 +7034,7 @@
   "{n} folios": "{n} 个客账",
   "{n} no-show": "{n} 个未到店",
   "{n} no-shows": "{n} 个未到店",
-  "Rounding": "舍入差额"
+  "Rounding": "舍入差额",
+  "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples above follow this switch.": "此营业点的账单底部会打印订单号条码，扫码即可找到账单。上方示例会随此开关变化。",
+  "Print a barcode on the bill": "在账单上打印条码"
 }

@@ -23,9 +23,14 @@ def _is_safe_logo(url: str) -> bool:
 	"""Only an uploaded file or an https link may be the receipt logo. A javascript: or data: URL,
 	a plain http one, a protocol-relative one or a path with .. in it is refused. The bill renderer
 	applies the same rule (logoSrc in frontend/src/lib/thermal.ts)."""
+	from urllib.parse import unquote
+
 	url = url.strip()
+	# check the decoded path too, so /files/%2e%2e/x cannot step out of /files/
+	decoded = unquote(url)
 	return (url.startswith(("/files/", "/private/files/", "https://"))
-	        and not any(c in url for c in ' "\'<>\\') and ".." not in url.split("/"))
+	        and not any(c in url for c in ' "\'<>\\')
+	        and ".." not in url.split("/") and ".." not in decoded.split("/"))
 
 
 def _issues_pos_invoices(property: str) -> bool:
