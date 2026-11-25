@@ -19,10 +19,10 @@ Payments this month,இந்த மாதக் கட்டணங்கள்
 Taxable value,வரிக்குட்பட்ட மதிப்பு
 "Your bill for {0} is attached: {1} billed, {2} due.","{0}-க்கான உங்கள் பில் இணைக்கப்பட்டுள்ளது: {1} பில் செய்யப்பட்டது, {2} செலுத்த வேண்டியது."
 Balance due,செலுத்த வேண்டிய நிலுவை
-Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,உங்கள் AI சாவியில் கிரெடிட் தீர்ந்துவிட்டது. உங்கள் வழங்குநரிடம் நிரப்பவும் அல்லது அமைப்புகள் > AI உதவியாளரில் சாவியை மாற்றவும்.
+Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,உங்கள் AI key-இல் கிரெடிட் தீர்ந்துவிட்டது. உங்கள் வழங்குநரிடம் நிரப்பவும் அல்லது அமைப்புகள் > AI உதவியாளரில் key-ஐ மாற்றவும்.
 Sells alcohol,மதுபானம் விற்கிறது
 "Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","மதுபானம் இல்லாத ஹோட்டலுக்கு அணைக்கவும்: ஒவ்வொரு மதுபானப் புலம், தேர்வுப்பெட்டி மற்றும் லேபிளும் எல்லா மொழிகளிலும் மறைக்கப்படும். முன்பு சேர்க்கப்பட்ட எதுவும் மாறாது."
-Extend unchecked-out departures one night,செக்-அவுட் செய்யாத புறப்பாடுகளை ஓர் இரவு நீட்டி
+Extend unchecked-out departures one night,செக்-அவுட் செய்யாத புறப்பாடுகளை ஓர் இரவு நீட்டிக்கவும்
 "On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.","இயக்கம்: புறப்பாட்டுத் தேதி கடந்தும் செக்-இன் நிலையில் உள்ள விருந்தினர், தணிக்கை இயங்கும்போது ஓர் இரவு நீட்டிக்கப்படுவார், அந்த இரவு மற்றவற்றைப் போலவே சேர்க்கப்படும். நீட்டிக்க முடியாத தங்குதல் (அறை புக் செய்யப்பட்டுள்ளது) சரிபார்ப்புப் பட்டியலில் இருக்கும்."
 The guest owes {0} - nothing is due back to refund.,விருந்தினர் {0} செலுத்த வேண்டும் - பணத்திருப்பம் செய்ய எதுவும் இல்லை.
 Only {0} is due back to the guest - can't refund more than that.,விருந்தினருக்குத் திருப்பித் தர வேண்டியது {0} மட்டுமே - அதற்கு மேல் பணத்திருப்பம் செய்ய முடியாது.
@@ -48,7 +48,7 @@ Misc,இதர
 Early Check-in,முன்கூட்டிய செக்-இன்
 Late Checkout,தாமதமான செக்-அவுட்
 Early Departure,முன்கூட்டிய புறப்பாடு
-Cleaning Fee,சுத்தக் கட்டணம்
+Cleaning Fee,சுத்தம் செய்யும் கட்டணம்
 Extra Guests,கூடுதல் விருந்தினர்கள்
 Pet Charge,செல்லப்பிராணிக் கட்டணம்
 Bills paid,செலுத்தப்பட்ட பில்கள்

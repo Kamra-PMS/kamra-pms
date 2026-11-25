@@ -18,8 +18,8 @@ Payments this month,इस महीने के भुगतान
 "Pick a month, like 2026-10.","एक महीना चुनें, जैसे 2026-10।"
 Taxable value,कर योग्य मूल्य
 "Your bill for {0} is attached: {1} billed, {2} due.","{0} का आपका बिल संलग्न है: {1} बिल किया गया, {2} देय।"
-Balance due,देय बकाया
-Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,आपकी AI कुंजी का क्रेडिट खत्म हो गया है। अपने प्रोवाइडर से टॉप अप करें या Settings > AI assistant में कुंजी बदलें।
+Balance due,बकाया राशि
+Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,आपकी AI की का क्रेडिट खत्म हो गया है। अपने प्रोवाइडर से टॉप अप करें या Settings > AI assistant में की बदलें।
 Sells alcohol,शराब बेचता है
 "Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","शराब-मुक्त प्रॉपर्टी के लिए बंद: हर शराब फ़ील्ड, टिक बॉक्स और लेबल हर भाषा में छिप जाता है। पहले पोस्ट हुआ कुछ नहीं बदलता।"
 Extend unchecked-out departures one night,चेक-आउट न हुए प्रस्थान एक रात बढ़ाएँ
@@ -27,10 +27,10 @@ Extend unchecked-out departures one night,चेक-आउट न हुए प�
 The guest owes {0} - nothing is due back to refund.,अतिथि पर {0} बकाया है - रिफ़ंड के लिए कुछ वापस देय नहीं है।
 Only {0} is due back to the guest - can't refund more than that.,अतिथि को केवल {0} वापस देय है - इससे ज़्यादा रिफ़ंड नहीं हो सकता।
 Room type code {0} is already used at this property.,कमरे के प्रकार का कोड {0} इस प्रॉपर्टी पर पहले से इस्तेमाल हो रहा है।
-There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,इस बिल पर अभी कोई कमरा रात नहीं है। छूट पोस्ट हुई रातों पर लगती है: इसे नाइट ऑडिट के बाद या चेक-आउट पर दें।
+There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,इस बिल पर अभी कोई रूम नाइट नहीं है। छूट पोस्ट हुई रातों पर लगती है: इसे नाइट ऑडिट के बाद या चेक-आउट पर दें।
 Enter a discount above zero.,शून्य से ज़्यादा छूट डालें।
 A discount can't be more than 100%.,छूट 100% से ज़्यादा नहीं हो सकती।
-The discount is more than the room nights on the bill ({0}).,छूट बिल पर कमरा रातों ({0}) से ज़्यादा है।
+The discount is more than the room nights on the bill ({0}).,छूट बिल पर रूम नाइट्स ({0}) से ज़्यादा है।
 "This folio is settled - give the discount on the guest's open folio, or cancel the invoice first.","यह फ़ोलियो निपट चुका है - छूट अतिथि के खुले फ़ोलियो पर दें, या पहले इनवॉइस रद्द करें।"
 "Pick a percent or an amount, per night or for the stay.","प्रतिशत या राशि चुनें, प्रति रात या पूरे ठहराव के लिए।"
 Promo code {0} is already on this stay.,प्रोमो कोड {0} पहले से इस ठहराव पर है।
@@ -50,7 +50,7 @@ Late Checkout,लेट चेक-आउट
 Early Departure,जल्दी प्रस्थान
 Cleaning Fee,सफ़ाई शुल्क
 Extra Guests,अतिरिक्त अतिथि
-Pet Charge,पालतू शुल्क
+Pet Charge,पेट चार्ज
 Bills paid,भुगतान किए गए बिल
 {0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,इस ठहराव के {0} बिल अभी अतिथि के बिल पर नहीं हैं: {1}। चेक-आउट से पहले इन्हें कमरे पर पोस्ट करें या निपटाएँ।
 Bills still open,अभी खुले बिल
