@@ -44,6 +44,8 @@ import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
 import StayInstructions from "../components/StayInstructions"
 import StayRates from "../components/StayRates"
+import ChangeGuestDialog from "../components/ChangeGuestDialog"
+import { useAuth } from "../lib/auth"
 import { cur, fmtAmount } from "../lib/money"
 import { t as translate, tn, useUILanguage } from "../lib/i18n"
 
@@ -200,6 +202,8 @@ export default function ReservationDetail({
   const [reinstated, setReinstated] = useState<string[]>([])
   const [reverseKeys, setReverseKeys] = useState<string | null>(null)
   const [changingRoom, setChangingRoom] = useState(false)
+  const [changingGuest, setChangingGuest] = useState(false)
+  const { allowed } = useAuth()
   const [declineReason, setDeclineReason] = useState("")
 
   const refresh = useCallback(() => {
@@ -562,13 +566,24 @@ export default function ReservationDetail({
           icon={<User className="size-4" />}
           title={translate("Guest")}
           action={
-            d.guest ? (
-              <Link
-                to={`/guests/${encodeURIComponent(d.guest.name)}`}
-                onClick={onClose}
-                className="text-xs font-medium text-brand-700 hover:underline"
-              >{translate("Guest journey →")}</Link>
-            ) : undefined
+            <span className="flex items-center gap-3">
+              {/* before check-in only: a different person arrived for the booking */}
+              {!["Checked In", "Checked Out", "Cancelled", "No Show"].includes(d.status) &&
+                allowed("Reservation", "handle_stays", ["Front Desk", "Hotel Admin"]) && (
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-brand-700 hover:underline"
+                    onClick={() => setChangingGuest(true)}
+                  >{translate("Change guest")}</button>
+                )}
+              {d.guest && (
+                <Link
+                  to={`/guests/${encodeURIComponent(d.guest.name)}`}
+                  onClick={onClose}
+                  className="text-xs font-medium text-brand-700 hover:underline"
+                >{translate("Guest journey →")}</Link>
+              )}
+            </span>
           }
         >
           {d.guest ? (
@@ -824,6 +839,18 @@ export default function ReservationDetail({
             setCheckingOut(false)
             onClose()
             navigate("/", { state: { checkout: resName } })
+          }}
+        />
+      )}
+      {changingGuest && (
+        <ChangeGuestDialog
+          reservation={d.name}
+          guestName={d.guest?.full_name ?? ""}
+          onClose={() => setChangingGuest(false)}
+          onDone={() => {
+            setChangingGuest(false)
+            refresh()
+            reload()
           }}
         />
       )}

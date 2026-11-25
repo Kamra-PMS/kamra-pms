@@ -3933,6 +3933,109 @@ def merge_guests(source: str, target: str):
 	return {"target": target, "moved": moved}
 
 
+# The documents of ONE booking that name its guest, repointed when the booking
+# changes guest. A WhatsApp message stays with the person it was sent to.
+_BOOKING_GUEST_DOCS = ("Folio", "Security Deposit", "Service Ticket", "POS Order",
+                       "Recreation Visit")
+_GUEST_CHANGE_CLOSED = ("Checked In", "Checked Out", "Cancelled", "No Show")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_perm("Reservation", "handle_stays")
+def change_booking_guest(reservation: str, guest: str | None = None,
+                         guest_name: str | None = None, phone: str | None = None,
+                         reason: str | None = None,
+                         blacklist_override_reason: str | None = None) -> dict:
+	"""A different person turns up for a booking made under someone else's
+	name or number: move the booking to them, before check-in.
+
+	Pass `guest` (an existing profile) or `guest_name` + `phone` (a new
+	person). A new name and phone that match an existing profile reuse it, as
+	a booking does; otherwise a new profile is made. The booking, and its own
+	folio, deposits, tickets and orders, now name the new guest and nothing
+	else changes: the old profile and its other stays are untouched, folio
+	lines and totals stay, the ID documents and photos stay with the old
+	profile, and WhatsApp messages already sent stay with the person they went
+	to. A pre-check-in link or form the old guest already used is cleared, so
+	their link stops working and the new guest starts again.
+
+	Refused once the guest has checked in, checked out or the booking is
+	cancelled, and for a blacklisted guest unless a Hotel Admin gives a
+	reason (`blacklist_override_reason`). The change is commented on the
+	booking and logged."""
+	from kamra import phone as phone_mod
+	from kamra.crs import assert_property_access
+	from kamra.savings import log_action
+	res = frappe.get_doc("Reservation", reservation)
+	assert_property_access(res.property)
+	if res.status in _GUEST_CHANGE_CLOSED:
+		frappe.throw(_("The guest can only be changed before check-in. This booking is {0}.")
+		             .format(_(res.status)))
+	old = res.guest
+	profiles_before = frappe.db.count("Guest")
+	if guest:
+		if not frappe.db.exists("Guest", guest):
+			frappe.throw(_("Guest {0} was not found.").format(guest))
+		new = guest
+	else:
+		name = (guest_name or "").strip()
+		if not name:
+			frappe.throw(_("Type the new guest's name, or pick an existing guest."))
+		# a blacklisted number still meets its blacklist, as when booking
+		banned = phone and frappe.db.get_value(
+			"Guest", {"phone": phone_mod.matching(phone, res.property), "blacklisted": 1})
+		new = banned or _guest_for_row(name, phone, res.property)
+	if new == old:
+		frappe.throw(_("That is already the guest on this booking."))
+	flagged, why = frappe.db.get_value("Guest", new, ["blacklisted", "blacklist_reason"]) or (0, None)
+	if flagged:
+		if not (blacklist_override_reason or "").strip():
+			frappe.throw(_("Guest {0} is blacklisted{1}. Only a Hotel Admin can book a "
+			               "blacklisted guest, with a reason.").format(
+				frappe.db.get_value("Guest", new, "full_name"), f" - {why}" if why else ""),
+				title=_("Blacklisted guest"))
+		_blacklist_gate(new, res.property, blacklist_override_reason)
+
+	was = (res.guest_name, frappe.db.get_value("Guest", old, "phone") if old else None)
+	now = frappe.db.get_value("Guest", new, ["full_name", "phone"], as_dict=True)
+	res.guest, res.guest_name = new, now.full_name
+	# a link or form the old guest already used must not carry over to the new one
+	if res.get("precheckin_token"):
+		res.precheckin_token = frappe.generate_hash(length=32)
+	if res.get("precheckin_status") in ("Submitted", "Verified"):
+		res.update({"precheckin_status": "Not Started", "precheckin_on": None,
+		            "precheckin_signature": None, "precheckin_consent": 0,
+		            "precheckin_verified_by": None, "precheckin_verified_on": None})
+	res.precheckin_link_sent = None
+	res.save()
+
+	moved = {}
+	for doctype in _BOOKING_GUEST_DOCS if old else ():
+		meta = frappe.get_meta(doctype)
+		if not (meta.has_field("guest") and meta.has_field("reservation")):
+			continue
+		values = {"guest": new}
+		if meta.has_field("guest_name"):
+			values["guest_name"] = now.full_name
+		rows = frappe.get_all(doctype, filters={"reservation": res.name, "guest": old}, pluck="name")
+		for row in rows:
+			frappe.db.set_value(doctype, row, values, update_modified=False)
+		if rows:
+			moved[doctype] = len(rows)
+
+	def who(name, number):
+		return f"{name} ({number})" if number else (name or "-")
+	text = _("Guest changed from {0} to {1}.").format(who(*was), who(now.full_name, now.phone))
+	note = (reason or "").strip()
+	res.add_comment("Comment", text + (f" {_('Reason')}: {note}" if note else ""))
+	log_action("change_booking_guest", "Reservation", res.name, res.property,
+	           rationale=f"{who(*was)} -> {who(now.full_name, now.phone)}"
+	                     + (f"; {note}" if note else "")
+	                     + ("; moved " + ", ".join(f"{k}x{v}" for k, v in moved.items()) if moved else ""))
+	return {"ok": True, "guest": new, "guest_name": now.full_name,
+	        "new_profile": frappe.db.count("Guest") > profiles_before, "moved": moved}
+
+
 @frappe.whitelist()
 @require_perm("Guest", "configure", scope={"guest": "Guest"})
 def anonymize_guest(guest: str):

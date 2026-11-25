@@ -11828,6 +11828,30 @@ def t_night_prices_saved_stay():
 	assert float(res.amount_after_tax) > total
 
 
+@check("a booking moves to a different guest before check-in: new profile, the old one untouched, refused after check-in")
+def t_change_booking_guest():
+	from kamra.api import change_booking_guest, create_booking
+	ci, co = "2033-10-10", "2033-10-12"
+	out = create_booking(P, RT, ci, co, "Eval Original Guest", phone="+91 70000 00637")
+	res = frappe.get_doc("Reservation", out["reservation"])
+	old = res.guest
+	swap = change_booking_guest(res.name, guest_name="Eval Arrived Guest", phone="+91 70000 00638")
+	res.reload()
+	assert swap["new_profile"] and res.guest == swap["guest"] != old, (swap, res.guest, old)
+	assert res.guest_name == "Eval Arrived Guest", res.guest_name
+	assert frappe.db.get_value("Guest", old, "full_name") == "Eval Original Guest"
+	try:
+		change_booking_guest(res.name, guest=old, reason="")
+		res.reload()
+		frappe.db.set_value("Reservation", res.name, "status", "Checked In")
+		change_booking_guest(res.name, guest_name="Late Guest", phone="+91 70000 00639")
+		raise AssertionError("the guest of a checked-in booking was changed")
+	except frappe.ValidationError as e:
+		assert "before check-in" in str(e), e
+	finally:
+		frappe.db.set_value("Reservation", res.name, "status", "Confirmed")
+
+
 @check("typed nights with a voucher or without the right to set rates are refused")
 def t_night_prices_refused():
 	from kamra.api import create_booking, get_quote
@@ -12492,7 +12516,7 @@ def execute():
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
-		           t_night_prices_saved_stay,
+		           t_night_prices_saved_stay, t_change_booking_guest,
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,

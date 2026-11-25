@@ -16,6 +16,7 @@ import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 import CameraCapture from "./CameraCapture"
 import IdScan, { type IdRead } from "./IdScan"
+import ChangeGuestDialog from "./ChangeGuestDialog"
 
 export interface GuestOccupant {
   row: string
@@ -89,6 +90,7 @@ export default function CheckInGuests({ reservation, guest, guestName, guestHasP
   const [scanning, setScanning] = useState<"main" | number | null>(null)
   const [mainRead, setMainRead] = useState<IdRead | null>(null)
   const [shot, setShot] = useState<Shot | null>(null)
+  const [changingGuest, setChangingGuest] = useState(false)
 
   const minor = (d: Draft) => d.age !== "" && Number(d.age) < loc.adult_age
   const noId = (d: Draft) => minor(d) && loc.minor_ids !== "all" &&
@@ -185,6 +187,8 @@ export default function CheckInGuests({ reservation, guest, guestName, guestHasP
         <div className="flex flex-wrap items-center gap-2">
           <UserRound className="size-4 text-zinc-400" aria-hidden />
           <span className="min-w-0 flex-1 truncate text-sm font-semibold">{guestName}</span>
+          <button type="button" className="text-xs text-brand-700 underline" disabled={busy}
+            onClick={() => setChangingGuest(true)}>{t("Not the right guest?")}</button>
           <PhotoButton has={guestHasPhoto} disabled={busy || !guest} onClick={() => setShot({ who: "main" })} />
           <Button type="button" variant="outline" disabled={busy} onClick={() => setScanning("main")}>
             <ScanLine className="size-4" />{t("Scan ID")}
@@ -284,6 +288,17 @@ export default function CheckInGuests({ reservation, guest, guestName, guestHasP
           facing={shot.who !== "main" && shot.kind === "id" ? "environment" : "user"}
           onUse={(data) => void takeShot(data)}
           onClose={() => setShot(null)}
+        />
+      )}
+      {changingGuest && (
+        <ChangeGuestDialog
+          reservation={reservation}
+          guestName={guestName}
+          onClose={() => setChangingGuest(false)}
+          onDone={() => {
+            setChangingGuest(false)
+            onChanged()
+          }}
         />
       )}
     </section>
