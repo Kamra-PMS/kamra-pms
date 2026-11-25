@@ -13,6 +13,11 @@ import { code128Svg } from "./code128"
 import inconsolataLatin from "../assets/fonts/inconsolata-latin.woff2?inline"
 import inconsolataVietnamese from "../assets/fonts/inconsolata-vietnamese.woff2?inline"
 
+/** The logo prints inside a box of at most 16 mm high and 60 mm wide, keeping its shape:
+ *  a square logo is 16 x 16, a wide one keeps 16 mm until it reaches 60 mm, then shrinks. */
+export const LOGO_MAX_H_MM = 16
+export const LOGO_MAX_W_MM = 60
+
 // Inconsolata (SIL OFL 1.1, see assets/fonts/OFL.txt): one variable font per script, weights 200-900.
 const FONT_FACE = `
   @font-face { font-family: Inconsolata; font-style: normal; font-weight: 200 900; font-stretch: 100%;
@@ -40,7 +45,8 @@ const CSS = `${FONT_FACE}
   .num { text-align: right; white-space: nowrap }
   .cut { text-align: center; font-size: 11px; margin-top: 10px; letter-spacing: 0.2em }
   /* the bill: solid rules, thin and thick, and a rounded box for the total */
-  .logo img { display: block; margin: 0 auto; filter: grayscale(1) contrast(1.4) }
+  .logo img { display: block; margin: 0 auto; filter: grayscale(1) contrast(1.4);
+              max-height: ${LOGO_MAX_H_MM}mm; max-width: ${LOGO_MAX_W_MM}mm; object-fit: contain }
   .brand { font-weight: 800; font-size: 21px; letter-spacing: .06em; text-transform: uppercase; line-height: 1.15 }
   .oname { font-weight: 800; font-size: 17px; letter-spacing: .14em; text-transform: uppercase; margin-top: 4px; line-height: 1.15 }
   .hname { font-size: 12px; margin-top: 1px }
@@ -95,13 +101,17 @@ const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string))
 
+/** Only an uploaded file or an https link may print as the logo: a javascript: or data: URL, a plain
+ *  http one or a path with .. in it is ignored, and the outlet name prints instead. */
+export const logoSrc = (u: unknown): string => {
+  const s = String(u ?? "").trim()
+  const allowed = /^(\/files\/|\/private\/files\/|https:\/\/)[^\s"'<>\\]+$/.test(s)
+  return allowed && !s.split("/").includes("..") ? s : ""
+}
+
 const inr = (n: unknown) =>
   Number(n ?? 0).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-/** The logo prints inside a box of at most 16 mm high and 60 mm wide, keeping its shape:
- *  a square logo is 16 x 16, a wide one keeps 16 mm until it reaches 60 mm, then shrinks. */
-export const LOGO_MAX_H_MM = 16
-export const LOGO_MAX_W_MM = 60
 export function logoSizeMm(naturalWidth: number, naturalHeight: number) {
   const ratio = naturalWidth / naturalHeight
   let height = LOGO_MAX_H_MM
@@ -290,6 +300,8 @@ export interface BillData {
   logo?: string | null
   /** how the item lines print: in columns (the default) or stacked */
   receipt_design?: "Stacked" | "Columns" | null
+  /** the outlet's "print a barcode" switch: the barcode prints unless this is 0 or false */
+  barcode?: boolean | number | null
   items: { item_name: string; qty: number; rate: number; amount: number }[]
   subtotal: number
   discount_amount: number
@@ -326,8 +338,9 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
   })
   const label = b.table_no ? translate("Table {n}", { n: String(b.table_no) })
     : b.room_no ? translate("Room {n}", { n: String(b.room_no) }) : translate(b.order_type || "Counter")
-  const head = (b.logo
-    ? `<div class="logo"><img src="${esc(b.logo)}" alt=""></div><div class="c oname">${esc(b.outlet_name)}</div>`
+  const logo = logoSrc(b.logo)
+  const head = (logo
+    ? `<div class="logo"><img src="${esc(logo)}" alt=""></div><div class="c oname">${esc(b.outlet_name)}</div>`
     : `<div class="c brand">${esc(b.outlet_name)}</div>`) +
     `<div class="c hname">${esc(b.property_name)}</div>`
   const taxParts = b.tax_parts ?? [
@@ -350,7 +363,7 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
   const sum = (l: string, v: number) => `<span class="l">${l}</span><span class="v">${f(v)}</span>`
   const n = b.items.length
   const customer = [b.customer_name, b.customer_phone].filter(Boolean).join(" · ")
-  const barcode = code128Svg(b.order)
+  const barcode = b.barcode === 0 || b.barcode === false ? "" : code128Svg(b.order)
   const served = b.served_by || ""
   // the total in a rounded box at the top: "BILL / RECEIPT <order> TOTAL", then the amount. A country that
   // requires a legal title on the bill (ZATCA) puts it in the box in place of BILL / RECEIPT.
@@ -381,8 +394,8 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
     <div class="hr thick"></div>
     ${b.nc ? `<div class="nc">${esc(translate("COMPLIMENTARY - NO CHARGE"))}</div>` +
       `<div class="c sm">${esc(translate("auth:"))} ${esc(b.nc_authorized_by || "-")}${b.nc_note ? ` · ${esc(b.nc_note)}` : ""}</div>` : ""}
-    ${b.statutory ? `<div class="c"><img src="${b.statutory.qr_image}" alt="QR" style="width:120px;height:120px"/></div>` +
-      `<div class="c sm">ICV ${b.statutory.icv}</div>` : ""}
+    ${b.statutory ? `<div class="c"><img src="${esc(b.statutory.qr_image)}" alt="QR" style="width:120px;height:120px"/></div>` +
+      `<div class="c sm">ICV ${esc(b.statutory.icv)}</div>` : ""}
     <div class="thanks">${esc(translate("Thank you. See you again."))}</div>
     ${barcode ? `<div class="bc">${barcode}</div>` : ""}
     <div class="foot">

@@ -8,6 +8,8 @@ from frappe.model.document import Document
 
 class POSOutlet(Document):
 	def validate(self):
+		if self.logo and not _is_safe_logo(self.logo):
+			frappe.throw(_("The receipt logo must be an uploaded file or an https link."))
 		percent = float(self.levy_percent or 0)
 		if percent < 0 or percent > 100:
 			frappe.throw(_("The levy must be between 0 and 100%."))
@@ -15,6 +17,15 @@ class POSOutlet(Document):
 			frappe.throw(_(
 				"The levy is not available while this property's e-invoicing is on: "
 				"the e-invoice is built from the item lines and would not include it."))
+
+
+def _is_safe_logo(url: str) -> bool:
+	"""Only an uploaded file or an https link may be the receipt logo. A javascript: or data: URL,
+	a plain http one, a protocol-relative one or a path with .. in it is refused. The bill renderer
+	applies the same rule (logoSrc in frontend/src/lib/thermal.ts)."""
+	url = url.strip()
+	return (url.startswith(("/files/", "/private/files/", "https://"))
+	        and not any(c in url for c in ' "\'<>\\') and ".." not in url.split("/"))
 
 
 def _issues_pos_invoices(property: str) -> bool:

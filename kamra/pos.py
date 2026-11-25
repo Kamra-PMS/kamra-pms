@@ -2109,7 +2109,7 @@ def bill_data(order: str):
 	live lines, the discount, and the CGST/SGST split at the outlet's rate."""
 	doc = frappe.get_doc("POS Order", order)
 	outlet = frappe.db.get_value(
-		"POS Outlet", doc.outlet, ["outlet_name", "logo", "receipt_design"],
+		"POS Outlet", doc.outlet, ["outlet_name", "logo", "receipt_design", "print_barcode"],
 		as_dict=True)
 	property_name = frappe.db.get_value(
 		"Property", doc.property, "property_name") or doc.property
@@ -2137,6 +2137,8 @@ def bill_data(order: str):
 		# the outlet's receipt logo (a file URL, or None) and how the items print
 		"logo": outlet.logo or None,
 		"receipt_design": outlet.receipt_design or "Columns",
+		# the outlet's "print a barcode" switch (on unless turned off)
+		"barcode": 0 if outlet.print_barcode is not None and not int(outlet.print_barcode) else 1,
 		"order_type": doc.order_type, "table_no": doc.table_no,
 		"room_no": (doc.room or "").split("-")[-1] if doc.room else None,
 		"customer_name": doc.customer_name,
