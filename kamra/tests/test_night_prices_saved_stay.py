@@ -7,6 +7,8 @@ card), a night already on the bill is closed, and a booking whose price is set
 another way (a rate plan, an OTA total, a checked-out stay) says why. The same
 people may do it as on a new booking: the front desk alone may not."""
 
+from unittest import mock
+
 import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
@@ -23,6 +25,7 @@ from kamra.api import (
 FRONT_DESK = "night.prices.desk@test.local"
 DESK_AND_RATES = "night.prices.deskrates@test.local"
 RATES_ONLY = "night.prices.rates@test.local"
+SCOPED = "night.prices.scoped@test.local"
 
 
 class SavedStayPricesTestCase(IntegrationTestCase):
@@ -52,7 +55,7 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 	def tearDown(self):
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		frappe.db.rollback()
-		for user in (FRONT_DESK, DESK_AND_RATES, RATES_ONLY):
+		for user in (FRONT_DESK, DESK_AND_RATES, RATES_ONLY, SCOPED):
 			frappe.clear_cache(user=user)
 
 	def _staff(self, email: str, *roles: str) -> str:
@@ -65,6 +68,11 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 
 	def res(self):
 		return frappe.get_doc("Reservation", self.name)
+
+	def save(self, typed):
+		"""What the page does: look at the new total, then save with that total."""
+		shown = stay_prices_preview(self.name, typed)["new_amount"]
+		return set_stay_prices(self.name, typed, expected_total=shown)
 
 	def shown(self):
 		"""What the guest pays for each night, as the price box shows it. The
@@ -86,7 +94,7 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			stay_prices_preview(self.name, typed)
 		with self.assertRaises(frappe.PermissionError):
-			set_stay_prices(self.name, typed, confirm_price=1)
+			set_stay_prices(self.name, typed, expected_total=3200)
 		# the reservation page still reads, and says this user may not edit
 		self.assertFalse(stay_rates(self.name)["can_set"])
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
@@ -95,7 +103,7 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 	def test_a_front_desk_user_who_also_holds_the_revenue_manager_role_can(self):
 		frappe.set_user(self.desk_and_rates)  # nosemgrep: frappe-setuser -- the roles under test
 		self.assertTrue(stay_rates(self.name)["can_set"])
-		set_stay_prices(self.name, [{"date": self.ci, "price": 1200}], confirm_price=1)
+		self.save([{"date": self.ci, "price": 1200}])
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
 		self.assertEqual(self.hand(), [1200, 0, 0])
 		self.assertEqual(self.shown(), [1200, 1000, 1000])
@@ -104,7 +112,7 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		frappe.set_user(self.rates_only)  # nosemgrep: frappe-setuser -- the role under test
 		pv = stay_prices_preview(self.name, [{"date": self.d2, "price": 1500}])
 		self.assertAlmostEqual(pv["new_amount"], 3500, places=1)
-		set_stay_prices(self.name, [{"date": self.d2, "price": 1500}], confirm_price=1)
+		self.save([{"date": self.d2, "price": 1500}])
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
 		self.assertEqual(self.hand(), [0, 1500, 0])
 
@@ -127,7 +135,7 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		self.assertAlmostEqual(before, 3000, places=1)
 		# the rate card moves after the booking: the nights the desk leaves alone must not follow it
 		self.move_rate_card(2000)
-		out = set_stay_prices(self.name, [{"date": self.d2, "price": 1500}], confirm_price=1)
+		out = self.save([{"date": self.d2, "price": 1500}])
 		res = self.res()
 		self.assertEqual(res.auto_price, 0)
 		self.assertEqual(self.hand(), [0, 1500, 0])
@@ -154,25 +162,27 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		self.assertEqual(self.res().auto_price, 1)
 
 	def test_a_second_change_keeps_the_first(self):
-		set_stay_prices(self.name, [{"date": self.d2, "price": 1500}], confirm_price=1)
-		set_stay_prices(self.name, [{"date": self.ci, "price": 900}], confirm_price=1)
+		self.save([{"date": self.d2, "price": 1500}])
+		self.save([{"date": self.ci, "price": 900}])
 		self.assertEqual(self.hand(), [900, 1500, 0])
 		self.assertEqual(self.shown(), [900, 1500, 1000])
 		self.assertAlmostEqual(float(self.res().amount_after_tax), 3400, places=1)
 
 	def test_the_change_is_commented_and_logged(self):
-		set_stay_prices(self.name, [{"date": self.d2, "price": 1500}], confirm_price=1)
+		self.save([{"date": self.d2, "price": 1500}])
 		comments = frappe.get_all("Comment", filters={
 			"reference_doctype": "Reservation", "reference_name": self.name,
 			"comment_type": "Comment"}, pluck="content")
-		self.assertTrue(any("Nightly prices changed" in c and self.d2 in c
-		                    and "1,000.00 → 1,500.00" in c for c in comments), comments)
+		from kamra.localization import money_text
+		change = f"{money_text(self.property, 1000)} → {money_text(self.property, 1500)}"
+		self.assertTrue(any("Nightly prices changed" in c and self.d2 in c and change in c
+		                    for c in comments), comments)
 		self.assertTrue(frappe.db.exists("Agent Action Log", {
 			"action_type": "set_night_prices", "reference_name": self.name}))
 
 	def test_the_folio_bills_the_new_price(self):
 		from kamra.folio import open_folio, post_room_night
-		set_stay_prices(self.name, [{"date": self.d2, "price": 1500}], confirm_price=1)
+		self.save([{"date": self.d2, "price": 1500}])
 		res = self.res()
 		open_folio(res)
 		post_room_night(res, self.d2)
@@ -180,6 +190,80 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 			"reservation": self.name, "charge_type": "Room"}, pluck="amount")
 		self.assertEqual([round(float(a), 2) for a in amounts],
 		                 [round(float(self.res().night_rates[1].rate), 2)])
+
+	def test_a_save_whose_total_is_not_the_one_shown_is_refused(self):
+		typed = [{"date": self.d2, "price": 1500}]
+		shown = stay_prices_preview(self.name, typed)["new_amount"]
+		self.assertAlmostEqual(shown, 3500, places=1)
+		# someone else changes another night before this save arrives
+		self.save([{"date": self.d3, "price": 1100}])
+		with self.assertRaisesRegex(PriceConfirmationRequired, "not the"):
+			set_stay_prices(self.name, typed, expected_total=shown)
+		self.assertEqual(self.hand(), [0, 0, 1100])
+		# the total the desk now sees is the one that saves
+		self.save(typed)
+		self.assertEqual(self.hand(), [0, 1500, 1100])
+
+	def test_a_change_in_the_total_is_not_saved_without_the_total_that_was_shown(self):
+		with self.assertRaises(PriceConfirmationRequired):
+			set_stay_prices(self.name, [{"date": self.d2, "price": 1500}])
+		self.assertEqual(self.hand(), [0, 0, 0])
+		self.assertEqual(self.res().auto_price, 1)
+
+	# -- the nights are recorded in the property's currency -------------------
+
+	def test_the_comment_reads_in_the_property_currency(self):
+		self.save([{"date": self.d2, "price": 1500}])
+		from kamra.localization import money_text
+		comments = frappe.get_all("Comment", filters={
+			"reference_doctype": "Reservation", "reference_name": self.name,
+			"comment_type": "Comment"}, pluck="content")
+		# UGX has no decimals: "1,500", never "1,500.00"
+		self.assertTrue(any(money_text(self.property, 1500) in c and "1,500.00" not in c
+		                    for c in comments), comments)
+
+	# -- who may look, and where ----------------------------------------------
+
+	def test_the_rate_card_is_quoted_only_for_someone_who_can_set_prices(self):
+		import kamra.rates
+		with mock.patch.object(kamra.rates, "rate_options", wraps=kamra.rates.rate_options) as quote:
+			frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the role under test
+			out = stay_rates(self.name)
+			self.assertEqual((out["can_set"], out["nights"]), (False, []))
+			quote.assert_not_called()
+			frappe.set_user(self.rates_only)  # nosemgrep: frappe-setuser -- the role under test
+			self.assertEqual(len(stay_rates(self.name)["nights"]), 3)
+			quote.assert_called_once()
+
+	def test_a_user_scoped_to_another_property_is_refused(self):
+		other = frappe.get_doc({"doctype": "Property",
+			"property_name": "TEST OTHER NIGHTS " + frappe.generate_hash(length=8),
+			"country": "Uganda", "currency": "UGX",
+			"rates_include_tax": 1}).insert(ignore_permissions=True).name
+		other_type = frappe.get_doc({"doctype": "Room Type", "property": other,
+			"room_type_code": "STD", "room_type_name": "Standard", "base_price": 1000,
+			"adults_capacity": 2}).insert(ignore_permissions=True).name
+		frappe.get_doc({"doctype": "Room", "property": other, "room_type": other_type,
+			"room_number": "201"}).insert(ignore_permissions=True)
+		theirs = create_booking(other, other_type, self.ci, self.co, "Other Property Guest")["reservation"]
+		scoped = self._staff(SCOPED, "Revenue Manager")
+		frappe.get_doc({"doctype": "User Permission", "user": scoped, "allow": "Property",
+			"for_value": other}).insert(ignore_permissions=True)
+		frappe.clear_cache(user=scoped)
+		typed = [{"date": self.ci, "price": 1200}]
+		frappe.set_user(scoped)  # nosemgrep: frappe-setuser -- the scoped user under test
+		# the same person works on the property they are scoped to ...
+		self.assertTrue(stay_rates(theirs)["can_set"])
+		self.assertTrue(stay_prices_preview(theirs, typed)["needs_confirmation"])
+		# ... and is refused on this one, on all three endpoints
+		with self.assertRaises(frappe.PermissionError):
+			stay_rates(self.name)
+		with self.assertRaises(frappe.PermissionError):
+			stay_prices_preview(self.name, typed)
+		with self.assertRaises(frappe.PermissionError):
+			set_stay_prices(self.name, typed, expected_total=3200)
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
+		self.assertEqual(self.hand(), [0, 0, 0])
 
 	# -- nights on the bill ------------------------------------------------
 
@@ -192,8 +276,8 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		out = stay_rates(self.name)
 		self.assertEqual([n["posted"] for n in out["nights"]], [True, False, False])
 		with self.assertRaisesRegex(frappe.ValidationError, "already on the bill"):
-			set_stay_prices(self.name, [{"date": self.ci, "price": 1200}], confirm_price=1)
-		set_stay_prices(self.name, [{"date": self.d3, "price": 1100}], confirm_price=1)
+			set_stay_prices(self.name, [{"date": self.ci, "price": 1200}], expected_total=1)
+		self.save([{"date": self.d3, "price": 1100}])
 		self.assertEqual(self.shown(), [1000, 1000, 1100])
 		charged = frappe.get_all("Folio Charge", filters={
 			"reservation": self.name, "charge_type": "Room"}, pluck="amount")
@@ -210,7 +294,7 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		self.assertFalse(out["editable"])
 		self.assertIn("rate plan", out["why_not"])
 		with self.assertRaisesRegex(frappe.ValidationError, "rate plan"):
-			set_stay_prices(self.name, [{"date": self.ci, "price": 1200}], confirm_price=1)
+			set_stay_prices(self.name, [{"date": self.ci, "price": 1200}], expected_total=1)
 
 	def test_a_stay_priced_as_a_whole_is_closed(self):
 		other = create_booking(self.property, self.room_type, self.ci, self.d3, "Whole Total",
@@ -219,13 +303,13 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		self.assertFalse(out["editable"])
 		self.assertIn("priced as a whole", out["why_not"])
 		with self.assertRaises(frappe.ValidationError):
-			set_stay_prices(other, [{"date": self.ci, "price": 1200}], confirm_price=1)
+			set_stay_prices(other, [{"date": self.ci, "price": 1200}], expected_total=1)
 
 	def test_a_checked_out_booking_is_closed(self):
 		frappe.db.set_value("Reservation", self.name, "status", "Checked Out")
 		self.assertFalse(stay_rates(self.name)["editable"])
 		with self.assertRaises(frappe.ValidationError):
-			set_stay_prices(self.name, [{"date": self.ci, "price": 1200}], confirm_price=1)
+			set_stay_prices(self.name, [{"date": self.ci, "price": 1200}], expected_total=1)
 
 	def test_bad_requests_are_refused(self):
 		for why, payload in {
@@ -236,5 +320,5 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		}.items():
 			with self.subTest(why):
 				with self.assertRaises(frappe.ValidationError):
-					set_stay_prices(self.name, payload, confirm_price=1)
+					set_stay_prices(self.name, payload, expected_total=1)
 		self.assertEqual(self.res().auto_price, 1)

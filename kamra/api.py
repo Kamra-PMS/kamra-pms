@@ -6477,9 +6477,11 @@ def _record_night_prices(doc, typed: dict, before: dict | None = None) -> None:
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	from kamra.webhooks import emit_rate_overridden
-	typed_text = ", ".join(f"{d} {float(p):,.2f}" for d, p in sorted(typed.items()))
+	def shown(amount) -> str:  # the property's own currency, as the action log shows it
+		return money_text(doc.property, float(amount))
+	typed_text = ", ".join(f"{d} {shown(p)}" for d, p in sorted(typed.items()))
 	if before:
-		changed = ", ".join(f"{d} {float(before[d]):,.2f} → {float(p):,.2f}"
+		changed = ", ".join(f"{d} {shown(before[d])} → {shown(p)}"
 		                    for d, p in sorted(typed.items()) if d in before)
 		doc.add_comment("Comment", _("Nightly prices changed: {0}. The other nights keep their price.")
 		                .format(changed))
@@ -6566,6 +6568,13 @@ def stay_rates(reservation: str) -> dict:
 	from kamra.pricing import rates_include_levy, rates_include_tax, room_rate_digits
 	res = frappe.get_doc("Reservation", reservation)
 	assert_property_access(res.property)
+	if not _can_set_rate():
+		# the page shows the box to people who may set prices only: for anyone else
+		# skip the rate-card quote below, which would run on every page load
+		return {"reservation": res.name, "status": res.status, "can_set": False,
+		        "editable": False, "why_not": None,
+		        "tax_inclusive": rates_include_tax(res.property),
+		        "levy_inclusive": rates_include_levy(res.property), "nights": []}
 	charged = charged_nights(res.name, room_rate_digits(res.property))
 	card: dict = {}
 	try:  # only a hint beside each night: the booking's own prices show without it
@@ -6638,22 +6647,37 @@ def stay_prices_preview(reservation: str, night_prices=None) -> dict:
 
 @frappe.whitelist()
 @require_perm("Reservation", "plan_stays")
-def set_stay_prices(reservation: str, night_prices=None, confirm_price: int = 0) -> dict:
+def set_stay_prices(reservation: str, night_prices=None, expected_total=None) -> dict:
 	"""Change the price of some nights of a confirmed or in-house booking
 	([{date, price}], tax included when the property's rates include tax, as
 	in create_booking). The nights listed take the typed price; every other
 	night keeps the rate it was booked at. A night already on the bill cannot
 	be changed here. The change is logged and commented on the booking. Call
-	stay_prices_preview first, show the new price, and pass confirm_price=1;
-	without it a change in the total is refused. A Revenue Manager or Hotel
-	Admin only. Not an agent tool."""
+	stay_prices_preview first, show the new total, and pass it as
+	expected_total: the save is refused when the new total is not the one that
+	was shown (someone else changed the booking in between), and a change in
+	the total without it is refused too. A Revenue Manager or Hotel Admin
+	only. Not an agent tool."""
 	from kamra.crs import assert_property_access
 	_require_night_prices_right()
 	res = frappe.get_doc("Reservation", reservation)
 	assert_property_access(res.property)
 	typed, before = _price_stay_nights(res, night_prices)
 	old_amount = float(res.amount_after_tax or 0)
-	_require_price_confirmation(_reprice_preview(res), confirm_price)
+	preview = _reprice_preview(res)
+	if expected_total in (None, ""):
+		if preview["needs_confirmation"]:
+			frappe.throw(
+				_("This change re-prices the stay from {0} to {1}. Show the guest the new "
+				  "total, then save it with expected_total.").format(
+					f"{preview['current_amount']:,.2f}", f"{preview['new_amount']:,.2f}"),
+				exc=PriceConfirmationRequired, title=_("Confirm the new price"))
+	elif abs(flt(expected_total) - preview["new_amount"]) >= 0.01:
+		frappe.throw(
+			_("The new total is {0}, not the {1} you were shown. The booking may have "
+			  "changed in the meantime: look at the new price and save again.").format(
+				f"{preview['new_amount']:,.2f}", f"{flt(expected_total):,.2f}"),
+			exc=PriceConfirmationRequired, title=_("Confirm the new price"))
 	res.save(ignore_permissions=True)  # the role was checked above; a Revenue Manager has no write
 	_record_night_prices(res, typed, before)
 	return {"ok": True, "previous_amount": old_amount,

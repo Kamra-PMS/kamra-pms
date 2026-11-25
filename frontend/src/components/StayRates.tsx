@@ -147,10 +147,16 @@ export default function StayRates({ reservation, onSaved }: { reservation: strin
     setBusy(true)
     setError(null)
     try {
-      await call("kamra.api.set_stay_prices", { reservation, night_prices: changes, confirm_price: 1 })
+      // the total the desk was shown: the server refuses the save if it is not the new total any more
+      await call("kamra.api.set_stay_prices", {
+        reservation,
+        night_prices: changes,
+        expected_total: preview?.new_amount,
+      })
       await load()
       onSaved?.()
     } catch (e) {
+      setPreview(null) // look at the new total again before saving
       setError(serverError(e))
     } finally {
       setBusy(false)

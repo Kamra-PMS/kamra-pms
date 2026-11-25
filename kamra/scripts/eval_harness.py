@@ -11780,7 +11780,8 @@ def t_night_prices_total():
 
 @check("the desk re-prices a night of a saved stay; the other nights keep the rate they were booked at")
 def t_night_prices_saved_stay():
-	from kamra.api import create_booking, set_stay_prices, stay_prices_preview, stay_rates
+	from kamra.api import (
+		PriceConfirmationRequired, create_booking, set_stay_prices, stay_prices_preview, stay_rates)
 	ci, co = "2033-09-10", "2033-09-13"
 	out = create_booking(P, RT, ci, co, "Eval Saved Night", phone="+91 70000 00636")
 	res = frappe.get_doc("Reservation", out["reservation"])
@@ -11796,16 +11797,24 @@ def t_night_prices_saved_stay():
 	assert res.auto_price == 1 and float(res.amount_after_tax) == total
 	try:
 		set_stay_prices(res.name, typed)
-		raise AssertionError("a change in the total was saved without confirmation")
-	except frappe.ValidationError as e:
-		assert "confirm" in str(e).lower(), e
+		raise AssertionError("a change in the total was saved without the total shown")
+	except PriceConfirmationRequired:
+		pass
+	# a save that carries a total other than the one the preview showed is refused too
+	try:
+		set_stay_prices(res.name, typed, expected_total=pv["new_amount"] + 1)
+		raise AssertionError("a save with a stale total was accepted")
+	except PriceConfirmationRequired as e:
+		assert "not the" in str(e), e
+	res.reload()
+	assert res.auto_price == 1 and float(res.amount_after_tax) == total
 	# the rate card moves after the booking: the nights left alone must not follow it
 	rt = frappe.get_doc("Room Type", RT)
 	old_base = rt.base_price
 	frappe.db.set_value("Room Type", RT, "base_price", float(old_base) * 2)
 	frappe.clear_document_cache("Room Type", RT)
 	try:
-		set_stay_prices(res.name, typed, confirm_price=1)
+		set_stay_prices(res.name, typed, expected_total=pv["new_amount"])
 	finally:
 		frappe.db.set_value("Room Type", RT, "base_price", old_base)
 		frappe.clear_document_cache("Room Type", RT)
