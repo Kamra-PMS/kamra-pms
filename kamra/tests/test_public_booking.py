@@ -2,7 +2,7 @@
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, flt, nowdate
 
 from kamra.public_api import search_stay, showcase
 
@@ -245,8 +245,13 @@ class PublicBookingTestCase(IntegrationTestCase):
 		r1, r2 = res["reservations"]
 		d1 = frappe.get_doc("Reservation", r1)
 		d2 = frappe.get_doc("Reservation", r2)
+		# recorded once on the master; both rooms keep the discounted total
 		self.assertEqual(d1.voucher, v.name)
-		self.assertEqual(d2.voucher, v.name)
+		self.assertFalse(d2.voucher)
+		self.assertGreater(flt(d1.discount_amount), 0)
+		self.assertGreater(flt(d2.discount_amount), 0)
+		self.assertAlmostEqual(
+			flt(d1.amount_after_tax), flt(d2.amount_after_tax), places=2)
 		self.assertEqual(frappe.db.get_value("Discount Voucher", v.name, "times_used"), 1)
 		with self.assertRaises(Exception):
 			book(

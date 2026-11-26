@@ -675,7 +675,12 @@ export default function PublicBooking() {
   const [ratesFailed, setRatesFailed] = useState(false)
   const [childAgesState, setChildAges] = useState<ChildAge[]>([])
   const childAges = sizeAges(childAgesState, search.children)
-  const agesMissing = search.children > 0 && !agesToSend(childAges)
+  // multi-room keeps ages on each party; single-room uses the global list
+  const agesMissing = (search.rooms || 1) > 1
+    ? roomParties.some(
+        (p) => p.children > 0 && !agesToSend(sizeAges(p.child_ages || [], p.children)),
+      )
+    : search.children > 0 && !agesToSend(childAges)
   const [editing, setEditing] = useState(false)
   const [mealFilter, setMealFilter] = useState<string | null>(null)
   const [availableOnly, setAvailableOnly] = useState(false)
@@ -1645,7 +1650,11 @@ export default function PublicBooking() {
                   {tn(nights, "{n} night", "{n} nights")}
                   {minNights > 1 ? `, ${t("{n}-night minimum", { n: minNights })}` : ""}
                 </p>
-                <Button type="submit" className="justify-center gap-2 px-6 py-2.5 text-base sm:ms-auto">
+                <Button
+                  type="submit"
+                  className="justify-center gap-2 px-6 py-2.5 text-base sm:ms-auto"
+                  disabled={search.adults < (search.rooms || 1) || agesMissing}
+                >
                   <Search className="size-4" aria-hidden />
                   {t("Check availability")}
                 </Button>

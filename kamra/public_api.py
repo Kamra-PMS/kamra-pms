@@ -1355,8 +1355,26 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 			for r in res_names:
 				frappe.db.set_value("Reservation", r, "group_booking", gb.name)
 
+			# Discount applied on every room above; keep the voucher link
+			# only on the master so a single-use code is recorded once.
+			if voucher_code and len(res_names) > 1:
+				for name in res_names[1:]:
+					doc = frappe.get_doc("Reservation", name)
+					if not doc.voucher:
+						continue
+					frappe.db.set_value("Reservation", name, "voucher", None,
+					                    update_modified=False)
+					doc.voucher = None
+					frappe.db.set_value(
+						"Reservation", name, "rate_lock_key",
+						doc.rate_lock_key_for(doc.quote_inputs()),
+						update_modified=False)
+
 			if voucher_code:
-				v_name = frappe.db.get_value("Discount Voucher", {"voucher_code": voucher_code, "property": property})
+				v_name = frappe.db.get_value(
+					"Discount Voucher",
+					{"voucher_code": voucher_code.strip().upper(),
+					 "property": property})
 				if v_name:
 					from kamra.pricing import consume_voucher_use
 					consume_voucher_use(v_name)
