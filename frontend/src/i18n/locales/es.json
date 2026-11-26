@@ -7101,5 +7101,17 @@
   "Uses {n}": "Usa {n}",
   "Uses stock": "Usa existencias",
   "What one of these takes off the outlet's stock when the dish is fired, on top of the dish's own recipe.": "Lo que una de estas descuenta de las existencias del punto de venta cuando el plato se envía a preparación, además de la receta propia del plato.",
-  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "Lo que se le pregunta al jefe de servicio cuando un plato se agrega a la cuenta: leche, hielo, extras. Cada opción puede sumar al precio."
+  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "Lo que se le pregunta al jefe de servicio cuando un plato se agrega a la cuenta: leche, hielo, extras. Cada opción puede sumar al precio.",
+  "{v0} · low-stock level": "{v0} · nivel de existencias bajas",
+  "Level ({v0})": "Nivel ({v0})",
+  "Low-stock level for {v0}": "Nivel de existencias bajas de {v0}",
+  "Save level": "Guardar nivel",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "Este ingrediente aparece como BAJO cuando la existencia es igual o inferior a este nivel. Introduzca 0 para no recibir avisos.",
+  "Issued": "Retirado",
+  "To issue": "Por retirar",
+  "Issue the difference": "Registrar salida de la diferencia",
+  "Already issued": "Salida ya registrada",
+  "Enter a number for the low-stock level.": "Introduzca un número para el nivel de existencias bajas.",
+  "Nothing stocked at this outlet yet.": "Todavía no hay existencias en este punto de venta.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Este punto de venta nunca ha tenido este ingrediente. Darlo de baja dejará el saldo por debajo de cero."
 }

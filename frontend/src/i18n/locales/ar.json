@@ -7101,5 +7101,17 @@
   "Uses {n}": "يستخدم {n}",
   "Uses stock": "يستخدم المخزون",
   "What one of these takes off the outlet's stock when the dish is fired, on top of the dish's own recipe.": "ما يخصمه أحدها من مخزون المنفذ عند إرسال الطبق للطبخ، إضافةً إلى وصفة الطبق نفسه.",
-  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "ما يُسأل عنه الكابتن عند إضافة طبق إلى الفاتورة: حليب، ثلج، إضافات. كل خيار يمكن أن يزيد السعر."
+  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "ما يُسأل عنه الكابتن عند إضافة طبق إلى الفاتورة: حليب، ثلج، إضافات. كل خيار يمكن أن يزيد السعر.",
+  "{v0} · low-stock level": "{v0} · حد المخزون المنخفض",
+  "Level ({v0})": "المستوى ({v0})",
+  "Low-stock level for {v0}": "حد المخزون المنخفض لـ {v0}",
+  "Save level": "حفظ المستوى",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "يظهر هذا المكوّن بحالة «منخفض» عندما يكون المتوفر مساويًا لهذا المستوى أو أقل منه. أدخل 0 لإلغاء التنبيه.",
+  "Issued": "المصروف",
+  "To issue": "المتبقي للصرف",
+  "Issue the difference": "صرف الفرق",
+  "Already issued": "تم الصرف",
+  "Enter a number for the low-stock level.": "أدخل رقماً لحد المخزون المنخفض.",
+  "Nothing stocked at this outlet yet.": "لا يوجد مخزون في هذا المنفذ بعد.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "هذا المنفذ لم يحتفظ بهذا المكوّن من قبل. شطبه يأخذ الرصيد إلى أقل من صفر."
 }

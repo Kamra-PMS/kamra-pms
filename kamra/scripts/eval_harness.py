@@ -2307,6 +2307,64 @@ def t41():
 		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
+@check("kitchen stock: a never-moved ingredient can be picked, a negative low-stock level is refused")
+def t_kitchen_stock_pick_and_level():
+	from kamra import inventory
+
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Pick Kitchen",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	milk = inventory.save_ingredient(P, "Pick Milk", "L", cost_per_unit=20)["name"]
+
+	# the shelf list is what the outlet holds; the pickers also offer the rest
+	assert milk not in [r["ingredient"] for r in inventory.stock_list(P, outlet)]
+	picked = [r for r in inventory.stock_list(P, outlet, include_unstocked=1)
+	          if r["ingredient"] == milk]
+	assert [(r["qty_on_hand"], r["stocked"]) for r in picked] == [(0, 0)], picked
+
+	inventory.receive_stock(P, outlet, [{"ingredient": milk, "qty": 2}])
+	inventory.set_par_level(P, outlet, milk, 5)
+	held = [r for r in inventory.stock_list(P, outlet) if r["ingredient"] == milk]
+	assert [(r["qty_on_hand"], r["status"]) for r in held] == [(2, "LOW")], held
+	try:
+		inventory.set_par_level(P, outlet, milk, -1)
+		raise AssertionError("a negative low-stock level was accepted")
+	except frappe.ValidationError:
+		pass
+
+
+@check("kitchen stock: another property's outlet is refused for receipts, counts, wastage and levels")
+def t_kitchen_stock_foreign_outlet():
+	from kamra import inventory
+
+	other = frappe.get_doc({
+		"doctype": "Property", "property_name": "EVAL Other Stock Hotel",
+	}).insert(ignore_permissions=True).name
+	foreign = frappe.get_doc({
+		"doctype": "POS Outlet", "property": other, "outlet_name": "Foreign Kitchen",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	milk = inventory.save_ingredient(P, "Foreign Milk", "L", cost_per_unit=20)["name"]
+
+	calls = {
+		"receipt": lambda: inventory.receive_stock(
+			P, foreign, [{"ingredient": milk, "qty": 1, "cost_per_unit": 99}]),
+		"stock take": lambda: inventory.adjust_stock(
+			P, foreign, [{"ingredient": milk, "counted_qty": 1}], "count"),
+		"wastage": lambda: inventory.record_wastage(P, foreign, milk, 1, "spilt"),
+		"low-stock level": lambda: inventory.set_par_level(P, foreign, milk, 3),
+	}
+	for what, call in calls.items():
+		try:
+			call()
+			raise AssertionError(f"a {what} was accepted at another property's outlet")
+		except frappe.ValidationError as e:
+			assert "not at this property" in str(e), e
+	assert not frappe.db.exists("Ingredient Stock", {"outlet": foreign})
+	assert frappe.db.get_value("Ingredient", milk, "cost_per_unit") == 20
+
+
 def _id_photo(colour=(180, 40, 40)):
 	"""A real PNG data URL, built in memory - no fixture file to go missing."""
 	import base64
@@ -3962,6 +4020,68 @@ def t74():
 	# and the chefs get it split by section
 	tandoor = next(k for k in ind["by_kitchen"] if k["kitchen"] == "Tandoor")
 	assert tandoor["dishes"][0]["portions"] == 200, tandoor
+
+
+@check("banquet: issuing the indent takes the stock off the outlet, and only the difference after")
+def t_banquet_issue_indent():
+	from kamra import banquet as bq
+	from kamra import inventory
+
+	b = _banquet_setup()
+	store = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Banquet Store",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	fn = _function(day_offset=260)
+	bq.update_function(fn, {"pax_guaranteed": 200})
+	bq.add_menu(fn, b["menu"])
+	bq.compose_menu(fn, b["menu"], [{"course": _starter(b), "dish": b["dish_veg"]}])
+	bq.set_status(fn, "Confirmed")
+	inventory.receive_stock(P, store, [{"ingredient": b["onion"], "qty": 50}])
+
+	out = bq.issue_indent(fn, store)
+	assert out["issued"] == 1, out
+	move = frappe.get_all(
+		"Ingredient Ledger Entry",
+		filters={"outlet": store, "reference_name": fn},
+		fields=["reason", "qty_change", "balance_after"])
+	assert [(m.reason, m.qty_change, m.balance_after) for m in move] \
+		== [("Consumed", -40, 10)], move
+
+	# a second press takes nothing; fifty more guests take their 10 kg only
+	assert bq.issue_indent(fn, store)["issued"] == 0
+	bq.update_function(fn, {"pax_guaranteed": 250})
+	onion = next(r for r in bq.kitchen_indent(fn)["ingredients"]
+	             if r["ingredient"] == b["onion"])
+	assert (onion["required"], onion["issued"], onion["to_issue"], onion["short_by"]) \
+		== (50, 40, 10, 0), onion
+	bq.issue_indent(fn, store)
+	assert frappe.db.get_value(
+		"Ingredient Stock", f"{store}::{b['onion']}", "qty_on_hand") == 0
+
+
+@check("banquet: the indent counts the shelf of the outlet it will be issued from")
+def t_banquet_indent_outlet_shelf():
+	from kamra import banquet as bq
+	from kamra import inventory
+
+	b = _banquet_setup()
+	full, empty = [frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": name,
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name for name in ("Shelf Full", "Shelf Empty")]
+	fn = _function(day_offset=262)
+	bq.update_function(fn, {"pax_guaranteed": 200})
+	bq.add_menu(fn, b["menu"])
+	bq.compose_menu(fn, b["menu"], [{"course": _starter(b), "dish": b["dish_veg"]}])
+	inventory.receive_stock(P, full, [{"ingredient": b["onion"], "qty": 100}])
+
+	def onion(outlet):
+		return next((r["on_hand"], r["short_by"]) for r in bq.kitchen_indent(fn, outlet)["ingredients"]
+		            if r["ingredient"] == b["onion"])
+
+	assert onion(full) == (100, 0), onion(full)
+	assert onion(empty) == (0, 40), onion(empty)
 
 
 @check("banquet: the night bills what was served, not what was quoted")
@@ -12497,7 +12617,8 @@ def execute():
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
-		           t_menu_modifiers):
+		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent,
+		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

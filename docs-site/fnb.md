@@ -433,8 +433,17 @@ before you stock them or put them on a recipe.
 
 ![Kitchen inventory: each ingredient's stock on hand, par level and status, with Receive, Stock take and Wastage](/img/fnb/inventory.png)
 
+The table lists what the outlet holds. **Receive** also lists every other
+active ingredient, so a new one can be received straight away. **Stock
+take** and **Wastage** start from what this outlet holds. Search that
+list, or use **Add ingredient**, to count or write off one it has never
+held. Writing off an ingredient the outlet has never held warns that the
+balance will go below zero; the write-off still saves, because a shortage
+is allowed to go negative.
+
 Each row shows status (OK, low, out or negative) against its par level.
-Recipes are set on the **Menu** screen (**Recipes**).
+To set that level, select the figure (or **Set**) in the **Par** column;
+0 means no warning. Recipes are set on the **Menu** screen (**Recipes**).
 
 - Ingredients leave stock when the KOT is sent - when cooking starts - not
   when the bill is paid.

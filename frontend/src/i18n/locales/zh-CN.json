@@ -7101,5 +7101,17 @@
   "Uses {n}": "使用 {n} 项",
   "Uses stock": "扣减库存",
   "What one of these takes off the outlet's stock when the dish is fired, on top of the dish's own recipe.": "菜品起菜时，此选项在菜品自身配方之外从营业点库存中扣减的用量。",
-  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "菜品加入账单时向领班询问的内容：奶类、冰、加料。每个选项都可加价。"
+  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "菜品加入账单时向领班询问的内容：奶类、冰、加料。每个选项都可加价。",
+  "{v0} · low-stock level": "{v0} · 低库存阈值",
+  "Level ({v0})": "阈值（{v0}）",
+  "Low-stock level for {v0}": "{v0} 的低库存阈值",
+  "Save level": "保存阈值",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "当前库存等于或低于此阈值时，该食材显示为“低”。输入 0 表示不预警。",
+  "Issued": "已出库",
+  "To issue": "待出库",
+  "Issue the difference": "出库差额",
+  "Already issued": "已全部出库",
+  "Enter a number for the low-stock level.": "请为低库存阈值输入一个数字。",
+  "Nothing stocked at this outlet yet.": "本营业点还没有库存。",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "本营业点从未有过这种食材。报损后结存会低于零。"
 }

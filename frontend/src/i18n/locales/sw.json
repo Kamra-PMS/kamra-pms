@@ -7101,5 +7101,17 @@
   "Uses {n}": "Inatumia {n}",
   "Uses stock": "Inatumia stoo",
   "What one of these takes off the outlet's stock when the dish is fired, on top of the dish's own recipe.": "Kile ambacho kimoja kati ya haya kinapunguza kwenye stoo ya kituo cha mauzo chakula kinapotumwa jikoni, juu ya mapishi ya chakula chenyewe.",
-  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "Kile ambacho kapteni anaulizwa chakula kinapoingia kwenye bili: maziwa, barafu, ziada. Kila chaguo linaweza kuongeza bei."
+  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "Kile ambacho kapteni anaulizwa chakula kinapoingia kwenye bili: maziwa, barafu, ziada. Kila chaguo linaweza kuongeza bei.",
+  "{v0} · low-stock level": "{v0} · kiwango cha akiba ndogo",
+  "Level ({v0})": "Kiwango ({v0})",
+  "Low-stock level for {v0}": "Kiwango cha akiba ndogo cha {v0}",
+  "Save level": "Hifadhi kiwango",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "Kiungo hiki huonyeshwa kama CHINI wakati kilichopo ni sawa na kiwango hiki au chini yake. Weka 0 ili kusiwe na onyo.",
+  "Issued": "Kilichotolewa",
+  "To issue": "Cha kutoa",
+  "Issue the difference": "Toa tofauti",
+  "Already issued": "Imeshatolewa",
+  "Enter a number for the low-stock level.": "Weka namba ya kiwango cha akiba ndogo.",
+  "Nothing stocked at this outlet yet.": "Hakuna kilichohifadhiwa katika kituo hiki bado.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Kituo hiki hakijawahi kuwa na kiungo hiki. Kukiondoa kutafanya akiba iwe chini ya sifuri."
 }

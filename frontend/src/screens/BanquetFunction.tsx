@@ -89,14 +89,22 @@ export default function BanquetFunction() {
   }, [])
 
   const act = useCallback(
-    async (work: () => Promise<unknown>) => {
+    async (
+      work: () => Promise<unknown>,
+      // When the storekeeper is looking at a sheet, the failure belongs
+      // there. Otherwise it stays on this page.
+      reportError?: (message: string | null) => void,
+    ) => {
       setBusy(true)
       setError(null)
+      reportError?.(null)
       try {
         await work()
         load()
       } catch (e) {
-        setError(serverError(e))
+        const message = serverError(e)
+        if (reportError) reportError(message)
+        else setError(message)
       } finally {
         setBusy(false)
       }

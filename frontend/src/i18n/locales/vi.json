@@ -7101,5 +7101,17 @@
   "Uses {n}": "Dùng {n}",
   "Uses stock": "Dùng tồn kho",
   "What one of these takes off the outlet's stock when the dish is fired, on top of the dish's own recipe.": "Lượng mà một lựa chọn này trừ khỏi tồn kho của điểm bán khi món được gửi bếp, ngoài công thức riêng của món.",
-  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "Những gì trưởng ca phục vụ được hỏi khi món lên hóa đơn: sữa, đá, thêm. Mỗi lựa chọn có thể cộng thêm vào giá."
+  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "Những gì trưởng ca phục vụ được hỏi khi món lên hóa đơn: sữa, đá, thêm. Mỗi lựa chọn có thể cộng thêm vào giá.",
+  "{v0} · low-stock level": "{v0} · mức tồn thấp",
+  "Level ({v0})": "Mức ({v0})",
+  "Low-stock level for {v0}": "Mức tồn thấp của {v0}",
+  "Save level": "Lưu mức",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "Nguyên liệu này hiển thị là THẤP khi tồn kho bằng hoặc dưới mức này. Nhập 0 để không cảnh báo.",
+  "Issued": "Đã xuất",
+  "To issue": "Cần xuất",
+  "Issue the difference": "Xuất phần chênh lệch",
+  "Already issued": "Đã xuất đủ",
+  "Enter a number for the low-stock level.": "Nhập một số cho mức tồn thấp.",
+  "Nothing stocked at this outlet yet.": "Điểm bán này chưa có hàng tồn.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Điểm bán này chưa từng giữ nguyên liệu này. Xuất hủy sẽ đưa số dư xuống dưới không."
 }

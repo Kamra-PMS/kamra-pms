@@ -7101,5 +7101,17 @@
   "Uses {n}": "Usa {n}",
   "Uses stock": "Usa estoque",
   "What one of these takes off the outlet's stock when the dish is fired, on top of the dish's own recipe.": "O que cada uma destas baixa do estoque do ponto de venda quando o prato é enviado à cozinha, além da receita do próprio prato.",
-  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "O que se pergunta ao capitão quando um prato entra na fatura: leite, gelo, extras. Cada opção pode somar ao preço."
+  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "O que se pergunta ao capitão quando um prato entra na fatura: leite, gelo, extras. Cada opção pode somar ao preço.",
+  "{v0} · low-stock level": "{v0} · nível de estoque baixo",
+  "Level ({v0})": "Nível ({v0})",
+  "Low-stock level for {v0}": "Nível de estoque baixo de {v0}",
+  "Save level": "Salvar nível",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "Este ingrediente aparece como BAIXO quando o disponível está neste nível ou abaixo dele. Digite 0 para não avisar.",
+  "Issued": "Emitido",
+  "To issue": "A emitir",
+  "Issue the difference": "Emitir a diferença",
+  "Already issued": "Já emitido",
+  "Enter a number for the low-stock level.": "Digite um número para o nível de estoque baixo.",
+  "Nothing stocked at this outlet yet.": "Ainda não há estoque neste ponto de venda.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Este ponto de venda nunca teve este ingrediente. Baixá-lo deixa o saldo abaixo de zero."
 }

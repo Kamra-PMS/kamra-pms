@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   PackageSearch, RefreshCw, TriangleAlert, X, Truck, ClipboardCheck,
-  Trash2, History, Ban,
+  Trash2, History, Ban, Plus,
 } from "lucide-react"
 import { call, getCurrentProperty } from "../lib/api"
 import { useAuth } from "../lib/auth"
@@ -20,7 +20,9 @@ import { t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 type Status = "OK" | "LOW" | "OUT" | "NEGATIVE"
 
 interface StockRow {
-  name: string
+  name: string | null
+  /** 0 = this outlet has never moved it: offered in the pickers only. */
+  stocked: 0 | 1
   ingredient: string
   ingredient_name: string
   uom: string
@@ -109,13 +111,17 @@ export default function Inventory() {
 
   const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
   const [outlet, setOutlet] = useState("")
-  const [rows, setRows] = useState<StockRow[]>([])
+  // Every active ingredient, so Receive can take a new one in. The table,
+  // stock take and wastage start from what this outlet holds.
+  const [shelf, setShelf] = useState<StockRow[]>([])
+  const rows = useMemo(() => shelf.filter((r) => r.stocked), [shelf])
   const [low, setLow] = useState<LowRow[]>([])
   const [filter, setFilter] = useState<Status | "">("")
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [modal, setModal] = useState<"receive" | "count" | "waste" | null>(null)
   const [ledgerOf, setLedgerOf] = useState<StockRow | null>(null)
+  const [parOf, setParOf] = useState<StockRow | null>(null)
 
   useEffect(() => {
     call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property: getCurrentProperty() })
@@ -127,8 +133,8 @@ export default function Inventory() {
   const load = useCallback(() => {
     if (!outlet) return
     const property = getCurrentProperty()
-    call<StockRow[]>("kamra.inventory.stock_list", { property, outlet })
-      .then(setRows).catch((e) => setErr(String(e)))
+    call<StockRow[]>("kamra.inventory.stock_list", { property, outlet, include_unstocked: 1 })
+      .then(setShelf).catch((e) => setErr(String(e)))
     call<LowRow[]>("kamra.inventory.low_stock", { property, outlet })
       .then(setLow).catch(() => {})
   }, [outlet])
@@ -140,6 +146,7 @@ export default function Inventory() {
     try {
       await call(`kamra.inventory.${method}`, { property: getCurrentProperty(), outlet, ...params })
       setModal(null)
+      setParOf(null)
       load()
     } catch (e) {
       setErr(e instanceof Error ? translate(e.message) : String(e))
@@ -265,7 +272,14 @@ export default function Inventory() {
                     {fmt(r.qty_on_hand)} <span className="font-normal text-zinc-400">{r.uom}</span>
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums text-zinc-400">
-                    {r.par_level ? fmt(r.par_level) : "-"}
+                    {canWrite ? (
+                      <Button type="button" variant="outline" onClick={() => setParOf(r)}
+                        aria-label={translate("Low-stock level for {v0}", { v0: String(r.ingredient_name) })}
+                        className="min-h-11 justify-end px-3">
+                        <span className="tabular-nums">{r.par_level ? fmt(r.par_level) : "-"}</span>
+                        {translate("Set")}
+                      </Button>
+                    ) : r.par_level ? fmt(r.par_level) : "-"}
                   </td>
                   <td className="px-4 py-2"><StatusChip s={r.status} /></td>
                   <td className="px-4 py-2 text-zinc-400">
@@ -286,16 +300,20 @@ export default function Inventory() {
       )}
 
       {modal === "receive" && (
-        <ReceiveModal rows={rows} outlet={outlet} busy={busy}
+        <ReceiveModal rows={shelf} outlet={outlet} busy={busy}
           onClose={() => setModal(null)} onSubmit={(p) => act("receive_stock", p)} />
       )}
       {modal === "count" && (
-        <CountModal rows={rows} busy={busy}
+        <CountModal rows={shelf} busy={busy}
           onClose={() => setModal(null)} onSubmit={(p) => act("adjust_stock", p)} />
       )}
       {modal === "waste" && (
-        <WasteModal rows={rows} busy={busy}
+        <WasteModal rows={shelf} busy={busy}
           onClose={() => setModal(null)} onSubmit={(p) => act("record_wastage", p)} />
+      )}
+      {parOf && (
+        <ParModal row={parOf} busy={busy}
+          onClose={() => setParOf(null)} onSubmit={(p) => act("set_par_level", p)} />
       )}
       {ledgerOf && (
         <LedgerModal row={ledgerOf} outlet={outlet} onClose={() => setLedgerOf(null)} />
@@ -333,7 +351,7 @@ function ReceiveModal({ rows, busy, onClose, onSubmit }: {
         </thead>
         <tbody className="divide-y divide-zinc-100">
           {rows.map((r) => (
-            <tr key={r.name}>
+            <tr key={r.ingredient}>
               <td className="py-1.5 font-medium">{r.ingredient_name}
                 <span className="ml-1 text-xs text-zinc-400">{r.uom}</span></td>
               <td className="py-1.5"><input type="number" min="0" step="any" inputMode="decimal"
@@ -364,46 +382,57 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
   useUILanguage()
   const [counted, setCounted] = useState<Record<string, string>>({})
   const [note, setNote] = useState("")
+  const [added, setAdded] = useState<string[]>([])
+  const [query, setQuery] = useState("")
+  const shown = heldMatching(rows, added, query)
   const lines = Object.entries(counted)
     .filter(([, v]) => v !== "")
     .map(([ingredient, v]) => ({ ingredient, counted_qty: Number(v) }))
   return (
     <Modal title={translate("Stock take")} onClose={onClose}>
       <p className="mb-3 text-sm text-zinc-500">{translate("Count what's physically on the shelf. Leave a row blank to skip it.")}</p>
-      <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase text-zinc-400">
-          <tr><th className="pb-1">{translate("Ingredient")}</th><th className="pb-1 text-right">{translate("System")}</th>
-            <th className="pb-1">{translate("Counted")}</th><th className="pb-1 text-right">{translate("Variance")}</th></tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
-          {rows.map((r) => {
-            const v = counted[r.ingredient]
-            const delta = v === "" || v === undefined ? null : Number(v) - r.qty_on_hand
-            return (
-              <tr key={r.name}>
-                <td className="py-1.5 font-medium">{r.ingredient_name}
-                  <span className="ml-1 text-xs text-zinc-400">{r.uom}</span></td>
-                <td className="py-1.5 text-right tabular-nums text-zinc-400">{fmt(r.qty_on_hand)}</td>
-                <td className="py-1.5">
-                  {/* Deliberately blank, never pre-filled with the system qty:
-                      pre-filling invites blind confirmation, which is exactly
-                      how a count rots into fiction. */}
-                  <input type="number" step="any" inputMode="decimal" placeholder={translate("count…")}
-                    className="w-24 rounded border border-zinc-300 px-2 py-1 tabular-nums"
-                    value={v ?? ""}
-                    onChange={(e) => setCounted({ ...counted, [r.ingredient]: e.target.value })} />
-                </td>
-                <td className={cn("py-1.5 text-right font-bold tabular-nums",
-                  delta === null ? "text-zinc-300"
-                    : Math.abs(delta) < 1e-9 ? "text-zinc-400"
-                      : delta < 0 ? "text-rose-600" : "text-emerald-600")}>
-                  {delta === null ? "-" : `${delta > 0 ? "+" : ""}${fmt(delta)}`}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      <ShelfTools rows={rows} query={query} onQuery={setQuery} added={added}
+        onAdd={(id) => { setAdded((prev) => prev.includes(id) ? prev : [...prev, id]); setQuery("") }} />
+      {shown.length === 0 ? (
+        <p className="py-6 text-center text-sm text-zinc-400">
+          {query.trim() ? translate("No matches.") : translate("Nothing stocked at this outlet yet.")}
+        </p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead className="text-left text-xs uppercase text-zinc-400">
+            <tr><th className="pb-1">{translate("Ingredient")}</th><th className="pb-1 text-right">{translate("System")}</th>
+              <th className="pb-1">{translate("Counted")}</th><th className="pb-1 text-right">{translate("Variance")}</th></tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {shown.map((r) => {
+              const v = counted[r.ingredient]
+              const delta = v === "" || v === undefined ? null : Number(v) - r.qty_on_hand
+              return (
+                <tr key={r.ingredient}>
+                  <td className="py-1.5 font-medium">{r.ingredient_name}
+                    <span className="ml-1 text-xs text-zinc-400">{r.uom}</span></td>
+                  <td className="py-1.5 text-right tabular-nums text-zinc-400">{fmt(r.qty_on_hand)}</td>
+                  <td className="py-1.5">
+                    {/* Deliberately blank, never pre-filled with the system qty:
+                        pre-filling invites blind confirmation, which is exactly
+                        how a count rots into fiction. */}
+                    <input type="number" step="any" inputMode="decimal" placeholder={translate("count…")}
+                      className="w-24 rounded border border-zinc-300 px-2 py-1 tabular-nums"
+                      value={v ?? ""}
+                      onChange={(e) => setCounted({ ...counted, [r.ingredient]: e.target.value })} />
+                  </td>
+                  <td className={cn("py-1.5 text-right font-bold tabular-nums",
+                    delta === null ? "text-zinc-300"
+                      : Math.abs(delta) < 1e-9 ? "text-zinc-400"
+                        : delta < 0 ? "text-rose-600" : "text-emerald-600")}>
+                    {delta === null ? "-" : `${delta > 0 ? "+" : ""}${fmt(delta)}`}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      )}
       <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)}
         placeholder={translate("What did you count, and why does it differ? (required)")}
         className="mt-4 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
@@ -423,19 +452,42 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
   const [ingredient, setIngredient] = useState("")
   const [qty, setQty] = useState("")
   const [note, setNote] = useState("")
+  const [added, setAdded] = useState<string[]>([])
+  const [query, setQuery] = useState("")
+  const shown = heldMatching(rows, added, query)
   const row = rows.find((r) => r.ingredient === ingredient)
+  // Keep a chosen row in the list even while a search hides its name.
+  const options = row && !shown.some((r) => r.ingredient === row.ingredient)
+    ? [row, ...shown] : shown
   return (
     <Modal title={translate("Record wastage")} onClose={onClose}>
       <p className="mb-3 text-sm text-zinc-500">{translate("Stock destroyed outside a sale - spoiled, broken, dropped. Food that was cooked and then voided is already accounted for; it shows in the wastage report on its own.")}</p>
+      <ShelfTools rows={rows} query={query} onQuery={setQuery} added={added}
+        onAdd={(id) => {
+          setAdded((prev) => prev.includes(id) ? prev : [...prev, id])
+          setIngredient(id)
+          setQuery("")
+        }} />
       <div className="space-y-3">
-        <select className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-          value={ingredient} onChange={(e) => setIngredient(e.target.value)}>
-          <option value="">{translate("Pick an ingredient…")}</option>
-          {rows.map((r) => (
-            <option key={r.name} value={r.ingredient}>
-              {r.ingredient_name} - {fmt(r.qty_on_hand)} {r.uom}{translate(" on hand")}</option>
-          ))}
-        </select>
+        {options.length === 0 ? (
+          <p className="text-sm text-zinc-400">
+            {query.trim() ? translate("No matches.") : translate("Nothing stocked at this outlet yet.")}
+          </p>
+        ) : (
+          <select className="min-h-11 w-full rounded-lg border border-zinc-300 px-3 text-sm"
+            value={ingredient} onChange={(e) => setIngredient(e.target.value)}>
+            <option value="">{translate("Pick an ingredient…")}</option>
+            {options.map((r) => (
+              <option key={r.ingredient} value={r.ingredient}>
+                {r.ingredient_name} - {fmt(r.qty_on_hand)} {r.uom}{translate(" on hand")}</option>
+            ))}
+          </select>
+        )}
+        {row && row.stocked === 0 && (
+          <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {translate("This outlet has never held this ingredient. Writing it off will take the balance below zero.")}
+          </div>
+        )}
         <input type="number" min="0" step="any" inputMode="decimal" value={qty}
           onChange={(e) => setQty(e.target.value)}
           placeholder={(row ? translate("Qty wasted ({v0})", { v0: String(row.uom) }) : translate("Qty wasted"))}
@@ -447,6 +499,97 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
       <Button className="mt-4 h-12 w-full justify-center"
         disabled={busy || !ingredient || Number(qty) <= 0 || !note.trim()}
         onClick={() => onSubmit({ ingredient, qty: Number(qty), reason_note: note })}>{translate("Write it off")}</Button>
+    </Modal>
+  )
+}
+
+/** Stock take and wastage start from what this outlet holds. Search narrows
+ *  that list; Add ingredient pulls in one the outlet has never moved. */
+function heldMatching(rows: StockRow[], added: string[], query: string): StockRow[] {
+  const q = query.trim().toLowerCase()
+  const working = rows.filter((r) => r.stocked || added.includes(r.ingredient))
+  if (!q) return working
+  return working.filter((r) => (r.ingredient_name || "").toLowerCase().includes(q))
+}
+
+function ShelfTools({ rows, query, onQuery, added, onAdd }: {
+  rows: StockRow[]
+  query: string
+  onQuery: (q: string) => void
+  added: string[]
+  onAdd: (ingredient: string) => void
+}) {
+  useUILanguage()
+  const [adding, setAdding] = useState(false)
+  const [addQuery, setAddQuery] = useState("")
+  const q = addQuery.trim().toLowerCase()
+  // Don't list every active ingredient: matches appear only after a search.
+  const matches = q
+    ? rows.filter((r) => !r.stocked && !added.includes(r.ingredient)
+      && (r.ingredient_name || "").toLowerCase().includes(q)).slice(0, 8)
+    : []
+  return (
+    <div className="mb-3 space-y-2">
+      <input
+        className="min-h-11 w-full rounded-lg border border-zinc-300 px-3 text-sm"
+        placeholder={translate("Search…")}
+        aria-label={translate("Search…")}
+        value={query}
+        onChange={(e) => onQuery(e.target.value)}
+      />
+      {adding ? (
+        <div className="space-y-2">
+          <input
+            autoFocus
+            className="min-h-11 w-full rounded-lg border border-zinc-300 px-3 text-sm"
+            placeholder={translate("Add ingredient")}
+            aria-label={translate("Add ingredient")}
+            value={addQuery}
+            onChange={(e) => setAddQuery(e.target.value)}
+          />
+          {q && matches.length === 0 && (
+            <p className="text-sm text-zinc-400">{translate("No matches.")}</p>
+          )}
+          {matches.length > 0 && (
+            <ul className="overflow-hidden rounded-lg border border-zinc-200">
+              {matches.map((r) => (
+                <li key={r.ingredient} className="border-b border-zinc-100 last:border-b-0">
+                  <button type="button"
+                    className="flex min-h-11 w-full items-center justify-between px-3 text-left text-sm hover:bg-zinc-50"
+                    onClick={() => { onAdd(r.ingredient); setAddQuery(""); setAdding(false) }}>
+                    <span className="font-medium text-zinc-800">{r.ingredient_name}</span>
+                    <span className="text-xs text-zinc-400">{r.uom}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <Button type="button" variant="outline" className="min-h-11" onClick={() => setAdding(true)}>
+          <Plus className="size-4" />{translate("Add ingredient")}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+function ParModal({ row, busy, onClose, onSubmit }: {
+  row: StockRow; busy: boolean; onClose: () => void
+  onSubmit: (p: Record<string, unknown>) => void
+}) {
+  useUILanguage()
+  const [level, setLevel] = useState(row.par_level ? String(row.par_level) : "")
+  const valid = level !== "" && Number(level) >= 0
+  return (
+    <Modal title={translate("{v0} · low-stock level", { v0: String(row.ingredient_name) })} onClose={onClose}>
+      <p className="mb-3 text-sm text-zinc-500">{translate("This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.")}</p>
+      <input type="number" min="0" step="any" inputMode="decimal" autoFocus value={level}
+        onChange={(e) => setLevel(e.target.value)}
+        placeholder={translate("Level ({v0})", { v0: String(row.uom) })}
+        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm tabular-nums" />
+      <Button className="mt-4 h-12 w-full justify-center" disabled={busy || !valid}
+        onClick={() => onSubmit({ ingredient: row.ingredient, par_level: Number(level) })}>{translate("Save level")}</Button>
     </Modal>
   )
 }

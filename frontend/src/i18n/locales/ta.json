@@ -7101,5 +7101,17 @@
   "Uses {n}": "{n} பயன்படுத்துகிறது",
   "Uses stock": "சரக்கைப் பயன்படுத்துகிறது",
   "What one of these takes off the outlet's stock when the dish is fired, on top of the dish's own recipe.": "உணவு அனுப்பப்படும்போது, உணவின் சொந்த ரெசிபிக்கு மேல், இவற்றில் ஒன்று விற்பனை நிலையத்தின் சரக்கிலிருந்து எதைக் குறைக்கிறது.",
-  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "உணவு பில்லில் சேரும்போது கேப்டனிடம் கேட்கப்படுவது: பால், ஐஸ், கூடுதல்கள். ஒவ்வொரு தேர்வும் விலையைக் கூட்டலாம்."
+  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "உணவு பில்லில் சேரும்போது கேப்டனிடம் கேட்கப்படுவது: பால், ஐஸ், கூடுதல்கள். ஒவ்வொரு தேர்வும் விலையைக் கூட்டலாம்.",
+  "{v0} · low-stock level": "{v0} · குறைந்த இருப்பு அளவு",
+  "Level ({v0})": "அளவு ({v0})",
+  "Low-stock level for {v0}": "{v0}-க்கான குறைந்த இருப்பு அளவு",
+  "Save level": "அளவை சேவ் செய்",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "கையிருப்பு இந்த அளவுக்குச் சமமாகவோ குறைவாகவோ இருக்கும்போது இந்த மூலப்பொருள் 'குறைவு' என்று காட்டப்படும். எச்சரிக்கை வேண்டாம் என்றால் 0 உள்ளிடவும்.",
+  "Issued": "வழங்கப்பட்டது",
+  "To issue": "வழங்க வேண்டியது",
+  "Issue the difference": "வித்தியாசத்தை வழங்கு",
+  "Already issued": "ஏற்கனவே வழங்கப்பட்டது",
+  "Enter a number for the low-stock level.": "குறைந்த இருப்பு அளவுக்கு ஒரு எண்ணை உள்ளிடவும்.",
+  "Nothing stocked at this outlet yet.": "இந்த விற்பனை நிலையத்தில் இன்னும் இருப்பு எதுவும் இல்லை.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "இந்த விற்பனை நிலையத்தில் இந்த மூலப்பொருள் இதுவரை இருந்ததில்லை. இதைக் கணக்கிலிருந்து டெலீட் செய்தால் இருப்பு பூஜ்ஜியத்திற்குக் கீழே செல்லும்."
 }

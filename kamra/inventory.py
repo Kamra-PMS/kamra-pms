@@ -28,6 +28,7 @@ authorization for consumption is the POS_ROLES gate on fire_kot, not doctype
 perms on the ledger. authz.py's own docstring makes the same point.
 """
 
+import math
 import uuid
 
 import frappe
@@ -59,6 +60,14 @@ def _status(qty: float, par: float) -> str:
 	if par and qty <= par:
 		return STATUS_LOW
 	return STATUS_OK
+
+
+def check_outlet(property: str, outlet: str) -> None:
+	"""Refuse an outlet of another property. require_perm only checks that the
+	user can reach each record, so someone on two hotels could pair one's name
+	with the other's outlet and leave a stock row labelled A under B."""
+	if frappe.db.get_value("POS Outlet", outlet, "property") != property:
+		frappe.throw(_("That outlet is not at this property."))
 
 
 def _stock_row(property: str, outlet: str, ingredient: str,
@@ -410,6 +419,7 @@ def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
 		rows = frappe.parse_json(rows)
 	if not rows:
 		frappe.throw(_("Nothing to receive."))
+	check_outlet(property, outlet)
 	batch = uuid.uuid4().hex[:12]
 	out = []
 	for r in rows:
@@ -453,6 +463,7 @@ def adjust_stock(property: str, outlet: str, rows, note: str):
 		               "does it differ?"))
 	if not rows:
 		frappe.throw(_("Nothing counted."))
+	check_outlet(property, outlet)
 	batch = uuid.uuid4().hex[:12]
 	out = []
 	for r in rows:
@@ -498,6 +509,7 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 		frappe.throw(_("Wasted quantity must be above zero."))
 	if not (reason_note or "").strip():
 		frappe.throw(_("Wastage needs a reason."))
+	check_outlet(property, outlet)
 	after = _apply_move(property, outlet, ingredient, -qty, "Wastage",
 	                    note=reason_note.strip()[:500])
 	from kamra.savings import log_action
@@ -513,13 +525,31 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 
 @frappe.whitelist()
 @require_perm("Ingredient", "view_stock")
-def stock_list(property: str, outlet: str, status: str | None = None):
+def stock_list(property: str, outlet: str, status: str | None = None,
+               include_unstocked: int = 0):
 	"""Everything this outlet holds. Stock is per outlet, so there is no such
-	thing as a merged total across outlets and this never offers one."""
+	thing as a merged total across outlets and this never offers one.
+
+	include_unstocked adds the active ingredients this outlet has never moved,
+	at zero and marked stocked = 0, for the receipt, count and wastage pickers:
+	a balance row only appears with the first movement, so without them a new
+	ingredient could never get one."""
 	rows = frappe.get_all(
 		"Ingredient Stock", filters={"property": property, "outlet": outlet},
 		fields=["name", "ingredient", "qty_on_hand", "par_level",
 		        "last_counted_at", "last_counted_by"])
+	for r in rows:
+		r["stocked"] = 1
+	if int(include_unstocked or 0):
+		held = {r.ingredient for r in rows}
+		rows += [
+			frappe._dict(name=None, ingredient=name, qty_on_hand=0.0, par_level=0.0,
+			             last_counted_at=None, last_counted_by=None, stocked=0)
+			for name in frappe.get_all(
+				"Ingredient", filters={"property": property, "is_active": 1},
+				pluck="name")
+			if name not in held
+		]
 	out = []
 	for r in rows:
 		meta = frappe.db.get_value(
@@ -672,7 +702,18 @@ def set_menu_availability(menu_item: str, available: int):
 @require_perm("Ingredient", "manage_stock")
 def set_par_level(property: str, outlet: str, ingredient: str, par_level: float):
 	"""Where LOW starts for this ingredient at this outlet. Zero = no par."""
+	try:
+		par = float(par_level)
+	except (TypeError, ValueError):
+		frappe.throw(_("Enter a number for the low-stock level."))
+	# nan and inf compare in surprising ways (nan < 0 is false) and must not
+	# land in the column as a level nobody can read
+	if not math.isfinite(par):
+		frappe.throw(_("Enter a number for the low-stock level."))
+	if par < 0:
+		frappe.throw(_("A low-stock level cannot be below zero."))
+	check_outlet(property, outlet)
 	name = _stock_row(property, outlet, ingredient)
-	frappe.db.set_value("Ingredient Stock", name, "par_level",
-	                    float(par_level or 0), update_modified=False)
+	frappe.db.set_value("Ingredient Stock", name, "par_level", par,
+	                    update_modified=False)
 	return {"ok": True}

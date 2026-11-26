@@ -7101,5 +7101,17 @@
   "Uses {n}": "{n} इस्तेमाल",
   "Uses stock": "स्टॉक इस्तेमाल",
   "What one of these takes off the outlet's stock when the dish is fired, on top of the dish's own recipe.": "व्यंजन फ़ायर होने पर इनमें से एक, व्यंजन की अपनी रेसिपी के अलावा, आउटलेट के स्टॉक से क्या घटाता है।",
-  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "व्यंजन बिल पर जाते समय कैप्टन से क्या पूछा जाता है: दूध, बर्फ़, एक्स्ट्रा। हर चॉइस से प्राइस बढ़ सकता है।"
+  "What the captain is asked when a dish goes on the bill: milk, ice, extras. Each choice can add to the price.": "व्यंजन बिल पर जाते समय कैप्टन से क्या पूछा जाता है: दूध, बर्फ़, एक्स्ट्रा। हर चॉइस से प्राइस बढ़ सकता है।",
+  "{v0} · low-stock level": "{v0} · कम स्टॉक स्तर",
+  "Level ({v0})": "स्तर ({v0})",
+  "Low-stock level for {v0}": "{v0} के लिए कम स्टॉक स्तर",
+  "Save level": "स्तर सेव करें",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "जब स्टॉक में मात्रा इस स्तर के बराबर या उससे कम हो, तो यह सामग्री 'कम' दिखती है। चेतावनी न चाहिए तो 0 डालें।",
+  "Issued": "जारी किया गया",
+  "To issue": "जारी करना बाकी",
+  "Issue the difference": "अंतर जारी करें",
+  "Already issued": "पहले ही जारी",
+  "Enter a number for the low-stock level.": "कम स्टॉक स्तर के लिए एक संख्या डालें।",
+  "Nothing stocked at this outlet yet.": "इस आउटलेट पर अभी कोई स्टॉक नहीं है।",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "इस आउटलेट में यह सामग्री कभी नहीं रही। इसे राइट ऑफ़ करने पर बैलेंस शून्य से नीचे चला जाएगा।"
 }
