@@ -48,6 +48,18 @@ that month, and the payout:
 
 **Download statement** saves it as a CSV. Guest names are never on it.
 
+## Owners with units at several properties
+
+An owner whose units are at more than one property gets an **All my
+properties** tab beside **This property**. It shows occupancy, room nights
+and room revenue for each property and in total, and one month's statement
+with the payout per property and overall. **Download statement** saves
+every property's lines in one CSV. Press a property to open its own view.
+
+Only properties the login is permitted for are listed. When the
+properties use different currencies, the totals say **Mixed currencies**
+instead of adding them up.
+
 ## Not yet
 
 Role Profiles ("Owner - read-only", "Owner - manage") adjustable in the
@@ -56,6 +68,6 @@ then the owner record is the switch.
 
 ## For developers
 
-`kamra.owners`: `my_portal`, `my_statement`, `block_unit`,
+`kamra.owners`: `my_portal`, `my_statement`, `my_overview`, `block_unit`,
 `release_block`, `book_unit`, `set_unit_rate` (Owner role);
 `desk`, `save_owner`, `add_owner_cost` (Hotel Admin).
