@@ -39,7 +39,7 @@ desk, or disclosed a security problem responsibly.
 All screen text lives in one file per language in the repository:
 `frontend/src/i18n/locales/ar.json` (Arabic), `de.json` (German),
 `es.json` (Spanish), `pt.json` (Portuguese), `id.json` (Indonesian),
-`fil.json` (Filipino), `vi.json` (Vietnamese), `sw.json` (Swahili) and `zh-CN.json` (Simplified Chinese). Each line is `"English": "translation"`. Change
+`fil.json` (Filipino), `vi.json` (Vietnamese), `sw.json` (Swahili), `hi.json` (Hindi), `ta.json` (Tamil) and `zh-CN.json` (Simplified Chinese). Each line is `"English": "translation"`. Change
 the translation on the right, keep any `{placeholder}` exactly as it is,
 and open a pull request (GitHub's pencil icon on the file does this for
 you). Messages from the server live in `kamra/translations/<lang>.csv`.

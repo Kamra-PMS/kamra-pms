@@ -54,6 +54,18 @@
     "dir": "ltr"
   },
   {
+    "code": "hi",
+    "nativeLabel": "हिन्दी",
+    "englishLabel": "Hindi",
+    "dir": "ltr"
+  },
+  {
+    "code": "ta",
+    "nativeLabel": "தமிழ்",
+    "englishLabel": "Tamil",
+    "dir": "ltr"
+  },
+  {
     "code": "zh-CN",
     "nativeLabel": "简体中文",
     "englishLabel": "Chinese (Simplified)",
