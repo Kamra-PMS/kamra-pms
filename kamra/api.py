@@ -7541,13 +7541,23 @@ def _blacklist_gate(guest: str, property: str, override_reason: str | None):
 		frappe.throw(_("Only a Hotel Admin can book a blacklisted guest."),
 		             frappe.PermissionError)
 	frappe.flags.kamra_blacklist_override = guest
+	# Front Desk can read this hotel's activity feed. If the listed profile
+	# has only stayed elsewhere, keep their standing reason out of the log —
+	# same rule as the refusal text when the desk cannot see the guest.
+	stays = set(frappe.get_all("Reservation", filters={"guest": guest},
+	                           pluck="property", distinct=True))
+	standing = reason if (not stays or property in stays) else None
 	from kamra.savings import log_action
 	log_action(
 		action_type="blacklist_override",
 		reference_doctype="Guest",
 		reference_name=guest,
 		property=property,
-		rationale=f"Booked despite blacklist ({reason or 'no reason'}): {override_reason}",
+		rationale=(
+			f"Booked despite blacklist ({standing}): {override_reason}"
+			if standing else
+			f"Booked despite blacklist: {override_reason}"
+		),
 	)
 
 

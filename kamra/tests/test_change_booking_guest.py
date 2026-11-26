@@ -343,6 +343,15 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 		res = self.res()
 		self.assertNotEqual(res.guest, dora)
 		self.assertEqual(res.guest_name, "Typed Local Name")
+		# Front Desk can read this hotel's activity feed — the other hotel's
+		# standing reason must not appear in the override log.
+		log = frappe.get_all(
+			"Agent Action Log",
+			filters={"action_type": "blacklist_override", "reference_name": dora},
+			fields=["rationale"], order_by="creation desc", limit=1)
+		self.assertTrue(log, "override was not logged")
+		self.assertNotIn("Secret other-hotel reason", log[0].rationale)
+		self.assertIn("GM approved at this hotel", log[0].rationale)
 
 	def test_the_desk_cannot_override_a_number_listed_at_another_hotel(self):
 		# not seeing who is listed is no reason to let them through
