@@ -5,7 +5,8 @@ from __future__ import annotations
 import frappe
 
 from kamra import inventory
-from kamra.tests.audit_fixtures import PROP_A, PROP_B, TODAY, AuditTestCase, make_property
+from kamra.tests.audit_fixtures import (
+	PROP_A, PROP_B, TODAY, AuditTestCase, ensure_user, make_property)
 
 STOCK_LIST = "kamra.inventory.stock_list"
 
@@ -77,3 +78,72 @@ class TestLowStockLevel(KitchenStockTestCase):
 			inventory.set_par_level(PROP_A, self.outlet, milk, -1)
 
 		self.assertEqual(self.listed()[milk]["par_level"], 5)
+
+	def test_a_level_that_is_not_a_finite_number_is_refused(self):
+		milk = self.ingredient("UT Milk")
+		inventory.set_par_level(PROP_A, self.outlet, milk, 5)
+
+		for bad in ("nope", "", None, "nan", "NaN", "inf", "+inf", "-inf",
+		            "Infinity", float("nan"), float("inf"), float("-inf")):
+			with self.assertRaises(frappe.ValidationError) as caught:
+				inventory.set_par_level(PROP_A, self.outlet, milk, bad)
+			self.assertIn("Enter a number for the low-stock level.", str(caught.exception))
+
+		inventory.set_par_level(PROP_A, self.outlet, milk, "6.5")
+		self.assertEqual(self.listed()[milk]["par_level"], 6.5)
+
+
+class TestWhoMaySetTheLevel(KitchenStockTestCase):
+	def test_a_user_without_manage_stock_is_refused(self):
+		milk = self.ingredient("UT Milk")
+		# Front Desk may look at stock, not set the level
+		frappe.set_user(ensure_user(  # nosemgrep: frappe-setuser -- the role under test
+			"ut.stock.desk@test.local", ["Front Desk"]))
+
+		with self.assertRaises(frappe.PermissionError):
+			inventory.set_par_level(PROP_A, self.outlet, milk, 3)
+
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		self.assertNotIn(milk, self.listed())
+
+	def test_a_user_restricted_to_one_property_cannot_touch_another(self):
+		mine = self.ingredient("UT Milk")
+		foreign = self.ingredient("UT Foreign Milk", prop=PROP_B)
+		outlet_b = frappe.get_doc({
+			"doctype": "POS Outlet", "property": PROP_B,
+			"outlet_name": "UT Other Kitchen", "outlet_type": "Restaurant",
+			"gst_rate": 5}).insert(ignore_permissions=True).name
+		user = ensure_user("ut.stock.scoped@test.local", ["F&B Manager"])
+		frappe.db.delete("User Permission", {"user": user, "allow": "Property"})
+		frappe.get_doc({
+			"doctype": "User Permission", "user": user,
+			"allow": "Property", "for_value": PROP_A,
+		}).insert(ignore_permissions=True)
+		frappe.clear_cache(user=user)
+		frappe.set_user(user)  # nosemgrep: frappe-setuser -- the role under test
+
+		rows = frappe.call(STOCK_LIST, property=PROP_A, outlet=self.outlet,
+		                   include_unstocked=1)
+		names = {r["ingredient"] for r in rows}
+		self.assertIn(mine, names)
+		self.assertNotIn(foreign, names)
+		inventory.set_par_level(PROP_A, self.outlet, mine, 4)
+
+		refused = (
+			lambda: frappe.call(STOCK_LIST, property=PROP_B, outlet=outlet_b,
+			                    include_unstocked=1),
+			lambda: frappe.call(STOCK_LIST, property=PROP_B, outlet=self.outlet,
+			                    include_unstocked=1),
+			lambda: frappe.call(STOCK_LIST, property=PROP_A, outlet=outlet_b,
+			                    include_unstocked=1),
+			lambda: inventory.set_par_level(PROP_B, outlet_b, foreign, 9),
+			lambda: inventory.set_par_level(PROP_A, outlet_b, mine, 9),
+			lambda: inventory.set_par_level(PROP_A, self.outlet, foreign, 9),
+		)
+		for call in refused:
+			with self.assertRaises(frappe.PermissionError):
+				call()
+
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		self.assertEqual(self.listed()[mine]["par_level"], 4)
+		self.assertFalse(frappe.db.exists("Ingredient Stock", {"ingredient": foreign}))

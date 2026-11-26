@@ -7047,5 +7047,8 @@
   "Issued": "Retirado",
   "To issue": "Por retirar",
   "Issue the difference": "Registrar salida de la diferencia",
-  "Already issued": "Salida ya registrada"
+  "Already issued": "Salida ya registrada",
+  "Enter a number for the low-stock level.": "Introduzca un número para el nivel de existencias bajas.",
+  "Nothing stocked at this outlet yet.": "Todavía no hay existencias en este punto de venta.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Este punto de venta nunca ha tenido este ingrediente. Darlo de baja dejará el saldo por debajo de cero."
 }

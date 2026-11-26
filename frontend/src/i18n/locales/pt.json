@@ -7047,5 +7047,8 @@
   "Issued": "Emitido",
   "To issue": "A emitir",
   "Issue the difference": "Emitir a diferença",
-  "Already issued": "Já emitido"
+  "Already issued": "Já emitido",
+  "Enter a number for the low-stock level.": "Digite um número para o nível de estoque baixo.",
+  "Nothing stocked at this outlet yet.": "Ainda não há estoque neste ponto de venda.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Este ponto de venda nunca teve este ingrediente. Baixá-lo deixa o saldo abaixo de zero."
 }

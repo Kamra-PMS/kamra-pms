@@ -34,7 +34,10 @@ import { sellsAlcohol, taxLabel } from "../../lib/money"
 import { Empty, ErrorNote, Field, inputCls, inr, Select } from "./shared"
 import { t as translate, useUILanguage } from "../../lib/i18n"
 
-type Act = (work: () => Promise<unknown>) => Promise<void>
+type Act = (
+  work: () => Promise<unknown>,
+  reportError?: (message: string | null) => void,
+) => Promise<void>
 
 export default function Economics({
   fn,
@@ -287,11 +290,11 @@ export default function Economics({
           property={fn.property}
           busy={busy}
           onClose={() => setIndent(null)}
-          onIssue={(outlet) =>
+          onIssue={(outlet, reportError) =>
             act(async () => {
               await banquet.issueIndent(fn.name, outlet)
               setIndent(null)
-            })
+            }, reportError)
           }
         />
       )}
@@ -417,11 +420,18 @@ function IndentSheet({
   property: string
   busy: boolean
   onClose: () => void
-  onIssue: (outlet: string) => void
+  onIssue: (outlet: string, reportError: (message: string | null) => void) => void
 }) {
   useUILanguage()
   const [outlets, setOutlets] = useState<Row[]>([])
   const [outlet, setOutlet] = useState("")
+  // The page error sits behind this sheet. Keep the failure here, and drop
+  // it when they try again or close.
+  const [issueError, setIssueError] = useState<string | null>(null)
+  const close = () => {
+    setIssueError(null)
+    onClose()
+  }
   useEffect(() => {
     listResource("POS Outlet", {
       fields: ["name", "outlet_name"],
@@ -442,36 +452,39 @@ function IndentSheet({
     <Sheet
       title={translate("Kitchen indent")}
       description={translate("{v0} pax · {v1} · {v2}", { v0: String(indent.pax), v1: String(indent.venue), v2: String(indent.event_date) })}
-      onClose={onClose}
+      onClose={close}
       wide
       footer={
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-sm text-zinc-500">
-            {inr(indent.total_cost)}{translate(" of ingredients")}{indent.shortfall_lines > 0 && (
-              <span className="text-amber-700">
-                {" "}
-                · {indent.shortfall_lines}{translate(" short on the shelf")}</span>
-            )}
-          </span>
-          <div className="flex items-end gap-2">
-            <Field label={translate("Issue from")}>
-              <select
-                className={inputCls + " !w-44"}
-                value={outlet}
-                onChange={(e) => setOutlet(e.target.value)}
-              >
-                {outlets.map((o) => (
-                  <option key={o.name} value={o.name}>
-                    {String(o.outlet_name ?? o.name)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Button variant="outline" onClick={() => window.print()}>{translate("Print")}</Button>
-            <Button disabled={busy || !outlet || !dueAny} onClick={() => onIssue(outlet)}>
-              {!issuedAny ? translate("Issue the stock")
-                : dueAny ? translate("Issue the difference") : translate("Already issued")}
-            </Button>
+        <div className="space-y-3">
+          <ErrorNote error={issueError} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm text-zinc-500">
+              {inr(indent.total_cost)}{translate(" of ingredients")}{indent.shortfall_lines > 0 && (
+                <span className="text-amber-700">
+                  {" "}
+                  · {indent.shortfall_lines}{translate(" short on the shelf")}</span>
+              )}
+            </span>
+            <div className="flex items-end gap-2">
+              <Field label={translate("Issue from")}>
+                <select
+                  className={inputCls + " !w-44"}
+                  value={outlet}
+                  onChange={(e) => setOutlet(e.target.value)}
+                >
+                  {outlets.map((o) => (
+                    <option key={o.name} value={o.name}>
+                      {String(o.outlet_name ?? o.name)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Button variant="outline" onClick={() => window.print()}>{translate("Print")}</Button>
+              <Button disabled={busy || !outlet || !dueAny} onClick={() => onIssue(outlet, setIssueError)}>
+                {!issuedAny ? translate("Issue the stock")
+                  : dueAny ? translate("Issue the difference") : translate("Already issued")}
+              </Button>
+            </div>
           </div>
         </div>
       }

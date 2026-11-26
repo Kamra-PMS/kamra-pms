@@ -7047,5 +7047,8 @@
   "Issued": "Kilichotolewa",
   "To issue": "Cha kutoa",
   "Issue the difference": "Toa tofauti",
-  "Already issued": "Imeshatolewa"
+  "Already issued": "Imeshatolewa",
+  "Enter a number for the low-stock level.": "Weka namba ya kiwango cha akiba ndogo.",
+  "Nothing stocked at this outlet yet.": "Hakuna kilichohifadhiwa katika kituo hiki bado.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Kituo hiki hakijawahi kuwa na kiungo hiki. Kukiondoa kutafanya akiba iwe chini ya sifuri."
 }

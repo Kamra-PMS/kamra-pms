@@ -28,6 +28,7 @@ authorization for consumption is the POS_ROLES gate on fire_kot, not doctype
 perms on the ledger. authz.py's own docstring makes the same point.
 """
 
+import math
 import uuid
 
 import frappe
@@ -690,7 +691,14 @@ def set_menu_availability(menu_item: str, available: int):
 @require_perm("Ingredient", "manage_stock")
 def set_par_level(property: str, outlet: str, ingredient: str, par_level: float):
 	"""Where LOW starts for this ingredient at this outlet. Zero = no par."""
-	par = float(par_level or 0)
+	try:
+		par = float(par_level)
+	except (TypeError, ValueError):
+		frappe.throw(_("Enter a number for the low-stock level."))
+	# nan and inf compare in surprising ways (nan < 0 is false) and must not
+	# land in the column as a level nobody can read
+	if not math.isfinite(par):
+		frappe.throw(_("Enter a number for the low-stock level."))
 	if par < 0:
 		frappe.throw(_("A low-stock level cannot be below zero."))
 	name = _stock_row(property, outlet, ingredient)

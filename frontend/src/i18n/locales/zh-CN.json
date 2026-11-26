@@ -7047,5 +7047,8 @@
   "Issued": "已出库",
   "To issue": "待出库",
   "Issue the difference": "出库差额",
-  "Already issued": "已全部出库"
+  "Already issued": "已全部出库",
+  "Enter a number for the low-stock level.": "请为低库存阈值输入一个数字。",
+  "Nothing stocked at this outlet yet.": "本营业点还没有库存。",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "本营业点从未有过这种食材。报损后结存会低于零。"
 }

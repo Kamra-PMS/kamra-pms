@@ -7047,5 +7047,8 @@
   "Issued": "Đã xuất",
   "To issue": "Cần xuất",
   "Issue the difference": "Xuất phần chênh lệch",
-  "Already issued": "Đã xuất đủ"
+  "Already issued": "Đã xuất đủ",
+  "Enter a number for the low-stock level.": "Nhập một số cho mức tồn thấp.",
+  "Nothing stocked at this outlet yet.": "Điểm bán này chưa có hàng tồn.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Điểm bán này chưa từng giữ nguyên liệu này. Xuất hủy sẽ đưa số dư xuống dưới không."
 }

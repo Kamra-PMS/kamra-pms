@@ -7047,5 +7047,8 @@
   "Issued": "المصروف",
   "To issue": "المتبقي للصرف",
   "Issue the difference": "صرف الفرق",
-  "Already issued": "تم الصرف"
+  "Already issued": "تم الصرف",
+  "Enter a number for the low-stock level.": "أدخل رقماً لحد المخزون المنخفض.",
+  "Nothing stocked at this outlet yet.": "لا يوجد مخزون في هذا المنفذ بعد.",
+  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "هذا المنفذ لم يحتفظ بهذا المكوّن من قبل. شطبه يأخذ الرصيد إلى أقل من صفر."
 }
