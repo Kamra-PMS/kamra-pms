@@ -272,6 +272,28 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
 		self.assertEqual(self.res().guest, self.alice)
 
+	def test_a_blacklisted_phone_at_another_hotel_hides_name_and_reason(self):
+		# Dora only stayed at the other hotel and is blacklisted there
+		_other, dora = self._other_hotel_booking()
+		frappe.db.set_value("Guest", dora, {
+			"blacklisted": 1, "blacklist_reason": "Secret other-hotel reason"})
+		dora_phone = frappe.db.get_value("Guest", dora, "phone")
+		self._limit_desk_to_this_hotel()
+		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			change_booking_guest(self.name, guest_name="Typed Local Name", phone=dora_phone)
+		msg = str(ctx.exception)
+		self.assertIn("blacklisted", msg.lower())
+		self.assertNotIn("Secret other-hotel reason", msg)
+		self.assertNotIn(frappe.db.get_value("Guest", dora, "full_name"), msg)
+		# Hotel Admin override keeps the typed name, not Dora's profile
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- admin override
+		change_booking_guest(self.name, guest_name="Typed Local Name", phone=dora_phone,
+		                     blacklist_override_reason="GM approved at this hotel")
+		res = self.res()
+		self.assertNotEqual(res.guest, dora)
+		self.assertEqual(res.guest_name, "Typed Local Name")
+
 	# -- a desk limited to one hotel ---------------------------------------
 
 	def _other_hotel_booking(self):

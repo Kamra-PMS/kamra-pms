@@ -3964,7 +3964,6 @@ def change_booking_guest(reservation: str, guest: str | None = None,
 	cancelled, and for a blacklisted guest unless a Hotel Admin gives a
 	reason (`blacklist_override_reason`). The change is commented on the
 	booking and logged."""
-	from kamra import phone as phone_mod
 	from kamra.crs import assert_property_access
 	from kamra.savings import log_action
 	res = frappe.get_doc("Reservation", reservation)
@@ -3974,6 +3973,7 @@ def change_booking_guest(reservation: str, guest: str | None = None,
 		             .format(_(res.status)))
 	old = res.guest
 	profiles_before = frappe.db.count("Guest")
+	hidden_blacklist = None  # phone hit on a profile this desk may not see
 	if guest:
 		if not frappe.db.exists("Guest", guest):
 			frappe.throw(_("Guest {0} was not found.").format(guest))
@@ -3982,20 +3982,26 @@ def change_booking_guest(reservation: str, guest: str | None = None,
 		name = (guest_name or "").strip()
 		if not name:
 			frappe.throw(_("Type the new guest's name, or pick an existing guest."))
-		# a blacklisted number still meets its blacklist, as when booking
-		banned = phone and frappe.db.get_value(
-			"Guest", {"phone": phone_mod.matching(phone, res.property), "blacklisted": 1})
-		new = banned or _guest_for_row(name, phone, res.property)
+		# a blacklisted number still meets its blacklist, as when booking —
+		# but only attach to that profile when this desk may see it
+		banned, visible = _blacklisted_phone_hit(phone, res.property)
+		if banned and visible:
+			new = banned
+		else:
+			if banned and not visible:
+				hidden_blacklist = banned
+			new = _guest_for_row(name, phone, res.property)
 	if new == old:
 		frappe.throw(_("That is already the guest on this booking."))
 	flagged, why = frappe.db.get_value("Guest", new, ["blacklisted", "blacklist_reason"]) or (0, None)
-	if flagged:
+	if flagged or hidden_blacklist:
 		if not (blacklist_override_reason or "").strip():
-			frappe.throw(_("Guest {0} is blacklisted{1}. Only a Hotel Admin can book a "
-			               "blacklisted guest, with a reason.").format(
-				frappe.db.get_value("Guest", new, "full_name"), f" - {why}" if why else ""),
-				title=_("Blacklisted guest"))
-		_blacklist_gate(new, res.property, blacklist_override_reason)
+			_refuse_blacklisted(new if flagged else None, bool(flagged), why if flagged else None)
+		# override: never move the booking onto a profile this desk can't see —
+		# keep the typed-name guest; only gate the accessible blacklisted one
+		if flagged:
+			_blacklist_gate(new, res.property, blacklist_override_reason)
+		# hidden hit: typed name stays; no override flag on the foreign profile
 
 	was = (res.guest_name, frappe.db.get_value("Guest", old, "phone") if old else None)
 	now = frappe.db.get_value("Guest", new, ["full_name", "phone"], as_dict=True)
@@ -7495,6 +7501,41 @@ def _guest_for_row(guest_name: str, phone: str | None, property: str | None = No
 	return _find_or_create_guest(guest_name, phone, property)
 
 
+def _blacklisted_phone_hit(phone: str | None, property: str | None):
+	"""A blacklisted Guest matching this phone, and whether the caller may
+	see them. Same disclosure rule as guest_alert: name and reason stay
+	hidden when the profile is out of scope (another hotel's guest)."""
+	if not phone:
+		return None, False
+	from kamra import phone as phone_mod
+	from kamra.authz import assert_guest_access
+	banned = frappe.db.get_value(
+		"Guest", {"phone": phone_mod.matching(phone, property), "blacklisted": 1})
+	if not banned:
+		return None, False
+	try:
+		assert_guest_access(banned)
+		return banned, True
+	except frappe.PermissionError:
+		return banned, False
+
+
+def _refuse_blacklisted(guest: str | None, visible: bool, why: str | None = None):
+	"""Refuse a blacklisted guest. Name and standing reason only when the
+	caller may see that profile (guest_alert's rule)."""
+	if visible and guest:
+		why = why if why is not None else frappe.db.get_value(
+			"Guest", guest, "blacklist_reason")
+		frappe.throw(_("Guest {0} is blacklisted{1}. Only a Hotel Admin can book a "
+		               "blacklisted guest, with a reason.").format(
+			frappe.db.get_value("Guest", guest, "full_name"),
+			f" - {why}" if why else ""),
+			title=_("Blacklisted guest"))
+	frappe.throw(_("This guest is blacklisted. Only a Hotel Admin can book a "
+	               "blacklisted guest, with a reason."),
+	             title=_("Blacklisted guest"))
+
+
 def _blacklist_gate(guest: str, property: str, override_reason: str | None):
 	"""A blacklisted guest is refused unless a Hotel Admin confirms with a
 	reason. The override is scoped to this guest for this request only and
@@ -7845,11 +7886,20 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 			frappe.throw(f"Guest profile {guest} not found.")
 	else:
 		# a phone already on another profile never replaces the typed name,
-		# but a blacklisted profile's number still meets its blacklist
-		from kamra import phone as phone_mod
-		banned = phone and frappe.db.get_value(
-			"Guest", {"phone": phone_mod.matching(phone, property), "blacklisted": 1})
-		guest = banned or _guest_for_row(guest_name, phone, property)
+		# but a blacklisted profile's number still meets its blacklist —
+		# only attach to that profile when this desk may see it (guest_alert)
+		banned, visible = _blacklisted_phone_hit(phone, property)
+		if banned and visible:
+			guest = banned
+		else:
+			guest = _guest_for_row(guest_name, phone, property)
+			if banned and not visible:
+				# refuse without naming the other hotel's guest; on override
+				# keep the typed-name profile rather than moving onto theirs
+				if not (blacklist_override_reason or "").strip():
+					_refuse_blacklisted(None, False)
+				# no _blacklist_gate on the foreign profile
+				banned = None
 	_blacklist_gate(guest, property, blacklist_override_reason)
 	if guest_category:
 		frappe.db.set_value("Guest", guest, "guest_category", guest_category)
