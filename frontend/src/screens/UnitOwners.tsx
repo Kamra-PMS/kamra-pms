@@ -6,9 +6,10 @@
  *  turns Show guest contact on. */
 
 import { useCallback, useEffect, useState } from "react"
-import { call, getCurrentProperty, serverError } from "../lib/api"
+import { call, getCurrentProperty, serverError, setCurrentProperty } from "../lib/api"
+import { fmtAmount } from "../lib/money"
 import { useAuth } from "../lib/auth"
-import { useT } from "../lib/i18n"
+import { tn, useT } from "../lib/i18n"
 
 const ADMIN = ["Hotel Admin", "System Manager", "Administrator"]
 
@@ -73,6 +74,30 @@ interface Statement {
   cost_lines?: { date: string; description: string; amount: number }[]
 }
 
+interface Overview {
+  from_date: string
+  to_date: string
+  properties: {
+    property: string
+    property_name: string
+    currency: string
+    currency_symbol: string
+    units: number
+    occupancy_pct: number
+    room_nights: number
+    revenue: number
+    statement?: Statement
+  }[]
+  totals: {
+    units: number
+    room_nights: number
+    occupancy_pct: number
+    currency: string | null
+    revenue: number | null
+    statement?: { revenue: number | null; commission: number | null; costs: number | null; payout: number | null }
+  }
+}
+
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +
   "focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
@@ -100,7 +125,7 @@ export default function UnitOwners() {
           <Tab on={tab === "portal"} onClick={() => setTab("portal")}>{t("My units")}</Tab>
         </div>
       )}
-      {tab === "desk" && admin ? <DeskPanel /> : <PortalPanel />}
+      {tab === "desk" && admin ? <DeskPanel /> : <OwnerPortal />}
     </div>
   )
 }
@@ -314,6 +339,141 @@ function daysBetween(from: string, to: string): string[] {
 
 function covers(day: string, start: string, end: string) {
   return start <= day && day < end
+}
+
+/** One property's portal, with "All my properties" beside it once the
+ *  owner has units at more than one. */
+function OwnerPortal() {
+  const { t } = useT()
+  const [many, setMany] = useState(false)
+  const [all, setAll] = useState(false)
+  useEffect(() => {
+    call<Overview>("kamra.owners.my_overview", {})
+      .then((o) => setMany(o.properties.length > 1))
+      .catch(() => setMany(false))
+  }, [])
+  return (
+    <div className="space-y-4">
+      {many && (
+        <div className="flex gap-2">
+          <Tab on={!all} onClick={() => setAll(false)}>{t("This property")}</Tab>
+          <Tab on={all} onClick={() => setAll(true)}>{t("All my properties")}</Tab>
+        </div>
+      )}
+      {all ? (
+        <AllPropertiesPanel onOpen={(p) => {
+          setCurrentProperty(p)
+          // the header switcher follows (AppShell listens)
+          window.dispatchEvent(new CustomEvent("kamra:property", { detail: p }))
+          setAll(false)
+        }} />
+      ) : <PortalPanel />}
+    </div>
+  )
+}
+
+/** #713: every property the owner has units at, side by side, and one
+ *  month's statement for all of them. Totals only when the currencies match. */
+function AllPropertiesPanel({ onOpen }: { onOpen: (property: string) => void }) {
+  const { t } = useT()
+  const [from, setFrom] = useState(iso(0))
+  const [to, setTo] = useState(iso(30))
+  const [month, setMonth] = useState(iso(0).slice(0, 7))
+  const [data, setData] = useState<Overview | null>(null)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    setError("")
+    call<Overview>("kamra.owners.my_overview", { from_date: from, to_date: to, month })
+      .then(setData)
+      .catch((e) => setError(serverError(e)))
+  }, [from, to, month])
+
+  const money = (n: number | null | undefined, currency: string | null, symbol = "") =>
+    n == null ? t("Mixed currencies") : `${symbol}${fmtAmount(n, currency)}`
+  const sym = data?.properties.find((p) => p.currency === data.totals.currency)?.currency_symbol ?? ""
+
+  function download(o: Overview) {
+    const rows = [
+      ["property", "currency", "unit", "room_nights", "revenue", "commission_percent", "commission"],
+      ...o.properties.flatMap((p) => (p.statement?.lines ?? []).map((l) => [
+        `"${p.property_name.replace(/"/g, '""')}"`, p.currency, l.room_number, String(l.room_nights),
+        String(l.revenue), String(l.commission_percent), String(l.commission)])),
+      [],
+      ["property", "currency", "cost_date", "description", "amount"],
+      ...o.properties.flatMap((p) => (p.statement?.cost_lines ?? []).map((c) => [
+        `"${p.property_name.replace(/"/g, '""')}"`, p.currency, c.date,
+        `"${c.description.replace(/"/g, '""')}"`, String(c.amount)])),
+      [],
+      ["property", "currency", "revenue", "commission", "costs", "payout"],
+      ...o.properties.map((p) => [`"${p.property_name.replace(/"/g, '""')}"`, p.currency,
+        String(p.statement?.revenue ?? 0), String(p.statement?.commission ?? 0),
+        String(p.statement?.costs ?? 0), String(p.statement?.payout ?? 0)]),
+    ]
+    const blob = new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv" })
+    const link = document.createElement("a")
+    link.href = URL.createObjectURL(blob)
+    link.download = `owner-statement-all-${month}.csv`
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input type="date" aria-label={t("From")} className={inputCls} value={from} onChange={(e) => setFrom(e.target.value)} />
+        <input type="date" aria-label={t("To")} className={inputCls} value={to} onChange={(e) => setTo(e.target.value)} />
+      </div>
+      {error && <p className="text-sm text-red-700">{error}</p>}
+      {data && (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            <Stat label={t("Occupancy")} value={`${data.totals.occupancy_pct}%`} />
+            <Stat label={t("Room nights")} value={String(data.totals.room_nights)} />
+            <Stat label={t("Room revenue")} value={money(data.totals.revenue, data.totals.currency, sym)} />
+          </div>
+          <ul className="space-y-2">
+            {data.properties.map((p) => (
+              <li key={p.property}>
+                <button type="button" onClick={() => onOpen(p.property)}
+                  className="w-full rounded-2xl border border-zinc-200 bg-white p-3 text-start hover:border-zinc-400">
+                  <div className="text-sm font-medium">{p.property_name}</div>
+                  <div className="text-sm text-zinc-500">
+                    {tn(p.units, "{n} unit", "{n} units")} · {p.occupancy_pct}% · {tn(p.room_nights, "{n} room night", "{n} room nights")}
+                    {" · "}{money(p.revenue, p.currency, p.currency_symbol)}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
+            <h2 className="text-sm font-semibold">{t("Statement for all properties")}</h2>
+            <p className="text-xs text-zinc-500">
+              {t("Room revenue per unit, minus commission and your costs that month. Guest names are not on this file.")}
+            </p>
+            <input type="month" aria-label={t("Month")} className={inputCls} value={month} onChange={(e) => setMonth(e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Stat label={t("Room revenue")} value={money(data.totals.statement?.revenue, data.totals.currency, sym)} />
+              <Stat label={t("Commission")} value={money(data.totals.statement?.commission, data.totals.currency, sym)} />
+              <Stat label={t("Costs")} value={money(data.totals.statement?.costs, data.totals.currency, sym)} />
+              <Stat label={t("Payout")} value={money(data.totals.statement?.payout, data.totals.currency, sym)} />
+            </div>
+            <ul className="space-y-1 text-sm">
+              {data.properties.map((p) => (
+                <li key={p.property} className="flex justify-between gap-2">
+                  <span className="truncate">{p.property_name}</span>
+                  <span className="tabular-nums">{t("Payout")}: {money(p.statement?.payout ?? 0, p.currency, p.currency_symbol)}</span>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="underline text-sm" onClick={() => download(data)}>
+              {t("Download statement")}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 function PortalPanel() {
