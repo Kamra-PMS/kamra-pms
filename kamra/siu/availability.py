@@ -137,6 +137,67 @@ def capacity_by_night(
 	]
 
 
+def unsold_by_night(
+	property: str,
+	room_type: str,
+	nights: list,
+	for_group: str | None = None,
+) -> list[int] | None:
+	"""How many more stays of the type could be saved on each night: rooms in
+	service plus the overbooking allowance, less every live stay of the type -
+	with a room number or without - and the rooms group blocks hold. It is the
+	count Reservation.validate_type_capacity holds a new stay to. None when the
+	type has no rooms to count."""
+	from kamra.group_blocks import block_hold_by_night
+	from kamra.kamra.doctype.reservation.reservation import (
+		countable_rooms,
+		overbooking_allowance,
+		rooms_out_of_sale,
+	)
+
+	total = countable_rooms(property, room_type)
+	if not total:
+		return None
+	nights = [str(getdate(n)) for n in nights]
+	pct = overbooking_allowance(property, room_type)
+	out = rooms_out_of_sale(room_type, nights)
+	held = block_hold_by_night(property, room_type, nights, for_group=for_group)
+	stays = frappe.get_all(
+		"Reservation",
+		filters={
+			"room_type": room_type,
+			"status": ("in", list(LIVE_STATUSES)),
+			"check_in_date": ("<=", nights[-1]),
+			# >= so a day-use stay on the first night is read too
+			"check_out_date": (">=", nights[0]),
+		},
+		fields=["check_in_date", "check_out_date"],
+	)
+	return [
+		max(0, int((total - out[night]) * (1 + pct / 100))
+		    - held.get(night, 0)
+		    - sum(1 for stay in stays if _covers(stay, night)))
+		for night in nights
+	]
+
+
+def cap_to_unsold(
+	property: str,
+	room_type: str,
+	check_in_date: str,
+	check_out_date: str,
+	free: int,
+	for_group: str | None = None,
+) -> int:
+	"""``free`` physical rooms, never more than the type has left to sell on its
+	busiest night. A stay with no room number leaves every physical room free
+	but is sold all the same."""
+	left = unsold_by_night(
+		property, room_type, _nights(check_in_date, check_out_date), for_group
+	)
+	return free if left is None else min(free, *left)
+
+
 def available_rooms_via_siu(
 	property: str,
 	room_type: str,

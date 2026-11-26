@@ -219,8 +219,9 @@ took it. Collect it at the desk and confirm the booking, or it is
 released when the hold runs out.
 
 **A room says "Sold out for these dates".** Every room of that type is
-taken for at least one night of the stay, or blocked. **Book now** stays
-greyed out until the guest picks other dates.
+taken for at least one night of the stay, or blocked. A booking with no
+room number yet, such as one from a channel, counts as taken too. **Book
+now** stays greyed out until the guest picks other dates.
 
 **A room type is missing from the page.** It's disabled, or it belongs to
 another property.

@@ -5812,7 +5812,8 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 	from kamra.group_blocks import block_hold_by_night
 	from kamra.kamra.doctype.reservation.reservation import villa_locked_nights
 	from kamra.pricing import occupancy_rate, season_adjust
-	from kamra.siu.availability import capacity_by_night, has_active_sius
+	from kamra.siu.availability import (capacity_by_night, has_active_sius,
+	                                    unsold_by_night)
 
 	start = start_date or nowdate()
 	days = min(int(days), 31)
@@ -5881,6 +5882,11 @@ def availability_calendar(property: str, start_date: str | None = None, days: in
 					else max(0, total - taken - held.get(str(date), 0)),
 					"rate": _display_rate(date),
 				})
+		# stays with no room number take no physical room, but are sold
+		unsold = unsold_by_night(property, rt.name, dates)
+		if unsold is not None:
+			for cell, left in zip(cells, unsold):
+				cell["available"] = min(cell["available"], left)
 		rows.append({
 			"room_type": rt.name,
 			"room_type_name": rt.room_type_name,
@@ -8013,6 +8019,8 @@ def waitlist_ready(property: str):
 	"""Waitlisted stays that CAN now be accommodated - a room is free for
 	their dates. This is the signal the voice/WhatsApp agent watches so it
 	can proactively reach the guest the moment a room opens."""
+	from kamra.siu.availability import cap_to_unsold
+
 	ready = []
 	for r in frappe.get_all(
 			"Reservation",
@@ -8020,10 +8028,12 @@ def waitlist_ready(property: str):
 			fields=["name", "guest", "guest_name", "room_type",
 			        "check_in_date", "check_out_date", "nights",
 			        "adults", "children", "amount_after_tax"]):
-		free = available_rooms(property, r.room_type,
-		                       r.check_in_date, r.check_out_date)
+		free = cap_to_unsold(property, r.room_type,
+		                     r.check_in_date, r.check_out_date,
+		                     len(available_rooms(property, r.room_type,
+		                                         r.check_in_date, r.check_out_date)))
 		if free:
-			r["rooms_free"] = len(free)
+			r["rooms_free"] = free
 			r["phone"] = frappe.db.get_value(
 				"Guest", r.guest, "phone") if r.guest else None
 			ready.append(r)
@@ -8254,6 +8264,7 @@ def create_group_with_rooming_list(property: str, group_name: str,
 	from kamra.booking_refs import resolve_room_type
 	from kamra.folio import COMPANY_BILLING_DEFAULTS
 	from kamra.group_blocks import group_nights, parse_nightly
+	from kamra.siu.availability import cap_to_unsold
 
 	blocks = frappe.parse_json(blocks) if isinstance(blocks, str) else (blocks or [])
 	guests = frappe.parse_json(guests) if isinstance(guests, str) else (guests or [])
@@ -8294,12 +8305,15 @@ def create_group_with_rooming_list(property: str, group_name: str,
 	for rt, by_night in (counts.items() if not quote_only else []):
 		if len(set(by_night.values())) == 1:
 			n = by_night[nights[0]]
-			free = len(available_rooms(property, rt, check_in_date, check_out_date))
+			free = cap_to_unsold(property, rt, check_in_date, check_out_date, len(
+				available_rooms(property, rt, check_in_date, check_out_date)))
 			if free < n:
 				short.append(_("{0}: {1} blocked, {2} free").format(rt, n, free))
 			continue
 		for d, n in by_night.items():
-			free = len(available_rooms(property, rt, d, str(add_days(d, 1)))) if n else 0
+			night_end = str(add_days(d, 1))
+			free = cap_to_unsold(property, rt, d, night_end, len(
+				available_rooms(property, rt, d, night_end))) if n else 0
 			if free < n:
 				short.append(_("{0} on {1}: {2} blocked, {3} free").format(rt, d, n, free))
 	if short:
@@ -9131,6 +9145,7 @@ def group_amend_dates(group_booking: str, check_in_date: str,
 	import json as _json
 
 	from kamra.group_blocks import _unpicked, effective_cutoff, group_nights, parse_nightly
+	from kamra.siu.availability import cap_to_unsold
 	gb = frappe.get_doc("Group Booking", group_booking)
 	old_ci, old_co = getdate(gb.check_in_date), getdate(gb.check_out_date)
 	new_ci, new_co = getdate(check_in_date), getdate(check_out_date)
@@ -9175,8 +9190,11 @@ def group_amend_dates(group_booking: str, check_in_date: str,
 		short = []
 		for b in gb.blocks:
 			held = _unpicked(gb.name, b.room_type)
-			free = len(available_rooms(gb.property, b.room_type, str(new_ci), str(new_co),
-			                           group_booking=gb.name)) if held else 0
+			free = cap_to_unsold(
+				gb.property, b.room_type, str(new_ci), str(new_co),
+				len(available_rooms(gb.property, b.room_type, str(new_ci),
+				                    str(new_co), group_booking=gb.name)),
+				for_group=gb.name) if held else 0
 			if held > free:
 				short.append(_("{0}: {1} kept, {2} free").format(b.room_type, held, free))
 		if short:

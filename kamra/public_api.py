@@ -385,7 +385,7 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 	# role gate, so this calls the same underlying helpers directly.
 	from kamra.api import _available_rooms_raw, _block_hold
 	from kamra.pricing import capacity_overflow, quote, stay_restriction_error
-	from kamra.siu.availability import has_active_sius, sellable_count
+	from kamra.siu.availability import cap_to_unsold, has_active_sius, sellable_count
 
 	nights = date_diff(check_out_date, check_in_date)
 	if nights < 1:
@@ -421,6 +421,8 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 			if hold:
 				free = free[:max(0, len(free) - hold)]
 			left = len(free)
+		# stays with no room number leave the physical rooms free
+		left = cap_to_unsold(property, rt, check_in_date, check_out_date, left)
 		rtd = frappe.get_cached_doc("Room Type", rt)
 		a, c, infants = _party(rtd, adults, children, ages)
 		above, beds = capacity_overflow(rtd, a, c)
