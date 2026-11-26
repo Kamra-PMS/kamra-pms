@@ -146,7 +146,8 @@ class PublicBookingTestCase(IntegrationTestCase):
 		self.assertEqual(doc2.guest_name, "Família Silva")
 		self.assertTrue(doc1.group_booking)
 		self.assertEqual(doc1.group_booking, doc2.group_booking)
-		self.assertEqual(res["reservation"], doc1.group_booking)
+		self.assertEqual(res["reservation"], r1)
+		self.assertEqual(res["group_booking"], doc1.group_booking)
 		gb = frappe.get_doc("Group Booking", doc1.group_booking)
 		self.assertEqual(gb.master_reservation, r1)
 		self.assertGreater(res["amount_after_tax"], 0)
@@ -176,27 +177,61 @@ class PublicBookingTestCase(IntegrationTestCase):
 				)
 
 	def test_multi_room_atomic_rollback_on_partial_failure(self):
+		from unittest.mock import patch
+		import kamra.public_api
 		from kamra.public_api import book
+
+		for r_num in ["102", "103"]:
+			if not frappe.db.exists("Room", {"property": self.property, "room_number": r_num}):
+				frappe.get_doc({
+					"doctype": "Room", "property": self.property,
+					"room_type": self.room_type, "room_number": r_num,
+				}).insert(ignore_permissions=True)
+
 		before_res = frappe.db.count("Reservation", {"property": self.property})
 		before_gb = frappe.db.count("Group Booking", {"property": self.property})
-		with self.assertRaises(Exception):
-			book(
-				property=self.property, check_in_date=self.ci, check_out_date=self.co,
-				guest_name="Fail Test", phone="+5511988887777",
-				rooms=[
-					{"room_type": self.room_type, "adults": 2, "children": 0},
-					{"room_type": "NON_EXISTENT_ROOM_TYPE_ABC", "adults": 2, "children": 0},
-				],
-			)
+
+		real_book_single = kamra.public_api._book_single_stay
+		calls = [0]
+		inserted_in_flight = []
+
+		def side_effect(*args, **kwargs):
+			calls[0] += 1
+			if calls[0] == 3:
+				inserted_count = frappe.db.count("Reservation", {"property": self.property})
+				inserted_in_flight.append(inserted_count)
+				raise RuntimeError("Simulated failure while inserting room 3")
+			return real_book_single(*args, **kwargs)
+
+		with patch("kamra.public_api._book_single_stay", side_effect=side_effect):
+			with self.assertRaises(RuntimeError):
+				book(
+					property=self.property, check_in_date=self.ci, check_out_date=self.co,
+					guest_name="Fail Test", phone="+5511988887777",
+					rooms=[
+						{"room_type": self.room_type, "adults": 2, "children": 0},
+						{"room_type": self.room_type, "adults": 2, "children": 0},
+						{"room_type": self.room_type, "adults": 2, "children": 0},
+					],
+				)
+
+		self.assertEqual(inserted_in_flight, [before_res + 2])
 		self.assertEqual(frappe.db.count("Reservation", {"property": self.property}), before_res)
 		self.assertEqual(frappe.db.count("Group Booking", {"property": self.property}), before_gb)
 
 	def test_single_use_voucher_applied_once_across_rooms(self):
 		from kamra.public_api import book
-		frappe.get_doc({
+
+		if not frappe.db.exists("Room", {"property": self.property, "room_number": "102"}):
+			frappe.get_doc({
+				"doctype": "Room", "property": self.property,
+				"room_type": self.room_type, "room_number": "102",
+			}).insert(ignore_permissions=True)
+
+		v = frappe.get_doc({
 			"doctype": "Discount Voucher", "property": self.property,
 			"voucher_code": "ONCEONLY", "discount_type": "Percent", "value": 10,
-			"min_nights": 1, "single_use": 1,
+			"min_nights": 1, "max_uses": 1,
 		}).insert(ignore_permissions=True)
 		res = book(
 			property=self.property, check_in_date=self.ci, check_out_date=self.co,
@@ -210,8 +245,15 @@ class PublicBookingTestCase(IntegrationTestCase):
 		r1, r2 = res["reservations"]
 		d1 = frappe.get_doc("Reservation", r1)
 		d2 = frappe.get_doc("Reservation", r2)
-		self.assertEqual(d1.voucher_code, "ONCEONLY")
-		self.assertFalse(d2.voucher_code)
+		self.assertEqual(d1.voucher, v.name)
+		self.assertEqual(d2.voucher, v.name)
+		self.assertEqual(frappe.db.get_value("Discount Voucher", v.name, "times_used"), 1)
+		with self.assertRaises(Exception):
+			book(
+				property=self.property, check_in_date=self.ci, check_out_date=self.co,
+				guest_name="Second Guest", phone="+5511988887777", voucher_code="ONCEONLY",
+				room_type=self.room_type, adults=2, children=0,
+			)
 
 	def test_child_ages_per_room_and_combined_advance(self):
 		from kamra.public_api import book
@@ -242,5 +284,56 @@ class PublicBookingTestCase(IntegrationTestCase):
 		)
 		self.assertEqual(out["advance_due"], round(out["amount_after_tax"] * 0.5, 2))
 		self.assertEqual(out["balance_at_hotel"], round(out["amount_after_tax"] - out["advance_due"], 2))
-		self.assertTrue(out["reservation"].startswith("GRP-") or frappe.db.exists("Group Booking", out["reservation"]))
+		self.assertEqual(out["reservation"], out["reservations"][0])
+		self.assertTrue(out["group_booking"].startswith("GRP-") or frappe.db.exists("Group Booking", out["group_booking"]))
+
+	def test_multi_room_idempotent_replay(self):
+		from kamra.public_api import book
+
+		if not frappe.db.exists("Room", {"property": self.property, "room_number": "102"}):
+			frappe.get_doc({
+				"doctype": "Room", "property": self.property,
+				"room_type": self.room_type, "room_number": "102",
+			}).insert(ignore_permissions=True)
+
+		before_gb = frappe.db.count("Group Booking", {"property": self.property})
+		res1 = book(
+			property=self.property, check_in_date=self.ci, check_out_date=self.co,
+			guest_name="Idempotent Guest", phone="+5511988887777",
+			idempotency_key="MULTI-IDEMP-TEST-123",
+			rooms=[
+				{"room_type": self.room_type, "adults": 2, "children": 0},
+				{"room_type": self.room_type, "adults": 1, "children": 0},
+			],
+		)
+		self.assertEqual(res1["idempotent_replay"], 0)
+		self.assertEqual(frappe.db.count("Group Booking", {"property": self.property}), before_gb + 1)
+
+		res2 = book(
+			property=self.property, check_in_date=self.ci, check_out_date=self.co,
+			guest_name="Idempotent Guest", phone="+5511988887777",
+			idempotency_key="MULTI-IDEMP-TEST-123",
+			rooms=[
+				{"room_type": self.room_type, "adults": 2, "children": 0},
+				{"room_type": self.room_type, "adults": 1, "children": 0},
+			],
+		)
+		self.assertEqual(res2["idempotent_replay"], 1)
+		self.assertEqual(res2["reservation"], res1["reservation"])
+		self.assertEqual(res2["group_booking"], res1["group_booking"])
+		self.assertEqual(res2["reservations"], res1["reservations"])
+		self.assertEqual(frappe.db.count("Group Booking", {"property": self.property}), before_gb + 1)
+
+	def test_booking_room_abuse_rate_limit(self):
+		from kamra.public_api import _check_booking_room_rate_limit
+		ip = getattr(frappe.local, "request_ip", None) or "127.0.0.1"
+		key = f"kamra:rate_limit:book_rooms:{ip}"
+		cache = frappe.cache()
+		cache.delete_value(key)
+
+		_check_booking_room_rate_limit(6)
+		_check_booking_room_rate_limit(4)  # 10 rooms allowed
+		with self.assertRaises(frappe.TooManyRequestsError):
+			_check_booking_room_rate_limit(1)  # 11 rooms blocked
+		cache.delete_value(key)
 

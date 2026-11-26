@@ -10,7 +10,7 @@ import re
 import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
-from frappe.utils import cint, date_diff
+from frappe.utils import cint, date_diff, flt
 
 from kamra.authz import act_as
 from kamra.booking_slugs import resolve_public_slug, slugify
@@ -363,6 +363,7 @@ def showcase(property: str, listing_slug: str | None = None,
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=3600)
 def search_stay(property: str, check_in_date: str, check_out_date: str,
                 adults: int = 2, children: int = 0,
                 listing_slug: str | None = None,
@@ -1126,8 +1127,22 @@ def _book_single_stay(property: str, room_type: str, check_in_date: str,
 	}
 
 
+def _check_booking_room_rate_limit(num_rooms: int = 1):
+	"""Abuse limit: count total rooms held per IP per hour, rejecting > 10."""
+	ip = getattr(frappe.local, "request_ip", None) or "127.0.0.1"
+	key = f"kamra:rate_limit:book_rooms:{ip}"
+	cache = frappe.cache()
+	val = cache.get_value(key)
+	current = cint(val) if val is not None else 0
+	if current + num_rooms > 10:
+		frappe.throw(
+			_("Booking limit exceeded (maximum 10 rooms per hour). Please try again later."),
+			frappe.TooManyRequestsError,
+		)
+	cache.set_value(key, current + num_rooms, expires_in_sec=3600)
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-@rate_limit(limit=10, seconds=3600)
 def book(property: str, room_type: str = "", check_in_date: str = "",
          check_out_date: str = "", guest_name: str = "", phone: str = "",
          email: str = "", adults: int = 2, children: int = 0,
@@ -1212,6 +1227,53 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 			parsed_rooms = None
 
 	if parsed_rooms and len(parsed_rooms) > 1:
+		if idempotency_key:
+			first_key = f"{idempotency_key}-0"
+			existing_res = frappe.db.get_value(
+				"Reservation",
+				{"idempotency_key": first_key, "property": property},
+				["name", "group_booking", "payment_policy", "status", "amount_after_tax", "advance_due"],
+				as_dict=True,
+			)
+			if existing_res:
+				gb_name = existing_res.group_booking
+				all_res = frappe.get_all(
+					"Reservation",
+					filters={"group_booking": gb_name} if gb_name else {"name": existing_res.name},
+					fields=["name", "amount_after_tax", "advance_due", "status"],
+					order_by="creation asc",
+				)
+				res_names = [r.name for r in all_res]
+				total_amount = sum(flt(r.amount_after_tax or 0) for r in all_res)
+				total_advance = sum(flt(r.advance_due or 0) for r in all_res)
+				if gb_name:
+					gb_deposit = frappe.db.get_value("Group Booking", gb_name, "deposit_due")
+					if gb_deposit is not None:
+						total_advance = flt(gb_deposit)
+				return {
+					"reservation": existing_res.name,
+					"reservations": res_names,
+					"group_booking": gb_name,
+					"amount_after_tax": round(total_amount, 2),
+					"advance_due": round(total_advance, 2),
+					"balance_at_hotel": round(max(0.0, total_amount - total_advance), 2),
+					"payment_policy": existing_res.payment_policy,
+					"pay_at_hotel": total_advance <= 0,
+					"status": existing_res.status,
+					"needs_confirmation": False,
+					"confirmation_reason": None,
+					"is_holiday": False,
+					"idempotent_replay": 1,
+					"cleaning_fee": float(
+						frappe.db.get_value("Property", property, "cleaning_fee") or 0
+					),
+					"security_deposit_amount": float(
+						frappe.db.get_value("Property", property, "security_deposit_amount") or 0
+					),
+				}
+
+		_check_booking_room_rate_limit(len(parsed_rooms))
+
 		from kamra.api import _available_rooms_raw, _block_hold
 		from kamra.siu.availability import has_active_sius, sellable_count
 
@@ -1241,6 +1303,7 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 		confirmation_reasons = []
 		any_holiday = False
 
+		frappe.flags.kamra_skip_voucher_consume = True
 		try:
 			for idx, rm in enumerate(parsed_rooms):
 				rt = rm["room_type"]
@@ -1256,7 +1319,7 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 					email=email, adults=rm_adults, children=rm_children,
 					meal_plan=rm_meal_plan, special_requests=special_requests if idx == 0 else "",
 					safe_addons=safe_addons if idx == 0 else None,
-					voucher_code=voucher_code if idx == 0 else "",
+					voucher_code=voucher_code,
 					idempotency_key=rm_key, pets=pets if idx == 0 else 0,
 					child_ages=rm_ages, marketing_consent=marketing_consent if idx == 0 else 0,
 					source_tag=source_tag, prop=prop, commit=False,
@@ -1292,10 +1355,16 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 			for r in res_names:
 				frappe.db.set_value("Reservation", r, "group_booking", gb.name)
 
+			if voucher_code:
+				v_name = frappe.db.get_value("Discount Voucher", {"voucher_code": voucher_code, "property": property})
+				if v_name:
+					from kamra.pricing import consume_voucher_use
+					consume_voucher_use(v_name)
+
 			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 
 			return {
-				"reservation": gb.name,
+				"reservation": res_names[0],
 				"reservations": res_names,
 				"group_booking": gb.name,
 				"amount_after_tax": round(total_amount, 2),
@@ -1318,6 +1387,11 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 		except Exception:
 			frappe.db.rollback()
 			raise
+		finally:
+			frappe.flags.kamra_skip_voucher_consume = False
+
+	if not (idempotency_key and frappe.db.exists("Reservation", {"idempotency_key": idempotency_key, "property": property})):
+		_check_booking_room_rate_limit(1)
 
 	return _book_single_stay(
 		property=property, room_type=room_type, check_in_date=check_in_date,

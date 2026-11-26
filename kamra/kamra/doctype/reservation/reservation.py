@@ -256,7 +256,7 @@ class Reservation(Document):
 			"precheckin_token", frappe.generate_hash(length=24),
 			update_modified=False,
 		)
-		if self.voucher:
+		if self.voucher and not frappe.flags.get("kamra_skip_voucher_consume"):
 			from kamra.pricing import consume_voucher_use
 			consume_voucher_use(self.voucher)
 		# WhatsApp booking confirmation - enqueued so a booking never
