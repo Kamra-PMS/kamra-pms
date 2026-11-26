@@ -26,6 +26,37 @@ upgrade-breaking changes (removed doctypes / API contracts).
   quotation, desk-led guest response, department checklists + notify on
   Confirm (Sales/Finance/HK/F&B), and quote no-response chase reminders
 
+## [2.8.3](https://github.com/Kamra-PMS/kamra-pms/compare/v2.8.2...v2.8.3) (2026-11-26)
+
+
+### Thank you
+
+@kentrick22 for the POS bill, levy, dish choices, currency decimals and nightly prices work, and @Kruthikagowda12 for the out-of-service rooms on the Housekeeping Board. Hindi and Tamil join the languages, and owners with units at several properties get one overview and statement (#713, asked for by @andreasnewuser).
+
+
+### Features
+
+* **booking:** price each added room's nights, and re-price a saved stay (follow-up to [#634](https://github.com/Kamra-PMS/kamra-pms/issues/634)) ([#719](https://github.com/Kamra-PMS/kamra-pms/issues/719)) ([5b24524](https://github.com/Kamra-PMS/kamra-pms/commit/5b24524c141f4a765ab96a15fa39cd932486816e)), thanks @kentrick22
+* Hindi and Tamil locales for the India pack ([#724](https://github.com/Kamra-PMS/kamra-pms/issues/724)) ([6fe67f7](https://github.com/Kamra-PMS/kamra-pms/commit/6fe67f7ec52aaac3bc8c60a3e09651149f59a16c))
+* **owners:** one overview and one monthly statement across all of an owner's properties ([#713](https://github.com/Kamra-PMS/kamra-pms/issues/713)) ([#728](https://github.com/Kamra-PMS/kamra-pms/issues/728)) ([eee3520](https://github.com/Kamra-PMS/kamra-pms/commit/eee352077f16105e72945ca23648c91efaee0f1c))
+* **pos:** an outlet service charge (levy), added after discount and optionally taxed ([#707](https://github.com/Kamra-PMS/kamra-pms/issues/707)) ([e582cd2](https://github.com/Kamra-PMS/kamra-pms/commit/e582cd2747d319f958f5a66160a98842888f8445)), thanks @kentrick22
+* **pos:** an outlet switch for the bill's barcode, and a stricter receipt logo ([#716](https://github.com/Kamra-PMS/kamra-pms/issues/716)) ([df6513f](https://github.com/Kamra-PMS/kamra-pms/commit/df6513fd47210137d354b70b645c03ebc91247fa)), thanks @kentrick22
+* **pos:** choices on a dish (milk, ice, extras) with prices and optional stock ([#722](https://github.com/Kamra-PMS/kamra-pms/issues/722)) ([b098bee](https://github.com/Kamra-PMS/kamra-pms/commit/b098beec76c1817ed8f6b0928ce90e7b1a763332)), thanks @kentrick22
+* **pos:** clearer 80 mm bill and tickets, outlet logo, two item layouts ([#705](https://github.com/Kamra-PMS/kamra-pms/issues/705)) ([5281a48](https://github.com/Kamra-PMS/kamra-pms/commit/5281a485b086bfdbf4dbe91919e7dbc361da2efe)), thanks @kentrick22
+
+
+### Bug Fixes
+
+* clear 15 GitHub Code Quality findings ([#702](https://github.com/Kamra-PMS/kamra-pms/issues/702)) ([7ae2138](https://github.com/Kamra-PMS/kamra-pms/commit/7ae2138f1f1eb358d980d74f812b40f324477d2d))
+* **docs:** drop missing roles.png that broke the docs build ([#697](https://github.com/Kamra-PMS/kamra-pms/issues/697)) ([907b1ba](https://github.com/Kamra-PMS/kamra-pms/commit/907b1ba75f37f656f3f6bc9cce77ba026d6cc672))
+* **housekeeping:** show out-of-service rooms on the Housekeeping Board ([#717](https://github.com/Kamra-PMS/kamra-pms/issues/717)) ([ea3db00](https://github.com/Kamra-PMS/kamra-pms/commit/ea3db004fca977ba99bdbd17c5c1899f95ce13ee)), thanks @Kruthikagowda12
+* **i18n:** fill the new strings in Arabic, Spanish, Portuguese, Chinese, Vietnamese and Swahili ([#709](https://github.com/Kamra-PMS/kamra-pms/issues/709)) ([6434b89](https://github.com/Kamra-PMS/kamra-pms/commit/6434b898e95c39496612e8920c0b9ecfbf79142a))
+* **i18n:** plurals use tn(), so no English 's' leaks into translations ([#711](https://github.com/Kamra-PMS/kamra-pms/issues/711)) ([3108e4d](https://github.com/Kamra-PMS/kamra-pms/commit/3108e4df328b913720a6c1cb570990ce0806bf26))
+* **pos:** print money with the currency's own decimals, and make the printed figures add up ([#712](https://github.com/Kamra-PMS/kamra-pms/issues/712)) ([dd555d6](https://github.com/Kamra-PMS/kamra-pms/commit/dd555d6f814738e2d9a16dbe2f4a869a75a99979)), thanks @kentrick22
+* **pos:** the outlet dialog explains a refused logo beside the field, and the barcode switch sits above the samples ([#718](https://github.com/Kamra-PMS/kamra-pms/issues/718)) ([1bb6cd4](https://github.com/Kamra-PMS/kamra-pms/commit/1bb6cd49cde18b173743c94dcad10a477f95c942)), thanks @kentrick22
+* **ui:** print money with the currency's own decimals on 31 more screens ([#706](https://github.com/Kamra-PMS/kamra-pms/issues/706)) ([24b9590](https://github.com/Kamra-PMS/kamra-pms/commit/24b9590133252c845ec4ec0758618bb7b9f77638)), thanks @kentrick22
+* **ui:** trip confirmation and the CRS stay screens use each stay's own currency decimals (follow-up to [#706](https://github.com/Kamra-PMS/kamra-pms/issues/706)) ([#715](https://github.com/Kamra-PMS/kamra-pms/issues/715)) ([9dea964](https://github.com/Kamra-PMS/kamra-pms/commit/9dea96488e9e730e18dd74bde91d73d5ef674b8e)), thanks @kentrick22
+
 ## [2.8.2](https://github.com/Kamra-PMS/kamra-pms/compare/v2.8.1...v2.8.2) (2026-11-24)
 
 
