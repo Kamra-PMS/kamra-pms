@@ -322,7 +322,7 @@ function Contribution() {
                     <div className="flex items-center justify-end gap-2">
                       <div className="h-1.5 w-16 overflow-hidden rounded-full bg-zinc-100">
                         <div
-                          className="h-full rounded-full bg-brand-500"
+                          className="h-full rounded-full bg-brand-600"
                           style={{ width: `${r.share}%` }}
                         />
                       </div>

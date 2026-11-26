@@ -382,7 +382,7 @@ function Bars({ rows }: { rows: RegisterRollup[] }) {
           </div>
           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100">
             <div
-              className="h-full bg-brand-500"
+              className="h-full bg-brand-600"
               style={{ width: `${(r.value / peak) * 100}%` }}
             />
           </div>
