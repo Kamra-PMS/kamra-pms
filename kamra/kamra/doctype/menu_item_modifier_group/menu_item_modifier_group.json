@@ -1,0 +1,32 @@
+{
+ "actions": [],
+ "creation": "2026-11-25 22:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "field_order": [
+  "modifier_group"
+ ],
+ "fields": [
+  {
+   "fieldname": "modifier_group",
+   "fieldtype": "Link",
+   "label": "Group",
+   "options": "Menu Modifier Group",
+   "reqd": 1,
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-25 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Menu Item Modifier Group",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "permissions": []
+}

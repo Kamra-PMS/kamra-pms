@@ -7,7 +7,7 @@ import { listResource, type Row } from "../lib/resource"
 import { auditHistory, type RunRow } from "../lib/eod"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
-import { cur, fmtMoney, moneyLocale } from "../lib/money"
+import { cur, fmtMoney, moneyLocale, fmtAmount } from "../lib/money"
 import { DataTable } from "../components/ui/data-table"
 import { useT, uiDateLocale } from "../lib/i18n"
 import {
@@ -18,7 +18,7 @@ import {
 } from "../components/ui/card"
 
 const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n ?? 0)
 
 const fmtDate = (d: unknown) =>
   d
@@ -42,7 +42,7 @@ type GuestOwing = {
 }
 
 export default function Billing() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [folios, setFolios] = useState<Row[]>([])
   const [auditRuns, setAuditRuns] = useState<RunRow[]>([])
   const [owing, setOwing] = useState<GuestOwing[]>([])
@@ -102,15 +102,11 @@ export default function Billing() {
                     {fmtDate(r.business_date)}
                   </span>
                   <span className="flex-1 text-zinc-500">
-                    {t("{n} night{s} · {amount} · {folios} folio{s2} · {noShows} no-show{s3}", {
-                      n: Number(r.room_charges_posted) || 0,
-                      s: Number(r.room_charges_posted) === 1 ? "" : "s",
-                      amount: `${cur()}${inr(r.amount_posted)}`,
-                      folios: Number(r.folios_opened) || 0,
-                      s2: Number(r.folios_opened) === 1 ? "" : "s",
-                      noShows: Number(r.no_shows_flagged) || 0,
-                      s3: Number(r.no_shows_flagged) === 1 ? "" : "s",
-                    })}
+                    {tn(Number(r.room_charges_posted) || 0, "{n} night", "{n} nights")}
+                    {` · ${cur()}${inr(r.amount_posted)} · `}
+                    {tn(Number(r.folios_opened) || 0, "{n} folio", "{n} folios")}
+                    {" · "}
+                    {tn(Number(r.no_shows_flagged) || 0, "{n} no-show", "{n} no-shows")}
                     {Number(r.late_arrivals_held) > 0 &&
                       ` · ${t("{n} late arrival(s) held", { n: Number(r.late_arrivals_held) })}`}
                     {Number(r.exceptions) > 0 &&

@@ -494,10 +494,7 @@ export default function TapeChart() {
       {mode === "day" && (data?.conflicts?.length ?? 0) > 0 && (
         <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           <span className="font-semibold">
-            {t("{n} changeover conflict{s}", {
-              n: data!.conflicts.length,
-              s: data!.conflicts.length === 1 ? "" : "s",
-            })}:
+            {tn(data!.conflicts.length, "{n} changeover conflict", "{n} changeover conflicts")}:
           </span>{" "}
           {data!.conflicts.map((c) => (
             <span key={c.in_res} className="me-3 whitespace-nowrap">

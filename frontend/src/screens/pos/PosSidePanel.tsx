@@ -83,6 +83,9 @@ interface ViewDetail {
   discount_amount: number
   subtotal: number
   order_total: number
+  levy_label?: string | null
+  levy_percent?: number | null
+  levy_amount?: number | null
   cancel_reason: string | null
   cancelled_by: string | null
   cancelled_at: string | null
@@ -601,6 +604,9 @@ export function OrderView({ name, onBack, onOpenBill }: {
           <div className="space-y-0.5 border-t border-zinc-100 pt-2 text-sm">
             {d.discount_amount > 0 && (
               <div className="flex justify-between text-zinc-500"><span>{t("Discount")}</span><span className="tabular-nums">-{cur()}{money(d.discount_amount)}</span></div>
+            )}
+            {Number(d.levy_amount) > 0 && (
+              <div className="flex justify-between text-zinc-500"><span>{d.levy_label || t("Service charge")} {d.levy_percent}%</span><span className="tabular-nums">{cur()}{money(d.levy_amount)}</span></div>
             )}
             <div className="flex justify-between font-semibold"><span>{t("Total before tax")}</span><span className="tabular-nums">{cur()}{money(d.order_total)}</span></div>
             {d.state === "paid" && (

@@ -7,7 +7,7 @@ const CompanyExtras = lazy(() => import("../components/CompanyExtras"))
 const EventLinks = lazy(() => import("../components/EventLinks"))
 const GroupControl = lazy(() => import("../components/GroupControl"))
 const RoomTypeMedia = lazy(() => import("../components/RoomTypeMedia"))
-const OutletWaiters = lazy(() => import("../components/OutletWaiters"))
+const OutletExtras = lazy(() => import("../components/OutletExtras"))
 const ChannelConnectionActions = lazy(() => import("../components/ChannelConnectionActions"))
 const HkTaskMediaPanel = lazy(() =>
   import("../components/HkMedia").then((m) => ({ default: m.HkTaskMediaPanel })),
@@ -788,6 +788,12 @@ export const outletsConfig: ScreenConfig = {
     { field: "outlet_name", label: "Outlet name", type: "data", required: true },
     { field: "outlet_type", label: "Type", type: "select", options: ["Restaurant", "Room Service", "Bar", "Spa", "Shop", "Other"] },
     { field: "gst_rate", label: "Tax %", type: "float" },
+    { field: "levy_label", label: "Levy name", type: "data", ownRow: true,
+      hint: "Printed on the bill, for example Service charge. Empty means Service charge." },
+    { field: "levy_percent", label: "Levy amount %", type: "float", ownRow: true,
+      hint: "Added to every bill at this outlet, after any discount. 0 means no levy." },
+    { field: "levy_taxable", label: "Tax applies to the levy", type: "switch", ownRow: true, defaultValue: 1,
+      hint: "On: tax is charged on the bill plus the levy. Off: tax is charged on the bill only." },
     { field: "disabled", label: "Disabled", type: "check" },
     {
       field: "kot_mode",
@@ -797,7 +803,7 @@ export const outletsConfig: ScreenConfig = {
       hint: "Auto-accept and print: sending an order prints the KOT and shows it on the kitchen display as started. Kitchen presses Start: the pass accepts each ticket. Use F&B setting follows Settings > F&B.",
     },
   ],
-  extra: OutletWaiters,
+  extra: OutletExtras,
 }
 
 export const ingredientsConfig: ScreenConfig = {
@@ -871,6 +877,8 @@ export const menuItemsConfig: ScreenConfig = {
       optionsFrom: "allergens",
       options: ["Egg", "Dairy", "Nuts", "Peanuts", "Gluten", "Soy", "Shellfish", "Fish", "Sesame", "Sulphites"],
       hint: "Edit the list under Settings → F&B → Menu master lists. Matched against the guest allergy note on the kitchen display." },
+    { field: "modifier_groups", label: "Choices", type: "choice_groups",
+      hint: "The groups this dish asks about when it goes on the bill: milk, ice, extras. A group belongs to one outlet. Make and edit groups under Menu → Choices." },
     { field: "is_veg", label: "Vegetarian", type: "check" },
     { field: "is_alcohol", label: "Alcohol", type: "check", dependsOn: sellsAlcohol,
       hint: "Alcohol always bills the guest folio, never the company" },

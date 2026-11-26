@@ -19,10 +19,31 @@ class POSOrder(Document):
 		self.discount_amount = discount
 		# NC (no charge): the items stand for the kitchen and the audit,
 		# but the bill is zero
-		self.order_total = 0.0 if self.nc else subtotal - discount
+		base = 0.0 if self.nc else subtotal - discount
+		self.order_total = base + self.apply_levy(base)
 		self.guard_room_posting()
 		self.guard_bill_close()
 		self.stamp_cashier()
+
+	def apply_levy(self, base: float) -> float:
+		"""The outlet's levy (a service charge) on the bill after discount, as one
+		amount added to the order total. Kamra then taxes, settles and posts the
+		total as it is; `levy_taxable` says whether the tax is charged on the levy
+		too (see pos._bill_tax_base). Worked out while the bill is new or open; once
+		it is paid or on a room, what was charged stays charged. NC bills get none."""
+		if not self.is_new() and (self.paid or self.posted_to_folio
+		                          or self.status == "Cancelled"):
+			return float(self.levy_amount or 0)
+		outlet = frappe.db.get_value(
+			"POS Outlet", self.outlet,
+			["levy_label", "levy_percent", "levy_taxable"], as_dict=True) or {}
+		percent = float(outlet.get("levy_percent") or 0)
+		self.levy_label = outlet.get("levy_label") or ""
+		self.levy_percent = percent
+		self.levy_taxable = 0 if outlet.get("levy_taxable") == 0 else 1
+		self.levy_amount = round(base * percent / 100, 2) \
+			if percent > 0 and base > 0 else 0.0
+		return self.levy_amount
 
 	def stamp_cashier(self):
 		"""The cashier on the bill: whoever closes it (pay_order, a room
@@ -145,26 +166,52 @@ class POSOrder(Document):
 		from kamra.business_date import get_business_date
 		detail = ", ".join(
 			f"{it.item_name} ×{int(it.qty)}" for it in self.items if not it.voided)
+		posting_date = get_business_date(self.property)
+		where = self.outlet.split('-')[-1]
+		# the items, and - when the outlet has a levy - the levy as its own line,
+		# so the guest's folio shows it and the tax can differ between them
+		levy = float(self.levy_amount or 0)
+		items_total = float(self.order_total or 0) - levy
 		folio.append("charges", {
-			"posting_date": get_business_date(self.property),
+			"posting_date": posting_date,
 			"charge_type": "Food & Beverage",
 			"reservation": self.reservation,
-			"description": f"{self.outlet.split('-')[-1]}: {detail} ({self.name})",
+			"description": f"{where}: {detail} ({self.name})",
 			"qty": 1,
-			"rate": self.order_total,
-			"amount": self.order_total,
+			"rate": items_total,
+			"amount": items_total,
 			"gst_rate": float(gst),
 			"auto_posted": 1,
 			"is_alcohol": 1 if has_alcohol else 0,
 		})
+		if levy > 0:
+			label = self.levy_label or "Service charge"
+			folio.append("charges", {
+				"posting_date": posting_date,
+				"charge_type": "Food & Beverage",
+				"reservation": self.reservation,
+				# the bill's name stays in the text: move_room_bill finds its lines by it
+				"description": f"{where}: {label} {float(self.levy_percent or 0):g}% ({self.name})",
+				"qty": 1,
+				"rate": levy,
+				"amount": levy,
+				"gst_rate": float(gst) if int(self.levy_taxable or 0) else 0.0,
+				"auto_posted": 1,
+				"is_alcohol": 1 if has_alcohol else 0,
+			})
 		_recalculate(folio)
 		from kamra.ledger import save_folio
 		save_folio(folio)
 		self.db_set("posted_to_folio", 1, update_modified=False)
 		from kamra.webhooks import emit_folio_posted
-		emit_folio_posted(folio, folio.charges[-1])
+		lines = folio.charges[-2:] if levy > 0 else folio.charges[-1:]
+		for line in lines:
+			emit_folio_posted(folio, line)
 		from kamra.whatsapp import queue_room_charge_alert
-		queue_room_charge_alert(folio, folio.charges[-1])
+		# the guest is told the whole bill, levy included
+		alert = lines[0].as_dict()
+		alert["amount"] = float(self.order_total or 0)
+		queue_room_charge_alert(folio, alert)
 
 		from kamra.savings import log_action
 		log_action("post_pos_order", "POS Order", self.name, self.property,

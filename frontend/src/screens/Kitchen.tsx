@@ -24,6 +24,8 @@ interface KotItem {
   item_name: string
   qty: number
   instructions: string | null
+  /** the choices ticked for the dish (milk, ice, extras), by name */
+  modifiers?: string[]
   kot_status: string
   state: LineState
   course: string
@@ -202,14 +204,14 @@ function AllergyBadge({ hits }: { hits: string[] }) {
 }
 
 function StationHead({ station, count }: { station: string; count: number }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const Icon = STATION_ICON[station] ?? Utensils
   return (
     <div className="flex items-center gap-2 pt-3">
       <Icon className="size-4 text-zinc-400" />
       <span className="text-xs font-black uppercase tracking-wider text-zinc-500">{t(station)}</span>
       <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500">
-        {t("{n} item{s}", { n: count, s: count === 1 ? "" : "s" })}
+        {tn(count, "{n} item", "{n} items")}
       </span>
     </div>
   )
@@ -273,6 +275,12 @@ function Line({ it, order, busy, onAction, big }: {
           </span>
           {!done && <AllergyBadge hits={it.allergy_hits} />}
         </div>
+        {!!it.modifiers?.length && (
+          <div className={cn("mt-0.5 flex flex-wrap gap-x-2 font-bold", big ? "text-base" : "text-xs",
+            done ? "text-zinc-400" : "text-zinc-700")}>
+            {it.modifiers.map((m) => <span key={m}>+ {m}</span>)}
+          </div>
+        )}
         {it.instructions && (
           <div className={cn("mt-0.5 font-bold", big ? "text-base" : "text-xs",
             done ? "text-zinc-400" : "text-rose-600")}>

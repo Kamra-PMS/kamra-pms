@@ -7,17 +7,9 @@ import { useEffect } from "react"
 import { Clock, Maximize2, X, XCircle } from "lucide-react"
 import { Button } from "../../components/ui/button"
 import { cn } from "../../lib/utils"
-import { cur, moneyLocale } from "../../lib/money"
+import { cur, fmtAmount } from "../../lib/money"
 import { useT, t as translate } from "../../lib/i18n"
 
-
-const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
-const inr2 = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
 
 export interface OpenBillRow {
   name: string
@@ -41,6 +33,7 @@ export interface BillLine {
   item_name: string
   qty: number
   amount: number
+  modifiers?: { name: string }[]
   instructions: string | null
   kot_status: string
   voided: number
@@ -165,7 +158,7 @@ export default function OpenBillsPopup({
                       </span>
                       <span className="mt-1 text-sm font-semibold tabular-nums text-zinc-800">
                         {cur()}
-                        {inr(o.order_total)}
+                        {fmtAmount(o.order_total)}
                         {o.kot_no ? translate(" · KOT {v0}", { v0: String(o.kot_no) }) : ""}
                         {o.items ? ` · ${o.items}` : ""}
                       </span>
@@ -195,7 +188,7 @@ export default function OpenBillsPopup({
                   <div className="text-right">
                     <div className="text-2xl font-semibold tabular-nums text-zinc-900">
                       {cur()}
-                      {inr2(grand)}
+                      {fmtAmount(grand)}
                     </div>
                   </div>
                 </div>
@@ -221,6 +214,11 @@ export default function OpenBillsPopup({
                           >
                             {Math.round(it.qty)}× {it.item_name}
                           </div>
+                          {!it.voided && !!it.modifiers?.length && (
+                            <div className="text-xs font-medium text-zinc-600">
+                              {it.modifiers.map((m) => m.name).join(" · ")}
+                            </div>
+                          )}
                           {!it.voided && (
                             <div className="mt-0.5 text-xs text-zinc-500">
                               {it.kot_status === "New"
@@ -235,7 +233,7 @@ export default function OpenBillsPopup({
                         <div className="flex shrink-0 items-center gap-2">
                           <span className="text-base font-semibold tabular-nums text-zinc-800">
                             {cur()}
-                            {inr(it.amount)}
+                            {fmtAmount(it.amount)}
                           </span>
                           {!it.voided && it.kot_status === "New" && onRemove && (
                             <button
@@ -274,7 +272,7 @@ export default function OpenBillsPopup({
                   </Button>
                   <Button className="h-12 flex-1 text-base font-semibold" disabled={busy} onClick={onSettle}>
                     {t("Settle")} · {cur()}
-                    {inr2(grand)}
+                    {fmtAmount(grand)}
                   </Button>
                 </div>
               </>

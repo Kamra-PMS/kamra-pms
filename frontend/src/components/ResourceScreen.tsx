@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useState,
+  Fragment,
   Suspense,
   type ComponentType,
   type ReactNode,
@@ -22,7 +23,10 @@ import { frappeFetch } from "../lib/api"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Switch } from "./ui/switch"
 import ImageField from "./ImageField"
+import ChoiceGroupsField from "./ChoiceGroupsField"
+import TagPills from "./TagPills"
 import { fmtAmount } from "../lib/money"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
@@ -104,12 +108,15 @@ export interface FieldSpec {
     | "currency"
     | "select"
     | "check"
+    | "switch" // a 0/1 field shown as Settings' on/off switch, label left and switch right
     | "date"
     | "link"
     | "readonly"
     | "password"
     | "image"
     | "tags"
+    // the dish's choice groups (milk, ice, extras) as ticks; the rows live in the `modifier_groups` child table
+    | "choice_groups"
   options?: string[] // for select / tags (static fallback)
   /** Load options from Settings → F&B → Menu master lists */
   optionsFrom?: MenuMasterKey
@@ -121,6 +128,10 @@ export interface FieldSpec {
   /** link options only from the current property (the target has a `property` field) */
   linkPropertyScoped?: boolean
   required?: boolean
+  /** its own row, at half the form's width (the levy fields stack one under another) */
+  ownRow?: boolean
+  /** what a NEW row starts with, when the doctype's own default is not empty/off */
+  defaultValue?: unknown
   hint?: string // for image: recommended size/format
   dependsOn?: (draft: Record<string, unknown>) => boolean
   /** Block dates before today unless the user may backdate (Finance / Hotel Admin). */
@@ -193,38 +204,12 @@ function TagsInput(props: {
     props.onChange(next.join(", "))
   }
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5">
-        {selected.length === 0 && (
-          <span className="text-xs text-zinc-400">{props.t("None selected")}</span>
-        )}
-        {selected.map((tag) => (
-          <button
-            key={tag}
-            type="button"
-            onClick={() => toggle(tag)}
-            className="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-800 hover:bg-brand-100"
-          >
-            {props.t(tag)}
-            <span aria-hidden className="text-brand-500">×</span>
-          </button>
-        ))}
-      </div>
-      {available.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {available.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => toggle(tag)}
-              className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-xs text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50"
-            >
-              + {props.t(tag)}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <TagPills
+      selected={selected.map((tag) => ({ key: tag, label: props.t(tag) }))}
+      available={available.map((tag) => ({ key: tag, label: props.t(tag) }))}
+      onToggle={toggle}
+      noneSelected={props.t("None selected")}
+    />
   )
 }
 
@@ -352,6 +337,14 @@ function FieldInput(props: {
           className="size-4 accent-brand-600"
           checked={Boolean(Number(value ?? 0))}
           onChange={(e) => onChange(e.target.checked ? 1 : 0)}
+        />
+      )
+    case "switch":
+      return (
+        <Switch
+          on={Boolean(Number(value ?? 0))}
+          label={spec.label}
+          onToggle={() => onChange(Number(value ?? 0) ? 0 : 1)}
         />
       )
     case "date":
@@ -646,6 +639,7 @@ export function ResourceScreen({
       const defaults: Record<string, unknown> = {}
       for (const spec of config.form) {
         if (spec.type === "date" && spec.notPast) defaults[spec.field] = isoToday()
+        if (spec.defaultValue !== undefined) defaults[spec.field] = spec.defaultValue
       }
       setDraft(defaults)
       return
@@ -708,8 +702,10 @@ export function ResourceScreen({
 
   return (
     <Card>
-      <CardHeader>
-        <div>
+      <CardHeader className="flex-wrap gap-x-4 gap-y-2">
+        {/* the title and description take the room the buttons leave and wrap inside it, so a long description
+            never squeezes the buttons (a button's label stays on one line); on a phone the buttons drop below */}
+        <div className="min-w-0 flex-1 basis-56">
           <CardTitle>{t(config.title)}</CardTitle>
           {config.description && (
             <p className="mt-0.5 text-xs text-zinc-400">
@@ -717,7 +713,7 @@ export function ResourceScreen({
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full flex-none flex-wrap items-center gap-2">
           {headerAction}
           {config.allowCreate !== false && (
             <Button onClick={() => openEdit("new")}>
@@ -983,38 +979,79 @@ export function ResourceScreen({
           ) : (
             <div className="space-y-4">
               <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
-                {config.form.filter(spec => spec.dependsOn ? spec.dependsOn(draft) : true).map((spec) => (
-                  <label
-                    key={spec.field}
-                    className={
-                      "block" +
-                      (spec.type === "check" || spec.type === "tags"
-                        ? " sm:col-span-2"
-                        : "")
-                    }
-                  >
-                    <span className="mb-1.5 block text-sm font-medium text-zinc-600">
-                      {t(spec.label)}
-                      {spec.required && <span className="text-rose-500"> *</span>}
-                    </span>
-                    <FieldInput
-                      spec={spec}
-                      value={draft[spec.field]}
-                      onChange={(v) =>
-                        setDraft((d) => ({ ...d, [spec.field]: v }))
+                {config.form.filter(spec => spec.dependsOn ? spec.dependsOn(draft) : true).map((spec) => {
+                  const node = spec.type === "choice_groups" ? (
+                    // a row of ticks, not one input: no <label> around it, or a click on any pill would hit the first
+                    <div className="block sm:col-span-2">
+                      <span className="mb-1.5 block text-sm font-medium text-zinc-600">{t(spec.label)}</span>
+                      <ChoiceGroupsField
+                        outlet={typeof draft.outlet === "string" ? draft.outlet : undefined}
+                        value={draft[spec.field]}
+                        onChange={(rows) => setDraft((d) => ({ ...d, [spec.field]: rows }))}
+                      />
+                      {spec.hint && (
+                        <span className="mt-1 block text-xs leading-relaxed text-zinc-400">{t(spec.hint)}</span>
+                      )}
+                    </div>
+                  ) : spec.type === "switch" ? (
+                    <div className="block">
+                      <div className="flex items-center justify-between gap-4 border-y border-zinc-100 py-3">
+                        <span className="text-sm text-zinc-800">{t(spec.label)}</span>
+                        <FieldInput
+                          spec={spec}
+                          value={draft[spec.field]}
+                          onChange={(v) => setDraft((d) => ({ ...d, [spec.field]: v }))}
+                          linkOptions={linkOptions}
+                          masterOptions={masterOptions}
+                          t={t}
+                          canBackdate={canBackdate}
+                        />
+                      </div>
+                      {spec.hint && (
+                        <span className="mt-1 block text-xs leading-relaxed text-zinc-400">
+                          {t(spec.hint)}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <label
+                      className={
+                        "block" +
+                        (spec.type === "check" || spec.type === "tags"
+                          ? " sm:col-span-2"
+                          : "")
                       }
-                      linkOptions={linkOptions}
-                      masterOptions={masterOptions}
-                      t={t}
-                      canBackdate={canBackdate}
-                    />
-                    {spec.hint && spec.type !== "image" && (
-                      <span className="mt-1 block text-xs leading-relaxed text-zinc-400">
-                        {t(spec.hint)}
+                    >
+                      <span className="mb-1.5 block text-sm font-medium text-zinc-600">
+                        {t(spec.label)}
+                        {spec.required && <span className="text-rose-500"> *</span>}
                       </span>
-                    )}
-                  </label>
-                ))}
+                      <FieldInput
+                        spec={spec}
+                        value={draft[spec.field]}
+                        onChange={(v) =>
+                          setDraft((d) => ({ ...d, [spec.field]: v }))
+                        }
+                        linkOptions={linkOptions}
+                        masterOptions={masterOptions}
+                        t={t}
+                        canBackdate={canBackdate}
+                      />
+                      {spec.hint && spec.type !== "image" && (
+                        <span className="mt-1 block text-xs leading-relaxed text-zinc-400">
+                          {t(spec.hint)}
+                        </span>
+                      )}
+                    </label>
+                  )
+                  return spec.ownRow ? (
+                    <div key={spec.field} className="sm:col-span-2">
+                      <div className="sm:w-[calc(50%-0.625rem)]">{node}</div>
+                    </div>
+                  ) : (
+                    <Fragment key={spec.field}>{node}</Fragment>
+                  )
+                })}
               </div>
               {editing !== "new" && config.extra && (
                 <Suspense fallback={null}>

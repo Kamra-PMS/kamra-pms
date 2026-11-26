@@ -147,13 +147,13 @@ def literal(node):
 
 def perm_roles(doctype, ptype):
     """Default roles for a permission type: the doctype JSON's DocPerm."""
-    import json
     import os
     slug = doctype.replace(" ", "_").lower()
     path = os.path.join(os.path.dirname(__file__), "..", "kamra", "kamra", "doctype",
                         slug, slug + ".json")
     try:
-        perms = json.load(open(path)).get("permissions", [])  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+        with open(path) as f:  # nosemgrep: frappe-security-file-traversal -- path is derived from the app source tree, not from user input
+            perms = json.load(f).get("permissions", [])
     except OSError:
         return []
     return [p["role"] for p in perms if p.get(ptype) and not p.get("permlevel")]

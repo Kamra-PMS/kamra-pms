@@ -18,9 +18,12 @@
     "booking-defaults:check": "node scripts/booking-defaults-check.mjs",
     "key-notice:check": "node scripts/key-notice-check.mjs",
     "night-prices:check": "node scripts/night-prices-check.mjs",
+    "addup:check": "node scripts/addup-check.mjs",
     "agent-order:check": "node scripts/agent-order-check.mjs",
     "dates:check": "node scripts/local-dates-check.mjs",
-    "offline:check": "node scripts/offline-check.mjs"
+    "offline:check": "node scripts/offline-check.mjs",
+    "bill:check": "node scripts/bill-check.mjs",
+    "money:check": "node scripts/money-check.mjs"
   },
   "dependencies": {
     "libphonenumber-js": "^1.13.15",

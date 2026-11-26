@@ -4,7 +4,8 @@ import { ArrowUpRight, Lock, RotateCcw } from "lucide-react"
 
 import ImageField from "../../components/ImageField"
 import { Card } from "../../components/ui/card"
-import { useT, t as translate, useUILanguage } from "../../lib/i18n"
+import { Switch } from "../../components/ui/switch"
+import { useT, t as translate } from "../../lib/i18n"
 import { cur } from "../../lib/money"
 import { serverError } from "../../lib/resource"
 import { cn } from "../../lib/utils"
@@ -31,41 +32,8 @@ const same = (a: unknown, b: unknown) =>
   String(a ?? "") === String(b ?? "") ||
   (typeof b === "number" && a !== null && a !== "" && Number(a) === b)
 
-export function Switch({
-  on, onToggle, disabled, label, id,
-}: {
-  on: boolean
-  onToggle: () => void
-  disabled?: boolean
-  label?: string
-  id?: string
-}) {
-  useUILanguage()
-  return (
-    <button
-      id={id}
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={translate(label)}
-      disabled={disabled}
-      onClick={onToggle}
-      className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
-        "disabled:cursor-not-allowed disabled:opacity-60",
-        on ? "bg-brand-600" : "bg-zinc-300",
-      )}
-    >
-      <span
-        className={cn(
-          "inline-block size-5 rounded-full bg-white shadow transition-transform",
-          on ? "translate-x-5.5 rtl:-translate-x-5.5" : "translate-x-0.5 rtl:-translate-x-0.5",
-        )}
-      />
-    </button>
-  )
-}
+// moved to components/ui/switch so the outlet form can use it too; kept exported here for its other users
+export { Switch }
 
 function Control({
   spec, value, disabled, onChange, sources,

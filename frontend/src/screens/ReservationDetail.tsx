@@ -43,11 +43,12 @@ import RoomChangeDialog from "../components/RoomChangeDialog"
 import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
 import StayInstructions from "../components/StayInstructions"
-import { cur, moneyLocale } from "../lib/money"
-import { t as translate, useUILanguage } from "../lib/i18n"
+import StayRates from "../components/StayRates"
+import { cur, fmtAmount } from "../lib/money"
+import { t as translate, tn, useUILanguage } from "../lib/i18n"
 
 const inr = (n: number) =>
-  `${cur()}` + Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  `${cur()}` + fmtAmount(n || 0)
 
 const STATUS_TONE: Record<string, string> = {
   Waitlist: "bg-amber-100 text-amber-800",
@@ -481,7 +482,7 @@ export default function ReservationDetail({
             <Field label={translate("Nights")} value={d.nights} />
             <Field
               label={translate("Guests")}
-              value={`${d.adults} adult${d.adults === 1 ? "" : "s"}${
+              value={`${tn(d.adults, "{n} adult", "{n} adults")}${
                 d.children ? ` · ${d.children} child` : ""
               }`}
             />
@@ -502,6 +503,7 @@ export default function ReservationDetail({
               <Field label={translate("Pre-check-in")} value={d.precheckin_status} />
             )}
           </dl>
+          <StayRates reservation={name} onSaved={() => { refresh(); reload() }} />
           {d.booked_check_out_date && (
             <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
               {translate("Left early: booked to {date}.", { date: d.booked_check_out_date })}
@@ -578,7 +580,7 @@ export default function ReservationDetail({
                 label={translate("History")}
                 value={
                   d.guest.stays > 0
-                    ? `${d.guest.stays} stay${d.guest.stays === 1 ? "" : "s"}${
+                    ? `${tn(d.guest.stays, "{n} stay", "{n} stays")}${
                         d.guest.last_stay ? ` · last ${d.guest.last_stay}` : ""
                       }`
                     : "First stay"

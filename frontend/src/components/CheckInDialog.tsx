@@ -307,7 +307,7 @@ export default function CheckInDialog(props: {
   onDone: () => void
   onClose: () => void
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [flow, setFlow] = useState<Flow | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -572,7 +572,7 @@ export default function CheckInDialog(props: {
   const r = flow?.reservation
   const title = r ? t("Check in {name}", { name: r.guest_name }) : t("Check in")
   const description = r
-    ? `${flow?.room.room_type_name ?? ""} · ${r.check_in_date} → ${r.check_out_date} · ${t("{n} adult{s}", { n: r.adults, s: r.adults === 1 ? "" : "s" })}${r.children ? ` + ${r.children}` : ""}`
+    ? `${flow?.room.room_type_name ?? ""} · ${r.check_in_date} → ${r.check_out_date} · ${tn(r.adults, "{n} adult", "{n} adults")}${r.children ? ` + ${r.children}` : ""}`
     : undefined
 
   if (finished && flow) {
@@ -1243,10 +1243,7 @@ export default function CheckInDialog(props: {
                 </p>
               ) : softPending > 0 ? (
                 <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                  {t("{n} item{s} left for after check-in. The guest can go to the room now.", {
-                    n: softPending,
-                    s: softPending === 1 ? "" : "s",
-                  })}
+                  {tn(softPending, "{n} item left for after check-in. The guest can go to the room now.", "{n} items left for after check-in. The guest can go to the room now.")}
                 </p>
               ) : (
                 <p className="text-sm text-zinc-600">{t("Ready. Check the guest in.")}</p>

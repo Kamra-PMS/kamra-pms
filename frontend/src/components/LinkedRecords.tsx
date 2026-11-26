@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 
 import { call } from "../lib/api"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 /** The connective tissue, rendered: one strip of chips on any record that
@@ -61,7 +61,7 @@ export default function LinkedRecords({
 
   if (!links) return null
   const inr = (n: number) =>
-    Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+    fmtAmount(n || 0)
 
   const chips: React.ReactNode[] = []
   if (links.guest && !exclude.includes("guest"))

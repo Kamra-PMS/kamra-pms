@@ -926,7 +926,7 @@ function DishLibrary({
                     <div className="mt-1 flex items-center justify-between gap-2">
                       <p className="text-xs text-zinc-400">
                         {d.recipe.length
-                          ? translate("{v0} ingredient{v1}", { v0: String(d.recipe.length), v1: String(d.recipe.length === 1 ? "" : "s") })
+                          ? tn(d.recipe.length, "{n} ingredient", "{n} ingredients")
                           : translate("no recipe")}
                       </p>
                       {canEdit && (

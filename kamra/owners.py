@@ -383,6 +383,66 @@ def my_portal(property: str, from_date: str | None = None,
 	return out
 
 
+@frappe.whitelist()
+@require_roles(OWNER_ROLE)
+def my_overview(from_date: str | None = None, to_date: str | None = None,
+                month: str | None = None) -> dict:
+	"""Every property the signed-in owner has units at, side by side (#713):
+	occupancy, room nights and room revenue per property, and with `month`
+	each property's statement. Totals only when every property shares one
+	currency: two currencies don't add up to one number."""
+	from kamra.authz import restricted_properties
+	from kamra.crs import _locale, _sum
+
+	allowed = restricted_properties()
+	by_property: dict[str, list] = {}
+	with _without_desk_permission():
+		for name in frappe.get_all("Unit Owner User", pluck="parent",
+		                           filters={"user": frappe.session.user,
+		                                    "parenttype": "Unit Owner"}):
+			doc = frappe.get_doc("Unit Owner", name)
+			if allowed is None or doc.property in allowed:
+				by_property.setdefault(doc.property, []).append(doc)
+	if not by_property:
+		frappe.throw(_("You don't have units at any property."), frappe.PermissionError)
+	start = from_date or nowdate()
+	end = to_date or start
+	span = date_diff(max(getdate(start), getdate(end)), min(getdate(start), getdate(end))) + 1
+	rows = []
+	for property, docs in by_property.items():
+		part = _portal(docs, property, start, end)
+		row = {
+			"property": property,
+			"property_name": frappe.get_cached_value("Property", property, "property_name") or property,
+			**_locale(property),
+			"units": len(part["units"]),
+			"occupancy_pct": part["occupancy_pct"],
+			"room_nights": part["room_nights"],
+			"revenue": part["revenue"],
+		}
+		if month:
+			s = statement(docs, property, month)
+			row["statement"] = {k: s[k] for k in ("from_date", "to_date", "room_nights", "revenue",
+			                                      "commission", "costs", "payout", "lines", "cost_lines")}
+		rows.append(row)
+	rows.sort(key=lambda r: r["property_name"])
+	units = sum(r["units"] for r in rows)
+	nights = sum(r["room_nights"] for r in rows)
+	totals = {
+		"units": units,
+		"room_nights": nights,
+		"occupancy_pct": round(100 * nights / (units * span), 1) if units and span else 0,
+		"currency": rows[0]["currency"] if _sum(rows, "revenue") is not None else None,
+		"revenue": _sum(rows, "revenue"),
+	}
+	if month:
+		sheets = [{**r["statement"], "currency": r["currency"]} for r in rows]
+		totals["statement"] = {k: _sum(sheets, k) for k in ("revenue", "commission", "costs", "payout")}
+	return {"from_date": str(min(getdate(start), getdate(end))),
+	        "to_date": str(max(getdate(start), getdate(end))),
+	        "properties": rows, "totals": totals}
+
+
 def _priceable_types(docs: list, property: str) -> list[dict]:
 	"""Unit types every unit of which this owner manages: the ones whose
 	rate they may set (set_unit_rate)."""

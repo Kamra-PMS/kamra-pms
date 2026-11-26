@@ -13,7 +13,6 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
 
 from kamra import authz
-from kamra.authz import assert_property_access, require_roles
 
 HOME = "TEST Scope Home"
 OTHER = "TEST Scope Other"

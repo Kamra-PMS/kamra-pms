@@ -1,0 +1,59 @@
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","मार्केटिंग सहमति गेस्ट प्रोफ़ाइल, बुकिंग पेज या STOP / START जवाब से बदली जाती है।"
+This guest has no phone number on file.,इस गेस्ट का कोई फ़ोन नंबर दर्ज नहीं है।
+This guest has not agreed to marketing messages.,इस गेस्ट ने मार्केटिंग संदेशों के लिए सहमति नहीं दी है।
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,आपको WhatsApp पर {0} से ऑफ़र मिलेंगे। बाहर निकलने के लिए कभी भी STOP लिखकर भेजें।
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,अब आपको {0} से ऑफ़र नहीं मिलेंगे। बुकिंग और ठहराव संदेश जारी रहेंगे। फिर से सहमति देने के लिए START लिखकर भेजें।
+AI Provider,AI प्रोवाइडर
+"Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.","आपका AI प्रोवाइडर आपकी भूमिका के भीतर {0} के रूप में काम करेगा। कीमतें, कर और अवेलेबिलिटी Kamra में रहती हैं। हर कार्य Activity log में आपके नाम से दर्ज होता है।"
+{0} bill from {1},{1} से {0} बिल
+{0} to {1},{0} से {1}
+Billed this month,इस महीने बिल किया गया
+Bills this month,इस महीने के बिल
+Brought forward,पिछला बकाया
+"Each bill above is a tax invoice of its own; this is a summary of the month, not a tax invoice. Taxable value and tax show where the whole invoice is on this account.","ऊपर का हर बिल अपने आप में एक टैक्स इनवॉइस है; यह महीने का सारांश है, टैक्स इनवॉइस नहीं। कर योग्य मूल्य और कर वहाँ दिखते हैं जहाँ पूरा इनवॉइस इस खाते पर है।"
+Monthly bill,मासिक बिल
+No such account.,ऐसा कोई खाता नहीं।
+Paid this month,इस महीने पेमेंट किया गया
+Payments this month,इस महीने के पेमेंट
+"Pick a month, like 2026-10.","एक महीना चुनें, जैसे 2026-10।"
+Taxable value,कर योग्य मूल्य
+"Your bill for {0} is attached: {1} billed, {2} due.","{0} का आपका बिल संलग्न है: {1} बिल किया गया, {2} देय।"
+Balance due,बकाया राशि
+Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,आपकी AI की का क्रेडिट खत्म हो गया है। अपने प्रोवाइडर से टॉप अप करें या Settings > AI assistant में की बदलें।
+Sells alcohol,शराब बेचता है
+"Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","शराब-मुक्त प्रॉपर्टी के लिए बंद: हर शराब फ़ील्ड, टिक बॉक्स और लेबल हर भाषा में छिप जाता है। पहले पोस्ट हुआ कुछ नहीं बदलता।"
+Extend unchecked-out departures one night,चेक-आउट न हुए डिपार्चर एक रात बढ़ाएँ
+"On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.","चालू: डिपार्चर तारीख के बाद भी Checked In गेस्ट का ठहराव ऑडिट चलने पर एक रात बढ़ जाता है, और वह रात बाकी रातों की तरह पोस्ट होती है। जो ठहराव बढ़ नहीं सकता (कमरा बुक है) वह चेकलिस्ट पर रहता है।"
+The guest owes {0} - nothing is due back to refund.,गेस्ट पर {0} बकाया है - रिफ़ंड के लिए कुछ वापस देय नहीं है।
+Only {0} is due back to the guest - can't refund more than that.,गेस्ट को केवल {0} वापस देय है - इससे ज़्यादा रिफ़ंड नहीं हो सकता।
+Room type code {0} is already used at this property.,कमरे के प्रकार का कोड {0} इस प्रॉपर्टी पर पहले से इस्तेमाल हो रहा है।
+There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,इस बिल पर अभी कोई रूम नाइट नहीं है। छूट पोस्ट हुई रातों पर लगती है: इसे नाइट ऑडिट के बाद या चेक-आउट पर दें।
+Enter a discount above zero.,शून्य से ज़्यादा छूट डालें।
+A discount can't be more than 100%.,छूट 100% से ज़्यादा नहीं हो सकती।
+The discount is more than the room nights on the bill ({0}).,छूट बिल पर रूम नाइट्स ({0}) से ज़्यादा है।
+"This folio is settled - give the discount on the guest's open folio, or cancel the invoice first.","यह फ़ोलियो निपट चुका है - छूट गेस्ट के खुले फ़ोलियो पर दें, या पहले इनवॉइस रद्द करें।"
+"Pick a percent or an amount, per night or for the stay.","प्रतिशत या राशि चुनें, प्रति रात या पूरे ठहराव के लिए।"
+Promo code {0} is already on this stay.,प्रोमो कोड {0} पहले से इस ठहराव पर है।
+Discount {0}%,छूट {0}%
+Discount {0} per night,छूट {0} प्रति रात
+A discount needs a reason - it goes on the record.,छूट के लिए कारण ज़रूरी है - यह रिकॉर्ड में जाता है।
+Monthly,मासिक
+Revenue by department,विभाग के अनुसार रेवेन्यू
+Department,विभाग
+"Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.","कमरे, हर आउटलेट, बैंक्वेट और हर छोटा विभाग (लॉन्ड्री, स्पा, टैक्सी...), जैसा नाइट ऑडिट रिपोर्ट में है।"
+Food and beverage on folios,फ़ोलियो पर खाना-पीना
+Meal plans and minibar,मील प्लान और मिनीबार
+Banquets,बैंक्वेट
+Misc,विविध
+Early Check-in,अर्ली चेक-इन
+Late Checkout,लेट चेक-आउट
+Early Departure,जल्दी डिपार्चर
+Cleaning Fee,सफ़ाई शुल्क
+Extra Guests,अतिरिक्त गेस्ट
+Pet Charge,पेट चार्ज
+Bills paid,पेमेंट किए गए बिल
+{0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,इस ठहराव के {0} बिल अभी गेस्ट के बिल पर नहीं हैं: {1}। चेक-आउट से पहले इन्हें कमरे पर पोस्ट करें या निपटाएँ।
+Bills still open,अभी खुले बिल
+Use Check out to check a guest out: it makes sure every bill is cleared first.,गेस्ट का चेक-आउट करने के लिए Check out का उपयोग करें: यह पहले सुनिश्चित करता है कि हर बिल चुका दिया गया है。
+Check out,चेक-आउट करें
+Discounts and allowances,छूट और अलाउंस

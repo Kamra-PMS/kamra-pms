@@ -4,12 +4,14 @@ import {
   Maximize2, Minimize2, Wallet, Printer, Receipt, XCircle, Ban,
   Scissors, Users, PauseCircle, Tag, Gift, Menu, LogOut, Focus,
   Keyboard, LayoutGrid, BedDouble, ListOrdered, UserRound, MoreVertical, History,
+  SlidersHorizontal,
 } from "lucide-react"
 import PosSidePanel from "./pos/PosSidePanel"
 import SettleSheet from "./pos/SettleSheet"
 import OpenBillsPopup from "./pos/OpenBillsPopup"
 import OrderHistory from "./pos/OrderHistory"
 import MoveRoomBill from "./pos/MoveRoomBill"
+import ModifierSheet, { type ModGroup, extrasOf } from "./pos/ModifierSheet"
 import VoidApproval, { type VoidArgs } from "./pos/VoidApproval"
 import { useNavigate } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
@@ -21,16 +23,12 @@ import { printThermal, kotHtml, billHtml, PRINT_DIALOG_EVENT, type BillData, typ
 import { useFloorFullscreen } from "../lib/kiosk"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
-import { cur, moneyLocale, useLocale } from "../lib/money"
+import { cur, fmtAmount, moneyDigits, useLocale } from "../lib/money"
+import { addUp } from "../lib/addUp"
 import { useT, t as translate } from "../lib/i18n"
 import { docsUrl } from "../components/InfoTip"
 import { cardArgs } from "../lib/cardNetwork"
 
-
-const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
-const inr2 = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 interface MenuItem {
   name: string
@@ -39,12 +37,18 @@ interface MenuItem {
   price: number
   is_veg: number
   image: string | null
+  /** the choice groups this dish asks about (milk, ice, extras), by id, in till order */
+  group_ids?: string[]
 }
 interface Outlet {
   name: string
   outlet_name: string
   gst_rate: number
   auto_kot?: 0 | 1
+  /** the outlet's levy (a service charge), added to every bill after discount */
+  levy_label?: string | null
+  levy_percent?: number | null
+  levy_taxable?: number | null
 }
 interface OpenOrder {
   name: string
@@ -100,18 +104,28 @@ interface RecentOrder {
   open: boolean
 }
 interface CartLine {
+  /** this line's own id: the same dish can be on two lines (other choices, or another note) */
+  key: string
   menu_item: string
   item_name: string
+  /** the dish's own price; what its choices add comes from `options` */
   price: number
   is_veg: number
   qty: number
   instructions: string
+  /** ids of the choices ticked for this line */
+  options: string[]
+  group_ids: string[]
 }
+/** the same ticks, in any order */
+const sameChoices = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x))
 interface OrderItem {
   row: string
   item_name: string
   qty: number
   amount: number
+  /** the choices sold with this line, as they were */
+  modifiers?: { name: string; price: number; group?: string }[]
   instructions: string | null
   kot_status: string
   voided: number
@@ -152,6 +166,11 @@ interface Detail {
   discount_amount: number
   subtotal: number
   order_total: number
+  /** what the outlet's levy added to this bill (order_total already includes it) */
+  levy_label?: string | null
+  levy_percent?: number | null
+  levy_taxable?: number | null
+  levy_amount?: number | null
   items: OrderItem[]
   guest?: string | null
   reservation?: string | null
@@ -200,7 +219,7 @@ function ago(ts?: string) {
 const OUTLET_KEY = "kamra_pos_outlet"
 
 export default function POS() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const { ensureUnlocked } = useCashierAuth()
   // pay_order settles Cash, Card and the country's instant modes
   const loc = useLocale()
@@ -238,6 +257,13 @@ export default function POS() {
   const [custPhone, setCustPhone] = useState("")
   const [custAddr, setCustAddr] = useState("")
   const [cart, setCart] = useState<CartLine[]>([]) // new lines (new bill OR next round)
+  // the choice groups of this outlet's menu, and the sheet that asks for them
+  const [groups, setGroups] = useState<Record<string, ModGroup>>({})
+  const [picking, setPicking] = useState<{
+    menu_item: string; item_name: string; price: number; group_ids: string[]
+    /** set while changing the choices of a line already in the cart */
+    key?: string; initial: string[]
+  } | null>(null)
   const [discount, setDiscount] = useState("")
   const [discOpen, setDiscOpen] = useState(false)
   const [printKot, setPrintKot] = useState(() => localStorage.getItem("pos_print_kot") !== "0")
@@ -307,8 +333,11 @@ export default function POS() {
 
   const loadMenu = useCallback(() => {
     if (!outlet) return
-    call<{ categories: { category: string; items: MenuItem[] }[] }>("kamra.pos.pos_menu", { outlet })
-      .then((m) => { setCats(m.categories); setCat("All") })
+    call<{ categories: { category: string; items: MenuItem[] }[]; modifier_groups?: ModGroup[] }>("kamra.pos.pos_menu", { outlet })
+      .then((m) => {
+        setCats(m.categories); setCat("All")
+        setGroups(Object.fromEntries((m.modifier_groups ?? []).map((g) => [g.name, g])))
+      })
       .catch((e) => setError(serverError(e)))
   }, [outlet])
   useEffect(loadMenu, [loadMenu])
@@ -430,27 +459,63 @@ export default function POS() {
     openTab(open[next].name)
   }
 
-  const addToCart = (it: MenuItem) => {
+  const lineSeq = useRef(0)
+  const addToCart = (it: MenuItem, options: string[] = []) => {
+    const key = `line-${++lineSeq.current}`
     setCart((c) => {
-      const ex = c.find((l) => l.menu_item === it.name)
+      // the same dish with the same choices adds to its line; one without a note is preferred,
+      // so a tap does not pile onto "no straw" when a plain line is there
+      const matches = c.filter((l) => l.menu_item === it.name && sameChoices(l.options, options))
+      const ex = matches.find((l) => !l.instructions) ?? matches[0]
       // bump qty and move that line to the top so the add is never buried
       if (ex) {
-        const next = c.map((l) => l.menu_item === it.name ? { ...l, qty: l.qty + 1 } : l)
-        const line = next.find((l) => l.menu_item === it.name)!
-        return [line, ...next.filter((l) => l.menu_item !== it.name)]
+        return [{ ...ex, qty: ex.qty + 1 }, ...c.filter((l) => l.key !== ex.key)]
       }
       return [{
-        menu_item: it.name, item_name: it.item_name, price: it.price,
-        is_veg: it.is_veg, qty: 1, instructions: "",
+        key, menu_item: it.name, item_name: it.item_name, price: it.price,
+        is_veg: it.is_veg, qty: 1, instructions: "", options, group_ids: it.group_ids ?? [],
       }, ...c]
     })
   }
-  const setQty = (mi: string, d: number) =>
-    setCart((c) => c.flatMap((l) => l.menu_item === mi ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l]))
-  const setInstr = (mi: string, v: string) =>
-    setCart((c) => c.map((l) => l.menu_item === mi ? { ...l, instructions: v } : l))
+  const groupsOf = (ids: string[]) => ids.map((id) => groups[id]).filter(Boolean)
+  /** What one of the line sells for: the dish plus the choices ticked. The server prices it again. */
+  const unitOf = (l: CartLine) => l.price + extrasOf(groupsOf(l.group_ids), l.options)
+  /** A dish with a compulsory group asks first; one with only optional groups adds at once
+   *  (its line has an Options button), so a quick order stays one tap. */
+  const tapItem = (it: MenuItem) => {
+    const gs = groupsOf(it.group_ids ?? [])
+    if (gs.some((g) => g.required)) {
+      setPicking({ menu_item: it.name, item_name: it.item_name, price: it.price, group_ids: it.group_ids ?? [], initial: [] })
+    } else addToCart(it)
+  }
+  const editOptions = (l: CartLine) =>
+    setPicking({ menu_item: l.menu_item, item_name: l.item_name, price: l.price, group_ids: l.group_ids, key: l.key, initial: l.options })
+  const chosen = (options: string[]) => {
+    if (!picking) return
+    const p = picking
+    setPicking(null)
+    if (!p.key) {
+      addToCart({ name: p.menu_item, item_name: p.item_name, price: p.price, category: "", is_veg: 0, image: null, group_ids: p.group_ids }, options)
+      return
+    }
+    // changing a line's choices: it merges into another line only when that one is now the same
+    // dish, choices AND note; otherwise both stay, so no note is lost or spread to more plates
+    setCart((c) => {
+      const line = c.find((l) => l.key === p.key)
+      if (!line) return c
+      const rest = c.filter((l) => l.key !== p.key)
+      const twin = rest.find((l) => l.menu_item === line.menu_item && sameChoices(l.options, options)
+        && l.instructions.trim() === line.instructions.trim())
+      if (twin) return rest.map((l) => l === twin ? { ...l, qty: l.qty + line.qty } : l)
+      return c.map((l) => l.key === p.key ? { ...l, options } : l)
+    })
+  }
+  const setQty = (key: string, d: number) =>
+    setCart((c) => c.flatMap((l) => l.key === key ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l]))
+  const setInstr = (key: string, v: string) =>
+    setCart((c) => c.map((l) => l.key === key ? { ...l, instructions: v } : l))
 
-  const newSubtotal = cart.reduce((s, l) => s + l.qty * l.price, 0)
+  const newSubtotal = cart.reduce((s, l) => s + l.qty * unitOf(l), 0)
   const disc = Math.min(Number(discount) || 0, selected ? Number.MAX_SAFE_INTEGER : newSubtotal)
 
   async function act(fn: () => Promise<unknown>) {
@@ -473,10 +538,27 @@ export default function POS() {
           ? `${d.order_type}${d.customer_name ? ` · ${d.customer_name.split(" ")[0]}` : ""}`
           : (d.name || "Bill")
 
-  // what the bill panel is pricing right now
-  const taxable = selected && detail ? Number(detail.order_total || 0) : newSubtotal - disc
+  // what the bill panel is pricing right now: the items after discount, the outlet's
+  // levy on top, and the tax on the items plus the levy when the levy is taxed
+  const levyAmt = selected && detail ? Number(detail.levy_amount || 0)
+    : Number(outletDoc?.levy_percent) > 0 && newSubtotal - disc > 0
+      ? Math.round((newSubtotal - disc) * Number(outletDoc?.levy_percent)) / 100 : 0
+  const levyLabel = (selected && detail ? detail.levy_label : outletDoc?.levy_label) || t("Service charge")
+  const levyTaxed = (selected && detail ? detail.levy_taxable : outletDoc?.levy_taxable) !== 0
+  const billed = selected && detail ? Number(detail.order_total || 0) - levyAmt : newSubtotal - disc
+  const taxable = billed + (levyTaxed ? levyAmt : 0)
   const gstAmt = taxable * gstRate / 100
-  const grand = taxable + gstAmt
+  const grand = billed + levyAmt + gstAmt
+  // the figures as printed on the bill: the lines add up to the subtotal, and a Rounding row
+  // appears only when the printed pieces still miss the printed total (see lib/addUp.ts)
+  const fig = addUp({
+    digits: moneyDigits(),
+    lines: selected && detail ? detail.items.filter((i) => !i.voided).map((i) => i.amount)
+      : cart.map((l) => l.qty * unitOf(l)),
+    discount: selected && detail ? detail.discount_amount : disc,
+    levy: levyAmt, taxes: [gstAmt], total: grand,
+  })
+  const showRounding = fig.rounding !== 0 && !(selected && detail?.nc)
 
   function printSavedKot(t: KotTicket, reprint = false) {
     printThermal(`KOT #${t.kot_no}`, kotHtml({
@@ -493,7 +575,7 @@ export default function POS() {
     ticket?: KotTicket
     till_ticket?: KotTicket
     print_jobs?: { printer_name: string }[]
-    fired_items: { item_name: string; qty: number; instructions?: string | null }[]
+    fired_items: KotLine[]
   }, label: string, type: string | null,
                          customer?: string | null, address?: string | null,
                          ncBy?: string | null) {
@@ -538,7 +620,7 @@ export default function POS() {
       delivery_address: orderType === "Delivery" ? custAddr || null : null,
       // a walk-in customer picked in the guest panel (a room bill is its guest's)
       guest: draftGuest && !(orderType === "Room Service" || (orderType === "Dine In" && room)) ? draftGuest.guest : null,
-      items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions })),
+      items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions, modifiers: l.options })),
     }
   }
   const newBillLabel = () =>
@@ -561,7 +643,7 @@ export default function POS() {
   async function createBill(fire: boolean) {
     if (fire) {
       // one round trip: create, discount, confirm and fire on the server
-      const kot = await confirmFree((allowZero) => call<{ order: string; kot_no: number | null; fired_items: { item_name: string; qty: number; instructions?: string | null }[]; ticket?: KotTicket }>(
+      const kot = await confirmFree((allowZero) => call<{ order: string; kot_no: number | null; fired_items: KotLine[]; ticket?: KotTicket }>(
         "kamra.pos.send_order", { ...newBillArgs(), discount: disc > 0 ? disc : 0, allow_zero: allowZero ? 1 : 0 }))
       maybePrintKot(kot, newBillLabel(), orderType,
         custName || null, orderType === "Delivery" ? custAddr || null : null)
@@ -578,10 +660,10 @@ export default function POS() {
       if (cart.length === 0) return
       await act(async () => {
         // one round trip: add the round and fire it on the server
-        const kot = await confirmFree((allowZero) => call<{ kot_no: number | null; nc?: boolean; ticket?: KotTicket; fired_items: { item_name: string; qty: number; instructions?: string | null }[] }>(
+        const kot = await confirmFree((allowZero) => call<{ kot_no: number | null; nc?: boolean; ticket?: KotTicket; fired_items: KotLine[] }>(
           "kamra.pos.send_round", {
             order: selected,
-            items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions })),
+            items: cart.map((l) => ({ menu_item: l.menu_item, qty: l.qty, instructions: l.instructions, modifiers: l.options })),
             allow_zero: allowZero ? 1 : 0,
           }))
         if (detail) maybePrintKot(kot, orderLabel(detail), detail.order_type,
@@ -674,7 +756,8 @@ export default function POS() {
       setPrintNote(translate("Reprinting KOT #{v0}.", { v0: String(last.kot_no) }))
       return
     }
-    const items = detail.items.filter((i) => !i.voided && i.kot_status !== "New")
+    const items: KotLine[] = detail.items.filter((i) => !i.voided && i.kot_status !== "New")
+      .map((i) => ({ ...i, modifiers: (i.modifiers ?? []).map((m) => m.name) }))
     if (!items.length) return
     printThermal(`KOT #${detail.kot_no}`, kotHtml({
       outlet: outletName, kot_no: detail.kot_no, label: orderLabel(detail),
@@ -927,7 +1010,7 @@ export default function POS() {
                             </div>
                             <div className="truncate text-[10px] opacity-70">
                               {tile.bills > 0
-                                ? <>{cur()}{inr(tile.order_total)}{tile.guests ? <> · <Users className="inline size-2.5" />{tile.guests}</> : null}</>
+                                ? <>{cur()}{fmtAmount(tile.order_total)}{tile.guests ? <> · <Users className="inline size-2.5" />{tile.guests}</> : null}</>
                                 : tile.state === "reserved" ? `${t("Res")} ${tile.res_time} · ${tile.res_guest || ""}`
                                   : tile.state === "cleaning" ? t("Cleaning")
                                     : tile.seats ? t("{n} seats", { n: tile.seats }) : " "}
@@ -989,7 +1072,7 @@ export default function POS() {
                         {t.orders.map((b) => (
                           <button key={b.order} onClick={() => openTab(b.order)}
                             className={"flex w-full items-center justify-between rounded-lg border px-2 py-1 text-xs transition " + TILE[b.state]}>
-                            <span>{translate(b.label)}</span><span className="tabular-nums">{cur()}{inr(b.order_total)}</span>
+                            <span>{translate(b.label)}</span><span className="tabular-nums">{cur()}{fmtAmount(b.order_total)}</span>
                           </button>
                         ))}
                         <button onClick={() => newOrder(t.table)}
@@ -1010,7 +1093,7 @@ export default function POS() {
                       <button key={o.name} onClick={() => openTab(o.name)}
                         className={"rounded-lg border px-2 py-1 text-xs transition " +
                           (selected === o.name ? "border-brand-600 bg-brand-50 font-semibold text-brand-700" : "border-zinc-200 bg-white hover:border-brand-400")}>
-                        {translate(o.label)} <span className="tabular-nums text-zinc-400">{cur()}{inr(o.order_total)}</span>
+                        {translate(o.label)} <span className="tabular-nums text-zinc-400">{cur()}{fmtAmount(o.order_total)}</span>
                       </button>
                     ))}
                   </div>
@@ -1038,7 +1121,7 @@ export default function POS() {
                                 title={t("Not sent to the kitchen for {mins} min", { mins: o.age_min ?? 0 })}>
                                 {ago(o.creation)}
                               </span>
-                              <span className="tabular-nums text-amber-800">{cur()}{inr(o.order_total)}</span>
+                              <span className="tabular-nums text-amber-800">{cur()}{fmtAmount(o.order_total)}</span>
                             </span>
                           </button>
                         </li>
@@ -1061,7 +1144,7 @@ export default function POS() {
                             <span className="font-semibold text-sky-900">
                               {translate(o.label)}{o.kot_no ? translate(" · KOT {v0}", { v0: String(o.kot_no) }) : ""}
                             </span>
-                            <span className="tabular-nums text-sky-800">{cur()}{inr(o.order_total)}</span>
+                            <span className="tabular-nums text-sky-800">{cur()}{fmtAmount(o.order_total)}</span>
                           </button>
                         </li>
                       ))}
@@ -1090,7 +1173,7 @@ export default function POS() {
                         <span className="ml-1 text-zinc-400">· {translate(r.order_type)}</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5 tabular-nums">
-                        <span className="font-semibold">{cur()}{inr(r.order_total)}</span>
+                        <span className="font-semibold">{cur()}{fmtAmount(r.order_total)}</span>
                         {r.nc ? <span className="rounded bg-amber-50 px-1 text-[10px] font-bold text-amber-700">{translate("NC")}</span>
                           : r.paid ? <span className="rounded bg-emerald-50 px-1 text-[10px] font-medium text-emerald-700">{translate(r.payment_mode)}</span>
                             : r.status === "Cancelled" ? <span className="rounded bg-rose-50 px-1 text-[10px] font-medium text-rose-600">✕</span>
@@ -1200,7 +1283,7 @@ export default function POS() {
                           )}>
                           <span className="min-w-0 flex-1 truncate font-medium">{translate(o.label)}</span>
                           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{translate(hint)}</span>
-                          <span className="shrink-0 tabular-nums text-xs font-semibold text-zinc-700">{cur()}{inr(o.order_total)}</span>
+                          <span className="shrink-0 tabular-nums text-xs font-semibold text-zinc-700">{cur()}{fmtAmount(o.order_total)}</span>
                         </button>
                       )
                     })
@@ -1354,7 +1437,7 @@ export default function POS() {
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 xl:grid-cols-4 2xl:grid-cols-5">
-                {shownItems.map((it) => <MenuCard key={it.name} it={it} onAdd={() => addToCart(it)} />)}
+                {shownItems.map((it) => <MenuCard key={it.name} it={it} onAdd={() => tapItem(it)} />)}
                 {shownItems.length === 0 && (
                   <p className="col-span-full py-16 text-center text-sm text-zinc-400">{t("No matches.")}</p>
                 )}
@@ -1453,7 +1536,7 @@ export default function POS() {
                             <button key={b.order} type="button" onClick={() => { setChooser(null); void openTab(b.order) }}
                               className={"flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-xs transition " + TILE[b.state]}>
                               <span className="font-medium">{translate(b.label)}</span>
-                              <span className="tabular-nums">{cur()}{inr(b.order_total)}</span>
+                              <span className="tabular-nums">{cur()}{fmtAmount(b.order_total)}</span>
                             </button>
                           ))}
                           <button type="button" onClick={() => { setChooser(null); newOrder(tile.table) }}
@@ -1553,33 +1636,45 @@ export default function POS() {
               ) : (
                 <ul className="space-y-2 pb-3">
                   {cart.map((l) => (
-                    <li key={l.menu_item}
+                    <li key={l.key}
                       className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="text-base font-bold leading-snug text-zinc-900">{l.item_name}</div>
+                          {l.group_ids.length > 0 && (
+                            <button type="button" onClick={() => editOptions(l)}
+                              aria-label={t("Choices for {name}", { name: l.item_name })}
+                              className="mt-1 flex flex-wrap items-center gap-1 text-left text-xs">
+                              {l.options.length > 0 ? groupsOf(l.group_ids).flatMap((g) => g.options.filter((o) => l.options.includes(o.name))).map((o) => (
+                                <span key={o.name} className="rounded bg-brand-50 px-1.5 py-0.5 font-semibold text-brand-700">{o.option_name}</span>
+                              )) : (
+                                <span className="font-semibold text-brand-700 underline">{t("Add options")}</span>
+                              )}
+                              <SlidersHorizontal className="size-3.5 text-zinc-400" aria-hidden />
+                            </button>
+                          )}
                           <div className="mt-1 text-sm font-semibold tabular-nums text-brand-700">
-                            {cur()}{inr(l.price)} × {l.qty} = {cur()}{inr(l.qty * l.price)}
+                            {cur()}{fmtAmount(unitOf(l))} × {l.qty} = {cur()}{fmtAmount(l.qty * unitOf(l))}
                           </div>
                         </div>
-                        <button type="button" onClick={() => setQty(l.menu_item, -l.qty)} aria-label={t("Remove")}
+                        <button type="button" onClick={() => setQty(l.key, -l.qty)} aria-label={t("Remove")}
                           className="grid size-9 shrink-0 place-items-center rounded-lg text-rose-500 hover:bg-rose-50">
                           <Trash2 className="size-4" />
                         </button>
                       </div>
                       <div className="mt-2.5 flex items-center gap-2">
-                        <button type="button" onClick={() => setQty(l.menu_item, -1)} aria-label={translate("One less")}
+                        <button type="button" onClick={() => setQty(l.key, -1)} aria-label={translate("One less")}
                           className="grid size-11 place-items-center rounded-lg border-2 border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50">
                           <Minus className="size-4" />
                         </button>
                         <span className="min-w-[2.25rem] text-center text-xl font-bold tabular-nums text-zinc-900">{l.qty}</span>
-                        <button type="button" onClick={() => setQty(l.menu_item, 1)} aria-label={translate("One more")}
+                        <button type="button" onClick={() => setQty(l.key, 1)} aria-label={translate("One more")}
                           className="grid size-11 place-items-center rounded-lg bg-brand-600 text-white hover:bg-brand-700">
                           <Plus className="size-4" />
                         </button>
                         <input className="ms-auto min-w-0 flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-2.5 text-xs text-zinc-800 placeholder:text-zinc-400"
                           placeholder={t("Notes")}
-                          value={l.instructions} onChange={(e) => setInstr(l.menu_item, e.target.value)} />
+                          value={l.instructions} onChange={(e) => setInstr(l.key, e.target.value)} />
                       </div>
                     </li>
                   ))}
@@ -1617,6 +1712,11 @@ export default function POS() {
                               <div className={cn("text-[15px] font-bold text-zinc-900", !!it.voided && "line-through")}>
                                 {Math.round(it.qty)}× {it.item_name}
                               </div>
+                              {!!it.modifiers?.length && (
+                                <div className={cn("text-xs font-medium text-zinc-600", !!it.voided && "line-through")}>
+                                  {it.modifiers.map((m) => m.name).join(" · ")}
+                                </div>
+                              )}
                               {!it.voided && (
                                 <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-zinc-500">
                                   <span>
@@ -1637,7 +1737,7 @@ export default function POS() {
                             </div>
                           </div>
                           <div className="flex shrink-0 items-center gap-1">
-                            <span className="text-base font-bold tabular-nums text-zinc-900">{cur()}{inr(it.amount)}</span>
+                            <span className="text-base font-bold tabular-nums text-zinc-900">{cur()}{fmtAmount(it.amount)}</span>
                             {!splitMode && !it.voided && detail.status !== "Delivered" && detail.status !== "Cancelled" && (
                               it.kot_status === "New" ? (
                                 <button type="button" title={t("Remove (not sent to the kitchen)")}
@@ -1687,7 +1787,7 @@ export default function POS() {
           <div className="border-t border-zinc-200 bg-white px-3 py-2">
             <div className="mb-2 flex items-end justify-between gap-2">
               <div className="min-w-0 text-[11px] leading-snug text-zinc-500">
-                <div>{t("Subtotal")} {cur()}{inr2(taxable)}{gstAmt ? <> · {loc.tax_label} {cur()}{inr2(gstAmt)}</> : null}</div>
+                <div>{t("Subtotal")} {cur()}{fmtAmount(fig.subtotal - fig.discount)}{levyAmt ? <> · {levyLabel} {cur()}{fmtAmount(fig.levy)}</> : null}{gstAmt ? <> · {loc.tax_label} {cur()}{fmtAmount(fig.taxes[0])}</> : null}{showRounding ? <> · {t("Rounding")} {cur()}{fmtAmount(fig.rounding)}</> : null}</div>
                 {discOpen ? (
                   <span className="mt-1 flex items-center gap-1">
                     <input autoFocus className={inputCls + " !w-24 !py-0.5 text-xs"} placeholder={translate(`${cur()}`)} inputMode="numeric"
@@ -1700,14 +1800,14 @@ export default function POS() {
                     className="mt-0.5 inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
                     <Tag className="size-3" />
                     {(selected && detail ? detail.discount_amount : disc) > 0
-                      ? `−${cur()}${inr(selected && detail ? detail.discount_amount : disc)}`
+                      ? `−${cur()}${fmtAmount(selected && detail ? detail.discount_amount : disc)}`
                       : t("Discount")}
                   </button>
                 )}
               </div>
               <div className="text-right">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{t("Total")}</div>
-                <div className="text-[1.65rem] font-bold tabular-nums leading-none text-zinc-900">{cur()}{inr2(grand)}</div>
+                <div className="text-[1.65rem] font-bold tabular-nums leading-none text-zinc-900">{cur()}{fmtAmount(grand)}</div>
               </div>
             </div>
 
@@ -1827,7 +1927,7 @@ export default function POS() {
       {settling && selected && detail && (
         <SettleSheet
           subtitle={translate(orderLabel(detail))}
-          grandLabel={`${cur()}${inr2(grand)}`}
+          grandLabel={`${cur()}${fmtAmount(grand)}`}
           zeroLabel={`${cur()}0`}
           modes={posModes}
           busy={busy}
@@ -1858,9 +1958,9 @@ export default function POS() {
             <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-brand-700">
               {cart.length > 0
                 ? `+ ${cart[0].item_name}${cart[0].qty > 1 ? ` ×${cart[0].qty}` : ""}`
-                : translate("{v0} item{v1}{v2}", { v0: String(Math.round(billItemCount)), v1: String(billItemCount === 1 ? "" : "s"), v2: String(selected && detail ? ` · ${orderLabel(detail)}` : "") })}
+                : tn(Math.round(billItemCount), "{n} item", "{n} items") + (selected && detail ? ` · ${orderLabel(detail)}` : "")}
             </div>
-            <div className="text-lg font-bold tabular-nums">{cur()}{inr2(grand)}</div>
+            <div className="text-lg font-bold tabular-nums">{cur()}{fmtAmount(grand)}</div>
           </button>
           <Button variant="outline" className="h-11" onClick={() => setMobilePane("bill")}>{t("View bill")}</Button>
           <Button className="h-11" disabled={busy || (selected ? !detail : cart.length === 0)} onClick={proceedToPay}>
@@ -1884,6 +1984,14 @@ export default function POS() {
             {tablesPane}
           </div>
         </div>
+      )}
+
+      {/* the choices a dish asks for (milk, ice, extras) */}
+      {picking && (
+        <ModifierSheet title={picking.item_name} price={picking.price}
+          groups={groupsOf(picking.group_ids)} initial={picking.initial}
+          confirmLabel={picking.key ? t("Update") : t("Add to bill")}
+          onConfirm={chosen} onClose={() => setPicking(null)} />
       )}
 
       {/* every past bill, on a wide screen of its own */}
@@ -1965,7 +2073,7 @@ function RunningStrip({
               (selected === o.name ? " ring-2 ring-brand-600 ring-offset-1" : "")}>
             <span className="min-w-0 truncate text-xs font-bold">{translate(o.label)}</span>
             <span className="shrink-0 text-[10px] font-semibold tabular-nums opacity-80">
-              {cur()}{inr(o.order_total)}
+              {cur()}{fmtAmount(o.order_total)}
             </span>
             <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-wide opacity-70 sm:inline">{tag}</span>
           </button>
@@ -2003,7 +2111,10 @@ function MenuCard({ it, onAdd }: { it: MenuItem; onAdd: () => void }) {
           <span className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-900">{it.item_name}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-bold tabular-nums text-zinc-800">{cur()}{inr(it.price)}</span>
+          <span className="text-sm font-bold tabular-nums text-zinc-800">
+            {cur()}{fmtAmount(it.price)}
+            {!!it.group_ids?.length && <SlidersHorizontal className="ms-1.5 inline size-3 text-zinc-400" aria-label="Options" />}
+          </span>
           <span className="grid size-8 place-items-center rounded-full bg-brand-50 text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white">
             <Plus className="size-3.5" />
           </span>

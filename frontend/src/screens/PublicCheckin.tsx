@@ -147,7 +147,7 @@ interface Companion {
 
 export default function PublicCheckin() {
   const { token } = useParams()
-  const { t } = useT()
+  const { t, tn } = useT()
   // a guest's phone speaks their language: follow it until they choose
   useEffect(() => adoptGuestLanguage(), [])
   const [info, setInfo] = useState<Info | null>(null)
@@ -254,8 +254,8 @@ export default function PublicCheckin() {
           <p className="mt-1 flex items-center gap-2 text-zinc-500">
             <CalendarDays className="size-4" aria-hidden />
             <span dir="ltr">{stay.check_in_date} → {stay.check_out_date}</span> ·{" "}
-            {t("{n} night{s}", { n: stay.nights, s: stay.nights === 1 ? "" : "s" })} ·{" "}
-            {t("{n} adult{s}", { n: stay.adults, s: stay.adults === 1 ? "" : "s" })}
+            {tn(stay.nights, "{n} night", "{n} nights")} ·{" "}
+            {tn(stay.adults, "{n} adult", "{n} adults")}
             {stay.children ? ` + ${t("{n} child", { n: stay.children })}` : ""}
           </p>
           <p className="mt-1 flex items-center gap-2 text-zinc-500">

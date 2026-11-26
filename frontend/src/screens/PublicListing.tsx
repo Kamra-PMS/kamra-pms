@@ -16,7 +16,7 @@ import { accentVars } from "../lib/accents"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
-import { cur, moneyLocale, adoptUiLocale } from "../lib/money"
+import { cur, adoptUiLocale, fmtAmount } from "../lib/money"
 import { formatPhoneDisplay, formatPhoneTel } from "../lib/phone"
 import { petChargeBasis } from "../lib/pets"
 import { useT, t as translate } from "../lib/i18n"
@@ -30,7 +30,7 @@ import ChildAges, {
 
 
 const inr = (n: number) =>
-  n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 interface Resolved {
   kind: "listing" | "site" | "property"

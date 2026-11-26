@@ -10,7 +10,7 @@ import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { serverError } from "../lib/resource"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
 
@@ -40,7 +40,7 @@ type BookingRequest = {
 type InboxData = { holds_inventory: boolean; count: number; requests: BookingRequest[] }
 
 const money0 = (n: number) =>
-  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 /** Request-to-Book inbox on Today: stays waiting for the host's yes / no.
  * A request holds no room until it is accepted, so "rooms free" is live
@@ -52,7 +52,7 @@ export default function BookingRequests({
   refreshKey?: unknown
   onChanged?: () => void
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const { allowed } = useAuth()
   // a role without the inbox does not ask for it (the server says 403)
   const canSee = allowed("Reservation", "handle_stays", INBOX_ROLES)
@@ -150,7 +150,7 @@ export default function BookingRequests({
                   </div>
                   <div className="mt-0.5 text-xs text-zinc-500">
                     {r.room_type_name} · {r.check_in_date} → {r.check_out_date} ·{" "}
-                    {t("{n} night{s}", { n: r.nights, s: r.nights === 1 ? "" : "s" })} ·{" "}
+                    {tn(r.nights, "{n} night", "{n} nights")} ·{" "}
                     {t("{n} ad", { n: r.adults })}
                     {r.children ? translate(" + {v0} ch", { v0: String(r.children) }) : ""}
                     {Number(r.amount_after_tax) > 0 &&

@@ -33,7 +33,7 @@ import uuid
 import frappe
 from frappe import _
 
-from kamra.authz import require_perm, require_roles
+from kamra.authz import require_perm
 from kamra.localization import money_text
 
 # Who may look at stock, and who may move it. Chefs never appear here: they
@@ -160,6 +160,23 @@ def _recipes_of(menu_items) -> dict:
 	return out
 
 
+def _option_recipes_of(options) -> dict:
+	"""choice -> [(ingredient, qty_per_dish), ...]. What a choice (Extra shot,
+	Oat milk) takes off the shelf on top of the dish's own recipe: the same
+	lines a recipe has, kept on the Menu Modifier Option."""
+	ids = [o for o in options if o]
+	if not ids:
+		return {}
+	out = {}
+	for r in frappe.get_all(
+		"Menu Item Ingredient",
+		filters={"parent": ["in", ids], "parenttype": "Menu Modifier Option"},
+		fields=["parent", "ingredient", "qty"], order_by="idx asc",
+	):
+		out.setdefault(r.parent, []).append((r.ingredient, float(r.qty or 0)))
+	return out
+
+
 def consume_for_lines(order, lines) -> list:
 	"""Take a fired order's recipes off the outlet's stock. Called from
 	fire_kot with the lines it just fired - never from a doc hook, see below.
@@ -204,10 +221,17 @@ def consume_for_lines(order, lines) -> list:
 		return []
 
 	recipes = _recipes_of({it["menu_item"] for it in todo})
+	# a choice can take stock too (Extra shot: 18 g of beans): the dish's own
+	# recipe and its choices are one movement per ingredient, summed
+	extras = _option_recipes_of({o for it in todo for o in it.get("modifiers") or ()})
 	need = {}
 	for it in todo:
+		qty = float(it.get("qty") or 1)
 		for ing, per in recipes.get(it["menu_item"], ()):
-			need[ing] = need.get(ing, 0.0) + per * float(it.get("qty") or 1)
+			need[ing] = need.get(ing, 0.0) + per * qty
+		for opt in it.get("modifiers") or ():
+			for ing, per in extras.get(opt, ()):
+				need[ing] = need.get(ing, 0.0) + per * qty
 	if not need:
 		return []  # nothing fired here has a recipe. Silence is correct.
 
@@ -586,7 +610,7 @@ def wastage_report(property: str, outlet: str | None = None, days: int = 30):
 		conds.append("p.outlet = %(outlet)s")
 		params["outlet"] = outlet
 	lines = frappe.db.sql(f"""  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
-		select i.item_name, i.menu_item, i.qty, i.void_reason, p.outlet,
+		select i.item_name, i.menu_item, i.qty, i.modifiers, i.void_reason, p.outlet,
 		       p.name as order_name, p.creation
 		  from `tabPOS Order Item` i
 		  join `tabPOS Order` p on p.name = i.parent
@@ -595,13 +619,20 @@ def wastage_report(property: str, outlet: str | None = None, days: int = 30):
 	if not lines:
 		return {"lines": [], "by_reason": [], "total_value": 0.0}
 
+	from kamra.menu_modifiers import option_ids_of
 	recipes = _recipes_of({r.menu_item for r in lines})
+	# what a line's choices took off the shelf (an extra shot's beans) was binned too
+	chosen = [option_ids_of(r.pop("modifiers")) for r in lines]
+	extras = _option_recipes_of({o for ids in chosen for o in ids})
 	costs = {}
 	total = 0.0
 	by_reason = {}
-	for r in lines:
+	for r, ids in zip(lines, chosen):
 		value = 0.0
-		for ing, per in recipes.get(r.menu_item, ()):
+		used = list(recipes.get(r.menu_item, ()))
+		for opt in ids:
+			used += extras.get(opt, ())
+		for ing, per in used:
 			if ing not in costs:
 				costs[ing] = float(frappe.db.get_value(
 					"Ingredient", ing, "cost_per_unit") or 0)

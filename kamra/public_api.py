@@ -11,7 +11,7 @@ import frappe
 from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, date_diff
 
-from kamra.authz import act_as, require_roles
+from kamra.authz import act_as
 from kamra.booking_slugs import resolve_public_slug, slugify
 from kamra.install import AGENT_EMAIL
 

@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "creation": "2026-11-25 22:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "editable_grid": 1,
+ "field_order": [
+  "property",
+  "outlet",
+  "group_name",
+  "column_break_a",
+  "required",
+  "multi",
+  "max_choices",
+  "sort_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1
+  },
+  {
+   "fieldname": "outlet",
+   "fieldtype": "Link",
+   "label": "Outlet",
+   "options": "POS Outlet",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "group_name",
+   "fieldtype": "Data",
+   "label": "Group",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "What the captain is asking: Milk, Size, Extras, How would you like it cooked."
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "label": "Must choose",
+   "in_list_view": 1,
+   "description": "The bill cannot take this dish until a choice is made."
+  },
+  {
+   "fieldname": "multi",
+   "fieldtype": "Check",
+   "label": "Several choices allowed",
+   "description": "Off: pick one. On: tick as many as the limit allows."
+  },
+  {
+   "fieldname": "max_choices",
+   "fieldtype": "Int",
+   "label": "Most choices",
+   "depends_on": "multi",
+   "description": "With several choices allowed. 0 = no limit."
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Order",
+   "default": "0",
+   "description": "Groups show on the till lowest first."
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-25 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "Menu Modifier Group",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "format:MMG-{#####}",
+ "title_field": "group_name",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hotel Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "write": 1,
+   "role": "F&B Manager"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Front Desk"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Kamra Agent"
+  }
+ ],
+ "track_changes": 1
+}

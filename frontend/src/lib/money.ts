@@ -144,9 +144,11 @@ export function moneyDigits(currency = cache.currency) {
   return 2
 }
 /** An amount with the currency's normal decimals, always the same count
- *  (2,27,255.40, never 2,27,255.4), so a column of figures lines up. */
-export const fmtAmount = (n: unknown) => {
-  const d = moneyDigits()
+ *  (2,27,255.40, never 2,27,255.4), so a column of figures lines up. Pass the
+ *  currency code of an amount that is not in the property's own currency (a stay
+ *  at another property on a trip): its decimals are used, not the property's. */
+export const fmtAmount = (n: unknown, currency?: string | null) => {
+  const d = moneyDigits(currency || undefined)
   return Number(n ?? 0).toLocaleString(cache.locale, { minimumFractionDigits: d, maximumFractionDigits: d })
 }
 /** fmtAmount with the currency symbol in front. */

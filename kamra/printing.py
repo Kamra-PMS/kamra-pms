@@ -75,8 +75,10 @@ def route_kot(doc, rows, ticket: dict, kind: str = "KOT") -> dict:
 	`ticket` is the till's ticket for the whole round. Returns the jobs and
 	the lines no printer took, which the till prints itself."""
 	printers = [p for p in _printers(doc.property) if p["prints_kots"]]
+	from kamra.menu_modifiers import names_of
 	lines = [{"item_name": it.item_name, "qty": it.qty,
-	          "instructions": it.instructions, "menu_item": it.menu_item} for it in rows]
+	          "instructions": it.instructions, "menu_item": it.menu_item,
+	          "modifiers": names_of(it.modifiers)} for it in rows]
 	if not printers or not lines:
 		return {"jobs": [], "unrouted": [_strip(ln) for ln in lines]}
 	stations = dict(frappe.get_all(
@@ -110,7 +112,9 @@ def route_kot(doc, rows, ticket: dict, kind: str = "KOT") -> dict:
 
 
 def _strip(ln: dict) -> dict:
-	return {"item_name": ln["item_name"], "qty": ln["qty"], "instructions": ln.get("instructions")}
+	return {"item_name": ln["item_name"], "qty": ln["qty"],
+	        "instructions": ln.get("instructions"),
+	        "modifiers": ln.get("modifiers") or []}
 
 
 def _queue(property: str, printer: dict, kind: str, payload: dict, order=None,

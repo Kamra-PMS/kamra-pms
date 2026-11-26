@@ -11778,6 +11778,56 @@ def t_night_prices_total():
 	assert q["room_total"] == 100, q["room_total"]
 
 
+@check("the desk re-prices a night of a saved stay; the other nights keep the rate they were booked at")
+def t_night_prices_saved_stay():
+	from kamra.api import (
+		PriceConfirmationRequired, create_booking, set_stay_prices, stay_prices_preview, stay_rates)
+	ci, co = "2033-09-10", "2033-09-13"
+	out = create_booking(P, RT, ci, co, "Eval Saved Night", phone="+91 70000 00636")
+	res = frappe.get_doc("Reservation", out["reservation"])
+	before = [float(r.rate) for r in res.night_rates]
+	total = float(res.amount_after_tax)
+	assert res.auto_price == 1 and len(before) == 3, (res.auto_price, before)
+	d2 = add_days(ci, 1)
+	typed = [{"date": d2, "price": 5000}]
+	# the preview writes nothing, and the save needs the new price confirmed
+	pv = stay_prices_preview(res.name, typed)
+	assert pv["needs_confirmation"] and pv["new_amount"] != total, pv
+	res.reload()
+	assert res.auto_price == 1 and float(res.amount_after_tax) == total
+	try:
+		set_stay_prices(res.name, typed)
+		raise AssertionError("a change in the total was saved without the total shown")
+	except PriceConfirmationRequired:
+		pass
+	# a save that carries a total other than the one the preview showed is refused too
+	try:
+		set_stay_prices(res.name, typed, expected_total=pv["new_amount"] + 1)
+		raise AssertionError("a save with a stale total was accepted")
+	except PriceConfirmationRequired as e:
+		assert "not the" in str(e), e
+	res.reload()
+	assert res.auto_price == 1 and float(res.amount_after_tax) == total
+	# the rate card moves after the booking: the nights left alone must not follow it
+	rt = frappe.get_doc("Room Type", RT)
+	old_base = rt.base_price
+	frappe.db.set_value("Room Type", RT, "base_price", float(old_base) * 2)
+	frappe.clear_document_cache("Room Type", RT)
+	try:
+		set_stay_prices(res.name, typed, expected_total=pv["new_amount"])
+	finally:
+		frappe.db.set_value("Room Type", RT, "base_price", old_base)
+		frappe.clear_document_cache("Room Type", RT)
+	res.reload()
+	assert res.auto_price == 0
+	assert [float(r.hand_price) for r in res.night_rates] == [0, 5000, 0], res.night_rates
+	rows = [float(r.rate) for r in res.night_rates]
+	assert rows[0] == before[0] and rows[2] == before[2], (rows, before)
+	shown = [n["price"] for n in stay_rates(res.name)["nights"]]
+	assert shown[1] == 5000, shown
+	assert float(res.amount_after_tax) > total
+
+
 @check("typed nights with a voucher or without the right to set rates are refused")
 def t_night_prices_refused():
 	from kamra.api import create_booking, get_quote
@@ -11834,6 +11884,111 @@ def t_folio_no_close_in_house():
 	assert frappe.db.get_value("Folio Charge", {
 		"charge_type": "Room", "posting_date": "2036-09-02",
 		"reservation": res.name, "parenttype": "Folio"}, "parent") == out["new_folio"]
+
+
+@check("POS: an outlet's levy is added after discount, taxed or not as set, kept once paid, and refused where every bill is e-invoiced")
+def t_pos_outlet_levy():
+	from kamra import pos
+
+	for doctype, field in (("POS Outlet", "levy_percent"), ("POS Outlet", "levy_taxable"),
+	                       ("POS Order", "levy_amount"), ("POS Order", "levy_taxable")):
+		assert frappe.get_meta(doctype).has_field(field), (doctype, field)
+
+	P6 = "EVAL Levy Hotel"
+	if not frappe.db.exists("Property", P6):
+		frappe.get_doc({"doctype": "Property", "property_name": P6, "city": "Ubud",
+		                "country": "Indonesia"}).insert(ignore_permissions=True)
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P6, "outlet_name": "Eval Levy Warung",
+		"outlet_type": "Restaurant", "gst_rate": 10,
+		"levy_label": "Service charge", "levy_percent": 10, "levy_taxable": 1,
+	}).insert(ignore_permissions=True).name
+	nasi, teh = (frappe.get_doc({
+		"doctype": "Menu Item", "property": P6, "outlet": outlet, "item_name": label,
+		"category": "Food", "price": price, "is_veg": 0, "available": 1,
+		"prep_station": "Kitchen"}).insert(ignore_permissions=True).name
+		for label, price in (("Eval Levy Nasi Goreng", 35000), ("Eval Levy Es Teh", 12000)))
+
+	def bill(taxable=1):
+		frappe.db.set_value("POS Outlet", outlet, "levy_taxable", taxable)
+		o = pos.create_order(outlet, [{"menu_item": nasi, "qty": 1},
+		                              {"menu_item": teh, "qty": 2}],
+		                     property=P6, table_no="T1", order_type="Dine In")["order"]
+		pos.apply_discount(o, 9000, "regular")
+		return o
+
+	# 59.000 less 9.000 = 50.000; levy 10% = 5.000; tax 10% on 55.000 (taxed levy) or 50.000
+	o = bill(taxable=1)
+	doc = frappe.get_doc("POS Order", o)
+	assert (doc.levy_amount, doc.order_total) == (5000, 55000), (doc.levy_amount, doc.order_total)
+	b = pos.bill_data(o)
+	assert b["levy"]["amount"] == 5000 and b["taxable"] == 55000 and b["grand_total"] == 60500, b
+	o2 = bill(taxable=0)
+	b2 = pos.bill_data(o2)
+	assert b2["taxable"] == 50000 and b2["grand_total"] == 60000, b2
+
+	# paid, the bill keeps its levy even when the outlet drops it afterwards
+	pos.pay_order(o, "Cash")
+	frappe.db.set_value("POS Outlet", outlet, "levy_percent", 0)
+	paid = frappe.get_doc("POS Order", o)
+	paid.save(ignore_permissions=True)
+	assert (paid.levy_amount, paid.order_total) == (5000, 55000), (paid.levy_amount, paid.order_total)
+
+	# a country that e-invoices every POS bill (Saudi Arabia) takes no levy
+	PS = "EVAL Levy Riyadh"
+	if not frappe.db.exists("Property", PS):
+		frappe.get_doc({"doctype": "Property", "property_name": PS, "city": "Riyadh",
+		                "country": "Saudi Arabia", "currency": "SAR",
+		                "gstin": "310122393500003"}).insert(ignore_permissions=True)
+	try:
+		frappe.get_doc({
+			"doctype": "POS Outlet", "property": PS, "outlet_name": "Eval Levy Majlis",
+			"outlet_type": "Restaurant", "gst_rate": 15, "levy_percent": 10,
+		}).insert(ignore_permissions=True)
+	except frappe.ValidationError:
+		pass
+	else:
+		raise AssertionError("a Saudi outlet was allowed a levy")
+
+
+@check("POS outlet: the receipt logo takes only an uploaded file or an https link, and the bill's barcode is on unless the outlet turns it off")
+def t_pos_outlet_receipt():
+	from kamra import pos
+
+	PR = "EVAL Receipt Hotel"
+	if not frappe.db.exists("Property", PR):
+		frappe.get_doc({"doctype": "Property", "property_name": PR, "city": "Ubud",
+		                "country": "Indonesia"}).insert(ignore_permissions=True)
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": PR, "outlet_name": "Eval Receipt Warung",
+		"outlet_type": "Restaurant", "gst_rate": 10,
+	}).insert(ignore_permissions=True)
+	assert int(outlet.print_barcode) == 1, outlet.print_barcode      # on by default
+
+	for ok in ("/files/logo.png", "/private/files/logo.png", "https://example.com/logo.png", ""):
+		doc = frappe.get_doc("POS Outlet", outlet.name)
+		doc.logo = ok
+		doc.save(ignore_permissions=True)
+	for bad in ("javascript:alert(1)", "http://example.com/logo.png", "data:image/svg+xml;base64,PHN2Zz4=",
+	            "//example.com/logo.png", "/files/../etc/passwd", '/files/x.png" onerror="y',
+	            "/files/%2e%2e/etc/passwd", "/files/%2E%2E/x.png"):
+		doc = frappe.get_doc("POS Outlet", outlet.name)
+		doc.logo = bad
+		try:
+			doc.save(ignore_permissions=True)
+		except frappe.ValidationError:
+			continue
+		raise AssertionError(f"a receipt logo of {bad!r} was accepted")
+
+	dish = frappe.get_doc({
+		"doctype": "Menu Item", "property": PR, "outlet": outlet.name, "item_name": "Eval Receipt Nasi",
+		"category": "Food", "price": 35000, "is_veg": 0, "available": 1, "prep_station": "Kitchen",
+	}).insert(ignore_permissions=True).name
+	order = pos.create_order(outlet.name, [{"menu_item": dish, "qty": 1}], property=PR,
+	                         table_no="T1", order_type="Dine In")["order"]
+	assert pos.bill_data(order)["barcode"] == 1, pos.bill_data(order)["barcode"]
+	frappe.db.set_value("POS Outlet", outlet.name, "print_barcode", 0)
+	assert pos.bill_data(order)["barcode"] == 0, pos.bill_data(order)["barcode"]
 
 
 @check("a price with tax and the levy inside bills to exactly that price; with neither inside nothing changes")
@@ -12223,6 +12378,68 @@ def t_card_network_agent_paths():
 	assert (bill().card_network, bill().card_last4) == (None, None), bill()
 
 
+@check("menu choices: the server prices and judges them, the line and the kitchen keep them, stock follows them")
+def t_menu_modifiers():
+	from kamra import inventory, menu_modifiers as mm, pos
+	outlet, dish = _eval_bill_outlet("Eval Choices")
+	beans = frappe.get_doc({"doctype": "Ingredient", "property": P, "ingredient_name": "Eval Choice Beans",
+	                        "uom": "g", "is_active": 1}).insert(ignore_permissions=True).name
+	inventory.receive_stock(P, outlet, [{"ingredient": beans, "qty": 500}])
+	ice = mm.save_modifier_group(outlet, "Ice", [{"option_name": "Normal"}, {"option_name": "Less"}],
+	                             items=[dish], required=1, sort_order=1)["name"]
+	extras = mm.save_modifier_group(
+		outlet, "Extras", [{"option_name": "Shot", "price": 60,
+		                    "ingredients": [{"ingredient": beans, "qty": 18}]},
+		                   {"option_name": "Caramel", "price": 50}],
+		items=[dish], multi=1, max_choices=1, sort_order=2)["name"]
+	pick = lambda g, n: frappe.db.get_value("Menu Modifier Option", {"modifier_group": g, "option_name": n}, "name")
+
+	# a compulsory group left open, and more than the limit, are refused before anything is written
+	for picks, why in (([], "choose Ice"),
+	                   ([pick(ice, "Normal"), pick(extras, "Shot"), pick(extras, "Caramel")], "at most 1")):
+		try:
+			pos.create_order(outlet, [{"menu_item": dish, "qty": 1, "modifiers": picks}], table_no="C1")
+		except frappe.ValidationError as e:
+			assert why in str(e), (why, e)
+		else:
+			raise AssertionError(f"choices accepted that should be refused: {why}")
+
+	# the till sends ids only; the line is the dish plus the choices, and keeps its own copy
+	o = pos.send_order(outlet, [{"menu_item": dish, "qty": 2, "rate": 1,
+	                             "modifiers": [pick(ice, "Less"), pick(extras, "Shot")]}],
+	                   property=P, table_no="C1")
+	line = frappe.get_doc("POS Order", o["order"]).items[0]
+	assert (line.rate, line.modifier_total, line.amount) == (360, 60, 720), (line.rate, line.modifier_total, line.amount)  # the dish is 300
+	assert o["fired_items"][0]["modifiers"] == ["Less", "Shot"], o["fired_items"]
+	kds = [q for q in pos.kitchen_queue(P, outlet) if q["name"] == o["order"]][0]
+	assert kds["items"][0]["modifiers"] == ["Less", "Shot"], kds["items"]
+	assert pos.bill_data(o["order"])["items"][0]["modifiers"] == ["Less", "Shot"]
+	assert frappe.db.get_value("Ingredient Stock", f"{outlet}::{beans}", "qty_on_hand") == 500 - 36, "the choice took no stock"
+
+	# a price finer than money is kept whole, and a voided line's choices count as waste
+	fine = mm.save_modifier_group(outlet, "Fine", [{"option_name": "Fils", "price": 0.125}],
+	                              items=[dish], sort_order=3)["name"]
+	o2 = pos.send_order(outlet, [{"menu_item": dish, "qty": 1, "modifiers": [
+		pick(ice, "Normal"), pick(fine, "Fils"), pick(extras, "Shot")]}], property=P, table_no="C2")
+	finer = frappe.get_doc("POS Order", o2["order"]).items[0]
+	assert abs(finer.modifier_total - 60.125) < 1e-6 and abs(finer.rate - 360.125) < 1e-6, (finer.rate, finer.modifier_total)
+	frappe.db.set_value("Ingredient", beans, "cost_per_unit", 10)
+	pos.void_item(o2["order"], finer.name, reason="eval spilled")
+	waste = [r for r in inventory.wastage_report(P, outlet)["lines"] if r["order_name"] == o2["order"]]
+	assert waste and waste[0]["value"] == 180, ("the choice's beans are not in the wastage value", waste)
+
+	# editing the price, then deleting the group, leaves the bill as it was sold
+	frappe.db.set_value("Menu Modifier Option", pick(extras, "Shot"), "price", 999)
+	frappe.db.set_value("Menu Item", dish, "price", 999)
+	mm.delete_modifier_group(extras)
+	pos.add_items(o["order"], [{"menu_item": dish, "qty": 1, "modifiers": [pick(ice, "Normal")]}])
+	rows = frappe.get_doc("POS Order", o["order"]).items
+	assert (rows[0].rate, rows[0].amount) == (360, 720), "a later price change re-priced a line already on the bill"
+	assert [c["name"] for c in mm.load(rows[0].modifiers)] == ["Less", "Shot"]
+	assert not frappe.db.exists("Menu Modifier Group", extras)
+	assert not frappe.db.count("Menu Modifier Option", {"modifier_group": extras})
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12275,10 +12492,12 @@ def execute():
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
+		           t_night_prices_saved_stay,
 		           t_night_prices_refused, t_folio_no_close_in_house,
-		           t_rates_include_levy,
+		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
-		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths):
+		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
+		           t_menu_modifiers):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

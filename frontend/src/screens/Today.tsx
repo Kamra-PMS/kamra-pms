@@ -40,7 +40,7 @@ import CheckInDialog from "../components/CheckInDialog"
 import NoShowDialog from "../components/NoShowDialog"
 import BookingRequests from "../components/BookingRequests"
 import { serverError } from "../lib/resource"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import CheckOutDialog from "../components/CheckOutDialog"
 import RoomDrawer, { type RoomTab } from "../components/RoomDrawer"
@@ -72,7 +72,7 @@ const hkTone: Record<RoomRow["housekeeping_status"], string> = {
 }
 
 const inr0 = (n: number) =>
-  Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 /** Group rooms held but not picked up: a lighter step of the brand ramp. */
 const HELD_SHADE = "color-mix(in oklab, var(--color-brand-600) 35%, var(--color-brand-50))"
@@ -242,7 +242,7 @@ function ReservationList(props: {
   selected?: string[]
   onToggle?: (name: string) => void
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   if (props.rows.length === 0) {
     return <p className="px-1 py-3 text-sm text-zinc-400">{translate(props.empty)}</p>
   }
@@ -271,7 +271,7 @@ function ReservationList(props: {
               {row.room
                 ? t("Room {n}", { n: row.room.split("-").pop() ?? "" })
                 : t("Unassigned")}{" "}
-              · {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })} ·{" "}
+              · {tn(row.nights, "{n} night", "{n} nights")} ·{" "}
               {t("{n} ad", { n: row.adults })}
               {row.children ? translate(" + {v0} ch", { v0: String(row.children) }) : ""}
               {row.eta && translate(" · ETA {v0}", { v0: String(row.eta) })}
@@ -468,7 +468,7 @@ function InHouseTable({
   rows: ReservationRow[]
   today?: string
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const navigate = useNavigate()
   if (!rows.length) {
     return (
@@ -559,8 +559,8 @@ function InHouseTable({
                   )}
                 </td>
                 <td className="py-2.5 text-zinc-500">
-                  {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })} ·{" "}
-                  {t("{n} adult{s}", { n: row.adults, s: row.adults === 1 ? "" : "s" })}
+                  {tn(row.nights, "{n} night", "{n} nights")} ·{" "}
+                  {tn(row.adults, "{n} adult", "{n} adults")}
                 </td>
                 <td className="py-2.5 pe-1 text-end">
                   <div className="tabular-nums text-zinc-600">

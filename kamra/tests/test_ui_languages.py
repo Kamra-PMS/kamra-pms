@@ -43,7 +43,7 @@ class UiLanguagesTest(IntegrationTestCase):
 		offered = languages.enabled_ui_languages()["enabled"]
 		self.assertEqual(offered[0], BASE)
 		self.assertEqual(offered, languages.known_codes())
-		for code in ("en", "es", "pt", "ar", "de", "id", "fil", "vi", "sw", "zh-CN"):
+		for code in ("en", "es", "pt", "ar", "de", "id", "fil", "vi", "sw", "hi", "ta", "zh-CN"):
 			self.assertIn(code, offered)
 
 		frappe.set_user(self.admin)  # nosemgrep: frappe-setuser -- Hotel Admin may change the list

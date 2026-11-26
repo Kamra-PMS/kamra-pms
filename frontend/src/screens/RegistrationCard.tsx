@@ -5,7 +5,7 @@ import { Link, useParams } from "react-router-dom"
 import { call, getCurrentProperty } from "../lib/api"
 import EditableNationality from "../components/EditableNationality"
 import { Button } from "../components/ui/button"
-import { chargesTax, cur, locale, moneyLocale, taxLabel, useLocale } from "../lib/money"
+import { chargesTax, cur, locale, taxLabel, useLocale, fmtAmount } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { cn } from "../lib/utils"
@@ -98,7 +98,7 @@ interface Grc {
 }
 
 const inr = (n: number) =>
-  n.toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n)
 
 function Row(props: { label: string; value?: string | null }) {
   useUILanguage()
@@ -526,7 +526,7 @@ function ReadIdButton({ guest, idType, idTypes, onDone }: {
 
 export default function RegistrationCard() {
   const { name } = useParams()
-  const { t } = useT()
+  const { t, tn } = useT()
   const loc = useLocale()
   const [d, setD] = useState<Grc | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -714,7 +714,7 @@ export default function RegistrationCard() {
               <Row
                 label={t("Guests")}
                 value={
-                  t("{n} adult{s}", { n: r.adults, s: r.adults === 1 ? "" : "s" }) +
+                  tn(r.adults, "{n} adult", "{n} adults") +
                   (r.children ? ` + ${t("{n} child", { n: r.children })}` : "")
                 }
               />

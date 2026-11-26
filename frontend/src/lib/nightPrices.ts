@@ -48,3 +48,31 @@ export function typedNights(
 /** A price typed equal to what Kamra would charge is not an override. */
 export const isOverride = (price: number | undefined, rate: number, digits: number) =>
   price !== undefined && toUnits(price, digits) !== toUnits(rate, digits)
+
+/** A night as the desk reads it: weekday, day and month ("Thu 11 Sep"), in the
+ *  reader's locale. The date is read as written ("YYYY-MM-DD"), never shifted
+ *  by the browser's time zone. */
+export function nightLabel(date: string, locale?: string | string[]): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(date)
+  if (!m) return date
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  })
+}
+
+/** The night a server message is about: the first of `dates` it names. */
+export function nightInMessage(message: string, dates: string[]): string | null {
+  return dates.find((d) => message.includes(d)) ?? null
+}
+
+/** Every night in `dates` at one price (the desk's "same price every night");
+ *  a night already at that price is not an override. */
+export function samePrice(
+  price: number,
+  nights: { date: string; price: number }[],
+  digits: number,
+): Record<string, number> {
+  return Object.fromEntries(nights.filter((n) => isOverride(price, n.price, digits)).map((n) => [n.date, price]))
+}

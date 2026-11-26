@@ -4,15 +4,16 @@ import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
-import { moneyLocale } from "../lib/money"
+import { fmtAmount } from "../lib/money"
+import { tripMoney } from "../lib/tripMoney"
 import { useT } from "../lib/i18n"
 import type { Itinerary } from "./CRS"
 
 /** Printable confirmation for a whole trip: one reference, every stay in
  * date order with its own hotel, booking number and price. */
 
-const amt = (sym: string, n: number) =>
-  `${sym}${Number(n).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })}`
+const amt = (sym: string, n: number, currency?: string | null) =>
+  `${sym}${fmtAmount(n, currency)}`
 
 export default function TripConfirmation() {
   const { t } = useT()
@@ -28,7 +29,7 @@ export default function TripConfirmation() {
 
   if (error) return <p className="py-10 text-center text-rose-600">{t(error)}</p>
   if (!d) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
-  const sym = d.legs[0]?.currency_symbol ?? ""
+  const { sym, code } = tripMoney(d.legs).live
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -61,7 +62,7 @@ export default function TripConfirmation() {
                 <div className="flex justify-between gap-2">
                   <span className="font-semibold">{l.property_name}{l.city ? `, ${l.city}` : ""}</span>
                   <span className={l.status === "Cancelled" ? "text-zinc-400 line-through" : ""}>
-                    {amt(l.currency_symbol, l.amount_after_tax)}
+                    {amt(l.currency_symbol, l.amount_after_tax, l.currency)}
                   </span>
                 </div>
                 <p className="text-zinc-600">
@@ -79,19 +80,19 @@ export default function TripConfirmation() {
           {d.total != null ? (
             <>
               <div className="flex justify-between font-medium">
-                <span>{t("Trip total, taxes in")}</span><span>{amt(sym, d.total)}</span>
+                <span>{t("Trip total, taxes in")}</span><span>{amt(sym, d.total, code)}</span>
               </div>
               {(d.advance_required ?? 0) > 0 && (
                 <div className="flex justify-between text-zinc-500">
-                  <span>{t("Advance required")}</span><span>{amt(sym, d.advance_required ?? 0)}</span>
+                  <span>{t("Advance required")}</span><span>{amt(sym, d.advance_required ?? 0, code)}</span>
                 </div>
               )}
               <div className="flex justify-between text-zinc-500">
-                <span>{t("Advance paid")}</span><span>{amt(sym, d.advance_paid ?? 0)}</span>
+                <span>{t("Advance paid")}</span><span>{amt(sym, d.advance_paid ?? 0, code)}</span>
               </div>
               {(d.advance_due ?? 0) > 0 && (
                 <div className="flex justify-between font-medium">
-                  <span>{t("Advance still due")}</span><span>{amt(sym, d.advance_due ?? 0)}</span>
+                  <span>{t("Advance still due")}</span><span>{amt(sym, d.advance_due ?? 0, code)}</span>
                 </div>
               )}
             </>

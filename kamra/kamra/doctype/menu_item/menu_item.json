@@ -22,6 +22,8 @@
   "course",
   "allergens",
   "prep_station",
+  "section_modifiers",
+  "modifier_groups",
   "section_recipe",
   "recipe"
  ],
@@ -119,6 +121,18 @@
    "description": "Which KOT this item prints to. The list is Settings → F&B → Prep stations."
   },
   {
+   "fieldname": "section_modifiers",
+   "fieldtype": "Section Break",
+   "label": "Choices"
+  },
+  {
+   "fieldname": "modifier_groups",
+   "fieldtype": "Table",
+   "label": "Choice groups",
+   "options": "Menu Item Modifier Group",
+   "description": "The groups the captain is asked about when this dish is added: milk, size, extras. Set them from Menu > Choices."
+  },
+  {
    "fieldname": "section_recipe",
    "fieldtype": "Section Break",
    "label": "Recipe"
@@ -134,7 +148,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-31 12:00:00.000000",
+ "modified": "2026-11-25 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Menu Item",

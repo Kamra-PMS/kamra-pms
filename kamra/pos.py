@@ -48,7 +48,9 @@ def outlets(property: str):
 	setting, so the till never has to know where the answer came from."""
 	rows = frappe.get_all(
 		"POS Outlet", filters={"property": property, "disabled": 0},
-		fields=["name", "outlet_name", "outlet_type", "gst_rate", "kot_mode"],
+		fields=["name", "outlet_name", "outlet_type", "gst_rate", "kot_mode",
+		        "logo", "receipt_design", "levy_label", "levy_percent",
+		        "levy_taxable"],
 		order_by="outlet_name")
 	for r in rows:
 		r["auto_kot"] = 1 if _auto_kot(property, r.kot_mode) else 0
@@ -81,30 +83,47 @@ def pos_menu(outlet: str):
 		fields=["name", "item_name", "category", "price", "is_veg",
 		        "is_alcohol", "image", "description", "prep_station"],
 		order_by="category, item_name")
+	# the choice groups a dish asks about (milk, size, extras): each group once,
+	# and per dish only the ids of the groups it offers
+	from kamra.menu_modifiers import menu_payload
+	groups, offered = menu_payload([it.name for it in items])
 	cats: dict[str, list] = {}
 	for it in items:
+		if offered.get(it.name):
+			it["group_ids"] = offered[it.name]
 		cats.setdefault(it.category or "Other", []).append(it)
-	return {"outlet": outlet,
+	return {"outlet": outlet, "modifier_groups": groups,
 	        "categories": [{"category": c, "items": v} for c, v in cats.items()]}
 
 
 def _load_items(rows):
 	"""Normalise incoming order lines and price them from the menu (the
-	guest/caller never sets the price - only qty and instructions)."""
+	guest/caller never sets the price - only qty, instructions and the ids of
+	the choices ticked). A dish's choices are judged against the groups it
+	offers and priced here; the line's rate is the dish's price plus them, and
+	the line keeps its own copy of what was chosen (kamra.menu_modifiers)."""
+	from kamra import menu_modifiers
 	if isinstance(rows, str):
 		rows = frappe.parse_json(rows)
+	rows = rows or []
+	# the choice groups of every dish on the order, looked up once for all lines
+	offered = menu_modifiers.groups_for_items([r.get("menu_item") for r in rows])
 	out = []
-	for r in rows or []:
+	for r in rows:
 		mi = frappe.db.get_value(
 			"Menu Item", r.get("menu_item"),
 			["item_name", "price", "available"], as_dict=True)
 		if not mi or not mi.available:
 			continue
+		chosen, extra = menu_modifiers.resolve(
+			mi.item_name, offered.get(r["menu_item"], []), r.get("modifiers"))
 		out.append({
 			"menu_item": r["menu_item"],
 			"item_name": mi.item_name,
 			"qty": max(1, float(r.get("qty") or 1)),
-			"rate": float(mi.price or 0),
+			"rate": float(mi.price or 0) + extra,
+			"modifiers": menu_modifiers.dump(chosen),
+			"modifier_total": extra,
 			"instructions": (r.get("instructions") or "")[:140] or None,
 			"kot_status": "New",
 		})
@@ -120,6 +139,12 @@ def _courses_of(doc) -> dict:
 		return {}
 	return {m.name: (m.course or DEFAULT_COURSE) for m in frappe.get_all(
 		"Menu Item", filters={"name": ["in", ids]}, fields=["name", "course"])}
+
+
+def _choices_of(it) -> list:
+	"""A line's choices as sold: [{group, option, name, price}]."""
+	from kamra.menu_modifiers import load
+	return load(it.modifiers)
 
 
 def _allergy_hits(allergy_note: str | None, allergens: str | None) -> list:
@@ -254,20 +279,25 @@ def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
 		"Folio Charge",
 		filters={"parenttype": "Folio", "description": ("like", f"%({doc.name})%"),
 		         "reservation": doc.reservation},
-		fields=["name", "parent", "idx", "posting_date", "is_alcohol", "amount"])
+		fields=["name", "parent", "idx", "posting_date", "is_alcohol", "amount"],
+		order_by="idx")
 	if not rows:
 		frappe.throw(_("Couldn't find this bill on the room's folio. It may have "
 		              "been moved or voided already."))
 	# split on the folio, or partly allowed off: moving one piece would
-	# leave the rest on the wrong guest
-	if len(rows) != 1 or abs(float(rows[0].amount or 0) - float(doc.order_total or 0)) > 0.009:
+	# leave the rest on the wrong guest. The bill's lines are its items and,
+	# when the outlet has a levy, the levy line: together they are the total.
+	expected = 2 if float(doc.levy_amount or 0) > 0 else 1
+	if len(rows) != expected or abs(sum(float(r.amount or 0) for r in rows)
+	                                - float(doc.order_total or 0)) > 0.009:
 		frappe.throw(_("This bill was split or changed on the folio, so it can't be "
 		              "moved in one go. Move its lines from the folio instead."))
 	row = rows[0]
 	# an allowance carries no link to its charge: one posted after this bill
 	# on the same folio may be against it, and would stay with the wrong guest
 	if frappe.db.exists("Folio Charge", {"parenttype": "Folio", "parent": row.parent,
-	                                     "charge_type": "Allowance", "idx": (">", row.idx)}):
+	                                     "charge_type": "Allowance",
+	                                     "idx": (">", max(int(r.idx) for r in rows))}):
 		frappe.throw(_("An allowance was posted on this folio after the bill. Reverse "
 		              "the allowance first, then move the bill."))
 	if frappe.db.get_value("Folio", row.parent, "status") == "Closed":
@@ -285,7 +315,7 @@ def move_room_bill(order: str, room: str, reason: str, pin: str | None = None):
 		frappe.get_doc("Reservation", new_res), "Food & Beverage",
 		is_alcohol=bool(row.is_alcohol)))
 	from kamra.webhooks import emit_folio_posted
-	for line in move_charges(src, dst, [row.name], reservation=new_res):
+	for line in move_charges(src, dst, [r.name for r in rows], reservation=new_res):
 		emit_folio_posted(dst, line)
 	doc.db_set({"room": new_room, "reservation": new_res,
 	            "guest": _bill_guest(new_res, None)}, update_modified=False)
@@ -665,6 +695,7 @@ def split_order(order: str, item_rows, table_no: str | None = None):
 		"items": [{
 			"menu_item": it.menu_item, "item_name": it.item_name,
 			"qty": it.qty, "rate": it.rate,
+			"modifiers": it.modifiers, "modifier_total": it.modifier_total,
 			"instructions": it.instructions, "kot_status": it.kot_status,
 			"fired_at": it.fired_at, "started_at": it.started_at,
 			"prepared_at": it.prepared_at, "picked_up_at": it.picked_up_at,
@@ -714,10 +745,14 @@ def order_detail(order: str):
 		"paid": doc.paid, "payment_mode": doc.payment_mode,
 		"discount_amount": doc.discount_amount, "discount_reason": doc.discount_reason,
 		"subtotal": doc.subtotal, "order_total": doc.order_total,
+		# what the outlet's levy added to this bill (the tax base follows levy_taxable)
+		"levy_label": doc.levy_label, "levy_percent": doc.levy_percent,
+		"levy_taxable": doc.levy_taxable, "levy_amount": doc.levy_amount,
 		"kot_fired": doc.kot_fired, "notes": doc.notes,
 		"items": [
 			{"row": it.name, "menu_item": it.menu_item, "item_name": it.item_name,
 			 "qty": it.qty, "rate": it.rate, "amount": it.amount,
+			 "modifiers": _choices_of(it), "modifier_total": it.modifier_total,
 			 "instructions": it.instructions, "kot_status": it.kot_status,
 			 "fired_at": it.fired_at, "started_at": it.started_at,
 			 "prepared_at": it.prepared_at, "picked_up_at": it.picked_up_at,
@@ -787,6 +822,7 @@ def fire_kot(order: str, course: str | None = None):
 def _fire(doc, course: str | None = None) -> dict:
 	"""fire_kot on a loaded order. Saves the order once, so a caller that
 	has just changed it (send_round) pays for one write, not two."""
+	from kamra.menu_modifiers import names_of, option_ids_of
 	courses = _courses_of(doc) if course else {}
 	now = frappe.utils.now()
 	fired = []
@@ -802,7 +838,8 @@ def _fire(doc, course: str | None = None) -> dict:
 				it.started_at = now  # auto KOT: nobody presses Start
 			# what the till prints on the thermal ticket...
 			fired.append({"item_name": it.item_name, "qty": it.qty,
-			              "instructions": it.instructions})
+			              "instructions": it.instructions,
+			              "modifiers": names_of(it.modifiers)})
 			# ...and what the stock engine needs. Kept apart deliberately:
 			# the ticket is a human artefact, this is bookkeeping. Rows, not
 			# dicts: a line send_round just appended has no name until save.
@@ -834,7 +871,8 @@ def _fire(doc, course: str | None = None) -> dict:
 	from kamra.inventory import consume_for_lines
 	alerts = consume_for_lines(doc, [
 		{"row": it.name, "menu_item": it.menu_item, "qty": it.qty,
-		 "stock_posted": it.stock_posted} for it in fired_rows])
+		 "stock_posted": it.stock_posted,
+		 "modifiers": option_ids_of(it.modifiers)} for it in fired_rows])
 	ticket = {
 		"kot_no": doc.kot_no, "at": now, "round": _next_kot_round(doc),
 		"nc": bool(doc.nc), "nc_by": doc.nc_authorized_by,
@@ -952,6 +990,7 @@ def kitchen_queue(property: str, outlet: str | None = None,
 
 	`fired_at` per line is what the display ages against - a table that sat an
 	hour over drinks must not hand the kitchen a ticket that is already red."""
+	from kamra.menu_modifiers import names_of
 	filters = {"property": property, "status": "Preparing", "kot_fired": 1}
 	if outlet:
 		filters["outlet"] = outlet
@@ -979,7 +1018,7 @@ def kitchen_queue(property: str, outlet: str | None = None,
 	# names: the display polls this, so it must not scale with ticket count.
 	rows = frappe.get_all(
 		"POS Order Item", filters={"parent": ["in", [o.name for o in orders]]},
-		fields=["name", "parent", "item_name", "qty", "instructions",
+		fields=["name", "parent", "item_name", "qty", "instructions", "modifiers",
 		        "kot_status", "menu_item", "voided", "void_reason",
 		        "void_seen", "fired_at", "started_at", "prepared_at", "idx"],
 		order_by="idx asc")
@@ -1005,6 +1044,8 @@ def kitchen_queue(property: str, outlet: str | None = None,
 		meta = menu.get(r.menu_item) or {}
 		if station and meta.get("prep_station") != station:
 			continue
+		# the cook reads the choices' names under the dish
+		r["modifiers"] = names_of(r.modifiers)
 		if r.voided:
 			r["state"] = "cancelled"
 		elif r.kot_status == "New":
@@ -2075,12 +2116,21 @@ def _outlet_history(outlet: str, order: str | None, g, stay) -> dict:
 	}
 
 
+def _bill_tax_base(doc) -> float:
+	"""What the outlet's tax is charged on: the bill after discount, plus the
+	levy when the levy is taxed. An untaxed levy stays outside the base."""
+	total = float(doc.order_total or 0)
+	if doc.get("levy_taxable") is not None and not int(doc.levy_taxable):
+		return total - float(doc.get("levy_amount") or 0)
+	return total
+
+
 def _bill_tax(doc) -> tuple[float, float]:
 	"""The outlet's tax rate on this bill and the tax amount, as the bill
 	prints it. The guest pays order_total plus this tax."""
 	rate = frappe.db.get_value("POS Outlet", doc.outlet, "gst_rate")
 	rate = 0.0 if doc.nc else float(5 if rate is None else rate)
-	return rate, round(float(doc.order_total or 0) * rate / 100, 2)
+	return rate, round(_bill_tax_base(doc) * rate / 100, 2)
 
 
 @frappe.whitelist()
@@ -2090,10 +2140,11 @@ def bill_data(order: str):
 	live lines, the discount, and the CGST/SGST split at the outlet's rate."""
 	doc = frappe.get_doc("POS Order", order)
 	outlet = frappe.db.get_value(
-		"POS Outlet", doc.outlet, ["outlet_name"], as_dict=True)
+		"POS Outlet", doc.outlet, ["outlet_name", "logo", "receipt_design", "print_barcode"],
+		as_dict=True)
 	property_name = frappe.db.get_value(
 		"Property", doc.property, "property_name") or doc.property
-	taxable = float(doc.order_total or 0)
+	taxable = _bill_tax_base(doc)
 	gst_rate, gst_amount = _bill_tax(doc)
 	# the tax is named and split the country's way (CGST+SGST in India,
 	# a single VAT line in the Gulf)
@@ -2114,6 +2165,11 @@ def bill_data(order: str):
 		             if doc.paid else None,
 		"order": doc.name, "kot_no": doc.kot_no, "status": doc.status,
 		"property_name": property_name, "outlet_name": outlet.outlet_name,
+		# the outlet's receipt logo (a file URL, or None) and how the items print
+		"logo": outlet.logo or None,
+		"receipt_design": outlet.receipt_design or "Columns",
+		# the outlet's "print a barcode" switch (on unless turned off)
+		"barcode": 0 if outlet.print_barcode is not None and not int(outlet.print_barcode) else 1,
 		"order_type": doc.order_type, "table_no": doc.table_no,
 		"room_no": (doc.room or "").split("-")[-1] if doc.room else None,
 		"customer_name": doc.customer_name,
@@ -2123,12 +2179,15 @@ def bill_data(order: str):
 		"served_by": _served_by(doc), "cashier": _full_name(doc.settled_by),
 		"items": [
 			{"item_name": it.item_name, "qty": it.qty, "rate": it.rate,
-			 "amount": it.amount}
+			 "amount": it.amount, "modifiers": [c["name"] for c in _choices_of(it)]}
 			for it in doc.items if not it.voided],
 		"subtotal": doc.subtotal, "discount_amount": doc.discount_amount,
 		"taxable": taxable, "gst_rate": gst_rate,
 		"cgst": round(gst_amount / 2, 2), "sgst": round(gst_amount / 2, 2),
-		"grand_total": round(taxable + gst_amount, 2),
+		"grand_total": round(float(doc.order_total or 0) + gst_amount, 2),
+		# the outlet's levy as charged on this bill (None when there is none)
+		"levy": {"label": doc.levy_label or "", "percent": doc.levy_percent,
+		         "amount": doc.levy_amount} if float(doc.levy_amount or 0) else None,
 		"paid": doc.paid, "payment_mode": doc.payment_mode,
 		"nc": doc.nc, "nc_authorized_by": doc.nc_authorized_by,
 		"nc_note": doc.nc_note,

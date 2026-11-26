@@ -13,8 +13,14 @@
   "outlet_type",
   "column_break_a",
   "gst_rate",
+  "levy_label",
+  "levy_percent",
+  "levy_taxable",
   "disabled",
   "kot_mode",
+  "logo",
+  "receipt_design",
+  "print_barcode",
   "tables",
   "waiters"
  ],
@@ -53,6 +59,26 @@
    "label": "GST %"
   },
   {
+   "description": "The name printed on the bill, e.g. Service charge. Empty means Service charge.",
+   "fieldname": "levy_label",
+   "fieldtype": "Data",
+   "label": "Levy Name"
+  },
+  {
+   "default": "0",
+   "description": "A percentage added to every bill at this outlet, after any discount (a service charge). 0 means none.",
+   "fieldname": "levy_percent",
+   "fieldtype": "Percent",
+   "label": "Levy Amount %"
+  },
+  {
+   "default": "1",
+   "description": "On: the tax is charged on the bill plus the levy. Off: the tax is charged on the bill only.",
+   "fieldname": "levy_taxable",
+   "fieldtype": "Check",
+   "label": "Tax applies to the levy"
+  },
+  {
    "default": "0",
    "fieldname": "disabled",
    "fieldtype": "Check",
@@ -65,6 +91,27 @@
    "label": "KOT on send",
    "options": "Use F&B setting\nAuto-accept and print\nKitchen presses Start",
    "description": "Auto-accept and print: sending an order prints the KOT and shows it on the kitchen display as started. Kitchen presses Start: the pass accepts each ticket and each till chooses whether to print. Use F&B setting follows Settings > F&B."
+  },
+  {
+   "description": "Printed at the top of this outlet's bills, at a fixed small size to save paper. Black on white, PNG, 512px+ looks best.",
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Receipt Logo"
+  },
+  {
+   "default": "Columns",
+   "description": "How the items print on the bill: Columns (Item, Qty, Rate and Amt) or Stacked (name on its own line, then quantity x rate and the amount).",
+   "fieldname": "receipt_design",
+   "fieldtype": "Select",
+   "label": "Receipt Design",
+   "options": "Columns\nStacked"
+  },
+  {
+   "default": "1",
+   "description": "Print a barcode of the order number at the bottom of this outlet's bills.",
+   "fieldname": "print_barcode",
+   "fieldtype": "Check",
+   "label": "Print Barcode"
   },
   {
    "fieldname": "tables",
@@ -83,7 +130,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-12 10:00:00.000000",
+ "modified": "2026-11-25 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Outlet",

@@ -26,7 +26,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, now_datetime
 
-from kamra.authz import ADMIN, IT_ADMIN, require_it_admin, require_perm, restricted_properties, require_roles
+from kamra.authz import ADMIN, IT_ADMIN, require_it_admin, require_perm, restricted_properties
 
 MCP_READ = "MCP Read"
 MCP_MANAGE = "MCP Manage"

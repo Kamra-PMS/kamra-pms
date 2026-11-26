@@ -4,7 +4,7 @@ import { call } from "../../lib/api"
 import { subscribeRealtime } from "../../lib/realtime"
 import { serverError } from "../../lib/resource"
 import { cn } from "../../lib/utils"
-import { moneyLocale } from "../../lib/money"
+import { fmtAmount } from "../../lib/money"
 import { t as translate, useUILanguage } from "../../lib/i18n"
 
 /** Shared laundry types, helpers and data hook used by BOTH the housekeeping
@@ -72,7 +72,7 @@ export const STATUS_TONE: Record<
 export const LAUNDRY_SERVICES = ["Wash & Iron", "Dry Clean", "Iron Only"]
 
 export const inr = (n: unknown) =>
-  Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+  fmtAmount(n ?? 0)
 
 /** One item line as the backend expects it for collect_laundry. */
 export interface CollectLine {

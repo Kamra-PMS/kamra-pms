@@ -11,7 +11,7 @@ import CheckOutDialog from "../components/CheckOutDialog"
 import type { ShellContext } from "../AppShell"
 import { cn } from "../lib/utils"
 import { shiftDate } from "../lib/stay"
-import { cur, moneyLocale } from "../lib/money"
+import { cur, fmtAmount } from "../lib/money"
 import { serverError } from "../lib/resource"
 import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 
@@ -32,7 +32,7 @@ const iso = (d: Date) => {
 // "" for a bad ?date= in the URL rather than an Invalid Date crash
 const shift = shiftDate
 const money = (n: number) =>
-  `${cur()}${Number(n || 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })}`
+  `${cur()}${fmtAmount(n || 0)}`
 const short = (d: string) =>
   new Date(d + "T00:00:00").toLocaleDateString(uiDateLocale(undefined), {
     day: "numeric",
@@ -49,7 +49,7 @@ function Balance({ row }: { row: ReservationRow }) {
 }
 
 export default function InHouse() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const navigate = useNavigate()
   const { refreshKey } = useOutletContext<ShellContext>()
   const [params, setParams] = useSearchParams()
@@ -241,7 +241,7 @@ export default function InHouse() {
                     </td>
                     <td className="hidden px-3 py-2.5 text-zinc-600 sm:table-cell">
                       {short(row.check_in_date)} - {short(row.check_out_date)}
-                      <span className="text-zinc-400"> · {t("{n} night{s}", { n: row.nights, s: row.nights === 1 ? "" : "s" })}</span>
+                      <span className="text-zinc-400"> · {tn(row.nights, "{n} night", "{n} nights")}</span>
                     </td>
                     <td className="hidden px-3 py-2.5 md:table-cell">
                       <Badge tone={row.source === "OTA" ? "indigo" : row.source === "AI Agent" ? "brand" : "zinc"}>

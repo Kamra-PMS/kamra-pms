@@ -59,8 +59,20 @@ jobs:
         run: npm run night-prices:check
         working-directory: frontend
 
+      - name: Check the figures printed on a POS bill add up
+        run: npm run addup:check
+        working-directory: frontend
+
       - name: Check the offline cache and queue
         run: npm run offline:check
+        working-directory: frontend
+
+      - name: Check the printed bill (barcode, escaping, logo rule)
+        run: npm run bill:check
+        working-directory: frontend
+
+      - name: Check amounts in another currency use that currency's decimals
+        run: npm run money:check
         working-directory: frontend
 
       - name: Check the food-order basket survives a typed done

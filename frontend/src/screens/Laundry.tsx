@@ -52,7 +52,7 @@ const inputCls =
 type Tab = "board" | "menu" | "billing"
 
 export default function Laundry() {
-  const { t } = useT()
+  const { t, tn } = useT()
   const { allowed } = useAuth()
   const property = getCurrentProperty()
   const canOperate = allowed("Laundry Order", "handle_laundry", OPERATOR_ROLES)
@@ -542,9 +542,7 @@ export default function Laundry() {
               }
               onClick={submitCollect}
             >
-              {t("Collect {n} piece{s} · {total}", {
-                n: countPieces,
-                s: countPieces === 1 ? "" : "s",
+              {tn(countPieces, "Collect {n} piece · {total}", "Collect {n} pieces · {total}", {
                 total: `${cur()}${inr(countTotal)}`,
               })}
             </Button>
@@ -1079,7 +1077,7 @@ function Billing({
   recent: LaundryOrder[]
   property: string
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const delivered = recent.filter((o) => o.status === "Delivered")
   const daySum = delivered.reduce((s, o) => s + (o.total || 0), 0)
   const [rev, setRev] = useState<Revenue | null>(null)
@@ -1106,10 +1104,7 @@ function Billing({
             </div>
             {rev.non_billable_orders > 0 && (
               <p className="mt-2 text-xs text-zinc-400">
-                {t("+{n} house / complimentary order{s} (not billed)", {
-                  n: rev.non_billable_orders,
-                  s: rev.non_billable_orders === 1 ? "" : "s",
-                })}
+                {tn(rev.non_billable_orders, "+{n} house / complimentary order (not billed)", "+{n} house / complimentary orders (not billed)")}
               </p>
             )}
             {rev.by_service.length > 0 && (

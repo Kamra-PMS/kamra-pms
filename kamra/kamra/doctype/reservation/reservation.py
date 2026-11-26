@@ -860,6 +860,13 @@ class Reservation(Document):
 			for r in self.get("night_rates") or []:  # still the booked rows here
 				if str(r.stay_date) not in charged:
 					booked[str(r.stay_date)] = r
+		# the desk re-priced some nights of a saved stay (api.set_stay_prices): the
+		# open nights it left alone keep the rate they were booked at instead of
+		# taking today's rate card
+		held = self.flags.get("hold_nights") or ()
+		for r in self.get("night_rates") or []:
+			if str(r.stay_date) in held and str(r.stay_date) not in charged:
+				booked[str(r.stay_date)] = r
 		if not charged and not booked:
 			return out
 		from kamra.settings import get_setting

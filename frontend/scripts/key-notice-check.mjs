@@ -43,7 +43,7 @@ const detail = read("screens/ReservationDetail.tsx")
 assert.match(detail, /<ReverseCheckInPanel[^>]*onDone=\{\(\w+\) =>/, "ReservationDetail keeps the panel's message")
 assert.match(detail, /translate\(reverseKeys\)/, "ReservationDetail shows the message, translated")
 
-for (const language of ["ar", "es", "pt", "fil", "vi", "sw"]) {
+for (const language of ["ar", "es", "pt", "fil", "vi", "sw", "hi", "ta"]) {
   const dictionary = JSON.parse(read(`i18n/locales/${language}.json`))
   assert.ok(dictionary[failed]?.trim(), `${language}: translation for the lock failure message`)
 }

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react"
 import { call, getCurrentProperty } from "../lib/api"
 import { InfoTip } from "./InfoTip"
-import { cur, moneyDigits, moneyLocale } from "../lib/money"
-import { isOverride, maxPriceDigits, parsePrice, splitRoomTotal } from "../lib/nightPrices"
-import { useT, t as translate } from "../lib/i18n"
+import { cur, moneyDigits, moneyLocale, fmtAmount } from "../lib/money"
+import { isOverride, maxPriceDigits, nightLabel, parsePrice, splitRoomTotal } from "../lib/nightPrices"
+import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import { cn } from "../lib/utils"
 
 
-const n0 = (n: number) => Number(n ?? 0).toLocaleString(moneyLocale(), { maximumFractionDigits: 0 })
+const n0 = (n: number) => fmtAmount(n ?? 0)
 
 export interface Restriction {
   name: string
@@ -69,6 +69,10 @@ export function RateOptions({
   onNightPrices,
   canSetPrice,
   lockedNote,
+  showPlans = true,
+  copyFrom,
+  showNote = true,
+  plansLocked = false,
 }: {
   roomType: string
   checkIn: string
@@ -86,6 +90,14 @@ export function RateOptions({
   canSetPrice: boolean
   /** why the prices cannot be typed, when it is not a missing right */
   lockedNote?: string
+  /** list the rate plans (a booking's main room); an added room has none of its own */
+  showPlans?: boolean
+  /** the first room's hand-set nights (date -> price): an added room can take the same prices */
+  copyFrom?: Record<string, number>
+  /** say that hand-set prices cannot be combined with a rate plan or a voucher (the booking says it once) */
+  showNote?: boolean
+  /** another room of this booking has hand-set prices, so no rate plan can be picked */
+  plansLocked?: boolean
 }) {
   const { t } = useT()
   const [data, setData] = useState<Options | null>(null)
@@ -167,6 +179,16 @@ export function RateOptions({
     })
     onNightPrices(next)
   }
+  /** the first room's hand-set prices on the nights this room is quoted for; a night
+   *  already at this room's rate is not an override */
+  const copyable = copyFrom
+    ? data.nights.filter((x) => copyFrom[x.date] !== undefined && isOverride(copyFrom[x.date], x.rate, digits))
+    : []
+  function copyFirstRoom() {
+    if (!copyFrom) return
+    setDrafts({})
+    onNightPrices(Object.fromEntries(copyable.map((x) => [x.date, copyFrom[x.date]])))
+  }
   function onNightKey(e: React.KeyboardEvent<HTMLInputElement>, i: number, x: NightRate) {
     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       const other = data?.nights[i + (e.key === "ArrowUp" ? -1 : 1)]
@@ -213,6 +235,16 @@ export function RateOptions({
             />
           </span>
           <span className="text-xs text-zinc-400">{basis}</span>
+          {copyFrom && Object.keys(copyFrom).length > 0 && (
+            <button
+              type="button"
+              className="text-xs text-brand-700 underline disabled:text-zinc-400 disabled:no-underline"
+              disabled={copyable.length === 0}
+              onClick={copyFirstRoom}
+            >
+              {t("Same as room 1")}
+            </button>
+          )}
         </div>
       )}
       {!canSetPrice && lockedNote && <p className="text-xs text-zinc-400">{lockedNote}</p>}
@@ -229,7 +261,7 @@ export function RateOptions({
                 typed && "-mx-2 rounded-md bg-brand-50 px-2",
               )}
             >
-              <span className="w-24 text-zinc-500">{x.date.slice(5)}</span>
+              <span className="w-28 shrink-0 text-zinc-500">{nightLabel(x.date, uiDateLocale(moneyLocale()))}</span>
               {canSetPrice ? (
                 <span className="inline-flex items-center gap-1">
                   <span className="text-zinc-500">{cur()}</span>
@@ -238,7 +270,7 @@ export function RateOptions({
                       inputs.current[x.date] = el
                     }}
                     inputMode="decimal"
-                    aria-label={t("Price for {d}", { d: x.date })}
+                    aria-label={t("Price for {d}", { d: nightLabel(x.date, uiDateLocale(moneyLocale())) })}
                     aria-invalid={bad}
                     className={cn(
                       "w-28 rounded-md border px-2 py-1 text-right font-medium tabular-nums",
@@ -299,7 +331,7 @@ export function RateOptions({
           {t("Type a price to set a night by hand. Up and down arrows move between nights; Alt+Backspace returns a night to BAR.")}
         </p>
       )}
-      {hasTyped && (
+      {showNote && hasTyped && (
         <p className="text-xs text-zinc-500">
           {t("Prices set by hand cannot be combined with a rate plan or a voucher.")}
         </p>
@@ -308,7 +340,7 @@ export function RateOptions({
         <p className="text-xs text-zinc-400">{t("No season or demand rule applies: every night is at BAR.")}</p>
       )}
 
-      {data.plans.length > 0 && (
+      {showPlans && data.plans.length > 0 && (
         <div>
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">{t("Rate plans")}</p>
           <div className="space-y-1">
@@ -332,7 +364,7 @@ export function RateOptions({
                 key={p.name}
                 type="button"
                 onClick={() => onPickPlan(p.name)}
-                disabled={hasTyped || !!p.restriction}
+                disabled={hasTyped || plansLocked || !!p.restriction}
                 title={p.restriction ? translate(p.restriction) : undefined}
                 className={cn(
                   "flex w-full items-center justify-between rounded-lg border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50",
