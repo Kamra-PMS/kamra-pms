@@ -11778,6 +11778,56 @@ def t_night_prices_total():
 	assert q["room_total"] == 100, q["room_total"]
 
 
+@check("the desk re-prices a night of a saved stay; the other nights keep the rate they were booked at")
+def t_night_prices_saved_stay():
+	from kamra.api import (
+		PriceConfirmationRequired, create_booking, set_stay_prices, stay_prices_preview, stay_rates)
+	ci, co = "2033-09-10", "2033-09-13"
+	out = create_booking(P, RT, ci, co, "Eval Saved Night", phone="+91 70000 00636")
+	res = frappe.get_doc("Reservation", out["reservation"])
+	before = [float(r.rate) for r in res.night_rates]
+	total = float(res.amount_after_tax)
+	assert res.auto_price == 1 and len(before) == 3, (res.auto_price, before)
+	d2 = add_days(ci, 1)
+	typed = [{"date": d2, "price": 5000}]
+	# the preview writes nothing, and the save needs the new price confirmed
+	pv = stay_prices_preview(res.name, typed)
+	assert pv["needs_confirmation"] and pv["new_amount"] != total, pv
+	res.reload()
+	assert res.auto_price == 1 and float(res.amount_after_tax) == total
+	try:
+		set_stay_prices(res.name, typed)
+		raise AssertionError("a change in the total was saved without the total shown")
+	except PriceConfirmationRequired:
+		pass
+	# a save that carries a total other than the one the preview showed is refused too
+	try:
+		set_stay_prices(res.name, typed, expected_total=pv["new_amount"] + 1)
+		raise AssertionError("a save with a stale total was accepted")
+	except PriceConfirmationRequired as e:
+		assert "not the" in str(e), e
+	res.reload()
+	assert res.auto_price == 1 and float(res.amount_after_tax) == total
+	# the rate card moves after the booking: the nights left alone must not follow it
+	rt = frappe.get_doc("Room Type", RT)
+	old_base = rt.base_price
+	frappe.db.set_value("Room Type", RT, "base_price", float(old_base) * 2)
+	frappe.clear_document_cache("Room Type", RT)
+	try:
+		set_stay_prices(res.name, typed, expected_total=pv["new_amount"])
+	finally:
+		frappe.db.set_value("Room Type", RT, "base_price", old_base)
+		frappe.clear_document_cache("Room Type", RT)
+	res.reload()
+	assert res.auto_price == 0
+	assert [float(r.hand_price) for r in res.night_rates] == [0, 5000, 0], res.night_rates
+	rows = [float(r.rate) for r in res.night_rates]
+	assert rows[0] == before[0] and rows[2] == before[2], (rows, before)
+	shown = [n["price"] for n in stay_rates(res.name)["nights"]]
+	assert shown[1] == 5000, shown
+	assert float(res.amount_after_tax) > total
+
+
 @check("typed nights with a voucher or without the right to set rates are refused")
 def t_night_prices_refused():
 	from kamra.api import create_booking, get_quote
@@ -12442,6 +12492,7 @@ def execute():
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
+		           t_night_prices_saved_stay,
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,

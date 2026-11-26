@@ -202,6 +202,8 @@ export function BookingDialog(props: {
   const badSlot = dayUse && (!slot.from || !slot.to || slot.to <= slot.from)
   const [moreOpen, setMoreOpen] = useState(false)
   const [moreRooms, setMoreRooms] = useState<ExtraRoom[]>([])
+  // the added rooms (by position) whose "Set nightly prices" box is open
+  const [pricesOpen, setPricesOpen] = useState<number[]>([])
   const [groupName, setGroupName] = useState("")
   const [moreQuotes, setMoreQuotes] = useState<(Quote | null)[]>([])
   const [addonQty, setAddonQty] = useState<Record<string, number>>({})
@@ -431,8 +433,20 @@ export function BookingDialog(props: {
       const keep = Object.fromEntries(Object.entries(p).filter(([d]) => stayKey.split(",").includes(d)))
       return Object.keys(keep).length === Object.keys(p).length ? p : keep
     })
+    // ... and from every added room, whose nights are its own
+    const nights = stayKey.split(",")
+    setMoreRooms((rs) =>
+      rs.some((r) => r.night_prices?.some((x) => !nights.includes(x.date)))
+        ? rs.map((r) => (r.night_prices ? { ...r, night_prices: r.night_prices.filter((x) => nights.includes(x.date)) } : r))
+        : rs,
+    )
   }, [stayKey])
   const nightPricesParam = nightPricesArg.length ? { night_prices: nightPricesArg } : {}
+  // some added room has nights priced by hand
+  const addedTyped = moreRooms.some((r) => r.night_prices?.length)
+  useEffect(() => {
+    if (moreRooms.length === 0) setPricesOpen([])
+  }, [moreRooms.length])
 
   useEffect(() => {
     if (!autoRoomType.current || !options?.room_types.length || badDate) return
@@ -1794,6 +1808,7 @@ export function BookingDialog(props: {
                     nightPrices={nightPrices}
                     onNightPrices={setNightPrices}
                     canSetPrice={canSetPrice}
+                    plansLocked={canSetPrice && addedTyped}
                     lockedNote={
                       options?.can_set_rate && otaTotal > 0
                         ? t("The OTA total sets the price, so nights cannot be priced one by one.")
@@ -1998,15 +2013,71 @@ export function BookingDialog(props: {
                     <button
                       className="rounded p-1.5 text-zinc-400 hover:text-rose-500"
                       aria-label={translate("Remove room {v0}", { v0: String(i + 2) })}
-                      onClick={() =>
+                      onClick={() => {
                         setMoreRooms((rs) => rs.filter((_, j) => j !== i))
-                      }
+                        setPricesOpen((o) => o.filter((j) => j !== i).map((j) => (j > i ? j - 1 : j)))
+                      }}
                     >
                       <Trash2 className="size-4" aria-hidden />
                     </button>
+                    {canSetPrice && r.room_type && !badDate && (
+                      <div className="w-full">
+                        <button
+                          type="button"
+                          aria-expanded={pricesOpen.includes(i)}
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+                          onClick={() =>
+                            setPricesOpen((o) => (o.includes(i) ? o.filter((j) => j !== i) : [...o, i]))
+                          }
+                        >
+                          <ChevronDown
+                            className={`size-4 transition-transform ${pricesOpen.includes(i) ? "" : "-rotate-90"}`}
+                            aria-hidden
+                          />
+                          {t("Set nightly prices")}
+                          {r.night_prices?.length ? (
+                            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-800">
+                              {t("{n} set", { n: r.night_prices.length })}
+                            </span>
+                          ) : null}
+                        </button>
+                        {pricesOpen.includes(i) && (
+                          <div className="mt-2">
+                            <RateOptions
+                              roomType={r.room_type}
+                              checkIn={form.check_in_date}
+                              checkOut={checkOut}
+                              adults={r.adults}
+                              children={r.children}
+                              mealPlan={r.meal_plan || undefined}
+                              ratePlan=""
+                              onPickPlan={() => {}}
+                              showPlans={false}
+                              showNote={false}
+                              copyFrom={nightPrices}
+                              nightPrices={Object.fromEntries((r.night_prices ?? []).map((x) => [x.date, x.price]))}
+                              onNightPrices={(typed) =>
+                                setMoreRooms((rs) =>
+                                  rs.map((x, j) => (j === i ? { ...x, night_prices: typedNights(typed, stayNights) } : x)),
+                                )
+                              }
+                              canSetPrice={!form.rate_plan && !form.voucher_code}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   )
                 })}
+
+                {/* said once for the booking: room 1's own box says it when room 1 has hand-set prices */}
+                {canSetPrice && moreRooms.length > 0 && nightPricesArg.length === 0 &&
+                  (form.rate_plan || form.voucher_code || addedTyped) && (
+                  <p className="text-xs text-zinc-500">
+                    {t("Prices set by hand cannot be combined with a rate plan or a voucher.")}
+                  </p>
+                )}
 
                 {!dayUse && <button
                   type="button"

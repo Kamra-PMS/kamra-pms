@@ -43,6 +43,7 @@ import RoomChangeDialog from "../components/RoomChangeDialog"
 import CheckOutDialog from "../components/CheckOutDialog"
 import CheckInDialog from "../components/CheckInDialog"
 import StayInstructions from "../components/StayInstructions"
+import StayRates from "../components/StayRates"
 import { cur, fmtAmount } from "../lib/money"
 import { t as translate, tn, useUILanguage } from "../lib/i18n"
 
@@ -502,6 +503,7 @@ export default function ReservationDetail({
               <Field label={translate("Pre-check-in")} value={d.precheckin_status} />
             )}
           </dl>
+          <StayRates reservation={name} onSaved={() => { refresh(); reload() }} />
           {d.booked_check_out_date && (
             <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
               {translate("Left early: booked to {date}.", { date: d.booked_check_out_date })}
