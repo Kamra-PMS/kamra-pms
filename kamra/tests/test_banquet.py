@@ -465,6 +465,23 @@ class TestIssuingTheIndent(BanquetTestCase):
 		self.assertEqual(out["issued"], 0)
 		self.assertEqual(self.taken(), [(self.store, -40)])
 
+	def test_an_outlet_at_another_property_is_refused(self):
+		other = frappe.get_doc({
+			"doctype": "Property",
+			"property_name": "TEST Other Issue Hotel " + frappe.generate_hash(length=6),
+		}).insert(ignore_permissions=True).name
+		foreign = frappe.get_doc({
+			"doctype": "POS Outlet", "property": other,
+			"outlet_name": f"Foreign Store {frappe.generate_hash(length=6)}",
+			"outlet_type": "Restaurant", "gst_rate": 5,
+		}).insert(ignore_permissions=True).name
+
+		with self.assertRaises(frappe.ValidationError) as caught:
+			bq.issue_indent(self.fn, foreign)
+
+		self.assertIn("That outlet is not at this property.", str(caught.exception))
+		self.assertEqual(self.taken(), [])
+
 
 # ══ the night, and the money ═════════════════════════════════════════════
 

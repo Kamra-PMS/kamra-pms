@@ -2486,6 +2486,11 @@ def issue_indent(function: str, outlet: str, rows=None):
 	if doc.status not in ("Confirmed", "Completed"):
 		frappe.throw(_("Issue against a confirmed function, not a {0} one.")
 		             .format(doc.status))
+	# require_perm only checks the user can reach each record; without this, a
+	# user on two hotels can issue Hotel A's function from Hotel B's outlet and
+	# leave a stock row labelled A under B.
+	if frappe.db.get_value("POS Outlet", outlet, "property") != doc.property:
+		frappe.throw(_("That outlet is not at this property."))
 	if rows:
 		wanted = [(r["ingredient"], float(r.get("required") or r.get("qty") or 0))
 		          for r in _rows(rows)]
