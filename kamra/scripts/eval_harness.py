@@ -12366,6 +12366,18 @@ def t_menu_modifiers():
 	assert pos.bill_data(o["order"])["items"][0]["modifiers"] == ["Less", "Shot"]
 	assert frappe.db.get_value("Ingredient Stock", f"{outlet}::{beans}", "qty_on_hand") == 500 - 36, "the choice took no stock"
 
+	# a price finer than money is kept whole, and a voided line's choices count as waste
+	fine = mm.save_modifier_group(outlet, "Fine", [{"option_name": "Fils", "price": 0.125}],
+	                              items=[dish], sort_order=3)["name"]
+	o2 = pos.send_order(outlet, [{"menu_item": dish, "qty": 1, "modifiers": [
+		pick(ice, "Normal"), pick(fine, "Fils"), pick(extras, "Shot")]}], property=P, table_no="C2")
+	finer = frappe.get_doc("POS Order", o2["order"]).items[0]
+	assert abs(finer.modifier_total - 60.125) < 1e-6 and abs(finer.rate - 360.125) < 1e-6, (finer.rate, finer.modifier_total)
+	frappe.db.set_value("Ingredient", beans, "cost_per_unit", 10)
+	pos.void_item(o2["order"], finer.name, reason="eval spilled")
+	waste = [r for r in inventory.wastage_report(P, outlet)["lines"] if r["order_name"] == o2["order"]]
+	assert waste and waste[0]["value"] == 180, ("the choice's beans are not in the wastage value", waste)
+
 	# editing the price, then deleting the group, leaves the bill as it was sold
 	frappe.db.set_value("Menu Modifier Option", pick(extras, "Shot"), "price", 999)
 	frappe.db.set_value("Menu Item", dish, "price", 999)

@@ -105,15 +105,18 @@ def _load_items(rows):
 	from kamra import menu_modifiers
 	if isinstance(rows, str):
 		rows = frappe.parse_json(rows)
+	rows = rows or []
+	# the choice groups of every dish on the order, looked up once for all lines
+	offered = menu_modifiers.groups_for_items([r.get("menu_item") for r in rows])
 	out = []
-	for r in rows or []:
+	for r in rows:
 		mi = frappe.db.get_value(
 			"Menu Item", r.get("menu_item"),
 			["item_name", "price", "available"], as_dict=True)
 		if not mi or not mi.available:
 			continue
 		chosen, extra = menu_modifiers.resolve(
-			r["menu_item"], mi.item_name, r.get("modifiers"))
+			mi.item_name, offered.get(r["menu_item"], []), r.get("modifiers"))
 		out.append({
 			"menu_item": r["menu_item"],
 			"item_name": mi.item_name,

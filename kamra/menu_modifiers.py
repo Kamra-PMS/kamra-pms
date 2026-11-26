@@ -104,8 +104,10 @@ def _ids(raw) -> list[str]:
 	return list(dict.fromkeys(str(x) for x in (raw or []) if x))
 
 
-def resolve(menu_item: str, item_name: str, option_ids) -> tuple[list, float]:
-	"""Judge the choices picked for one dish and price them.
+def resolve(item_name: str, offered: list, option_ids) -> tuple[list, float]:
+	"""Judge the choices picked for one dish and price them. `offered` is the
+	dish's groups from `groups_for_items`, which the caller looks up once for a
+	whole order.
 
 	Returns ([{"group", "option", "name", "price"}], what_they_add_to_one).
 	Raises for a choice the dish does not offer, a compulsory group left
@@ -113,7 +115,6 @@ def resolve(menu_item: str, item_name: str, option_ids) -> tuple[list, float]:
 	words name the dish and the group, and the choices with their ids, so a
 	person or an agent can see what to send instead."""
 	chosen = _ids(option_ids)
-	offered = groups_for_items([menu_item]).get(menu_item, [])
 	known = {o["name"] for g in offered for o in g["options"]}
 	if [c for c in chosen if c not in known]:
 		frappe.throw(_("{0} does not offer that choice.").format(item_name))
@@ -134,7 +135,10 @@ def resolve(menu_item: str, item_name: str, option_ids) -> tuple[list, float]:
 			snapshot.append({"group": g["group_name"], "option": o["name"],
 			                 "name": o["option_name"], "price": o["price"]})
 			total += o["price"]
-	return snapshot, round(total, 2)
+	# prices count as they are stored: a currency may have 3 decimals, and a price
+	# kept to 6 lets a tax added on top land on a round figure. So the sum is not
+	# rounded to money, only cleared of float noise at the column's 9 places.
+	return snapshot, flt(total, 9)
 
 
 def dump(snapshot: list) -> str | None:

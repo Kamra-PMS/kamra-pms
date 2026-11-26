@@ -610,7 +610,7 @@ def wastage_report(property: str, outlet: str | None = None, days: int = 30):
 		conds.append("p.outlet = %(outlet)s")
 		params["outlet"] = outlet
 	lines = frappe.db.sql(f"""  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
-		select i.item_name, i.menu_item, i.qty, i.void_reason, p.outlet,
+		select i.item_name, i.menu_item, i.qty, i.modifiers, i.void_reason, p.outlet,
 		       p.name as order_name, p.creation
 		  from `tabPOS Order Item` i
 		  join `tabPOS Order` p on p.name = i.parent
@@ -619,13 +619,20 @@ def wastage_report(property: str, outlet: str | None = None, days: int = 30):
 	if not lines:
 		return {"lines": [], "by_reason": [], "total_value": 0.0}
 
+	from kamra.menu_modifiers import option_ids_of
 	recipes = _recipes_of({r.menu_item for r in lines})
+	# what a line's choices took off the shelf (an extra shot's beans) was binned too
+	chosen = [option_ids_of(r.pop("modifiers")) for r in lines]
+	extras = _option_recipes_of({o for ids in chosen for o in ids})
 	costs = {}
 	total = 0.0
 	by_reason = {}
-	for r in lines:
+	for r, ids in zip(lines, chosen):
 		value = 0.0
-		for ing, per in recipes.get(r.menu_item, ()):
+		used = list(recipes.get(r.menu_item, ()))
+		for opt in ids:
+			used += extras.get(opt, ())
+		for ing, per in used:
 			if ing not in costs:
 				costs[ing] = float(frappe.db.get_value(
 					"Ingredient", ing, "cost_per_unit") or 0)

@@ -104,7 +104,7 @@ interface RecentOrder {
   open: boolean
 }
 interface CartLine {
-  /** the dish and its choices: the same dish with other choices is another line */
+  /** this line's own id: the same dish can be on two lines (other choices, or another note) */
   key: string
   menu_item: string
   item_name: string
@@ -117,8 +117,8 @@ interface CartLine {
   options: string[]
   group_ids: string[]
 }
-/** a dish and its choices make a cart line */
-const cartKey = (menuItem: string, options: string[]) => `${menuItem}|${[...options].sort().join(",")}`
+/** the same ticks, in any order */
+const sameChoices = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x))
 interface OrderItem {
   row: string
   item_name: string
@@ -459,15 +459,17 @@ export default function POS() {
     openTab(open[next].name)
   }
 
+  const lineSeq = useRef(0)
   const addToCart = (it: MenuItem, options: string[] = []) => {
-    const key = cartKey(it.name, options)
+    const key = `line-${++lineSeq.current}`
     setCart((c) => {
-      const ex = c.find((l) => l.key === key)
+      // the same dish with the same choices adds to its line; one without a note is preferred,
+      // so a tap does not pile onto "no straw" when a plain line is there
+      const matches = c.filter((l) => l.menu_item === it.name && sameChoices(l.options, options))
+      const ex = matches.find((l) => !l.instructions) ?? matches[0]
       // bump qty and move that line to the top so the add is never buried
       if (ex) {
-        const next = c.map((l) => l.key === key ? { ...l, qty: l.qty + 1 } : l)
-        const line = next.find((l) => l.key === key)!
-        return [line, ...next.filter((l) => l.key !== key)]
+        return [{ ...ex, qty: ex.qty + 1 }, ...c.filter((l) => l.key !== ex.key)]
       }
       return [{
         key, menu_item: it.name, item_name: it.item_name, price: it.price,
@@ -496,15 +498,16 @@ export default function POS() {
       addToCart({ name: p.menu_item, item_name: p.item_name, price: p.price, category: "", is_veg: 0, image: null, group_ids: p.group_ids }, options)
       return
     }
-    // changing a line's choices; if another line already has exactly these, they merge
+    // changing a line's choices: it merges into another line only when that one is now the same
+    // dish, choices AND note; otherwise both stay, so no note is lost or spread to more plates
     setCart((c) => {
       const line = c.find((l) => l.key === p.key)
       if (!line) return c
-      const key = cartKey(line.menu_item, options)
       const rest = c.filter((l) => l.key !== p.key)
-      const twin = rest.find((l) => l.key === key)
+      const twin = rest.find((l) => l.menu_item === line.menu_item && sameChoices(l.options, options)
+        && l.instructions.trim() === line.instructions.trim())
       if (twin) return rest.map((l) => l === twin ? { ...l, qty: l.qty + line.qty } : l)
-      return c.map((l) => l.key === p.key ? { ...l, key, options } : l)
+      return c.map((l) => l.key === p.key ? { ...l, options } : l)
     })
   }
   const setQty = (key: string, d: number) =>

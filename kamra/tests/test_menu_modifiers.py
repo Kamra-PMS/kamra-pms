@@ -12,6 +12,8 @@ choice's stock lines are taken at the fire, with the dish's recipe, once.
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import frappe
 
 from kamra import inventory, menu_modifiers, pos
@@ -93,6 +95,32 @@ class MenuModifiersTest(AuditTestCase):
 		self.assertEqual([c["name"] for c in kept],
 		                 ["Less ice", "Oat milk", "Extra shot", "Caramel"])
 		self.assertEqual([c["group"] for c in kept], ["Ice", "Milk", "Extras", "Extras"])
+
+	def test_a_price_finer_than_two_decimals_is_kept_whole(self):
+		# 0.125 is a real price in a 3-decimal currency (KWD, BHD, OMR); 4545.454545
+		# is 5000 with a 10% tax on top, kept to 6 places so the guest pays a round figure
+		kopi = self.dish("UT Fine Kopi", 25454.545455)
+		fine = self.group("Fine", [("Fils", 0.125), ("Shot", 4545.454545)], multi=1)
+		self.offer(fine, kopi)
+		o = self.order(kopi, [(fine, "Fils"), (fine, "Shot")])
+		line = self.doc(o).items[0]
+		sold = sum(c["price"] for c in menu_modifiers.load(line.modifiers))
+		self.assertAlmostEqual(line.modifier_total, 4545.579545, places=6)
+		self.assertAlmostEqual(line.modifier_total, sold, places=6)      # the line's own copy agrees
+		self.assertAlmostEqual(line.rate, 30000.125, places=6)
+		self.assertAlmostEqual(line.rate - line.modifier_total, 25454.545455, places=6)
+
+	def test_a_bill_looks_the_groups_up_once_however_many_lines(self):
+		pick = [self.option(self.ice, "Normal")]
+		lines = [{"menu_item": self.kopi, "qty": 1, "modifiers": pick},
+		         {"menu_item": self.nasi, "qty": 1},
+		         {"menu_item": self.kopi, "qty": 2, "modifiers": pick}]
+		with patch.object(menu_modifiers, "groups_for_items",
+		                  wraps=menu_modifiers.groups_for_items) as looked_up:
+			o = pos.create_order(self.outlet, lines, table_no="T1",
+			                     order_type="Dine In")["order"]
+		self.assertEqual(looked_up.call_count, 1)
+		self.assertEqual(self.doc(o).order_total, 24000 + 35000 + 48000)
 
 	def test_a_dish_without_choices_bills_exactly_as_before(self):
 		o = pos.create_order(self.outlet, [{"menu_item": self.nasi, "qty": 2}],
@@ -280,6 +308,30 @@ class MenuModifiersTest(AuditTestCase):
 			self.option(self.ice, "Normal"), self.option(self.milk, "Soy milk")]}],
 			property=PROP_A, table_no="T1")
 		self.assertEqual(self.on_hand(beans), 500)
+
+	def test_a_voided_line_wastes_its_choices_ingredients_too(self):
+		beans = self.ingredient("UT Waste Beans", "g")
+		frappe.db.set_value("Ingredient", beans, "cost_per_unit", 200)
+		inventory.receive_stock(PROP_A, self.outlet, [{"ingredient": beans, "qty": 1000}])
+		dish = frappe.get_doc("Menu Item", self.kopi)
+		dish.set("recipe", [{"ingredient": beans, "qty": 18}])
+		dish.save(ignore_permissions=True)
+		shot = self.option(self.extras, "Extra shot")
+		menu_modifiers.save_modifier_group(
+			self.outlet, "Extras", [{"name": shot, "option_name": "Extra shot", "price": 6000,
+			                         "ingredients": [{"ingredient": beans, "qty": 18}]}],
+			multi=1, max_choices=2, sort_order=3, name=self.extras)
+		out = pos.send_order(self.outlet, [{"menu_item": self.kopi, "qty": 2, "modifiers": [
+			self.option(self.ice, "Normal"), shot]}], property=PROP_A, table_no="T1")
+		line = self.doc(out["order"]).items[0].name
+		pos.void_item(out["order"], line, reason="spilled")
+		report = inventory.wastage_report(PROP_A, self.outlet)
+		mine = [r for r in report["lines"] if r["order_name"] == out["order"]]
+		# 2 dishes x (18 g of the recipe + 18 g of the extra shot) x 200
+		self.assertEqual(mine[0]["value"], 14400)
+		self.assertEqual(report["total_value"], 14400)
+		self.assertEqual(report["by_reason"], [{"reason": "spilled", "value": 14400}])
+		self.assertNotIn("modifiers", mine[0])          # the report's rows keep their shape
 
 	# the editor ---------------------------------------------------------------------------
 
