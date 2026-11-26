@@ -7178,5 +7178,19 @@
   "Last price paid": "Último precio pagado",
   "Average of purchases": "Promedio de compras",
   "Last price paid: each priced delivery replaces the cost. Average of purchases: the cost becomes the weighted average of the stock held and what arrived.": "Último precio pagado: cada entrega con precio reemplaza el costo. Promedio de compras: el costo pasa a ser el promedio ponderado de lo que hay y lo que llega.",
-  "A price cannot be below zero.": "El precio no puede ser menor que cero."
+  "A price cannot be below zero.": "El precio no puede ser menor que cero.",
+  "Analytics & Tracking": "Analítica y seguimiento",
+  "Measure visitors, ad campaign performance and booking engine conversion events.": "Mida visitantes, rendimiento de campañas publicitarias y eventos de conversión del motor de reservas.",
+  "Google Tag Manager / GA4 ID": "ID de Google Tag Manager / GA4",
+  "e.g. GTM-XXXXXXX or G-XXXXXXXXXX": "p. ej., GTM-XXXXXXX o G-XXXXXXXXXX",
+  "Container ID for Google Tag Manager or GA4 measurement ID.": "ID de contenedor de Google Tag Manager o ID de medición de GA4.",
+  "Meta Pixel ID": "ID del píxel de Meta",
+  "e.g. 123456789012345": "p. ej., 123456789012345",
+  "Facebook & Instagram Pixel ID for retargeting and ad conversion tracking.": "ID del píxel de Facebook e Instagram para retargeting y seguimiento de conversiones de anuncios.",
+  "Custom Header Tracking Code (<head>)": "Código de seguimiento personalizado en el encabezado (<head>)",
+  "e.g. <script>...</script> or <meta name=\"google-site-verification\" content=\"...\" />": "p. ej., <script>...</script> o <meta name=\"google-site-verification\" content=\"...\" />",
+  "Injected before </head> on public booking pages (TikTok Pixel, verification tags, custom scripts).": "Inyectado antes de </head> en las páginas públicas de reservas (píxel de TikTok, etiquetas de verificación, scripts personalizados).",
+  "Custom Body Tracking Code (<body>)": "Código de seguimiento personalizado en el cuerpo (<body>)",
+  "e.g. <noscript><iframe src=\"...\"></iframe></noscript>": "p. ej., <noscript><iframe src=\"...\"></iframe></noscript>",
+  "Injected immediately after <body> on public booking pages.": "Inyectado inmediatamente después de <body> en las páginas públicas de reservas."
 }

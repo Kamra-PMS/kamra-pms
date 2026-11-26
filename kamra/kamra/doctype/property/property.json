@@ -105,6 +105,10 @@
   "booking_language",
   "og_image",
   "page_slug",
+  "google_tag_manager_id",
+  "meta_pixel_id",
+  "custom_header_script",
+  "custom_body_script",
   "overbooking_pct",
   "setup_wants",
   "mcp_section",
@@ -714,6 +718,30 @@
    "fieldname": "page_slug",
    "fieldtype": "Data",
    "label": "Page Slug"
+  },
+  {
+   "description": "GTM container ID (e.g. GTM-XXXXXXX) or GA4 measurement ID (e.g. G-XXXXXXXXXX) for analytics and booking conversion tracking.",
+   "fieldname": "google_tag_manager_id",
+   "fieldtype": "Data",
+   "label": "Google Tag Manager ID"
+  },
+  {
+   "description": "Meta (Facebook/Instagram) Pixel ID (e.g. 123456789012345) for tracking conversions and retargeting campaigns.",
+   "fieldname": "meta_pixel_id",
+   "fieldtype": "Data",
+   "label": "Meta Pixel ID"
+  },
+  {
+   "description": "Custom scripts, verification tags, or pixels injected before </head> on public booking pages.",
+   "fieldname": "custom_header_script",
+   "fieldtype": "Code",
+   "label": "Custom Header Tracking Code"
+  },
+  {
+   "description": "Custom code (e.g. <noscript> fallbacks) injected immediately after <body> on public booking pages.",
+   "fieldname": "custom_body_script",
+   "fieldtype": "Code",
+   "label": "Custom Body Tracking Code"
   },
   {
    "fieldname": "overbooking_pct",

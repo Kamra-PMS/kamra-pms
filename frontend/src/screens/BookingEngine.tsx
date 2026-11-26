@@ -86,6 +86,10 @@ export default function BookingEngine() {
         page_slug: doc?.page_slug,
         meta_title: doc?.meta_title,
         meta_description: doc?.meta_description,
+        google_tag_manager_id: doc?.google_tag_manager_id,
+        meta_pixel_id: doc?.meta_pixel_id,
+        custom_header_script: doc?.custom_header_script,
+        custom_body_script: doc?.custom_body_script,
         booking_language: offered.some((l) => l.code === (doc?.booking_language ?? ""))
           ? (doc?.booking_language || "")
           : "",
@@ -830,6 +834,61 @@ export default function BookingEngine() {
                         onChange={(e) => updateField("page_slug", e.target.value)}
                       />
                       <p className="mt-1 text-xs text-zinc-400">{translate("Used when several properties share one site: guests reach this property at /book?property=your-slug or /stay/your-slug. Room types have their own /stay/listing-slug.")}</p>
+                    </label>
+                  </div>
+
+                  <div className="border-t border-zinc-200/80 pt-5 space-y-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-zinc-900">{translate("Analytics & Tracking")}</h4>
+                      <p className="text-xs text-zinc-500">{translate("Measure visitors, ad campaign performance and booking engine conversion events.")}</p>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Google Tag Manager / GA4 ID")}</span>
+                        <input
+                          className={inputCls}
+                          placeholder={translate("e.g. GTM-XXXXXXX or G-XXXXXXXXXX")}
+                          value={doc.google_tag_manager_id ?? ""}
+                          onChange={(e) => updateField("google_tag_manager_id", e.target.value)}
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">{translate("Container ID for Google Tag Manager or GA4 measurement ID.")}</p>
+                      </label>
+
+                      <label className="block">
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Meta Pixel ID")}</span>
+                        <input
+                          className={inputCls}
+                          placeholder={translate("e.g. 123456789012345")}
+                          value={doc.meta_pixel_id ?? ""}
+                          onChange={(e) => updateField("meta_pixel_id", e.target.value)}
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">{translate("Facebook & Instagram Pixel ID for retargeting and ad conversion tracking.")}</p>
+                      </label>
+                    </div>
+
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Custom Header Tracking Code (<head>)")}</span>
+                      <textarea
+                        rows={3}
+                        className={`${inputCls} font-mono text-xs`}
+                        placeholder={translate("e.g. <script>...</script> or <meta name=\"google-site-verification\" content=\"...\" />")}
+                        value={doc.custom_header_script ?? ""}
+                        onChange={(e) => updateField("custom_header_script", e.target.value)}
+                      />
+                      <p className="mt-1 text-xs text-zinc-400">{translate("Injected before </head> on public booking pages (TikTok Pixel, verification tags, custom scripts).")}</p>
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Custom Body Tracking Code (<body>)")}</span>
+                      <textarea
+                        rows={2}
+                        className={`${inputCls} font-mono text-xs`}
+                        placeholder={translate("e.g. <noscript><iframe src=\"...\"></iframe></noscript>")}
+                        value={doc.custom_body_script ?? ""}
+                        onChange={(e) => updateField("custom_body_script", e.target.value)}
+                      />
+                      <p className="mt-1 text-xs text-zinc-400">{translate("Injected immediately after <body> on public booking pages.")}</p>
                     </label>
                   </div>
                 </div>
