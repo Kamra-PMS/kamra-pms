@@ -482,6 +482,52 @@ class TestIssuingTheIndent(BanquetTestCase):
 		self.assertIn("That outlet is not at this property.", str(caught.exception))
 		self.assertEqual(self.taken(), [])
 
+	def shelf(self, outlet: str) -> tuple:
+		"""(onion on hand, onion short, short lines) as the sheet would ask."""
+		# frappe.call, as the browser's request does: arguments by name
+		ind = frappe.call("kamra.banquet.kitchen_indent",
+		                  function=self.fn, outlet=outlet)
+		row = next(r for r in ind["ingredients"]
+		           if r["ingredient"] == self.f["onion"])
+		return row["on_hand"], row["short_by"], ind["shortfall_lines"]
+
+	def test_on_hand_and_short_are_the_chosen_outlets(self):
+		empty = self.new_store()
+		inventory.receive_stock(PROPERTY, self.store,
+		                        [{"ingredient": self.f["onion"], "qty": 100}])
+
+		self.assertEqual(self.shelf(self.store), (100, 0, 0))
+		self.assertEqual(self.shelf(empty), (0, 40, 1))
+
+	def test_without_an_outlet_every_shelf_is_counted(self):
+		for store in (self.store, self.new_store()):
+			inventory.receive_stock(PROPERTY, store,
+			                        [{"ingredient": self.f["onion"], "qty": 7}])
+		everywhere = sum(frappe.get_all(
+			"Ingredient Stock", filters={"ingredient": self.f["onion"]},
+			pluck="qty_on_hand"))
+
+		row = next(r for r in bq.kitchen_indent(self.fn)["ingredients"]
+		           if r["ingredient"] == self.f["onion"])
+
+		self.assertEqual(row["on_hand"], round(everywhere, 3))
+
+	def test_the_indent_refuses_another_propertys_outlet(self):
+		other = frappe.get_doc({
+			"doctype": "Property",
+			"property_name": "TEST Other Shelf Hotel " + frappe.generate_hash(length=6),
+		}).insert(ignore_permissions=True).name
+		foreign = frappe.get_doc({
+			"doctype": "POS Outlet", "property": other,
+			"outlet_name": f"Foreign Shelf {frappe.generate_hash(length=6)}",
+			"outlet_type": "Restaurant", "gst_rate": 5,
+		}).insert(ignore_permissions=True).name
+
+		with self.assertRaises(frappe.ValidationError) as caught:
+			self.shelf(foreign)
+
+		self.assertIn("That outlet is not at this property.", str(caught.exception))
+
 
 # ══ the night, and the money ═════════════════════════════════════════════
 

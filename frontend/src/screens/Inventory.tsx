@@ -276,7 +276,7 @@ export default function Inventory() {
                       <Button type="button" variant="outline" onClick={() => setParOf(r)}
                         aria-label={translate("Low-stock level for {v0}", { v0: String(r.ingredient_name) })}
                         className="min-h-11 justify-end px-3">
-                        <span className="tabular-nums">{r.par_level ? fmt(r.par_level) : "—"}</span>
+                        <span className="tabular-nums">{r.par_level ? fmt(r.par_level) : "-"}</span>
                         {translate("Set")}
                       </Button>
                     ) : r.par_level ? fmt(r.par_level) : "-"}

@@ -11423,10 +11423,10 @@
         "kamra.banquet.kitchen_indent"
        ]
       },
-      "description": "What the kitchen has to buy and pull for this function.\n\nThe artifact that has always sat between the event order and the store\nroom, written by hand: chosen dishes x portions x guaranteed pax,\nexploded through the recipes into ingredient quantities, checked against\nwhat's actually on the shelf. `issued` is what the function has already\nhad; `to_issue` and `short_by` are about the rest.",
+      "description": "What the kitchen has to buy and pull for this function.\n\nThe artifact that has always sat between the event order and the store\nroom, written by hand: chosen dishes x portions x guaranteed pax,\nexploded through the recipes into ingredient quantities, checked against\nwhat's actually on the shelf. `issued` is what the function has already\nhad; `to_issue` and `short_by` are about the rest.\n\n`outlet` counts that shelf only - the one the stock will be issued from.\nWithout it `on_hand` adds up every outlet.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
+       "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"outlet\": \"Your Property-Restaurant\"\n}",
        "options": {
         "raw": {
          "language": "json"

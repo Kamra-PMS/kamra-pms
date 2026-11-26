@@ -2364,9 +2364,16 @@ def _issued_to(function: str, ingredients: list) -> dict:
 	return out
 
 
+def _check_outlet(doc, outlet: str) -> None:
+	"""require_perm only checks the user can reach each record; an outlet at
+	another property is not this function's."""
+	if frappe.db.get_value("POS Outlet", outlet, "property") != doc.property:
+		frappe.throw(_("That outlet is not at this property."))
+
+
 @frappe.whitelist()
 @require_perm("Venue Booking", "view_functions")
-def kitchen_indent(function: str):
+def kitchen_indent(function: str, outlet: str | None = None):
 	"""What the kitchen has to buy and pull for this function.
 
 	The artifact that has always sat between the event order and the store
@@ -2374,8 +2381,14 @@ def kitchen_indent(function: str):
 	exploded through the recipes into ingredient quantities, checked against
 	what's actually on the shelf. `issued` is what the function has already
 	had; `to_issue` and `short_by` are about the rest.
+
+	`outlet` counts that shelf only - the one the stock will be issued from.
+	Without it `on_hand` adds up every outlet.
 	"""
 	doc = _fn(function)
+	if outlet:
+		_check_outlet(doc, outlet)
+	shelf = {"outlet": outlet} if outlet else {}
 	pax = doc.billable_pax
 	if not pax:
 		frappe.throw(_("Set the guaranteed pax first - an indent without a "
@@ -2417,7 +2430,7 @@ def kitchen_indent(function: str):
 			["ingredient_name", "uom", "cost_per_unit", "category"],
 			as_dict=True) or {}
 		on_hand = sum(float(x or 0) for x in frappe.get_all(
-			"Ingredient Stock", filters={"ingredient": ingredient},
+			"Ingredient Stock", filters={"ingredient": ingredient, **shelf},
 			pluck="qty_on_hand"))
 		qty = round(slot["qty"], 3)
 		had = round(issued.get(ingredient, 0.0), 3)
@@ -2486,11 +2499,9 @@ def issue_indent(function: str, outlet: str, rows=None):
 	if doc.status not in ("Confirmed", "Completed"):
 		frappe.throw(_("Issue against a confirmed function, not a {0} one.")
 		             .format(doc.status))
-	# require_perm only checks the user can reach each record; without this, a
-	# user on two hotels can issue Hotel A's function from Hotel B's outlet and
-	# leave a stock row labelled A under B.
-	if frappe.db.get_value("POS Outlet", outlet, "property") != doc.property:
-		frappe.throw(_("That outlet is not at this property."))
+	# without this, a user on two hotels can issue Hotel A's function from
+	# Hotel B's outlet and leave a stock row labelled A under B
+	_check_outlet(doc, outlet)
 	if rows:
 		wanted = [(r["ingredient"], float(r.get("required") or r.get("qty") or 0))
 		          for r in _rows(rows)]

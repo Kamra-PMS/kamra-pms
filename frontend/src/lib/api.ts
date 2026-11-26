@@ -1643,8 +1643,9 @@ export const banquet = {
     }>("kamra.banquet.compose_menu", { function: fn, menu, picks }),
 
   // the kitchen, and the night itself
-  indent: (fn: string) =>
-    call<KitchenIndent>("kamra.banquet.kitchen_indent", { function: fn }),
+  /** `outlet` counts on hand and short on that outlet's shelf only. */
+  indent: (fn: string, outlet?: string) =>
+    call<KitchenIndent>("kamra.banquet.kitchen_indent", { function: fn, ...(outlet ? { outlet } : {}) }),
   issueIndent: (fn: string, outlet: string) =>
     call<{ ok: boolean; issued: number }>("kamra.banquet.issue_indent", {
       function: fn,

@@ -444,9 +444,24 @@ function IndentSheet({
       .catch(() => {})
   }, [property])
 
+  // On hand and short are the chosen outlet's: that is the shelf it comes off.
+  const [counted, setCounted] = useState<{ outlet: string; indent: KitchenIndent } | null>(null)
+  useEffect(() => {
+    if (!outlet) return
+    let current = true
+    setIssueError(null)
+    banquet.indent(indent.function, outlet)
+      .then((d) => { if (current) setCounted({ outlet, indent: d }) })
+      .catch((e) => { if (current) setIssueError(serverError(e)) })
+    return () => { current = false }
+  }, [outlet, indent])
+  // Until that count arrives, no other figure is shown as this outlet's.
+  const shelf = !outlet ? indent : counted?.outlet === outlet ? counted.indent : null
+  const view = shelf ?? indent
+
   // Once something has left the shelf the button takes only what is left.
-  const issuedAny = indent.ingredients.some((r) => r.issued > 0)
-  const dueAny = indent.ingredients.some((r) => r.to_issue > 0)
+  const issuedAny = view.ingredients.some((r) => r.issued > 0)
+  const dueAny = view.ingredients.some((r) => r.to_issue > 0)
 
   return (
     <Sheet
@@ -459,10 +474,10 @@ function IndentSheet({
           <ErrorNote error={issueError} />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm text-zinc-500">
-              {inr(indent.total_cost)}{translate(" of ingredients")}{indent.shortfall_lines > 0 && (
+              {inr(indent.total_cost)}{translate(" of ingredients")}{shelf && shelf.shortfall_lines > 0 && (
                 <span className="text-amber-700">
                   {" "}
-                  · {indent.shortfall_lines}{translate(" short on the shelf")}</span>
+                  · {shelf.shortfall_lines}{translate(" short on the shelf")}</span>
               )}
             </span>
             <div className="flex items-end gap-2">
@@ -510,7 +525,7 @@ function IndentSheet({
           </tr>
         </thead>
         <tbody>
-          {indent.ingredients.map((r) => (
+          {view.ingredients.map((r) => (
             <tr key={r.ingredient} className="border-b border-zinc-100">
               <td className="py-1.5 pr-3">
                 {r.ingredient_name}
@@ -532,15 +547,15 @@ function IndentSheet({
                 </>
               )}
               <td className="py-1.5 pr-3 text-right tabular-nums text-zinc-500">
-                {r.on_hand}
+                {shelf ? r.on_hand : "…"}
               </td>
               <td
                 className={
                   "py-1.5 pr-3 text-right tabular-nums " +
-                  (r.short_by > 0 ? "font-medium text-rose-700" : "text-zinc-300")
+                  (shelf && r.short_by > 0 ? "font-medium text-rose-700" : "text-zinc-300")
                 }
               >
-                {r.short_by > 0 ? r.short_by : "-"}
+                {!shelf ? "…" : r.short_by > 0 ? r.short_by : "-"}
               </td>
               <td className="py-1.5 text-right tabular-nums">{inr(r.cost)}</td>
             </tr>

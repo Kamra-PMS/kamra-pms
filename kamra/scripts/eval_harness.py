@@ -4029,6 +4029,30 @@ def t_banquet_issue_indent():
 		"Ingredient Stock", f"{store}::{b['onion']}", "qty_on_hand") == 0
 
 
+@check("banquet: the indent counts the shelf of the outlet it will be issued from")
+def t_banquet_indent_outlet_shelf():
+	from kamra import banquet as bq
+	from kamra import inventory
+
+	b = _banquet_setup()
+	full, empty = [frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": name,
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name for name in ("Shelf Full", "Shelf Empty")]
+	fn = _function(day_offset=262)
+	bq.update_function(fn, {"pax_guaranteed": 200})
+	bq.add_menu(fn, b["menu"])
+	bq.compose_menu(fn, b["menu"], [{"course": _starter(b), "dish": b["dish_veg"]}])
+	inventory.receive_stock(P, full, [{"ingredient": b["onion"], "qty": 100}])
+
+	def onion(outlet):
+		return next((r["on_hand"], r["short_by"]) for r in bq.kitchen_indent(fn, outlet)["ingredients"]
+		            if r["ingredient"] == b["onion"])
+
+	assert onion(full) == (100, 0), onion(full)
+	assert onion(empty) == (0, 40), onion(empty)
+
+
 @check("banquet: the night bills what was served, not what was quoted")
 def t75():
 	from kamra import banquet as bq
@@ -12562,7 +12586,8 @@ def execute():
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
-		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent):
+		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent,
+		           t_banquet_indent_outlet_shelf):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

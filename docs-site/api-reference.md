@@ -4645,9 +4645,13 @@ exploded through the recipes into ingredient quantities, checked against
 what's actually on the shelf. `issued` is what the function has already
 had; `to_issue` and `short_by` are about the rest.
 
+`outlet` counts that shelf only - the one the stock will be issued from.
+Without it `on_hand` adds up every outlet.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `function` | yes |  |
+| `outlet` | no | `None` |
 
 ### `kamra.banquet.issue_indent`
 
