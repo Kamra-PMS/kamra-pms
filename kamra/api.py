@@ -4173,13 +4173,13 @@ def _guest_folio_sums(names: list) -> dict:
 	)}
 
 
-def _checkout_projection(names: list) -> dict:
+def _checkout_projection(names: list, docs: dict | None = None) -> dict:
 	"""Guest-folio sums as they will stand at check-out: every remaining
 	night posted by the same writer check-out uses (post_remaining_nights),
 	inside a savepoint that is rolled back. Nothing is kept - not the
 	charges, the ledger lines, nor the realtime pings their saves queue -
 	so this is a read. Falls back to the posted figures on any error."""
-	from kamra.folio import post_remaining_nights
+	from kamra.folio import post_rate_lines, post_remaining_nights
 
 	db = frappe.db
 	queues = (db.before_commit, db.after_commit, db.after_rollback)
@@ -4190,7 +4190,13 @@ def _checkout_projection(names: list) -> dict:
 	db.savepoint(sp)
 	try:
 		for name in names:
-			post_remaining_nights(frappe.get_doc("Reservation", name))
+			# `docs` carries a booking as it is about to be saved (new nightly prices),
+			# with the lines that save would post for nights already billed
+			doc = docs[name] if docs and name in docs else frappe.get_doc("Reservation", name)
+			lines = doc.flags.get("rate_change_lines")
+			if lines:
+				post_rate_lines(doc, lines)
+			post_remaining_nights(doc)
 		return _guest_folio_sums(names)
 	except Exception:
 		frappe.log_error(title="Kamra: check-out balance projection")
@@ -6602,8 +6608,10 @@ def _price_stay_nights(res, night_prices) -> tuple[dict, dict]:
 	typed nights take the typed price and every other night that is not on the
 	bill yet keeps the rate it was booked at (without that the re-quote would
 	give it today's rate card). Nights already on the bill are never typed -
-	the property's rate-change policy holds them. Returns the typed nights and
-	the price each had before."""
+	the property's rate-change policy holds them. A night sent at the price it
+	already has is not a change and is left out; with no change at all the
+	booking is not touched. Returns the changed nights and the price each had
+	before."""
 	from kamra.folio import charged_nights
 	from kamra.pricing import normalize_night_prices, room_rate_digits
 	why = _stay_prices_blocker(res)
@@ -6615,12 +6623,17 @@ def _price_stay_nights(res, night_prices) -> tuple[dict, dict]:
 	charged = charged_nights(res.name, room_rate_digits(res.property))
 	rows = {str(r.stay_date): r for r in res.night_rates}
 	for d in sorted(typed):
-		if d in charged:
-			frappe.throw(_("The night of {0} is already on the bill, so its price cannot be "
-			               "changed here.").format(d))
 		if d not in rows:
 			frappe.throw(_("{0} is not a night of this booking.").format(d))
 	before = {d: _night_price(res, rows[d]) for d in typed}
+	typed = {d: p for d, p in typed.items() if abs(float(p) - before[d]) >= 0.005}
+	before = {d: before[d] for d in typed}
+	for d in sorted(typed):
+		if d in charged:
+			frappe.throw(_("The night of {0} is already on the bill, so its price cannot be "
+			               "changed here.").format(d))
+	if not typed:
+		return typed, before
 	res.flags.hold_nights = {d for d, r in rows.items()
 	                         if d not in typed and d not in charged and flt(r.hand_price) <= 0}
 	for d, price in typed.items():
@@ -6635,24 +6648,19 @@ def stay_prices_preview(reservation: str, night_prices=None) -> dict:
 	"""What new nightly prices ([{date, price}], the nights to change) would do
 	to a booking's bill, before anything changes: the current and new totals
 	and the new nightly rates, priced by the same code the save runs, plus
-	what the guest has paid so far (`paid`) and what is left after the change
-	(`new_balance`, below zero when the guest has paid more than the new
-	total). Nights not listed keep their rate. set_stay_prices wants the new
-	total back as expected_total. A Revenue Manager or Hotel Admin only. Not an
-	agent tool."""
+	what the guest has paid so far (`paid`) and what they will still owe after
+	the change (`new_balance`, below zero when they are in credit; for an
+	in-house guest it is the guest folio's balance at check-out, extras
+	included, and null when that cannot be worked out). Nights not listed keep
+	their rate. set_stay_prices wants the new total back as expected_total. A
+	Revenue Manager or Hotel Admin only. Not an agent tool."""
 	from kamra.crs import assert_property_access
 	_require_night_prices_right()
 	res = frappe.get_doc("Reservation", reservation)
 	assert_property_access(res.property)
-	_price_stay_nights(res, night_prices)
-	out = _reprice_preview(res)
-	# what the guest has paid on this stay so far (the guest folio's payments, else
-	# the advance taken with the booking) and what is left after the change; below
-	# zero when the guest has paid more than the new total
-	folio = _guest_folio_sums([res.name]).get(res.name)
-	paid = float(folio.paid) if folio else float(res.get("advance_paid") or 0)
-	out["paid"] = round(paid, 2)
-	out["new_balance"] = round(out["new_amount"] - paid, 2)
+	typed, _before = _price_stay_nights(res, night_prices)
+	out = _reprice_preview(res) if typed else _unchanged_price(res)
+	out["paid"], out["new_balance"] = _stay_balance_after(res, out)
 	return out
 
 
@@ -6675,24 +6683,66 @@ def set_stay_prices(reservation: str, night_prices=None, expected_total=None) ->
 	assert_property_access(res.property)
 	typed, before = _price_stay_nights(res, night_prices)
 	old_amount = float(res.amount_after_tax or 0)
-	preview = _reprice_preview(res)
+	_require_shown_total(res.property, _reprice_preview(res) if typed else _unchanged_price(res),
+	                     expected_total)
+	if typed:  # nothing to save, comment or log when every night keeps its price
+		res.save(ignore_permissions=True)  # the role was checked above; a Revenue Manager has no write
+		_record_night_prices(res, typed, before)
+	return {"ok": True, "previous_amount": old_amount,
+	        "amount_after_tax": float(res.amount_after_tax or 0)}
+
+
+def _unchanged_price(res) -> dict:
+	"""The preview of a request that changes no night's price."""
+	current = float(res.amount_after_tax or 0)
+	return {"current_amount": current, "new_amount": current, "difference": 0.0,
+	        "auto_price": bool(res.get("auto_price")), "reprices": False,
+	        "needs_confirmation": False, "nights": []}
+
+
+def _require_shown_total(property: str, preview: dict, expected_total) -> None:
+	"""A re-priced stay is saved against the total the user was shown: refused
+	when the new total is not that figure, or when it changes and no figure was
+	sent."""
+	from kamra.localization import money_text
 	if expected_total in (None, ""):
 		if preview["needs_confirmation"]:
 			frappe.throw(
 				_("This change re-prices the stay from {0} to {1}. Show the guest the new "
 				  "total, then save it with expected_total.").format(
-					f"{preview['current_amount']:,.2f}", f"{preview['new_amount']:,.2f}"),
+					money_text(property, preview["current_amount"]),
+					money_text(property, preview["new_amount"])),
 				exc=PriceConfirmationRequired, title=_("Confirm the new price"))
 	elif abs(flt(expected_total) - preview["new_amount"]) >= 0.01:
 		frappe.throw(
 			_("The new total is {0}, not the {1} you were shown. The booking may have "
 			  "changed in the meantime: look at the new price and save again.").format(
-				f"{preview['new_amount']:,.2f}", f"{flt(expected_total):,.2f}"),
+				money_text(property, preview["new_amount"]),
+				money_text(property, flt(expected_total))),
 			exc=PriceConfirmationRequired, title=_("Confirm the new price"))
-	res.save(ignore_permissions=True)  # the role was checked above; a Revenue Manager has no write
-	_record_night_prices(res, typed, before)
-	return {"ok": True, "previous_amount": old_amount,
-	        "amount_after_tax": float(res.amount_after_tax or 0)}
+
+
+def _stay_balance_after(res, preview: dict) -> tuple[float, float | None]:
+	"""What the guest has paid on a stay, and what they will still owe once its
+	new prices are saved (below zero: in credit).
+
+	An in-house stay's bill is its guest folio, so the second figure is that
+	folio as it will stand at check-out at the new prices: the extras already on
+	it are in, so is any credit the save posts for a billed night, and nights
+	billed to a company or group folio are not. The remaining nights are posted
+	inside a savepoint that is rolled back (None when that fails). Before arrival the booking total is the bill: the new total less the
+	folio's payments, else the advance. `res` carries the new prices and is
+	changed in memory only."""
+	folio = _guest_folio_sums([res.name]).get(res.name)
+	paid = float(folio.paid) if folio else float(res.get("advance_paid") or 0)
+	if not (folio and res.status == "Checked In"):
+		return round(paid, 2), round(preview["new_amount"] - paid, 2)
+	if preview["reprices"]:  # put the nights the save would lock on the doc
+		rows = res.quote_night_rows(res.requote())
+		res.flags.rate_change_lines = res.hold_charged_nights(rows)["lines"]
+		res.set("night_rates", rows)
+	after = _checkout_projection([res.name], docs={res.name: res}).get(res.name)
+	return round(paid, 2), round(float(after.due), 2) if after else None
 
 
 def _move_price(res, new_type: str | None, rate_mode: str,

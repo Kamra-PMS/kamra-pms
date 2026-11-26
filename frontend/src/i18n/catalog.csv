@@ -4542,7 +4542,7 @@ Out of order,Out of order,معطّلة,Fuera de servicio,Fora de serviço,维修
 Out of Order,Out of Order,معطّلة,Fuera de servicio,Fora de serviço,维修房,screens/Today.tsx,,translated
 Out of order (repairs),Out of order (repairs),معطّلة (إصلاحات),Fuera de servicio (reparaciones),Fora de serviço (reparos),维修房（维修中）,,,translated
 Out of order room has an in-house guest,Out of order room has an in-house guest,غرفة خارج الخدمة فيها نزيل مقيم,Habitación fuera de servicio con un huésped alojado,Quarto fora de serviço tem hóspede interno,维修房内有在住宾客,,,translated
-Out of service,Out of service,خارج الخدمة,Fuera de servicio,Fora de serviço,停用房,components/RoomDrawer.tsx; components/RoomInsights.tsx; screens/HousekeepingBoard.tsx; screens/Rooms.tsx; screens/Today.tsx,,translated
+Out of service,Out of service,خارج الخدمة,Fuera de servicio,Fora de serviço,停用房,components/RoomDrawer.tsx; components/RoomInsights.tsx; screens/Rooms.tsx; screens/Today.tsx,,translated
 Outbound,Outbound,صادر,Saliente,Saída,呼出,,,translated
 Outcome,Outcome,النتيجة,Resultado,Resultado,结果,screens/BanquetFunction.tsx,,translated
 Outlet,Outlet,المنفذ,Punto de venta,Saída,营业点,screens/CashierBoard.tsx; screens/KitchenPrinters.tsx; screens/MenuImport.tsx,,translated
@@ -4624,8 +4624,9 @@ Paid out,Paid out,مدفوع للخارج,Egreso de caja,Pago,现金支出,scree
 Paid Out,Paid Out,مدفوع للخارج,Salida de efectivo,Pago,现金支出,,,translated
 Paid outs,Paid outs,مدفوعات للخارج,Egresos de caja,Pagamentos,现金支出,screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/ManagementBooks.tsx,,translated
 Paid so far,Paid so far,المدفوع حتى الآن,Pagado hasta ahora,Pago até agora,已付金额,components/CheckInDialog.tsx; components/GroupControl.tsx,,translated
-"Paid so far {paid}, which is {credit} more than the new total.","Paid so far {paid}, which is {credit} more than the new total.",,,,,components/StayRates.tsx,paid credit,needs_translation
+Paid so far {paid}.,Paid so far {paid}.,,,,,components/StayRates.tsx,paid,needs_translation
 Paid so far {paid}. Still to pay after this change: {balance}.,Paid so far {paid}. Still to pay after this change: {balance}.,,,,,components/StayRates.tsx,paid balance,needs_translation
+Paid so far {paid}. The guest is {credit} in credit after this change.,Paid so far {paid}. The guest is {credit} in credit after this change.,,,,,components/StayRates.tsx,paid credit,needs_translation
 PAN,PAN,PAN,PAN,PAN,永久账号（PAN）,,,translated
 "Paneer tikka, Hara bhara kebab, Corn seekh","Paneer tikka, Hara bhara kebab, Corn seekh",بانير تكا، هارا بهارا كباب، سيخ الذرة,"Paneer tikka, hara bhara kebab, brochetas de maíz","Paneer tikka, Hara bhara kebab, Corn seekh",奶酪串、菠菜蔬菜饼、玉米串,screens/BanquetCatalogue.tsx,,translated
 Paper width,Paper width,عرض الورق,Ancho del papel,Largura do papel,纸张宽度,screens/KitchenPrinters.tsx,,translated

@@ -45,8 +45,9 @@ interface Preview {
   needs_confirmation: boolean
   /** what the guest has paid on the stay so far */
   paid: number
-  /** the new total less what was paid; below zero when the guest has paid more */
-  new_balance: number
+  /** what the guest will still owe after the change (in house: the folio at
+   *  check-out, extras included); below zero in credit, null when unknown */
+  new_balance: number | null
 }
 
 /** A night the desk is changing, as the server takes it. */
@@ -386,7 +387,9 @@ export default function StayRates({ reservation, onSaved }: { reservation: strin
                 })}
               </p>
               {preview.paid > 0 &&
-                (preview.new_balance >= 0 ? (
+                (preview.new_balance === null ? (
+                  <p>{t("Paid so far {paid}.", { paid: money(preview.paid) })}</p>
+                ) : preview.new_balance >= 0 ? (
                   <p>
                     {t("Paid so far {paid}. Still to pay after this change: {balance}.", {
                       paid: money(preview.paid),
@@ -395,7 +398,7 @@ export default function StayRates({ reservation, onSaved }: { reservation: strin
                   </p>
                 ) : (
                   <p>
-                    {t("Paid so far {paid}, which is {credit} more than the new total.", {
+                    {t("Paid so far {paid}. The guest is {credit} in credit after this change.", {
                       paid: money(preview.paid),
                       credit: money(-preview.new_balance),
                     })}

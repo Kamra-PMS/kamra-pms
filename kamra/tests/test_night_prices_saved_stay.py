@@ -82,6 +82,37 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 	def hand(self):
 		return [float(r.hand_price) for r in self.res().night_rates]
 
+	def assert_reads_in_property_currency(self, error, *amounts):
+		"""money_text, as the comment and the action log: UGX has no decimals."""
+		from kamra.localization import money_text
+		for amount in amounts:
+			self.assertIn(money_text(self.property, amount), str(error))
+		self.assertNotIn(".00", str(error))
+
+	def trail(self):
+		"""The reservation's comments and logged price changes."""
+		comments = frappe.get_all("Comment", filters={
+			"reference_doctype": "Reservation", "reference_name": self.name,
+			"comment_type": "Comment"}, pluck="content")
+		logged = frappe.db.count("Agent Action Log", {
+			"action_type": "set_night_prices", "reference_name": self.name})
+		return [c for c in comments if "ightly prices" in c], logged
+
+	def check_in_with_a_folio(self, extra: float, paid: float) -> str:
+		"""In house: the first night on the bill, a sundry of `extra`, `paid` received."""
+		from kamra.folio import open_folio, post_room_night, save_folios
+		frappe.db.set_value("Reservation", self.name, "status", "Checked In")
+		res = self.res()
+		folio = open_folio(res)
+		post_room_night(res, self.ci)
+		doc = frappe.get_doc("Folio", folio)
+		doc.append("charges", {"posting_date": self.ci, "charge_type": "Misc", "reservation": self.name,
+			"description": "Minibar", "qty": 1, "rate": extra, "amount": extra, "gst_rate": 0})
+		doc.append("payments", {"posting_date": nowdate(), "mode": "Cash", "amount": paid,
+			"payment_kind": "Payment"})
+		save_folios({folio: doc})  # totals and balance, as the app saves a folio
+		return folio
+
 	def move_rate_card(self, base_price):
 		frappe.db.set_value("Room Type", self.room_type, "base_price", base_price)
 		frappe.clear_document_cache("Room Type", self.room_type)
@@ -168,6 +199,36 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		self.assertEqual(self.shown(), [900, 1500, 1000])
 		self.assertAlmostEqual(float(self.res().amount_after_tax), 3400, places=1)
 
+	def test_a_night_sent_at_the_price_it_has_is_not_a_change(self):
+		same = [{"date": self.d2, "price": 1000}]
+		pv = stay_prices_preview(self.name, same)
+		self.assertFalse(pv["needs_confirmation"])
+		self.assertAlmostEqual(pv["new_amount"], 3000, places=1)
+		self.assertEqual(pv["difference"], 0)
+		out = set_stay_prices(self.name, same)
+		self.assertAlmostEqual(out["amount_after_tax"], 3000, places=1)
+		self.assertEqual(self.hand(), [0, 0, 0])
+		self.assertEqual(self.res().auto_price, 1)  # the booking was not touched
+		self.assertEqual(self.trail(), ([], 0))
+		# sent along with a real change, only the real change is recorded
+		self.save([{"date": self.ci, "price": 1000}, {"date": self.d2, "price": 1500}])
+		self.assertEqual(self.hand(), [0, 1500, 0])
+		comments, logged = self.trail()
+		self.assertEqual((len(comments), logged), (1, 1))
+		self.assertIn(self.d2, comments[0])
+		self.assertNotIn(self.ci, comments[0])
+		# and the same figure again changes nothing
+		self.save([{"date": self.d2, "price": 1500}])
+		self.assertEqual((len(self.trail()[0]), self.trail()[1]), (1, 1))
+
+	def test_a_night_on_the_bill_sent_unchanged_is_skipped(self):
+		from kamra.folio import open_folio, post_room_night
+		res = self.res()
+		open_folio(res)
+		post_room_night(res, self.ci)
+		self.save([{"date": self.ci, "price": 1000}, {"date": self.d3, "price": 1100}])
+		self.assertEqual(self.hand(), [0, 0, 1100])
+
 	def test_the_change_is_commented_and_logged(self):
 		self.save([{"date": self.d2, "price": 1500}])
 		comments = frappe.get_all("Comment", filters={
@@ -197,16 +258,18 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		self.assertAlmostEqual(shown, 3500, places=1)
 		# someone else changes another night before this save arrives
 		self.save([{"date": self.d3, "price": 1100}])
-		with self.assertRaisesRegex(PriceConfirmationRequired, "not the"):
+		with self.assertRaisesRegex(PriceConfirmationRequired, "not the") as refused:
 			set_stay_prices(self.name, typed, expected_total=shown)
+		self.assert_reads_in_property_currency(refused.exception, 3600, 3500)
 		self.assertEqual(self.hand(), [0, 0, 1100])
 		# the total the desk now sees is the one that saves
 		self.save(typed)
 		self.assertEqual(self.hand(), [0, 1500, 1100])
 
 	def test_a_change_in_the_total_is_not_saved_without_the_total_that_was_shown(self):
-		with self.assertRaises(PriceConfirmationRequired):
+		with self.assertRaises(PriceConfirmationRequired) as refused:
 			set_stay_prices(self.name, [{"date": self.d2, "price": 1500}])
+		self.assert_reads_in_property_currency(refused.exception, 3000, 3500)
 		self.assertEqual(self.hand(), [0, 0, 0])
 		self.assertEqual(self.res().auto_price, 1)
 
@@ -234,6 +297,51 @@ class SavedStayPricesTestCase(IntegrationTestCase):
 		self.assertAlmostEqual(pv["new_amount"], 300, places=1)
 		self.assertAlmostEqual(pv["new_balance"], -500, places=1)
 		self.assertEqual(self.hand(), [0, 0, 0])  # a preview writes nothing
+
+	def test_an_in_house_guest_owes_what_the_folio_will_show_at_check_out(self):
+		from kamra.folio import post_remaining_nights
+		folio = self.check_in_with_a_folio(extra=200, paid=800)
+		self.move_rate_card(2000)  # the nights to come keep their booked or typed price
+		charges = frappe.db.count("Folio Charge", {"parent": folio})
+		typed = [{"date": self.d2, "price": 1500}]
+		pv = stay_prices_preview(self.name, typed)
+		self.assertEqual(pv["paid"], 800)
+		# 1000 billed + 1500 and 1000 still to bill + 200 of minibar - 800 paid
+		self.assertAlmostEqual(pv["new_balance"], 2900, places=1)
+		self.assertAlmostEqual(
+			stay_prices_preview(self.name, [{"date": self.d2, "price": 1000}])["new_balance"], 2400, places=1)
+		# the preview leaves the bill and the booking as they were
+		self.assertEqual(frappe.db.count("Folio Charge", {"parent": folio}), charges)
+		self.assertEqual(self.hand(), [0, 0, 0])
+		# the figure shown is the one check-out bills after the save
+		set_stay_prices(self.name, typed, expected_total=pv["new_amount"])
+		post_remaining_nights(self.res())
+		self.assertAlmostEqual(float(frappe.db.get_value("Folio", folio, "balance")),
+		                       pv["new_balance"], places=1)
+
+	def test_the_balance_counts_the_credit_the_save_posts_for_a_billed_night(self):
+		from kamra.folio import post_remaining_nights
+		from kamra.settings import write_kv
+		write_kv(self.property, "charged_night_rate_change", "Credit the difference")
+		folio = self.check_in_with_a_folio(extra=200, paid=800)
+		self.move_rate_card(500)  # lower now: the billed night is credited the difference on save
+		typed = [{"date": self.d2, "price": 1500}]
+		pv = stay_prices_preview(self.name, typed)
+		# 500 for the billed night after its credit + 1500 and 1000 to come + 200 - 800
+		self.assertAlmostEqual(pv["new_balance"], 2400, places=1)
+		set_stay_prices(self.name, typed, expected_total=pv["new_amount"])
+		post_remaining_nights(self.res())
+		self.assertAlmostEqual(float(frappe.db.get_value("Folio", folio, "balance")),
+		                       pv["new_balance"], places=1)
+
+	def test_nights_billed_to_the_company_are_not_the_guests_to_pay(self):
+		corp = frappe.get_doc({"doctype": "Corporate Account",
+			"company_name": "TEST NIGHTS CO " + frappe.generate_hash(length=8), "credit_allowed": 1,
+			"billing_rules": [{"charge_type": "Room", "pay_by": "Company"}]}).insert(ignore_permissions=True)
+		frappe.db.set_value("Reservation", self.name, "company", corp.name)
+		self.check_in_with_a_folio(extra=200, paid=50)
+		pv = stay_prices_preview(self.name, [{"date": self.d2, "price": 1500}])
+		self.assertAlmostEqual(pv["new_balance"], 150, places=1)  # the minibar less what was paid
 
 	# -- the nights are recorded in the property's currency -------------------
 
