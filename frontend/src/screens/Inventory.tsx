@@ -8,6 +8,9 @@ import { useAuth } from "../lib/auth"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
 import { t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
+import {
+  defaultEntry, fmtUnitCost, receiveLine, receiveRow, type ReceiveEntry,
+} from "../lib/stockCost"
 
 /* Kitchen stock. Two things here are deliberate and read as bugs if you don't
    know why:
@@ -26,6 +29,8 @@ interface StockRow {
   ingredient: string
   ingredient_name: string
   uom: string
+  buy_uom: string | null
+  buy_size: number | null
   category: string | null
   cost_per_unit: number | null
   qty_on_hand: number
@@ -43,6 +48,17 @@ interface LedgerRow {
   reference_name: string | null
   note: string | null
   supplier: string | null
+  invoice_no: string | null
+  outlet: string
+  outlet_name?: string | null
+  cost_per_unit: number | null
+  purchase_qty: number | null
+  purchase_uom: string | null
+  purchase_size: number | null
+  purchase_price: number | null
+  /** "" = a delivery recorded before prices were kept this way */
+  price_entry: "" | "Entered" | "Not entered" | null
+  cost_after: number | null
 }
 interface LowRow {
   ingredient: string
@@ -79,8 +95,8 @@ function StatusChip({ s }: { s: Status }) {
   )
 }
 
-function Modal({ title, onClose, children }: {
-  title: string; onClose: () => void; children: React.ReactNode
+function Modal({ title, onClose, wide, children }: {
+  title: string; onClose: () => void; wide?: boolean; children: React.ReactNode
 }) {
   useUILanguage()
   useEffect(() => {
@@ -90,7 +106,8 @@ function Modal({ title, onClose, children }: {
   }, [onClose])
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/30 p-4">
-      <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl">
+      <div className={cn("flex max-h-[85vh] w-full flex-col rounded-2xl bg-white shadow-2xl",
+        wide ? "max-w-4xl" : "max-w-2xl")}>
         <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3">
           <h2 className="text-lg font-bold text-zinc-800">{translate(title)}</h2>
           <button onClick={onClose} aria-label={translate("Close")}
@@ -178,7 +195,8 @@ export default function Inventory() {
           </select>
           {canWrite && (
             <>
-              <Button variant="outline" onClick={() => setModal("receive")}>
+              {/* reloaded on opening: a delivery is refused when a buying unit changed since */}
+              <Button variant="outline" onClick={() => { setErr(null); load(); setModal("receive") }}>
                 <Truck className="size-4" />{translate("Receive")}</Button>
               <Button variant="outline" onClick={() => setModal("count")}>
                 <ClipboardCheck className="size-4" />{translate("Stock take")}</Button>
@@ -300,8 +318,9 @@ export default function Inventory() {
       )}
 
       {modal === "receive" && (
-        <ReceiveModal rows={shelf} outlet={outlet} busy={busy}
-          onClose={() => setModal(null)} onSubmit={(p) => act("receive_stock", p)} />
+        <ReceiveModal rows={shelf} outlet={outlet} busy={busy} error={err}
+          onClose={() => { setErr(null); setModal(null) }}
+          onSubmit={(p) => act("receive_stock", p)} />
       )}
       {modal === "count" && (
         <CountModal rows={shelf} busy={busy}
@@ -322,53 +341,106 @@ export default function Inventory() {
   )
 }
 
-function ReceiveModal({ rows, busy, onClose, onSubmit }: {
-  rows: StockRow[]; outlet: string; busy: boolean; onClose: () => void
-  onSubmit: (p: Record<string, unknown>) => void
+function ReceiveModal({ rows, busy, error, onClose, onSubmit }: {
+  rows: StockRow[]; outlet: string; busy: boolean; error: string | null
+  onClose: () => void; onSubmit: (p: Record<string, unknown>) => void
 }) {
   useUILanguage()
-  const [picked, setPicked] = useState<Record<string, string>>({})
-  const [cost, setCost] = useState<Record<string, string>>({})
+  const [typed, setTyped] = useState<Record<string, ReceiveEntry>>({})
   const [supplier, setSupplier] = useState("")
   const [invoice, setInvoice] = useState("")
-  const lines = Object.entries(picked)
-    .filter(([, q]) => Number(q) > 0)
-    .map(([ingredient, q]) => ({
-      ingredient, qty: Number(q),
-      ...(cost[ingredient] ? { cost_per_unit: Number(cost[ingredient]) } : {}),
-    }))
+  const entryOf = (r: StockRow) => typed[r.ingredient] ?? defaultEntry(r)
+  const edit = (r: StockRow, change: Partial<ReceiveEntry>) =>
+    setTyped({ ...typed, [r.ingredient]: { ...entryOf(r), ...change } })
+  const lines = rows.map((r) => receiveRow(r, entryOf(r))).filter((l) => l !== null)
+  // a quantity typed against an empty pack size must not be dropped unnoticed
+  const incomplete = rows.some((r) => Number(entryOf(r).qty) > 0 && !receiveLine(r, entryOf(r)))
+  const box = "w-24 rounded border border-zinc-300 px-2 py-1 tabular-nums"
   return (
-    <Modal title={translate("Receive stock")} onClose={onClose}>
+    <Modal title={translate("Receive stock")} onClose={onClose} wide>
       <div className="mb-4 grid gap-2 sm:grid-cols-2">
         <input className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
           placeholder={translate("Supplier")} value={supplier} onChange={(e) => setSupplier(e.target.value)} />
         <input className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
           placeholder={translate("Invoice no")} value={invoice} onChange={(e) => setInvoice(e.target.value)} />
       </div>
-      <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase text-zinc-400">
-          <tr><th className="pb-1">{translate("Ingredient")}</th><th className="pb-1">{translate("Qty in")}</th><th className="pb-1">{translate("Cost/unit")}</th></tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
-          {rows.map((r) => (
-            <tr key={r.ingredient}>
-              <td className="py-1.5 font-medium">{r.ingredient_name}
-                <span className="ml-1 text-xs text-zinc-400">{r.uom}</span></td>
-              <td className="py-1.5"><input type="number" min="0" step="any" inputMode="decimal"
-                className="w-24 rounded border border-zinc-300 px-2 py-1 tabular-nums"
-                value={picked[r.ingredient] ?? ""}
-                onChange={(e) => setPicked({ ...picked, [r.ingredient]: e.target.value })} /></td>
-              <td className="py-1.5"><input type="number" min="0" step="any" inputMode="decimal"
-                className="w-24 rounded border border-zinc-300 px-2 py-1 tabular-nums"
-                placeholder={translate(r.cost_per_unit ? String(r.cost_per_unit) : "-")}
-                value={cost[r.ingredient] ?? ""}
-                onChange={(e) => setCost({ ...cost, [r.ingredient]: e.target.value })} /></td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-left text-xs uppercase text-zinc-400">
+            <tr>
+              <th className="pb-1 pr-2">{translate("Ingredient")}</th>
+              <th className="pb-1 pr-2">{translate("Qty in")}</th>
+              <th className="pb-1 pr-2">{translate("Unit")}</th>
+              <th className="pb-1 pr-2">{translate("Holds")}</th>
+              <th className="pb-1 pr-2">{translate("Price per unit")}</th>
+              <th className="pb-1">{translate("Goes into stock")}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="mt-3 text-xs text-zinc-400">{translate("A cost here updates the ingredient's cost, which is what wastage gets valued at. Indicative only - it doesn't tie to the books.")}</p>
-      <Button className="mt-4 h-12 w-full justify-center" disabled={busy || !lines.length}
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {rows.map((r) => {
+              const e = entryOf(r)
+              const line = receiveLine(r, e)
+              const size = e.unit === "buy" ? Number(e.size) || 0 : 1
+              const current = r.cost_per_unit && size
+                ? String(Math.round(r.cost_per_unit * size * 10000) / 10000) : "-"
+              const vars = line ? { qty: fmt(line.stockQty), uom: r.uom } : null
+              return (
+                <tr key={r.ingredient}>
+                  <td className="py-1.5 pr-2 font-medium">{r.ingredient_name}</td>
+                  <td className="py-1.5 pr-2"><input type="number" min="0" step="any" inputMode="decimal"
+                    aria-label={`${r.ingredient_name} · ${translate("Qty in")}`}
+                    className={box} value={e.qty} onChange={(ev) => edit(r, { qty: ev.target.value })} /></td>
+                  <td className="py-1.5 pr-2">
+                    {r.buy_uom && Number(r.buy_size) > 0 ? (
+                      <select className="rounded border border-zinc-300 px-2 py-1"
+                        aria-label={`${r.ingredient_name} · ${translate("Unit")}`}
+                        value={e.unit}
+                        onChange={(ev) => edit(r, ev.target.value === "buy"
+                          ? { unit: "buy", size: String(r.buy_size) } : { unit: "stock" })}>
+                        <option value="buy">{r.buy_uom} ({fmt(Number(r.buy_size))} {r.uom})</option>
+                        <option value="stock">{r.uom}</option>
+                      </select>
+                    ) : <span className="text-zinc-500">{r.uom}</span>}
+                  </td>
+                  <td className="py-1.5 pr-2 whitespace-nowrap">
+                    {e.unit === "buy" && (
+                      <>
+                        <input type="number" min="0" step="any" inputMode="decimal"
+                          aria-label={`${r.ingredient_name} · ${translate("Holds")}`}
+                          className="w-20 rounded border border-zinc-300 px-2 py-1 tabular-nums"
+                          value={e.size} onChange={(ev) => edit(r, { size: ev.target.value })} />
+                        <span className="ml-1 text-xs text-zinc-400">{r.uom}</span>
+                      </>
+                    )}
+                  </td>
+                  <td className="py-1.5 pr-2"><input type="number" min="0" step="any" inputMode="decimal"
+                    aria-label={`${r.ingredient_name} · ${translate("Price per unit")}`}
+                    className={box} placeholder={current}
+                    value={e.price} onChange={(ev) => edit(r, { price: ev.target.value })} /></td>
+                  <td className="py-1.5 text-xs tabular-nums text-zinc-500">
+                    {line && vars
+                      ? line.perUnit === null
+                        ? translate("+{qty} {uom}, no price", vars)
+                        : translate("+{qty} {uom} at {price} each, {total} in all", {
+                            ...vars, price: fmtUnitCost(line.perUnit), total: fmtUnitCost(line.total),
+                          })
+                      : Number(e.qty) > 0 && (
+                        <span className="font-bold text-rose-600">{translate("Holds must be above zero.")}</span>
+                      )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xs text-zinc-400">{translate("A price updates the ingredient's cost as Settings, F&B says: the last price paid, or the average of purchases. Leave it empty to keep the cost.")}</p>
+      {error && (
+        <div role="alert" className="mt-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+          {error}
+        </div>
+      )}
+      <Button className="mt-4 h-12 w-full justify-center" disabled={busy || !lines.length || incomplete}
         onClick={() => onSubmit({ rows: lines, supplier: supplier || null, invoice_no: invoice || null })}>{translate("Receive ")}{lines.length || ""}{translate(" ingredient")}{lines.length === 1 ? "" : translate("s")}
       </Button>
     </Modal>
@@ -400,7 +472,7 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
       ) : (
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase text-zinc-400">
-            <tr><th className="pb-1">{translate("Ingredient")}</th><th className="pb-1 text-right">{translate("System")}</th>
+            <tr><th className="pb-1">{translate("Ingredient")}</th><th className="pb-1 pr-6 text-right">{translate("System")}</th>
               <th className="pb-1">{translate("Counted")}</th><th className="pb-1 text-right">{translate("Variance")}</th></tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
@@ -411,7 +483,7 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
                 <tr key={r.ingredient}>
                   <td className="py-1.5 font-medium">{r.ingredient_name}
                     <span className="ml-1 text-xs text-zinc-400">{r.uom}</span></td>
-                  <td className="py-1.5 text-right tabular-nums text-zinc-400">{fmt(r.qty_on_hand)}</td>
+                  <td className="py-1.5 pr-6 text-right tabular-nums text-zinc-400">{fmt(r.qty_on_hand)}</td>
                   <td className="py-1.5">
                     {/* Deliberately blank, never pre-filled with the system qty:
                         pre-filling invites blind confirmation, which is exactly
@@ -594,54 +666,149 @@ function ParModal({ row, busy, onClose, onSubmit }: {
   )
 }
 
+/** What a delivery cost per stock unit, when it was given a price (or, on an
+ *  older line, the price it stored). */
+function pricedAt(e: LedgerRow): number | null {
+  if (e.reason !== "Received" || e.price_entry === "Not entered") return null
+  const cost = Number(e.cost_per_unit ?? 0)
+  return e.price_entry === "Entered" || cost > 0 ? cost : null
+}
+
 function LedgerModal({ row, outlet, onClose }: {
   row: StockRow; outlet: string; onClose: () => void
 }) {
   useUILanguage()
-  const [entries, setEntries] = useState<LedgerRow[] | null>(null)
+  const [tab, setTab] = useState<"all" | "purchases">("all")
+  const [loaded, setLoaded] = useState<{ tab: string; entries: LedgerRow[] } | null>(null)
   useEffect(() => {
+    let live = true
     call<LedgerRow[]>("kamra.inventory.ingredient_ledger", {
       property: getCurrentProperty(), outlet, ingredient: row.ingredient, limit: 50,
-    }).then(setEntries).catch(() => setEntries([]))
-  }, [row.ingredient, outlet])
+      purchases_only: tab === "purchases" ? 1 : 0,
+    }).then((entries) => { if (live) setLoaded({ tab, entries }) })
+      .catch(() => { if (live) setLoaded({ tab, entries: [] }) })
+    return () => { live = false }
+  }, [row.ingredient, outlet, tab])
+  const entries = loaded && loaded.tab === tab ? loaded.entries : null
+  const when = (iso: string) => new Date(iso.replace(" ", "T")).toLocaleString(uiDateLocale([]), {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  })
   return (
-    <Modal title={translate("{v0} · where it went", { v0: String(row.ingredient_name) })} onClose={onClose}>
+    <Modal title={translate("{v0} · where it went", { v0: String(row.ingredient_name) })} onClose={onClose} wide>
+      <div className="mb-3 flex gap-1.5">
+        {(["all", "purchases"] as const).map((k) => (
+          <button key={k} type="button" aria-pressed={tab === k} onClick={() => setTab(k)}
+            className={cn("rounded-lg px-3 py-1.5 text-sm font-medium",
+              tab === k ? "bg-brand-600 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200")}>
+            {k === "all" ? translate("All movements") : translate("Purchases")}
+          </button>
+        ))}
+      </div>
       {entries === null ? (
         <p className="text-sm text-zinc-400">{translate("Loading…")}</p>
       ) : entries.length === 0 ? (
-        <p className="text-sm text-zinc-400">{translate("No movements yet.")}</p>
+        <p className="text-sm text-zinc-400">
+          {tab === "all" ? translate("No movements yet.") : translate("No deliveries yet.")}
+        </p>
+      ) : tab === "purchases" ? (
+        <Purchases entries={entries} uom={row.uom} when={when} />
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase text-zinc-400">
-            <tr><th className="pb-1">{translate("When")}</th><th className="pb-1">{translate("Reason")}</th>
-              <th className="pb-1 text-right">{translate("Change")}</th><th className="pb-1 text-right">{translate("Balance")}</th>
-              <th className="pb-1">{translate("Detail")}</th></tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {entries.map((e) => (
-              <tr key={e.name}>
-                <td className="py-1.5 whitespace-nowrap text-zinc-500">
-                  {new Date(e.creation.replace(" ", "T")).toLocaleString(uiDateLocale([]), {
-                    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-                  })}
-                </td>
-                <td className="py-1.5"><span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-bold text-zinc-600">{translate(e.reason)}</span></td>
-                <td className={cn("py-1.5 text-right font-bold tabular-nums",
-                  e.qty_change < 0 ? "text-rose-600" : "text-emerald-600")}>
-                  {e.qty_change > 0 ? "+" : ""}{fmt(e.qty_change)}
-                </td>
-                <td className={cn("py-1.5 text-right tabular-nums",
-                  e.balance_after < 0 ? "font-bold text-rose-600" : "text-zinc-500")}>
-                  {fmt(e.balance_after)}
-                </td>
-                <td className="py-1.5 text-zinc-400">
-                  {e.note || e.supplier || e.reference_name || "-"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-left text-xs uppercase text-zinc-400">
+              <tr><th className="pb-1">{translate("When")}</th><th className="pb-1">{translate("Reason")}</th>
+                <th className="pb-1 text-right">{translate("Change")}</th><th className="pb-1 text-right">{translate("Balance")}</th>
+                <th className="pb-1 pl-3">{translate("Detail")}</th></tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {entries.map((e) => {
+                const price = pricedAt(e)
+                return (
+                  <tr key={e.name}>
+                    <td className="py-1.5 whitespace-nowrap text-zinc-500">{when(e.creation)}</td>
+                    <td className="py-1.5"><span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-bold text-zinc-600">{translate(e.reason)}</span></td>
+                    <td className={cn("py-1.5 text-right font-bold tabular-nums",
+                      e.qty_change < 0 ? "text-rose-600" : "text-emerald-600")}>
+                      {e.qty_change > 0 ? "+" : ""}{fmt(e.qty_change)}
+                    </td>
+                    <td className={cn("py-1.5 text-right tabular-nums",
+                      e.balance_after < 0 ? "font-bold text-rose-600" : "text-zinc-500")}>
+                      {fmt(e.balance_after)}
+                    </td>
+                    <td className="py-1.5 pl-3 text-zinc-400">
+                      {price !== null && (
+                        <span className="mr-2 whitespace-nowrap font-medium tabular-nums text-zinc-600">
+                          {fmtUnitCost(price)} / {row.uom}</span>
+                      )}
+                      {e.note || e.supplier || e.reference_name || (price === null ? "-" : "")}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </Modal>
+  )
+}
+
+/** Deliveries only, from every outlet: what was bought, for how much, from whom. */
+function Purchases({ entries, uom, when }: {
+  entries: LedgerRow[]; uom: string; when: (iso: string) => string
+}) {
+  useUILanguage()
+  const older = entries.some((e) => !e.price_entry)
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-left text-xs uppercase text-zinc-400">
+            <tr>
+              <th className="pb-1 pr-3">{translate("Date")}</th>
+              <th className="pb-1 pr-3">{translate("Outlet")}</th>
+              <th className="pb-1 pr-3">{translate("Bought")}</th>
+              <th className="pb-1 pr-3 text-right">{translate("Price")}</th>
+              <th className="pb-1 pr-3 text-right">{translate("Per unit")}</th>
+              <th className="pb-1 pr-3">{translate("Supplier, invoice")}</th>
+              <th className="pb-1 text-right">{translate("Cost after")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {entries.map((e) => {
+              const price = pricedAt(e)
+              const packed = !!e.price_entry && !!e.purchase_uom && e.purchase_uom !== uom
+              return (
+                <tr key={e.name}>
+                  <td className="py-1.5 pr-3 whitespace-nowrap text-zinc-500">{when(e.creation)}</td>
+                  <td className="py-1.5 pr-3">{e.outlet_name || e.outlet}</td>
+                  <td className="py-1.5 pr-3 whitespace-nowrap tabular-nums">
+                    {packed
+                      ? `${fmt(Number(e.purchase_qty))} ${e.purchase_uom} x ${fmt(Number(e.purchase_size))} = ${fmt(e.qty_change)} ${uom}`
+                      : `${fmt(e.qty_change)} ${uom}`}
+                  </td>
+                  <td className="py-1.5 pr-3 whitespace-nowrap text-right tabular-nums">
+                    {price === null ? "-"
+                      : e.price_entry
+                        ? `${fmtUnitCost(e.purchase_price)} / ${e.purchase_uom}`
+                        : `${fmtUnitCost(price)} / ${uom}`}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right tabular-nums">{price === null ? "-" : fmtUnitCost(price)}</td>
+                  <td className="py-1.5 pr-3 text-zinc-500">
+                    {[e.supplier, e.invoice_no].filter(Boolean).join(", ") || "-"}
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">
+                    {e.price_entry ? fmtUnitCost(e.cost_after) : ""}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      {older && (
+        <p className="mt-3 text-xs text-zinc-400">{translate("Older deliveries may show a price copied from an earlier one.")}</p>
+      )}
+    </>
   )
 }

@@ -57,3 +57,10 @@ Bills still open,இன்னும் திறந்திருக்கு�
 Use Check out to check a guest out: it makes sure every bill is cleared first.,கெஸ்ட்டை செக்-அவுட் செய்ய செக்-அவுட்டைப் பயன்படுத்தவும்: அது முதலில் ஒவ்வொரு பில்லும் தீர்க்கப்பட்டதை உறுதிசெய்யும்.
 Check out,செக்-அவுட்
 Discounts and allowances,தள்ளுபடிகள் மற்றும் சலுகைகள்
+A price cannot be below zero.,விலை பூஜ்ஜியத்திற்குக் கீழே இருக்க முடியாது.
+{0} has no buying unit.,{0}-க்கு வாங்கும் அலகு இல்லை.
+A buying unit must hold more than zero {0}.,ஒரு வாங்கும் அலகில் பூஜ்ஜியத்தை விட அதிக {0} இருக்க வேண்டும்.
+The buying unit of {0} changed. Close the window and open it again.,{0}-இன் வாங்கும் அலகு மாறிவிட்டது. சாளரத்தை மூடி மீண்டும் திறக்கவும்.
+The unit of {0} changed. Close the window and open it again.,{0}-இன் அலகு மாறிவிட்டது. சாளரத்தை மூடி மீண்டும் திறக்கவும்.
+Give a buying unit both a name and how many {0} it holds.,வாங்கும் அலகுக்குப் பெயரும் அதில் எத்தனை {0} உள்ளன என்பதும் கொடுக்கவும்.
+"{0} already has stock history or is on a recipe, so its unit stays {1}.","{0}-க்கு ஏற்கனவே சரக்கு வரலாறு உள்ளது அல்லது அது ரெசிபியில் உள்ளது, எனவே அதன் அலகு {1} ஆகவே இருக்கும்."

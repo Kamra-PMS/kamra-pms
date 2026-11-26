@@ -5257,7 +5257,9 @@ Replace a dish's recipe wholesale. An empty list is valid and means
 
 **POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
-Create or update one ingredient.
+Create or update one ingredient. A cost or buying unit that isn't sent is
+left as it is: the cost follows deliveries, and editing something else must
+not put an old figure back.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5265,10 +5267,12 @@ Create or update one ingredient.
 | `ingredient_name` | yes |  |
 | `uom` | yes |  |
 | `category` | no | `None` |
-| `cost_per_unit` | no | `0` |
+| `cost_per_unit` | no | `None` |
 | `gst_rate` | no | `None` |
 | `is_active` | no | `1` |
 | `name` | no | `None` |
+| `buy_uom` | no | `None` |
+| `buy_size` | no | `None` |
 
 ### `kamra.inventory.delete_ingredient`
 
@@ -5285,9 +5289,14 @@ recipe or punch a hole in the ledger. Deactivate instead.
 
 **POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
 
-Goods in. rows = [{ingredient, qty, cost_per_unit?}]. One batch_id ties
-the delivery together, which is why this needs no Stock Receipt doctype:
-a receipt is just its ledger rows plus a supplier and an invoice number.
+Goods in. rows = [{ingredient, qty, cost_per_unit?, note?, uom?,
+in_buying_unit?, buy_uom?, buy_size?}]. qty and cost_per_unit are in the
+unit chosen: the stock unit, or the buying unit with in_buying_unit
+(buy_size changes the pack size for this delivery only; uom and buy_uom are
+the units the screen showed, and a row is refused if either has changed
+since). One batch_id ties the delivery together, which is why
+this needs no Stock Receipt doctype: a receipt is just its ledger rows plus
+a supplier and an invoice number.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5362,12 +5371,17 @@ ingredient could never get one.
 Where did my paneer go? Newest first, each row carrying the balance it
 produced, so the history explains the number on the shelf.
 
+purchases_only lists the deliveries alone, from every outlet of the
+property (an ingredient has one cost), with their own limit: kitchen usage
+would otherwise push them off the end.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
 | `outlet` | yes |  |
 | `ingredient` | yes |  |
 | `limit` | no | `50` |
+| `purchases_only` | no | `0` |
 
 ### `kamra.inventory.low_stock`
 

@@ -75,6 +75,10 @@ jobs:
         run: npm run money:check
         working-directory: frontend
 
+      - name: Check kitchen stock unit costs, received rows and saved form fields
+        run: npm run stock:check
+        working-directory: frontend
+
       - name: Check the food-order basket survives a typed done
         run: npm run agent-order:check
         working-directory: frontend

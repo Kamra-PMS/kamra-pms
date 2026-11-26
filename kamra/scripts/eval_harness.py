@@ -2365,6 +2365,34 @@ def t_kitchen_stock_foreign_outlet():
 	assert frappe.db.get_value("Ingredient", milk, "cost_per_unit") == 20
 
 
+@check("kitchen stock: boxes are received as pieces and the cost becomes the average of purchases")
+def t_stock_cost_average():
+	from kamra import inventory, settings
+
+	outlet = frappe.get_doc({
+		"doctype": "POS Outlet", "property": P, "outlet_name": "Average Kitchen",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	cups = inventory.save_ingredient(
+		P, "Average Cups", "pc", cost_per_unit=2000, buy_uom="box", buy_size=24)["name"]
+	settings.save_settings(P, "fnb", {"stock_cost_method": "Average of purchases"})
+	try:
+		inventory.adjust_stock(P, outlet, [{"ingredient": cups, "counted_qty": 12}],
+		                       note="eval opening")
+		inventory.receive_stock(P, outlet, [{
+			"ingredient": cups, "qty": 2, "in_buying_unit": 1, "buy_uom": "box",
+			"cost_per_unit": 60000}])
+		held = [r for r in inventory.stock_list(P, outlet) if r["ingredient"] == cups]
+		assert [r["qty_on_hand"] for r in held] == [60], held
+		cost = frappe.db.get_value("Ingredient", cups, "cost_per_unit")
+		assert cost == 2400, cost
+		bought = inventory.ingredient_ledger(P, outlet, cups, purchases_only=1)
+		assert [(r["purchase_qty"], r["purchase_uom"], r["purchase_price"]) for r in bought] \
+			== [(2, "box", 60000)], bought
+	finally:
+		settings.save_settings(P, "fnb", {"stock_cost_method": "Last price paid"})
+
+
 def _id_photo(colour=(180, 40, 40)):
 	"""A real PNG data URL, built in memory - no fixture file to go missing."""
 	import base64
@@ -12618,7 +12646,8 @@ def execute():
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
 		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent,
-		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet):
+		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
+		           t_stock_cost_average):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

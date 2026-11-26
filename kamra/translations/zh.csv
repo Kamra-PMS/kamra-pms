@@ -2113,3 +2113,10 @@ this bill,本账单
 "{0}{1:,.2f} is owed back on folio {2}, which is already invoiced ({3}). A refund needs the invoice cancelled first: open the folio.","客账 {2} 尚需退还 {0}{1:,.2f}，但该客账已开票（{3}）。退款需先作废发票：请打开客账。"
 "{0}{1:,.2f} overdue (oldest due {2}).","{0}{1:,.2f} 已逾期（最早到期 {2}）。"
 "{0}{1:,.2f} overdue by more than {2} days (oldest due {3}).","{0}{1:,.2f} 逾期超过 {2} 天（最早到期 {3}）。"
+A price cannot be below zero.,价格不能小于零。
+{0} has no buying unit.,{0} 没有采购单位。
+A buying unit must hold more than zero {0}.,一个采购单位包含的 {0} 数量必须大于零。
+The buying unit of {0} changed. Close the window and open it again.,{0} 的采购单位已变更。请关闭窗口后重新打开。
+The unit of {0} changed. Close the window and open it again.,{0} 的单位已变更。请关闭窗口后重新打开。
+Give a buying unit both a name and how many {0} it holds.,请同时填写采购单位的名称及其包含的 {0} 数量。
+"{0} already has stock history or is on a recipe, so its unit stays {1}.",{0} 已有库存记录或已用于配方，因此单位保持为 {1}。

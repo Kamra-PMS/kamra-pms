@@ -356,6 +356,12 @@ MODULES: tuple[Module, ...] = (
 				S("pos_reservation_before_min", "Show a reservation from", "number", 60, min=0, max=480, unit="min before"),
 				S("pos_reservation_after_min", "Keep showing it until", "number", 240, min=0, max=720, unit="min after"),
 			)),
+			Section("stock", "Kitchen stock", "How an ingredient's cost follows its deliveries.", (
+				S("stock_cost_method", "Ingredient cost", "select", "Last price paid",
+				  options=("Last price paid", "Average of purchases"),
+				  hint="Last price paid: each priced delivery replaces the cost. Average of purchases: "
+				       "the cost becomes the weighted average of the stock held and what arrived."),
+			)),
 			Section("external_pos", "External POS", "A third-party POS posting room charges through the POS interface.", (
 				S("pos_room_charge_limit", "Largest room charge from an external POS", "number", 0, min=0,
 				  hint="One ticket above this is refused - settle it at the outlet. 0 means no limit."),

@@ -422,9 +422,20 @@ print waiting on a dialog.
 
 ## Ingredients
 
-**F&B → Ingredients** is the store cupboard master: name, unit (kg, g, L…),
-category, cost per unit and whether it is active. Add ingredients here
-before you stock them or put them on a recipe.
+**F&B → Ingredients** is the store cupboard master: name, unit, category,
+cost per unit and whether it is active. Add ingredients here before you
+stock them or put them on a recipe.
+
+- **Unit** is the one unit stock, recipes, counts and wastage use: kg, g, L,
+  ml, pc, or any short word such as *shot* or *slice*. It locks once the
+  ingredient has stock history or is on a recipe, because the quantities
+  already stored are plain numbers in that unit.
+- **Buying unit** (optional) is how it is bought, such as a *box* holding 24
+  pc or a *sack* holding 25,000 g. Fill both the name and how many it holds.
+  You can change it later; past deliveries keep the size they came in.
+- **Cost / unit** is what one stock unit costs. It is updated as stock is
+  received (see [Ingredient cost](#ingredient-cost)); change it here to set
+  it yourself. Saving the form without touching the cost leaves it as it is.
 
 ## Kitchen inventory
 
@@ -452,6 +463,31 @@ To set that level, select the figure (or **Set**) in the **Par** column;
 - A shortage never blocks an order. It's reported, and a dish is never
   switched off automatically.
 - A stock count is a deliberate entry, not a silent overwrite.
+
+**Receive** offers the buying unit first, with how many it holds (change that
+for one delivery if a box came with 20). The price is for whatever unit you
+pick, per box or per piece, and the last column shows what goes into stock and
+what it costs. Leave the price empty to keep the cost; enter 0 for free goods.
+
+The **Ledger** has two tabs. **All movements** is this outlet's history, with
+the price on delivery lines. **Purchases** lists every outlet's deliveries:
+what was bought, the price, the supplier and invoice, and the cost after each.
+
+### Ingredient cost
+
+**Settings → F&B → Kitchen stock → Ingredient cost** decides how a priced
+delivery changes an ingredient's cost, which values wastage, banquet
+ingredient needs and banquet dish costs. An ingredient has one cost for all
+outlets.
+
+- **Last price paid** (default): the delivery's price becomes the cost.
+- **Average of purchases**: the weighted average of the stock held at every
+  outlet and what arrived. 2,000 g costing 200 a gram, plus 1,000 g at 260,
+  gives 220. With no stock (or none priced yet) the new price becomes the
+  cost; free goods lower the average only while priced stock is held.
+
+A banquet dish keeps its saved cost until it is saved again or re-costed from
+today's ingredient prices.
 
 ## F&B dashboard
 
@@ -482,6 +518,7 @@ All under **Settings → F&B** (Hotel Admin, Finance and F&B Manager can change 
 | Flag a bill not sent to the kitchen after | 15 min | An open bill nobody sent turns red on the till and in the orders list. |
 | Show a reservation from | 60 min before | When a table reservation starts showing on the table map. |
 | Keep showing it until | 240 min after | When it stops showing. |
+| Ingredient cost | Last price paid | Whether a priced delivery replaces an ingredient's cost or averages into it. |
 | Kitchen printers | Not a toggle | Managed under **F&B → Printers**. |
 
 ## Troubleshooting

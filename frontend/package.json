@@ -23,7 +23,8 @@
     "dates:check": "node scripts/local-dates-check.mjs",
     "offline:check": "node scripts/offline-check.mjs",
     "bill:check": "node scripts/bill-check.mjs",
-    "money:check": "node scripts/money-check.mjs"
+    "money:check": "node scripts/money-check.mjs",
+    "stock:check": "node scripts/stock-check.mjs"
   },
   "dependencies": {
     "libphonenumber-js": "^1.13.15",
