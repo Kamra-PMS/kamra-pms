@@ -13,6 +13,8 @@
   "rate",
   "amount",
   "instructions",
+  "modifiers",
+  "modifier_total",
   "kot_status",
   "fired_at",
   "started_at",
@@ -53,7 +55,9 @@
    "fieldname": "rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Rate"
+   "label": "Rate",
+   "fetch_if_empty": 1,
+   "description": "The dish's price plus its choices, fixed when the line was added. A later menu price change does not re-price a bill that is open."
   },
   {
    "fieldname": "amount",
@@ -67,6 +71,20 @@
    "fieldtype": "Data",
    "label": "Instructions",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "modifiers",
+   "fieldtype": "Long Text",
+   "label": "Choices",
+   "read_only": 1,
+   "description": "What was chosen from the dish's choice groups, as sold: group, choice and price at that moment."
+  },
+  {
+   "fieldname": "modifier_total",
+   "fieldtype": "Currency",
+   "label": "Choices Add",
+   "read_only": 1,
+   "description": "What the choices add to ONE of this line. Rate already includes it."
   },
   {
    "fieldname": "kot_status",
@@ -145,7 +163,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-10-29 12:00:00.000000",
+ "modified": "2026-11-25 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order Item",

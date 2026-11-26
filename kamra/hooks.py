@@ -283,7 +283,7 @@ _PROPERTY_SCOPED = (
 	"Folio Reprint", "Group Booking", "Holiday Package", "Housekeeping Task", "Hurdle Rate",
 	"Ingredient", "Ingredient Ledger Entry", "Ingredient Stock", "Kamra Custom Report", "Kamra Notification", "Kitchen Printer",
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",
-	"Meal Plan", "Menu Item", "Night Audit Log", "Night Audit Run", "Outbound Webhook",
+	"Meal Plan", "Menu Item", "Menu Modifier Group", "Menu Modifier Option", "Night Audit Log", "Night Audit Run", "Outbound Webhook",
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
 	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Table Reservation",
 	"Print Job",
