@@ -147,3 +147,43 @@ class TestWhoMaySetTheLevel(KitchenStockTestCase):
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
 		self.assertEqual(self.listed()[mine]["par_level"], 4)
 		self.assertFalse(frappe.db.exists("Ingredient Stock", {"ingredient": foreign}))
+
+
+class TestAnOutletOfAnotherProperty(KitchenStockTestCase):
+	"""Someone who can reach both hotels (Administrator here) must not pair one
+	hotel's name with the other's outlet."""
+
+	def setUp(self):
+		super().setUp()
+		self.milk = self.ingredient("UT Milk")
+		self.foreign = frappe.get_doc({
+			"doctype": "POS Outlet", "property": PROP_B,
+			"outlet_name": "UT Foreign Kitchen", "outlet_type": "Restaurant",
+			"gst_rate": 5}).insert(ignore_permissions=True).name
+
+	def assert_refused(self, call):
+		with self.assertRaises(frappe.ValidationError) as caught:
+			call()
+		self.assertIn("That outlet is not at this property.", str(caught.exception))
+		self.assertFalse(frappe.db.exists("Ingredient Stock", {"outlet": self.foreign}))
+
+	def test_a_receipt_is_refused_and_the_cost_is_left_alone(self):
+		self.assert_refused(lambda: inventory.receive_stock(
+			PROP_A, self.foreign,
+			[{"ingredient": self.milk, "qty": 1, "cost_per_unit": 99}]))
+
+		self.assertEqual(
+			frappe.db.get_value("Ingredient", self.milk, "cost_per_unit"), 20)
+
+	def test_a_stock_take_is_refused(self):
+		self.assert_refused(lambda: inventory.adjust_stock(
+			PROP_A, self.foreign,
+			[{"ingredient": self.milk, "counted_qty": 1}], "weekly count"))
+
+	def test_wastage_is_refused(self):
+		self.assert_refused(lambda: inventory.record_wastage(
+			PROP_A, self.foreign, self.milk, 1, "spilt"))
+
+	def test_a_low_stock_level_is_refused(self):
+		self.assert_refused(lambda: inventory.set_par_level(
+			PROP_A, self.foreign, self.milk, 3))

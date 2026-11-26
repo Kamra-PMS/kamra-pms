@@ -2334,6 +2334,37 @@ def t_kitchen_stock_pick_and_level():
 		pass
 
 
+@check("kitchen stock: another property's outlet is refused for receipts, counts, wastage and levels")
+def t_kitchen_stock_foreign_outlet():
+	from kamra import inventory
+
+	other = frappe.get_doc({
+		"doctype": "Property", "property_name": "EVAL Other Stock Hotel",
+	}).insert(ignore_permissions=True).name
+	foreign = frappe.get_doc({
+		"doctype": "POS Outlet", "property": other, "outlet_name": "Foreign Kitchen",
+		"outlet_type": "Restaurant", "gst_rate": 5,
+	}).insert(ignore_permissions=True).name
+	milk = inventory.save_ingredient(P, "Foreign Milk", "L", cost_per_unit=20)["name"]
+
+	calls = {
+		"receipt": lambda: inventory.receive_stock(
+			P, foreign, [{"ingredient": milk, "qty": 1, "cost_per_unit": 99}]),
+		"stock take": lambda: inventory.adjust_stock(
+			P, foreign, [{"ingredient": milk, "counted_qty": 1}], "count"),
+		"wastage": lambda: inventory.record_wastage(P, foreign, milk, 1, "spilt"),
+		"low-stock level": lambda: inventory.set_par_level(P, foreign, milk, 3),
+	}
+	for what, call in calls.items():
+		try:
+			call()
+			raise AssertionError(f"a {what} was accepted at another property's outlet")
+		except frappe.ValidationError as e:
+			assert "not at this property" in str(e), e
+	assert not frappe.db.exists("Ingredient Stock", {"outlet": foreign})
+	assert frappe.db.get_value("Ingredient", milk, "cost_per_unit") == 20
+
+
 def _id_photo(colour=(180, 40, 40)):
 	"""A real PNG data URL, built in memory - no fixture file to go missing."""
 	import base64
@@ -12587,7 +12618,7 @@ def execute():
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
 		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent,
-		           t_banquet_indent_outlet_shelf):
+		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

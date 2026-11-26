@@ -2364,13 +2364,6 @@ def _issued_to(function: str, ingredients: list) -> dict:
 	return out
 
 
-def _check_outlet(doc, outlet: str) -> None:
-	"""require_perm only checks the user can reach each record; an outlet at
-	another property is not this function's."""
-	if frappe.db.get_value("POS Outlet", outlet, "property") != doc.property:
-		frappe.throw(_("That outlet is not at this property."))
-
-
 @frappe.whitelist()
 @require_perm("Venue Booking", "view_functions")
 def kitchen_indent(function: str, outlet: str | None = None):
@@ -2385,9 +2378,11 @@ def kitchen_indent(function: str, outlet: str | None = None):
 	`outlet` counts that shelf only - the one the stock will be issued from.
 	Without it `on_hand` adds up every outlet.
 	"""
+	from kamra.inventory import check_outlet
+
 	doc = _fn(function)
 	if outlet:
-		_check_outlet(doc, outlet)
+		check_outlet(doc.property, outlet)
 	shelf = {"outlet": outlet} if outlet else {}
 	pax = doc.billable_pax
 	if not pax:
@@ -2488,7 +2483,7 @@ def issue_indent(function: str, outlet: str, rows=None):
 	and a bigger headcount takes the difference. A smaller one puts nothing
 	back; a stock take does that. Rows named by the caller are issued as given.
 	"""
-	from kamra.inventory import _apply_move
+	from kamra.inventory import _apply_move, check_outlet
 
 	# One issue at a time per function, and everything read after the lock. The
 	# transaction this request has been reading in ends first: its snapshot
@@ -2499,9 +2494,7 @@ def issue_indent(function: str, outlet: str, rows=None):
 	if doc.status not in ("Confirmed", "Completed"):
 		frappe.throw(_("Issue against a confirmed function, not a {0} one.")
 		             .format(doc.status))
-	# without this, a user on two hotels can issue Hotel A's function from
-	# Hotel B's outlet and leave a stock row labelled A under B
-	_check_outlet(doc, outlet)
+	check_outlet(doc.property, outlet)
 	if rows:
 		wanted = [(r["ingredient"], float(r.get("required") or r.get("qty") or 0))
 		          for r in _rows(rows)]
