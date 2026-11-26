@@ -487,7 +487,15 @@ function distributeGuests(adults: number, children: number, rooms: number): Room
   return list
 }
 
-function matchesRoomError(errorMsg: string | null | undefined, roomIdx: number, roomTypeName?: string, roomTypeDoc?: string): boolean {
+/** Prefer structured `room_index` (0-based) from the server; fall back to text. */
+function matchesRoomError(
+  errorMsg: string | null | undefined,
+  roomIdx: number,
+  roomTypeName?: string,
+  roomTypeDoc?: string,
+  errorRoomIndex?: number | null,
+): boolean {
+  if (errorRoomIndex != null) return errorRoomIndex === roomIdx
   if (!errorMsg) return false
   const lower = errorMsg.toLowerCase()
   const roomNum = roomIdx + 1
@@ -501,6 +509,25 @@ function matchesRoomError(errorMsg: string | null | undefined, roomIdx: number, 
     return true
   }
   return false
+}
+
+/** Read `room_index` from a Frappe `_server_messages` payload, if present. */
+function roomIndexFromError(e: unknown): number | null {
+  try {
+    const body = (e as { body?: string }).body
+    if (!body) return null
+    const parsed = JSON.parse(body) as { _server_messages?: string }
+    const msgs = JSON.parse(parsed._server_messages ?? "[]") as unknown[]
+    for (const raw of msgs) {
+      const m = typeof raw === "string" ? JSON.parse(raw) : raw
+      if (m && typeof (m as { room_index?: unknown }).room_index === "number") {
+        return (m as { room_index: number }).room_index
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null
 }
 
 export default function PublicBooking() {
@@ -710,6 +737,7 @@ export default function PublicBooking() {
     status: string
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorRoomIndex, setErrorRoomIndex] = useState<number | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -721,6 +749,7 @@ export default function PublicBooking() {
     setProperty(null)
     setResults({})
     setError(null)
+    setErrorRoomIndex(null)
     setLoadFailed(false)
     callGuest<{
       mode: string
@@ -902,10 +931,15 @@ export default function PublicBooking() {
           activeRows.forEach((r) => (map[r.room_type] = r))
           setResults(map)
         }
-      }).catch(() => {
+      }).catch((e) => {
         setResults({})
         setMultiRoomResults(null)
         setRatesFailed(true)
+        const idx = roomIndexFromError(e)
+        if (idx != null) {
+          setError(serverError(e))
+          setErrorRoomIndex(idx)
+        }
       }).finally(() => setLoadingRates(false))
       return
     }
@@ -993,9 +1027,12 @@ export default function PublicBooking() {
     if (isMulti && Object.keys(selectedRooms).length < (search.rooms || 1)) return
     setBusy(true)
     setError(null)
+    setErrorRoomIndex(null)
 
     if (isMulti && roomParties.some((p) => p.adults < 1)) {
+      const badIdx = roomParties.findIndex((p) => p.adults < 1)
       setError(t("Each room must have at least 1 adult."))
+      setErrorRoomIndex(badIdx >= 0 ? badIdx : null)
       setBusy(false)
       return
     }
@@ -1053,6 +1090,7 @@ export default function PublicBooking() {
       })
     } catch (e) {
       setError(serverError(e))
+      setErrorRoomIndex(roomIndexFromError(e))
     } finally {
       setBusy(false)
     }
@@ -1588,7 +1626,7 @@ export default function PublicBooking() {
                             </div>
                             {p.adults < 1 && (
                               <p role="alert" className="text-[11px] font-medium text-amber-700 bg-amber-50 p-1.5 rounded border border-amber-200">
-                                {t("Each room requires at least 1 adult.")}
+                                {t("Each room must have at least 1 adult.")}
                               </p>
                             )}
                             {p.children > 0 && (
@@ -1906,7 +1944,7 @@ export default function PublicBooking() {
                         const isSelected = !!selectedRooms[idx]
                         const isActive = activeRoomIndex === idx
                         const sel = selectedRooms[idx]
-                        const isTabError = matchesRoomError(error, idx, sel?.room_type_name, sel?.room_type) || party.adults < 1
+                        const isTabError = matchesRoomError(error, idx, sel?.room_type_name, sel?.room_type, errorRoomIndex) || party.adults < 1
                         return (
                           <button
                             key={idx}
@@ -2051,7 +2089,7 @@ export default function PublicBooking() {
                 )}
 
                 <div className="mt-5 space-y-5">
-                  {isMulti && matchesRoomError(error, activeRoomIndex, selectedRooms[activeRoomIndex]?.room_type_name, selectedRooms[activeRoomIndex]?.room_type) && (
+                  {isMulti && matchesRoomError(error, activeRoomIndex, selectedRooms[activeRoomIndex]?.room_type_name, selectedRooms[activeRoomIndex]?.room_type, errorRoomIndex) && (
                     <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700 flex items-center gap-2">
                       <AlertCircle className="size-4 shrink-0" />
                       <span>{translate(error!)}</span>
@@ -2624,7 +2662,7 @@ export default function PublicBooking() {
                   </div>
                   {selectedRoomsList.map(([idx, r]) => {
                     const roomNum = Number(idx) + 1
-                    const isRoomError = matchesRoomError(error, Number(idx), r.room_type_name, r.room_type)
+                    const isRoomError = matchesRoomError(error, Number(idx), r.room_type_name, r.room_type, errorRoomIndex)
                     return (
                       <div
                         key={idx}
@@ -2806,7 +2844,7 @@ export default function PublicBooking() {
                 </label>
               </div>
 
-              {error && (!isMulti || !selectedRoomsList.some(([idx, r]) => matchesRoomError(error, Number(idx), r.room_type_name, r.room_type))) && (
+              {error && (!isMulti || !selectedRoomsList.some(([idx, r]) => matchesRoomError(error, Number(idx), r.room_type_name, r.room_type, errorRoomIndex))) && (
                 <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 flex items-center gap-2">
                   <AlertCircle className="size-4 shrink-0" />
                   <span>{translate(error)}</span>

@@ -427,15 +427,15 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 		if len(parsed_rooms) > 10:
 			frappe.throw(_("Cannot search more than 10 rooms."))
 
-		for r in parsed_rooms:
+		for idx, r in enumerate(parsed_rooms):
 			if not isinstance(r, dict):
-				frappe.throw(_("Each room must be an object."))
+				_throw_for_room(idx, _("Each room must be an object."))
 			r_a = cint(r.get("adults", 0))
 			r_c = cint(r.get("children", 0))
 			if r_a < 1:
-				frappe.throw(_("Each room must have at least 1 adult."))
+				_throw_for_room(idx, _("Each room must have at least 1 adult."))
 			if r_c < 0:
-				frappe.throw(_("Children count cannot be negative."))
+				_throw_for_room(idx, _("Children count cannot be negative."))
 
 		if len(parsed_rooms) == 1:
 			adults = cint(parsed_rooms[0].get("adults", 1))
@@ -904,6 +904,46 @@ def request_guest_laundry(token: str, notes: str = "", express: int = 0):
 TOO_MANY_GUESTS = "The property cannot accommodate the number of people requested."
 
 
+def _throw_for_room(room_index: int, msg: str):
+	"""Refuse a multi-room request naming which room failed.
+
+	`room_index` is 0-based (matches the `rooms[]` payload / frontend tabs).
+	The human message is prefixed with a 1-based "Room N:" for text matchers;
+	`room_index` is also attached on the last `_server_messages` entry so the
+	client can mark the right room without scraping the string.
+	"""
+	labeled = _("Room {0}: {1}").format(room_index + 1, msg)
+	try:
+		frappe.throw(labeled)
+	except Exception:
+		_annotate_last_message(room_index=room_index)
+		raise
+
+
+def _annotate_last_message(room_index: int | None = None, **extra):
+	"""Merge keys onto the most recent frappe message_log entry, if any.
+
+	When `room_index` is set, also prefix the message with a 1-based
+	"Room N:" so text-based UI matchers keep working.
+	"""
+	log = getattr(frappe.local, "message_log", None) or []
+	if not log:
+		return
+	try:
+		entry = log[-1]
+		data = frappe.parse_json(entry) if isinstance(entry, str) else dict(entry)
+		if room_index is not None:
+			extra = {**extra, "room_index": room_index}
+			msg = str(data.get("message") or "")
+			prefix = _("Room {0}:").format(room_index + 1)
+			if msg and prefix not in msg and f"Room {room_index + 1}:" not in msg:
+				data["message"] = f"{prefix} {msg}"
+		data.update(extra)
+		log[-1] = frappe.as_json(data) if isinstance(entry, str) else data
+	except Exception:
+		pass
+
+
 def _child_ages(child_ages) -> list[int] | None:
 	"""Ages from the request - a list, a JSON list or "3,8,13". None when the
 	caller sent only a children count."""
@@ -1200,23 +1240,23 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 		if len(parsed_rooms) > 10:
 			frappe.throw(_("Cannot book more than 10 rooms in a single transaction."))
 
-		for rm in parsed_rooms:
+		for idx, rm in enumerate(parsed_rooms):
 			if not isinstance(rm, dict):
-				frappe.throw(_("Each room must be an object."))
+				_throw_for_room(idx, _("Each room must be an object."))
 			rt = rm.get("room_type")
 			if not rt:
-				frappe.throw(_("Each room must specify a room_type."))
+				_throw_for_room(idx, _("Each room must specify a room_type."))
 			r_a = cint(rm.get("adults", 0))
 			r_c = cint(rm.get("children", 0))
 			if r_a < 1:
-				frappe.throw(_("Each room must have at least 1 adult."))
+				_throw_for_room(idx, _("Each room must have at least 1 adult."))
 			if r_c < 0:
-				frappe.throw(_("Children count cannot be negative."))
+				_throw_for_room(idx, _("Children count cannot be negative."))
 			rtd = frappe.get_cached_doc("Room Type", rt)
 			a, c, infants = _party(rtd, r_a, r_c, _child_ages(rm.get("child_ages")))
 			above, beds = capacity_overflow(rtd, a, c)
 			if above > beds:
-				frappe.throw(TOO_MANY_GUESTS)
+				_throw_for_room(idx, TOO_MANY_GUESTS)
 
 		if len(parsed_rooms) == 1:
 			room_type = parsed_rooms[0]["room_type"]
@@ -1240,7 +1280,11 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 				all_res = frappe.get_all(
 					"Reservation",
 					filters={"group_booking": gb_name} if gb_name else {"name": existing_res.name},
-					fields=["name", "amount_after_tax", "advance_due", "status"],
+					fields=[
+						"name", "amount_after_tax", "advance_due", "status",
+						"over_capacity_guests", "room_type",
+						"check_in_date", "check_out_date",
+					],
 					order_by="creation asc",
 				)
 				res_names = [r.name for r in all_res]
@@ -1250,6 +1294,20 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 					gb_deposit = frappe.db.get_value("Group Booking", gb_name, "deposit_due")
 					if gb_deposit is not None:
 						total_advance = flt(gb_deposit)
+				any_needs_confirmation = False
+				confirmation_reason = None
+				any_holiday = False
+				from kamra.pricing import stay_season_rules
+				for r in all_res:
+					above = cint(r.over_capacity_guests)
+					if above > 0:
+						any_needs_confirmation = True
+						if not confirmation_reason:
+							confirmation_reason = _over_capacity_note(above)
+					rules = stay_season_rules(
+						property, r.check_in_date, r.check_out_date, r.room_type)
+					if rules.get("is_holiday"):
+						any_holiday = True
 				return {
 					"reservation": existing_res.name,
 					"reservations": res_names,
@@ -1260,9 +1318,9 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 					"payment_policy": existing_res.payment_policy,
 					"pay_at_hotel": total_advance <= 0,
 					"status": existing_res.status,
-					"needs_confirmation": False,
-					"confirmation_reason": None,
-					"is_holiday": False,
+					"needs_confirmation": any_needs_confirmation,
+					"confirmation_reason": confirmation_reason,
+					"is_holiday": any_holiday,
 					"idempotent_replay": 1,
 					"cleaning_fee": float(
 						frappe.db.get_value("Property", property, "cleaning_fee") or 0
@@ -1313,17 +1371,21 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 				rm_ages = rm.get("child_ages")
 				rm_key = f"{idempotency_key}-{idx}" if idempotency_key else ""
 
-				res = _book_single_stay(
-					property=property, room_type=rt, check_in_date=check_in_date,
-					check_out_date=check_out_date, guest_name=guest_name, phone=phone,
-					email=email, adults=rm_adults, children=rm_children,
-					meal_plan=rm_meal_plan, special_requests=special_requests if idx == 0 else "",
-					safe_addons=safe_addons if idx == 0 else None,
-					voucher_code=voucher_code,
-					idempotency_key=rm_key, pets=pets if idx == 0 else 0,
-					child_ages=rm_ages, marketing_consent=marketing_consent if idx == 0 else 0,
-					source_tag=source_tag, prop=prop, commit=False,
-				)
+				try:
+					res = _book_single_stay(
+						property=property, room_type=rt, check_in_date=check_in_date,
+						check_out_date=check_out_date, guest_name=guest_name, phone=phone,
+						email=email, adults=rm_adults, children=rm_children,
+						meal_plan=rm_meal_plan, special_requests=special_requests if idx == 0 else "",
+						safe_addons=safe_addons if idx == 0 else None,
+						voucher_code=voucher_code,
+						idempotency_key=rm_key, pets=pets if idx == 0 else 0,
+						child_ages=rm_ages, marketing_consent=marketing_consent if idx == 0 else 0,
+						source_tag=source_tag, prop=prop, commit=False,
+					)
+				except frappe.ValidationError:
+					_annotate_last_message(room_index=idx)
+					raise
 				created_list.append(res)
 				total_advance_due += float(res.get("advance_due") or 0)
 				total_amount += float(res.get("amount_after_tax") or 0)
@@ -1355,20 +1417,9 @@ def book(property: str, room_type: str = "", check_in_date: str = "",
 			for r in res_names:
 				frappe.db.set_value("Reservation", r, "group_booking", gb.name)
 
-			# Discount applied on every room above; keep the voucher link
-			# only on the master so a single-use code is recorded once.
-			if voucher_code and len(res_names) > 1:
-				for name in res_names[1:]:
-					doc = frappe.get_doc("Reservation", name)
-					if not doc.voucher:
-						continue
-					frappe.db.set_value("Reservation", name, "voucher", None,
-					                    update_modified=False)
-					doc.voucher = None
-					frappe.db.set_value(
-						"Reservation", name, "rate_lock_key",
-						doc.rate_lock_key_for(doc.quote_inputs()),
-						update_modified=False)
+			# Discount is applied on every room above; consume the voucher once
+			# under the lock below. Keep the voucher link on every Reservation
+			# so amendments and night pricing still see it.
 
 			if voucher_code:
 				v_name = frappe.db.get_value(

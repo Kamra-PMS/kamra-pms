@@ -245,9 +245,9 @@ class PublicBookingTestCase(IntegrationTestCase):
 		r1, r2 = res["reservations"]
 		d1 = frappe.get_doc("Reservation", r1)
 		d2 = frappe.get_doc("Reservation", r2)
-		# recorded once on the master; both rooms keep the discounted total
+		# voucher link kept on every room; use counted once under the lock
 		self.assertEqual(d1.voucher, v.name)
-		self.assertFalse(d2.voucher)
+		self.assertEqual(d2.voucher, v.name)
 		self.assertGreater(flt(d1.discount_amount), 0)
 		self.assertGreater(flt(d2.discount_amount), 0)
 		self.assertAlmostEqual(
@@ -327,7 +327,67 @@ class PublicBookingTestCase(IntegrationTestCase):
 		self.assertEqual(res2["reservation"], res1["reservation"])
 		self.assertEqual(res2["group_booking"], res1["group_booking"])
 		self.assertEqual(res2["reservations"], res1["reservations"])
+		self.assertEqual(res2["needs_confirmation"], res1["needs_confirmation"])
+		self.assertEqual(res2["is_holiday"], res1["is_holiday"])
+		self.assertEqual(res2.get("confirmation_reason"), res1.get("confirmation_reason"))
 		self.assertEqual(frappe.db.count("Group Booking", {"property": self.property}), before_gb + 1)
+
+	def test_multi_room_idempotent_replay_keeps_confirmation_and_holiday(self):
+		from kamra.public_api import book
+
+		frappe.db.set_value("Room Type", self.room_type, "max_extra_beds", 1)
+		frappe.clear_document_cache("Room Type", self.room_type)
+		frappe.get_doc({
+			"doctype": "Season", "property": self.property,
+			"season_name": "Holiday Test", "start_date": self.ci, "end_date": self.ci,
+			"is_holiday": 1, "adjustment_type": "Percent", "adjustment_value": 0,
+		}).insert(ignore_permissions=True)
+		if not frappe.db.exists("Room", {"property": self.property, "room_number": "102"}):
+			frappe.get_doc({
+				"doctype": "Room", "property": self.property,
+				"room_type": self.room_type, "room_number": "102",
+			}).insert(ignore_permissions=True)
+
+		key = "MULTI-IDEMP-CONFIRM-HOLIDAY"
+		res1 = book(
+			property=self.property, check_in_date=self.ci, check_out_date=self.co,
+			guest_name="Confirm Guest", phone="+5511988887777",
+			idempotency_key=key,
+			rooms=[
+				{"room_type": self.room_type, "adults": 3, "children": 0},
+				{"room_type": self.room_type, "adults": 2, "children": 0},
+			],
+		)
+		self.assertTrue(res1["needs_confirmation"])
+		self.assertTrue(res1["is_holiday"])
+		self.assertEqual(res1["idempotent_replay"], 0)
+
+		res2 = book(
+			property=self.property, check_in_date=self.ci, check_out_date=self.co,
+			guest_name="Confirm Guest", phone="+5511988887777",
+			idempotency_key=key,
+			rooms=[
+				{"room_type": self.room_type, "adults": 3, "children": 0},
+				{"room_type": self.room_type, "adults": 2, "children": 0},
+			],
+		)
+		self.assertEqual(res2["idempotent_replay"], 1)
+		self.assertTrue(res2["needs_confirmation"])
+		self.assertTrue(res2["is_holiday"])
+		self.assertEqual(res2["confirmation_reason"], res1["confirmation_reason"])
+
+	def test_per_room_validation_includes_room_index(self):
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			search_stay(self.property, self.ci, self.co, rooms=[
+				{"adults": 2, "children": 0},
+				{"adults": 0, "children": 0},
+			])
+		self.assertIn("Room 2", str(ctx.exception))
+		log = getattr(frappe.local, "message_log", None) or []
+		self.assertTrue(log)
+		entry = log[-1]
+		data = frappe.parse_json(entry) if isinstance(entry, str) else entry
+		self.assertEqual(data.get("room_index"), 1)
 
 	def test_booking_room_abuse_rate_limit(self):
 		from kamra.public_api import _check_booking_room_rate_limit

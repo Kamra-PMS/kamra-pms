@@ -2067,6 +2067,7 @@
 	"Each request becomes a task for the right team.": "Cada solicitação se torna uma tarefa para a equipe certa.",
 	"Each request becomes a task for the right team. A price goes on the guest's bill.": "Cada solicitação gera uma tarefa para a equipe responsável. O valor entra na fatura do hóspede.",
 	"Each request carries X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp and X-Kamra-Signature. Recompute the signature over the raw body and reject old timestamps:": "Cada solicitação carrega X-Kamra-Event, X-Kamra-Event-Id, X-Kamra-Timestamp e X-Kamra-Signature. Recalcule a assinatura sobre o corpo bruto e rejeite os carimbos de data/hora antigos:",
+	"Each room must have at least 1 adult.": "Cada quarto deve ter pelo menos 1 adulto.",
 	"Each room requires at least 1 adult ({n} adults needed for {rooms} rooms).": "Cada quarto requer pelo menos 1 adulto ({n} adultos necessários para {rooms} quartos).",
 	"Each sign-in from Claude, ChatGPT or another MCP client. Disconnect one and it has to sign in again.": "Cada login de Claude, ChatGPT ou outro cliente MCP. Desconecte um e ele deverá fazer login novamente.",
 	"Each stay becomes a normal booking at its own property, with its own bill. Take advances on each stay.": "Cada estadia se torna uma reserva normal no seu respectivo hotel, com sua própria fatura. Receba adiantamentos em cada estadia.",
