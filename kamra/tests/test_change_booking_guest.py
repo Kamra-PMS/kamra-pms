@@ -4,11 +4,13 @@ number: the desk moves the booking to them, before check-in.
 The booking and its own paperwork name the new guest; the old profile, its
 other stays, the money and the messages already sent to it stay as they were."""
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
 
-from kamra.api import change_booking_guest, create_booking
+from kamra.api import change_booking_guest, create_booking, guest_alert
 
 DESK = "change.guest.desk@test.local"
 HOUSEKEEPER = "change.guest.hk@test.local"
@@ -40,6 +42,7 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 
 	def tearDown(self):
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		frappe.flags.kamra_blacklist_override = None
 		frappe.db.rollback()
 		for user in (DESK, HOUSEKEEPER, ADMIN):
 			frappe.clear_cache(user=user)
@@ -212,7 +215,6 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 		self.assertFalse(frappe.db.exists("File", {"file_url": url}))
 
 	def test_if_the_scan_cannot_be_deleted_the_guest_is_not_changed(self):
-		from unittest.mock import patch
 		self._store_id_scan()
 		frappe.db.savepoint("before_swap")
 		# discard_id_document logs and carries on when Frappe cannot delete the file
@@ -272,28 +274,6 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
 		self.assertEqual(self.res().guest, self.alice)
 
-	def test_a_blacklisted_phone_at_another_hotel_hides_name_and_reason(self):
-		# Dora only stayed at the other hotel and is blacklisted there
-		_other, dora = self._other_hotel_booking()
-		frappe.db.set_value("Guest", dora, {
-			"blacklisted": 1, "blacklist_reason": "Secret other-hotel reason"})
-		dora_phone = frappe.db.get_value("Guest", dora, "phone")
-		self._limit_desk_to_this_hotel()
-		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
-		with self.assertRaises(frappe.ValidationError) as ctx:
-			change_booking_guest(self.name, guest_name="Typed Local Name", phone=dora_phone)
-		msg = str(ctx.exception)
-		self.assertIn("blacklisted", msg.lower())
-		self.assertNotIn("Secret other-hotel reason", msg)
-		self.assertNotIn(frappe.db.get_value("Guest", dora, "full_name"), msg)
-		# Hotel Admin override keeps the typed name, not Dora's profile
-		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- admin override
-		change_booking_guest(self.name, guest_name="Typed Local Name", phone=dora_phone,
-		                     blacklist_override_reason="GM approved at this hotel")
-		res = self.res()
-		self.assertNotEqual(res.guest, dora)
-		self.assertEqual(res.guest_name, "Typed Local Name")
-
 	# -- a desk limited to one hotel ---------------------------------------
 
 	def _other_hotel_booking(self):
@@ -341,6 +321,158 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 		change_booking_guest(self.name, guest=unseen)
 		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
 		self.assertEqual(self.res().guest, unseen)
+
+	def test_a_blacklisted_phone_at_another_hotel_hides_name_and_reason(self):
+		# Dora only stayed at the other hotel and is blacklisted there
+		_other, dora = self._other_hotel_booking()
+		frappe.db.set_value("Guest", dora, {
+			"blacklisted": 1, "blacklist_reason": "Secret other-hotel reason"})
+		dora_phone = frappe.db.get_value("Guest", dora, "phone")
+		self._limit_desk_to_this_hotel()
+		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			change_booking_guest(self.name, guest_name="Typed Local Name", phone=dora_phone)
+		msg = str(ctx.exception)
+		self.assertIn("blacklisted", msg.lower())
+		self.assertNotIn("Secret other-hotel reason", msg)
+		self.assertNotIn(frappe.db.get_value("Guest", dora, "full_name"), msg)
+		# Hotel Admin override keeps the typed name, not Dora's profile
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- admin override
+		change_booking_guest(self.name, guest_name="Typed Local Name", phone=dora_phone,
+		                     blacklist_override_reason="GM approved at this hotel")
+		res = self.res()
+		self.assertNotEqual(res.guest, dora)
+		self.assertEqual(res.guest_name, "Typed Local Name")
+
+	def test_the_desk_cannot_override_a_number_listed_at_another_hotel(self):
+		# not seeing who is listed is no reason to let them through
+		_booking, dora = self._other_hotel_booking()
+		frappe.db.set_value("Guest", dora, {"blacklisted": 1, "blacklist_reason": "Broke a door"})
+		self._limit_desk_to_this_hotel()
+		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
+		number = "+256 700 000 007"
+		for what, call in (
+			("change guest", lambda: self.swap(guest_name="Somebody Else", phone=number,
+			                                   blacklist_override_reason="I say so")),
+			("change guest, under their name", lambda: self.swap(
+				guest_name="Dora Elsewhere", phone=number, blacklist_override_reason="I say so")),
+			("new booking", lambda: self._book_with("Somebody Else", number,
+			                                        blacklist_override_reason="I say so")),
+		):
+			with self.subTest(what):
+				frappe.local.message_log = []
+				with self.assertRaises(frappe.PermissionError) as refused:
+					call()
+				told = f"{refused.exception} {frappe.local.message_log}"
+				self.assertNotIn("Broke a door", told)
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
+		self.assertEqual(self.res().guest, self.alice)
+		self.assertFalse(frappe.db.exists("Agent Action Log", {
+			"action_type": "blacklist_override", "reference_name": dora}))
+
+	# -- a number on the blacklist ------------------------------------------
+
+	def _listed(self, phone="+256700000009"):
+		"""A blacklisted guest who has never stayed anywhere: every desk may see them."""
+		return frappe.get_doc({"doctype": "Guest", "first_name": "Barred", "last_name": "Person",
+			"phone": phone, "blacklisted": 1,
+			"blacklist_reason": "Damage"}).insert(ignore_permissions=True).name
+
+	def _book_with(self, guest_name, phone, **kw):
+		return create_booking(self.property, self.room_type, str(add_days(nowdate(), 40)),
+		                      str(add_days(nowdate(), 41)), guest_name, phone=phone, **kw)
+
+	def _refusal(self, call) -> str:
+		"""Everything the screen would be told: the error and the queued messages."""
+		frappe.local.message_log = []
+		with self.assertRaises(frappe.ValidationError) as refused:
+			call()
+		return f"{refused.exception} {frappe.local.message_log}"
+
+	def test_a_number_listed_at_another_hotel_is_refused_without_saying_who_or_why(self):
+		_booking, dora = self._other_hotel_booking()
+		frappe.db.set_value("Guest", dora, {"blacklisted": 1, "blacklist_reason": "Broke a door"})
+		self._limit_desk_to_this_hotel()
+		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
+		number = "+256 700 000 007"
+		for what, call in (
+			("change guest", lambda: self.swap(guest_name="Somebody Else", phone=number)),
+			("change guest, under their name", lambda: self.swap(guest_name="Dora Elsewhere", phone=number)),
+			("new booking", lambda: self._book_with("Somebody Else", number)),
+		):
+			with self.subTest(what):
+				told = self._refusal(call)
+				self.assertIn("blacklisted", told)
+				self.assertNotIn("Dora", told)
+				self.assertNotIn("Broke a door", told)
+		alert = guest_alert(phone=number)
+		self.assertTrue(alert["blacklisted"])
+		self.assertIsNone(alert["guest"])
+		self.assertIsNone(alert["full_name"])
+		self.assertIsNone(alert["blacklist_reason"])
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
+		self.assertEqual(self.res().guest, self.alice)
+
+	def test_a_number_the_desk_may_see_is_refused_saying_who_and_why(self):
+		self._listed()
+		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
+		for what, call in (
+			("change guest", lambda: self.swap(guest_name="Somebody Else", phone="+256 700 000 009")),
+			("new booking", lambda: self._book_with("Somebody Else", "+256 700 000 009")),
+		):
+			with self.subTest(what):
+				told = self._refusal(call)
+				self.assertIn("Barred Person", told)
+				self.assertIn("Damage", told)
+
+	def test_the_warning_is_about_the_blacklisted_profile_when_a_number_is_shared(self):
+		banned = self._listed()
+		# a newer, clean profile on the same number: a plain lookup would find this one
+		frappe.get_doc({"doctype": "Guest", "first_name": "Honest", "last_name": "Sharer",
+			"phone": "+256700000009"}).insert(ignore_permissions=True)
+		alert = guest_alert(phone="+256700000009")
+		self.assertTrue(alert["blacklisted"])
+		self.assertEqual(alert["guest"], banned)
+
+	def test_a_hotel_admins_override_books_the_name_typed_not_the_listed_profile(self):
+		banned = self._listed()
+		out = self.swap(guest_name="Somebody Else", phone="+256 700 000 009",
+		                blacklist_override_reason="Shared family phone")
+		self.assertNotEqual(out["guest"], banned)
+		self.assertTrue(out["new_profile"])
+		self.assertEqual(self.res().guest_name, "Somebody Else")
+		self.assertEqual(frappe.db.get_value("Guest", banned, "full_name"), "Barred Person")
+		self.assertTrue(frappe.db.exists("Agent Action Log", {
+			"action_type": "blacklist_override", "reference_name": banned}))
+
+	def test_a_new_booking_override_books_the_name_typed_too(self):
+		banned = self._listed()
+		out = self._book_with("Somebody Else", "+256 700 000 009",
+		                      blacklist_override_reason="Shared family phone")
+		booked = frappe.db.get_value("Reservation", out["reservation"], ["guest", "guest_name"],
+		                             as_dict=True)
+		self.assertNotEqual(booked.guest, banned)
+		self.assertEqual(booked.guest_name, "Somebody Else")
+
+	def test_an_override_under_the_listed_name_books_that_profile(self):
+		banned = self._listed()
+		out = self.swap(guest_name="barred person", phone="+256 700 000 009",
+		                blacklist_override_reason="Manager OK")
+		self.assertEqual(out["guest"], banned)
+
+	def test_the_desk_cannot_override_a_listed_number(self):
+		self._listed()
+		frappe.set_user(self.desk)  # nosemgrep: frappe-setuser -- the user under test
+		for call in (
+			lambda: self.swap(guest_name="Somebody Else", phone="+256 700 000 009",
+			                  blacklist_override_reason="I say so"),
+			lambda: self._book_with("Somebody Else", "+256 700 000 009",
+			                        blacklist_override_reason="I say so"),
+		):
+			with self.assertRaises(frappe.PermissionError):
+				call()
+		frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- read back the result
+		self.assertEqual(self.res().guest, self.alice)
 
 	# -- who may ----------------------------------------------------------
 

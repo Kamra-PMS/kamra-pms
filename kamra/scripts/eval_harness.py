@@ -11852,6 +11852,28 @@ def t_change_booking_guest():
 		frappe.db.set_value("Reservation", res.name, "status", "Confirmed")
 
 
+@check("a blacklisted phone number still stops a booking; a Hotel Admin's override books the name typed")
+def t_blacklisted_number_books_typed_name():
+	from kamra import api
+	banned = _guest("Eval Listed Number", "+91 70000 00640")
+	frappe.db.set_value("Guest", banned, {"blacklisted": 1, "blacklist_reason": "eval"})
+	kw = dict(property=P, room_type=RT, check_in_date="2033-11-10", check_out_date="2033-11-11",
+	          guest_name="Eval Someone Else", phone="+91 70000 00640")
+	try:
+		api.create_booking(**kw)
+		raise AssertionError("a blacklisted number booked without an override")
+	except frappe.ValidationError as e:
+		assert "blacklisted" in str(e).lower(), e
+	try:
+		out = api.create_booking(**kw, blacklist_override_reason="shared family phone")
+	finally:
+		frappe.flags.kamra_blacklist_override = None
+	booked = frappe.db.get_value("Reservation", out["reservation"], ["guest", "guest_name"], as_dict=True)
+	assert booked.guest != banned and booked.guest_name == "Eval Someone Else", booked
+	assert frappe.db.exists("Agent Action Log", {
+		"reference_name": banned, "action_type": "blacklist_override"})
+
+
 @check("typed nights with a voucher or without the right to set rates are refused")
 def t_night_prices_refused():
 	from kamra.api import create_booking, get_quote
@@ -12517,6 +12539,7 @@ def execute():
 		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_saved_stay, t_change_booking_guest,
+		           t_blacklisted_number_books_typed_name,
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,

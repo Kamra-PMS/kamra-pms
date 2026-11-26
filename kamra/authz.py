@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from functools import wraps
 
 import frappe
+from frappe import _
 from frappe.utils import add_to_date, cint, now_datetime
 
 ADMIN = ("System Manager", "Administrator", "Hotel Admin")
@@ -233,6 +234,24 @@ def assert_guest_access(guest: str | None):
 	if props and not props & allowed:
 		frappe.throw("You don't have access to this guest.",
 		             frappe.PermissionError)
+
+
+def can_see_guest(guest: str | None) -> bool:
+	"""assert_guest_access as a question: no error, and no message left behind
+	for the screen."""
+	try:
+		assert_guest_access(guest)
+	except frappe.PermissionError:
+		frappe.clear_last_message()
+		return False
+	return True
+
+
+def hidden_blacklist_message() -> str:
+	"""The refusal for someone who may not see the blacklisted profile: neither
+	who it is nor why they are listed."""
+	return _("This phone number belongs to a blacklisted guest. Only a Hotel Admin "
+	         "can book them, with a reason.")
 
 
 def guest_scope_sql(alias: str = "g") -> tuple[str, dict]:

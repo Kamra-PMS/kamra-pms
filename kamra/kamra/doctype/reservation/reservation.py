@@ -596,6 +596,9 @@ class Reservation(Document):
 			"Guest", self.guest, ["blacklisted", "blacklist_reason"]
 		) or (0, None)
 		if flagged:
+			from kamra.authz import can_see_guest, hidden_blacklist_message
+			if not can_see_guest(self.guest):  # reached by a typed phone number
+				frappe.throw(hidden_blacklist_message(), title=_("Blacklisted guest"))
 			frappe.throw(
 				_("Guest {0} is blacklisted{1}. Remove the flag on the guest "
 				  "profile to book.").format(
