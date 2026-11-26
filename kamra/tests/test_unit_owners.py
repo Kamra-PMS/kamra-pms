@@ -157,6 +157,52 @@ class UnitOwnerTest(AuditTestCase):
 		self.assertNotIn("Lina", blob)
 		self.assertNotIn("Omar", blob)
 
+	def test_one_overview_and_statement_across_an_owners_properties(self):
+		"""#713: an owner with units at two properties sees both side by side,
+		and another owner at one of them sees only their own."""
+		rt_b = make_room_type(PROP_B)
+		room_c = make_room(PROP_B, rt_b, "OC1")
+		frappe.get_doc({
+			"doctype": "Unit Owner", "owner_name": "Hill villa",
+			"property": PROP_B, "access": "Read only", "commission_percent": 10,
+			"units": [{"room": room_c}],
+			"users": [{"user": self.owner_a}],
+		}).insert(ignore_permissions=True)
+		frappe.set_user(self.owner_a)  # nosemgrep: frappe-setuser -- test fixture
+		try:
+			both = owners.my_overview(TODAY, TODAY, TODAY[:7])
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		self.assertEqual(sorted(r["property"] for r in both["properties"]), sorted([PROP_A, PROP_B]))
+		a = next(r for r in both["properties"] if r["property"] == PROP_A)
+		self.assertGreater(a["revenue"], 0)
+		self.assertEqual(both["totals"]["units"], 2)
+		self.assertEqual(both["totals"]["room_nights"], 1)
+		self.assertEqual(both["totals"]["occupancy_pct"], 50)
+		self.assertEqual(both["totals"]["revenue"], round(sum(r["revenue"] for r in both["properties"]), 2))
+		self.assertEqual(both["totals"]["statement"]["payout"],
+		                 round(sum(r["statement"]["payout"] for r in both["properties"]), 2))
+		blob = json.dumps(both)
+		self.assertNotIn("Lina", blob)
+		self.assertNotIn("Omar", blob)
+		self.assertNotIn(self.room_b, blob)
+
+		frappe.set_user(self.owner_b)  # nosemgrep: frappe-setuser -- test fixture
+		try:
+			one = owners.my_overview(TODAY, TODAY)
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+		self.assertEqual([r["property"] for r in one["properties"]], [PROP_A])
+		self.assertNotIn("statement", one["properties"][0])
+
+		desk = ensure_user("ut.owner.desk2@example.com", ["Front Desk"])
+		frappe.set_user(desk)  # nosemgrep: frappe-setuser -- test fixture
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				owners.my_overview(TODAY, TODAY)
+		finally:
+			frappe.set_user("Administrator")  # nosemgrep: frappe-setuser -- test fixture
+
 	def test_a_new_email_becomes_an_owner_login(self):
 		owners.save_owner(
 			PROP_A, "East wing", [self.room_a], ["ut.owner.new@example.com"])
