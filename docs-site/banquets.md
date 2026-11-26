@@ -80,7 +80,7 @@ done, or the one thing still missing. You can open any step at any time.
 | --- | --- |
 | **Enquiry** | Event details, setup style, guaranteed pax, contact, billing and tax details, green room, notes. |
 | **Quote** | The lines, discount and service charge. |
-| **Margin** | Revenue against cost, and the kitchen indent. |
+| **Margin** | Revenue against cost, and the kitchen indent. **Issue the stock** takes the indent off an outlet; after that, only what the function still lacks (a bigger headcount takes the difference). Nothing is put back automatically. |
 | **Money** | Payment terms and receipts. |
 | **Documents** | Quotation, contract, event order, pack list, invoice. |
 | **The night** | Count what was served, damages, deposit, close-out. |

@@ -7038,5 +7038,14 @@
   "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "Mã vạch số đơn được in ở cuối hóa đơn của điểm bán này, để tìm hóa đơn bằng cách quét. Các mẫu phía dưới thay đổi theo công tắc này.",
   "Print a barcode on the bill": "In mã vạch trên hóa đơn",
   "Upload a PNG, or paste an https link": "Tải lên tệp PNG, hoặc dán liên kết https",
-  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Dùng nút Tải lên, hoặc dán liên kết bắt đầu bằng https://. Liên kết http thường không được chấp nhận."
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Dùng nút Tải lên, hoặc dán liên kết bắt đầu bằng https://. Liên kết http thường không được chấp nhận.",
+  "{v0} · low-stock level": "{v0} · mức tồn thấp",
+  "Level ({v0})": "Mức ({v0})",
+  "Low-stock level for {v0}": "Mức tồn thấp của {v0}",
+  "Save level": "Lưu mức",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "Nguyên liệu này hiển thị là THẤP khi tồn kho bằng hoặc dưới mức này. Nhập 0 để không cảnh báo.",
+  "Issued": "Đã xuất",
+  "To issue": "Cần xuất",
+  "Issue the difference": "Xuất phần chênh lệch",
+  "Already issued": "Đã xuất đủ"
 }

@@ -7038,5 +7038,14 @@
   "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "يُطبع باركود لرقم الطلب أسفل فواتير هذا المنفذ، حتى يمكن العثور على الفاتورة بمسحه ضوئياً. تتبع النماذج أدناه هذا المفتاح.",
   "Print a barcode on the bill": "طباعة باركود على الفاتورة",
   "Upload a PNG, or paste an https link": "ارفع ملف PNG أو الصق رابط https",
-  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "استخدم زر «رفع»، أو الصق رابطاً يبدأ بـ https://. روابط http العادية غير مقبولة."
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "استخدم زر «رفع»، أو الصق رابطاً يبدأ بـ https://. روابط http العادية غير مقبولة.",
+  "{v0} · low-stock level": "{v0} · حد المخزون المنخفض",
+  "Level ({v0})": "المستوى ({v0})",
+  "Low-stock level for {v0}": "حد المخزون المنخفض لـ {v0}",
+  "Save level": "حفظ المستوى",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "يظهر هذا المكوّن بحالة «منخفض» عندما يكون المتوفر مساويًا لهذا المستوى أو أقل منه. أدخل 0 لإلغاء التنبيه.",
+  "Issued": "المصروف",
+  "To issue": "المتبقي للصرف",
+  "Issue the difference": "صرف الفرق",
+  "Already issued": "تم الصرف"
 }

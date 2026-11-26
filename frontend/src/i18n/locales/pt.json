@@ -7038,5 +7038,14 @@
   "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "Um código de barras com o número do pedido é impresso no fim das contas deste ponto de venda, para encontrar a conta escaneando-o. Os exemplos abaixo seguem esta opção.",
   "Print a barcode on the bill": "Imprimir um código de barras na conta",
   "Upload a PNG, or paste an https link": "Carregue um PNG ou cole um link https",
-  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Use o botão Carregar ou cole um link que comece com https://. Links http simples não são aceitos."
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Use o botão Carregar ou cole um link que comece com https://. Links http simples não são aceitos.",
+  "{v0} · low-stock level": "{v0} · nível de estoque baixo",
+  "Level ({v0})": "Nível ({v0})",
+  "Low-stock level for {v0}": "Nível de estoque baixo de {v0}",
+  "Save level": "Salvar nível",
+  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "Este ingrediente aparece como BAIXO quando o disponível está neste nível ou abaixo dele. Digite 0 para não avisar.",
+  "Issued": "Emitido",
+  "To issue": "A emitir",
+  "Issue the difference": "Emitir a diferença",
+  "Already issued": "Já emitido"
 }

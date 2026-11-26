@@ -20,7 +20,9 @@ import { t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 type Status = "OK" | "LOW" | "OUT" | "NEGATIVE"
 
 interface StockRow {
-  name: string
+  name: string | null
+  /** 0 = this outlet has never moved it: offered in the pickers only. */
+  stocked: 0 | 1
   ingredient: string
   ingredient_name: string
   uom: string
@@ -109,13 +111,16 @@ export default function Inventory() {
 
   const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
   const [outlet, setOutlet] = useState("")
-  const [rows, setRows] = useState<StockRow[]>([])
+  // Every ingredient the pickers offer; the table is only what is held here.
+  const [shelf, setShelf] = useState<StockRow[]>([])
+  const rows = useMemo(() => shelf.filter((r) => r.stocked), [shelf])
   const [low, setLow] = useState<LowRow[]>([])
   const [filter, setFilter] = useState<Status | "">("")
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [modal, setModal] = useState<"receive" | "count" | "waste" | null>(null)
   const [ledgerOf, setLedgerOf] = useState<StockRow | null>(null)
+  const [parOf, setParOf] = useState<StockRow | null>(null)
 
   useEffect(() => {
     call<{ name: string; outlet_name: string }[]>("kamra.pos.outlets", { property: getCurrentProperty() })
@@ -127,8 +132,8 @@ export default function Inventory() {
   const load = useCallback(() => {
     if (!outlet) return
     const property = getCurrentProperty()
-    call<StockRow[]>("kamra.inventory.stock_list", { property, outlet })
-      .then(setRows).catch((e) => setErr(String(e)))
+    call<StockRow[]>("kamra.inventory.stock_list", { property, outlet, include_unstocked: 1 })
+      .then(setShelf).catch((e) => setErr(String(e)))
     call<LowRow[]>("kamra.inventory.low_stock", { property, outlet })
       .then(setLow).catch(() => {})
   }, [outlet])
@@ -140,6 +145,7 @@ export default function Inventory() {
     try {
       await call(`kamra.inventory.${method}`, { property: getCurrentProperty(), outlet, ...params })
       setModal(null)
+      setParOf(null)
       load()
     } catch (e) {
       setErr(e instanceof Error ? translate(e.message) : String(e))
@@ -265,7 +271,13 @@ export default function Inventory() {
                     {fmt(r.qty_on_hand)} <span className="font-normal text-zinc-400">{r.uom}</span>
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums text-zinc-400">
-                    {r.par_level ? fmt(r.par_level) : "-"}
+                    {canWrite ? (
+                      <button type="button" onClick={() => setParOf(r)}
+                        aria-label={translate("Low-stock level for {v0}", { v0: String(r.ingredient_name) })}
+                        className="min-h-8 rounded px-2 underline decoration-dotted underline-offset-4 hover:bg-zinc-100 hover:text-zinc-700">
+                        {r.par_level ? fmt(r.par_level) : translate("Set")}
+                      </button>
+                    ) : r.par_level ? fmt(r.par_level) : "-"}
                   </td>
                   <td className="px-4 py-2"><StatusChip s={r.status} /></td>
                   <td className="px-4 py-2 text-zinc-400">
@@ -286,16 +298,20 @@ export default function Inventory() {
       )}
 
       {modal === "receive" && (
-        <ReceiveModal rows={rows} outlet={outlet} busy={busy}
+        <ReceiveModal rows={shelf} outlet={outlet} busy={busy}
           onClose={() => setModal(null)} onSubmit={(p) => act("receive_stock", p)} />
       )}
       {modal === "count" && (
-        <CountModal rows={rows} busy={busy}
+        <CountModal rows={shelf} busy={busy}
           onClose={() => setModal(null)} onSubmit={(p) => act("adjust_stock", p)} />
       )}
       {modal === "waste" && (
-        <WasteModal rows={rows} busy={busy}
+        <WasteModal rows={shelf} busy={busy}
           onClose={() => setModal(null)} onSubmit={(p) => act("record_wastage", p)} />
+      )}
+      {parOf && (
+        <ParModal row={parOf} busy={busy}
+          onClose={() => setParOf(null)} onSubmit={(p) => act("set_par_level", p)} />
       )}
       {ledgerOf && (
         <LedgerModal row={ledgerOf} outlet={outlet} onClose={() => setLedgerOf(null)} />
@@ -333,7 +349,7 @@ function ReceiveModal({ rows, busy, onClose, onSubmit }: {
         </thead>
         <tbody className="divide-y divide-zinc-100">
           {rows.map((r) => (
-            <tr key={r.name}>
+            <tr key={r.ingredient}>
               <td className="py-1.5 font-medium">{r.ingredient_name}
                 <span className="ml-1 text-xs text-zinc-400">{r.uom}</span></td>
               <td className="py-1.5"><input type="number" min="0" step="any" inputMode="decimal"
@@ -380,7 +396,7 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
             const v = counted[r.ingredient]
             const delta = v === "" || v === undefined ? null : Number(v) - r.qty_on_hand
             return (
-              <tr key={r.name}>
+              <tr key={r.ingredient}>
                 <td className="py-1.5 font-medium">{r.ingredient_name}
                   <span className="ml-1 text-xs text-zinc-400">{r.uom}</span></td>
                 <td className="py-1.5 text-right tabular-nums text-zinc-400">{fmt(r.qty_on_hand)}</td>
@@ -432,7 +448,7 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
           value={ingredient} onChange={(e) => setIngredient(e.target.value)}>
           <option value="">{translate("Pick an ingredient…")}</option>
           {rows.map((r) => (
-            <option key={r.name} value={r.ingredient}>
+            <option key={r.ingredient} value={r.ingredient}>
               {r.ingredient_name} - {fmt(r.qty_on_hand)} {r.uom}{translate(" on hand")}</option>
           ))}
         </select>
@@ -447,6 +463,26 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
       <Button className="mt-4 h-12 w-full justify-center"
         disabled={busy || !ingredient || Number(qty) <= 0 || !note.trim()}
         onClick={() => onSubmit({ ingredient, qty: Number(qty), reason_note: note })}>{translate("Write it off")}</Button>
+    </Modal>
+  )
+}
+
+function ParModal({ row, busy, onClose, onSubmit }: {
+  row: StockRow; busy: boolean; onClose: () => void
+  onSubmit: (p: Record<string, unknown>) => void
+}) {
+  useUILanguage()
+  const [level, setLevel] = useState(row.par_level ? String(row.par_level) : "")
+  const valid = level !== "" && Number(level) >= 0
+  return (
+    <Modal title={translate("{v0} · low-stock level", { v0: String(row.ingredient_name) })} onClose={onClose}>
+      <p className="mb-3 text-sm text-zinc-500">{translate("This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.")}</p>
+      <input type="number" min="0" step="any" inputMode="decimal" autoFocus value={level}
+        onChange={(e) => setLevel(e.target.value)}
+        placeholder={translate("Level ({v0})", { v0: String(row.uom) })}
+        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm tabular-nums" />
+      <Button className="mt-4 h-12 w-full justify-center" disabled={busy || !valid}
+        onClick={() => onSubmit({ ingredient: row.ingredient, par_level: Number(level) })}>{translate("Save level")}</Button>
     </Modal>
   )
 }

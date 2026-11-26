@@ -513,13 +513,31 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 
 @frappe.whitelist()
 @require_perm("Ingredient", "view_stock")
-def stock_list(property: str, outlet: str, status: str | None = None):
+def stock_list(property: str, outlet: str, status: str | None = None,
+               include_unstocked: int = 0):
 	"""Everything this outlet holds. Stock is per outlet, so there is no such
-	thing as a merged total across outlets and this never offers one."""
+	thing as a merged total across outlets and this never offers one.
+
+	include_unstocked adds the active ingredients this outlet has never moved,
+	at zero and marked stocked = 0, for the receipt, count and wastage pickers:
+	a balance row only appears with the first movement, so without them a new
+	ingredient could never get one."""
 	rows = frappe.get_all(
 		"Ingredient Stock", filters={"property": property, "outlet": outlet},
 		fields=["name", "ingredient", "qty_on_hand", "par_level",
 		        "last_counted_at", "last_counted_by"])
+	for r in rows:
+		r["stocked"] = 1
+	if int(include_unstocked or 0):
+		held = {r.ingredient for r in rows}
+		rows += [
+			frappe._dict(name=None, ingredient=name, qty_on_hand=0.0, par_level=0.0,
+			             last_counted_at=None, last_counted_by=None, stocked=0)
+			for name in frappe.get_all(
+				"Ingredient", filters={"property": property, "is_active": 1},
+				pluck="name")
+			if name not in held
+		]
 	out = []
 	for r in rows:
 		meta = frappe.db.get_value(
@@ -672,7 +690,10 @@ def set_menu_availability(menu_item: str, available: int):
 @require_perm("Ingredient", "manage_stock")
 def set_par_level(property: str, outlet: str, ingredient: str, par_level: float):
 	"""Where LOW starts for this ingredient at this outlet. Zero = no par."""
+	par = float(par_level or 0)
+	if par < 0:
+		frappe.throw(_("A low-stock level cannot be below zero."))
 	name = _stock_row(property, outlet, ingredient)
-	frappe.db.set_value("Ingredient Stock", name, "par_level",
-	                    float(par_level or 0), update_modified=False)
+	frappe.db.set_value("Ingredient Stock", name, "par_level", par,
+	                    update_modified=False)
 	return {"ok": True}

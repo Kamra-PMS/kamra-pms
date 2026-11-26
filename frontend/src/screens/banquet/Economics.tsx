@@ -434,6 +434,10 @@ function IndentSheet({
       .catch(() => {})
   }, [property])
 
+  // Once something has left the shelf the button takes only what is left.
+  const issuedAny = indent.ingredients.some((r) => r.issued > 0)
+  const dueAny = indent.ingredients.some((r) => r.to_issue > 0)
+
   return (
     <Sheet
       title={translate("Kitchen indent")}
@@ -464,7 +468,10 @@ function IndentSheet({
               </select>
             </Field>
             <Button variant="outline" onClick={() => window.print()}>{translate("Print")}</Button>
-            <Button disabled={busy || !outlet} onClick={() => onIssue(outlet)}>{translate("Issue the stock")}</Button>
+            <Button disabled={busy || !outlet || !dueAny} onClick={() => onIssue(outlet)}>
+              {!issuedAny ? translate("Issue the stock")
+                : dueAny ? translate("Issue the difference") : translate("Already issued")}
+            </Button>
           </div>
         </div>
       }
@@ -478,6 +485,12 @@ function IndentSheet({
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
             <th className="py-2 pr-3 font-medium">{translate("Ingredient")}</th>
             <th className="py-2 pr-3 text-right font-medium">{translate("Need")}</th>
+            {issuedAny && (
+              <>
+                <th className="py-2 pr-3 text-right font-medium">{translate("Issued")}</th>
+                <th className="py-2 pr-3 text-right font-medium">{translate("To issue")}</th>
+              </>
+            )}
             <th className="py-2 pr-3 text-right font-medium">{translate("On hand")}</th>
             <th className="py-2 pr-3 text-right font-medium">{translate("Short")}</th>
             <th className="py-2 text-right font-medium">{translate("Cost")}</th>
@@ -495,6 +508,16 @@ function IndentSheet({
               <td className="py-1.5 pr-3 text-right tabular-nums font-medium">
                 {r.required} {r.uom}
               </td>
+              {issuedAny && (
+                <>
+                  <td className="py-1.5 pr-3 text-right tabular-nums text-zinc-500">
+                    {r.issued > 0 ? r.issued : "-"}
+                  </td>
+                  <td className="py-1.5 pr-3 text-right tabular-nums font-medium">
+                    {r.to_issue > 0 ? r.to_issue : "-"}
+                  </td>
+                </>
+              )}
               <td className="py-1.5 pr-3 text-right tabular-nums text-zinc-500">
                 {r.on_hand}
               </td>

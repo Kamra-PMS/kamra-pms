@@ -416,6 +416,7 @@
 {v0} · {v1} · {v2} pax · {v3}{v4},{v0} · {v1} · {v2} pax · {v3}{v4},{v0} · {v1} · {v2} أشخاص · {v3}{v4},{v0} · {v1} · {v2} personas · {v3}{v4},{v0} · {v1} · {v2} pax · {v3}{v4},{v0} · {v1} · {v2} 人 · {v3}{v4},screens/BanquetDiary.tsx,v0 v1 v2 v3 v4,translated
 {v0} · {v1}-{v2} · day use,{v0} · {v1}-{v2} · day use,{v0} · {v1}-{v2} · استخدام نهاري,{v0} · {v1}-{v2} · uso diurno,{v0} · {v1}-{v2} · uso diário,{v0} · {v1}-{v2} · 钟点房,screens/TapeChart.tsx,v0 v1 v2,translated
 {v0} · city ledger,{v0} · city ledger,{v0} · دفتر المدينة,{v0} · cuentas por cobrar a empresas,{v0} · city ledger,{v0} · 城市挂账,screens/CityLedgerPayment.tsx,v0,translated
+{v0} · low-stock level,{v0} · low-stock level,{v0} · حد المخزون المنخفض,{v0} · nivel de existencias bajas,{v0} · nível de estoque baixo,{v0} · 低库存阈值,screens/Inventory.tsx,v0,translated
 {v0} · where it went,{v0} · where it went,{v0} · أين ذهب,{v0} · movimientos,{v0} · para onde foi,{v0} · 去向,screens/Inventory.tsx,v0,translated
 {v0} ({v1} free),{v0} ({v1} free),{v0} ({v1} شاغرة),{v0} ({v1} libres),{v0} ({v1} livres),{v0}（空房 {v1}）,components/GroupControl.tsx,v0 v1,translated
 {v0} {v1},{v0} {v1},{v0} {v1},{v0} {v1},{v0} {v1},{v0} {v1},components/GroupControl.tsx,v0 v1,translated
@@ -920,6 +921,7 @@ Allowances need a manager's approval,Allowances need a manager's approval,الخ
 Allowances to approve,Allowances to approve,خصومات بانتظار الموافقة,Ajustes por aprobar,Abatimentos a aprovar,待批准的减免,screens/AllowanceApprovals.tsx,,translated
 Already connected. Disconnect it below first.,Already connected. Disconnect it below first.,متصل بالفعل. افصله أدناه أولًا.,Ya está conectada. Primero desconéctala abajo.,Já está conectado. Desconecte-o abaixo primeiro.,已连接。请先在下方断开。,components/ConnectApp.tsx,,translated
 "Already exist, skipped: {n}","Already exist, skipped: {n}",موجودة مسبقًا وتم تخطيها: {n},"Ya existen, omitidas: {n}","Já existem, ignorados: {n}",已存在，跳过：{n},screens/AdminRooms.tsx,n,translated
+Already issued,Already issued,تم الصرف,Salida ya registrada,Já emitido,已全部出库,screens/banquet/Economics.tsx,,translated
 Already on bill,Already on bill,موجود في الفاتورة,Ya en la cuenta,Já está na fatura,已在账单中,screens/POS.tsx,,translated
 Already on the folio,Already on the folio,موجود في الفاتورة بالفعل,Ya en el folio,Já está no extrato,已在客账中,components/CheckOutDialog.tsx,,translated
 Already posted,Already posted,تم ترحيله بالفعل,Ya registrado,Já lançado,已入账,screens/GoLiveImport.tsx,,translated
@@ -3302,7 +3304,9 @@ Issue,Issue,المشكلة,Incidencia,Edição,问题,screens/BanquetFunction.ts
 "Issue a credit note against the invoice, move a bill to another company (Transfer), or cancel and reissue the invoice. Each adds an entry; nothing is deleted.","Issue a credit note against the invoice, move a bill to another company (Transfer), or cancel and reissue the invoice. Each adds an entry; nothing is deleted.",أصدر إشعاراً دائناً على الفاتورة، أو انقل الفاتورة إلى شركة أخرى (تحويل)، أو ألغِ الفاتورة وأعد إصدارها. كل إجراء يضيف قيداً؛ ولا يُحذف شيء.,"Emite una nota de crédito contra la factura, pasa una cuenta a otra empresa (Transferir), o cancela y vuelve a emitir la factura. Cada acción añade un asiento; nada se borra.","Emita uma nota de crédito contra a fatura, passe uma conta para outra empresa (Transferir), ou cancele e emita a fatura de novo. Cada ação adiciona um lançamento; nada é apagado.",针对发票开具贷项通知单、将账单转至其他公司（转移），或取消后重开发票。每种操作都会新增分录，不会删除任何内容。,screens/Ledgers.tsx,,translated
 Issue event order,Issue event order,إصدار أمر الفعالية,Emitir orden del evento,Emitir ordem de eventos,签发宴会执行单,screens/BanquetFunction.tsx,,translated
 Issue from,Issue from,الصرف من,Retirar de,Emissão de,签发方,screens/banquet/Economics.tsx,,translated
+Issue the difference,Issue the difference,صرف الفرق,Registrar salida de la diferencia,Emitir a diferença,出库差额,screens/banquet/Economics.tsx,,translated
 Issue the stock,Issue the stock,صرف المخزون,Registrar salida de existencias,Emitir o estoque,出库,screens/banquet/Economics.tsx,,translated
+Issued,Issued,المصروف,Retirado,Emitido,已出库,screens/banquet/Economics.tsx,,translated
 Issued {v0},Issued {v0},صدرت {v0},Emitido el {v0},Emitido {v0},已发放 {v0},screens/GroupQuotation.tsx,v0,translated
 IT,IT,تقنية المعلومات,TI,TI,IT,screens/settings/SettingsHub.tsx,,translated
 It asks to,It asks to,يطلب,Solicita,Ele solicita,请求执行以下操作,components/ConnectApp.tsx,,translated
@@ -3508,6 +3512,7 @@ Less,Less,أقل,Menos,Menos,收起,screens/Assistant.tsx,,translated
 Less damages,Less damages,ناقص الأضرار,Menos daños,Menos danos,减：损坏赔偿,screens/BanquetFunction.tsx,,translated
 Less discount,Less discount,ناقص الخصم,Menos descuento,Menos desconto,减：折扣,screens/BanquetFunction.tsx,,translated
 Let staff connect Claude to this property's governed tools.,Let staff connect Claude to this property's governed tools.,اسمح للموظفين بربط Claude بأدوات هذا العقار الخاضعة للصلاحيات.,Permita que el personal conecte Claude a las herramientas del alojamiento con control de permisos.,Permita que a equipe conecte Claude às ferramentas gerenciadas desta propriedade.,允许员工将 Claude 连接到本酒店受管控的工具。,,,translated
+Level ({v0}),Level ({v0}),المستوى ({v0}),Nivel ({v0}),Nível ({v0}),阈值（{v0}）,screens/Inventory.tsx,v0,translated
 Lifetime,Lifetime,مدى الحياة,Histórico,Vitalício,累计,screens/GuestJourney.tsx,,translated
 Lifetime {cur},Lifetime {cur},مدى الحياة {cur},Gasto acumulado {cur},Vida útil {cur},累计 {cur},screens/Guests.tsx,cur,translated
 Lifetime value,Lifetime value,القيمة الإجمالية,Valor histórico,Valor vitalício,宾客终身价值,,,translated
@@ -3573,6 +3578,7 @@ lost item,lost item,غرض مفقود,objeto perdido,item perdido,遗失物品,,
 Lot,Lot,دفعة,Lote,Lote,停车场,,,translated
 Low,Low,منخفضة,Baja,Baixo,低,,,translated
 LOW,LOW,منخفض,BAJO,BAIXO,低,,,translated
+Low-stock level for {v0},Low-stock level for {v0},حد المخزون المنخفض لـ {v0},Nivel de existencias bajas de {v0},Nível de estoque baixo de {v0},{v0} 的低库存阈值,screens/Inventory.tsx,v0,translated
 "Lower numbers come first (for example 0, 10, 20).","Lower numbers come first (for example 0, 10, 20).",الأرقام الأصغر تأتي أولًا (مثل 0 و10 و20).,"Los números más bajos van primero (por ejemplo 0, 10, 20).","Os números menores vêm primeiro (por exemplo 0, 10, 20).",数字越小越靠前（例如 0、10、20）。,,,translated
 Lowest first,Lowest first,,,,,screens/ModifierManager.tsx,,needs_translation
 Lump Sum,Lump Sum,مبلغ إجمالي,Importe global,Montante fixo,一口价,,,translated
@@ -5608,6 +5614,7 @@ Save for me,Save for me,حفظ لي,Guardar mi diseño,Salve para mim,为我保�
 Save group,Save group,,,,,screens/ModifierManager.tsx,,needs_translation
 Save guests,Save guests,حفظ الضيوف,Guardar huéspedes,Salvar hóspedes,保存宾客,components/CheckInGuests.tsx,,translated
 Save imprest,Save imprest,حفظ السلفة المستديمة,Guardar fondo fijo de caja chica,Salvar adiantamento,保存定额备用金,screens/PettyCash.tsx,,translated
+Save level,Save level,حفظ المستوى,Guardar nivel,Salvar nível,保存阈值,screens/Inventory.tsx,,translated
 Save menu,Save menu,حفظ القائمة,Guardar menú,Salvar menu,保存菜单,screens/BanquetCatalogue.tsx,,translated
 Save names ({v0}),Save names ({v0}),حفظ الأسماء ({v0}),Guardar nombres ({v0}),Salvar nomes ({v0}),保存姓名（{v0}）,components/GroupControl.tsx,v0,translated
 Save new total {amount},Save new total {amount},,,,,components/StayRates.tsx,amount,needs_translation
@@ -5783,7 +5790,7 @@ Session,Session,الجلسة,Sesión,Sessão,会话,screens/Banquet.tsx; screens
 Session price,Session price,سعر الجلسة,Precio por sesión,Preço da sessão,场次价格,screens/Recreation.tsx,,translated
 Sessions,Sessions,الجلسات,Sesiones,Sessões,会话,screens/CashierSessions.tsx,,translated
 Sessions opened without choosing a till.,Sessions opened without choosing a till.,جلسات فُتحت دون اختيار صندوق.,Sesiones abiertas sin elegir caja.,Sessões abertas sem seleção de caixa.,未选择钱箱即开班的班次。,screens/CashierBoard.tsx,,translated
-Set,Set,تعيين,Establecer,Definir,设置,screens/TapeChart.tsx,,translated
+Set,Set,تعيين,Establecer,Definir,设置,screens/Inventory.tsx; screens/TapeChart.tsx,,translated
 Set a rate,Set a rate,تحديد سعر,Definir una tarifa,Definir tarifa,设定房价,screens/UnitOwners.tsx,,translated
 Set by hand,Set by hand,,,,,components/StayRates.tsx,,needs_translation
 "Set each room type's base rate, extra adult and child prices.","Set each room type's base rate, extra adult and child prices.",حدّد السعر الأساسي لكل نوع غرفة وأسعار البالغ والطفل الإضافيين.,Configure la tarifa base de cada tipo de habitación y los precios de adultos y menores adicionales.,"Defina a tarifa base de cada tipo de quarto, preços extras para adultos e crianças.",设置各房型基础房价、额外成人及儿童加人价。,,,translated
@@ -6433,6 +6440,7 @@ This dish never touches inventory. That's a valid choice - most menus only ever 
 This group is cancelled.,This group is cancelled.,هذه المجموعة ملغاة.,Este grupo está cancelado.,Este grupo foi cancelado.,此团队已取消。,components/GroupControl.tsx,,translated
 This guest is blacklisted,This guest is blacklisted,هذا النزيل في القائمة السوداء,Este huésped está en la lista negra,Este hóspede está na lista restrita (blacklist),该宾客已列入黑名单,components/BookingDialog.tsx,,translated
 this hotel,this hotel,هذا الفندق,este hotel,este hotel,本酒店,screens/Agents.tsx,,translated
+This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.,This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.,يظهر هذا المكوّن بحالة «منخفض» عندما يكون المتوفر مساويًا لهذا المستوى أو أقل منه. أدخل 0 لإلغاء التنبيه.,Este ingrediente aparece como BAJO cuando la existencia es igual o inferior a este nivel. Introduzca 0 para no recibir avisos.,Este ingrediente aparece como BAIXO quando o disponível está neste nível ou abaixo dele. Digite 0 para não avisar.,当前库存等于或低于此阈值时，该食材显示为“低”。输入 0 表示不预警。,screens/Inventory.tsx,,translated
 This is a computer-generated invoice.,This is a computer-generated invoice.,هذه فاتورة صادرة إلكترونيًا.,Esta es una factura generada por computadora.,Esta é uma fatura gerada por computador.,本发票由系统自动生成。,screens/FolioView.tsx,,translated
 This is a computer-generated tax invoice under the GST Act.,This is a computer-generated tax invoice under the GST Act.,هذه فاتورة ضريبية مولّدة حاسوبياً بموجب قانون GST.,Esta factura fiscal se generó electrónicamente conforme a la ley del GST.,Esta é uma fatura fiscal gerada por computador de acordo com a Lei GST.,本税务发票依据 GST 法由系统自动生成。,,,translated
 "This is a management P&L. It counts what Kamra records: guest and company bills, restaurant bills, banquets, supplier bills and petty cash. Payroll, depreciation, loans and anything paid outside Kamra are not in it. Your accountant keeps the statutory books from the Accounting Export.","This is a management P&L. It counts what Kamra records: guest and company bills, restaurant bills, banquets, supplier bills and petty cash. Payroll, depreciation, loans and anything paid outside Kamra are not in it. Your accountant keeps the statutory books from the Accounting Export.",هذا بيان أرباح وخسائر إداري. يحتسب ما يسجله Kamra: فواتير النزلاء والشركات وفواتير المطعم والحفلات وفواتير الموردين والمصروفات النثرية. لا يشمل الرواتب والإهلاك والقروض وأي مدفوعات خارج Kamra. يحتفظ محاسبك بالدفاتر النظامية من خلال التصدير المحاسبي.,"Este es un estado de resultados de gestión. Cuenta lo que registra Kamra: facturas de huéspedes y empresas, cuentas del restaurante, banquetes, facturas de proveedores y caja chica. No incluye nómina, depreciación, préstamos ni nada pagado fuera de Kamra. Tu contador lleva los libros oficiales con la Exportación contable.","DRE gerencial consolidado: faturas de hóspedes e empresas, restaurante, eventos, faturas de fornecedores e caixa pequeno. Folha de pagamento, depreciação e empréstimos externos são apurados na contabilidade via Exportação Contábil.",这是管理损益表，仅统计 Kamra 记录的内容：宾客与公司账单、餐厅账单、宴会、供应商账单与零用金。人工、折旧、借款及 Kamra 之外支付的项目不在其中。法定账目请由会计基于「会计导出」维护。,screens/ManagementBooks.tsx,,translated
@@ -6516,6 +6524,7 @@ to close,to close,للإغلاق,para cerrar,fechar,待关闭,components/Command
 To date (exclusive),To date (exclusive),حتى تاريخ (غير مشمول),Hasta la fecha (excluida),Até o momento (exclusivo),结束日期（不含）,,,translated
 To fix before go-live,To fix before go-live,يجب إصلاحه قبل التشغيل الفعلي,Para arreglar antes de entrar en funcionamiento,Para corrigir antes de entrar em operação,上线前需修复,screens/GoLiveImport.tsx,,translated
 to give the money back,to give the money back,لرد المال,para devolver el dinero,devolver o dinheiro,以便退款,components/CheckOutDialog.tsx,,translated
+To issue,To issue,المتبقي للصرف,Por retirar,A emitir,待出库,screens/banquet/Economics.tsx,,translated
 to issue the invoice,to issue the invoice,لإصدار الفاتورة,para emitir la factura,emitir a fatura,待开发票,components/CheckOutDialog.tsx,,translated
 To number,To number,إلى الرقم,Hasta el número,Até o número,结束号码,screens/AdminRooms.tsx,,translated
 to open,to open,للفتح,para abrir,abrir,待打开,components/CommandPalette.tsx,,translated

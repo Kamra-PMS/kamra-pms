@@ -5,11 +5,14 @@ tests for this module alone - one behaviour per test, named for the rule
 it defends, so a failure says what broke rather than that something did.
 """
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
 
 from kamra import banquet as bq
+from kamra import inventory
 from kamra.tests.fixtures import PROPERTY, build, enquiry
 
 
@@ -327,6 +330,140 @@ class TestKitchen(BanquetTestCase):
 		bq.add_menu(fn, self.f["menu"])
 		with self.assertRaises(frappe.ValidationError):
 			bq.kitchen_indent(fn)
+
+
+
+class TestIssuingTheIndent(BanquetTestCase):
+	"""200 guests of the veg starter need 40 kg of onion."""
+
+	def setUp(self):
+		super().setUp()
+		# issuing commits for itself; keep this class's rows rollable
+		commits = patch.object(frappe.local.db, "commit")
+		commits.start()
+		self.addCleanup(commits.stop)
+		self.store = self.new_store()
+		self.fn = enquiry(self.f)
+		bq.update_function(self.fn, {"pax_guaranteed": 200})
+		bq.add_menu(self.fn, self.f["menu"])
+		bq.compose_menu(self.fn, self.f["menu"],
+		                [{"course": "Starters", "dish": self.f["veg"]}])
+		bq.set_status(self.fn, "Confirmed")
+
+	def new_store(self) -> str:
+		return frappe.get_doc({
+			"doctype": "POS Outlet", "property": PROPERTY,
+			"outlet_name": f"Issue Store {frappe.generate_hash(length=6)}",
+			"outlet_type": "Restaurant", "gst_rate": 5,
+		}).insert(ignore_permissions=True).name
+
+	def taken(self) -> list:
+		"""(outlet, quantity) of every movement this function made, in order."""
+		return [(m.outlet, m.qty_change) for m in frappe.get_all(
+			"Ingredient Ledger Entry", filters={"reference_name": self.fn},
+			fields=["outlet", "qty_change"], order_by="creation asc")]
+
+	def onion(self) -> tuple:
+		row = next(r for r in bq.kitchen_indent(self.fn)["ingredients"]
+		           if r["ingredient"] == self.f["onion"])
+		return row["required"], row["issued"], row["to_issue"]
+
+	def test_issuing_the_indent_takes_the_stock_off_the_shelf(self):
+		inventory.receive_stock(PROPERTY, self.store,
+		                        [{"ingredient": self.f["onion"], "qty": 50}])
+
+		out = bq.issue_indent(self.fn, self.store)
+
+		self.assertEqual(out["issued"], 1)
+		moves = frappe.get_all(
+			"Ingredient Ledger Entry",
+			filters={"outlet": self.store, "reference_name": self.fn},
+			fields=["reason", "qty_change", "balance_after", "reference_doctype"])
+		self.assertEqual(
+			[(m.reason, m.qty_change, m.balance_after, m.reference_doctype) for m in moves],
+			[("Consumed", -40, 10, "Venue Booking")])
+
+	def test_a_second_issue_takes_nothing(self):
+		bq.issue_indent(self.fn, self.store)
+
+		again = bq.issue_indent(self.fn, self.store)
+
+		self.assertEqual(again["issued"], 0)
+		self.assertEqual(self.taken(), [(self.store, -40)])
+
+	def test_what_one_outlet_issued_is_not_taken_again_from_another(self):
+		bq.issue_indent(self.fn, self.store)
+
+		bq.issue_indent(self.fn, self.new_store())
+
+		self.assertEqual(self.taken(), [(self.store, -40)])
+
+	def test_a_bigger_headcount_takes_only_the_difference(self):
+		bq.issue_indent(self.fn, self.store)
+		bq.update_function(self.fn, {"pax_guaranteed": 250})
+		self.assertEqual(self.onion(), (50, 40, 10))
+
+		bq.issue_indent(self.fn, self.store)
+
+		self.assertEqual(self.taken(), [(self.store, -40), (self.store, -10)])
+
+	def test_a_smaller_headcount_puts_nothing_back(self):
+		bq.issue_indent(self.fn, self.store)
+		bq.update_function(self.fn, {"pax_guaranteed": 150})
+		self.assertEqual(self.onion(), (30, 40, 0))
+
+		out = bq.issue_indent(self.fn, self.store)
+
+		self.assertEqual(out["issued"], 0)
+		self.assertEqual(self.taken(), [(self.store, -40)])
+
+	def test_nothing_is_short_once_it_has_been_issued(self):
+		bq.issue_indent(self.fn, self.store)
+
+		ind = bq.kitchen_indent(self.fn)
+
+		self.assertEqual(
+			([r["short_by"] for r in ind["ingredients"]], ind["shortfall_lines"]),
+			([0], 0))
+
+	def test_rows_named_by_the_caller_are_issued_as_given_and_counted(self):
+		bq.issue_indent(self.fn, self.store,
+		                rows=[{"ingredient": self.f["onion"], "qty": 15}])
+		self.assertEqual(self.onion(), (40, 15, 25))
+
+		bq.issue_indent(self.fn, self.store)
+
+		self.assertEqual(self.taken(), [(self.store, -15), (self.store, -25)])
+
+	def test_stock_rows_are_taken_in_the_kitchens_lock_order(self):
+		# a KOT locks its ingredients sorted by name; an issue that took them
+		# in another order could deadlock against it
+		both = sorted([self.f["onion"], self.f["chicken"]])
+
+		with patch.object(inventory, "_apply_move", return_value=0) as move:
+			bq.issue_indent(self.fn, self.store, rows=[
+				{"ingredient": name, "qty": 1} for name in reversed(both)])
+
+		self.assertEqual([c.args[2] for c in move.call_args_list], both)
+
+	def test_an_issue_that_lands_while_this_one_waits_is_counted(self):
+		# a second connection can't see this test's rows, so the overlap is
+		# played in order: the other issue runs right after this one takes the
+		# lock - where it would land if it committed while this one waited
+		real_lock = bq._lock_function
+		state = {"done": False}
+
+		def other_issue_lands_first(name):
+			real_lock(name)
+			if not state["done"]:
+				state["done"] = True
+				bq.issue_indent(self.fn, self.store)
+
+		with patch.object(bq, "_lock_function", other_issue_lands_first):
+			out = bq.issue_indent(self.fn, self.store)
+
+		self.assertEqual(out["issued"], 0)
+		self.assertEqual(self.taken(), [(self.store, -40)])
 
 
 # ══ the night, and the money ═════════════════════════════════════════════

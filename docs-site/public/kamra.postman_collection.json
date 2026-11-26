@@ -11423,7 +11423,7 @@
         "kamra.banquet.kitchen_indent"
        ]
       },
-      "description": "What the kitchen has to buy and pull for this function.\n\nThe artifact that has always sat between the event order and the store\nroom, written by hand: chosen dishes x portions x guaranteed pax,\nexploded through the recipes into ingredient quantities, checked against\nwhat's actually on the shelf.",
+      "description": "What the kitchen has to buy and pull for this function.\n\nThe artifact that has always sat between the event order and the store\nroom, written by hand: chosen dishes x portions x guaranteed pax,\nexploded through the recipes into ingredient quantities, checked against\nwhat's actually on the shelf. `issued` is what the function has already\nhad; `to_issue` and `short_by` are about the rest.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
@@ -11460,7 +11460,7 @@
         "kamra.banquet.issue_indent"
        ]
       },
-      "description": "Pull the indent off the shelf. Writes real stock movements through\nthe same single writer the restaurant uses, so the store room reflects\na banquet the way it reflects a table.",
+      "description": "Pull the indent off the shelf. Writes real stock movements through\nthe same single writer the restaurant uses, so the store room reflects\na banquet the way it reflects a table.\n\nWithout rows it takes only what the function still lacks: the indent less\nwhat it has already had, from any outlet. So a second press takes nothing\nand a bigger headcount takes the difference. A smaller one puts nothing\nback; a stock take does that. Rows named by the caller are issued as given.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"outlet\": \"Your Property-Restaurant\"\n}",
@@ -13330,10 +13330,10 @@
         "kamra.inventory.stock_list"
        ]
       },
-      "description": "Everything this outlet holds. Stock is per outlet, so there is no such\nthing as a merged total across outlets and this never offers one.",
+      "description": "Everything this outlet holds. Stock is per outlet, so there is no such\nthing as a merged total across outlets and this never offers one.\n\ninclude_unstocked adds the active ingredients this outlet has never moved,\nat zero and marked stocked = 0, for the receipt, count and wastage pickers:\na balance row only appears with the first movement, so without them a new\ningredient could never get one.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"include_unstocked\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

@@ -1397,6 +1397,9 @@ export interface KitchenIndent {
     category: string | null
     uom: string
     required: number
+    /** What this function has already had off the shelf, and what is left. */
+    issued: number
+    to_issue: number
     on_hand: number
     short_by: number
     cost: number

@@ -2348,6 +2348,22 @@ def _sync_supplement(doc, menu: str, per_pax: float):
 
 # ══ the kitchen ══════════════════════════════════════════════════════════
 
+def _issued_to(function: str, ingredients: list) -> dict:
+	"""ingredient -> how much this function has already had off the shelf,
+	from any outlet. Read from the ledger, so it is what actually moved."""
+	if not ingredients:
+		return {}
+	out: dict = {}
+	for r in frappe.get_all(
+		"Ingredient Ledger Entry",
+		filters={"ingredient": ("in", ingredients),
+		         "reference_doctype": "Venue Booking",
+		         "reference_name": function},
+		fields=["ingredient", "qty_change"]):
+		out[r.ingredient] = out.get(r.ingredient, 0.0) - float(r.qty_change or 0)
+	return out
+
+
 @frappe.whitelist()
 @require_perm("Venue Booking", "view_functions")
 def kitchen_indent(function: str):
@@ -2356,7 +2372,8 @@ def kitchen_indent(function: str):
 	The artifact that has always sat between the event order and the store
 	room, written by hand: chosen dishes x portions x guaranteed pax,
 	exploded through the recipes into ingredient quantities, checked against
-	what's actually on the shelf.
+	what's actually on the shelf. `issued` is what the function has already
+	had; `to_issue` and `short_by` are about the rest.
 	"""
 	doc = _fn(function)
 	pax = doc.billable_pax
@@ -2392,6 +2409,7 @@ def kitchen_indent(function: str):
 			if s.dish_name not in slot["dishes"]:
 				slot["dishes"].append(s.dish_name)
 
+	issued = _issued_to(doc.name, list(need))
 	rows = []
 	for ingredient, slot in need.items():
 		meta = frappe.db.get_value(
@@ -2402,12 +2420,16 @@ def kitchen_indent(function: str):
 			"Ingredient Stock", filters={"ingredient": ingredient},
 			pluck="qty_on_hand"))
 		qty = round(slot["qty"], 3)
+		had = round(issued.get(ingredient, 0.0), 3)
+		due = round(max(0.0, qty - had), 3)
 		rows.append({
 			"ingredient": ingredient,
 			"ingredient_name": meta.get("ingredient_name"),
 			"category": meta.get("category"), "uom": meta.get("uom"),
-			"required": qty, "on_hand": round(on_hand, 3),
-			"short_by": round(max(0.0, qty - on_hand), 3),
+			"required": qty, "issued": had, "to_issue": due,
+			"on_hand": round(on_hand, 3),
+			# nothing left to pull is never short, whatever a stale count says
+			"short_by": round(max(0.0, due - on_hand), 3) if due else 0.0,
 			"cost": round(qty * float(meta.get("cost_per_unit") or 0), 2),
 			"for_dishes": slot["dishes"],
 		})
@@ -2435,36 +2457,59 @@ def kitchen_indent(function: str):
 	}
 
 
+def _lock_function(function: str) -> None:
+	"""Hold the function's row until this request commits, so a second issue
+	for it waits here."""
+	frappe.db.get_value("Venue Booking", function, "name", for_update=True)
+
+
 @frappe.whitelist(methods=["POST"])
 @require_perm("Venue Booking", "issue_indent")
 def issue_indent(function: str, outlet: str, rows=None):
 	"""Pull the indent off the shelf. Writes real stock movements through
 	the same single writer the restaurant uses, so the store room reflects
-	a banquet the way it reflects a table."""
+	a banquet the way it reflects a table.
+
+	Without rows it takes only what the function still lacks: the indent less
+	what it has already had, from any outlet. So a second press takes nothing
+	and a bigger headcount takes the difference. A smaller one puts nothing
+	back; a stock take does that. Rows named by the caller are issued as given.
+	"""
 	from kamra.inventory import _apply_move
 
+	# One issue at a time per function, and everything read after the lock. The
+	# transaction this request has been reading in ends first: its snapshot
+	# would not show an issue that committed while this one waited.
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- nothing written yet; the reads after the lock need a fresh snapshot
+	_lock_function(function)
 	doc = _fn(function)
 	if doc.status not in ("Confirmed", "Completed"):
 		frappe.throw(_("Issue against a confirmed function, not a {0} one.")
 		             .format(doc.status))
-	wanted = _rows(rows) if rows else kitchen_indent(function)["ingredients"]
+	if rows:
+		wanted = [(r["ingredient"], float(r.get("required") or r.get("qty") or 0))
+		          for r in _rows(rows)]
+	else:
+		wanted = [(r["ingredient"], r["to_issue"])
+		          for r in kitchen_indent(function)["ingredients"]]
 	moved = []
-	for r in wanted:
-		qty = float(r.get("required") or r.get("qty") or 0)
+	# sorted, like a KOT's deductions, so the two cannot deadlock
+	for ingredient, qty in sorted(wanted):
 		if qty <= 0:
 			continue
 		after = _apply_move(
-			doc.property, outlet, r["ingredient"], -qty, "Consumption",
+			doc.property, outlet, ingredient, -qty, "Consumed",
 			ref_dt="Venue Booking", ref_dn=doc.name,
 			note=_("Banquet indent for {0}").format(doc.customer_name))
-		moved.append({"ingredient": r["ingredient"], "qty": qty,
+		moved.append({"ingredient": ingredient, "qty": qty,
 		              "balance_after": after})
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
-	from kamra.savings import log_action
-	log_action("banquet_indent", "Venue Booking", doc.name, doc.property,
-	           minutes_saved=20,
-	           rationale=f"{len(moved)} ingredient line(s) issued for "
-	                     f"{doc.customer_name} ({doc.billable_pax} pax)")
+	if moved:
+		from kamra.savings import log_action
+		log_action("banquet_indent", "Venue Booking", doc.name, doc.property,
+		           minutes_saved=20,
+		           rationale=f"{len(moved)} ingredient line(s) issued for "
+		                     f"{doc.customer_name} ({doc.billable_pax} pax)")
 	return {"ok": True, "issued": len(moved), "lines": moved}
 
 
