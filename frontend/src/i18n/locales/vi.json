@@ -7202,7 +7202,6 @@
   "Correct this on the room's bill at the desk.": "Hãy sửa trên hóa đơn phòng tại quầy lễ tân.",
   "Money back as": "Hoàn tiền bằng",
   "Net sales": "Doanh thu thuần",
-  "No supervisor has a cashier PIN yet. One sets it the first time a money action asks.": "Chưa giám sát nào có PIN thu ngân. PIN được đặt lần đầu khi thao tác tiền yêu cầu.",
   "Note (required)": "Ghi chú (bắt buộc)",
   "Paid {paid} · already refunded {refunded}": "Đã trả {paid} · đã hoàn {refunded}",
   "Partly refunded": "Đã hoàn một phần",
@@ -7241,5 +7240,13 @@
   "One batch makes": "Một mẻ làm được",
   "In the stock unit.": "Theo đơn vị tồn kho.",
   "What one batch uses, from bought ingredients.": "Một mẻ dùng gì, lấy từ nguyên liệu mua vào.",
-  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Làm theo mẻ trong bếp của bạn, như siro hoặc nước sốt. Giá vốn tính từ công thức và không thể nhập như hàng giao đến."
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Làm theo mẻ trong bếp của bạn, như siro hoặc nước sốt. Giá vốn tính từ công thức và không thể nhập như hàng giao đến.",
+  "4 to 8 digits.": "Từ 4 đến 8 chữ số.",
+  "Current PIN": "Mã PIN hiện tại",
+  "New PIN": "Mã PIN mới",
+  "No supervisor has a cashier PIN yet. A supervisor sets one from the account menu: Set my cashier PIN.": "Chưa giám sát viên nào có mã PIN thu ngân. Giám sát viên đặt mã trong menu tài khoản: Đặt mã PIN thu ngân của tôi.",
+  "Repeat new PIN": "Nhập lại mã PIN mới",
+  "Set my cashier PIN": "Đặt mã PIN thu ngân của tôi",
+  "Set your cashier PIN to approve this refund.": "Đặt mã PIN thu ngân của bạn để duyệt khoản hoàn tiền này.",
+  "The two PINs don't match.": "Hai mã PIN không khớp."
 }

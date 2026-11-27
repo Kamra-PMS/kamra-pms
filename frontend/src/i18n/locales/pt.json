@@ -7240,7 +7240,6 @@
   "Correct this on the room's bill at the desk.": "Corrija na conta do quarto na recepção.",
   "Money back as": "Devolver como",
   "Net sales": "Vendas líquidas",
-  "No supervisor has a cashier PIN yet. One sets it the first time a money action asks.": "Nenhum supervisor tem PIN de caixa ainda. Ele é criado na primeira vez que uma ação com dinheiro pedir.",
   "Note (required)": "Observação (obrigatória)",
   "Paid {paid} · already refunded {refunded}": "Pago {paid} · já reembolsado {refunded}",
   "Partly refunded": "Reembolsado em parte",
@@ -7279,5 +7278,13 @@
   "One batch makes": "Um lote rende",
   "In the stock unit.": "Na unidade de estoque.",
   "What one batch uses, from bought ingredients.": "O que um lote usa, de ingredientes comprados.",
-  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Preparado na sua cozinha em lotes, como um xarope ou um molho. O custo vem da receita e ele não pode ser recebido como entrega."
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Preparado na sua cozinha em lotes, como um xarope ou um molho. O custo vem da receita e ele não pode ser recebido como entrega.",
+  "4 to 8 digits.": "De 4 a 8 dígitos.",
+  "Current PIN": "PIN atual",
+  "New PIN": "Novo PIN",
+  "No supervisor has a cashier PIN yet. A supervisor sets one from the account menu: Set my cashier PIN.": "Nenhum supervisor tem um PIN de caixa ainda. Um supervisor define o seu no menu da conta: Definir meu PIN de caixa.",
+  "Repeat new PIN": "Repita o novo PIN",
+  "Set my cashier PIN": "Definir meu PIN de caixa",
+  "Set your cashier PIN to approve this refund.": "Defina seu PIN de caixa para aprovar este reembolso.",
+  "The two PINs don't match.": "Os dois PINs não coincidem."
 }

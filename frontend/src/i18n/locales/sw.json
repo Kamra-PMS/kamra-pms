@@ -7202,7 +7202,6 @@
   "Correct this on the room's bill at the desk.": "Rekebisha hili kwenye bili ya chumba mapokezi.",
   "Money back as": "Rudisha pesa kama",
   "Net sales": "Mauzo halisi",
-  "No supervisor has a cashier PIN yet. One sets it the first time a money action asks.": "Hakuna msimamizi aliye na PIN ya keshia bado. Huiweka mara ya kwanza tendo la pesa linapoiomba.",
   "Note (required)": "Maelezo (lazima)",
   "Paid {paid} · already refunded {refunded}": "Imelipwa {paid} · imesharejeshwa {refunded}",
   "Partly refunded": "Imerejeshwa kwa sehemu",
@@ -7241,5 +7240,13 @@
   "One batch makes": "Fungu moja hutoa",
   "In the stock unit.": "Kwa kipimo cha stoo.",
   "What one batch uses, from bought ingredients.": "Kinachotumika kwa fungu moja, kutoka viungo vilivyonunuliwa.",
-  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Hutengenezwa jikoni kwako kwa mafungu, kama sharubati au mchuzi. Gharama yake inatoka kwenye mapishi na haiwezi kupokelewa kama mzigo."
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Hutengenezwa jikoni kwako kwa mafungu, kama sharubati au mchuzi. Gharama yake inatoka kwenye mapishi na haiwezi kupokelewa kama mzigo.",
+  "4 to 8 digits.": "Tarakimu 4 hadi 8.",
+  "Current PIN": "PIN ya sasa",
+  "New PIN": "PIN mpya",
+  "No supervisor has a cashier PIN yet. A supervisor sets one from the account menu: Set my cashier PIN.": "Hakuna msimamizi aliye na PIN ya keshia bado. Msimamizi huiweka kwenye menyu ya akaunti: Weka PIN yangu ya keshia.",
+  "Repeat new PIN": "Rudia PIN mpya",
+  "Set my cashier PIN": "Weka PIN yangu ya keshia",
+  "Set your cashier PIN to approve this refund.": "Weka PIN yako ya keshia ili kuidhinisha urejeshaji huu.",
+  "The two PINs don't match.": "PIN hizo mbili hazilingani."
 }

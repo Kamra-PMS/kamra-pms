@@ -7202,7 +7202,6 @@
   "Correct this on the room's bill at the desk.": "صحّح هذا في فاتورة الغرفة عند الاستقبال.",
   "Money back as": "إعادة المبلغ بواسطة",
   "Net sales": "صافي المبيعات",
-  "No supervisor has a cashier PIN yet. One sets it the first time a money action asks.": "لا يوجد مشرف لديه رمز أمين صندوق بعد. يعيّنه المشرف عند أول طلب في إجراء مالي.",
   "Note (required)": "ملاحظة (مطلوبة)",
   "Paid {paid} · already refunded {refunded}": "المدفوع {paid} · المسترد سابقًا {refunded}",
   "Partly refunded": "مسترد جزئيًا",
@@ -7241,5 +7240,13 @@
   "One batch makes": "كمية الدفعة الواحدة",
   "In the stock unit.": "بوحدة المخزون.",
   "What one batch uses, from bought ingredients.": "ما تستهلكه الدفعة الواحدة من مكونات مشتراة.",
-  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "يُصنع في مطبخك على دفعات، مثل شراب محلّى أو صلصة. تُحسب تكلفته من الوصفة ولا يمكن استلامه كتوريد."
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "يُصنع في مطبخك على دفعات، مثل شراب محلّى أو صلصة. تُحسب تكلفته من الوصفة ولا يمكن استلامه كتوريد.",
+  "4 to 8 digits.": "من 4 إلى 8 أرقام.",
+  "Current PIN": "رمز PIN الحالي",
+  "New PIN": "رمز PIN الجديد",
+  "No supervisor has a cashier PIN yet. A supervisor sets one from the account menu: Set my cashier PIN.": "لا يملك أي مشرف PIN أمين صندوق بعد. يعيّنه المشرف من قائمة الحساب: تعيين PIN أمين الصندوق الخاص بي.",
+  "Repeat new PIN": "أعد إدخال رمز PIN الجديد",
+  "Set my cashier PIN": "تعيين PIN أمين الصندوق الخاص بي",
+  "Set your cashier PIN to approve this refund.": "عيّن PIN أمين الصندوق للموافقة على هذا الاسترداد.",
+  "The two PINs don't match.": "رمزا PIN غير متطابقين."
 }

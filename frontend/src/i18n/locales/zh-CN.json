@@ -7202,7 +7202,6 @@
   "Correct this on the room's bill at the desk.": "请在前台的房间账单上更正。",
   "Money back as": "退款方式",
   "Net sales": "净销售额",
-  "No supervisor has a cashier PIN yet. One sets it the first time a money action asks.": "尚无主管设置收银 PIN。首次进行资金操作时设置。",
   "Note (required)": "备注（必填）",
   "Paid {paid} · already refunded {refunded}": "已付 {paid} · 已退 {refunded}",
   "Partly refunded": "部分退款",
@@ -7241,5 +7240,13 @@
   "One batch makes": "一批产量",
   "In the stock unit.": "按库存单位。",
   "What one batch uses, from bought ingredients.": "一批所用的外购食材。",
-  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "在厨房分批制作，例如糖浆或酱汁。成本按配方计算，不能作为收货入库。"
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "在厨房分批制作，例如糖浆或酱汁。成本按配方计算，不能作为收货入库。",
+  "4 to 8 digits.": "4 到 8 位数字。",
+  "Current PIN": "当前 PIN",
+  "New PIN": "新 PIN",
+  "No supervisor has a cashier PIN yet. A supervisor sets one from the account menu: Set my cashier PIN.": "还没有主管设置收银 PIN。主管可在账户菜单中设置：设置我的收银 PIN。",
+  "Repeat new PIN": "再次输入新 PIN",
+  "Set my cashier PIN": "设置我的收银 PIN",
+  "Set your cashier PIN to approve this refund.": "设置收银 PIN 后才能批准这笔退款。",
+  "The two PINs don't match.": "两次输入的 PIN 不一致。"
 }
