@@ -16,6 +16,7 @@
     "phone:check": "node scripts/phone-check.mjs",
     "csv:check": "node scripts/csv-check.mjs",
     "booking-defaults:check": "node scripts/booking-defaults-check.mjs",
+    "rooms-to-sell:check": "node scripts/rooms-to-sell-check.mjs",
     "key-notice:check": "node scripts/key-notice-check.mjs",
     "night-prices:check": "node scripts/night-prices-check.mjs",
     "stock:check": "node scripts/stock-check.mjs",

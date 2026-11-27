@@ -7153,5 +7153,7 @@
   "Visa number": "رقم التأشيرة",
   "Visa type": "نوع التأشيرة",
   "e-Visa": "تأشيرة إلكترونية",
-  "New visa number (leave empty to keep)": "رقم تأشيرة جديد (اتركه فارغًا للإبقاء على الحالي)"
+  "New visa number (leave empty to keep)": "رقم تأشيرة جديد (اتركه فارغًا للإبقاء على الحالي)",
+  "{n} left": "المتبقي: {n}",
+  "No room to assign": "لا توجد غرفة للتخصيص"
 }

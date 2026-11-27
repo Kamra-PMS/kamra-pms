@@ -7191,5 +7191,7 @@
   "Visa number": "Número do visto",
   "Visa type": "Tipo de visto",
   "e-Visa": "Visto eletrônico",
-  "New visa number (leave empty to keep)": "Novo número do visto (deixe vazio para manter)"
+  "New visa number (leave empty to keep)": "Novo número do visto (deixe vazio para manter)",
+  "{n} left": "Disponíveis: {n}",
+  "No room to assign": "Sem quarto para atribuir"
 }

@@ -7153,5 +7153,7 @@
   "Visa number": "Namba ya viza",
   "Visa type": "Aina ya viza",
   "e-Visa": "Viza ya kielektroniki",
-  "New visa number (leave empty to keep)": "Namba mpya ya viza (acha wazi ili kubaki)"
+  "New visa number (leave empty to keep)": "Namba mpya ya viza (acha wazi ili kubaki)",
+  "{n} left": "Zimebaki: {n}",
+  "No room to assign": "Hakuna chumba cha kupanga"
 }

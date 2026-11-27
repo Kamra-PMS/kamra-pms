@@ -10,6 +10,7 @@ import {
 } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { cur, fmtAmount } from "../lib/money"
+import { freeCounts, type RoomSales } from "../lib/roomsToSell"
 import { useT } from "../lib/i18n"
 import { Button } from "./ui/button"
 import PhoneInput from "./PhoneInput"
@@ -191,21 +192,23 @@ export default function GroupBookingDialog(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockKey])
 
-  // how many rooms of each type are free on the group's dates
-  const types = [...new Set(blocks.map((b) => b.room_type).filter(Boolean))].join("|")
+  // how many rooms of each type can still be sold on the group's dates, the
+  // count the save holds the block to
   useEffect(() => {
-    if (!types) return
-    for (const rt of types.split("|")) {
-      call<{ name: string }[]>("kamra.api.available_rooms", {
-        property: getCurrentProperty(),
-        room_type: rt,
-        check_in_date: g.check_in_date,
-        check_out_date: g.check_out_date,
-      })
-        .then((rs) => setFree((f) => ({ ...f, [rt]: rs.length })))
-        .catch(() => {})
+    setFree({})
+    if (g.check_out_date <= g.check_in_date) return
+    let live = true
+    call<RoomSales>("kamra.api.rooms_to_sell", {
+      property: getCurrentProperty(),
+      check_in_date: g.check_in_date,
+      check_out_date: g.check_out_date,
+    })
+      .then((sales) => live && setFree(freeCounts(sales)))
+      .catch(() => {})
+    return () => {
+      live = false
     }
-  }, [types, g.check_in_date, g.check_out_date])
+  }, [g.check_in_date, g.check_out_date])
 
   const typeName = (rt: string) =>
     options?.room_types.find((x) => x.name === rt)?.room_type_name ?? rt
