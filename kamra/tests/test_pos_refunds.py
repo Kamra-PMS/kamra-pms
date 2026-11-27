@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import frappe
 
-from kamra import cashier, inventory, pos, pos_refunds, settings
+from kamra import cashier, inventory, menu_modifiers, pos, pos_refunds, settings
 from kamra.tests.audit_fixtures import (
 	PROP_A, PROP_B, TODAY, AuditTestCase, make_property)
 from kamra.tests.test_rbac import _user
@@ -497,6 +497,21 @@ class TestTheTill(Refunding):
 			fields=["approver", "rationale", "action_channel"])
 		self.assertEqual((log[0].approver, log[0].action_channel), (SUPERVISOR, "Desk"))
 		self.assertIn("Wrong order", log[0].rationale)
+
+
+class TestChoices(Refunding):
+	def test_the_refund_window_tells_two_lines_of_one_dish_apart(self):
+		group = menu_modifiers.save_modifier_group(
+			self.outlet, "UT Milk", [{"option_name": "Oat milk", "price": 5000}],
+			items=[self.latte])["name"]
+		oat = frappe.db.get_value("Menu Modifier Option", {"modifier_group": group})
+		order = pos.create_order(
+			self.outlet, [{"menu_item": self.latte, "qty": 1, "modifiers": [oat]},
+			              {"menu_item": self.latte, "qty": 1}], table_no="T1")["order"]
+		pos.pay_order(order, "Cash")
+		lines = pos_refunds.refund_options(order)["lines"]
+		self.assertEqual([(x["item_name"], x["choices"]) for x in lines],
+		                 [("UT Latte", ["Oat milk"]), ("UT Latte", [])])
 
 
 class TestBackToStock(Refunding):

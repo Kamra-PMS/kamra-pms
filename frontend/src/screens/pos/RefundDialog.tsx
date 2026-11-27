@@ -21,7 +21,7 @@ interface Options {
   paid: number
   refunded: number
   remaining: number
-  lines: { row: string; item_name: string; qty: number; refunded_qty: number; can_restock: boolean }[]
+  lines: { row: string; item_name: string; choices: string[]; qty: number; refunded_qty: number; can_restock: boolean }[]
   modes: string[]
   reasons: { code: string; label: string }[]
   approvers: { user: string; full_name: string }[]
@@ -149,21 +149,25 @@ export default function RefundDialog({ order, onClose, onDone }: {
                     {opts.lines.map((l) => {
                       const left = Math.round((l.qty - l.refunded_qty) * 1000) / 1000
                       const share = shareOf(l.row)
+                      const label = [l.item_name, ...l.choices].join(", ")
                       return (
                         <tr key={l.row} className={cn(left <= 0 && "text-zinc-400")}>
-                          <td className="py-1.5">{l.item_name}</td>
+                          <td className="py-1.5">
+                            {l.item_name}
+                            {l.choices.length > 0 && <span className="block text-xs text-zinc-500">{l.choices.join(", ")}</span>}
+                          </td>
                           <td className="py-1.5 pr-3 text-right tabular-nums">{left}</td>
                           {kind === "items" && (
                             <td className="py-1.5">
                               <input className={cn(box, "w-20")} type="number" min="0" max={left} step="any" disabled={left <= 0}
                                 value={qtys[l.row] ?? ""} onChange={(e) => setQtys({ ...qtys, [l.row]: e.target.value })}
-                                aria-label={`${l.item_name} · ${t("Refund")}`} />
+                                aria-label={`${label} · ${t("Refund")}`} />
                             </td>
                           )}
                           <td className="py-1.5 pr-3 text-right tabular-nums">{share === undefined ? "-" : money(share)}</td>
                           <td className="py-1.5">
                             {l.can_restock && left > 0 && (
-                              <input type="checkbox" checked={!!back[l.row]} aria-label={`${l.item_name} · ${t("Back to stock")}`}
+                              <input type="checkbox" checked={!!back[l.row]} aria-label={`${label} · ${t("Back to stock")}`}
                                 onChange={(e) => setBack({ ...back, [l.row]: e.target.checked })} />
                             )}
                           </td>

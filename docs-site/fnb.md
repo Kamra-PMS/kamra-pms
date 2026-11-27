@@ -257,7 +257,8 @@ or **Order history**): press **Refund**.
 - If the connection drops, press again: the same refund is never paid twice.
   Once the window shows it went through, close it before refunding more.
 - Items with [their own stock](#items-with-their-own-stock) can be ticked
-  **Back to stock**. Dishes made from a recipe never return stock.
+  **Back to stock**: the item itself returns, not what its choices took.
+  Dishes made from a recipe never return stock.
 - The bill shows **Partly refunded** or **Refunded** and lists each refund,
   with a slip to print. A refund can't be edited or deleted, and the bill's
   payment mode can no longer be changed.

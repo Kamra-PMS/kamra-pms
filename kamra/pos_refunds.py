@@ -282,6 +282,7 @@ def refund_options(order: str):
 	refunds so far."""
 	from kamra.authz import is_supervisor, supervisors_for
 	from kamra.ledger import ensure_default_reason_codes
+	from kamra.menu_modifiers import names_of
 
 	doc = frappe.get_doc("POS Order", order)
 	problem = why_not(doc)
@@ -296,6 +297,8 @@ def refund_options(order: str):
 		"remaining": round(max(flt(doc.paid_amount) - refunded, 0), 2),
 		"lines": [
 			{"row": it.name, "item_name": it.item_name, "qty": flt(it.qty),
+			 # tells two lines of one dish apart (oat milk and plain)
+			 "choices": names_of(it.modifiers),
 			 "refunded_qty": flt(done.get(it.name)),
 			 "can_restock": bool(it.stock_item and it.stock_posted)}
 			for it in doc.items if not it.voided],
