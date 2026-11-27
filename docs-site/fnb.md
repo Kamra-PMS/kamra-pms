@@ -50,8 +50,7 @@ access**; like every role, it reaches only the properties ticked there.
    **allergen chips** from the master list. The station decides which kitchen
    printer gets the dish and which station filter shows it on the kitchen
    display. To load a whole menu at once, use **Bulk upload** on the Menu
-   screen: upload a spreadsheet, check the preview, then run it. For milk,
-   size or extras on a dish, see [Choices on a dish](#choices-on-a-dish).
+   screen: upload a spreadsheet, check the preview, then run it.
 
    ![The menu list: each item with its outlet, category, price and whether it is available, with Recipes, Bulk upload and New](/img/fnb/menu.png)
 
@@ -92,46 +91,6 @@ long it has waited. After 15 minutes (change it in **Settings → F&B**) the
 bill turns red on the till and a red dot shows on **Orders**, so a
 forgotten order gets sent or cancelled. Night Audit lists it as *open, not
 sent to kitchen*.
-
-## Choices on a dish
-
-Choices are what the captain asks when a dish goes on the bill: which milk,
-how much ice, any extras. Each choice can add to the price. Finance, F&B
-Manager and Hotel Admin set them up on **F&B → Menu → Choices**.
-
-1. Press **New group** and name it (Milk, Size, Extras). A group belongs to
-   one outlet.
-2. Tick **Must choose** if the dish cannot go on the bill without an answer.
-   Tick **Several choices allowed** if the guest may take more than one, and
-   set **Most choices** (0 means no limit).
-3. Add the choices. Each has a name and what it adds to the price (0 is
-   free). A choice that uses stock (an extra shot: 18 g of beans) has a
-   **Uses stock** button: add its ingredients, and they leave stock with the
-   dish's recipe when the KOT is sent.
-4. Under **Dishes that ask for it**, tick the dishes of that outlet. The
-   search box and **Tick all shown** pick a whole category at once.
-5. Press **Save group**.
-
-You can also pick a dish's groups from the dish itself: open it on **F&B →
-Menu**, click groups under **Choices** at the bottom of the form to add them
-(click one again, or its ×, to take it off - the same as the allergens), then
-**Save**. Both ways change the same list, so they always agree. The form shows
-the groups of the dish's outlet only; move a dish to another outlet and the
-old outlet's groups come off it.
-
-On the till, a dish with a **Must choose** group opens its choices first. A
-dish with only optional groups is added at once; its line has a button to add
-choices before you send it. The line's price is the dish's price plus its
-choices, and the same dish with different choices is a separate line.
-
-The kitchen display, the KOT and the bill show the choices under the dish.
-The bill keeps what was sold: renaming a choice or changing its price later
-does not change a bill that is already written, and deleting a group takes it
-off every dish without touching past bills. A line that was already sent
-cannot change its choices; void it and add it again.
-
-Bulk upload does not set choices. A group with no choices is not asked for,
-so it never blocks a dish.
 
 ## The table map
 
@@ -433,17 +392,8 @@ before you stock them or put them on a recipe.
 
 ![Kitchen inventory: each ingredient's stock on hand, par level and status, with Receive, Stock take and Wastage](/img/fnb/inventory.png)
 
-The table lists what the outlet holds. **Receive** also lists every other
-active ingredient, so a new one can be received straight away. **Stock
-take** and **Wastage** start from what this outlet holds. Search that
-list, or use **Add ingredient**, to count or write off one it has never
-held. Writing off an ingredient the outlet has never held warns that the
-balance will go below zero; the write-off still saves, because a shortage
-is allowed to go negative.
-
 Each row shows status (OK, low, out or negative) against its par level.
-To set that level, select the figure (or **Set**) in the **Par** column;
-0 means no warning. Recipes are set on the **Menu** screen (**Recipes**).
+Recipes are set on the **Menu** screen (**Recipes**).
 
 - Ingredients leave stock when the KOT is sent - when cooking starts - not
   when the bill is paid.

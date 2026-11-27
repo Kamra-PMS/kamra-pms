@@ -85,8 +85,6 @@ const CSS = `${FONT_FACE}
   .kt tr.h td.q { text-align: right; padding-right: 1.2ch }
   .kt td.n { font-weight: 700; overflow-wrap: anywhere }
   .kt .ins { font-size: 13.5px; font-weight: 700 }
-  .kt .mod { font-size: 14px; font-weight: 800 }
-  .tbl .mod, .it .mod { font-size: 12px; font-weight: 500 }
   .kt .sv { font-size: 12px; font-weight: 500 }
   .flag { border: 2px solid #000; border-radius: 8px; padding: 2px 6px; text-align: center; font-weight: 800; letter-spacing: .04em; margin: 6px 0 }
   /* totals: the label hugs the value column, regular weight; the value is bold */
@@ -191,16 +189,7 @@ export function printThermal(title: string, body: string): boolean {
  *  staff how to print silently (Chrome --kiosk-printing). */
 export const PRINT_DIALOG_EVENT = "kamra:print-dialog"
 
-export interface KotLine {
-  item_name: string
-  qty: number
-  instructions?: string | null
-  /** the choices ticked for the dish (milk, size, extras), by name */
-  modifiers?: string[]
-}
-
-/** The choices under a dish, one per line: "+ Oat milk". Empty when it has none. */
-const modLines = (mods?: string[]) => (mods ?? []).map((m) => `<div class="mod">+ ${esc(m)}</div>`).join("")
+export interface KotLine { item_name: string; qty: number; instructions?: string | null }
 
 export function kotHtml(o: {
   outlet: string
@@ -226,7 +215,7 @@ export function kotHtml(o: {
   })
   const rows = o.items.map((it) =>
     `<tr><td class="q">${Math.round(it.qty)}×</td>` +
-    `<td class="n">${esc(it.item_name)}` + modLines(it.modifiers) +
+    `<td class="n">${esc(it.item_name)}` +
     (it.instructions ? `<div class="ins">» ${esc(it.instructions)}</div>` : "") +
     `</td></tr>`).join("")
   const title = (o.kind === "Void" ? translate("*** VOID *** KOT #{number}", { number: String(o.kot_no ?? "-") })
@@ -315,8 +304,7 @@ export interface BillData {
   receipt_design?: "Stacked" | "Columns" | null
   /** the outlet's "print a barcode" switch: the barcode prints unless this is 0 or false */
   barcode?: boolean | number | null
-  /** `rate` already includes the dish's choices; `modifiers` are their names, printed under the dish */
-  items: { item_name: string; qty: number; rate: number; amount: number; modifiers?: string[] }[]
+  items: { item_name: string; qty: number; rate: number; amount: number }[]
   subtotal: number
   discount_amount: number
   /** the outlet's levy (a service charge) as charged on this bill; none when absent */
@@ -378,10 +366,10 @@ export function billHtml(b: BillData, opts: BillOptions = {}) {
     ? `<table class="tbl"><tr class="h"><td>${esc(translate("Item"))}</td><td class="q">${esc(translate("Qty"))}</td>` +
       `<td class="r">${esc(translate("Rate"))}</td><td class="a">${esc(translate("Amt"))}</td></tr>` +
       b.items.map((it, i) =>
-        `<tr><td class="nm">${esc(it.item_name)}${modLines(it.modifiers)}</td><td class="q">${Math.round(it.qty)}</td>` +
+        `<tr><td class="nm">${esc(it.item_name)}</td><td class="q">${Math.round(it.qty)}</td>` +
         `<td class="r">${f(it.rate)}</td><td class="a">${f(fig.lines[i])}</td></tr>`).join("") + `</table>`
     : b.items.map((it, i) =>
-      `<div class="it"><div class="n">${esc(it.item_name)}</div>${modLines(it.modifiers)}<div class="row"><span>${Math.round(it.qty)} x ${f(it.rate)}</span>` +
+      `<div class="it"><div class="n">${esc(it.item_name)}</div><div class="row"><span>${Math.round(it.qty)} x ${f(it.rate)}</span>` +
       `<span class="a num">${f(fig.lines[i])}</span></div></div>`).join("")
   const sum = (l: string, v: number) => `<span class="l">${l}</span><span class="v">${f(v)}</span>`
   const n = b.items.length

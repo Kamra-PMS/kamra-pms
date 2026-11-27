@@ -86,7 +86,7 @@ for (const receipt_design of ["Columns", "Stacked"]) {
   const html = billHtml(bill({
     receipt_design, order: EVIL, property_name: EVIL, outlet_name: EVIL, table_no: EVIL, room_no: null,
     customer_name: EVIL, customer_phone: EVIL, delivery_address: EVIL, served_by: EVIL, cashier: EVIL,
-    items: [{ item_name: EVIL, qty: 1, rate: 1, amount: 1, modifiers: [EVIL] }], tax_parts: [{ label: EVIL, rate: 10, amount: 1 }],
+    items: [{ item_name: EVIL, qty: 1, rate: 1, amount: 1 }], tax_parts: [{ label: EVIL, rate: 10, amount: 1 }],
     paid: 1, payment_mode: EVIL, nc: 1, nc_authorized_by: EVIL, nc_note: EVIL,
   }))
   assert.ok(!/<img/i.test(html), `${receipt_design}: nothing the user typed becomes a tag`)
@@ -100,19 +100,8 @@ assert.ok(saudi.includes("&quot; onerror=&quot;alert(1)"), "the QR source is esc
 assert.ok(saudi.includes("ICV 1&lt;b&gt;x"), "the ICV is escaped")
 // the kitchen ticket and the laundry docket
 const kot = kotHtml({ outlet: EVIL, kot_no: 1, label: EVIL, order_type: EVIL, order: EVIL, customer: EVIL, address: EVIL,
-  station: EVIL, fallback_from: EVIL, nc: true, nc_by: EVIL, items: [{ item_name: EVIL, qty: 1, instructions: EVIL, modifiers: [EVIL] }] })
+  station: EVIL, fallback_from: EVIL, nc: true, nc_by: EVIL, items: [{ item_name: EVIL, qty: 1, instructions: EVIL }] })
 assert.ok(!/<img/i.test(kot), "the kitchen ticket escapes everything")
-// the choices ticked for a dish print under it, one per line, on the kitchen ticket and on the bill in both layouts
-const kotMods = kotHtml({ outlet: "Warung", kot_no: 2, label: "Table 1", order: "ORD-1", items: [
-  { item_name: "Es Kopi Susu", qty: 2, modifiers: ["Less ice", "Oat milk"], instructions: "no straw" },
-  { item_name: "Nasi Goreng", qty: 1 }] })
-assert.ok(kotMods.includes('<div class="mod">+ Less ice</div><div class="mod">+ Oat milk</div><div class="ins">'), "the kitchen ticket lists the choices, then the note")
-assert.equal((kotMods.match(/class="mod"/g) ?? []).length, 2, "a dish without choices prints none")
-for (const receipt_design of ["Columns", "Stacked"]) {
-  const html = billHtml(bill({ receipt_design, items: [{ item_name: "Es Kopi Susu", qty: 1, rate: 32000, amount: 32000, modifiers: ["Less ice", "Oat milk"] }] }))
-  assert.ok(html.includes('<div class="mod">+ Oat milk</div>'), `${receipt_design}: the bill lists the choices under the dish`)
-  assert.ok(html.includes("32,000.00") || html.includes("32000.00"), `${receipt_design}: the rate is the one that includes them`)
-}
 const laundry = laundryDocketHtml({ property_name: EVIL, order: EVIL, room_no: EVIL, guest_name: EVIL, order_type: EVIL,
   express: true, ready_by: EVIL, items: [{ item_name: EVIL, service_type: EVIL, qty: 1 }], total: 100 })
 assert.ok(!/<img/i.test(laundry), "the laundry docket escapes everything")

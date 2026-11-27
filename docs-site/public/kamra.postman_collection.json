@@ -11423,7 +11423,7 @@
         "kamra.banquet.kitchen_indent"
        ]
       },
-      "description": "What the kitchen has to buy and pull for this function.\n\nThe artifact that has always sat between the event order and the store\nroom, written by hand: chosen dishes x portions x guaranteed pax,\nexploded through the recipes into ingredient quantities, checked against\nwhat's actually on the shelf. `issued` is what the function has already\nhad; `to_issue` and `short_by` are about the rest.",
+      "description": "What the kitchen has to buy and pull for this function.\n\nThe artifact that has always sat between the event order and the store\nroom, written by hand: chosen dishes x portions x guaranteed pax,\nexploded through the recipes into ingredient quantities, checked against\nwhat's actually on the shelf.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"function\": \"EVT-2026-0001\"\n}",
@@ -11460,7 +11460,7 @@
         "kamra.banquet.issue_indent"
        ]
       },
-      "description": "Pull the indent off the shelf. Writes real stock movements through\nthe same single writer the restaurant uses, so the store room reflects\na banquet the way it reflects a table.\n\nWithout rows it takes only what the function still lacks: the indent less\nwhat it has already had, from any outlet. So a second press takes nothing\nand a bigger headcount takes the difference. A smaller one puts nothing\nback; a stock take does that. Rows named by the caller are issued as given.",
+      "description": "Pull the indent off the shelf. Writes real stock movements through\nthe same single writer the restaurant uses, so the store room reflects\na banquet the way it reflects a table.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"function\": \"EVT-2026-0001\",\n  \"outlet\": \"Your Property-Restaurant\"\n}",
@@ -13330,10 +13330,10 @@
         "kamra.inventory.stock_list"
        ]
       },
-      "description": "Everything this outlet holds. Stock is per outlet, so there is no such\nthing as a merged total across outlets and this never offers one.\n\ninclude_unstocked adds the active ingredients this outlet has never moved,\nat zero and marked stocked = 0, for the receipt, count and wastage pickers:\na balance row only appears with the first movement, so without them a new\ningredient could never get one.",
+      "description": "Everything this outlet holds. Stock is per outlet, so there is no such\nthing as a merged total across outlets and this never offers one.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"include_unstocked\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -20447,7 +20447,7 @@
       "description": "Availability + real quoted price per room type for the stay.\n\nEach available row also carries `plans`: the stay quoted room only\n(first) and with each meal plan, so the page lists real totals per plan. A valid\n`voucher_code` discounts every quote, and each plan then keeps its\nundiscounted `list_amount` for the strike-through; an invalid one is\nignored here (check_voucher tells the guest why).\n\n`child_ages` (e.g. [3, 8, 13]) lets each room type's age bands decide who\nis free, a child or an adult; without it `children` are all children.\nEach row says whether the room type can take the party: `available`, a\n`reason` when it cannot, and `needs_confirmation` when the party is above\nwhat it sleeps but within the extra guests it allows by arrangement.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"pets\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"pets\": 0,\n  \"rooms\": null\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -20645,7 +20645,7 @@
       "description": "Create a Website booking. `source_tag` is the src / utm_source tag of\nthe booking link the guest came in on, kept on the reservation when the\nproperty has booking links on (#560). An existing guest profile is reused when\nboth the phone and the full name match; staff verify at check-in.\nThe advance owed is computed from the property's\ncurrent payment policy and snapshotted onto the booking.\n\nInstant mode (default): Confirmed when nothing is due now, else\nPending Payment with a hold window. Request to Book: Requested (no\ninventory) until the host approves. A party above what the room sleeps,\nwithin the extra guests it allows, is also Requested: the host confirms\nthe sleeping arrangement and agrees the price for them.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0,\n  \"marketing_consent\": 0,\n  \"source_tag\": \"\"\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"room_type\": \"Your Property-DLX\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"guest_name\": \"A. Guest\",\n  \"phone\": \"+91 90000 00000\",\n  \"email\": \"guest@example.com\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"meal_plan\": \"\",\n  \"special_requests\": \"\",\n  \"voucher_code\": \"\",\n  \"idempotency_key\": \"\",\n  \"pets\": 0,\n  \"marketing_consent\": 0,\n  \"source_tag\": \"\",\n  \"rooms\": null\n}",
        "options": {
         "raw": {
          "language": "json"

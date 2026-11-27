@@ -33,7 +33,6 @@ export interface BillLine {
   item_name: string
   qty: number
   amount: number
-  modifiers?: { name: string }[]
   instructions: string | null
   kot_status: string
   voided: number
@@ -214,11 +213,6 @@ export default function OpenBillsPopup({
                           >
                             {Math.round(it.qty)}× {it.item_name}
                           </div>
-                          {!it.voided && !!it.modifiers?.length && (
-                            <div className="text-xs font-medium text-zinc-600">
-                              {it.modifiers.map((m) => m.name).join(" · ")}
-                            </div>
-                          )}
                           {!it.voided && (
                             <div className="mt-0.5 text-xs text-zinc-500">
                               {it.kot_status === "New"

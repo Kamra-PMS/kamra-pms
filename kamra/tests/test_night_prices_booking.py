@@ -101,9 +101,8 @@ class NightPricesBookingTestCase(IntegrationTestCase):
 		comments = frappe.get_all("Comment", filters={
 			"reference_doctype": "Reservation", "reference_name": res.name,
 			"comment_type": "Comment"}, pluck="content")
-		from kamra.localization import money_text
-		self.assertTrue(any("Hand-set nightly prices" in c and self.ci in c
-		                    and money_text(res.property, 1200) in c for c in comments), comments)
+		self.assertTrue(any("Hand-set nightly prices" in c and self.ci in c and "1,200.00" in c
+		                    for c in comments), comments)
 		self.assertTrue(frappe.db.exists("Agent Action Log", {
 			"action_type": "set_night_prices", "reference_name": res.name}))
 

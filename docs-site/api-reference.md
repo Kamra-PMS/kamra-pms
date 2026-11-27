@@ -4642,8 +4642,7 @@ What the kitchen has to buy and pull for this function.
 The artifact that has always sat between the event order and the store
 room, written by hand: chosen dishes x portions x guaranteed pax,
 exploded through the recipes into ingredient quantities, checked against
-what's actually on the shelf. `issued` is what the function has already
-had; `to_issue` and `short_by` are about the rest.
+what's actually on the shelf.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -4656,11 +4655,6 @@ had; `to_issue` and `short_by` are about the rest.
 Pull the indent off the shelf. Writes real stock movements through
 the same single writer the restaurant uses, so the store room reflects
 a banquet the way it reflects a table.
-
-Without rows it takes only what the function still lacks: the indent less
-what it has already had, from any outlet. So a second press takes nothing
-and a bigger headcount takes the difference. A smaller one puts nothing
-back; a stock take does that. Rows named by the caller are issued as given.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5339,17 +5333,11 @@ a Wastage row too would deduct it twice. Use wastage_report() for those.
 Everything this outlet holds. Stock is per outlet, so there is no such
 thing as a merged total across outlets and this never offers one.
 
-include_unstocked adds the active ingredients this outlet has never moved,
-at zero and marked stocked = 0, for the receipt, count and wastage pickers:
-a balance row only appears with the first movement, so without them a new
-ingredient could never get one.
-
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
 | `outlet` | yes |  |
 | `status` | no | `None` |
-| `include_unstocked` | no | `0` |
 
 ### `kamra.inventory.ingredient_ledger`
 
@@ -5652,6 +5640,7 @@ meal plan and what is due now under the property's payment policy.
 | `children` | no | `0` |
 | `child_ages` | no | `None` |
 | `voucher_code` | no | `None` |
+| `rooms` | no | `None` |
 
 ### `kamra.guest_booking.hold`
 
@@ -8106,6 +8095,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
 | `voucher_code` | no | `None` |
+| `rooms` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
@@ -8229,6 +8219,7 @@ the sleeping arrangement and agrees the price for them.
 | `child_ages` | no | `None` |
 | `marketing_consent` | no | `0` |
 | `source_tag` | no | `''` |
+| `rooms` | no | `None` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 

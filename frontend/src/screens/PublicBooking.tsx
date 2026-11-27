@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react"
-import { clampGuests, maxCapacity } from "../lib/occupancy"
+import { singleRoomMaxCapacity } from "../lib/occupancy"
 import PrivacyNotice, { setPrivacyTerms } from "../components/PrivacyNotice"
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import {
+  AlertCircle,
   ArrowRight,
   BedDouble,
   CalendarDays,
@@ -11,11 +12,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Copy,
   ExternalLink,
   Eye,
   Images,
   MapPin,
+  Minus,
   Phone,
+  Plus,
   Search,
   ShieldCheck,
   Star,
@@ -57,6 +61,7 @@ interface Showcase {
     logo_url: string | null
     hero_image: string | null
     brand_accent: string | null
+    auto_expand_search?: number | boolean
     payment_mode: string
     advance_percent: number
     registration_fee: number
@@ -109,6 +114,7 @@ interface Showcase {
     children_capacity: number
     max_total_occupants?: number
     bed_type: string | null
+    bed_configuration?: string | null
     room_view: string | null
     amenities: string[]
     media: { media_type: string; url: string; caption: string | null }[]
@@ -458,11 +464,52 @@ function PhotoStrip({ photos, name, onOpen }: {
   )
 }
 
+export interface RoomParty {
+  adults: number
+  children: number
+  child_ages?: ChildAge[]
+}
+
+function distributeGuests(adults: number, children: number, rooms: number): RoomParty[] {
+  const r = Math.max(1, rooms)
+  const baseA = Math.floor(adults / r)
+  let remA = adults % r
+  const baseC = Math.floor(children / r)
+  let remC = children % r
+  const list: RoomParty[] = []
+  for (let i = 0; i < r; i++) {
+    const a = baseA + (remA > 0 ? 1 : 0)
+    if (remA > 0) remA--
+    const c = baseC + (remC > 0 ? 1 : 0)
+    if (remC > 0) remC--
+    list.push({ adults: a, children: c, child_ages: Array(c).fill("") })
+  }
+  return list
+}
+
+function matchesRoomError(errorMsg: string | null | undefined, roomIdx: number, roomTypeName?: string, roomTypeDoc?: string): boolean {
+  if (!errorMsg) return false
+  const lower = errorMsg.toLowerCase()
+  const roomNum = roomIdx + 1
+  if (lower.includes(`room ${roomNum}`) || lower.includes(`room #${roomNum}`) || lower.includes(`quarto ${roomNum}`) || lower.includes(`habitación ${roomNum}`)) {
+    return true
+  }
+  if (roomTypeName && lower.includes(roomTypeName.toLowerCase())) {
+    return true
+  }
+  if (roomTypeDoc && lower.includes(roomTypeDoc.toLowerCase())) {
+    return true
+  }
+  return false
+}
+
 export default function PublicBooking() {
   const { t, tn, lang } = useT()
   useEffect(() => adoptGuestLanguage(), [])
   const params = useParams()
   const navigate = useNavigate()
+  const navigateRef = useRef(navigate)
+  navigateRef.current = navigate
   const location = useLocation()
   const [property, setProperty] = useState<string | null>(null)
   const [catalogMode, setCatalogMode] = useState<string | null>(null)
@@ -489,38 +536,151 @@ export default function PublicBooking() {
   // A property slug where the check-in date goes (/book/kamra-demo-palace,
   // a hand-typed or older link) means that property, not a date.
   const slugInPath = params.checkin && !parseDate(params.checkin) ? params.checkin : null
-  const propertySlug = new URLSearchParams(location.search).get("property") || slugInPath
+  const searchParams = new URLSearchParams(location.search)
+  const propertySlug = searchParams.get("property") || slugInPath
 
-  // What this property can actually sleep. A property page lists several room
-  // types and the guest has not picked one yet, so the roomiest bounds the
-  // search. Without it the page quotes a party the booking then refuses -
-  // the guest gets a price, fills in their details, and only finds out on
-  // submit (Reservation.validate_occupancy is the real guard).
-  const maxAdults = maxCapacity(data?.room_types, "adults_capacity")
-  const maxChildren = maxCapacity(data?.room_types, "children_capacity")
-
-  // The party also arrives in the URL (/book/in/out/adults/children), so clamp
-  // once the capacity is known - otherwise a shared or edited link walks
-  // straight past the inputs.
-  useEffect(() => {
-    if (!maxAdults && !maxChildren) return
-    setSearch((q) => {
-      const adults = clampGuests(q.adults, 1, maxAdults)
-      const children = clampGuests(q.children, 0, maxChildren)
-      return adults === q.adults && children === q.children
-        ? q
-        : { ...q, adults, children }
+  const [search, setSearch] = useState(() => {
+    const raw = slugInPath ? {} : params
+    return stayFromParams({
+      checkin: raw.checkin || searchParams.get("check_in_date") || searchParams.get("checkin") || undefined,
+      checkout: raw.checkout || searchParams.get("check_out_date") || searchParams.get("checkout") || undefined,
+      adults: raw.adults || searchParams.get("adults") || undefined,
+      children: raw.children || searchParams.get("children") || undefined,
+      rooms: raw.rooms || searchParams.get("rooms") || undefined,
     })
-  }, [maxAdults, maxChildren])
-  const [search, setSearch] = useState(() =>
-    stayFromParams(slugInPath ? {} : params),
-  )
+  })
+
+  const singleMaxCapacity = singleRoomMaxCapacity(data?.room_types)
+  const minRoomsNeeded = singleMaxCapacity > 0
+    ? Math.max(1, Math.ceil((search.adults + search.children) / singleMaxCapacity))
+    : 1
+
+  const [showCustomParties, setShowCustomParties] = useState(false)
+  const [sameRoomError, setSameRoomError] = useState<string | null>(null)
+
+  const [activeRoomIndex, setActiveRoomIndex] = useState(0)
+  const [selectedRooms, setSelectedRooms] = useState<Record<number, {
+    room_type: string
+    room_type_name: string
+    meal_plan: string
+    amount: number
+    advance_due: number
+  }>>({})
+  const [multiRoomResults, setMultiRoomResults] = useState<{
+    multi_room: boolean
+    rooms: StayResult[][]
+    inventory: Record<string, number>
+  } | null>(null)
+
+  const [adultsStr, setAdultsStr] = useState<string | null>(null)
+  const [childrenStr, setChildrenStr] = useState<string | null>(null)
+  const [roomsStr, setRoomsStr] = useState<string | null>(null)
+
+  const curRooms = search.rooms || 1
+  const [customParties, setCustomParties] = useState<RoomParty[] | null>(null)
+
+  const roomParties: RoomParty[] = (customParties && customParties.length === curRooms)
+    ? customParties
+    : distributeGuests(search.adults, search.children, curRooms)
+
+  function updateRoomParty(roomIdx: number, newAdults: number, newChildren: number) {
+    const nextAdults = Math.max(0, Math.min(10, newAdults))
+    const nextChildren = Math.max(0, Math.min(10, newChildren))
+    const updated = roomParties.map((p, i) => {
+      if (i !== roomIdx) return { ...p }
+      const resizedAges = sizeAges(p.child_ages || [], nextChildren)
+      return { adults: nextAdults, children: nextChildren, child_ages: resizedAges }
+    })
+    setCustomParties(updated)
+    const totalA = updated.reduce((sum, p) => sum + p.adults, 0)
+    const totalC = updated.reduce((sum, p) => sum + p.children, 0)
+    setSearch((s) => ({ ...s, adults: totalA, children: totalC }))
+    setSelectedRooms((prev) => {
+      const next = { ...prev }
+      delete next[roomIdx]
+      return next
+    })
+  }
+
+  function updateRoomChildAges(roomIdx: number, newAges: ChildAge[]) {
+    const updated = roomParties.map((p, i) =>
+      i === roomIdx ? { ...p, child_ages: newAges } : { ...p }
+    )
+    setCustomParties(updated)
+  }
+
+  function addRoom() {
+    if (curRooms >= 10) return
+    const nextRooms = curRooms + 1
+    const newParty: RoomParty = { adults: 2, children: 0, child_ages: [] }
+    const updated = [...roomParties, newParty]
+    setCustomParties(updated)
+    const totalA = updated.reduce((sum, p) => sum + p.adults, 0)
+    const totalC = updated.reduce((sum, p) => sum + p.children, 0)
+    setSearch((s) => ({ ...s, rooms: nextRooms, adults: totalA, children: totalC }))
+    setActiveRoomIndex(nextRooms - 1)
+  }
+
+  function removeRoom(roomIdx: number) {
+    if (curRooms <= 1) return
+    const updated = roomParties.filter((_, i) => i !== roomIdx)
+    setCustomParties(updated)
+    const totalA = updated.reduce((sum, p) => sum + p.adults, 0)
+    const totalC = updated.reduce((sum, p) => sum + p.children, 0)
+    setSelectedRooms((prev) => {
+      const next: Record<number, { room_type: string; room_type_name: string; meal_plan: string; amount: number; advance_due: number }> = {}
+      let newI = 0
+      for (let i = 0; i < curRooms; i++) {
+        if (i === roomIdx) continue
+        if (prev[i]) next[newI] = prev[i]
+        newI++
+      }
+      return next
+    })
+    setSearch((s) => ({ ...s, rooms: curRooms - 1, adults: totalA, children: totalC }))
+    if (activeRoomIndex >= curRooms - 1) {
+      setActiveRoomIndex(Math.max(0, curRooms - 2))
+    }
+  }
+
+  function applySameForAllRooms() {
+    const curSel = selectedRooms[activeRoomIndex]
+    if (!curSel) return
+    const rtName = curSel.room_type
+    const rtData = results[rtName]
+    const totalAvail = rtData?.rooms_left ?? 0
+    if (totalAvail < curRooms) {
+      setSameRoomError(t("Only {n} rooms available for {roomType}.", { n: totalAvail, roomType: curSel.room_type_name }))
+      return
+    }
+    setSameRoomError(null)
+    const updated: Record<number, { room_type: string; room_type_name: string; meal_plan: string; amount: number; advance_due: number }> = {}
+    for (let i = 0; i < curRooms; i++) {
+      const roomQuotes = multiRoomResults?.rooms?.[i]
+      const matchingQuote = roomQuotes?.find((r) => r.room_type === rtName)
+      const matchingPlan = matchingQuote?.plans?.find((p) => p.meal_plan === curSel.meal_plan)
+      updated[i] = {
+        room_type: curSel.room_type,
+        room_type_name: curSel.room_type_name,
+        meal_plan: curSel.meal_plan,
+        amount: matchingPlan ? matchingPlan.amount_after_tax : curSel.amount,
+        advance_due: matchingPlan ? (matchingPlan.advance_due || 0) : curSel.advance_due,
+      }
+    }
+    setSelectedRooms(updated)
+  }
+
   const [results, setResults] = useState<Record<string, StayResult>>({})
   const [loadingRates, setLoadingRates] = useState(false)
   const [ratesFailed, setRatesFailed] = useState(false)
   const [childAgesState, setChildAges] = useState<ChildAge[]>([])
   const childAges = sizeAges(childAgesState, search.children)
-  const agesMissing = search.children > 0 && !agesToSend(childAges)
+  // multi-room keeps ages on each party; single-room uses the global list
+  const agesMissing = (search.rooms || 1) > 1
+    ? roomParties.some(
+        (p) => p.children > 0 && !agesToSend(sizeAges(p.child_ages || [], p.children)),
+      )
+    : search.children > 0 && !agesToSend(childAges)
   const [editing, setEditing] = useState(false)
   const [mealFilter, setMealFilter] = useState<string | null>(null)
   const [availableOnly, setAvailableOnly] = useState(false)
@@ -542,6 +702,8 @@ export default function PublicBooking() {
   const [voucherMsg, setVoucherMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [done, setDone] = useState<{
     reservation: string
+    reservations?: string[]
+    group_booking?: string
     amount: number
     advance_due: number
     balance_at_hotel: number
@@ -571,7 +733,7 @@ export default function PublicBooking() {
       .then((idx) => {
         setCatalogMode(idx.mode)
         if (idx.mode === "single_listing" && idx.listing_slug) {
-          navigate(`/stay/${idx.listing_slug}`, { replace: true })
+          navigateRef.current(`/stay/${idx.listing_slug}`, { replace: true })
           return null
         }
         if (idx.mode === "properties") {
@@ -598,19 +760,30 @@ export default function PublicBooking() {
         adoptUiLocale((d as unknown as { ui_locale?: { currency_symbol?: string; locale?: string } }).ui_locale)
         setPrivacyTerms((d as unknown as { ui_locale?: { privacy_authority?: string } }).ui_locale)
         setData(d)
+        if (d.property?.auto_expand_search) {
+          setEditing(true)
+        }
       })
       .catch(() => setLoadFailed(true))
-  }, [navigate, propertySlug])
+  }, [propertySlug])
 
   // stay state lives in the URL - shareable, crawlable, UTM params kept
   useEffect(() => {
     const qs = new URLSearchParams(location.search)
-    if (propertySlug) qs.set("property", propertySlug)
+    qs.delete("check_in_date")
+    qs.delete("check_out_date")
+    qs.delete("checkin")
+    qs.delete("checkout")
+    qs.delete("adults")
+    qs.delete("children")
+    qs.delete("rooms")
+    if (propertySlug && !slugInPath) qs.set("property", propertySlug)
     const query = qs.toString()
-    navigate(
-      `/book/${search.check_in_date}/${checkOut}/${search.adults}/${search.children}${query ? `?${query}` : ""}`,
-      { replace: true },
-    )
+    const roomsPart = (search.rooms || 1) > 1 ? `/${search.rooms}` : ""
+    const target = `/book/${search.check_in_date}/${checkOut}/${search.adults}/${search.children}${roomsPart}${query ? `?${query}` : ""}`
+    if (location.pathname + (location.search || "") !== target) {
+      navigate(target, { replace: true })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, checkOut])
 
@@ -696,12 +869,47 @@ export default function PublicBooking() {
     setLoadingRates(true)
     const t = setTimeout(fetchResults, 300)
     return () => clearTimeout(t)
-  }, [property, search, checkOut, catalogMode, childAgesState, appliedVoucher])
+  }, [property, search, checkOut, catalogMode, childAgesState, appliedVoucher, customParties])
 
   function fetchResults() {
     if (!property) return
     setLoadingRates(true)
     setRatesFailed(false)
+    const curRooms = search.rooms || 1
+    const partyList = roomParties.map((p) => ({
+      adults: p.adults,
+      children: p.children,
+      child_ages: agesToSend(sizeAges(p.child_ages || [], p.children)),
+    }))
+
+    if (curRooms > 1) {
+      callGuest<{
+        multi_room: boolean
+        rooms: StayResult[][]
+        inventory: Record<string, number>
+      }>("kamra.public_api.search_stay", {
+        property,
+        check_in_date: search.check_in_date,
+        check_out_date: checkOut,
+        rooms: partyList,
+        pets: search.pets,
+        voucher_code: appliedVoucher || undefined,
+      }).then((resp) => {
+        if (resp && resp.multi_room && Array.isArray(resp.rooms)) {
+          setMultiRoomResults(resp)
+          const activeRows = resp.rooms[activeRoomIndex] || resp.rooms[0] || []
+          const map: Record<string, StayResult> = {}
+          activeRows.forEach((r) => (map[r.room_type] = r))
+          setResults(map)
+        }
+      }).catch(() => {
+        setResults({})
+        setMultiRoomResults(null)
+        setRatesFailed(true)
+      }).finally(() => setLoadingRates(false))
+      return
+    }
+
     callGuest<StayResult[]>("kamra.public_api.search_stay", {
       property,
       check_in_date: search.check_in_date,
@@ -712,6 +920,7 @@ export default function PublicBooking() {
       pets: search.pets,
       voucher_code: appliedVoucher || undefined,
     }).then((rows) => {
+      setMultiRoomResults(null)
       const map: Record<string, StayResult> = {}
       rows.forEach((r) => (map[r.room_type] = r))
       setResults(map)
@@ -735,9 +944,33 @@ export default function PublicBooking() {
       })
     }).catch(() => {
       setResults({})
+      setMultiRoomResults(null)
       setRatesFailed(true)
     }).finally(() => setLoadingRates(false))
   }
+
+  useEffect(() => {
+    if (multiRoomResults && multiRoomResults.rooms && multiRoomResults.rooms[activeRoomIndex]) {
+      const activeRows = multiRoomResults.rooms[activeRoomIndex] || []
+      const map: Record<string, StayResult> = {}
+      activeRows.forEach((r) => (map[r.room_type] = r))
+      setResults(map)
+    }
+  }, [activeRoomIndex, multiRoomResults])
+
+  useEffect(() => {
+    const curRooms = search.rooms || 1
+    if (activeRoomIndex >= curRooms) {
+      setActiveRoomIndex(0)
+    }
+    setSelectedRooms((prev) => {
+      const next: typeof prev = {}
+      Object.entries(prev).forEach(([idx, val]) => {
+        if (Number(idx) < curRooms) next[Number(idx)] = val
+      })
+      return next
+    })
+  }, [search.rooms, activeRoomIndex])
 
   async function applyVoucher() {
     if (!property || !voucher.trim()) return
@@ -754,12 +987,37 @@ export default function PublicBooking() {
   }
 
   async function submitBooking() {
-    if (!booking || !property || !selected) return
+    const isMulti = (search.rooms || 1) > 1
+    if (!property) return
+    if (!isMulti && (!booking || !selected)) return
+    if (isMulti && Object.keys(selectedRooms).length < (search.rooms || 1)) return
     setBusy(true)
     setError(null)
+
+    if (isMulti && roomParties.some((p) => p.adults < 1)) {
+      setError(t("Each room must have at least 1 adult."))
+      setBusy(false)
+      return
+    }
+
+    const roomsPayload = isMulti
+      ? Object.entries(selectedRooms).map(([idx, sel]) => {
+          const party = roomParties[Number(idx)] || { adults: 2, children: 0 }
+          return {
+            room_type: sel.room_type,
+            meal_plan: sel.meal_plan,
+            adults: party.adults,
+            children: party.children,
+            child_ages: agesToSend(sizeAges(party.child_ages || [], party.children)),
+          }
+        })
+      : undefined
+
     try {
       const res = await callGuest<{
         reservation: string
+        reservations?: string[]
+        group_booking?: string
         amount_after_tax: number
         advance_due: number
         balance_at_hotel: number
@@ -767,7 +1025,7 @@ export default function PublicBooking() {
       }>("kamra.public_api.book",
         {
           property,
-          room_type: booking,
+          room_type: isMulti ? selectedRooms[0]?.room_type : booking,
           check_in_date: search.check_in_date,
           check_out_date: checkOut,
           adults: search.adults,
@@ -775,9 +1033,10 @@ export default function PublicBooking() {
           child_ages: agesToSend(childAges),
           pets: search.pets,
           ...form,
-          meal_plan: selected.meal_plan,
+          meal_plan: isMulti ? selectedRooms[0]?.meal_plan : selected?.meal_plan,
           voucher_code: appliedVoucher,
           source_tag: sourceTag || undefined,
+          rooms: roomsPayload,
           addons: Object.entries(addons)
             .filter(([, qty]) => qty > 0)
             .map(([experience, qty]) => ({ experience, qty })),
@@ -785,6 +1044,8 @@ export default function PublicBooking() {
       )
       setDone({
         reservation: res.reservation,
+        reservations: res.reservations,
+        group_booking: res.group_booking,
         amount: res.amount_after_tax,
         advance_due: Number(res.advance_due || 0),
         balance_at_hotel: Number(res.balance_at_hotel ?? res.amount_after_tax ?? 0),
@@ -908,44 +1169,120 @@ export default function PublicBooking() {
   const selTerms = selected ? cancelTerms(results[selected.room_type]) : null
   const roomsShown = data.room_types.filter((rt) => !availableOnly || canReserve(results[rt.name]))
 
-  const summary = (compact: boolean) => sel && selPlan ? (
-    <>
-      {!compact && (
-        <div className="flex gap-3">
-          {imagesOf(sel.media)[0] && (
-            <img src={imagesOf(sel.media)[0].url} alt="" className="size-16 shrink-0 rounded-lg object-cover" />
+  const isMulti = (search.rooms || 1) > 1
+  const totalRooms = search.rooms || 1
+  const selectedRoomsList = Object.entries(selectedRooms)
+  const allRoomsSelected = isMulti && selectedRoomsList.length === totalRooms
+  const multiTotal = selectedRoomsList.reduce((acc, [, r]) => acc + (r.amount || 0), 0)
+  const multiAdvance = selectedRoomsList.reduce((acc, [, r]) => acc + (r.advance_due || 0), 0)
+  const hasSummary = isMulti ? selectedRoomsList.length > 0 : !!(sel && selPlan)
+
+  const summary = (compact: boolean) => {
+    if (isMulti) {
+      if (selectedRoomsList.length === 0) return null
+      return (
+        <>
+          {!compact && (
+            <div className="space-y-2">
+              <p className="font-semibold text-zinc-900">{t("Rooms")}</p>
+              {Array.from({ length: totalRooms }).map((_, idx) => {
+                const roomSel = selectedRooms[idx]
+                const party = roomParties[idx]
+                return (
+                  <div key={idx} className="rounded-lg border border-zinc-100 bg-zinc-50 p-2.5 text-xs">
+                    <div className="flex justify-between items-center font-medium">
+                      <span className="text-zinc-800">{t("Room {n}", { n: idx + 1 })}: {roomSel ? roomSel.room_type_name : t("Not selected")}</span>
+                      <span className="text-zinc-500">
+                        {party ? `${tn(party.adults, "{n} adult", "{n} adults")}${party.children > 0 ? `, ${tn(party.children, "{n} child", "{n} children")}` : ""}` : ""}
+                      </span>
+                    </div>
+                    {roomSel ? (
+                      <div className="flex justify-between items-center mt-1 text-zinc-600">
+                        <span>{mealLabel(roomSel.meal_plan)}</span>
+                        <span className="font-semibold text-zinc-900">{money(roomSel.amount)}</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setActiveRoomIndex(idx)}
+                        className="mt-1 text-brand-700 underline font-medium hover:text-brand-800"
+                      >
+                        {t("Select this room")}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           )}
-          <div className="min-w-0">
-            <p className="font-semibold text-zinc-900">{sel.room_type_name}</p>
-            <p className="text-sm text-zinc-500">{mealLabel(selPlan.meal_plan)}</p>
+          {!compact && (
+            <dl className="mt-4 space-y-1.5 border-t border-zinc-100 pt-4 text-sm">
+              <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Check-in")}</dt><dd className="font-medium text-zinc-800">{fmtDay(search.check_in_date)}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Check-out")}</dt><dd className="font-medium text-zinc-800">{fmtDay(checkOut)}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Guests")}</dt><dd className="font-medium text-zinc-800">{guestsLabel}</dd></div>
+              {appliedVoucher && (
+                <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Promo code")}</dt><dd className="font-medium text-brand-700">{appliedVoucher.toUpperCase()}</dd></div>
+              )}
+            </dl>
+          )}
+          <div className={compact ? "" : "mt-4 border-t border-zinc-100 pt-4"}>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className={compact ? "truncate text-sm font-medium text-zinc-700" : "text-sm text-zinc-500"}>
+                {compact ? `${selectedRoomsList.length}/${totalRooms} ${t("rooms selected")}` : tn(nights, "Total for {n} night", "Total for {n} nights")}
+              </span>
+              <span className="text-xl font-semibold tabular-nums text-zinc-900">{money(multiTotal)}</span>
+            </div>
+            <p className="mt-0.5 text-end text-xs text-zinc-500">
+              {multiAdvance > 0
+                ? t("{amount} due now", { amount: money(multiAdvance) })
+                : t("Taxes and fees included")}
+            </p>
           </div>
+        </>
+      )
+    }
+
+    if (!sel || !selPlan) return null
+
+    return (
+      <>
+        {!compact && (
+          <div className="flex gap-3">
+            {imagesOf(sel.media)[0] && (
+              <img src={imagesOf(sel.media)[0].url} alt="" className="size-16 shrink-0 rounded-lg object-cover" />
+            )}
+            <div className="min-w-0">
+              <p className="font-semibold text-zinc-900">{sel.room_type_name}</p>
+              <p className="text-sm text-zinc-500">{mealLabel(selPlan.meal_plan)}</p>
+            </div>
+          </div>
+        )}
+        {!compact && (
+          <dl className="mt-4 space-y-1.5 border-t border-zinc-100 pt-4 text-sm">
+            <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Check-in")}</dt><dd className="font-medium text-zinc-800">{fmtDay(search.check_in_date)}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Check-out")}</dt><dd className="font-medium text-zinc-800">{fmtDay(checkOut)}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Guests")}</dt><dd className="font-medium text-zinc-800">{guestsLabel}</dd></div>
+            {appliedVoucher && (
+              <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Promo code")}</dt><dd className="font-medium text-brand-700">{appliedVoucher.toUpperCase()}</dd></div>
+            )}
+          </dl>
+        )}
+        <div className={compact ? "" : "mt-4 border-t border-zinc-100 pt-4"}>
+          <div className="flex items-baseline justify-between gap-3">
+            <span className={compact ? "truncate text-sm font-medium text-zinc-700" : "text-sm text-zinc-500"}>
+              {compact ? sel.room_type_name : tn(nights, "Total for {n} night", "Total for {n} nights")}
+            </span>
+            <span className="text-xl font-semibold tabular-nums text-zinc-900">{money(selPlan.amount_after_tax)}</span>
+          </div>
+          <p className="mt-0.5 text-end text-xs text-zinc-500">
+            {(selPlan.advance_due || 0) > 0
+              ? t("{amount} due now", { amount: money(selPlan.advance_due || 0) })
+              : t("Taxes and fees included")}
+          </p>
         </div>
-      )}
-      {!compact && (
-        <dl className="mt-4 space-y-1.5 border-t border-zinc-100 pt-4 text-sm">
-          <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Check-in")}</dt><dd className="font-medium text-zinc-800">{fmtDay(search.check_in_date)}</dd></div>
-          <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Check-out")}</dt><dd className="font-medium text-zinc-800">{fmtDay(checkOut)}</dd></div>
-          <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Guests")}</dt><dd className="font-medium text-zinc-800">{guestsLabel}</dd></div>
-          {appliedVoucher && (
-            <div className="flex justify-between gap-3"><dt className="text-zinc-500">{t("Promo code")}</dt><dd className="font-medium text-brand-700">{appliedVoucher.toUpperCase()}</dd></div>
-          )}
-        </dl>
-      )}
-      <div className={compact ? "" : "mt-4 border-t border-zinc-100 pt-4"}>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className={compact ? "truncate text-sm font-medium text-zinc-700" : "text-sm text-zinc-500"}>
-            {compact ? sel.room_type_name : tn(nights, "Total for {n} night", "Total for {n} nights")}
-          </span>
-          <span className="text-xl font-semibold tabular-nums text-zinc-900">{money(selPlan.amount_after_tax)}</span>
-        </div>
-        <p className="mt-0.5 text-end text-xs text-zinc-500">
-          {(selPlan.advance_due || 0) > 0
-            ? t("{amount} due now", { amount: money(selPlan.advance_due || 0) })
-            : t("Taxes and fees included")}
-        </p>
-      </div>
-    </>
-  ) : null
+      </>
+    )
+  }
 
   return (
     <div className="relative min-h-screen bg-zinc-50" style={accentVars(data?.property.brand_accent)}>
@@ -973,7 +1310,9 @@ export default function PublicBooking() {
               <ArrowRight className="mx-1 inline size-3.5 text-zinc-400 rtl:rotate-180" aria-label={t("to")} />
               {fmtDay(checkOut)}
             </span>
-            <span className="hidden shrink-0 text-zinc-500 sm:inline">{guestsLabel}</span>
+            <span className="hidden shrink-0 text-zinc-500 sm:inline">
+              {guestsLabel}{(search.rooms || 1) > 1 ? ` · ${tn(search.rooms || 1, "{n} room", "{n} rooms")}` : ""}
+            </span>
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
               <Search className="size-3.5" aria-hidden />
             </span>
@@ -1028,35 +1367,129 @@ export default function PublicBooking() {
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Adults")}</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={maxAdults || undefined}
-                    className={inputCls}
-                    value={search.adults}
-                    onChange={(e) =>
-                      setSearch({ ...search, adults: clampGuests(Number(e.target.value), 1, maxAdults) })
-                    }
-                  />
-                  {maxAdults > 0 && search.adults >= maxAdults && (
-                    <span className="mt-1 block text-xs text-zinc-500">{t("Sleeps up to {n}", { n: maxAdults })}</span>
-                  )}
+                  <div className="flex h-10 items-stretch rounded-lg border border-zinc-200 bg-white">
+                    <button
+                      type="button"
+                      aria-label={t("Decrease adults")}
+                      disabled={search.adults <= 1}
+                      onClick={() => setSearch((s) => ({ ...s, adults: Math.max(1, s.adults - 1) }))}
+                      className="flex h-full w-10 shrink-0 items-center justify-center rounded-l-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={30}
+                      className="h-full min-w-0 flex-1 border-0 bg-transparent px-2 text-center text-sm text-zinc-900 focus:outline-none focus:ring-0 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      value={adultsStr !== null ? adultsStr : search.adults}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setAdultsStr(val)
+                        if (val !== "") {
+                          const n = parseInt(val, 10)
+                          if (!isNaN(n)) setSearch((s) => ({ ...s, adults: Math.max(1, Math.min(30, n)) }))
+                        }
+                      }}
+                      onBlur={() => {
+                        setAdultsStr(null)
+                        setSearch((s) => ({ ...s, adults: Math.max(1, Math.min(30, s.adults || 1)) }))
+                      }}
+                    />
+                    <button
+                      type="button"
+                      aria-label={t("Increase adults")}
+                      disabled={search.adults >= 30}
+                      onClick={() => setSearch((s) => ({ ...s, adults: Math.min(30, s.adults + 1) }))}
+                      className="flex h-full w-10 shrink-0 items-center justify-center rounded-r-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Children")}</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={maxChildren || undefined}
-                    className={inputCls}
-                    value={search.children}
-                    onChange={(e) =>
-                      setSearch({ ...search, children: clampGuests(Number(e.target.value), 0, maxChildren) })
-                    }
-                  />
-                  {maxChildren > 0 && search.children >= maxChildren && (
-                    <span className="mt-1 block text-xs text-zinc-500">{t("Up to {n} children", { n: maxChildren })}</span>
-                  )}
+                  <div className="flex h-10 items-stretch rounded-lg border border-zinc-200 bg-white">
+                    <button
+                      type="button"
+                      aria-label={t("Decrease children")}
+                      disabled={search.children <= 0}
+                      onClick={() => setSearch((s) => ({ ...s, children: Math.max(0, s.children - 1) }))}
+                      className="flex h-full w-10 shrink-0 items-center justify-center rounded-l-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                    <input
+                      type="number"
+                      min={0}
+                      max={20}
+                      className="h-full min-w-0 flex-1 border-0 bg-transparent px-2 text-center text-sm text-zinc-900 focus:outline-none focus:ring-0 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      value={childrenStr !== null ? childrenStr : search.children}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setChildrenStr(val)
+                        if (val !== "") {
+                          const n = parseInt(val, 10)
+                          if (!isNaN(n)) setSearch((s) => ({ ...s, children: Math.max(0, Math.min(20, n)) }))
+                        }
+                      }}
+                      onBlur={() => {
+                        setChildrenStr(null)
+                        setSearch((s) => ({ ...s, children: Math.max(0, Math.min(20, s.children || 0)) }))
+                      }}
+                    />
+                    <button
+                      type="button"
+                      aria-label={t("Increase children")}
+                      disabled={search.children >= 20}
+                      onClick={() => setSearch((s) => ({ ...s, children: Math.min(20, s.children + 1) }))}
+                      className="flex h-full w-10 shrink-0 items-center justify-center rounded-r-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Rooms")}</span>
+                  <div className="flex h-10 items-stretch rounded-lg border border-zinc-200 bg-white">
+                    <button
+                      type="button"
+                      aria-label={t("Decrease rooms")}
+                      disabled={(search.rooms || 1) <= minRoomsNeeded}
+                      onClick={() => setSearch((s) => ({ ...s, rooms: Math.max(minRoomsNeeded, (s.rooms || 1) - 1) }))}
+                      className="flex h-full w-10 shrink-0 items-center justify-center rounded-l-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                    <input
+                      type="number"
+                      min={minRoomsNeeded}
+                      max={10}
+                      className="h-full min-w-0 flex-1 border-0 bg-transparent px-2 text-center text-sm text-zinc-900 focus:outline-none focus:ring-0 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      value={roomsStr !== null ? roomsStr : (search.rooms || 1)}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setRoomsStr(val)
+                        if (val !== "") {
+                          const n = parseInt(val, 10)
+                          if (!isNaN(n)) setSearch((s) => ({ ...s, rooms: Math.max(minRoomsNeeded, Math.min(10, n)) }))
+                        }
+                      }}
+                      onBlur={() => {
+                        setRoomsStr(null)
+                        setSearch((s) => ({ ...s, rooms: Math.max(minRoomsNeeded, Math.min(10, s.rooms || 1)) }))
+                      }}
+                    />
+                    <button
+                      type="button"
+                      aria-label={t("Increase rooms")}
+                      disabled={(search.rooms || 1) >= 10}
+                      onClick={() => setSearch((s) => ({ ...s, rooms: Math.min(10, (s.rooms || 1) + 1) }))}
+                      className="flex h-full w-10 shrink-0 items-center justify-center rounded-r-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
                 </label>
                 {!!p.pets_allowed && (
                   <label className="block">
@@ -1076,9 +1509,127 @@ export default function PublicBooking() {
                   </label>
                 )}
               </div>
-              <div className="mt-3">
-                <ChildAges ages={childAges} onChange={setChildAges} selectCls={inputCls} />
-              </div>
+              {search.adults < (search.rooms || 1) && (
+                <p role="alert" className="mt-2 text-xs font-medium text-amber-700 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+                  {t("Each room requires at least 1 adult ({n} adults needed for {rooms} rooms).", { n: search.rooms || 1, rooms: search.rooms || 1 })}
+                </p>
+              )}
+              {minRoomsNeeded > (search.rooms || 1) && (
+                <p className="mt-2 text-xs font-medium text-amber-700">
+                  {t("For this group, at least {n} rooms are required", { n: minRoomsNeeded })}
+                </p>
+              )}
+              {(search.rooms || 1) > 1 && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomParties((v) => !v)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 underline-offset-2 hover:underline"
+                  >
+                    <span>{showCustomParties ? t("Hide per-room distribution") : t("Customize per room")}</span>
+                  </button>
+                  {showCustomParties && (
+                    <div className="mt-2 rounded-xl bg-zinc-50 p-3 text-xs border border-zinc-200">
+                      <div className="flex flex-wrap items-center justify-between gap-1 mb-2.5">
+                        <span className="font-semibold text-zinc-800 text-sm">{t("Room allocation")}:</span>
+                        <span className="text-zinc-500 text-xs">{t("Adjust adults and children per room")}</span>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {roomParties.map((p, idx) => (
+                          <div key={idx} className="rounded-lg bg-white p-2.5 border border-zinc-200 shadow-sm space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-zinc-800">{t("Room {n}", { n: idx + 1 })}</span>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-zinc-500 text-[11px] font-medium">{t("Adults")}:</span>
+                                  <div className="flex h-9 items-stretch rounded border border-zinc-200">
+                                    <button
+                                      type="button"
+                                      disabled={p.adults <= 0}
+                                      onClick={() => updateRoomParty(idx, p.adults - 1, p.children)}
+                                      className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:bg-zinc-100 disabled:opacity-30"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="flex min-w-[20px] items-center justify-center font-semibold text-zinc-800">{p.adults}</span>
+                                    <button
+                                      type="button"
+                                      disabled={p.adults >= 10}
+                                      onClick={() => updateRoomParty(idx, p.adults + 1, p.children)}
+                                      className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:bg-zinc-100 disabled:opacity-30"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-zinc-500 text-[11px] font-medium">{t("Children")}:</span>
+                                  <div className="flex h-9 items-stretch rounded border border-zinc-200">
+                                    <button
+                                      type="button"
+                                      disabled={p.children <= 0}
+                                      onClick={() => updateRoomParty(idx, p.adults, p.children - 1)}
+                                      className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:bg-zinc-100 disabled:opacity-30"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="flex min-w-[20px] items-center justify-center font-semibold text-zinc-800">{p.children}</span>
+                                    <button
+                                      type="button"
+                                      disabled={p.children >= 10}
+                                      onClick={() => updateRoomParty(idx, p.adults, p.children + 1)}
+                                      className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:bg-zinc-100 disabled:opacity-30"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {p.adults < 1 && (
+                              <p role="alert" className="text-[11px] font-medium text-amber-700 bg-amber-50 p-1.5 rounded border border-amber-200">
+                                {t("Each room requires at least 1 adult.")}
+                              </p>
+                            )}
+                            {p.children > 0 && (
+                              <div className="pt-2 border-t border-zinc-100">
+                                <span className="text-[11px] font-medium text-zinc-500 mb-1 block">
+                                  {t("Room {n} children ages", { n: idx + 1 })}:
+                                </span>
+                                <ChildAges
+                                  ages={sizeAges(p.child_ages || [], p.children)}
+                                  onChange={(ages) => updateRoomChildAges(idx, ages)}
+                                  selectCls={inputCls}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {curRooms === 1 ? (
+                <div className="mt-3">
+                  <ChildAges ages={childAges} onChange={setChildAges} selectCls={inputCls} />
+                </div>
+              ) : !showCustomParties && search.children > 0 && (
+                <div className="mt-3 space-y-2">
+                  {roomParties.map((p, idx) => p.children > 0 && (
+                    <div key={idx} className="rounded-lg bg-zinc-50 p-2.5 border border-zinc-200">
+                      <span className="text-xs font-semibold text-zinc-700 mb-1.5 block">
+                        {t("Room {n} children ages", { n: idx + 1 })}:
+                      </span>
+                      <ChildAges
+                        ages={sizeAges(p.child_ages || [], p.children)}
+                        onChange={(ages) => updateRoomChildAges(idx, ages)}
+                        selectCls={inputCls}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
                 <label className="block sm:w-72">
                   <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Promo code")}</span>
@@ -1099,7 +1650,11 @@ export default function PublicBooking() {
                   {tn(nights, "{n} night", "{n} nights")}
                   {minNights > 1 ? `, ${t("{n}-night minimum", { n: minNights })}` : ""}
                 </p>
-                <Button type="submit" className="justify-center gap-2 px-6 py-2.5 text-base sm:ms-auto">
+                <Button
+                  type="submit"
+                  className="justify-center gap-2 px-6 py-2.5 text-base sm:ms-auto"
+                  disabled={search.adults < (search.rooms || 1) || agesMissing}
+                >
                   <Search className="size-4" aria-hidden />
                   {t("Check availability")}
                 </Button>
@@ -1314,7 +1869,194 @@ export default function PublicBooking() {
                   </p>
                 )}
 
+                {isMulti && (
+                  <div className="mt-5 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                      <div>
+                        <h4 className="font-semibold text-zinc-900">
+                          {t("Select rooms for your stay")}
+                        </h4>
+                        <p className="text-xs text-zinc-500">
+                          {t("Pick a room type and rate for each room")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {selectedRooms[activeRoomIndex] && totalRooms > 1 && (
+                          <button
+                            type="button"
+                            onClick={applySameForAllRooms}
+                            className="inline-flex items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-100 transition"
+                          >
+                            <Copy className="size-3.5" aria-hidden />
+                            <span>{t("Same for all rooms")}</span>
+                          </button>
+                        )}
+                        <Badge tone={allRoomsSelected ? "green" : "zinc"}>
+                          {selectedRoomsList.length} / {totalRooms} {t("Selected")}
+                        </Badge>
+                      </div>
+                    </div>
+                    {sameRoomError && (
+                      <p role="alert" className="mb-3 text-xs font-medium text-rose-600 bg-rose-50 p-2 rounded-lg border border-rose-200">
+                        {sameRoomError}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {roomParties.map((party, idx) => {
+                        const isSelected = !!selectedRooms[idx]
+                        const isActive = activeRoomIndex === idx
+                        const sel = selectedRooms[idx]
+                        const isTabError = matchesRoomError(error, idx, sel?.room_type_name, sel?.room_type) || party.adults < 1
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveRoomIndex(idx)}
+                            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition ${
+                              isTabError
+                                ? "border-rose-400 bg-rose-50 text-rose-800 ring-2 ring-rose-400/20"
+                                : isActive
+                                ? "border-brand-600 bg-brand-50 text-brand-700 ring-2 ring-brand-600/20"
+                                : isSelected
+                                ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                            }`}
+                          >
+                            <span>
+                              {t("Room {n}", { n: idx + 1 })} · {party.adults} {tn(party.adults, "adult", "adults")}
+                              {party.children > 0 ? `, ${party.children} ${tn(party.children, "child", "children")}` : ""}
+                            </span>
+                            {sel && (
+                              <span className="text-xs font-semibold tabular-nums opacity-90">
+                                · {money(sel.amount)}
+                              </span>
+                            )}
+                            {isTabError && (
+                              <AlertCircle className="size-4 text-rose-600 shrink-0" aria-hidden />
+                            )}
+                            {!isTabError && isSelected && (
+                              <Check className="size-4 text-emerald-600 shrink-0" aria-hidden />
+                            )}
+                          </button>
+                        )
+                      })}
+                      {curRooms < 10 && (
+                        <button
+                          type="button"
+                          onClick={addRoom}
+                          className="flex items-center gap-1.5 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-600 hover:border-zinc-400 hover:bg-zinc-100 transition"
+                        >
+                          <Plus className="size-3.5" />
+                          <span>{t("Add room")}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Active room guest selector */}
+                    {roomParties[activeRoomIndex] && (
+                      <div className="mt-3.5 rounded-xl bg-zinc-50 border border-zinc-200 p-3 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-4">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600">
+                              {t("Guests for Room {n}", { n: activeRoomIndex + 1 })}:
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-zinc-600 font-medium">{t("Adults")}:</span>
+                              <div className="flex h-9 items-stretch rounded-lg border border-zinc-200 bg-white">
+                                <button
+                                  type="button"
+                                  disabled={roomParties[activeRoomIndex].adults <= 0}
+                                  onClick={() => updateRoomParty(activeRoomIndex, roomParties[activeRoomIndex].adults - 1, roomParties[activeRoomIndex].children)}
+                                  className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:bg-zinc-100 disabled:opacity-30 transition-colors"
+                                >
+                                  <Minus className="size-3.5" />
+                                </button>
+                                <span className="flex min-w-[24px] items-center justify-center text-xs font-semibold text-zinc-800">
+                                  {roomParties[activeRoomIndex].adults}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={roomParties[activeRoomIndex].adults >= 10}
+                                  onClick={() => updateRoomParty(activeRoomIndex, roomParties[activeRoomIndex].adults + 1, roomParties[activeRoomIndex].children)}
+                                  className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:bg-zinc-100 disabled:opacity-30 transition-colors"
+                                >
+                                  <Plus className="size-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-zinc-600 font-medium">{t("Children")}:</span>
+                              <div className="flex h-9 items-stretch rounded-lg border border-zinc-200 bg-white">
+                                <button
+                                  type="button"
+                                  disabled={roomParties[activeRoomIndex].children <= 0}
+                                  onClick={() => updateRoomParty(activeRoomIndex, roomParties[activeRoomIndex].adults, roomParties[activeRoomIndex].children - 1)}
+                                  className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:bg-zinc-100 disabled:opacity-30 transition-colors"
+                                >
+                                  <Minus className="size-3.5" />
+                                </button>
+                                <span className="flex min-w-[24px] items-center justify-center text-xs font-semibold text-zinc-800">
+                                  {roomParties[activeRoomIndex].children}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={roomParties[activeRoomIndex].children >= 10}
+                                  onClick={() => updateRoomParty(activeRoomIndex, roomParties[activeRoomIndex].adults, roomParties[activeRoomIndex].children + 1)}
+                                  className="flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-500 hover:bg-zinc-100 disabled:opacity-30 transition-colors"
+                                >
+                                  <Plus className="size-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          {curRooms > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeRoom(activeRoomIndex)}
+                              className="inline-flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 hover:underline font-medium"
+                            >
+                              <X className="size-3.5" />
+                              {t("Remove this room")}
+                            </button>
+                          )}
+                        </div>
+                        {roomParties[activeRoomIndex].adults < 1 && (
+                          <p role="alert" className="text-xs font-medium text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                            {t("Each room must have at least 1 adult.")}
+                          </p>
+                        )}
+                        {roomParties[activeRoomIndex].children > 0 && (
+                          <div className="pt-2 border-t border-zinc-200/60">
+                            <span className="text-xs font-medium text-zinc-600 mb-1 block">
+                              {t("Room {n} children ages", { n: activeRoomIndex + 1 })}:
+                            </span>
+                            <ChildAges
+                              ages={sizeAges(roomParties[activeRoomIndex].child_ages || [], roomParties[activeRoomIndex].children)}
+                              onChange={(ages) => updateRoomChildAges(activeRoomIndex, ages)}
+                              selectCls={inputCls}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {selectedRooms[activeRoomIndex] && (
+                      <p className="mt-2.5 text-xs text-zinc-500">
+                        {t("Room {n} selected", { n: activeRoomIndex + 1 })}:{" "}
+                        <span className="font-medium text-zinc-800">
+                          {selectedRooms[activeRoomIndex].room_type_name} - {mealLabel(selectedRooms[activeRoomIndex].meal_plan)} ({money(selectedRooms[activeRoomIndex].amount)})
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-5 space-y-5">
+                  {isMulti && matchesRoomError(error, activeRoomIndex, selectedRooms[activeRoomIndex]?.room_type_name, selectedRooms[activeRoomIndex]?.room_type) && (
+                    <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700 flex items-center gap-2">
+                      <AlertCircle className="size-4 shrink-0" />
+                      <span>{translate(error!)}</span>
+                    </div>
+                  )}
                   {roomsShown.length === 0 && (
                     <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-10 text-center">
                       <p className="font-medium text-zinc-800">{t("Nothing is available for these dates")}</p>
@@ -1328,12 +2070,21 @@ export default function PublicBooking() {
                     const r = results[rt.name]
                     const photos: Photo[] = imagesOf(rt.media)
                     const plans = plansOf(r).filter((pl) => mealFilter === null || pl.meal_plan === mealFilter)
-                    const reservable = canReserve(r) && !agesMissing
-                    const soldOut = r && r.rooms_left === 0
+                    const selectedInOtherRooms = isMulti
+                      ? Object.entries(selectedRooms).reduce((count, [idxStr, sel]) => {
+                          const i = Number(idxStr)
+                          return i !== activeRoomIndex && sel.room_type === rt.name ? count + 1 : count
+                        }, 0)
+                      : 0
+                    const remainingForThisRoom = Math.max(0, (r?.rooms_left ?? 0) - selectedInOtherRooms)
+                    const isExhausted = isMulti && r && r.rooms_left > 0 && remainingForThisRoom <= 0
+                    const reservable = canReserve(r) && !agesMissing && !isExhausted
+                    const soldOut = (r && r.rooms_left === 0) || isExhausted
                     const terms = cancelTerms(r)
                     return (
                       <article key={rt.name}
-                        className="overflow-hidden rounded-2xl border border-zinc-200 bg-white md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+                        className={"overflow-hidden rounded-2xl border transition md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] " +
+                          (isExhausted ? "border-zinc-200 bg-zinc-50/70 opacity-60" : "border-zinc-200 bg-white")}>
                         <div className="md:border-e md:border-zinc-100">
                           <PhotoStrip photos={photos} name={rt.room_type_name}
                             onOpen={(i) => setLightbox({ photos, start: i, title: rt.room_type_name })} />
@@ -1357,7 +2108,7 @@ export default function PublicBooking() {
                               {rt.bed_type && (
                                 <li className="flex items-center gap-2">
                                   <BedDouble className="size-4 shrink-0 text-zinc-400" aria-hidden />
-                                  {t("{type} bed", { type: translate(rt.bed_type) })}
+                                  {rt.bed_configuration ? translate(rt.bed_configuration) : t("{type} bed", { type: translate(rt.bed_type || "") })}
                                 </li>
                               )}
                               {rt.room_view && (
@@ -1426,9 +2177,14 @@ export default function PublicBooking() {
                           ) : (
                             <>
                               <div className="mb-3 flex flex-wrap items-center gap-2">
-                                {r.rooms_left <= 3 && (
+                                {isExhausted && (
+                                  <Badge tone="zinc">
+                                    {t("Selected in other rooms (sold out)")}
+                                  </Badge>
+                                )}
+                                {!isExhausted && remainingForThisRoom > 0 && remainingForThisRoom <= 3 && (
                                   <Badge tone="rose">
-                                    {tn(r.rooms_left, "Only {n} room left for these dates", "Only {n} rooms left for these dates")}
+                                    {tn(remainingForThisRoom, "Only {n} room left for these dates", "Only {n} rooms left for these dates")}
                                   </Badge>
                                 )}
                                 <StayNotice row={r} />
@@ -1438,13 +2194,22 @@ export default function PublicBooking() {
                               )}
                               <ul className="divide-y divide-zinc-200 overflow-hidden rounded-xl border border-zinc-200">
                                 {plans.map((pl) => {
-                                  const on = selected?.room_type === rt.name && selected.meal_plan === pl.meal_plan
+                                  const party = isMulti
+                                    ? (roomParties[activeRoomIndex] || { adults: 2, children: 0 })
+                                    : { adults: search.adults, children: search.children }
+                                  const roomGuests = party.adults + party.children
+                                  const guestsText = tn(roomGuests, "for {n} guest", "for {n} guests")
+
+                                  const curRoomSel = selectedRooms[activeRoomIndex]
+                                  const on = isMulti
+                                    ? curRoomSel?.room_type === rt.name && curRoomSel?.meal_plan === pl.meal_plan
+                                    : selected?.room_type === rt.name && selected?.meal_plan === pl.meal_plan
                                   return (
                                     <li key={pl.meal_plan}
                                       className={"p-4 transition " + (on ? "bg-brand-50 shadow-[inset_3px_0_0_var(--color-brand-600)] rtl:shadow-[inset_-3px_0_0_var(--color-brand-600)]" : "")}>
                                       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
                                         <div className="min-w-0 flex-1 basis-52 space-y-1">
-                                          <p className="font-medium text-zinc-900">{mealLabel(pl.meal_plan)}</p>
+                                          <p className="font-medium text-zinc-900">{mealLabel(pl.meal_plan)} {guestsText}</p>
                                           {terms && (
                                             <p className={"flex items-center gap-1.5 text-sm " + (terms.free ? "text-brand-700" : "text-zinc-500")}>
                                               <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
@@ -1476,7 +2241,36 @@ export default function PublicBooking() {
                                             className="min-w-24 justify-center whitespace-nowrap px-4 py-2"
                                             disabled={!reservable}
                                             aria-pressed={on}
-                                            onClick={() => setSelected(on ? null : { room_type: rt.name, meal_plan: pl.meal_plan })}
+                                            onClick={() => {
+                                              if (isMulti) {
+                                                if (on) {
+                                                  setSelectedRooms((prev) => {
+                                                    const next = { ...prev }
+                                                    delete next[activeRoomIndex]
+                                                    return next
+                                                  })
+                                                } else {
+                                                  setSelectedRooms((prev) => ({
+                                                    ...prev,
+                                                    [activeRoomIndex]: {
+                                                      room_type: rt.name,
+                                                      room_type_name: rt.room_type_name,
+                                                      meal_plan: pl.meal_plan,
+                                                      amount: pl.amount_after_tax,
+                                                      advance_due: pl.advance_due || 0,
+                                                    },
+                                                  }))
+                                                  for (let i = 0; i < totalRooms; i++) {
+                                                    if (i !== activeRoomIndex && !selectedRooms[i]) {
+                                                      setActiveRoomIndex(i)
+                                                      break
+                                                    }
+                                                  }
+                                                }
+                                              } else {
+                                                setSelected(on ? null : { room_type: rt.name, meal_plan: pl.meal_plan })
+                                              }
+                                            }}
                                           >
                                             {on ? <><Check className="size-4" aria-hidden />{t("Selected")}</> : t("Select")}
                                           </Button>
@@ -1665,11 +2459,17 @@ export default function PublicBooking() {
             <aside className="hidden lg:block">
               <div className="sticky top-20 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
                 <h2 className="text-base font-semibold text-zinc-900">{t("Your stay")}</h2>
-                {sel && selPlan ? (
+                {hasSummary ? (
                   <div className="mt-4">
                     {summary(false)}
-                    <Button className="mt-5 w-full justify-center py-2.5 text-base" onClick={() => setBooking(sel.name)}>
-                      {t("Continue")}
+                    <Button
+                      className="mt-5 w-full justify-center py-2.5 text-base"
+                      disabled={isMulti && !allRoomsSelected}
+                      onClick={() => setBooking(isMulti ? selectedRooms[0]?.room_type || "multi" : sel?.name || null)}
+                    >
+                      {isMulti && !allRoomsSelected
+                        ? t("Please select all {n} rooms to continue", { n: totalRooms })
+                        : t("Continue")}
                     </Button>
                   </div>
                 ) : (
@@ -1685,13 +2485,35 @@ export default function PublicBooking() {
         </div>
       </main>
 
-      {/* booking summary: a bottom bar on phones and tablets */}
-      {sel && selPlan && !booking && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur lg:hidden">
+      {/* booking summary: sticky bottom bar */}
+      {hasSummary && !booking && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center gap-4">
-            <div className="min-w-0 flex-1">{summary(true)}</div>
-            <Button className="shrink-0 px-6 py-2.5 text-base" onClick={() => setBooking(sel.name)}>
-              {t("Continue")}
+            <div className="min-w-0 flex-1">
+              {isMulti ? (
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="font-semibold text-zinc-900">
+                    {totalRooms} {tn(totalRooms, "room", "rooms")} · {money(multiTotal)} {t("total")}
+                    {multiAdvance > 0 && (
+                      <span className="text-zinc-600 font-normal">
+                        {" "}· {t("{amount} due now", { amount: money(multiAdvance) })}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    ({selectedRoomsList.length}/{totalRooms} {t("selected")})
+                  </span>
+                </div>
+              ) : (
+                summary(true)
+              )}
+            </div>
+            <Button
+              className="shrink-0 px-6 py-2.5 text-base"
+              disabled={isMulti && !allRoomsSelected}
+              onClick={() => setBooking(isMulti ? selectedRooms[0]?.room_type || "multi" : sel?.name || null)}
+            >
+              {allRoomsSelected || !isMulti ? t("Continue") : t("Select all {n} rooms", { n: totalRooms })}
             </Button>
           </div>
         </div>
@@ -1702,22 +2524,26 @@ export default function PublicBooking() {
           onClose={() => setLightbox(null)} />
       )}
 
-      {booking && sel && selPlan && (
+      {booking && (isMulti ? allRoomsSelected : (sel && selPlan)) && (
         <Sheet
           wide
           title={done ? (done.status === "Requested" ? t("Request sent") : t("Booking confirmed")) : t("Complete your booking")}
-          description={done ? undefined : `${sel.room_type_name}, ${mealLabel(selPlan.meal_plan)}`}
+          description={done ? undefined : (isMulti
+            ? selectedRoomsList.map(([, r]) => `${r.room_type_name} (${mealLabel(r.meal_plan)})`).join(", ")
+            : `${sel?.room_type_name}, ${mealLabel(selPlan?.meal_plan || "")}`
+          )}
           onClose={() => {
             setBooking(null)
             if (done) {
               setDone(null)
               setSelected(null)
+              setSelectedRooms({})
               fetchResults()
             }
           }}
           footer={
             done ? (
-              <Button className="w-full justify-center py-2.5" onClick={() => { setBooking(null); setDone(null); setSelected(null); fetchResults() }}>
+              <Button className="w-full justify-center py-2.5" onClick={() => { setBooking(null); setDone(null); setSelected(null); setSelectedRooms({}); fetchResults() }}>
                 {t("Done")}
               </Button>
             ) : (
@@ -1740,10 +2566,34 @@ export default function PublicBooking() {
               <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-brand-50">
                 <Check className="size-7 text-brand-700" aria-hidden />
               </div>
-              <p className="mt-4 text-sm text-zinc-500">{t("Booking number")}</p>
-              <p className="text-2xl font-semibold tracking-tight text-zinc-900">{done.reservation}</p>
+              <p className="mt-4 text-sm text-zinc-500">{t("Booking reference")}</p>
+              <p className="text-2xl font-semibold tracking-tight text-zinc-900">{done.group_booking || done.reservation}</p>
+              {isMulti && done.reservations && done.reservations.length > 0 && (
+                <div className="mt-4 rounded-xl bg-zinc-50 p-3.5 text-start text-xs border border-zinc-200">
+                  <p className="font-semibold text-zinc-700 mb-1.5">{t("Reserved rooms")}:</p>
+                  <ul className="space-y-1.5 text-zinc-600">
+                    {selectedRoomsList.map(([idx, r]) => {
+                      const resId = done.reservations?.[Number(idx)]
+                      return (
+                        <li key={idx} className="flex justify-between items-center py-0.5">
+                          <span>{t("Room {n}", { n: Number(idx) + 1 })}: {r.room_type_name} ({mealLabel(r.meal_plan)})</span>
+                          {resId && <span className="font-mono text-zinc-500 bg-white px-2 py-0.5 rounded border border-zinc-200">{resId}</span>}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
               <dl className="mt-6 divide-y divide-zinc-100 rounded-2xl border border-zinc-200 px-5 text-start text-sm">
-                <div className="flex justify-between gap-4 py-3"><dt className="text-zinc-500">{isStr ? t("Listing") : t("Room")}</dt><dd className="text-end font-medium text-zinc-800">{sel.room_type_name}, {mealLabel(selPlan.meal_plan)}</dd></div>
+                <div className="flex justify-between gap-4 py-3">
+                  <dt className="text-zinc-500">{isStr ? t("Listing") : (isMulti ? t("Rooms") : t("Room"))}</dt>
+                  <dd className="text-end font-medium text-zinc-800">
+                    {isMulti
+                      ? selectedRoomsList.map(([idx, r]) => `${t("Room {n}", { n: Number(idx) + 1 })}: ${r.room_type_name} (${mealLabel(r.meal_plan)})`).join(" • ")
+                      : `${sel?.room_type_name}, ${mealLabel(selPlan?.meal_plan || "")}`
+                    }
+                  </dd>
+                </div>
                 <div className="flex justify-between gap-4 py-3"><dt className="text-zinc-500">{t("Dates")}</dt><dd className="text-end font-medium text-zinc-800">{fmtDay(search.check_in_date)} {t("to")} {fmtDay(checkOut)}</dd></div>
                 <div className="flex justify-between gap-4 py-3"><dt className="text-zinc-500">{t("Guests")}</dt><dd className="text-end font-medium text-zinc-800">{guestsLabel}</dd></div>
                 <div className="flex justify-between gap-4 py-3"><dt className="text-zinc-500">{t("Total")}</dt><dd className="text-end font-semibold text-zinc-900">{money(done.amount)}</dd></div>
@@ -1766,27 +2616,76 @@ export default function PublicBooking() {
           ) : (
             <div className="space-y-6">
               {/* what they are booking */}
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-zinc-50 p-4">
-                <div className="flex min-w-0 items-center gap-3">
-                  {imagesOf(sel.media)[0] && (
-                    <img src={imagesOf(sel.media)[0].url} alt="" className="size-14 shrink-0 rounded-lg object-cover" />
-                  )}
-                  <div className="min-w-0 text-sm">
-                    <p className="font-semibold text-zinc-900">{sel.room_type_name}</p>
-                    <p className="text-zinc-500">
-                      {fmtDay(search.check_in_date)} {t("to")} {fmtDay(checkOut)}, {guestsLabel}
-                    </p>
-                    {selTerms && <p className={selTerms.free ? "text-brand-700" : "text-zinc-500"}>{selTerms.text}</p>}
+              {isMulti ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-zinc-500 font-medium px-1">
+                    <span>{t("Rooms selected ({n})", { n: selectedRoomsList.length })}</span>
+                    <span>{fmtDay(search.check_in_date)} {t("to")} {fmtDay(checkOut)}</span>
+                  </div>
+                  {selectedRoomsList.map(([idx, r]) => {
+                    const roomNum = Number(idx) + 1
+                    const isRoomError = matchesRoomError(error, Number(idx), r.room_type_name, r.room_type)
+                    return (
+                      <div
+                        key={idx}
+                        className={`rounded-xl p-3 border transition-colors ${
+                          isRoomError ? "border-rose-300 bg-rose-50" : "border-zinc-200 bg-zinc-50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-sm">
+                          <div>
+                            <span className="font-semibold text-zinc-900">
+                              {t("Room {n}", { n: roomNum })}: {r.room_type_name}
+                            </span>
+                            <span className="ml-2 text-zinc-500">
+                              ({mealLabel(r.meal_plan)})
+                            </span>
+                          </div>
+                          <span className="font-semibold text-zinc-900 tabular-nums">
+                            {money(r.amount)}
+                          </span>
+                        </div>
+                        {isRoomError && (
+                          <div role="alert" className="mt-2 text-xs font-medium text-rose-700 flex items-center gap-1.5">
+                            <AlertCircle className="size-4 shrink-0" />
+                            <span>{translate(error!)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <div className="flex justify-between items-center px-1 pt-1">
+                    <span className="text-xs text-zinc-500">{t("Taxes and fees included")}</span>
+                    <span className="text-lg font-bold text-zinc-900 tabular-nums">{money(multiTotal)}</span>
                   </div>
                 </div>
-                <div className="text-end">
-                  {selPlan.list_amount && selPlan.list_amount > selPlan.amount_after_tax && (
-                    <p className="text-sm text-zinc-400 line-through tabular-nums">{money(selPlan.list_amount)}</p>
-                  )}
-                  <p className="text-xl font-semibold tabular-nums text-zinc-900">{money(selPlan.amount_after_tax)}</p>
-                  <p className="text-xs text-zinc-500">{t("Taxes and fees included")}</p>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-zinc-50 p-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {sel && imagesOf(sel.media)[0] && (
+                      <img src={imagesOf(sel.media)[0].url} alt="" className="size-14 shrink-0 rounded-lg object-cover" />
+                    )}
+                    <div className="min-w-0 text-sm">
+                      <p className="font-semibold text-zinc-900">
+                        {sel?.room_type_name}
+                      </p>
+                      <p className="text-zinc-500">
+                        {fmtDay(search.check_in_date)} {t("to")} {fmtDay(checkOut)}, {guestsLabel}
+                      </p>
+                      {selTerms && <p className={selTerms.free ? "text-brand-700" : "text-zinc-500"}>{selTerms.text}</p>}
+                    </div>
+                  </div>
+                  <div className="text-end">
+                    {selPlan?.list_amount && selPlan.list_amount > selPlan.amount_after_tax && (
+                      <p className="text-sm text-zinc-400 line-through tabular-nums">{money(selPlan.list_amount)}</p>
+                    )}
+                    <p className="text-xl font-semibold tabular-nums text-zinc-900">
+                      {money(selPlan?.amount_after_tax || 0)}
+                    </p>
+                    <p className="text-xs text-zinc-500">{t("Taxes and fees included")}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <fieldset className="grid gap-4 sm:grid-cols-2">
                 <legend className="mb-3 text-base font-semibold text-zinc-900">{t("Your details")}</legend>
@@ -1907,9 +2806,10 @@ export default function PublicBooking() {
                 </label>
               </div>
 
-              {error && (
-                <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                  {translate(error)}
+              {error && (!isMulti || !selectedRoomsList.some(([idx, r]) => matchesRoomError(error, Number(idx), r.room_type_name, r.room_type))) && (
+                <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 flex items-center gap-2">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <span>{translate(error)}</span>
                 </div>
               )}
             </div>

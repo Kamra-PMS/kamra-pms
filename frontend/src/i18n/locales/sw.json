@@ -7038,17 +7038,5 @@
   "A barcode of the order number prints at the bottom of this outlet's bills, so a bill can be found by scanning it. The samples below follow this switch.": "Msimbopau wa namba ya oda huchapishwa chini ya bili za kituo hiki, ili bili ipatikane kwa kuuskani. Mifano iliyo chini hufuata swichi hii.",
   "Print a barcode on the bill": "Chapisha msimbopau kwenye bili",
   "Upload a PNG, or paste an https link": "Pakia PNG, au bandika kiungo cha https",
-  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Tumia kitufe cha Pakia, au bandika kiungo kinachoanza na https://. Viungo vya kawaida vya http havikubaliwi.",
-  "{v0} · low-stock level": "{v0} · kiwango cha akiba ndogo",
-  "Level ({v0})": "Kiwango ({v0})",
-  "Low-stock level for {v0}": "Kiwango cha akiba ndogo cha {v0}",
-  "Save level": "Hifadhi kiwango",
-  "This ingredient shows as LOW when the stock on hand is at or below this level. Enter 0 for no warning.": "Kiungo hiki huonyeshwa kama CHINI wakati kilichopo ni sawa na kiwango hiki au chini yake. Weka 0 ili kusiwe na onyo.",
-  "Issued": "Kilichotolewa",
-  "To issue": "Cha kutoa",
-  "Issue the difference": "Toa tofauti",
-  "Already issued": "Imeshatolewa",
-  "Enter a number for the low-stock level.": "Weka namba ya kiwango cha akiba ndogo.",
-  "Nothing stocked at this outlet yet.": "Hakuna kilichohifadhiwa katika kituo hiki bado.",
-  "This outlet has never held this ingredient. Writing it off will take the balance below zero.": "Kituo hiki hakijawahi kuwa na kiungo hiki. Kukiondoa kutafanya akiba iwe chini ya sifuri."
+  "Use the Upload button, or paste a link that starts with https://. Plain http links are not accepted.": "Tumia kitufe cha Pakia, au bandika kiungo kinachoanza na https://. Viungo vya kawaida vya http havikubaliwi."
 }

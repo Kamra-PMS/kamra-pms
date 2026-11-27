@@ -34,10 +34,7 @@ import { sellsAlcohol, taxLabel } from "../../lib/money"
 import { Empty, ErrorNote, Field, inputCls, inr, Select } from "./shared"
 import { t as translate, useUILanguage } from "../../lib/i18n"
 
-type Act = (
-  work: () => Promise<unknown>,
-  reportError?: (message: string | null) => void,
-) => Promise<void>
+type Act = (work: () => Promise<unknown>) => Promise<void>
 
 export default function Economics({
   fn,
@@ -290,11 +287,11 @@ export default function Economics({
           property={fn.property}
           busy={busy}
           onClose={() => setIndent(null)}
-          onIssue={(outlet, reportError) =>
+          onIssue={(outlet) =>
             act(async () => {
               await banquet.issueIndent(fn.name, outlet)
               setIndent(null)
-            }, reportError)
+            })
           }
         />
       )}
@@ -420,18 +417,11 @@ function IndentSheet({
   property: string
   busy: boolean
   onClose: () => void
-  onIssue: (outlet: string, reportError: (message: string | null) => void) => void
+  onIssue: (outlet: string) => void
 }) {
   useUILanguage()
   const [outlets, setOutlets] = useState<Row[]>([])
   const [outlet, setOutlet] = useState("")
-  // The page error sits behind this sheet. Keep the failure here, and drop
-  // it when they try again or close.
-  const [issueError, setIssueError] = useState<string | null>(null)
-  const close = () => {
-    setIssueError(null)
-    onClose()
-  }
   useEffect(() => {
     listResource("POS Outlet", {
       fields: ["name", "outlet_name"],
@@ -444,47 +434,37 @@ function IndentSheet({
       .catch(() => {})
   }, [property])
 
-  // Once something has left the shelf the button takes only what is left.
-  const issuedAny = indent.ingredients.some((r) => r.issued > 0)
-  const dueAny = indent.ingredients.some((r) => r.to_issue > 0)
-
   return (
     <Sheet
       title={translate("Kitchen indent")}
       description={translate("{v0} pax · {v1} · {v2}", { v0: String(indent.pax), v1: String(indent.venue), v2: String(indent.event_date) })}
-      onClose={close}
+      onClose={onClose}
       wide
       footer={
-        <div className="space-y-3">
-          <ErrorNote error={issueError} />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="text-sm text-zinc-500">
-              {inr(indent.total_cost)}{translate(" of ingredients")}{indent.shortfall_lines > 0 && (
-                <span className="text-amber-700">
-                  {" "}
-                  · {indent.shortfall_lines}{translate(" short on the shelf")}</span>
-              )}
-            </span>
-            <div className="flex items-end gap-2">
-              <Field label={translate("Issue from")}>
-                <select
-                  className={inputCls + " !w-44"}
-                  value={outlet}
-                  onChange={(e) => setOutlet(e.target.value)}
-                >
-                  {outlets.map((o) => (
-                    <option key={o.name} value={o.name}>
-                      {String(o.outlet_name ?? o.name)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Button variant="outline" onClick={() => window.print()}>{translate("Print")}</Button>
-              <Button disabled={busy || !outlet || !dueAny} onClick={() => onIssue(outlet, setIssueError)}>
-                {!issuedAny ? translate("Issue the stock")
-                  : dueAny ? translate("Issue the difference") : translate("Already issued")}
-              </Button>
-            </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-zinc-500">
+            {inr(indent.total_cost)}{translate(" of ingredients")}{indent.shortfall_lines > 0 && (
+              <span className="text-amber-700">
+                {" "}
+                · {indent.shortfall_lines}{translate(" short on the shelf")}</span>
+            )}
+          </span>
+          <div className="flex items-end gap-2">
+            <Field label={translate("Issue from")}>
+              <select
+                className={inputCls + " !w-44"}
+                value={outlet}
+                onChange={(e) => setOutlet(e.target.value)}
+              >
+                {outlets.map((o) => (
+                  <option key={o.name} value={o.name}>
+                    {String(o.outlet_name ?? o.name)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Button variant="outline" onClick={() => window.print()}>{translate("Print")}</Button>
+            <Button disabled={busy || !outlet} onClick={() => onIssue(outlet)}>{translate("Issue the stock")}</Button>
           </div>
         </div>
       }
@@ -498,12 +478,6 @@ function IndentSheet({
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-400">
             <th className="py-2 pr-3 font-medium">{translate("Ingredient")}</th>
             <th className="py-2 pr-3 text-right font-medium">{translate("Need")}</th>
-            {issuedAny && (
-              <>
-                <th className="py-2 pr-3 text-right font-medium">{translate("Issued")}</th>
-                <th className="py-2 pr-3 text-right font-medium">{translate("To issue")}</th>
-              </>
-            )}
             <th className="py-2 pr-3 text-right font-medium">{translate("On hand")}</th>
             <th className="py-2 pr-3 text-right font-medium">{translate("Short")}</th>
             <th className="py-2 text-right font-medium">{translate("Cost")}</th>
@@ -521,16 +495,6 @@ function IndentSheet({
               <td className="py-1.5 pr-3 text-right tabular-nums font-medium">
                 {r.required} {r.uom}
               </td>
-              {issuedAny && (
-                <>
-                  <td className="py-1.5 pr-3 text-right tabular-nums text-zinc-500">
-                    {r.issued > 0 ? r.issued : "-"}
-                  </td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums font-medium">
-                    {r.to_issue > 0 ? r.to_issue : "-"}
-                  </td>
-                </>
-              )}
               <td className="py-1.5 pr-3 text-right tabular-nums text-zinc-500">
                 {r.on_hand}
               </td>

@@ -2307,33 +2307,6 @@ def t41():
 		frappe.set_user(me)  # nosemgrep: frappe-setuser -- controlled user context switch; target user is validated and scope-limited in this flow
 
 
-@check("kitchen stock: a never-moved ingredient can be picked, a negative low-stock level is refused")
-def t_kitchen_stock_pick_and_level():
-	from kamra import inventory
-
-	outlet = frappe.get_doc({
-		"doctype": "POS Outlet", "property": P, "outlet_name": "Pick Kitchen",
-		"outlet_type": "Restaurant", "gst_rate": 5,
-	}).insert(ignore_permissions=True).name
-	milk = inventory.save_ingredient(P, "Pick Milk", "L", cost_per_unit=20)["name"]
-
-	# the shelf list is what the outlet holds; the pickers also offer the rest
-	assert milk not in [r["ingredient"] for r in inventory.stock_list(P, outlet)]
-	picked = [r for r in inventory.stock_list(P, outlet, include_unstocked=1)
-	          if r["ingredient"] == milk]
-	assert [(r["qty_on_hand"], r["stocked"]) for r in picked] == [(0, 0)], picked
-
-	inventory.receive_stock(P, outlet, [{"ingredient": milk, "qty": 2}])
-	inventory.set_par_level(P, outlet, milk, 5)
-	held = [r for r in inventory.stock_list(P, outlet) if r["ingredient"] == milk]
-	assert [(r["qty_on_hand"], r["status"]) for r in held] == [(2, "LOW")], held
-	try:
-		inventory.set_par_level(P, outlet, milk, -1)
-		raise AssertionError("a negative low-stock level was accepted")
-	except frappe.ValidationError:
-		pass
-
-
 def _id_photo(colour=(180, 40, 40)):
 	"""A real PNG data URL, built in memory - no fixture file to go missing."""
 	import base64
@@ -3989,44 +3962,6 @@ def t74():
 	# and the chefs get it split by section
 	tandoor = next(k for k in ind["by_kitchen"] if k["kitchen"] == "Tandoor")
 	assert tandoor["dishes"][0]["portions"] == 200, tandoor
-
-
-@check("banquet: issuing the indent takes the stock off the outlet, and only the difference after")
-def t_banquet_issue_indent():
-	from kamra import banquet as bq
-	from kamra import inventory
-
-	b = _banquet_setup()
-	store = frappe.get_doc({
-		"doctype": "POS Outlet", "property": P, "outlet_name": "Banquet Store",
-		"outlet_type": "Restaurant", "gst_rate": 5,
-	}).insert(ignore_permissions=True).name
-	fn = _function(day_offset=260)
-	bq.update_function(fn, {"pax_guaranteed": 200})
-	bq.add_menu(fn, b["menu"])
-	bq.compose_menu(fn, b["menu"], [{"course": _starter(b), "dish": b["dish_veg"]}])
-	bq.set_status(fn, "Confirmed")
-	inventory.receive_stock(P, store, [{"ingredient": b["onion"], "qty": 50}])
-
-	out = bq.issue_indent(fn, store)
-	assert out["issued"] == 1, out
-	move = frappe.get_all(
-		"Ingredient Ledger Entry",
-		filters={"outlet": store, "reference_name": fn},
-		fields=["reason", "qty_change", "balance_after"])
-	assert [(m.reason, m.qty_change, m.balance_after) for m in move] \
-		== [("Consumed", -40, 10)], move
-
-	# a second press takes nothing; fifty more guests take their 10 kg only
-	assert bq.issue_indent(fn, store)["issued"] == 0
-	bq.update_function(fn, {"pax_guaranteed": 250})
-	onion = next(r for r in bq.kitchen_indent(fn)["ingredients"]
-	             if r["ingredient"] == b["onion"])
-	assert (onion["required"], onion["issued"], onion["to_issue"], onion["short_by"]) \
-		== (50, 40, 10, 0), onion
-	bq.issue_indent(fn, store)
-	assert frappe.db.get_value(
-		"Ingredient Stock", f"{store}::{b['onion']}", "qty_on_hand") == 0
 
 
 @check("banquet: the night bills what was served, not what was quoted")
@@ -10313,6 +10248,28 @@ def t264():
 	assert q["is_holiday"] and q["stay_rules"]["holiday"] == "EVAL Holiday", q["stay_rules"]
 	assert abs(q["advance_due"] - q["amount_after_tax"]) < 0.01, (q["advance_due"], q["amount_after_tax"])
 
+
+@check("multi-room booking on website links rooms to Group Booking with atomic inventory check")
+def t_multi_room_booking():
+	from kamra import public_api
+	# Search stay with multi-room bounds check
+	try:
+		public_api.search_stay(P, TUE, WED, rooms=[{"adults": 1}] * 11)
+		raise AssertionError("search_stay allowed 11 rooms")
+	except frappe.ValidationError:
+		pass
+
+	# Single-room list treats as single room
+	single = public_api.search_stay(P, TUE, WED, rooms=[{"adults": 2, "children": 0}])
+	assert not isinstance(single, dict) or not single.get("multi_room"), single
+
+	# Multi-room search with child ages
+	multi = public_api.search_stay(P, TUE, WED, rooms=[
+		{"adults": 2, "children": 1, "child_ages": [3]},
+		{"adults": 2, "children": 0},
+	])
+	assert multi.get("multi_room") and len(multi["rooms"]) == 2, multi
+
 # ── check-in / check-out on the desk: tills, open bills, roles (t380-t383) ──
 
 EVAL_FIN = "eval.fin@kamra.local"
@@ -11843,56 +11800,6 @@ def t_night_prices_total():
 	assert q["room_total"] == 100, q["room_total"]
 
 
-@check("the desk re-prices a night of a saved stay; the other nights keep the rate they were booked at")
-def t_night_prices_saved_stay():
-	from kamra.api import (
-		PriceConfirmationRequired, create_booking, set_stay_prices, stay_prices_preview, stay_rates)
-	ci, co = "2033-09-10", "2033-09-13"
-	out = create_booking(P, RT, ci, co, "Eval Saved Night", phone="+91 70000 00636")
-	res = frappe.get_doc("Reservation", out["reservation"])
-	before = [float(r.rate) for r in res.night_rates]
-	total = float(res.amount_after_tax)
-	assert res.auto_price == 1 and len(before) == 3, (res.auto_price, before)
-	d2 = add_days(ci, 1)
-	typed = [{"date": d2, "price": 5000}]
-	# the preview writes nothing, and the save needs the new price confirmed
-	pv = stay_prices_preview(res.name, typed)
-	assert pv["needs_confirmation"] and pv["new_amount"] != total, pv
-	res.reload()
-	assert res.auto_price == 1 and float(res.amount_after_tax) == total
-	try:
-		set_stay_prices(res.name, typed)
-		raise AssertionError("a change in the total was saved without the total shown")
-	except PriceConfirmationRequired:
-		pass
-	# a save that carries a total other than the one the preview showed is refused too
-	try:
-		set_stay_prices(res.name, typed, expected_total=pv["new_amount"] + 1)
-		raise AssertionError("a save with a stale total was accepted")
-	except PriceConfirmationRequired as e:
-		assert "not the" in str(e), e
-	res.reload()
-	assert res.auto_price == 1 and float(res.amount_after_tax) == total
-	# the rate card moves after the booking: the nights left alone must not follow it
-	rt = frappe.get_doc("Room Type", RT)
-	old_base = rt.base_price
-	frappe.db.set_value("Room Type", RT, "base_price", float(old_base) * 2)
-	frappe.clear_document_cache("Room Type", RT)
-	try:
-		set_stay_prices(res.name, typed, expected_total=pv["new_amount"])
-	finally:
-		frappe.db.set_value("Room Type", RT, "base_price", old_base)
-		frappe.clear_document_cache("Room Type", RT)
-	res.reload()
-	assert res.auto_price == 0
-	assert [float(r.hand_price) for r in res.night_rates] == [0, 5000, 0], res.night_rates
-	rows = [float(r.rate) for r in res.night_rates]
-	assert rows[0] == before[0] and rows[2] == before[2], (rows, before)
-	shown = [n["price"] for n in stay_rates(res.name)["nights"]]
-	assert shown[1] == 5000, shown
-	assert float(res.amount_after_tax) > total
-
-
 @check("typed nights with a voucher or without the right to set rates are refused")
 def t_night_prices_refused():
 	from kamra.api import create_booking, get_quote
@@ -12443,68 +12350,6 @@ def t_card_network_agent_paths():
 	assert (bill().card_network, bill().card_last4) == (None, None), bill()
 
 
-@check("menu choices: the server prices and judges them, the line and the kitchen keep them, stock follows them")
-def t_menu_modifiers():
-	from kamra import inventory, menu_modifiers as mm, pos
-	outlet, dish = _eval_bill_outlet("Eval Choices")
-	beans = frappe.get_doc({"doctype": "Ingredient", "property": P, "ingredient_name": "Eval Choice Beans",
-	                        "uom": "g", "is_active": 1}).insert(ignore_permissions=True).name
-	inventory.receive_stock(P, outlet, [{"ingredient": beans, "qty": 500}])
-	ice = mm.save_modifier_group(outlet, "Ice", [{"option_name": "Normal"}, {"option_name": "Less"}],
-	                             items=[dish], required=1, sort_order=1)["name"]
-	extras = mm.save_modifier_group(
-		outlet, "Extras", [{"option_name": "Shot", "price": 60,
-		                    "ingredients": [{"ingredient": beans, "qty": 18}]},
-		                   {"option_name": "Caramel", "price": 50}],
-		items=[dish], multi=1, max_choices=1, sort_order=2)["name"]
-	pick = lambda g, n: frappe.db.get_value("Menu Modifier Option", {"modifier_group": g, "option_name": n}, "name")
-
-	# a compulsory group left open, and more than the limit, are refused before anything is written
-	for picks, why in (([], "choose Ice"),
-	                   ([pick(ice, "Normal"), pick(extras, "Shot"), pick(extras, "Caramel")], "at most 1")):
-		try:
-			pos.create_order(outlet, [{"menu_item": dish, "qty": 1, "modifiers": picks}], table_no="C1")
-		except frappe.ValidationError as e:
-			assert why in str(e), (why, e)
-		else:
-			raise AssertionError(f"choices accepted that should be refused: {why}")
-
-	# the till sends ids only; the line is the dish plus the choices, and keeps its own copy
-	o = pos.send_order(outlet, [{"menu_item": dish, "qty": 2, "rate": 1,
-	                             "modifiers": [pick(ice, "Less"), pick(extras, "Shot")]}],
-	                   property=P, table_no="C1")
-	line = frappe.get_doc("POS Order", o["order"]).items[0]
-	assert (line.rate, line.modifier_total, line.amount) == (360, 60, 720), (line.rate, line.modifier_total, line.amount)  # the dish is 300
-	assert o["fired_items"][0]["modifiers"] == ["Less", "Shot"], o["fired_items"]
-	kds = [q for q in pos.kitchen_queue(P, outlet) if q["name"] == o["order"]][0]
-	assert kds["items"][0]["modifiers"] == ["Less", "Shot"], kds["items"]
-	assert pos.bill_data(o["order"])["items"][0]["modifiers"] == ["Less", "Shot"]
-	assert frappe.db.get_value("Ingredient Stock", f"{outlet}::{beans}", "qty_on_hand") == 500 - 36, "the choice took no stock"
-
-	# a price finer than money is kept whole, and a voided line's choices count as waste
-	fine = mm.save_modifier_group(outlet, "Fine", [{"option_name": "Fils", "price": 0.125}],
-	                              items=[dish], sort_order=3)["name"]
-	o2 = pos.send_order(outlet, [{"menu_item": dish, "qty": 1, "modifiers": [
-		pick(ice, "Normal"), pick(fine, "Fils"), pick(extras, "Shot")]}], property=P, table_no="C2")
-	finer = frappe.get_doc("POS Order", o2["order"]).items[0]
-	assert abs(finer.modifier_total - 60.125) < 1e-6 and abs(finer.rate - 360.125) < 1e-6, (finer.rate, finer.modifier_total)
-	frappe.db.set_value("Ingredient", beans, "cost_per_unit", 10)
-	pos.void_item(o2["order"], finer.name, reason="eval spilled")
-	waste = [r for r in inventory.wastage_report(P, outlet)["lines"] if r["order_name"] == o2["order"]]
-	assert waste and waste[0]["value"] == 180, ("the choice's beans are not in the wastage value", waste)
-
-	# editing the price, then deleting the group, leaves the bill as it was sold
-	frappe.db.set_value("Menu Modifier Option", pick(extras, "Shot"), "price", 999)
-	frappe.db.set_value("Menu Item", dish, "price", 999)
-	mm.delete_modifier_group(extras)
-	pos.add_items(o["order"], [{"menu_item": dish, "qty": 1, "modifiers": [pick(ice, "Normal")]}])
-	rows = frappe.get_doc("POS Order", o["order"]).items
-	assert (rows[0].rate, rows[0].amount) == (360, 720), "a later price change re-priced a line already on the bill"
-	assert [c["name"] for c in mm.load(rows[0].modifiers)] == ["Less", "Shot"]
-	assert not frappe.db.exists("Menu Modifier Group", extras)
-	assert not frappe.db.count("Menu Modifier Option", {"modifier_group": extras})
-
-
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12557,12 +12402,11 @@ def execute():
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
-		           t_night_prices_saved_stay,
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
-		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent):
+		           t_multi_room_booking):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

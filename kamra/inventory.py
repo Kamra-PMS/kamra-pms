@@ -28,7 +28,6 @@ authorization for consumption is the POS_ROLES gate on fire_kot, not doctype
 perms on the ledger. authz.py's own docstring makes the same point.
 """
 
-import math
 import uuid
 
 import frappe
@@ -161,23 +160,6 @@ def _recipes_of(menu_items) -> dict:
 	return out
 
 
-def _option_recipes_of(options) -> dict:
-	"""choice -> [(ingredient, qty_per_dish), ...]. What a choice (Extra shot,
-	Oat milk) takes off the shelf on top of the dish's own recipe: the same
-	lines a recipe has, kept on the Menu Modifier Option."""
-	ids = [o for o in options if o]
-	if not ids:
-		return {}
-	out = {}
-	for r in frappe.get_all(
-		"Menu Item Ingredient",
-		filters={"parent": ["in", ids], "parenttype": "Menu Modifier Option"},
-		fields=["parent", "ingredient", "qty"], order_by="idx asc",
-	):
-		out.setdefault(r.parent, []).append((r.ingredient, float(r.qty or 0)))
-	return out
-
-
 def consume_for_lines(order, lines) -> list:
 	"""Take a fired order's recipes off the outlet's stock. Called from
 	fire_kot with the lines it just fired - never from a doc hook, see below.
@@ -222,17 +204,10 @@ def consume_for_lines(order, lines) -> list:
 		return []
 
 	recipes = _recipes_of({it["menu_item"] for it in todo})
-	# a choice can take stock too (Extra shot: 18 g of beans): the dish's own
-	# recipe and its choices are one movement per ingredient, summed
-	extras = _option_recipes_of({o for it in todo for o in it.get("modifiers") or ()})
 	need = {}
 	for it in todo:
-		qty = float(it.get("qty") or 1)
 		for ing, per in recipes.get(it["menu_item"], ()):
-			need[ing] = need.get(ing, 0.0) + per * qty
-		for opt in it.get("modifiers") or ():
-			for ing, per in extras.get(opt, ()):
-				need[ing] = need.get(ing, 0.0) + per * qty
+			need[ing] = need.get(ing, 0.0) + per * float(it.get("qty") or 1)
 	if not need:
 		return []  # nothing fired here has a recipe. Silence is correct.
 
@@ -514,31 +489,13 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 
 @frappe.whitelist()
 @require_perm("Ingredient", "view_stock")
-def stock_list(property: str, outlet: str, status: str | None = None,
-               include_unstocked: int = 0):
+def stock_list(property: str, outlet: str, status: str | None = None):
 	"""Everything this outlet holds. Stock is per outlet, so there is no such
-	thing as a merged total across outlets and this never offers one.
-
-	include_unstocked adds the active ingredients this outlet has never moved,
-	at zero and marked stocked = 0, for the receipt, count and wastage pickers:
-	a balance row only appears with the first movement, so without them a new
-	ingredient could never get one."""
+	thing as a merged total across outlets and this never offers one."""
 	rows = frappe.get_all(
 		"Ingredient Stock", filters={"property": property, "outlet": outlet},
 		fields=["name", "ingredient", "qty_on_hand", "par_level",
 		        "last_counted_at", "last_counted_by"])
-	for r in rows:
-		r["stocked"] = 1
-	if int(include_unstocked or 0):
-		held = {r.ingredient for r in rows}
-		rows += [
-			frappe._dict(name=None, ingredient=name, qty_on_hand=0.0, par_level=0.0,
-			             last_counted_at=None, last_counted_by=None, stocked=0)
-			for name in frappe.get_all(
-				"Ingredient", filters={"property": property, "is_active": 1},
-				pluck="name")
-			if name not in held
-		]
 	out = []
 	for r in rows:
 		meta = frappe.db.get_value(
@@ -629,7 +586,7 @@ def wastage_report(property: str, outlet: str | None = None, days: int = 30):
 		conds.append("p.outlet = %(outlet)s")
 		params["outlet"] = outlet
 	lines = frappe.db.sql(f"""  # nosemgrep: frappe-sql-format-injection -- values are parameterized; interpolated text is a constant or whitelisted identifier, not user input
-		select i.item_name, i.menu_item, i.qty, i.modifiers, i.void_reason, p.outlet,
+		select i.item_name, i.menu_item, i.qty, i.void_reason, p.outlet,
 		       p.name as order_name, p.creation
 		  from `tabPOS Order Item` i
 		  join `tabPOS Order` p on p.name = i.parent
@@ -638,20 +595,13 @@ def wastage_report(property: str, outlet: str | None = None, days: int = 30):
 	if not lines:
 		return {"lines": [], "by_reason": [], "total_value": 0.0}
 
-	from kamra.menu_modifiers import option_ids_of
 	recipes = _recipes_of({r.menu_item for r in lines})
-	# what a line's choices took off the shelf (an extra shot's beans) was binned too
-	chosen = [option_ids_of(r.pop("modifiers")) for r in lines]
-	extras = _option_recipes_of({o for ids in chosen for o in ids})
 	costs = {}
 	total = 0.0
 	by_reason = {}
-	for r, ids in zip(lines, chosen):
+	for r in lines:
 		value = 0.0
-		used = list(recipes.get(r.menu_item, ()))
-		for opt in ids:
-			used += extras.get(opt, ())
-		for ing, per in used:
+		for ing, per in recipes.get(r.menu_item, ()):
 			if ing not in costs:
 				costs[ing] = float(frappe.db.get_value(
 					"Ingredient", ing, "cost_per_unit") or 0)
@@ -691,17 +641,7 @@ def set_menu_availability(menu_item: str, available: int):
 @require_perm("Ingredient", "manage_stock")
 def set_par_level(property: str, outlet: str, ingredient: str, par_level: float):
 	"""Where LOW starts for this ingredient at this outlet. Zero = no par."""
-	try:
-		par = float(par_level)
-	except (TypeError, ValueError):
-		frappe.throw(_("Enter a number for the low-stock level."))
-	# nan and inf compare in surprising ways (nan < 0 is false) and must not
-	# land in the column as a level nobody can read
-	if not math.isfinite(par):
-		frappe.throw(_("Enter a number for the low-stock level."))
-	if par < 0:
-		frappe.throw(_("A low-stock level cannot be below zero."))
 	name = _stock_row(property, outlet, ingredient)
-	frappe.db.set_value("Ingredient Stock", name, "par_level", par,
-	                    update_modified=False)
+	frappe.db.set_value("Ingredient Stock", name, "par_level",
+	                    float(par_level or 0), update_modified=False)
 	return {"ok": True}
