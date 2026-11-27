@@ -99,3 +99,20 @@ Try again from the refund window.,Jaribu tena kutoka dirisha la marejesho.
 Money goes back as {0}.,Pesa hurudishwa kama {0}.
 The amount to give back has changed: it is now {0}. Check it and refund again.,Kiasi cha kurudisha kimebadilika: sasa ni {0}. Kikague kisha urejeshe tena.
 This attempt already refunded {0}. Close the window to see it.,Jaribio hili tayari limerejesha {0}. Funga dirisha ili uione.
+"{0} already has stock history, so ""Made here"" stays as it is.","{0} tayari ina historia ya stoo, kwa hiyo ""Hutengenezwa hapa"" inabaki ilivyo."
+"Say how much one batch makes, above zero.","Sema fungu moja hutoa kiasi gani, zaidi ya sifuri."
+Something made here needs at least one ingredient in its recipe.,Kitu kinachotengenezwa hapa kinahitaji angalau kiungo kimoja kwenye mapishi.
+"{0} is used to make {1}, so it cannot be made here itself.","{0} hutumika kutengeneza {1}, kwa hiyo haiwezi yenyewe kutengenezwa hapa."
+{0} cannot be made from itself.,{0} haiwezi kutengenezwa kutokana na yenyewe.
+{0} is made here too. Use only bought ingredients.,{0} pia hutengenezwa hapa. Tumia viungo vilivyonunuliwa tu.
+{0} recipe(s) use this ingredient. Deactivate it instead.,Mapishi {0} yanatumia kiungo hiki. Kizime badala yake.
+{0} (in {1}),{0} (ndani ya {1})
+"{0} is made here. Record it with Produce, not as a delivery.","{0} hutengenezwa hapa. Iandike kwa Zalisha, si kama mzigo."
+"Say how much was made, above zero.","Sema kiasi kilichotengenezwa, zaidi ya sifuri."
+{0} is not made here.,{0} haitengenezwi hapa.
+The recipe of {0} just changed. Try again.,Mapishi ya {0} yamebadilika sasa hivi. Jaribu tena.
+{0} is made here itself. Take it out of the recipe of {1}.,{0} yenyewe hutengenezwa hapa. Iondoe kwenye mapishi ya {1}.
+That is too little to take anything from stock.,Kiasi hicho ni kidogo mno kutoa chochote stoo.
+Every recipe line needs a quantity above zero.,Kila mstari wa mapishi unahitaji kiasi kilicho juu ya sifuri.
+{0} belongs to another property.,{0} ni ya jengo jingine.
+"Only deliveries, stock takes, wastage and production batches can be cancelled.","Ni upokeaji, hesabu za hifadhi, upotevu na mafungu ya uzalishaji pekee vinavyoweza kughairiwa."

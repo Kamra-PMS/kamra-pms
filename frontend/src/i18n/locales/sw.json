@@ -7224,5 +7224,22 @@
   "This week": "Wiki hii",
   "Last week": "Wiki iliyopita",
   "Low only": "Chache tu",
-  "No stock or movements in this period.": "Hakuna hifadhi wala miamala katika kipindi hiki."
+  "No stock or movements in this period.": "Hakuna hifadhi wala miamala katika kipindi hiki.",
+  "{part} (in {made})": "{part} (ndani ya {made})",
+  "{qty} {uom} there: goes below zero": "kuna {qty} {uom}: itashuka chini ya sifuri",
+  "Cancel batch": "Ghairi mafungu",
+  "Cancel this whole batch?": "Ughairi mafungu haya yote?",
+  "Cost / {uom}": "Gharama / {uom}",
+  "Made here (semi-finished)": "Hutengenezwa hapa (nusu tayari)",
+  "Make": "Tengeneza",
+  "Produce": "Zalisha",
+  "Record a batch made at {outlet}. It goes into stock, and what it is made from comes out.": "Andika mafungu yaliyotengenezwa {outlet}. Yanaingia stoo, na vilivyotumika vinatoka.",
+  "This uses:": "Hii inatumia:",
+  "Used to make: {names}": "Hutumika kutengeneza: {names}",
+  "worked out from the recipe": "imekokotolewa kutoka kwenye mapishi",
+  "Made from": "Imetengenezwa kwa",
+  "One batch makes": "Fungu moja hutoa",
+  "In the stock unit.": "Kwa kipimo cha stoo.",
+  "What one batch uses, from bought ingredients.": "Kinachotumika kwa fungu moja, kutoka viungo vilivyonunuliwa.",
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Hutengenezwa jikoni kwako kwa mafungu, kama sharubati au mchuzi. Gharama yake inatoka kwenye mapishi na haiwezi kupokelewa kama mzigo."
 }

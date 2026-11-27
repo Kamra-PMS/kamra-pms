@@ -35,10 +35,11 @@ perms on the ledger. authz.py's own docstring makes the same point.
 
 import math
 import uuid
+from functools import partial
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, cint, getdate, nowdate
+from frappe.utils import add_days, cint, flt, getdate, nowdate
 
 from kamra.authz import require_perm
 from kamra.localization import money_text
@@ -439,18 +440,119 @@ def _sees_costs() -> bool:
 	return bool(frappe.has_permission("Ingredient", "view_stock",
 	                                  ignore_share_permissions=True))
 
+# ------------------------------------------------- ingredients made here
+#
+# A made ingredient ("syrup") carries the recipe of one batch. Its cost is
+# stored like any other ingredient's, so everything that reads a cost needs no
+# change; it is worked out again after whatever moved it has committed.
+
+def _made_parts(made: list) -> dict:
+	"""made ingredient -> the lines of its batch recipe."""
+	out = {}
+	for r in frappe.get_all(
+		"Menu Item Ingredient",
+		filters={"parent": ["in", made or [""]], "parenttype": "Ingredient"},
+		fields=["parent", "ingredient", "qty"], order_by="idx asc",
+	):
+		out.setdefault(r.parent, []).append(r)
+	return out
+
+
+def _cost_gaps(names) -> dict:
+	"""For the made ingredients among `names`: what in them has no cost yet."""
+	parts = _made_parts(list(names))
+	if not parts:
+		return {}
+	bare = dict(frappe.get_all(
+		"Ingredient",
+		filters={"name": ["in", [r.ingredient for rows in parts.values() for r in rows]],
+		         "cost_per_unit": ["<=", 0]},
+		fields=["name", "ingredient_name"], as_list=True))
+	return {made: list(dict.fromkeys(bare[r.ingredient] for r in rows
+	                                 if r.ingredient in bare))
+	        for made, rows in parts.items()}
+
+
+def _made_cost(parts: list, batch: float) -> float:
+	"""One stock unit of a batch, from (quantity, cost per unit) pairs. 0, "no
+	cost yet", when any part has none."""
+	total = portion_cost(parts)
+	if total is None or batch <= 0:
+		return 0.0
+	return round(total / batch, 6)
+
+
+def schedule_recost(names) -> None:
+	"""Work out made ingredients' costs again once the change in hand has
+	committed; `names` are the ingredients whose cost or recipe just changed.
+	Not before, and not inside a save: the saved row is still locked there (the
+	wrong order to lock a batch's ingredients in), and the reads would not show
+	what others have saved meanwhile."""
+	if names:
+		frappe.db.after_commit.add(partial(_recost, tuple(sorted(set(names)))))
+
+
+def _recost(changed: tuple) -> None:
+	"""Runs after the commit, as short transactions of its own. A database clash
+	is tried again; a failure is logged and never fails what triggered it."""
+	# whatever else waits for this commit runs now: a rollback below would drop it
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- after-commit work, nothing of the request is pending
+	for attempt in range(3):
+		try:
+			made = sorted({
+				*frappe.get_all("Ingredient", filters={"name": ["in", changed], "is_made": 1},
+				                pluck="name"),
+				*frappe.get_all("Menu Item Ingredient",
+				                filters={"ingredient": ["in", changed],
+				                         "parenttype": "Ingredient"}, pluck="parent")})
+			if made:
+				_write_made_costs(made)
+			return
+		except Exception:
+			frappe.db.rollback()
+			if attempt == 2:
+				frappe.log_error(
+					title="Cost of made ingredients not worked out",
+					message=f"After a change to {', '.join(changed)}\n{frappe.get_traceback()}")
+				frappe.db.commit()  # nosemgrep: frappe-manual-commit -- keep the error log
+
+
+def _write_made_costs(made: list) -> None:
+	names = {*made, *(r.ingredient for rows in _made_parts(made).values() for r in rows)}
+	# the locks must open the transaction: the reads after them are then current
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- after-commit work, nothing written yet
+	_lock_ingredients(sorted(names))
+	parts = _made_parts(made)
+	costs = dict(frappe.get_all(
+		"Ingredient",
+		filters={"name": ["in", [r.ingredient for rows in parts.values() for r in rows] or [""]]},
+		fields=["name", "cost_per_unit"], as_list=True))
+	for name, rows in parts.items():
+		batch = flt(frappe.db.get_value("Ingredient", name, "batch_qty"))
+		frappe.db.set_value(
+			"Ingredient", name, "cost_per_unit",
+			_made_cost([(r.qty, costs.get(r.ingredient)) for r in rows], batch))
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- release the locks
+
+
 @frappe.whitelist()
 @require_perm("Ingredient", "view_stock")
 def ingredients(property: str, active_only: int = 1):
-	"""The ingredient master - the picker behind the recipe editor."""
+	"""The ingredient master - the picker behind the recipe editor. A made one
+	without a cost also names what in it still needs one (`missing`)."""
 	filters = {"property": property}
 	if int(active_only or 0):
 		filters["is_active"] = 1
-	return frappe.get_all(
+	rows = frappe.get_all(
 		"Ingredient", filters=filters,
 		fields=["name", "ingredient_name", "uom", "category", "cost_per_unit",
-		        "is_active"],
+		        "is_active", "is_made"],
 		order_by="ingredient_name asc")
+	gaps = _cost_gaps([r.name for r in rows if r.is_made and flt(r.cost_per_unit) <= 0])
+	for r in rows:
+		if r.name in gaps:
+			r["missing"] = gaps[r.name]
+	return rows
 
 
 @frappe.whitelist()
@@ -469,6 +571,7 @@ def menu_recipe(menu_item: str):
 		"Menu Item Ingredient", filters={"parent": menu_item, "parenttype": "Menu Item"},
 		fields=["name", "ingredient", "qty", "note"], order_by="idx asc")
 	costs = _sees_costs()
+	gaps = _cost_gaps([r.ingredient for r in rows]) if costs else {}
 	for r in rows:
 		meta = frappe.db.get_value(
 			"Ingredient", r.ingredient,
@@ -477,6 +580,8 @@ def menu_recipe(menu_item: str):
 		r["uom"] = meta.get("uom")
 		if costs:
 			r["cost_per_unit"] = meta.get("cost_per_unit")
+			if r.ingredient in gaps and flt(r["cost_per_unit"]) <= 0:
+				r["missing"] = gaps[r.ingredient]
 		r["qty_on_hand"] = frappe.db.get_value(
 			"Ingredient Stock", f"{mi.outlet}::{r.ingredient}", "qty_on_hand")
 	out = {"menu_item": menu_item, "item_name": mi.item_name,
@@ -529,6 +634,14 @@ def recipe_overview(property: str):
 			"POS Outlet", filters={"name": ["in", list({d.outlet for d in dishes})]},
 			fields=["name", "outlet_name"])
 	}
+	bare = [n for n, i in ings.items() if float(i.cost_per_unit or 0) <= 0]
+	gaps = _cost_gaps(bare)
+
+	def needs_cost(name):
+		"""What to give a cost, so that this ingredient has one."""
+		own = ings[name].ingredient_name
+		return [_("{0} (in {1})").format(part, own) for part in gaps.get(name) or []] or [own]
+
 	for d in dishes:
 		rows = lines.get(d.name, [])
 		d["lines"] = len(rows)
@@ -538,8 +651,7 @@ def recipe_overview(property: str):
 			[(r.qty, ings[r.ingredient].cost_per_unit) for r in rows])
 		d["margin"], d["margin_pct"] = margin_of(d.price, d["cost"])
 		d["uncosted"] = list(dict.fromkeys(
-			ings[r.ingredient].ingredient_name for r in rows
-			if float(ings[r.ingredient].cost_per_unit or 0) <= 0))
+			label for r in rows if r.ingredient in bare for label in needs_cost(r.ingredient)))
 	return dishes
 
 
@@ -664,9 +776,11 @@ def save_ingredient(property: str, ingredient_name: str, uom: str,
 def delete_ingredient(name: str):
 	"""Refuse if it is on a recipe or has history - deleting it would orphan a
 	recipe or punch a hole in the ledger. Deactivate instead."""
-	used = frappe.db.count("Menu Item Ingredient", {"ingredient": name})
+	used = len(set(frappe.get_all(
+		"Menu Item Ingredient", filters={"ingredient": name},
+		fields=["parenttype", "parent"], as_list=True)))
 	if used:
-		frappe.throw(_("{0} dish(es) use this ingredient. Deactivate it instead.")
+		frappe.throw(_("{0} recipe(s) use this ingredient. Deactivate it instead.")
 		             .format(used))
 	if frappe.db.count("Ingredient Ledger Entry", {"ingredient": name}):
 		frappe.throw(_("This ingredient has stock history. Deactivate it instead."))
@@ -717,6 +831,9 @@ def _number(value) -> float:
 def _delivery_line(row: dict, ing: dict) -> dict:
 	"""One received row in stock units, plus what was bought as typed. Refuses
 	the row before anything moves."""
+	if cint(ing.get("is_made")):
+		frappe.throw(_("{0} is made here. Record it with Produce, not as a delivery.")
+		             .format(ing["ingredient_name"]))
 	qty = _number(row.get("qty") or 0)
 	if not qty > 0:
 		frappe.throw(_("Received quantity must be above zero."))
@@ -784,7 +901,7 @@ def _lock_for_writing(property: str, names: list) -> dict:
 	for name in names:
 		ing = frappe.db.get_value(
 			"Ingredient", name,
-			["name", "property", "ingredient_name", "uom", "buy_uom", "buy_size"],
+			["name", "property", "ingredient_name", "uom", "buy_uom", "buy_size", "is_made"],
 			as_dict=True)
 		if not ing or ing.property != property:
 			frappe.throw(_("{0} belongs to another property.").format(name))
@@ -827,7 +944,7 @@ def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
 
 	method = get_setting(property, "stock_cost_method")
 	batch = uuid.uuid4().hex[:12]
-	out = []
+	out, repriced = [], []
 	for line in lines:
 		ing, price = line["ingredient"], line["price"]
 		on_hand = sum(float(q or 0) for q in frappe.get_all(
@@ -843,6 +960,7 @@ def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
 			new_cost = cost_after_receipt(method, on_hand, cost, line["qty"], price)
 		if new_cost != cost:
 			frappe.db.set_value("Ingredient", ing, "cost_per_unit", new_cost)
+			repriced.append(ing)
 		after = _apply_move(
 			property, outlet, ing, line["qty"], "Received",
 			supplier=supplier, invoice_no=invoice_no, batch_id=batch,
@@ -861,6 +979,7 @@ def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
 	           rationale=f"{len(out)} ingredient(s) received"
 	                     + (f" from {supplier}" if supplier else ""),
 	           channel="API")
+	schedule_recost(repriced)
 	return {"ok": True, "batch_id": batch, "rows": out}
 
 
@@ -952,12 +1071,79 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 	return {"ok": True, "qty_on_hand": after}
 
 
+# ------------------------------------------------------------- production
+
+@frappe.whitelist(methods=["POST"])
+@require_perm("Ingredient", "manage_stock")
+def produce(property: str, outlet: str, ingredient: str, qty: float,
+            posted_at: str | None = None, note: str | None = None):
+	"""Record a batch made at an outlet: the made ingredient goes into stock and,
+	in the recipe's proportion, what it is made from comes out (3 decimals). Too
+	little of something goes below zero, as everywhere. The new stock's row is
+	costed at what this batch used, each other row at that ingredient's cost now.
+	One batch_id, so a cancel takes back the whole batch."""
+	made_qty = _number(qty or 0)
+	if not made_qty > 0:
+		frappe.throw(_("Say how much was made, above zero."))
+	posted_at = _when(posted_at)
+	note = (note or "").strip()[:500] or None
+	check_outlet(property, outlet)
+	# read the recipe to know what to lock, then read it again under the locks
+	parts = {r.ingredient for r in _made_parts([ingredient]).get(ingredient, [])}
+	held = _lock_for_writing(property, sorted({ingredient, *parts}))
+	name = held[ingredient].ingredient_name
+	lines = _made_parts([ingredient]).get(ingredient, [])
+	if not cint(held[ingredient].is_made) or not lines:
+		frappe.throw(_("{0} is not made here.").format(name))
+	if {r.ingredient for r in lines} - set(held):
+		frappe.throw(_("The recipe of {0} just changed. Try again.").format(name))
+	per_batch = {}
+	for r in lines:
+		per_batch[r.ingredient] = per_batch.get(r.ingredient, 0.0) + flt(r.qty)
+	batch_qty = flt(frappe.db.get_value("Ingredient", ingredient, "batch_qty"))
+	if batch_qty <= 0:
+		frappe.throw(_("Say how much one batch makes, above zero."))
+	costs = {}
+	for part in per_batch:
+		if cint(held[part].is_made):
+			frappe.throw(_("{0} is made here itself. Take it out of the recipe of {1}.")
+			             .format(held[part].ingredient_name, name))
+		costs[part] = flt(frappe.db.get_value("Ingredient", part, "cost_per_unit"))
+	use = {part: round(per * made_qty / batch_qty, 3) for part, per in per_batch.items()}
+	use = {part: amount for part, amount in use.items() if amount > 0}
+	if not use:
+		frappe.throw(_("That is too little to take anything from stock."))
+	batch_cost = _made_cost([(amount, costs[part]) for part, amount in use.items()], made_qty)
+
+	batch = uuid.uuid4().hex[:12]
+	after = {}
+	for part in sorted({ingredient, *use}):
+		made_row = part == ingredient
+		after[part] = _apply_move(
+			property, outlet, part, made_qty if made_row else -use[part], "Production",
+			note=note if made_row else
+			     (f"For {name}: {note}" if note else f"For {name}")[:500],
+			batch_id=batch, posted_at=posted_at,
+			cost=batch_cost if made_row else costs[part])
+
+	from kamra.savings import log_action
+	log_action("stock_produce", "Ingredient", ingredient, property,
+	           rationale=f"{made_qty:g} {held[ingredient].uom} of {name} made at {outlet}",
+	           channel="API")
+	return {
+		"ok": True, "batch_id": batch, "qty_on_hand": after[ingredient],
+		"used": [{"ingredient": part, "ingredient_name": held[part].ingredient_name,
+		          "uom": held[part].uom, "qty": use[part], "qty_on_hand": after[part]}
+		         for part in per_batch if part in use],
+	}
+
+
 # ----------------------------------------------------------------- cancel
 
 # Every ledger reason is on one of these two lists. Only what someone typed by
 # hand can be taken back; the rest (kitchen and banquet usage, the demo's
 # opening rows, anything added later) is put right with a stock take.
-CANCELLABLE = ("Received", "Count", "Wastage")
+CANCELLABLE = ("Received", "Count", "Wastage", "Production")
 NOT_CANCELLABLE = ("Opening", "Consumed", "Return")
 
 
@@ -991,15 +1177,19 @@ def cancel_stock_entry(property: str, entry: str, reason: str):
 	if any(r.cancelled for r in rows):
 		frappe.throw(_("This entry is already cancelled."))
 	if any(r.reason not in CANCELLABLE for r in rows):
-		frappe.throw(_("Only deliveries, stock takes and wastage can be cancelled."))
+		frappe.throw(_("Only deliveries, stock takes, wastage and production batches can be cancelled."))
 	method = get_setting(property, "stock_cost_method")
 	why = reason.strip()[:500]
-	unchanged = []
+	unchanged, repriced = [], []
 	for r in rows:
 		row = _cancel_row(r.name, why)
-		if row.reason == "Received" and not _restore_cost(row, method):
+		if row.reason != "Received":
+			continue
+		repriced.append(row.ingredient)
+		if not _restore_cost(row, method):
 			unchanged.append(
 				frappe.db.get_value("Ingredient", row.ingredient, "ingredient_name"))
+	schedule_recost(repriced)
 	from kamra.savings import log_action
 	log_action("stock_cancel", "Ingredient Ledger Entry", entry, property,
 	           rationale=f"{len(rows)} stock line(s) cancelled - {why[:80]}",
@@ -1114,7 +1304,7 @@ def stock_list(property: str, outlet: str, status: str | None = None,
 		meta = frappe.db.get_value(
 			"Ingredient", r.ingredient,
 			["ingredient_name", "uom", "buy_uom", "buy_size", "category",
-			 "cost_per_unit", "is_active"],
+			 "cost_per_unit", "is_active", "is_made"],
 			as_dict=True) or {}
 		r.update(meta)
 		r["status"] = _status(float(r.qty_on_hand or 0), float(r.par_level or 0))
@@ -1192,6 +1382,7 @@ def _name_the_entries(rows: list) -> None:
 SUMMARY_BUCKETS = {
 	"Received": "purchases", "Consumed": "used", "Return": "used",
 	"Wastage": "wastage", "Count": "adjustment", "Opening": "adjustment",
+	"Production": "production",
 }
 
 
@@ -1316,6 +1507,12 @@ def low_stock(property: str, outlet: str | None = None):
 		r["dishes"] = frappe.get_all(
 			"Menu Item", filters={"name": ["in", uses], "outlet": r.outlet},
 			fields=["name", "item_name", "available"]) if uses else []
+		makes = frappe.get_all(
+			"Menu Item Ingredient",
+			filters={"ingredient": r.ingredient, "parenttype": "Ingredient"}, pluck="parent")
+		r["makes"] = frappe.get_all(
+			"Ingredient", filters={"name": ["in", makes], "is_active": 1},
+			pluck="ingredient_name", order_by="ingredient_name asc") if makes else []
 		out.append(r)
 	out.sort(key=lambda r: {STATUS_NEGATIVE: 0, STATUS_OUT: 1, STATUS_LOW: 2}[r["status"]])
 	return out

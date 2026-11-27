@@ -7262,5 +7262,22 @@
   "This week": "Esta semana",
   "Last week": "La semana pasada",
   "Low only": "Solo bajos",
-  "No stock or movements in this period.": "No hay existencias ni movimientos en este periodo."
+  "No stock or movements in this period.": "No hay existencias ni movimientos en este periodo.",
+  "{part} (in {made})": "{part} (en {made})",
+  "{qty} {uom} there: goes below zero": "hay {qty} {uom}: quedará por debajo de cero",
+  "Cancel batch": "Anular lote",
+  "Cancel this whole batch?": "¿Anular todo este lote?",
+  "Cost / {uom}": "Costo / {uom}",
+  "Made here (semi-finished)": "Hecho aquí (semielaborado)",
+  "Make": "Preparar",
+  "Produce": "Producir",
+  "Record a batch made at {outlet}. It goes into stock, and what it is made from comes out.": "Registre un lote preparado en {outlet}. Entra en existencias y sale lo que se usó para hacerlo.",
+  "This uses:": "Esto usa:",
+  "Used to make: {names}": "Se usa para hacer: {names}",
+  "worked out from the recipe": "calculado a partir de la receta",
+  "Made from": "Hecho de",
+  "One batch makes": "Un lote rinde",
+  "In the stock unit.": "En la unidad de existencias.",
+  "What one batch uses, from bought ingredients.": "Lo que usa un lote, de ingredientes comprados.",
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Se prepara en su cocina por lotes, como un sirope o una salsa. Su costo sale de la receta y no se puede recibir como entrega."
 }

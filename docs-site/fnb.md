@@ -472,10 +472,36 @@ stock them or put them on a recipe.
   received (see [Ingredient cost](#ingredient-cost)); change it here to set
   it yourself. Saving the form without touching the cost leaves it as it is.
 
+### Made here (semi-finished)
+
+Something your kitchen makes first and uses later, such as a syrup or a
+sauce, can be **made here**. Tick **Made here (semi-finished)**, say how much
+**one batch makes** (in its unit) and list what a batch is **made from**, for
+example 1,000 ml of syrup from 500 g sugar and 600 ml water.
+
+- It is made from **bought** ingredients only: one made item cannot go into
+  another. Dishes and banquet dishes then use the syrup like any ingredient,
+  so selling a latte takes syrup stock, not sugar.
+- Its **cost** is worked out from the recipe and cannot be typed: the cost of
+  one batch divided by what it makes. It follows when a part's cost or the
+  recipe changes, a moment after the change is saved. While any part has no
+  cost it has none, and the recipe screen names the part.
+- It **cannot be received** as a delivery. If you sometimes buy it ready, keep
+  the bought one as a second ingredient.
+- **Made here** cannot be switched once there is stock history, and the unit
+  locks while it has a recipe.
+
+**Record a batch** with **Produce** in Kitchen inventory: pick the outlet,
+what was made, how much, and when. The window shows what it will use and
+warns when there is not enough; it still saves, and that stock goes below
+zero. The batch adds the made quantity and takes each part in proportion (to 3
+decimals). Producing needs the right to manage stock.
+
 ## Kitchen inventory
 
 **F&B → Kitchen Inventory** is stock at each outlet: on hand, par level,
-**Receive**, **Stock take**, **Wastage** and the **Ledger**.
+**Receive**, **Stock take**, **Wastage**, **Produce** (for what is
+[made here](#made-here-semi-finished)) and the **Ledger**.
 
 ![Kitchen inventory: each ingredient's stock on hand, par level and status, with Receive, Stock take and Wastage](/img/fnb/inventory.png)
 
@@ -530,7 +556,8 @@ what was bought, the price, the supplier and invoice, and the cost after each.
 
 ### Dating and cancelling entries
 
-**Receive**, **Stock take** and **Wastage** take a **Date and time**. Leave it
+**Receive**, **Stock take**, **Wastage** and **Produce** take a **Date and
+time**. Leave it
 empty for now, or pick a moment in the past. A stock take is true for its
 moment: if something dated earlier is entered or cancelled afterwards, the
 counted figure stays and its difference is worked out again. A stock take
@@ -538,8 +565,9 @@ with no difference is saved for the same reason. The history is ordered by
 when things happened and says when a line was typed later, and by whom.
 
 Whoever holds **Cancel Stock** (Hotel Admin and System Manager at first) can
-**Cancel** a delivery, a stock take or a wastage from the ledger. A delivery
-or stock take goes as a whole; enter it again if only one line was wrong. The
+**Cancel** a delivery, a stock take, a wastage or a batch from the ledger. A
+delivery, stock take or batch goes as a whole; enter it again if only one line
+was wrong. The
 cancelled lines stay, struck through, with who, when and why. Kitchen and
 banquet usage is put right with a stock take instead.
 
@@ -552,9 +580,10 @@ cost is still the one it set. Otherwise the screen asks you to check the cost.
 
 The **Summary** tab shows a period for one outlet or **All outlets** (one row
 per ingredient per outlet): **Beginning** stock, **Purchases** (deliveries),
-**Used** (kitchen and banquet usage, less bottles returned by refunds),
-**Wastage**, **Adjustment** (stock-take differences), and **Ending**, which is
-the beginning plus those four. Pick Today, Yesterday, This or Last week (weeks
+**Production** (batches made, and what they used), **Used** (kitchen and
+banquet usage, less bottles returned by refunds), **Wastage**, **Adjustment**
+(stock-take differences), and **Ending**, which is the beginning plus those
+five. Pick Today, Yesterday, This or Last week (weeks
 start Monday), This or Last month, or Custom; days are the dates entries are
 dated, so a back-dated entry changes its past period. **Low only** keeps what
 is at or below its low-stock level now. Select a row to see its history for the

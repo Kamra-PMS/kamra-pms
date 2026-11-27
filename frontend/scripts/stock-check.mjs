@@ -2,7 +2,8 @@
 /** Checks for the kitchen stock screens' pure helpers: unit costs (lib/stockCost.ts), what a Receive row
  *  adds up to and sends, which fields a form saves (lib/formPayload.ts), and what a recipe costs
  *  (lib/recipeCost.ts), an entry's date (lib/stockDates.ts) and the till's out-of-stock notice
- *  (lib/stockNotice.ts) and the stock report's periods (lib/periods.ts). Pure Node: bundled with small
+ *  (lib/stockNotice.ts), the stock report's periods (lib/periods.ts) and what a batch made here uses
+ *  (lib/produce.ts). Pure Node: bundled with small
  *  stand-ins for React, the API client and the language module. */
 import assert from "node:assert/strict"
 import fs from "node:fs"
@@ -21,7 +22,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stock-check-"))
 // one bundle, so the helpers share the same money.ts (it holds the property's locale)
 await build({
   stdin: {
-    contents: `export * from "./money"; export * from "./stockCost"; export * from "./formPayload"; export * from "./recipeCost"; export * from "./stockDates"; export * from "./stockNotice"; export * from "./periods"`,
+    contents: `export * from "./money"; export * from "./stockCost"; export * from "./formPayload"; export * from "./recipeCost"; export * from "./stockDates"; export * from "./stockNotice"; export * from "./periods"; export * from "./produce"`,
     resolveDir: lib, loader: "ts",
   },
   bundle: true, format: "esm", platform: "node", outfile: path.join(dir, "stock.mjs"), logLevel: "silent",
@@ -35,7 +36,7 @@ await build({
 })
 // money.ts remembers the locale in localStorage when there is one; there is none here
 Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true })
-const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost, postedAt, enteredLater, stockNotice, periodRange } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
+const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost, postedAt, enteredLater, stockNotice, periodRange, batchUse } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
 
 // a cost per unit keeps up to 4 decimals, whatever the currency
 adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
@@ -144,6 +145,35 @@ assert.deepEqual(on("2027-01-01"), {
   thisMonth: "2027-01-01..2027-01-01", lastMonth: "2026-12-01..2026-12-31",
 })
 assert.equal(periodRange("lastMonth", "2028-03-01").join(".."), "2028-02-01..2028-02-29")
+
+// a batch uses the recipe in proportion, to 3 decimals; a part on two lines is one move
+const syrup = [{ ingredient: "S", qty: 500 }, { ingredient: "W", qty: 600 }]
+assert.deepEqual(batchUse(syrup, 1000, 333), [{ ingredient: "S", qty: 166.5 }, { ingredient: "W", qty: 199.8 }])
+assert.deepEqual(batchUse([{ ingredient: "S", qty: 1 }, { ingredient: "S", qty: 2 }], 3, 10), [{ ingredient: "S", qty: 10 }])
+assert.deepEqual(batchUse([{ ingredient: "S", qty: 1 }], 3, 1), [{ ingredient: "S", qty: 0.333 }])
+// nothing to show until a batch, a quantity and lines are there; a line still being typed is left out
+assert.deepEqual([batchUse(syrup, 0, 5), batchUse(syrup, 1000, 0), batchUse(syrup, 1000, NaN)], [[], [], []])
+assert.deepEqual(batchUse([{ ingredient: "", qty: 5 }, { ingredient: "S", qty: "" }], 1000, 1000), [])
+assert.deepEqual(batchUse([{ ingredient: "S", qty: "1" }], 1000, 0.0001), [], "too little to take anything")
+
+// a made ingredient without a cost names what in it still needs one
+const made = [{ name: "SY", ingredient_name: "Sugar syrup", cost_per_unit: 0, missing: ["Water", "Sugar"] }]
+assert.deepEqual(recipeTotals([{ ingredient: "SY", qty: 20 }], made, 100).missing,
+  ["Water (in Sugar syrup)", "Sugar (in Sugar syrup)"])
+assert.deepEqual(recipeTotals([{ ingredient: "SY", qty: 20 }], made, 100, (part, own) => `${own}>${part}`).missing,
+  ["Sugar syrup>Water", "Sugar syrup>Sugar"])
+assert.deepEqual(recipeTotals([{ ingredient: "SY", qty: 1 }], [{ ...made[0], missing: [] }], 100).missing, ["Sugar syrup"])
+
+// an untouched recipe isn't saved again; an edited or emptied one is
+const recipeField = [{ field: "recipe", type: "recipe", onlyIfChanged: true }]
+const lines = [{ ingredient: "S", qty: 5 }]
+assert.deepEqual(formPayload(recipeField, { recipe: lines }, { recipe: lines }), {})
+assert.deepEqual(formPayload(recipeField, { recipe: [] }, { recipe: [] }), {})
+assert.deepEqual(formPayload(recipeField, { recipe: [] }, { recipe: lines }), { recipe: [] })
+assert.deepEqual(formPayload(recipeField, { recipe: [{ ingredient: "S", qty: 6 }] }, { recipe: lines }),
+  { recipe: [{ ingredient: "S", qty: 6 }] })
+assert.deepEqual(formPayload(recipeField, { recipe: [{ ingredient: "S", qty: 6 }] }, null),
+  { recipe: [{ ingredient: "S", qty: 6 }] })
 
 fs.rmSync(dir, { recursive: true, force: true })
 console.log("stock checks passed")

@@ -5287,7 +5287,8 @@ problem are skipped and listed; the rest go in.
 
 **GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
-The ingredient master - the picker behind the recipe editor.
+The ingredient master - the picker behind the recipe editor. A made one
+without a cost also names what in it still needs one (`missing`).
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5463,6 +5464,25 @@ a Wastage row too would deduct it twice. Use wastage_report() for those.
 | `qty` | yes |  |
 | `reason_note` | yes |  |
 | `posted_at` | no | `None` |
+
+### `kamra.inventory.produce`
+
+**POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
+
+Record a batch made at an outlet: the made ingredient goes into stock and,
+in the recipe's proportion, what it is made from comes out (3 decimals). Too
+little of something goes below zero, as everywhere. The new stock's row is
+costed at what this batch used, each other row at that ingredient's cost now.
+One batch_id, so a cancel takes back the whole batch.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `outlet` | yes |  |
+| `ingredient` | yes |  |
+| `qty` | yes |  |
+| `posted_at` | no | `None` |
+| `note` | no | `None` |
 
 ### `kamra.inventory.cancel_stock_entry`
 

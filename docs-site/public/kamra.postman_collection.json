@@ -13150,7 +13150,7 @@
         "kamra.inventory.ingredients"
        ]
       },
-      "description": "The ingredient master - the picker behind the recipe editor.",
+      "description": "The ingredient master - the picker behind the recipe editor. A made one\nwithout a cost also names what in it still needs one (`missing`).",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"active_only\": 1\n}",
@@ -13524,6 +13524,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"ingredient\": \"<ingredient>\",\n  \"qty\": \"<qty>\",\n  \"reason_note\": \"<reason_note>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "produce",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.inventory.produce",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.inventory.produce"
+       ]
+      },
+      "description": "Record a batch made at an outlet: the made ingredient goes into stock and,\nin the recipe's proportion, what it is made from comes out (3 decimals). Too\nlittle of something goes below zero, as everywhere. The new stock's row is\ncosted at what this batch used, each other row at that ingredient's cost now.\nOne batch_id, so a cancel takes back the whole batch.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"ingredient\": \"<ingredient>\",\n  \"qty\": \"<qty>\"\n}",
        "options": {
         "raw": {
          "language": "json"

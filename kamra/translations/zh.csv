@@ -2155,3 +2155,18 @@ Try again from the refund window.,请在退款窗口重试。
 Money goes back as {0}.,退款方式为 {0}。
 The amount to give back has changed: it is now {0}. Check it and refund again.,应退金额已变更:现在是 {0}。请核对后重新退款。
 This attempt already refunded {0}. Close the window to see it.,本次操作已退款 {0}。关闭窗口即可查看。
+"{0} already has stock history, so ""Made here"" stays as it is.",{0} 已有库存记录，“本店自制”保持不变。
+"Say how much one batch makes, above zero.",请填写一批的产量，需大于零。
+Something made here needs at least one ingredient in its recipe.,本店自制品的配方至少需要一种食材。
+"{0} is used to make {1}, so it cannot be made here itself.",{0} 用于制作 {1}，因此它本身不能设为自制品。
+{0} cannot be made from itself.,{0} 不能用自身制作。
+{0} is made here too. Use only bought ingredients.,{0} 也是自制品。只能使用外购食材。
+{0} recipe(s) use this ingredient. Deactivate it instead.,有 {0} 个配方使用此食材。请改为停用。
+{0} (in {1}),{0}（用于 {1}）
+"{0} is made here. Record it with Produce, not as a delivery.",{0} 为本店自制品。请用“生产”记录，不要按收货录入。
+"Say how much was made, above zero.",请填写制作量，需大于零。
+{0} is not made here.,{0} 不是本店自制品。
+The recipe of {0} just changed. Try again.,{0} 的配方刚刚发生变化。请重试。
+{0} is made here itself. Take it out of the recipe of {1}.,{0} 本身是自制品。请将其从 {1} 的配方中移除。
+That is too little to take anything from stock.,数量太小，无法从库存中扣减任何原料。
+"Only deliveries, stock takes, wastage and production batches can be cancelled.",只能取消收货、盘点、损耗和生产批次记录。

@@ -7224,5 +7224,22 @@
   "This week": "Tuần này",
   "Last week": "Tuần trước",
   "Low only": "Chỉ mục sắp hết",
-  "No stock or movements in this period.": "Không có tồn kho hay biến động trong kỳ này."
+  "No stock or movements in this period.": "Không có tồn kho hay biến động trong kỳ này.",
+  "{part} (in {made})": "{part} (trong {made})",
+  "{qty} {uom} there: goes below zero": "hiện có {qty} {uom}: sẽ xuống dưới 0",
+  "Cancel batch": "Hủy mẻ",
+  "Cancel this whole batch?": "Hủy toàn bộ mẻ này?",
+  "Cost / {uom}": "Giá vốn / {uom}",
+  "Made here (semi-finished)": "Làm tại chỗ (bán thành phẩm)",
+  "Make": "Làm",
+  "Produce": "Sản xuất",
+  "Record a batch made at {outlet}. It goes into stock, and what it is made from comes out.": "Ghi một mẻ làm tại {outlet}. Thành phẩm nhập kho, nguyên liệu dùng để làm được trừ ra.",
+  "This uses:": "Mẻ này dùng:",
+  "Used to make: {names}": "Dùng để làm: {names}",
+  "worked out from the recipe": "tính từ công thức",
+  "Made from": "Làm từ",
+  "One batch makes": "Một mẻ làm được",
+  "In the stock unit.": "Theo đơn vị tồn kho.",
+  "What one batch uses, from bought ingredients.": "Một mẻ dùng gì, lấy từ nguyên liệu mua vào.",
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "Làm theo mẻ trong bếp của bạn, như siro hoặc nước sốt. Giá vốn tính từ công thức và không thể nhập như hàng giao đến."
 }

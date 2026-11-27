@@ -21,6 +21,7 @@ export interface SummaryRow {
   outlet_name: string
   beginning: number
   purchases: number
+  production: number
   used: number
   wastage: number
   adjustment: number
@@ -29,7 +30,7 @@ export interface SummaryRow {
 }
 
 /** The movement columns, in the order they are shown and exported. */
-const COLUMNS = ["beginning", "purchases", "used", "wastage", "adjustment", "ending"] as const
+const COLUMNS = ["beginning", "purchases", "production", "used", "wastage", "adjustment", "ending"] as const
 
 const fmt = (n: number) => (Math.round(n * 1000) / 1000).toString()
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10)
@@ -63,7 +64,7 @@ export default function StockSummary({ outlets, outlet, onOpen }: {
   }, [from, to, where, search, lowOnly])
 
   const head: Record<(typeof COLUMNS)[number], string> = {
-    beginning: t("Beginning"), purchases: t("Purchases"), used: t("Used"),
+    beginning: t("Beginning"), purchases: t("Purchases"), production: t("Production"), used: t("Used"),
     wastage: t("Wastage"), adjustment: t("Adjustment"), ending: t("Ending"),
   }
   const all = !where
@@ -142,7 +143,7 @@ export default function StockSummary({ outlets, outlet, onOpen }: {
                   {COLUMNS.map((c) => (
                     <td key={c} className={cn("px-3 py-2 text-end tabular-nums",
                       c === "ending" ? "font-bold text-zinc-900" : r[c] === 0 ? "text-zinc-300" : "text-zinc-700",
-                      r[c] < 0 && c !== "used" && c !== "wastage" && "text-rose-600")}>
+                      r[c] < 0 && c !== "used" && c !== "wastage" && c !== "production" && "text-rose-600")}>
                       {fmt(r[c])}
                     </td>
                   ))}

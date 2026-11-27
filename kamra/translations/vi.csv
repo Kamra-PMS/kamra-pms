@@ -99,3 +99,20 @@ Try again from the refund window.,Hãy thử lại từ cửa sổ hoàn tiền.
 Money goes back as {0}.,Tiền được hoàn bằng {0}.
 The amount to give back has changed: it is now {0}. Check it and refund again.,Số tiền hoàn đã thay đổi: hiện là {0}. Hãy kiểm tra rồi hoàn tiền lại.
 This attempt already refunded {0}. Close the window to see it.,Lần thử này đã hoàn {0}. Đóng cửa sổ để xem.
+"{0} already has stock history, so ""Made here"" stays as it is.","{0} đã có lịch sử tồn kho nên mục ""Làm tại chỗ"" được giữ nguyên."
+"Say how much one batch makes, above zero.","Hãy nhập một mẻ làm được bao nhiêu, lớn hơn 0."
+Something made here needs at least one ingredient in its recipe.,Món làm tại chỗ cần ít nhất một nguyên liệu trong công thức.
+"{0} is used to make {1}, so it cannot be made here itself.",{0} được dùng để làm {1} nên bản thân nó không thể là món làm tại chỗ.
+{0} cannot be made from itself.,{0} không thể được làm từ chính nó.
+{0} is made here too. Use only bought ingredients.,{0} cũng là món làm tại chỗ. Chỉ dùng nguyên liệu mua vào.
+{0} recipe(s) use this ingredient. Deactivate it instead.,{0} công thức đang dùng nguyên liệu này. Hãy tắt nó thay vì xóa.
+{0} (in {1}),{0} (trong {1})
+"{0} is made here. Record it with Produce, not as a delivery.","{0} là món làm tại chỗ. Hãy ghi bằng Sản xuất, không ghi như hàng giao đến."
+"Say how much was made, above zero.","Hãy nhập lượng đã làm, lớn hơn 0."
+{0} is not made here.,{0} không phải món làm tại chỗ.
+The recipe of {0} just changed. Try again.,Công thức của {0} vừa thay đổi. Hãy thử lại.
+{0} is made here itself. Take it out of the recipe of {1}.,{0} cũng là món làm tại chỗ. Hãy bỏ nó khỏi công thức của {1}.
+That is too little to take anything from stock.,"Lượng này quá nhỏ, không trừ được gì khỏi kho."
+Every recipe line needs a quantity above zero.,Mỗi dòng công thức cần số lượng lớn hơn 0.
+{0} belongs to another property.,{0} thuộc cơ sở khác.
+"Only deliveries, stock takes, wastage and production batches can be cancelled.","Chỉ có thể hủy phiếu nhập, kiểm kê, hao hụt và mẻ sản xuất."

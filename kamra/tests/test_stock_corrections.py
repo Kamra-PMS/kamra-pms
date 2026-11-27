@@ -466,7 +466,7 @@ class TestMessages(WriterCase):
 		"A reason is required to cancel.",
 		"Stock entry not found.",
 		"This entry is already cancelled.",
-		"Only deliveries, stock takes and wastage can be cancelled.",
+		"Only deliveries, stock takes, wastage and production batches can be cancelled.",
 	)
 
 	def test_every_new_refusal_is_translated(self):

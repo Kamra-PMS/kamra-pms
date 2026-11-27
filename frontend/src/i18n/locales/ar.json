@@ -7224,5 +7224,22 @@
   "This week": "هذا الأسبوع",
   "Last week": "الأسبوع الماضي",
   "Low only": "المنخفض فقط",
-  "No stock or movements in this period.": "لا مخزون ولا حركات في هذه الفترة."
+  "No stock or movements in this period.": "لا مخزون ولا حركات في هذه الفترة.",
+  "{part} (in {made})": "{part} (ضمن {made})",
+  "{qty} {uom} there: goes below zero": "الموجود {qty} {uom}: سيصبح أقل من الصفر",
+  "Cancel batch": "إلغاء الدفعة",
+  "Cancel this whole batch?": "إلغاء هذه الدفعة بالكامل؟",
+  "Cost / {uom}": "التكلفة / {uom}",
+  "Made here (semi-finished)": "يُصنع هنا (نصف مصنّع)",
+  "Make": "الكمية المصنوعة",
+  "Produce": "إنتاج",
+  "Record a batch made at {outlet}. It goes into stock, and what it is made from comes out.": "سجّل دفعة صُنعت في {outlet}. تدخل إلى المخزون ويُخصم ما صُنعت منه.",
+  "This uses:": "يستهلك هذا:",
+  "Used to make: {names}": "يُستخدم لصنع: {names}",
+  "worked out from the recipe": "محسوبة من الوصفة",
+  "Made from": "مصنوع من",
+  "One batch makes": "كمية الدفعة الواحدة",
+  "In the stock unit.": "بوحدة المخزون.",
+  "What one batch uses, from bought ingredients.": "ما تستهلكه الدفعة الواحدة من مكونات مشتراة.",
+  "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.": "يُصنع في مطبخك على دفعات، مثل شراب محلّى أو صلصة. تُحسب تكلفته من الوصفة ولا يمكن استلامه كتوريد."
 }

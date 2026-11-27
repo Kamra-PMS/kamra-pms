@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   PackageSearch, RefreshCw, TriangleAlert, X, Truck, ClipboardCheck,
-  Trash2, History, Ban, Plus,
+  Trash2, History, Ban, Plus, CookingPot,
 } from "lucide-react"
-import { call, getCurrentProperty } from "../lib/api"
+import { call, frappeFetch, getCurrentProperty } from "../lib/api"
+import { serverError } from "../lib/resource"
 import { useAuth } from "../lib/auth"
 import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
@@ -12,6 +13,7 @@ import {
   defaultEntry, fmtUnitCost, receiveLine, receiveRow, type ReceiveEntry,
 } from "../lib/stockCost"
 import { enteredLater, postedAt } from "../lib/stockDates"
+import { batchUse, type BatchLine } from "../lib/produce"
 import StockSummary from "./StockSummary"
 
 /* Kitchen stock. Two things here are deliberate and read as bugs if you don't
@@ -35,6 +37,8 @@ interface StockRow {
   buy_size: number | null
   category: string | null
   cost_per_unit: number | null
+  /** made in the kitchen from other ingredients: produced, never received */
+  is_made: 0 | 1
   qty_on_hand: number
   par_level: number
   last_counted_at: string | null
@@ -78,13 +82,16 @@ interface LowRow {
   qty_on_hand: number
   status: Status
   dishes: { name: string; item_name: string; available: 0 | 1 }[]
+  /** names of what is made from this ingredient */
+  makes: string[]
 }
 
 const WRITE_ROLES = ["Finance", "F&B Manager", "Hotel Admin", "System Manager", "Administrator"]
 const CANCEL_ROLES = ["Hotel Admin", "System Manager", "Administrator"]
 /** What was typed by hand can be taken back; kitchen and banquet usage cannot. */
-const CANCELLABLE = ["Received", "Count", "Wastage"]
+const CANCELLABLE = ["Received", "Count", "Wastage", "Production"]
 function cancelWords(reason: string) {
+  if (reason === "Production") return { ask: translate("Cancel this whole batch?"), yes: translate("Cancel batch") }
   if (reason === "Received") return { ask: translate("Cancel this whole delivery?"), yes: translate("Cancel delivery") }
   if (reason === "Count") return { ask: translate("Cancel this whole stock take?"), yes: translate("Cancel stock take") }
   return { ask: translate("Cancel this wastage?"), yes: translate("Cancel wastage") }
@@ -180,6 +187,9 @@ export default function Inventory() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [modal, setModal] = useState<"receive" | "count" | "waste" | null>(null)
+  // the Produce window: "" to pick what was made, or the ingredient chosen
+  const [producing, setProducing] = useState<string | null>(null)
+  const makesHere = shelf.some((r) => r.is_made)
   // the history window: one ingredient at one outlet, maybe for one period
   const [ledgerOf, setLedgerOf] = useState<History | null>(null)
   const [view, setView] = useState<"stock" | "summary">("stock")
@@ -208,6 +218,7 @@ export default function Inventory() {
     try {
       await call(`kamra.inventory.${method}`, { property: getCurrentProperty(), outlet, ...params })
       setModal(null)
+      setProducing(null)
       setParOf(null)
       load()
     } catch (e) {
@@ -247,6 +258,10 @@ export default function Inventory() {
                 <ClipboardCheck className="size-4" />{translate("Stock take")}</Button>
               <Button variant="outline" onClick={() => { setErr(null); setModal("waste") }}>
                 <Trash2 className="size-4" />{translate("Wastage")}</Button>
+              {makesHere && (
+                <Button variant="outline" onClick={() => { setErr(null); load(); setProducing("") }}>
+                  <CookingPot className="size-4" />{translate("Produce")}</Button>
+              )}
             </>
           )}
           <button onClick={load} aria-label={translate("Refresh")}><RefreshCw className="size-5 text-zinc-400" /></button>
@@ -298,6 +313,11 @@ export default function Inventory() {
                 {l.dishes.length > 0 && (
                   <span className="text-zinc-500">
                     → {l.dishes.filter((d) => d.available).map((d) => d.item_name).join(", ") || translate("no live dishes")}
+                  </span>
+                )}
+                {l.makes.length > 0 && (
+                  <span className="text-zinc-500">
+                    {translate("Used to make: {names}", { names: l.makes.join(", ") })}
                   </span>
                 )}
                 {canWrite && l.dishes.filter((d) => d.available).map((d) => (
@@ -363,7 +383,12 @@ export default function Inventory() {
                       ? <span className="font-bold text-rose-600">{translate("recount")}{daysSince(r.last_counted_at) ? translate(" · last {v0}", { v0: String(daysSince(r.last_counted_at)) }) : translate(" · never counted")}</span>
                       : daysSince(r.last_counted_at) ?? translate("never")}
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-2 text-right whitespace-nowrap">
+                    {canWrite && !!r.is_made && (
+                      <Button variant="ghost" className="h-8 px-2 text-xs"
+                        onClick={() => { setErr(null); load(); setProducing(r.ingredient) }}>
+                        <CookingPot className="size-3.5" />{translate("Produce")}</Button>
+                    )}
                     <Button variant="ghost" className="h-8 px-2 text-xs"
                       onClick={() => setLedgerOf({ row: r, outlet })}>
                       <History className="size-3.5" />{translate("Ledger")}</Button>
@@ -378,7 +403,7 @@ export default function Inventory() {
       </>)}
 
       {modal === "receive" && (
-        <ReceiveModal rows={shelf} outlet={outlet} busy={busy} error={err}
+        <ReceiveModal rows={shelf.filter((r) => !r.is_made)} outlet={outlet} busy={busy} error={err}
           onClose={() => { setErr(null); setModal(null) }}
           onSubmit={(p) => act("receive_stock", p)} />
       )}
@@ -389,6 +414,12 @@ export default function Inventory() {
       {modal === "waste" && (
         <WasteModal rows={shelf} busy={busy} error={err}
           onClose={() => { setErr(null); setModal(null) }} onSubmit={(p) => act("record_wastage", p)} />
+      )}
+      {producing !== null && (
+        <ProduceModal rows={shelf} outlet={outlet} initial={producing} busy={busy} error={err}
+          outletName={outlets.find((o) => o.name === outlet)?.outlet_name ?? outlet}
+          onClose={() => { setErr(null); setProducing(null) }}
+          onSubmit={(p) => act("produce", p)} />
       )}
       {parOf && (
         <ParModal row={parOf} busy={busy}
@@ -650,6 +681,115 @@ function WasteModal({ rows, busy, error, onClose, onSubmit }: {
       <Button className="mt-4 h-12 w-full justify-center"
         disabled={busy || !ingredient || Number(qty) <= 0 || !note.trim()}
         onClick={() => onSubmit({ ingredient, qty: Number(qty), reason_note: note, posted_at: postedAt(when) })}>{translate("Write it off")}</Button>
+    </Modal>
+  )
+}
+
+/** A batch made: what goes into stock, and what that takes off the shelf. Too
+ *  little of something is warned about by name and can still be saved. */
+function ProduceModal({ rows, outlet, outletName, initial, busy, error, onClose, onSubmit }: {
+  rows: StockRow[]; outlet: string; outletName: string; initial: string
+  busy: boolean; error: string | null; onClose: () => void
+  onSubmit: (p: Record<string, unknown>) => void
+}) {
+  useUILanguage()
+  const made = rows.filter((r) => r.is_made)
+  const [picked, setPicked] = useState(initial)
+  const ingredient = picked || (made.length === 1 ? made[0].ingredient : "")
+  const row = rows.find((r) => r.ingredient === ingredient)
+  const [qty, setQty] = useState("")
+  const [note, setNote] = useState("")
+  const [when, setWhen] = useState("")
+  const [recipe, setRecipe] = useState<{ of: string; batch: number; lines: BatchLine[] } | null>(null)
+  const [names, setNames] = useState<Record<string, { ingredient_name: string; uom: string }>>({})
+  const [failed, setFailed] = useState<string | null>(null)
+  useEffect(() => {
+    call<{ name: string; ingredient_name: string; uom: string }[]>(
+      "kamra.inventory.ingredients", { property: getCurrentProperty(), active_only: 0 })
+      .then((list) => setNames(Object.fromEntries(list.map((i) => [i.name, i]))))
+      .catch((e) => setFailed(serverError(e)))
+  }, [])
+  useEffect(() => {
+    if (!ingredient) return
+    let live = true
+    frappeFetch<{ data: { batch_qty: number; recipe: BatchLine[] } }>(
+      `/api/resource/Ingredient/${encodeURIComponent(ingredient)}`)
+      .then((r) => { if (live) setRecipe({ of: ingredient, batch: r.data.batch_qty, lines: r.data.recipe }) })
+      .catch((e) => { if (live) setFailed(serverError(e)) })
+    return () => { live = false }
+  }, [ingredient])
+  // a batch dated in the past is set against what the shelf held then
+  const at = postedAt(when)
+  const [past, setPast] = useState<{ at: string; held: Record<string, number> } | null>(null)
+  useEffect(() => {
+    if (!at) return
+    let live = true
+    call<Record<string, number>>("kamra.inventory.stock_at", { property: getCurrentProperty(), outlet, at })
+      .then((held) => { if (live) setPast({ at, held }) })
+      .catch(() => {})
+    return () => { live = false }
+  }, [at, outlet])
+  const uses = recipe && recipe.of === ingredient ? batchUse(recipe.lines, recipe.batch, Number(qty)) : []
+  const onShelf = (id: string) =>
+    !at ? rows.find((r) => r.ingredient === id)?.qty_on_hand ?? 0
+      : past?.at === at ? past.held[id] ?? 0 : null
+
+  return (
+    <Modal title={translate("Produce")} onClose={onClose}>
+      <p className="mb-3 text-sm text-zinc-500">
+        {translate("Record a batch made at {outlet}. It goes into stock, and what it is made from comes out.", { outlet: outletName })}
+      </p>
+      <div className="space-y-3">
+        <select className="min-h-11 w-full rounded-lg border border-zinc-300 px-3 text-sm"
+          aria-label={translate("Made here (semi-finished)")} value={ingredient}
+          onChange={(e) => setPicked(e.target.value)}>
+          <option value="">{translate("Pick an ingredient…")}</option>
+          {made.map((r) => (
+            <option key={r.ingredient} value={r.ingredient}>
+              {r.ingredient_name} - {fmt(r.qty_on_hand)} {r.uom}{translate(" on hand")}</option>
+          ))}
+        </select>
+        <label className="flex items-center gap-2 text-sm text-zinc-600">
+          <span className="font-medium">{translate("Make")}</span>
+          <input type="number" min="0" step="any" inputMode="decimal" value={qty}
+            onChange={(e) => setQty(e.target.value)}
+            className="w-32 rounded-lg border border-zinc-300 px-3 py-2 tabular-nums" />
+          <span>{row?.uom}</span>
+        </label>
+        <DateField value={when} onChange={setWhen} />
+        {uses.length > 0 && (
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm">
+            <div className="mb-1 font-medium text-zinc-600">{translate("This uses:")}</div>
+            <ul className="space-y-1">
+              {uses.map((u) => {
+                const have = onShelf(u.ingredient)
+                const short = have !== null && have - u.qty < -1e-9
+                const uom = names[u.ingredient]?.uom ?? ""
+                return (
+                  <li key={u.ingredient} className="flex flex-wrap items-center justify-between gap-2">
+                    <span>{names[u.ingredient]?.ingredient_name ?? u.ingredient}</span>
+                    <span className="tabular-nums">
+                      <b>{fmt(u.qty)}</b> {uom}
+                      {short && (
+                        <span className="ms-2 text-xs font-bold text-rose-600">
+                          {translate("{qty} {uom} there: goes below zero", { qty: fmt(have), uom })}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+        <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)}
+          placeholder={translate("Note")} aria-label={translate("Note")}
+          className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
+      </div>
+      <Refusal error={error ?? (failed && translate(failed))} />
+      <Button className="mt-4 h-12 w-full justify-center" disabled={busy || !uses.length}
+        onClick={() => onSubmit({ ingredient, qty: Number(qty), note: note.trim() || null, posted_at: at })}>
+        {translate("Produce")}</Button>
     </Modal>
   )
 }

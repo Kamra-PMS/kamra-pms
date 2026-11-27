@@ -120,3 +120,20 @@ Try again from the refund window.,Tente novamente pela janela de reembolso.
 Money goes back as {0}.,O dinheiro volta como {0}.
 The amount to give back has changed: it is now {0}. Check it and refund again.,O valor a devolver mudou: agora é {0}. Confira e faça o reembolso novamente.
 This attempt already refunded {0}. Close the window to see it.,Esta tentativa já reembolsou {0}. Feche a janela para ver.
+"{0} already has stock history, so ""Made here"" stays as it is.","{0} já tem histórico de estoque, então ""Feito aqui"" permanece como está."
+"Say how much one batch makes, above zero.","Informe quanto um lote rende, acima de zero."
+Something made here needs at least one ingredient in its recipe.,Algo feito aqui precisa de pelo menos um ingrediente na receita.
+"{0} is used to make {1}, so it cannot be made here itself.","{0} é usado para fazer {1}, então não pode ser feito aqui."
+{0} cannot be made from itself.,{0} não pode ser feito de si mesmo.
+{0} is made here too. Use only bought ingredients.,{0} também é feito aqui. Use apenas ingredientes comprados.
+{0} recipe(s) use this ingredient. Deactivate it instead.,{0} receita(s) usam este ingrediente. Desative-o em vez disso.
+{0} (in {1}),{0} (em {1})
+"{0} is made here. Record it with Produce, not as a delivery.","{0} é feito aqui. Registre com Produzir, não como entrega."
+"Say how much was made, above zero.","Informe quanto foi feito, acima de zero."
+{0} is not made here.,{0} não é feito aqui.
+The recipe of {0} just changed. Try again.,A receita de {0} acabou de mudar. Tente novamente.
+{0} is made here itself. Take it out of the recipe of {1}.,{0} também é feito aqui. Retire-o da receita de {1}.
+That is too little to take anything from stock.,É pouco demais para tirar algo do estoque.
+Every recipe line needs a quantity above zero.,Cada linha da receita precisa de uma quantidade acima de zero.
+{0} belongs to another property.,{0} pertence a outra propriedade.
+"Only deliveries, stock takes, wastage and production batches can be cancelled.","Só é possível cancelar entregas, contagens, perdas e lotes de produção."

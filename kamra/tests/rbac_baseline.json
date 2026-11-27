@@ -2604,6 +2604,13 @@
 "Kamra Agent",
 "System Manager"
 ],
+"inventory.produce": [
+"Administrator",
+"F&B Manager",
+"Finance",
+"Hotel Admin",
+"System Manager"
+],
 "inventory.receive_stock": [
 "Administrator",
 "F&B Manager",

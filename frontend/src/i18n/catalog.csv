@@ -710,7 +710,7 @@ Ad/Ch,Ad/Ch,بالغ/طفل,Ad./Ni.,Ad/Cr,成人/儿童,,,translated
 Add,Add,إضافة,Agregar,Adicionar,添加,components/OutletWaiters.tsx; components/StayInstructions.tsx; screens/BanquetFunction.tsx; screens/PublicBooking.tsx,,translated
 Add a cash office (central safe),Add a cash office (central safe),إضافة مكتب نقدي (الخزنة المركزية),Agregar caja central,Adicionar caixa (cofre central),添加现金办公室（中心保险柜）,screens/Setup.tsx,,translated
 Add a charge,Add a charge,إضافة رسوم,Agregar un cargo,Adicionar cobrança,添加费用,components/AgentGuide.tsx,,translated
-Add a cost for: {names},Add a cost for: {names},أضف تكلفة لـ: {names},Agregue un costo para: {names},Adicione um custo para: {names},请为以下项目添加成本：{names},screens/RecipeManager.tsx,names,translated
+Add a cost for: {names},Add a cost for: {names},أضف تكلفة لـ: {names},Agregue un costo para: {names},Adicione um custo para: {names},请为以下项目添加成本：{names},components/MadeRecipe.tsx; screens/RecipeManager.tsx,names,translated
 Add a customer email on the Enquiry step first,Add a customer email on the Enquiry step first,أضف بريد العميل في خطوة الاستفسار أولًا,Agregue primero el correo del cliente en la etapa Consulta,Adicione primeiro um e-mail do cliente na etapa de Consulta,请先在询价步骤填写客户邮箱,screens/BanquetFunction.tsx,,translated
 Add a customer phone on the Enquiry step first,Add a customer phone on the Enquiry step first,أضف هاتف العميل في خطوة الاستفسار أولًا,Agregue primero el teléfono del cliente en la etapa Consulta,Adicione primeiro um telefone do cliente na etapa de Consulta,请先在询价步骤填写客户电话,screens/BanquetFunction.tsx,,translated
 Add a facility or a plan,Add a facility or a plan,أضف مرفقاً أو خطة,Agregar una instalación o un plan,Adicionar instalação ou plano,添加设施或套餐,screens/Recreation.tsx,,translated
@@ -4283,7 +4283,7 @@ Not the right guest?,Not the right guest?,,,,,components/CheckInGuests.tsx,,need
 Not tied to a group,Not tied to a group,غير مرتبط بمجموعة,Sin vincular a un grupo,Não vinculado a um grupo,未关联团队,screens/BanquetFunction.tsx,,translated
 Not used yet,Not used yet,لم يُستخدم بعد,Aún no utilizado,Ainda não utilizado,尚未使用,screens/KitchenPrinters.tsx,,translated
 Not yet,Not yet,ليس بعد,Aún no,Ainda não,尚未,screens/BanquetFunction.tsx,,translated
-Note,Note,ملاحظة,Nota,Nota,备注,screens/Receivables.tsx; screens/pos/RefundDialog.tsx,,translated
+Note,Note,ملاحظة,Nota,Nota,备注,screens/Inventory.tsx; screens/Receivables.tsx; screens/pos/RefundDialog.tsx,,translated
 Note (optional),Note (optional),ملاحظة (اختياري),Nota (opcional),Nota (opcional),备注（可选）,components/NoShowDialog.tsx; components/RoomChangeDialog.tsx; components/SecurityDepositPanel.tsx; screens/Receivables.tsx,,translated
 "Note (what is wrong, who is fixing it)","Note (what is wrong, who is fixing it)",ملاحظة (ما المشكلة، ومن يصلحها),"Nota (qué está mal, quién lo está solucionando)","Nota (o que está errado, quem está consertando)",备注（问题是什么、谁在处理）,components/RoomDrawer.tsx,,translated
 Notes,Notes,ملاحظات,Notas,Notas,备注,components/RoomDrawer.tsx; screens/BanquetFunction.tsx; screens/POS.tsx,,translated
@@ -4893,7 +4893,7 @@ Pick a suggestion or type a new one,Pick a suggestion or type a new one,اختر
 Pick a table with an open bill to add items to it.,Pick a table with an open bill to add items to it.,اختر طاولة عليها فاتورة مفتوحة لإضافة أصناف إليها.,Elija una mesa con una cuenta abierta para agregarle elementos.,Selecione uma mesa com fatura em aberto para adicionar itens.,选择有未结账单的桌台以添加项目。,screens/POS.tsx,,translated
 "Pick a villa, then choose a room or the whole house.","Pick a villa, then choose a room or the whole house.",اختر فيلا، ثم اختر غرفة أو المنزل بالكامل.,Elige una villa y luego selecciona una habitación o la casa completa.,Escolha uma villa e depois escolha um quarto ou a casa inteira.,选择别墅，再选择单间或整栋。,screens/PublicBooking.tsx,,translated
 Pick an account…,Pick an account…,اختر حسابًا…,Elige una cuenta…,Escolha uma conta…,选择账户…,screens/Receivables.tsx,,translated
-Pick an ingredient…,Pick an ingredient…,اختر مكوّناً…,Seleccione un ingrediente…,Escolha um ingrediente…,选择食材…,screens/Inventory.tsx,,translated
+Pick an ingredient…,Pick an ingredient…,اختر مكوّناً…,Seleccione un ingrediente…,Escolha um ingrediente…,选择食材…,components/MadeRecipe.tsx; screens/Inventory.tsx,,translated
 Pick dates,Pick dates,اختر التواريخ,Seleccionar fechas,Escolha as datas,选择日期,screens/pos/OrderHistory.tsx,,translated
 Pick folios,Pick folios,اختيار الفواتير,Seleccionar folios,Escolha os fólios,选择客账,screens/CityLedgerPayment.tsx,,translated
 Pick the ID type too.,Pick the ID type too.,اختر نوع الهوية أيضاً.,Elija también el tipo de ID.,Escolha o tipo de ID também.,同时选择证件类型。,components/BookingDialog.tsx,,translated
@@ -5093,7 +5093,7 @@ Private,Private,خاص,Privado,Privado,私人,screens/Setup.tsx,,translated
 Proceed to pay,Proceed to pay,المتابعة للدفع,Continuar con el pago,Prossiga para pagar,去支付,,,translated
 "Produce, Dairy, Dry Goods, Bar - free text","Produce, Dairy, Dry Goods, Bar - free text",خضار وفواكه، ألبان، مواد جافة، بار: نص حر,"Productos frescos, lácteos, productos secos, bar: texto libre","Produtos, Laticínios, Produtos Secos, Bar - texto livre",生鲜、乳制品、干货、酒吧 - 自由文本,,,translated
 Product Launch,Product Launch,إطلاق منتج,Lanzamiento de producto,Lançamento de produto,产品发布,,,translated
-Production,Production,الإنتاج,Producción,Produção,制作,,,translated
+Production,Production,الإنتاج,Producción,Produção,制作,screens/StockSummary.tsx,,translated
 Professional Fees,Professional Fees,الأتعاب المهنية,Honorarios profesionales,Honorários profissionais,专业服务费,,,translated
 Profile,Profile,الملف الشخصي,Perfil,Perfil,档案,AppShell.tsx,,translated
 Profile actions,Profile actions,إجراءات الملف الشخصي,Acciones del perfil,Ações de perfil,档案操作,screens/GuestJourney.tsx,,translated
@@ -5142,7 +5142,7 @@ Qty wasted,Qty wasted,الكمية المهدرة,Cantidad descartada,Quantidade
 Qty wasted ({v0}),Qty wasted ({v0}),الكمية المهدرة ({v0}),Cantidad descartada ({v0}),Quantidade desperdiçada ({v0}),损耗数量（{v0}）,screens/Inventory.tsx,v0,translated
 "Quantities are per one dish, in each ingredient's own unit - there are no conversions. Editing a recipe never rewrites history: past consumption was recorded at the quantity in force when it was fired.","Quantities are per one dish, in each ingredient's own unit - there are no conversions. Editing a recipe never rewrites history: past consumption was recorded at the quantity in force when it was fired.",الكميات لطبق واحد، بوحدة كل مكوّن الخاصة، دون تحويلات. تعديل الوصفة لا يغيّر السجل: الاستهلاك السابق سُجّل بالكمية السارية وقت إرسال الطلب.,"Las cantidades corresponden a un plato y usan la unidad propia de cada ingrediente, sin conversiones. Editar una receta no cambia el historial: el consumo anterior conserva la cantidad vigente cuando comenzó la preparación.","As quantidades são por prato, na unidade de cada ingrediente - não há conversões. Editar uma receita nunca reescreve a história: o consumo passado foi registado na quantidade em vigor no momento da cozedura.",数量按一份菜品计，使用各食材自身单位 - 不做换算。修改配方不会改写历史：历史消耗按下单时生效的用量记录。,screens/RecipeManager.tsx,,translated
 "Quantities are per portion, in each ingredient's own unit.","Quantities are per portion, in each ingredient's own unit.",الكميات لكل حصة، بوحدة كل مكوّن الخاصة.,Las cantidades corresponden a una porción y usan la unidad propia de cada ingrediente.,"As quantidades são por porção, na unidade própria de cada ingrediente.",数量按每份计，使用各食材自身单位。,screens/BanquetCatalogue.tsx,,translated
-Quantity,Quantity,الكمية,Cantidad,Quantidade,数量,screens/banquet/Economics.tsx,,translated
+Quantity,Quantity,الكمية,Cantidad,Quantidade,数量,components/MadeRecipe.tsx; screens/banquet/Economics.tsx,,translated
 quantity per portion x that ingredient's cost per unit,quantity per portion x that ingredient's cost per unit,الكمية لكل حصة × تكلفة الوحدة لذلك المكوّن,cantidad por porción × costo unitario del ingrediente,quantidade por porção x custo unitário daquele ingrediente,每份用量 × 该食材单位成本,screens/BanquetCatalogue.tsx,,translated
 Queen,Queen,كوين,Queen,Rainha,大床（Queen）,,,translated
 Question,Question,سؤال,Pregunta,Pergunta,问题,screens/BookingEngine.tsx,,translated
@@ -5360,7 +5360,7 @@ Reload,Reload,إعادة التحميل,Volver a cargar,Recarregar,重新加载,
 Reload to get the latest version of this page.,Reload to get the latest version of this page.,أعد التحميل للحصول على أحدث إصدار من هذه الصفحة.,Recargue para obtener la versión más reciente de esta página.,Recarregue para obter a versão mais recente desta página.,重新加载以获取本页最新版本。,components/ErrorBoundary.tsx,,translated
 Remind me later,Remind me later,ذكّرني لاحقاً,Recordármelo más tarde,Lembre-me mais tarde,稍后提醒,components/UpdateNag.tsx,,translated
 "Remote AI providers need a public HTTPS URL to reach this hotel. For a local site, use a local MCP client or the stdio sidecar.","Remote AI providers need a public HTTPS URL to reach this hotel. For a local site, use a local MCP client or the stdio sidecar.",يحتاج مزوّدو الذكاء الاصطناعي عن بُعد إلى عنوان HTTPS عام للوصول إلى هذا الفندق. للموقع المحلي، استخدم عميل MCP محلياً أو محوّل stdio.,"Los proveedores de IA remotos necesitan una URL HTTPS pública para acceder a este hotel. Para una instalación local, utilice un cliente MCP local o el adaptador stdio.","Provedores de IA remotos precisam de uma URL HTTPS pública para acessar este hotel. Para uma instalação local, use um cliente MCP local ou o adaptador stdio.",远程 AI 提供商需公网 HTTPS 地址才能访问本酒店。本地站点请使用本地 MCP 客户端或 stdio sidecar。,screens/Agents.tsx,,translated
-Remove,Remove,إزالة,Eliminar,Remover,移除,components/GuestDocuments.tsx; components/HkMedia.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/POS.tsx; screens/PublicCheckin.tsx; screens/Setup.tsx,,translated
+Remove,Remove,إزالة,Eliminar,Remover,移除,components/GuestDocuments.tsx; components/HkMedia.tsx; components/MadeRecipe.tsx; screens/HkApp.tsx; screens/KitchenPrinters.tsx; screens/POS.tsx; screens/PublicCheckin.tsx; screens/Setup.tsx,,translated
 Remove (not sent to the kitchen),Remove (not sent to the kitchen),إزالة (لم يُرسل إلى المطبخ),Quitar (no enviado a la cocina),Retirar (não enviar para a cozinha),移除（未发送至厨房）,screens/POS.tsx; screens/pos/OpenBillsPopup.tsx,,translated
 Remove & retake,Remove & retake,إزالة وإعادة التصوير,Quitar y volver a tomar,Remover e retomar,移除并重拍,screens/PublicCheckin.tsx,,translated
 Remove block row,Remove block row,إزالة صف الكتلة,Eliminar fila del bloqueo,Remover linha do bloqueio,移除预留行,,,translated
@@ -7310,3 +7310,20 @@ Low only,Low only,المنخفض فقط,Solo bajos,Apenas baixos,仅低库存,sc
 No stock or movements in this period.,No stock or movements in this period.,لا مخزون ولا حركات في هذه الفترة.,No hay existencias ni movimientos en este periodo.,Sem estoque nem movimentos neste período.,此期间没有库存或变动。,screens/StockSummary.tsx,,translated
 Period,Period,الفترة,Periodo,Período,期间,screens/StockSummary.tsx,,translated
 This week,This week,هذا الأسبوع,Esta semana,Esta semana,本周,screens/StockSummary.tsx,,translated
+{part} (in {made}),{part} (in {made}),{part} (ضمن {made}),{part} (en {made}),{part} (em {made}),{part}（用于 {made}）,components/MadeRecipe.tsx; screens/RecipeManager.tsx,part made,translated
+{qty} {uom} there: goes below zero,{qty} {uom} there: goes below zero,الموجود {qty} {uom}: سيصبح أقل من الصفر,hay {qty} {uom}: quedará por debajo de cero,há {qty} {uom}: ficará abaixo de zero,现有 {qty} {uom}：将低于零,screens/Inventory.tsx,qty uom,translated
+Cancel batch,Cancel batch,إلغاء الدفعة,Anular lote,Cancelar lote,取消批次,screens/Inventory.tsx,,translated
+Cancel this whole batch?,Cancel this whole batch?,إلغاء هذه الدفعة بالكامل؟,¿Anular todo este lote?,Cancelar este lote inteiro?,取消整个批次？,screens/Inventory.tsx,,translated
+Cost / {uom},Cost / {uom},التكلفة / {uom},Costo / {uom},Custo / {uom},成本 / {uom},components/MadeRecipe.tsx,uom,translated
+In the stock unit.,In the stock unit.,بوحدة المخزون.,En la unidad de existencias.,Na unidade de estoque.,按库存单位。,,,translated
+Made from,Made from,مصنوع من,Hecho de,Feito de,原料,,,translated
+Made here (semi-finished),Made here (semi-finished),يُصنع هنا (نصف مصنّع),Hecho aquí (semielaborado),Feito aqui (semiacabado),本店自制（半成品）,screens/Inventory.tsx,,translated
+"Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.","Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery.",يُصنع في مطبخك على دفعات، مثل شراب محلّى أو صلصة. تُحسب تكلفته من الوصفة ولا يمكن استلامه كتوريد.,"Se prepara en su cocina por lotes, como un sirope o una salsa. Su costo sale de la receta y no se puede recibir como entrega.","Preparado na sua cozinha em lotes, como um xarope ou um molho. O custo vem da receita e ele não pode ser recebido como entrega.",在厨房分批制作，例如糖浆或酱汁。成本按配方计算，不能作为收货入库。,,,translated
+Make,Make,الكمية المصنوعة,Preparar,Preparar,制作量,screens/Inventory.tsx,,translated
+One batch makes,One batch makes,كمية الدفعة الواحدة,Un lote rinde,Um lote rende,一批产量,,,translated
+Produce,Produce,إنتاج,Producir,Produzir,生产,screens/Inventory.tsx,,translated
+"Record a batch made at {outlet}. It goes into stock, and what it is made from comes out.","Record a batch made at {outlet}. It goes into stock, and what it is made from comes out.",سجّل دفعة صُنعت في {outlet}. تدخل إلى المخزون ويُخصم ما صُنعت منه.,Registre un lote preparado en {outlet}. Entra en existencias y sale lo que se usó para hacerlo.,Registre um lote preparado em {outlet}. Ele entra no estoque e sai o que foi usado para fazê-lo.,记录在 {outlet} 制作的一批。成品入库，所用原料出库。,screens/Inventory.tsx,outlet,translated
+This uses:,This uses:,يستهلك هذا:,Esto usa:,Isto usa:,本次用料：,screens/Inventory.tsx,,translated
+Used to make: {names},Used to make: {names},يُستخدم لصنع: {names},Se usa para hacer: {names},Usado para fazer: {names},用于制作：{names},screens/Inventory.tsx,names,translated
+"What one batch uses, from bought ingredients.","What one batch uses, from bought ingredients.",ما تستهلكه الدفعة الواحدة من مكونات مشتراة.,"Lo que usa un lote, de ingredientes comprados.","O que um lote usa, de ingredientes comprados.",一批所用的外购食材。,,,translated
+worked out from the recipe,worked out from the recipe,محسوبة من الوصفة,calculado a partir de la receta,calculado pela receita,按配方计算,components/MadeRecipe.tsx,,translated

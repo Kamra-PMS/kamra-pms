@@ -34,6 +34,8 @@ interface IngredientRow {
   category: string | null
   cost_per_unit: number | null
   is_active: 0 | 1
+  /** for one made here without a cost: what in it needs one */
+  missing?: string[]
 }
 interface MenuRecipe {
   recipe: RecipeLine[]
@@ -122,7 +124,8 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
     }
   }, [picked, lines, loadDishes])
 
-  const totals = price === null ? null : recipeTotals(lines, ings, price)
+  const totals = price === null ? null : recipeTotals(lines, ings, price,
+    (part, made) => translate("{part} (in {made})", { part, made }))
 
   const shown = q
     ? dishes.filter((d) => `${d.item_name} ${d.outlet_name} ${d.category ?? ""}`
