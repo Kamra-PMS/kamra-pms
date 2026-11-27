@@ -1,4 +1,5 @@
 {
+  "Back on {date}": "Disponible el {date}",
   "{m} did not fit - no more free rooms of that type on these dates.": "{m} no entraron: no quedan habitaciones libres de ese tipo en estas fechas.",
   "{n} blocked · {k} booked now · {h} held": "{n} bloqueadas · {k} reservadas ahora · {h} retenidas",
   "{n} free on these dates": "{n} libres en estas fechas",
