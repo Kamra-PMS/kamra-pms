@@ -19,11 +19,13 @@ from kamra.api import (
 	create_booking,
 	create_group_with_rooming_list,
 	group_amend_dates,
+	promote_waitlist,
 	waitlist_ready,
 )
 from kamra.booking_requests import booking_requests
 from kamra.crs import crs_search, quote_itinerary
 from kamra.public_api import book, search_stay
+from kamra.siu import availability as siu_availability
 
 
 class _Case(IntegrationTestCase):
@@ -72,14 +74,14 @@ class _Case(IntegrationTestCase):
 		           if r["room_type"] == (room_type or self.room_type))
 		return [c["available"] for c in row["cells"]]
 
-	def channel(self):
+	def channel(self, days=2):
 		conn = frappe.get_doc({"doctype": "Channel Manager Connection",
 			"property": self.property, "provider": "AioSell", "active": 1,
 			"external_property_id": frappe.generate_hash(length=8)}).insert(ignore_permissions=True)
 		frappe.get_doc({"doctype": "Channel Room Mapping", "connection": conn.name,
 			"room_type": self.room_type, "external_room_id": "std",
 			"external_rate_id": "std-rate"}).insert(ignore_permissions=True)
-		snapshot = cm.ari_snapshot(self.property, conn.name, days=2, start=self.ci,
+		snapshot = cm.ari_snapshot(self.property, conn.name, days=days, start=self.ci,
 		                           with_rates=False)
 		return [d["available"] for d in snapshot[0]["days"]]
 
@@ -135,6 +137,32 @@ class TestStaysWithoutARoom(_Case):
 		self.stay()
 		self.assertEqual(self.page(), (0, False))
 		self.assertEqual(self.channel(), [0, 0])
+
+	def test_the_channels_count_each_night_on_its_own(self):
+		self.stay(co=self.day(11))
+		self.stay(co=self.day(12))
+		self.assertEqual(self.channel(days=3), [0, 1, 2])
+
+	def test_the_channels_get_no_overbooking_allowance_around_a_blocked_room(self):
+		"""Three rooms, one blocked, one stay: one room is physically free."""
+		frappe.db.set_value("Room Type", self.room_type, "overbooking_pct", 50)
+		frappe.get_doc({"doctype": "Room", "property": self.property,
+			"room_type": self.room_type, "room_number": "103"}).insert(ignore_permissions=True)
+		room = frappe.db.get_value("Room", {"room_type": self.room_type, "room_number": "101"})
+		frappe.get_doc({"doctype": "Room Block", "property": self.property, "room": room,
+			"from_date": self.ci, "to_date": self.co, "block_status": "Active",
+			"reason": "Maintenance"}).insert(ignore_permissions=True)
+		self.stay()
+		self.assertEqual(self.channel(), [1, 1])
+
+	def test_the_channel_push_counts_unsold_rooms_once_per_room_type(self):
+		"""Once for the whole window, not once a day: the push covers 90 days."""
+		with patch.object(siu_availability, "unsold_by_night",
+		                  wraps=siu_availability.unsold_by_night) as counted, \
+				patch.object(cm, "_sellable_by_night",
+				             wraps=cm._sellable_by_night) as per_night:
+			self.assertEqual(self.channel(days=6), [2] * 6)
+		self.assertEqual((counted.call_count, per_night.call_count), (1, 1))
 
 	def test_the_overbooking_allowance_is_still_offered(self):
 		"""The page offers what saving the booking would accept."""
@@ -218,6 +246,80 @@ class TestWholeVilla(_Case):
 	def live_villa_stays(self):
 		return frappe.db.count("Reservation", {"room_type": self.villa,
 			"status": ("in", ["Confirmed", "Checked In", "Held", "Pending Payment"])})
+
+	def searched(self):
+		"""How many of the villa the multi-property search offers (0: not listed)."""
+		return next((row["available"]
+			for found in crs_search(self.ci, self.co)["properties"]
+			if found["property"] == self.property
+			for row in found["room_types"] if row["room_type"] == self.villa), 0)
+
+	def quoted(self):
+		leg = {"property": self.property, "room_type": self.villa,
+		       "check_in_date": self.ci, "check_out_date": self.co}
+		return quote_itinerary([leg])["legs"][0]["available"]
+
+	def waitlisted(self):
+		return create_booking(property=self.property, room_type=self.villa,
+			check_in_date=self.ci, check_out_date=self.co, guest_name="Wait Villa",
+			phone="+91 90000 73001", waitlist=1)["reservation"]
+
+	def ready(self):
+		return [row["name"] for row in waitlist_ready(self.property)]
+
+	def block_villa(self, ci=None, co=None, guests=None, **block):
+		return create_group_with_rooming_list(
+			self.property, "Villa Group", ci or self.ci, co or self.co,
+			[{"room_type": self.villa, "rooms_blocked": 1, **block}], guests=guests)
+
+	def test_a_free_villa_is_found_by_the_search_and_the_trip_quote(self):
+		self.assertEqual((self.searched(), self.quoted()), (1, 1))
+
+	def test_a_free_villa_waitlist_is_ready_and_can_be_confirmed(self):
+		waiting = self.waitlisted()
+		self.assertIn(waiting, self.ready())
+		promote_waitlist(waiting)
+		self.assertEqual(frappe.db.get_value("Reservation", waiting, "status"), "Confirmed")
+		self.assertEqual(self.searched(), 0)
+
+	def test_a_waitlisted_villa_cannot_be_confirmed_over_a_booked_one(self):
+		waiting = self.waitlisted()
+		self.villa_stay()
+		with self.assertRaisesRegex(frappe.ValidationError, "sold out"):
+			promote_waitlist(waiting)
+
+	def test_a_group_can_block_the_free_villa_and_name_its_guest(self):
+		out = self.block_villa(guests=[{"room_type": self.villa,
+			"guest_name": "Villa Host", "phone": "+91 90000 73002"}])
+		self.assertEqual((len(out["created"]), out["skipped"]), (1, []))
+
+	def test_a_block_that_differs_by_night_can_take_the_free_villa(self):
+		out = self.block_villa(nightly_counts={self.ci: 1, self.day(11): 0})
+		self.assertEqual(out["status"], "Confirmed")
+
+	def test_a_group_can_move_its_villa_block_to_free_dates(self):
+		group = self.block_villa(ci=self.day(20), co=self.day(22))["group_booking"]
+		group_amend_dates(group, self.ci, self.co)
+		self.assertEqual(
+			str(frappe.db.get_value("Group Booking", group, "check_in_date")), self.ci)
+
+	def test_a_booked_villa_is_offered_nowhere(self):
+		group = self.block_villa(ci=self.day(20), co=self.day(22))["group_booking"]
+		self.villa_stay()
+		self.assert_villa_off_sale(group)
+
+	def test_a_booked_member_room_takes_the_villa_off_sale_there_too(self):
+		group = self.block_villa(ci=self.day(20), co=self.day(22))["group_booking"]
+		self.stay()
+		self.assert_villa_off_sale(group)
+
+	def assert_villa_off_sale(self, moving_group):
+		self.assertEqual((self.searched(), self.quoted()), (0, 0))
+		self.assertNotIn(self.waitlisted(), self.ready())
+		with self.assertRaisesRegex(frappe.ValidationError, "Not enough rooms"):
+			self.block_villa()
+		with self.assertRaisesRegex(frappe.ValidationError, "not free on those dates"):
+			group_amend_dates(moving_group, self.ci, self.co)
 
 	def test_a_second_guest_cannot_book_it_for_the_same_dates(self):
 		"""Through the booking page's own call, as two guests would."""

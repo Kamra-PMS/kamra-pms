@@ -67,7 +67,7 @@ FORECAST_DAYS = 90
 
 
 def _sellable(property: str) -> int:
-	# out of order rooms are not for sale, as channel_manager._sellable counts
+	# out of order rooms are not for sale, as channel_manager._sellable_by_night does
 	return frappe.db.count("Room", {
 		"property": property, "housekeeping_status": ("!=", "Out of Order")})
 

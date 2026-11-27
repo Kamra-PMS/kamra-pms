@@ -68,7 +68,7 @@ class ChannelManagerBookingTestCase(IntegrationTestCase):
 		self.assertIn("OTA overbooking — resolve", doc.special_requests)
 		self.assertIn("Late arrival", doc.special_requests)
 		self.assertEqual(float(doc.amount_after_tax), 1500)
-		self.assertEqual(cm._sellable(self.property, self.room_type, nowdate(), add_days(nowdate(), 1)), 0)
+		self.assertEqual(cm._sellable_by_night(self.property, self.room_type, nowdate(), add_days(nowdate(), 1)), [0])
 		self.assertEqual(frappe.db.get_value("Reservation", original.name, "status"), "Confirmed")
 
 	def test_multi_room_refusal_keeps_all_lines_requested(self):
@@ -109,7 +109,7 @@ class ChannelManagerBookingTestCase(IntegrationTestCase):
 		self.assertIn("UGX", doc.special_requests)
 		self.assertIn("1500", doc.special_requests)
 		self.assertEqual(float(doc.amount_after_tax or 0), 0)
-		self.assertEqual(cm._sellable(self.property, self.room_type, nowdate(), add_days(nowdate(), 1)), 1)
+		self.assertEqual(cm._sellable_by_night(self.property, self.room_type, nowdate(), add_days(nowdate(), 1)), [1])
 
 	def test_matching_currency_keeps_confirmed_booking_and_original_price(self):
 		self.deliver(self.payload())

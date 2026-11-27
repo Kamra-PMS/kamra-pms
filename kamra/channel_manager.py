@@ -20,7 +20,7 @@ from decimal import Decimal
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, date_diff, nowdate
 
 from kamra.authz import require_perm
 from kamra.channels import provider_for
@@ -81,40 +81,28 @@ def _mappings(connection: str) -> list[dict]:
 		fields=["room_type", "external_room_id", "external_rate_id", "rate_plan"])
 
 
-def _sellable(property: str, room_type: str, check_in, check_out) -> int:
-	"""Rooms of a type actually sellable for [check_in, check_out): physical
-	rooms (not out of order) minus every overlapping reservation of that type
-	that holds inventory - ASSIGNED OR NOT, unpaid holds included - minus
-	unpicked group holds, and nothing at all while the villa <-> room lockout
-	applies.
+def _sellable_by_night(property: str, room_type: str, check_in,
+                       check_out) -> list[int]:
+	"""What a channel may sell of a type on each night of [check_in, check_out):
+	rooms in service (not out of order or blocked) minus every reservation of
+	that type that holds inventory - ASSIGNED OR NOT, unpaid holds included -
+	minus unpicked group holds, and nothing on the nights the villa <-> room
+	lockout applies. Channels get no overbooking allowance.
 
 	Counting unassigned reservations is the point: an OTA booking arrives
 	without a room number, and it must still lower what we offer the OTAs, or
 	the same room sells twice. The booking page and the desk calendar count the
-	same stays through kamra.siu.availability.unsold_by_night."""
-	from kamra.api import _block_hold
-	from kamra.kamra.doctype.reservation.reservation import villa_lockout_conflict
-	from kamra.reservation_state import LIVE_STATUSES
-	# the villa <-> room lockout: a booked whole villa leaves its member
-	# rooms nothing to sell, and a booked member room leaves the villa none
-	if villa_lockout_conflict(property, room_type, check_in, check_out):
-		return 0
-	total = frappe.db.count("Room", {
-		"property": property, "room_type": room_type,
-		"housekeeping_status": ("!=", "Out of Order")})
-	booked = frappe.db.sql(
-		"""SELECT COUNT(*) FROM `tabReservation`
-		   WHERE property = %(p)s AND room_type = %(rt)s
-		     AND status IN %(live)s
-		     AND check_in_date < GREATEST(%(co)s,
-		                                  DATE_ADD(%(ci)s, INTERVAL 1 DAY))
-		     AND GREATEST(check_out_date,
-		                  DATE_ADD(check_in_date, INTERVAL 1 DAY)) > %(ci)s""",
-		{"p": property, "rt": room_type, "ci": check_in, "co": check_out,
-		 "live": LIVE_STATUSES},
-	)[0][0]
-	hold = _block_hold(property, room_type, check_in, check_out) or 0
-	return max(0, int(total) - int(booked) - int(hold))
+	same stays, through kamra.siu.availability.unsold_by_night, which is asked
+	here once for the whole range."""
+	from kamra.kamra.doctype.reservation.reservation import villa_locked_nights
+	from kamra.siu.availability import unsold_by_night
+	nights = [str(add_days(check_in, i))
+	          for i in range(max(date_diff(check_out, check_in), 1))]
+	left = unsold_by_night(property, room_type, nights, allowance=False)
+	if left is None:  # no rooms of this type to sell
+		return [0] * len(nights)
+	locked = villa_locked_nights(property, room_type, check_in, check_out)
+	return [0 if night in locked else n for night, n in zip(nights, left)]
 
 
 def ari_snapshot(property: str, connection: str, days: int = 90, start=None,
@@ -130,8 +118,7 @@ def ari_snapshot(property: str, connection: str, days: int = 90, start=None,
 	plan on its own (kamra.channel_ari)."""
 	from kamra.api import _available_rooms_raw, _block_hold
 	from kamra.kamra.doctype.reservation.reservation import villa_locked_nights
-	from kamra.siu.availability import (capacity_by_night, cap_to_unsold,
-	                                    has_active_sius)
+	from kamra.siu.availability import capacity_by_night, has_active_sius
 
 	mappings = _mappings(connection)
 	if not with_rates:
@@ -167,6 +154,10 @@ def ari_snapshot(property: str, connection: str, days: int = 90, start=None,
 		# nights the villa <-> room lockout takes this type off sale: a
 		# booked villa zeroes its member rooms, a booked room the villa
 		locked = villa_locked_nights(property, m.room_type, start, end)
+		# stays with no room number take no physical room but are sold; asked
+		# once for the whole window, not once a night
+		sellable = _sellable_by_night(property, m.room_type, start, end) \
+			if meta[m.room_type]["total"] else None
 		for i in range(days):
 			d = add_days(start, i)
 			d2 = add_days(d, 1)
@@ -181,11 +172,10 @@ def ari_snapshot(property: str, connection: str, days: int = 90, start=None,
 			else:
 				free = _available_rooms_raw(property, m.room_type, d, d2)
 				avail = max(0, len(free) - (hold or 0))
-			# Both paths must account for stays without a room number.
-			if meta[m.room_type]["total"]:
-				avail = min(avail, _sellable(property, m.room_type, d, d2))
-				# nor offer a blocked room to cover such a stay
-				avail = cap_to_unsold(property, m.room_type, d, d2, avail)
+			# Both paths must account for stays without a room number, and
+			# never offer a blocked room to cover one.
+			if sellable:
+				avail = min(avail, sellable[i])
 			row["days"].append({"date": str(d), "available": avail,
 			                    "rate": rate(m.room_type, d, d2)})
 		out.append(row)

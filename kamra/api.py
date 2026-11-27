@@ -8000,16 +8000,21 @@ def promote_waitlist(reservation: str):
 	doc = frappe.get_doc("Reservation", reservation)
 	if doc.status != "Waitlist":
 		frappe.throw("Only waitlisted reservations can be promoted.")
-	free = available_rooms(doc.property, doc.room_type,
-	                       doc.check_in_date, doc.check_out_date)
-	if not free:
-		frappe.throw("Still no room free for those dates.")
-	doc.room = free[0]["name"]
+	from kamra.kamra.doctype.reservation.reservation import uses_member_rooms
+	# a whole villa with no rooms of its own is confirmed without one: saving
+	# runs the same capacity and villa lockout checks as any booking
+	if not uses_member_rooms(doc.property, doc.room_type):
+		free = available_rooms(doc.property, doc.room_type,
+		                       doc.check_in_date, doc.check_out_date)
+		if not free:
+			frappe.throw("Still no room free for those dates.")
+		doc.room = free[0]["name"]
 	doc.status = "Confirmed"
 	doc.save()
 	from kamra.savings import log_action
 	log_action("waitlist_promote", "Reservation", doc.name, doc.property,
-	           rationale=f"Promoted from waitlist into {doc.room}")
+	           rationale="Promoted from waitlist"
+	           + (f" into {doc.room}" if doc.room else ""))
 	return {"ok": True, "reservation": doc.name, "room": doc.room}
 
 
@@ -8019,7 +8024,7 @@ def waitlist_ready(property: str):
 	"""Waitlisted stays that CAN now be accommodated - a room is free for
 	their dates. This is the signal the voice/WhatsApp agent watches so it
 	can proactively reach the guest the moment a room opens."""
-	from kamra.siu.availability import cap_to_unsold
+	from kamra.siu.availability import free_to_sell
 
 	ready = []
 	for r in frappe.get_all(
@@ -8028,10 +8033,8 @@ def waitlist_ready(property: str):
 			fields=["name", "guest", "guest_name", "room_type",
 			        "check_in_date", "check_out_date", "nights",
 			        "adults", "children", "amount_after_tax"]):
-		free = cap_to_unsold(property, r.room_type,
-		                     r.check_in_date, r.check_out_date,
-		                     len(available_rooms(property, r.room_type,
-		                                         r.check_in_date, r.check_out_date)))
+		free = free_to_sell(property, r.room_type,
+		                    r.check_in_date, r.check_out_date)
 		if free:
 			r["rooms_free"] = free
 			r["phone"] = frappe.db.get_value(
@@ -8264,7 +8267,7 @@ def create_group_with_rooming_list(property: str, group_name: str,
 	from kamra.booking_refs import resolve_room_type
 	from kamra.folio import COMPANY_BILLING_DEFAULTS
 	from kamra.group_blocks import group_nights, parse_nightly
-	from kamra.siu.availability import cap_to_unsold
+	from kamra.siu.availability import free_to_sell
 
 	blocks = frappe.parse_json(blocks) if isinstance(blocks, str) else (blocks or [])
 	guests = frappe.parse_json(guests) if isinstance(guests, str) else (guests or [])
@@ -8305,15 +8308,13 @@ def create_group_with_rooming_list(property: str, group_name: str,
 	for rt, by_night in (counts.items() if not quote_only else []):
 		if len(set(by_night.values())) == 1:
 			n = by_night[nights[0]]
-			free = cap_to_unsold(property, rt, check_in_date, check_out_date, len(
-				available_rooms(property, rt, check_in_date, check_out_date)))
+			free = free_to_sell(property, rt, check_in_date, check_out_date)
 			if free < n:
 				short.append(_("{0}: {1} blocked, {2} free").format(rt, n, free))
 			continue
 		for d, n in by_night.items():
 			night_end = str(add_days(d, 1))
-			free = cap_to_unsold(property, rt, d, night_end, len(
-				available_rooms(property, rt, d, night_end))) if n else 0
+			free = free_to_sell(property, rt, d, night_end) if n else 0
 			if free < n:
 				short.append(_("{0} on {1}: {2} blocked, {3} free").format(rt, d, n, free))
 	if short:
@@ -9145,7 +9146,7 @@ def group_amend_dates(group_booking: str, check_in_date: str,
 	import json as _json
 
 	from kamra.group_blocks import _unpicked, effective_cutoff, group_nights, parse_nightly
-	from kamra.siu.availability import cap_to_unsold
+	from kamra.siu.availability import free_to_sell
 	gb = frappe.get_doc("Group Booking", group_booking)
 	old_ci, old_co = getdate(gb.check_in_date), getdate(gb.check_out_date)
 	new_ci, new_co = getdate(check_in_date), getdate(check_out_date)
@@ -9190,11 +9191,8 @@ def group_amend_dates(group_booking: str, check_in_date: str,
 		short = []
 		for b in gb.blocks:
 			held = _unpicked(gb.name, b.room_type)
-			free = cap_to_unsold(
-				gb.property, b.room_type, str(new_ci), str(new_co),
-				len(available_rooms(gb.property, b.room_type, str(new_ci),
-				                    str(new_co), group_booking=gb.name)),
-				for_group=gb.name) if held else 0
+			free = free_to_sell(gb.property, b.room_type, str(new_ci), str(new_co),
+			                    for_group=gb.name) if held else 0
 			if held > free:
 				short.append(_("{0}: {1} kept, {2} free").format(b.room_type, held, free))
 		if short:

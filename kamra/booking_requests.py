@@ -29,10 +29,8 @@ DECLINE_REASON = "Other"
 def _availability(res) -> dict:
 	"""Can this request be accepted right now? {rooms_free, can_accept,
 	blocker}. Read-only: the same checks accept enforces."""
-	from kamra.api import available_rooms
-	from kamra.kamra.doctype.reservation.reservation import (
-		uses_member_rooms, villa_lockout_conflict)
-	from kamra.siu.availability import cap_to_unsold
+	from kamra.kamra.doctype.reservation.reservation import villa_lockout_conflict
+	from kamra.siu.availability import free_to_sell
 
 	ci, co = str(res.check_in_date), str(res.check_out_date)
 	if getdate(ci) < getdate(nowdate()):
@@ -44,12 +42,8 @@ def _availability(res) -> dict:
 		return {"rooms_free": 0, "can_accept": False,
 		        "blocker": _("Villa lockout: {0} is booked for these dates.").format(
 			        conflict)}
-	# a whole villa with no rooms of its own is one thing to sell
-	free = 1 if uses_member_rooms(res.property, res.room_type) else len(
-		available_rooms(res.property, res.room_type, ci, co,
-		                group_booking=res.get("group_booking")))
-	free = cap_to_unsold(res.property, res.room_type, ci, co, free,
-	                     for_group=res.get("group_booking"))
+	free = free_to_sell(res.property, res.room_type, ci, co,
+	                    for_group=res.get("group_booking"))
 	if not free:
 		return {"rooms_free": 0, "can_accept": False,
 		        "blocker": _("No {0} room is free for these dates.").format(
