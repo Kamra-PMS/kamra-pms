@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Checks for the kitchen stock screens' pure helpers: unit costs (lib/stockCost.ts), what a Receive row
  *  adds up to and sends, which fields a form saves (lib/formPayload.ts), and what a recipe costs
- *  (lib/recipeCost.ts). Pure Node: bundled with small
+ *  (lib/recipeCost.ts) and an entry's date (lib/stockDates.ts). Pure Node: bundled with small
  *  stand-ins for React, the API client and the language module. */
 import assert from "node:assert/strict"
 import fs from "node:fs"
@@ -20,7 +20,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stock-check-"))
 // one bundle, so the helpers share the same money.ts (it holds the property's locale)
 await build({
   stdin: {
-    contents: `export * from "./money"; export * from "./stockCost"; export * from "./formPayload"; export * from "./recipeCost"`,
+    contents: `export * from "./money"; export * from "./stockCost"; export * from "./formPayload"; export * from "./recipeCost"; export * from "./stockDates"`,
     resolveDir: lib, loader: "ts",
   },
   bundle: true, format: "esm", platform: "node", outfile: path.join(dir, "stock.mjs"), logLevel: "silent",
@@ -34,7 +34,7 @@ await build({
 })
 // money.ts remembers the locale in localStorage when there is one; there is none here
 Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true })
-const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
+const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost, postedAt, enteredLater } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
 
 // a cost per unit keeps up to 4 decimals, whatever the currency
 adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
@@ -111,6 +111,15 @@ assert.equal(fmtCost(9360), "9,360.00")
 adoptUiLocale({ currency: "JPY", locale: "en-US", currency_symbol: "¥" })
 assert.equal(fmtCost(9360), "9,360")
 assert.equal(fmtCost(334.285722), "334.29")
+
+// an entry's date: blank means now; one typed well after it happened says so
+assert.equal(postedAt(""), undefined)
+assert.equal(postedAt("  "), undefined)
+assert.equal(postedAt("2026-11-02T18:00"), "2026-11-02 18:00:00")
+assert.equal(postedAt("2026-11-02T18:00:30"), "2026-11-02 18:00:30")
+assert.equal(enteredLater({ posted_at: "2026-11-02 18:00:00.000000", creation: "2026-11-02 18:00:00.500000" }), false)
+assert.equal(enteredLater({ posted_at: "2026-11-02 18:00:00", creation: "2026-11-05 09:12:00.123456" }), true)
+assert.equal(enteredLater({ posted_at: null, creation: "2026-11-05 09:12:00" }), false)
 
 fs.rmSync(dir, { recursive: true, force: true })
 console.log("stock checks passed")

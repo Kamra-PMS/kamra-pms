@@ -5319,7 +5319,8 @@ unit chosen: the stock unit, or the buying unit with in_buying_unit
 the units the screen showed, and a row is refused if either has changed
 since). One batch_id ties the delivery together, which is why
 this needs no Stock Receipt doctype: a receipt is just its ledger rows plus
-a supplier and an invoice number.
+a supplier and an invoice number. posted_at dates a delivery that happened
+earlier; it is costed with the stock and cost as they are now.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5328,6 +5329,7 @@ a supplier and an invoice number.
 | `rows` | yes |  |
 | `supplier` | no | `None` |
 | `invoice_no` | no | `None` |
+| `posted_at` | no | `None` |
 
 ### `kamra.inventory.adjust_stock`
 
@@ -5342,12 +5344,17 @@ The note is required on purpose. A write-off with no reason is precisely
 the silence this module exists to remove - the same call laundry's
 shortage guard makes when it refuses to deliver a short bag unexplained.
 
+Every count is recorded, a count with no difference too: it fixes what was
+on the shelf at that moment against anything dated earlier. posted_at says
+when the shelf was counted; the difference is against that moment.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
 | `outlet` | yes |  |
 | `rows` | yes |  |
 | `note` | yes |  |
+| `posted_at` | no | `None` |
 
 ### `kamra.inventory.record_wastage`
 
@@ -5367,6 +5374,24 @@ a Wastage row too would deduct it twice. Use wastage_report() for those.
 | `ingredient` | yes |  |
 | `qty` | yes |  |
 | `reason_note` | yes |  |
+| `posted_at` | no | `None` |
+
+### `kamra.inventory.cancel_stock_entry`
+
+**POST** · permission: `Ingredient: cancel_stock` · default roles: `System Manager`, `Hotel Admin`
+
+Take back a delivery, a stock take or a wastage entry. `entry` is any
+line of it: a delivery or a stock take goes as a whole. The lines stay in
+history, marked cancelled, moving nothing on their date, and later
+balances and stock takes are worked again. A cancelled delivery's price is
+taken out of the cost only while that is safe; `cost_unchanged` names the
+ingredients to check by hand.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `entry` | yes |  |
+| `reason` | yes |  |
 
 ### `kamra.inventory.stock_list`
 
@@ -5391,8 +5416,10 @@ ingredient could never get one.
 
 **GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
-Where did my paneer go? Newest first, each row carrying the balance it
-produced, so the history explains the number on the shelf.
+Where did my paneer go? Newest first by when it happened, each row
+carrying the balance it produced, so the history explains the number on the
+shelf. Cancelled lines stay, saying who took them back and why;
+batch_ingredients names everything in the line's entry.
 
 purchases_only lists the deliveries alone, from every outlet of the
 property (an ingredient has one cost), with their own limit: kitchen usage
@@ -5405,6 +5432,20 @@ would otherwise push them off the end.
 | `ingredient` | yes |  |
 | `limit` | no | `50` |
 | `purchases_only` | no | `0` |
+
+### `kamra.inventory.stock_at`
+
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
+
+What the outlet's shelf held at a moment, per ingredient: today's figure
+less everything dated after it. The stock take screen compares against
+this when the count is dated in the past.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `outlet` | yes |  |
+| `at` | yes |  |
 
 ### `kamra.inventory.low_stock`
 

@@ -7163,5 +7163,17 @@
   "cost not complete": "成本不完整",
   "Cost per portion": "每份成本",
   "Menu price": "菜单价",
-  "no cost": "无成本"
+  "no cost": "无成本",
+  "Cancel delivery": "取消收货",
+  "Cancel stock take": "取消盘点",
+  "Cancel this wastage?": "取消此损耗记录？",
+  "Cancel this whole delivery?": "取消整笔收货？",
+  "Cancel this whole stock take?": "取消整次盘点？",
+  "Cancel wastage": "取消损耗",
+  "Cancelled {when} by {who}: {why}": "{who} 于 {when} 取消：{why}",
+  "Cost not changed: it has moved since. Check it on the ingredient.": "成本未更改：此后成本已变动。请在原料中检查。",
+  "Date and time": "日期和时间",
+  "entered {when} by {who}": "{who} 于 {when} 录入",
+  "Keep it": "保留",
+  "Leave empty for now.": "留空表示现在。"
 }

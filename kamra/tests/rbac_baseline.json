@@ -2556,6 +2556,11 @@
 "Hotel Admin",
 "System Manager"
 ],
+"inventory.cancel_stock_entry": [
+ "Administrator",
+ "Hotel Admin",
+ "System Manager"
+],
 "inventory.delete_ingredient": [
 "Administrator",
 "F&B Manager",

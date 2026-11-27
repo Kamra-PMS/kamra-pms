@@ -1485,7 +1485,7 @@ Cancellation policy,Cancellation policy,سياسة الإلغاء,Política de c
 Cancellations,Cancellations,الإلغاءات,Cancelaciones,Cancelamentos,取消,screens/AuditPack.tsx,,translated
 Cancellations earlier than this are always free.,Cancellations earlier than this are always free.,الإلغاء قبل هذه المهلة مجاني دائماً.,Las cancelaciones anteriores a este plazo siempre son gratuitas.,Cancelamentos antes disso são sempre gratuitos.,早于此时间取消免费。,,,translated
 cancelled,cancelled,ملغى,cancelada,cancelado,已取消,components/GroupControl.tsx; screens/GuestJourney.tsx,,translated
-Cancelled,Cancelled,ملغى,Cancelado,Cancelado,已取消,screens/CRS.tsx; screens/Payables.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
+Cancelled,Cancelled,ملغى,Cancelado,Cancelado,已取消,screens/CRS.tsx; screens/Inventory.tsx; screens/Payables.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
 Cancelled - ,Cancelled - ,ملغى: ,Cancelada: ,Cancelado - ,已取消 - ,screens/ReservationDetail.tsx,,translated
 Cancelled - {n},Cancelled - {n},ملغى - {n},Cancelado - {n},Cancelado - {n},已取消 - {n},components/CancelPanel.tsx,n,translated
 CANCELLED - STOP,CANCELLED - STOP,ملغى - توقف,CANCELADO - DETENER,CANCELADO - PARAR,已取消 - 停止,screens/Kitchen.tsx,,translated
@@ -5240,7 +5240,7 @@ Reason (optional),Reason (optional),السبب (اختياري),Motivo (opcional
 Reason (required - e.g. deposit returned),Reason (required - e.g. deposit returned),السبب (مطلوب - مثل إعادة العربون),"Motivo (obligatorio, por ejemplo, depósito devuelto)","Motivo (obrigatório - por exemplo, depósito devolvido)",原因（必填 - 例如已退还押金）,screens/FolioView.tsx,,translated
 Reason (required - goes on the record),Reason (required - goes on the record),السبب (مطلوب - يُسجَّل),Motivo (obligatorio - consta en el registro),Motivo (obrigatório - fica registrado),原因（必填 - 记入记录）,screens/FolioView.tsx,,translated
 "Reason (required, goes on the record)","Reason (required, goes on the record)",السبب (مطلوب، يُحفظ في السجل),"Motivo (obligatorio, consta en el registro)","Motivo (obrigatório, fica registrado)",原因（必填，记入记录）,components/ChangeCompany.tsx; components/CheckOutDialog.tsx; components/NoShowDialog.tsx,,translated
-Reason (required),Reason (required),السبب (مطلوب),Motivo (obligatorio),Motivo (obrigatório),原因（必填）,components/FolioDiscount.tsx; components/SecurityDepositPanel.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx,,translated
+Reason (required),Reason (required),السبب (مطلوب),Motivo (obligatorio),Motivo (obrigatório),原因（必填）,components/FolioDiscount.tsx; components/SecurityDepositPanel.tsx; screens/FolioView.tsx; screens/GuestJourney.tsx; screens/Inventory.tsx,,translated
 Reason (sent to the guest),Reason (sent to the guest),السبب (يُرسل إلى الضيف),Motivo (enviado al huésped),Motivo (enviado ao hóspede),原因（发送给宾客）,components/BookingRequests.tsx,,translated
 Reason code,Reason code,رمز السبب,Código de motivo,Código do motivo,原因代码,screens/AllowanceVoucher.tsx,,translated
 Reason Code,Reason Code,رمز السبب,Código de motivo,Código de Razão,原因代码,,,translated
@@ -7249,3 +7249,15 @@ Ends before check-out ({date}),Ends before check-out ({date}),تنتهي قبل 
 Photograph the visa,Photograph the visa,صوّر التأشيرة,Fotografíe el visado,Fotografe o visto,拍摄签证,components/CheckInDialog.tsx,,translated
 Visa number,Visa number,رقم التأشيرة,Número de visado,Número do visto,签证号码,components/CheckInDialog.tsx,,translated
 New visa number (leave empty to keep),New visa number (leave empty to keep),رقم هوية جديد (اتركه فارغا للإبقاء على الحالي),Nuevo número de visado (déjelo vacío para conservar),Novo número do visto (deixe vazio para manter),新签证号码（留空则保留）,components/CheckInDialog.tsx,,translated
+Cancel delivery,Cancel delivery,إلغاء الاستلام,Cancelar entrega,Cancelar entrega,取消收货,screens/Inventory.tsx,,translated
+Cancel stock take,Cancel stock take,إلغاء الجرد,Cancelar inventario,Cancelar contagem,取消盘点,screens/Inventory.tsx,,translated
+Cancel this wastage?,Cancel this wastage?,إلغاء هذا الهدر؟,¿Cancelar esta merma?,Cancelar esta perda?,取消此损耗记录？,screens/Inventory.tsx,,translated
+Cancel this whole delivery?,Cancel this whole delivery?,إلغاء عملية الاستلام بالكامل؟,¿Cancelar toda la entrega?,Cancelar toda a entrega?,取消整笔收货？,screens/Inventory.tsx,,translated
+Cancel this whole stock take?,Cancel this whole stock take?,إلغاء الجرد بالكامل؟,¿Cancelar todo el inventario?,Cancelar toda a contagem?,取消整次盘点？,screens/Inventory.tsx,,translated
+Cancel wastage,Cancel wastage,إلغاء الهدر,Cancelar merma,Cancelar perda,取消损耗,screens/Inventory.tsx,,translated
+Cancelled {when} by {who}: {why},Cancelled {when} by {who}: {why},أُلغي في {when} بواسطة {who}: {why},Cancelado {when} por {who}: {why},Cancelado {when} por {who}: {why},{who} 于 {when} 取消：{why},screens/Inventory.tsx,when who why,translated
+Cost not changed: it has moved since. Check it on the ingredient.,Cost not changed: it has moved since. Check it on the ingredient.,لم تتغير التكلفة لأنها تغيرت منذ ذلك الحين. تحقق منها في المكوّن.,El costo no cambió: se ha modificado desde entonces. Revíselo en el ingrediente.,Custo não alterado: ele mudou desde então. Confira no ingrediente.,成本未更改：此后成本已变动。请在原料中检查。,screens/Inventory.tsx,,translated
+Date and time,Date and time,التاريخ والوقت,Fecha y hora,Data e hora,日期和时间,screens/Inventory.tsx,,translated
+entered {when} by {who},entered {when} by {who},أدخله {who} في {when},registrado {when} por {who},lançado {when} por {who},{who} 于 {when} 录入,screens/Inventory.tsx,when who,translated
+Keep it,Keep it,الاحتفاظ بها,Conservar,Manter,保留,screens/Inventory.tsx,,translated
+Leave empty for now.,Leave empty for now.,اتركه فارغًا للوقت الحالي.,Déjelo vacío para usar ahora.,Deixe em branco para usar agora.,留空表示现在。,screens/Inventory.tsx,,translated

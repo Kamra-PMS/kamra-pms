@@ -2120,3 +2120,9 @@ The buying unit of {0} changed. Close the window and open it again.,{0} 的采�
 The unit of {0} changed. Close the window and open it again.,{0} 的单位已变更。请关闭窗口后重新打开。
 Give a buying unit both a name and how many {0} it holds.,请同时填写采购单位的名称及其包含的 {0} 数量。
 "{0} already has stock history or is on a recipe, so its unit stays {1}.",{0} 已有库存记录或已用于配方，因此单位保持为 {1}。
+Pick a date and time.,请选择日期和时间。
+A stock entry cannot be dated in the future.,库存记录的日期不能是将来。
+A reason is required to cancel.,取消时必须填写原因。
+Stock entry not found.,未找到该库存记录。
+This entry is already cancelled.,该记录已取消。
+"Only deliveries, stock takes and wastage can be cancelled.",只能取消收货、盘点和损耗记录。

@@ -13256,7 +13256,7 @@
         "kamra.inventory.receive_stock"
        ]
       },
-      "description": "Goods in. rows = [{ingredient, qty, cost_per_unit?, note?, uom?,\nin_buying_unit?, buy_uom?, buy_size?}]. qty and cost_per_unit are in the\nunit chosen: the stock unit, or the buying unit with in_buying_unit\n(buy_size changes the pack size for this delivery only; uom and buy_uom are\nthe units the screen showed, and a row is refused if either has changed\nsince). One batch_id ties the delivery together, which is why\nthis needs no Stock Receipt doctype: a receipt is just its ledger rows plus\na supplier and an invoice number.",
+      "description": "Goods in. rows = [{ingredient, qty, cost_per_unit?, note?, uom?,\nin_buying_unit?, buy_uom?, buy_size?}]. qty and cost_per_unit are in the\nunit chosen: the stock unit, or the buying unit with in_buying_unit\n(buy_size changes the pack size for this delivery only; uom and buy_uom are\nthe units the screen showed, and a row is refused if either has changed\nsince). One batch_id ties the delivery together, which is why\nthis needs no Stock Receipt doctype: a receipt is just its ledger rows plus\na supplier and an invoice number. posted_at dates a delivery that happened\nearlier; it is costed with the stock and cost as they are now.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"rows\": \"<rows>\"\n}",
@@ -13293,7 +13293,7 @@
         "kamra.inventory.adjust_stock"
        ]
       },
-      "description": "The stock take, and the escape hatch for everything this module cannot\nknow. rows = [{ingredient, counted_qty}] - COUNTS, not deltas, exactly\nlike laundry's return_items: a human reports what is physically on the\nshelf and the system works out its own error.\n\nThe note is required on purpose. A write-off with no reason is precisely\nthe silence this module exists to remove - the same call laundry's\nshortage guard makes when it refuses to deliver a short bag unexplained.",
+      "description": "The stock take, and the escape hatch for everything this module cannot\nknow. rows = [{ingredient, counted_qty}] - COUNTS, not deltas, exactly\nlike laundry's return_items: a human reports what is physically on the\nshelf and the system works out its own error.\n\nThe note is required on purpose. A write-off with no reason is precisely\nthe silence this module exists to remove - the same call laundry's\nshortage guard makes when it refuses to deliver a short bag unexplained.\n\nEvery count is recorded, a count with no difference too: it fixes what was\non the shelf at that moment against anything dated earlier. posted_at says\nwhen the shelf was counted; the difference is against that moment.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"rows\": \"<rows>\",\n  \"note\": \"<note>\"\n}",
@@ -13334,6 +13334,43 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"ingredient\": \"<ingredient>\",\n  \"qty\": \"<qty>\",\n  \"reason_note\": \"<reason_note>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "cancel_stock_entry",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.inventory.cancel_stock_entry",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.inventory.cancel_stock_entry"
+       ]
+      },
+      "description": "Take back a delivery, a stock take or a wastage entry. `entry` is any\nline of it: a delivery or a stock take goes as a whole. The lines stay in\nhistory, marked cancelled, moving nothing on their date, and later\nbalances and stock takes are worked again. A cancelled delivery's price is\ntaken out of the cost only while that is safe; `cost_unchanged` names the\ningredients to check by hand.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"entry\": \"<entry>\",\n  \"reason\": \"<reason>\"\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -13404,10 +13441,47 @@
         "kamra.inventory.ingredient_ledger"
        ]
       },
-      "description": "Where did my paneer go? Newest first, each row carrying the balance it\nproduced, so the history explains the number on the shelf.\n\npurchases_only lists the deliveries alone, from every outlet of the\nproperty (an ingredient has one cost), with their own limit: kitchen usage\nwould otherwise push them off the end.",
+      "description": "Where did my paneer go? Newest first by when it happened, each row\ncarrying the balance it produced, so the history explains the number on the\nshelf. Cancelled lines stay, saying who took them back and why;\nbatch_ingredients names everything in the line's entry.\n\npurchases_only lists the deliveries alone, from every outlet of the\nproperty (an ingredient has one cost), with their own limit: kitchen usage\nwould otherwise push them off the end.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"ingredient\": \"<ingredient>\",\n  \"limit\": 50,\n  \"purchases_only\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "stock_at",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.inventory.stock_at",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.inventory.stock_at"
+       ]
+      },
+      "description": "What the outlet's shelf held at a moment, per ingredient: today's figure\nless everything dated after it. The stock take screen compares against\nthis when the count is dated in the past.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"at\": \"<at>\"\n}",
        "options": {
         "raw": {
          "language": "json"

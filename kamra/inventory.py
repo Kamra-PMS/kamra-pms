@@ -120,7 +120,7 @@ def _apply_move(property: str, outlet: str, ingredient: str,
                 supplier: str | None = None, invoice_no: str | None = None,
                 batch_id: str | None = None, set_counted: bool = False,
                 set_qty: float | None = None, cost: float | None = None,
-                extra: dict | None = None) -> float:
+                extra: dict | None = None, posted_at: str | None = None) -> float:
 	"""THE only writer of qty_on_hand. One move = one locked row + one ledger
 	entry, in one transaction. Never blocks: a move that takes the balance
 	negative still lands, because a stale count must not stop service.
@@ -131,38 +131,124 @@ def _apply_move(property: str, outlet: str, ingredient: str,
 	one transaction, so the lock spans the read and the write. This is not a
 	novelty here: reservation.py locks a Room row the same way to stop a
 	double booking. Do not "simplify" it away.
+
+	`posted_at` dates the move in the past: it goes in at that moment and the
+	later balances are worked again (_ripple). Without it the move happens now,
+	stamped after the lock, so no row dated "now" can land before it. Never
+	pass a time read before the lock. Answers with the stock on hand afterwards.
 	"""
 	name = _stock_row(property, outlet, ingredient, for_update=True)
 	current = float(frappe.db.get_value("Ingredient Stock", name, "qty_on_hand",
 	                                    for_update=True) or 0)
+	back = posted_at is not None
+	posted_at = posted_at or frappe.utils.now()
+	# what the shelf held just before this move
+	before = current - _moved_after(outlet, ingredient, posted_at) if back else current
 	# A count reports what is on the shelf. Applying a delta taken before
 	# the lock would miss a sale that landed while this count waited.
-	if set_qty is not None:
+	counting = set_qty is not None
+	if counting:
 		after = float(set_qty)
-		qty_change = after - current
+		qty_change = after - before
 	else:
-		after = current + float(qty_change)
+		after = before + float(qty_change)
+	effect = (_ripple(outlet, ingredient, float(qty_change), after=(posted_at,))
+	          if back else float(qty_change))
+	on_hand = current + effect
 	# a delivery names the price paid; any other move snapshots today's cost
 	if cost is None:
 		cost = frappe.db.get_value("Ingredient", ingredient, "cost_per_unit")
 
-	frappe.db.set_value("Ingredient Stock", name, "qty_on_hand", after,
+	frappe.db.set_value("Ingredient Stock", name, "qty_on_hand", on_hand,
 	                    update_modified=False)
-	if set_counted:
-		frappe.db.set_value("Ingredient Stock", name, {
-			"last_counted_at": frappe.utils.now(),
-			"last_counted_by": frappe.session.user,
-		}, update_modified=False)
 
-	frappe.get_doc({
+	entry = frappe.get_doc({
 		"doctype": "Ingredient Ledger Entry", "property": property, "outlet": outlet,
 		"ingredient": ingredient, "qty_change": float(qty_change),
-		"balance_after": after, "reason": reason,
+		"balance_after": after, "reason": reason, "posted_at": posted_at,
+		"counted_qty": after if counting else 0,
 		"reference_doctype": ref_dt, "reference_name": ref_dn, "note": note,
 		"supplier": supplier, "invoice_no": invoice_no, "batch_id": batch_id,
 		"cost_per_unit": cost, **(extra or {}),
-	}).insert(ignore_permissions=True)
-	return after
+	})
+	entry.flags.stock_effect, entry.flags.on_hand = effect, on_hand
+	entry.insert(ignore_permissions=True)
+	if set_counted:
+		_stamp_counted(name, outlet, ingredient)
+	return on_hand
+
+
+def _stamp_counted(stock_row: str, outlet: str, ingredient: str) -> None:
+	"""The shelf says when it was last counted: the newest stock take still
+	standing, which a back-dated one need not be."""
+	last = frappe.get_all(
+		"Ingredient Ledger Entry",
+		filters={"outlet": outlet, "ingredient": ingredient, "reason": "Count",
+		         "cancelled": 0},
+		fields=["posted_at", "owner"], order_by="posted_at desc, creation desc", limit=1)
+	frappe.db.set_value("Ingredient Stock", stock_row, {
+		"last_counted_at": last[0].posted_at if last else None,
+		"last_counted_by": last[0].owner if last else None,
+	}, update_modified=False)
+
+
+# A ledger row's place in its (ingredient, outlet) history is
+# (posted_at, creation, name). "After" an insert is just a later posted_at:
+# the new row is the newest typed at its own moment.
+_PLACE = "(posted_at, creation, name)"
+
+
+def _later_than(place: tuple) -> tuple:
+	"""SQL condition and values for "comes after this place"."""
+	if len(place) == 1:
+		return "posted_at > %s", list(place)
+	return f"{_PLACE} > (%s, %s, %s)", list(place)
+
+
+def _moved_after(outlet: str, ingredient: str, posted_at: str) -> float:
+	return float(frappe.db.sql(
+		"""select coalesce(sum(qty_change), 0) from `tabIngredient Ledger Entry`
+		where ingredient = %s and outlet = %s and posted_at > %s""",
+		(ingredient, outlet, posted_at))[0][0])
+
+
+def _later_count(outlet: str, ingredient: str, after: tuple):
+	"""The first stock take still standing after this place, or None."""
+	cond, values = _later_than(after)
+	rows = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- the condition is one of two constants; values are parameters
+		f"""select name, posted_at, creation from `tabIngredient Ledger Entry`
+		where ingredient = %s and outlet = %s and reason = 'Count' and cancelled = 0
+		  and {cond}
+		order by posted_at, creation, name limit 1""",
+		[ingredient, outlet, *values], as_dict=True)
+	return rows[0] if rows else None
+
+
+def _ripple(outlet: str, ingredient: str, delta: float, *, after: tuple) -> float:
+	"""A change of `delta` appears at a place in history: carry it forward.
+
+	A stock take says what was on the shelf at its moment, so it absorbs the
+	change - its own difference moves by -delta and nothing after it does.
+	Answers with how much the stock on hand now changes. The caller holds the
+	stock row's lock, so no other writer is adding rows meanwhile. Two set-based
+	updates at most: a date far back must not hold the kitchen up row by row."""
+	if not delta:
+		return 0.0
+	count = _later_count(outlet, ingredient, after)
+	cond, values = _later_than(after)
+	if count:
+		cond += f" and {_PLACE} < (%s, %s, %s)"
+		values += [count.posted_at, count.creation, count.name]
+	frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- constant conditions; values are parameters
+		f"""update `tabIngredient Ledger Entry` set balance_after = balance_after + %s
+		where ingredient = %s and outlet = %s and {cond}""",
+		[delta, ingredient, outlet, *values])
+	if not count:
+		return delta
+	frappe.db.sql(
+		"""update `tabIngredient Ledger Entry` set qty_change = qty_change - %s
+		where name = %s""", (delta, count.name))
+	return 0.0
 
 
 def _recipes_of(menu_items) -> dict:
@@ -549,33 +635,37 @@ def _delivery_line(row: dict, ing: dict) -> dict:
 	}
 
 
-@frappe.whitelist(methods=["POST"])
-@require_perm("Ingredient", "manage_stock")
-def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
-                  invoice_no: str | None = None):
-	"""Goods in. rows = [{ingredient, qty, cost_per_unit?, note?, uom?,
-	in_buying_unit?, buy_uom?, buy_size?}]. qty and cost_per_unit are in the
-	unit chosen: the stock unit, or the buying unit with in_buying_unit
-	(buy_size changes the pack size for this delivery only; uom and buy_uom are
-	the units the screen showed, and a row is refused if either has changed
-	since). One batch_id ties the delivery together, which is why
-	this needs no Stock Receipt doctype: a receipt is just its ledger rows plus
-	a supplier and an invoice number."""
-	from kamra.settings import get_setting
+def _moment(value):
+	"""A date and time as the screens send it (the site's own time, no zone
+	named), or a refusal."""
+	try:
+		when = frappe.utils.get_datetime(value)
+	except (ValueError, TypeError, OverflowError):
+		when = None
+	if not when or when.tzinfo:
+		frappe.throw(_("Pick a date and time."))
+	return when
 
-	if isinstance(rows, str):
-		rows = frappe.parse_json(rows)
-	if not rows:
-		frappe.throw(_("Nothing to receive."))
-	check_outlet(property, outlet)
-	names = sorted({r["ingredient"] for r in rows})
-	# One delivery at a time per ingredient, with stock and cost read after the
-	# lock. The transaction this request has been reading in ends first: its
-	# snapshot would not show a delivery that committed while this one waited.
+
+def _when(posted_at) -> str | None:
+	"""The moment a manual stock entry is dated, or None for "now"."""
+	if posted_at in (None, ""):
+		return None
+	when = _moment(posted_at)
+	if when > frappe.utils.now_datetime():
+		frappe.throw(_("A stock entry cannot be dated in the future."))
+	return str(when)
+
+
+def _lock_for_writing(property: str, names: list) -> dict:
+	"""Start a manual stock entry: hold these ingredients and their stock rows,
+	then read them. One manual entry at a time per ingredient, with stock, cost
+	and history read after the lock - so the transaction this request has been
+	reading in ends first (nothing is written yet): its snapshot would not show
+	an entry that committed while this one waited."""
 	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- nothing written yet; the reads after the lock need a fresh snapshot
 	_lock_ingredients(names)
 	_lock_stock(names)
-
 	held = {}
 	for name in names:
 		ing = frappe.db.get_value(
@@ -585,6 +675,39 @@ def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
 		if not ing or ing.property != property:
 			frappe.throw(_("{0} belongs to another property.").format(name))
 		held[name] = ing
+	return held
+
+
+def _priced_after(ingredient: str, posted_at: str) -> bool:
+	"""A delivery with a price, still standing, dated after this moment - at
+	any outlet, since an ingredient has one cost."""
+	return bool(frappe.db.exists("Ingredient Ledger Entry", {
+		"ingredient": ingredient, "reason": "Received", "price_entry": "Entered",
+		"cancelled": 0, "posted_at": [">", posted_at]}))
+
+
+@frappe.whitelist(methods=["POST"])
+@require_perm("Ingredient", "manage_stock")
+def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
+                  invoice_no: str | None = None, posted_at: str | None = None):
+	"""Goods in. rows = [{ingredient, qty, cost_per_unit?, note?, uom?,
+	in_buying_unit?, buy_uom?, buy_size?}]. qty and cost_per_unit are in the
+	unit chosen: the stock unit, or the buying unit with in_buying_unit
+	(buy_size changes the pack size for this delivery only; uom and buy_uom are
+	the units the screen showed, and a row is refused if either has changed
+	since). One batch_id ties the delivery together, which is why
+	this needs no Stock Receipt doctype: a receipt is just its ledger rows plus
+	a supplier and an invoice number. posted_at dates a delivery that happened
+	earlier; it is costed with the stock and cost as they are now."""
+	from kamra.settings import get_setting
+
+	if isinstance(rows, str):
+		rows = frappe.parse_json(rows)
+	if not rows:
+		frappe.throw(_("Nothing to receive."))
+	check_outlet(property, outlet)
+	posted_at = _when(posted_at)
+	held = _lock_for_writing(property, sorted({r["ingredient"] for r in rows}))
 	# every row is checked before any of them moves
 	lines = [_delivery_line(r, held[r["ingredient"]]) for r in rows]
 
@@ -596,13 +719,21 @@ def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
 		on_hand = sum(float(q or 0) for q in frappe.get_all(
 			"Ingredient Stock", filters={"ingredient": ing}, pluck="qty_on_hand"))
 		cost = float(frappe.db.get_value("Ingredient", ing, "cost_per_unit") or 0)
-		new_cost = cost_after_receipt(method, on_hand, cost, line["qty"], price)
+		# the stock these goods join: today's total, unless a later stock take at
+		# this outlet already holds them - then it is the total less them
+		if posted_at and _later_count(outlet, ing, (posted_at,)):
+			on_hand -= line["qty"]
+		if posted_at and method != AVERAGE_COST and _priced_after(ing, posted_at):
+			new_cost = cost  # a newer-dated delivery names the last price paid
+		else:
+			new_cost = cost_after_receipt(method, on_hand, cost, line["qty"], price)
 		if new_cost != cost:
 			frappe.db.set_value("Ingredient", ing, "cost_per_unit", new_cost)
 		after = _apply_move(
 			property, outlet, ing, line["qty"], "Received",
 			supplier=supplier, invoice_no=invoice_no, batch_id=batch,
 			note=line["note"], cost=cost if price is None else round(price, 6),
+			posted_at=posted_at,
 			extra={
 				**{k: line[k] for k in ("purchase_qty", "purchase_uom",
 				                        "purchase_size", "purchase_price")},
@@ -621,7 +752,8 @@ def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
 
 @frappe.whitelist(methods=["POST"])
 @require_perm("Ingredient", "manage_stock")
-def adjust_stock(property: str, outlet: str, rows, note: str):
+def adjust_stock(property: str, outlet: str, rows, note: str,
+                 posted_at: str | None = None):
 	"""The stock take, and the escape hatch for everything this module cannot
 	know. rows = [{ingredient, counted_qty}] - COUNTS, not deltas, exactly
 	like laundry's return_items: a human reports what is physically on the
@@ -630,6 +762,10 @@ def adjust_stock(property: str, outlet: str, rows, note: str):
 	The note is required on purpose. A write-off with no reason is precisely
 	the silence this module exists to remove - the same call laundry's
 	shortage guard makes when it refuses to deliver a short bag unexplained.
+
+	Every count is recorded, a count with no difference too: it fixes what was
+	on the shelf at that moment against anything dated earlier. posted_at says
+	when the shelf was counted; the difference is against that moment.
 	"""
 	if isinstance(rows, str):
 		rows = frappe.parse_json(rows)
@@ -639,21 +775,24 @@ def adjust_stock(property: str, outlet: str, rows, note: str):
 	if not rows:
 		frappe.throw(_("Nothing counted."))
 	check_outlet(property, outlet)
+	posted_at = _when(posted_at)
+	_lock_for_writing(property, sorted({r["ingredient"] for r in rows}))
 	batch = uuid.uuid4().hex[:12]
 	out = []
 	for r in rows:
 		ing = r["ingredient"]
 		counted = float(r.get("counted_qty") or 0)
 		name = _stock_row(property, outlet, ing, for_update=True)
-		current = float(frappe.db.get_value("Ingredient Stock", name, "qty_on_hand",
-		                                    for_update=True) or 0)
-		if abs(counted - current) < 1e-9:
-			continue  # counted exactly what we thought: nothing to record
-		after = _apply_move(property, outlet, ing, 0, "Count",
-		                    note=note.strip()[:500], batch_id=batch,
-		                    set_counted=True, set_qty=counted)
-		out.append({"ingredient": ing, "was": current, "now": after,
-		            "variance": after - current})
+		expected = float(frappe.db.get_value("Ingredient Stock", name, "qty_on_hand",
+		                                     for_update=True) or 0)
+		if posted_at:
+			expected -= _moved_after(outlet, ing, posted_at)
+		_apply_move(property, outlet, ing, 0, "Count",
+		            note=note.strip()[:500], batch_id=batch,
+		            set_counted=True, set_qty=counted, posted_at=posted_at)
+		if abs(counted - expected) >= 1e-9:
+			out.append({"ingredient": ing, "was": expected, "now": counted,
+			            "variance": counted - expected})
 
 	if out:
 		from kamra.savings import log_action
@@ -671,7 +810,7 @@ def adjust_stock(property: str, outlet: str, rows, note: str):
 @frappe.whitelist(methods=["POST"])
 @require_perm("Ingredient", "manage_stock")
 def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
-                   reason_note: str):
+                   reason_note: str, posted_at: str | None = None):
 	"""Stock destroyed OUTSIDE a sale: a crate of tomatoes rots, a bottle
 	breaks. No POS line exists, so only a real ledger row can say it happened.
 
@@ -685,8 +824,11 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 	if not (reason_note or "").strip():
 		frappe.throw(_("Wastage needs a reason."))
 	check_outlet(property, outlet)
+	posted_at = _when(posted_at)
+	_lock_for_writing(property, [ingredient])
 	after = _apply_move(property, outlet, ingredient, -qty, "Wastage",
-	                    note=reason_note.strip()[:500])
+	                    note=reason_note.strip()[:500], batch_id=uuid.uuid4().hex[:12],
+	                    posted_at=posted_at)
 	from kamra.savings import log_action
 	cost = float(frappe.db.get_value("Ingredient", ingredient, "cost_per_unit") or 0)
 	log_action("stock_wastage", "Ingredient", ingredient, property,
@@ -694,6 +836,134 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 	                     f"{reason_note.strip()[:80]}",
 	           channel="API")
 	return {"ok": True, "qty_on_hand": after}
+
+
+# ----------------------------------------------------------------- cancel
+
+# Every ledger reason is on one of these two lists. Only what someone typed by
+# hand can be taken back; the rest (kitchen and banquet usage, the demo's
+# opening rows, anything added later) is put right with a stock take.
+CANCELLABLE = ("Received", "Count", "Wastage")
+NOT_CANCELLABLE = ("Opening", "Consumed")
+
+
+@frappe.whitelist(methods=["POST"])
+@require_perm("Ingredient", "cancel_stock", scope={"entry": "Ingredient Ledger Entry"})
+def cancel_stock_entry(property: str, entry: str, reason: str):
+	"""Take back a delivery, a stock take or a wastage entry. `entry` is any
+	line of it: a delivery or a stock take goes as a whole. The lines stay in
+	history, marked cancelled, moving nothing on their date, and later
+	balances and stock takes are worked again. A cancelled delivery's price is
+	taken out of the cost only while that is safe; `cost_unchanged` names the
+	ingredients to check by hand."""
+	from kamra.settings import get_setting
+
+	if not (reason or "").strip():
+		frappe.throw(_("A reason is required to cancel."))
+	first = frappe.db.get_value(
+		"Ingredient Ledger Entry", entry, ["property", "batch_id"], as_dict=True)
+	if not first or first.property != property:
+		frappe.throw(_("Stock entry not found."))
+	filters = ({"batch_id": first.batch_id, "property": property}
+	           if first.batch_id else {"name": entry})
+	picked = frappe.get_all(
+		"Ingredient Ledger Entry", filters=filters, fields=["name", "ingredient"])
+	_lock_for_writing(property, sorted({r.ingredient for r in picked}))
+	# read again after the lock: someone may have cancelled it while we waited.
+	# Newest first, so two lines of one ingredient are undone in turn.
+	rows = frappe.get_all(
+		"Ingredient Ledger Entry", filters={"name": ["in", [r.name for r in picked]]},
+		fields=["name", "reason", "cancelled"], order_by="creation desc, name desc")
+	if any(r.cancelled for r in rows):
+		frappe.throw(_("This entry is already cancelled."))
+	if any(r.reason not in CANCELLABLE for r in rows):
+		frappe.throw(_("Only deliveries, stock takes and wastage can be cancelled."))
+	method = get_setting(property, "stock_cost_method")
+	why = reason.strip()[:500]
+	unchanged = []
+	for r in rows:
+		row = _cancel_row(r.name, why)
+		if row.reason == "Received" and not _restore_cost(row, method):
+			unchanged.append(
+				frappe.db.get_value("Ingredient", row.ingredient, "ingredient_name"))
+	from kamra.savings import log_action
+	log_action("stock_cancel", "Ingredient Ledger Entry", entry, property,
+	           rationale=f"{len(rows)} stock line(s) cancelled - {why[:80]}",
+	           channel="API")
+	return {"ok": True, "cancelled": len(rows),
+	        "cost_unchanged": list(dict.fromkeys(unchanged))}
+
+
+def _cancel_row(name: str, why: str):
+	"""Zero one ledger line and carry that forward. Answers with the line as it
+	was. The caller holds the ingredient's locks."""
+	row = frappe.db.get_value(
+		"Ingredient Ledger Entry", name,
+		["name", "property", "outlet", "ingredient", "reason", "qty_change",
+		 "balance_after", "posted_at", "creation", "price_entry", "cost_before", "cost_after"],
+		as_dict=True, for_update=True)
+	delta = -float(row.qty_change or 0)
+	frappe.db.set_value("Ingredient Ledger Entry", name, {
+		"cancelled": 1, "cancelled_by": frappe.session.user,
+		"cancelled_at": frappe.utils.now(), "cancel_reason": why,
+		"original_qty_change": row.qty_change, "qty_change": 0,
+		"balance_after": float(row.balance_after or 0) + delta,
+	}, update_modified=False)
+	stock = _stock_row(row.property, row.outlet, row.ingredient, for_update=True)
+	current = float(frappe.db.get_value("Ingredient Stock", stock, "qty_on_hand",
+	                                    for_update=True) or 0)
+	effect = _ripple(row.outlet, row.ingredient, delta,
+	                 after=(row.posted_at, row.creation, row.name))
+	frappe.db.set_value("Ingredient Stock", stock, "qty_on_hand", current + effect,
+	                    update_modified=False)
+	if row.reason == "Count":
+		_stamp_counted(stock, row.outlet, row.ingredient)
+	from kamra.notifications import low_stock_crossed
+	low_stock_crossed(row.property, row.outlet, row.ingredient, effect, current + effect)
+	return row
+
+
+def _restore_cost(row, method: str) -> bool:
+	"""After a delivery line is cancelled, take its price out of the cost. False
+	when the cost can no longer be worked back and someone should look at it.
+
+	Only the cost this very line set is touched. With an average, the old cost
+	returns unless a later-typed delivery was averaged on top of it - walking
+	back through earlier ones already cancelled. With "last price paid", the
+	newest-dated delivery still standing names the price."""
+	if row.price_entry == "Not entered":
+		return True  # it never touched the cost
+	if row.price_entry != "Entered":
+		return False  # from before prices were kept this way
+
+	def same(a, b):
+		return abs(float(a or 0) - float(b or 0)) < 1e-6
+
+	cost = frappe.db.get_value("Ingredient", row.ingredient, "cost_per_unit")
+	if not same(cost, row.cost_after):
+		return False
+	priced = {"ingredient": row.ingredient, "reason": "Received",
+	          "price_entry": "Entered", "name": ["!=", row.name]}
+	if method == AVERAGE_COST:
+		if frappe.db.exists("Ingredient Ledger Entry",
+		                    {**priced, "cancelled": 0, "creation": [">", row.creation]}):
+			return False
+		target = row.cost_before
+		for earlier in frappe.get_all(
+				"Ingredient Ledger Entry",
+				filters={**priced, "creation": ["<", row.creation]},
+				fields=["cancelled", "cost_before", "cost_after"],
+				order_by="creation desc, name desc"):
+			if not earlier.cancelled or not same(earlier.cost_after, target):
+				break
+			target = earlier.cost_before
+	else:
+		newest = frappe.get_all(
+			"Ingredient Ledger Entry", filters={**priced, "cancelled": 0},
+			fields=["cost_per_unit"], order_by="posted_at desc, creation desc", limit=1)
+		target = newest[0].cost_per_unit if newest else row.cost_before
+	frappe.db.set_value("Ingredient", row.ingredient, "cost_per_unit", float(target or 0))
+	return True
 
 
 # ----------------------------------------------------------------- reads
@@ -747,8 +1017,10 @@ def stock_list(property: str, outlet: str, status: str | None = None,
 @require_perm("Ingredient", "view_stock")
 def ingredient_ledger(property: str, outlet: str, ingredient: str,
                       limit: int = 50, purchases_only: int = 0):
-	"""Where did my paneer go? Newest first, each row carrying the balance it
-	produced, so the history explains the number on the shelf.
+	"""Where did my paneer go? Newest first by when it happened, each row
+	carrying the balance it produced, so the history explains the number on the
+	shelf. Cancelled lines stay, saying who took them back and why;
+	batch_ingredients names everything in the line's entry.
 
 	purchases_only lists the deliveries alone, from every outlet of the
 	property (an ingredient has one cost), with their own limit: kitchen usage
@@ -765,8 +1037,10 @@ def ingredient_ledger(property: str, outlet: str, ingredient: str,
 		        "reference_doctype", "reference_name", "note", "supplier",
 		        "invoice_no", "cost_per_unit", "purchase_qty", "purchase_uom",
 		        "purchase_size", "purchase_price", "price_entry", "cost_after",
-		        "owner"],
-		order_by="creation desc", limit=int(limit or 50))
+		        "owner", "posted_at", "batch_id", "cancelled", "cancelled_by",
+		        "cancelled_at", "cancel_reason", "original_qty_change"],
+		order_by="posted_at desc, creation desc", limit=int(limit or 50))
+	_name_the_entries(rows)
 	if purchases and rows:
 		names = {o.name: o.outlet_name for o in frappe.get_all(
 			"POS Outlet", filters={"name": ["in", list({r.outlet for r in rows})]},
@@ -774,6 +1048,43 @@ def ingredient_ledger(property: str, outlet: str, ingredient: str,
 		for r in rows:
 			r["outlet_name"] = names.get(r.outlet)
 	return rows
+
+
+def _name_the_entries(rows: list) -> None:
+	"""Give each line the names of every ingredient in its entry (a delivery
+	or a stock take covers several): what a cancel would take back."""
+	batches = {r.batch_id for r in rows if r.batch_id}
+	lines = frappe.get_all(
+		"Ingredient Ledger Entry",
+		filters={"batch_id": ["in", list(batches) or [""]]},
+		fields=["batch_id", "ingredient"], order_by="creation asc") if rows else []
+	names = {i.name: i.ingredient_name for i in frappe.get_all(
+		"Ingredient", filters={"name": ["in", [x.ingredient for x in lines] or [""]]},
+		fields=["name", "ingredient_name"])}
+	held = {}
+	for x in lines:
+		held.setdefault(x.batch_id, {})[names.get(x.ingredient, x.ingredient)] = 1
+	for r in rows:
+		r["batch_ingredients"] = list(held.get(r.batch_id, {}))
+
+
+@frappe.whitelist()
+@require_perm("Ingredient", "view_stock")
+def stock_at(property: str, outlet: str, at: str):
+	"""What the outlet's shelf held at a moment, per ingredient: today's figure
+	less everything dated after it. The stock take screen compares against
+	this when the count is dated in the past."""
+	moment = str(_moment(at))
+	held = {r.ingredient: float(r.qty_on_hand or 0) for r in frappe.get_all(
+		"Ingredient Stock", filters={"property": property, "outlet": outlet},
+		fields=["ingredient", "qty_on_hand"])}
+	for ingredient, later in frappe.db.sql(
+			"""select ingredient, sum(qty_change) from `tabIngredient Ledger Entry`
+			where property = %s and outlet = %s and posted_at > %s
+			group by ingredient""", (property, outlet, moment)):
+		if ingredient in held:
+			held[ingredient] -= float(later or 0)
+	return held
 
 
 @frappe.whitelist()

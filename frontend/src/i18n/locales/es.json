@@ -7201,5 +7201,17 @@
   "cost not complete": "costo incompleto",
   "Cost per portion": "Costo por porción",
   "Menu price": "Precio de carta",
-  "no cost": "sin costo"
+  "no cost": "sin costo",
+  "Cancel delivery": "Cancelar entrega",
+  "Cancel stock take": "Cancelar inventario",
+  "Cancel this wastage?": "¿Cancelar esta merma?",
+  "Cancel this whole delivery?": "¿Cancelar toda la entrega?",
+  "Cancel this whole stock take?": "¿Cancelar todo el inventario?",
+  "Cancel wastage": "Cancelar merma",
+  "Cancelled {when} by {who}: {why}": "Cancelado {when} por {who}: {why}",
+  "Cost not changed: it has moved since. Check it on the ingredient.": "El costo no cambió: se ha modificado desde entonces. Revíselo en el ingrediente.",
+  "Date and time": "Fecha y hora",
+  "entered {when} by {who}": "registrado {when} por {who}",
+  "Keep it": "Conservar",
+  "Leave empty for now.": "Déjelo vacío para usar ahora."
 }

@@ -88,7 +88,7 @@
   }
  ],
  "links": [],
- "modified": "2026-11-26 14:00:00.000000",
+ "modified": "2026-11-26 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Ingredient",
@@ -106,7 +106,8 @@
    "share": 1,
    "write": 1,
    "manage_stock": 1,
-   "view_stock": 1
+   "view_stock": 1,
+   "cancel_stock": 1
   },
   {
    "create": 1,
@@ -119,7 +120,8 @@
    "share": 1,
    "write": 1,
    "manage_stock": 1,
-   "view_stock": 1
+   "view_stock": 1,
+   "cancel_stock": 1
   },
   {
    "create": 1,

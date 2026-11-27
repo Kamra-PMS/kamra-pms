@@ -64,3 +64,9 @@ The buying unit of {0} changed. Close the window and open it again.,Kipimo cha k
 The unit of {0} changed. Close the window and open it again.,Kipimo cha {0} kimebadilika. Funga dirisha ulifungue tena.
 Give a buying unit both a name and how many {0} it holds.,Kipe kipimo cha kununulia jina na idadi ya {0} kilichonayo.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} tayari ina historia ya stoo au iko kwenye pishi, kwa hiyo kipimo chake kinabaki {1}."
+Pick a date and time.,Chagua tarehe na saa.
+A stock entry cannot be dated in the future.,Ingizo la hifadhi haliwezi kuwa na tarehe ya baadaye.
+A reason is required to cancel.,Sababu inahitajika ili kughairi.
+Stock entry not found.,Ingizo la hifadhi halikupatikana.
+This entry is already cancelled.,Ingizo hili tayari limeghairiwa.
+"Only deliveries, stock takes and wastage can be cancelled.","Ni upokeaji, hesabu za hifadhi na upotevu pekee vinavyoweza kughairiwa."

@@ -1145,3 +1145,9 @@ The buying unit of {0} changed. Close the window and open it again.,La unidad de
 The unit of {0} changed. Close the window and open it again.,La unidad de {0} cambió. Cierre la ventana y ábrala de nuevo.
 Give a buying unit both a name and how many {0} it holds.,Indique el nombre de la unidad de compra y cuántos {0} contiene.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} ya tiene historial de existencias o está en una receta, así que su unidad sigue siendo {1}."
+Pick a date and time.,Elija fecha y hora.
+A stock entry cannot be dated in the future.,Un movimiento de existencias no puede tener fecha futura.
+A reason is required to cancel.,Se necesita un motivo para cancelar.
+Stock entry not found.,No se encontró el movimiento de existencias.
+This entry is already cancelled.,Este movimiento ya está cancelado.
+"Only deliveries, stock takes and wastage can be cancelled.","Solo se pueden cancelar entregas, inventarios y mermas."

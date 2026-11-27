@@ -11,6 +11,7 @@ import { t as translate, useUILanguage, uiDateLocale } from "../lib/i18n"
 import {
   defaultEntry, fmtUnitCost, receiveLine, receiveRow, type ReceiveEntry,
 } from "../lib/stockCost"
+import { enteredLater, postedAt } from "../lib/stockDates"
 
 /* Kitchen stock. Two things here are deliberate and read as bugs if you don't
    know why:
@@ -59,6 +60,15 @@ interface LedgerRow {
   /** "" = a delivery recorded before prices were kept this way */
   price_entry: "" | "Entered" | "Not entered" | null
   cost_after: number | null
+  posted_at: string | null
+  owner: string
+  /** every ingredient in this line's delivery or stock take */
+  batch_ingredients: string[]
+  cancelled: 0 | 1
+  cancelled_by: string | null
+  cancelled_at: string | null
+  cancel_reason: string | null
+  original_qty_change: number | null
 }
 interface LowRow {
   ingredient: string
@@ -70,6 +80,14 @@ interface LowRow {
 }
 
 const WRITE_ROLES = ["Finance", "F&B Manager", "Hotel Admin", "System Manager", "Administrator"]
+const CANCEL_ROLES = ["Hotel Admin", "System Manager", "Administrator"]
+/** What was typed by hand can be taken back; kitchen and banquet usage cannot. */
+const CANCELLABLE = ["Received", "Count", "Wastage"]
+function cancelWords(reason: string) {
+  if (reason === "Received") return { ask: translate("Cancel this whole delivery?"), yes: translate("Cancel delivery") }
+  if (reason === "Count") return { ask: translate("Cancel this whole stock take?"), yes: translate("Cancel stock take") }
+  return { ask: translate("Cancel this wastage?"), yes: translate("Cancel wastage") }
+}
 const STATUSES: Status[] = ["NEGATIVE", "OUT", "LOW", "OK"]
 
 const TONE: Record<Status, string> = {
@@ -92,6 +110,29 @@ function StatusChip({ s }: { s: Status }) {
     <span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide", TONE[s])}>
       {s === "NEGATIVE" && <TriangleAlert className="size-3" />}{translate(s)}
     </span>
+  )
+}
+
+/** When a stock entry happened. Left empty, it happens now. */
+function DateField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  useUILanguage()
+  const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+  return (
+    <label className="mb-3 flex flex-wrap items-center gap-2 text-sm text-zinc-600">
+      <span className="font-medium">{translate("Date and time")}</span>
+      <input type="datetime-local" max={now} value={value} onChange={(e) => onChange(e.target.value)}
+        className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm tabular-nums" />
+      {!value && <span className="text-xs text-zinc-400">{translate("Leave empty for now.")}</span>}
+    </label>
+  )
+}
+
+function Refusal({ error }: { error: string | null }) {
+  if (!error) return null
+  return (
+    <div role="alert" className="mt-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+      {error}
+    </div>
   )
 }
 
@@ -125,6 +166,7 @@ export default function Inventory() {
   useUILanguage()
   const { allowed } = useAuth()
   const canWrite = allowed("Ingredient", "manage_stock", WRITE_ROLES)
+  const canCancel = allowed("Ingredient", "cancel_stock", CANCEL_ROLES)
 
   const [outlets, setOutlets] = useState<{ name: string; outlet_name: string }[]>([])
   const [outlet, setOutlet] = useState("")
@@ -198,9 +240,9 @@ export default function Inventory() {
               {/* reloaded on opening: a delivery is refused when a buying unit changed since */}
               <Button variant="outline" onClick={() => { setErr(null); load(); setModal("receive") }}>
                 <Truck className="size-4" />{translate("Receive")}</Button>
-              <Button variant="outline" onClick={() => setModal("count")}>
+              <Button variant="outline" onClick={() => { setErr(null); load(); setModal("count") }}>
                 <ClipboardCheck className="size-4" />{translate("Stock take")}</Button>
-              <Button variant="outline" onClick={() => setModal("waste")}>
+              <Button variant="outline" onClick={() => { setErr(null); setModal("waste") }}>
                 <Trash2 className="size-4" />{translate("Wastage")}</Button>
             </>
           )}
@@ -323,19 +365,20 @@ export default function Inventory() {
           onSubmit={(p) => act("receive_stock", p)} />
       )}
       {modal === "count" && (
-        <CountModal rows={shelf} busy={busy}
-          onClose={() => setModal(null)} onSubmit={(p) => act("adjust_stock", p)} />
+        <CountModal rows={shelf} outlet={outlet} busy={busy} error={err}
+          onClose={() => { setErr(null); setModal(null) }} onSubmit={(p) => act("adjust_stock", p)} />
       )}
       {modal === "waste" && (
-        <WasteModal rows={shelf} busy={busy}
-          onClose={() => setModal(null)} onSubmit={(p) => act("record_wastage", p)} />
+        <WasteModal rows={shelf} busy={busy} error={err}
+          onClose={() => { setErr(null); setModal(null) }} onSubmit={(p) => act("record_wastage", p)} />
       )}
       {parOf && (
         <ParModal row={parOf} busy={busy}
           onClose={() => setParOf(null)} onSubmit={(p) => act("set_par_level", p)} />
       )}
       {ledgerOf && (
-        <LedgerModal row={ledgerOf} outlet={outlet} onClose={() => setLedgerOf(null)} />
+        <LedgerModal row={ledgerOf} outlet={outlet} canCancel={canCancel} onChanged={load}
+          onClose={() => setLedgerOf(null)} />
       )}
     </div>
   )
@@ -349,6 +392,7 @@ function ReceiveModal({ rows, busy, error, onClose, onSubmit }: {
   const [typed, setTyped] = useState<Record<string, ReceiveEntry>>({})
   const [supplier, setSupplier] = useState("")
   const [invoice, setInvoice] = useState("")
+  const [when, setWhen] = useState("")
   const entryOf = (r: StockRow) => typed[r.ingredient] ?? defaultEntry(r)
   const edit = (r: StockRow, change: Partial<ReceiveEntry>) =>
     setTyped({ ...typed, [r.ingredient]: { ...entryOf(r), ...change } })
@@ -364,6 +408,7 @@ function ReceiveModal({ rows, busy, error, onClose, onSubmit }: {
         <input className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
           placeholder={translate("Invoice no")} value={invoice} onChange={(e) => setInvoice(e.target.value)} />
       </div>
+      <DateField value={when} onChange={setWhen} />
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase text-zinc-400">
@@ -435,20 +480,16 @@ function ReceiveModal({ rows, busy, error, onClose, onSubmit }: {
         </table>
       </div>
       <p className="mt-3 text-xs text-zinc-400">{translate("A price updates the ingredient's cost as Settings, F&B says: the last price paid, or the average of purchases. Leave it empty to keep the cost.")}</p>
-      {error && (
-        <div role="alert" className="mt-3 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
-          {error}
-        </div>
-      )}
+      <Refusal error={error} />
       <Button className="mt-4 h-12 w-full justify-center" disabled={busy || !lines.length || incomplete}
-        onClick={() => onSubmit({ rows: lines, supplier: supplier || null, invoice_no: invoice || null })}>{translate("Receive ")}{lines.length || ""}{translate(" ingredient")}{lines.length === 1 ? "" : translate("s")}
+        onClick={() => onSubmit({ rows: lines, supplier: supplier || null, invoice_no: invoice || null, posted_at: postedAt(when) })}>{translate("Receive ")}{lines.length || ""}{translate(" ingredient")}{lines.length === 1 ? "" : translate("s")}
       </Button>
     </Modal>
   )
 }
 
-function CountModal({ rows, busy, onClose, onSubmit }: {
-  rows: StockRow[]; busy: boolean; onClose: () => void
+function CountModal({ rows, outlet, busy, error, onClose, onSubmit }: {
+  rows: StockRow[]; outlet: string; busy: boolean; error: string | null; onClose: () => void
   onSubmit: (p: Record<string, unknown>) => void
 }) {
   useUILanguage()
@@ -456,6 +497,20 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
   const [note, setNote] = useState("")
   const [added, setAdded] = useState<string[]>([])
   const [query, setQuery] = useState("")
+  const [when, setWhen] = useState("")
+  // a count dated in the past is compared with what the shelf held then
+  const at = postedAt(when)
+  const [past, setPast] = useState<{ at: string; held: Record<string, number> } | null>(null)
+  useEffect(() => {
+    if (!at) return
+    let live = true
+    call<Record<string, number>>("kamra.inventory.stock_at", { property: getCurrentProperty(), outlet, at })
+      .then((held) => { if (live) setPast({ at, held }) })
+      .catch(() => {})
+    return () => { live = false }
+  }, [at, outlet])
+  const expected = (r: StockRow) =>
+    !at ? r.qty_on_hand : past?.at === at ? past.held[r.ingredient] ?? 0 : null
   const shown = heldMatching(rows, added, query)
   const lines = Object.entries(counted)
     .filter(([, v]) => v !== "")
@@ -463,6 +518,7 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
   return (
     <Modal title={translate("Stock take")} onClose={onClose}>
       <p className="mb-3 text-sm text-zinc-500">{translate("Count what's physically on the shelf. Leave a row blank to skip it.")}</p>
+      <DateField value={when} onChange={setWhen} />
       <ShelfTools rows={rows} query={query} onQuery={setQuery} added={added}
         onAdd={(id) => { setAdded((prev) => prev.includes(id) ? prev : [...prev, id]); setQuery("") }} />
       {shown.length === 0 ? (
@@ -478,12 +534,13 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
           <tbody className="divide-y divide-zinc-100">
             {shown.map((r) => {
               const v = counted[r.ingredient]
-              const delta = v === "" || v === undefined ? null : Number(v) - r.qty_on_hand
+              const system = expected(r)
+              const delta = v === "" || v === undefined || system === null ? null : Number(v) - system
               return (
                 <tr key={r.ingredient}>
                   <td className="py-1.5 font-medium">{r.ingredient_name}
                     <span className="ml-1 text-xs text-zinc-400">{r.uom}</span></td>
-                  <td className="py-1.5 pr-6 text-right tabular-nums text-zinc-400">{fmt(r.qty_on_hand)}</td>
+                  <td className="py-1.5 pr-6 text-right tabular-nums text-zinc-400">{system === null ? "…" : fmt(system)}</td>
                   <td className="py-1.5">
                     {/* Deliberately blank, never pre-filled with the system qty:
                         pre-filling invites blind confirmation, which is exactly
@@ -508,16 +565,17 @@ function CountModal({ rows, busy, onClose, onSubmit }: {
       <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)}
         placeholder={translate("What did you count, and why does it differ? (required)")}
         className="mt-4 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
+      <Refusal error={error} />
       <Button className="mt-3 h-12 w-full justify-center"
         disabled={busy || !lines.length || !note.trim()}
-        onClick={() => onSubmit({ rows: lines, note })}>{translate("Apply count · ")}{lines.length}{translate(" line")}{lines.length === 1 ? "" : translate("s")}
+        onClick={() => onSubmit({ rows: lines, note, posted_at: at })}>{translate("Apply count · ")}{lines.length}{translate(" line")}{lines.length === 1 ? "" : translate("s")}
       </Button>
     </Modal>
   )
 }
 
-function WasteModal({ rows, busy, onClose, onSubmit }: {
-  rows: StockRow[]; busy: boolean; onClose: () => void
+function WasteModal({ rows, busy, error, onClose, onSubmit }: {
+  rows: StockRow[]; busy: boolean; error: string | null; onClose: () => void
   onSubmit: (p: Record<string, unknown>) => void
 }) {
   useUILanguage()
@@ -526,6 +584,7 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
   const [note, setNote] = useState("")
   const [added, setAdded] = useState<string[]>([])
   const [query, setQuery] = useState("")
+  const [when, setWhen] = useState("")
   const shown = heldMatching(rows, added, query)
   const row = rows.find((r) => r.ingredient === ingredient)
   // Keep a chosen row in the list even while a search hides its name.
@@ -567,10 +626,12 @@ function WasteModal({ rows, busy, onClose, onSubmit }: {
         <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)}
           placeholder={translate("What happened? (required)")}
           className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
+        <DateField value={when} onChange={setWhen} />
       </div>
+      <Refusal error={error} />
       <Button className="mt-4 h-12 w-full justify-center"
         disabled={busy || !ingredient || Number(qty) <= 0 || !note.trim()}
-        onClick={() => onSubmit({ ingredient, qty: Number(qty), reason_note: note })}>{translate("Write it off")}</Button>
+        onClick={() => onSubmit({ ingredient, qty: Number(qty), reason_note: note, posted_at: postedAt(when) })}>{translate("Write it off")}</Button>
     </Modal>
   )
 }
@@ -674,12 +735,15 @@ function pricedAt(e: LedgerRow): number | null {
   return e.price_entry === "Entered" || cost > 0 ? cost : null
 }
 
-function LedgerModal({ row, outlet, onClose }: {
-  row: StockRow; outlet: string; onClose: () => void
+function LedgerModal({ row, outlet, canCancel, onChanged, onClose }: {
+  row: StockRow; outlet: string; canCancel: boolean; onChanged: () => void; onClose: () => void
 }) {
   useUILanguage()
   const [tab, setTab] = useState<"all" | "purchases">("all")
   const [loaded, setLoaded] = useState<{ tab: string; entries: LedgerRow[] } | null>(null)
+  const [asking, setAsking] = useState<LedgerRow | null>(null)
+  const [version, setVersion] = useState(0)
+  const [kept, setKept] = useState<string[]>([])
   useEffect(() => {
     let live = true
     call<LedgerRow[]>("kamra.inventory.ingredient_ledger", {
@@ -688,8 +752,10 @@ function LedgerModal({ row, outlet, onClose }: {
     }).then((entries) => { if (live) setLoaded({ tab, entries }) })
       .catch(() => { if (live) setLoaded({ tab, entries: [] }) })
     return () => { live = false }
-  }, [row.ingredient, outlet, tab])
+  }, [row.ingredient, outlet, tab, version])
   const entries = loaded && loaded.tab === tab ? loaded.entries : null
+  // a cancelled line moves nothing now: show what it had moved
+  const change = (e: LedgerRow) => Number(e.cancelled ? e.original_qty_change ?? 0 : e.qty_change)
   const when = (iso: string) => new Date(iso.replace(" ", "T")).toLocaleString(uiDateLocale([]), {
     month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
   })
@@ -704,6 +770,15 @@ function LedgerModal({ row, outlet, onClose }: {
           </button>
         ))}
       </div>
+      {asking && (
+        <CancelAsk entry={asking} onKeep={() => setAsking(null)}
+          onDone={(unchanged) => { setAsking(null); setKept(unchanged); setVersion((v) => v + 1); onChanged() }} />
+      )}
+      {kept.length > 0 && (
+        <div role="status" className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {translate("Cost not changed: it has moved since. Check it on the ingredient.")} ({kept.join(", ")})
+        </div>
+      )}
       {entries === null ? (
         <p className="text-sm text-zinc-400">{translate("Loading…")}</p>
       ) : entries.length === 0 ? (
@@ -718,29 +793,46 @@ function LedgerModal({ row, outlet, onClose }: {
             <thead className="text-left text-xs uppercase text-zinc-400">
               <tr><th className="pb-1">{translate("When")}</th><th className="pb-1">{translate("Reason")}</th>
                 <th className="pb-1 text-right">{translate("Change")}</th><th className="pb-1 text-right">{translate("Balance")}</th>
-                <th className="pb-1 pl-3">{translate("Detail")}</th></tr>
+                <th className="pb-1 pl-3">{translate("Detail")}</th><th className="pb-1"></th></tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {entries.map((e) => {
                 const price = pricedAt(e)
                 return (
-                  <tr key={e.name}>
-                    <td className="py-1.5 whitespace-nowrap text-zinc-500">{when(e.creation)}</td>
+                  <tr key={e.name} className={cn(!!e.cancelled && "text-zinc-400 [&_td:not(.keep)]:line-through")}>
+                    <td className="py-1.5 whitespace-nowrap text-zinc-500">{when(e.posted_at || e.creation)}</td>
                     <td className="py-1.5"><span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-bold text-zinc-600">{translate(e.reason)}</span></td>
                     <td className={cn("py-1.5 text-right font-bold tabular-nums",
-                      e.qty_change < 0 ? "text-rose-600" : "text-emerald-600")}>
-                      {e.qty_change > 0 ? "+" : ""}{fmt(e.qty_change)}
+                      e.cancelled ? "text-zinc-400" : e.qty_change < 0 ? "text-rose-600" : "text-emerald-600")}>
+                      {change(e) > 0 ? "+" : ""}{fmt(change(e))}
                     </td>
                     <td className={cn("py-1.5 text-right tabular-nums",
                       e.balance_after < 0 ? "font-bold text-rose-600" : "text-zinc-500")}>
-                      {fmt(e.balance_after)}
+                      {e.cancelled ? "" : fmt(e.balance_after)}
                     </td>
-                    <td className="py-1.5 pl-3 text-zinc-400">
+                    <td className="keep py-1.5 pl-3 text-zinc-400">
+                      {/* the old line is struck through; the note that says why stays readable */}
+                      <div className={cn(!!e.cancelled && "line-through")}>
                       {price !== null && (
                         <span className="mr-2 whitespace-nowrap font-medium tabular-nums text-zinc-600">
                           {fmtUnitCost(price)} / {row.uom}</span>
                       )}
                       {e.note || e.supplier || e.reference_name || (price === null ? "-" : "")}
+                      {enteredLater(e) && (
+                        <div className="text-xs">{translate("entered {when} by {who}", { when: when(e.creation), who: e.owner })}</div>
+                      )}
+                      </div>
+                      {e.cancelled ? (
+                        <div className="text-xs font-medium text-rose-600">{translate("Cancelled {when} by {who}: {why}", {
+                          when: when(e.cancelled_at || e.creation), who: e.cancelled_by ?? "", why: e.cancel_reason ?? "",
+                        })}</div>
+                      ) : null}
+                    </td>
+                    <td className="py-1.5 text-right">
+                      {canCancel && !e.cancelled && CANCELLABLE.includes(e.reason) && (
+                        <Button variant="outline" className="h-8 px-2 text-xs"
+                          onClick={() => { setKept([]); setAsking(e) }}>{translate("Cancel")}</Button>
+                      )}
                     </td>
                   </tr>
                 )
@@ -750,6 +842,47 @@ function LedgerModal({ row, outlet, onClose }: {
         </div>
       )}
     </Modal>
+  )
+}
+
+/** Asks once, with a reason, before a whole entry is taken back. */
+function CancelAsk({ entry, onKeep, onDone }: {
+  entry: LedgerRow; onKeep: () => void; onDone: (costKept: string[]) => void
+}) {
+  useUILanguage()
+  const [why, setWhy] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const words = cancelWords(entry.reason)
+  const what = [
+    [entry.supplier, entry.invoice_no].filter(Boolean).join(" "),
+    (entry.batch_ingredients ?? []).join(", "),
+  ].filter(Boolean).join(": ")
+  const go = async () => {
+    setBusy(true); setError(null)
+    try {
+      const r = await call<{ cost_unchanged: string[] }>("kamra.inventory.cancel_stock_entry", {
+        property: getCurrentProperty(), entry: entry.name, reason: why,
+      })
+      onDone(r.cost_unchanged)
+    } catch (e) {
+      setError(e instanceof Error ? translate(e.message) : String(e))
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="mb-3 rounded-xl border-2 border-rose-200 bg-rose-50/60 p-3">
+      <div className="text-sm font-bold text-zinc-800">{words.ask}</div>
+      {what && <div className="text-sm text-zinc-600">{what}</div>}
+      <input autoFocus value={why} onChange={(e) => setWhy(e.target.value)}
+        placeholder={translate("Reason (required)")} aria-label={translate("Reason (required)")}
+        className="mt-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm" />
+      <Refusal error={error} />
+      <div className="mt-2 flex justify-end gap-2">
+        <Button variant="outline" onClick={onKeep}>{translate("Keep it")}</Button>
+        <Button disabled={busy || !why.trim()} onClick={go}>{words.yes}</Button>
+      </div>
+    </div>
   )
 }
 
@@ -779,13 +912,16 @@ function Purchases({ entries, uom, when }: {
               const price = pricedAt(e)
               const packed = !!e.price_entry && !!e.purchase_uom && e.purchase_uom !== uom
               return (
-                <tr key={e.name}>
-                  <td className="py-1.5 pr-3 whitespace-nowrap text-zinc-500">{when(e.creation)}</td>
+                <tr key={e.name} className={cn(!!e.cancelled && "text-zinc-400 [&_td:not(:first-child)]:line-through")}>
+                  <td className="py-1.5 pr-3 whitespace-nowrap text-zinc-500">
+                    {when(e.posted_at || e.creation)}
+                    {e.cancelled ? <span className="ml-1 text-xs font-bold text-rose-600">{translate("Cancelled")}</span> : null}
+                  </td>
                   <td className="py-1.5 pr-3">{e.outlet_name || e.outlet}</td>
                   <td className="py-1.5 pr-3 whitespace-nowrap tabular-nums">
                     {packed
-                      ? `${fmt(Number(e.purchase_qty))} ${e.purchase_uom} x ${fmt(Number(e.purchase_size))} = ${fmt(e.qty_change)} ${uom}`
-                      : `${fmt(e.qty_change)} ${uom}`}
+                      ? `${fmt(Number(e.purchase_qty))} ${e.purchase_uom} x ${fmt(Number(e.purchase_size))} = ${fmt(Number(e.cancelled ? e.original_qty_change : e.qty_change))} ${uom}`
+                      : `${fmt(Number(e.cancelled ? e.original_qty_change : e.qty_change))} ${uom}`}
                   </td>
                   <td className="py-1.5 pr-3 whitespace-nowrap text-right tabular-nums">
                     {price === null ? "-"

@@ -85,3 +85,9 @@ The buying unit of {0} changed. Close the window and open it again.,A unidade de
 The unit of {0} changed. Close the window and open it again.,A unidade de {0} mudou. Feche a janela e abra-a novamente.
 Give a buying unit both a name and how many {0} it holds.,Informe o nome da unidade de compra e quantos {0} ela contém.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} já tem histórico de estoque ou está em uma receita, então sua unidade continua {1}."
+Pick a date and time.,Escolha data e hora.
+A stock entry cannot be dated in the future.,Um lançamento de estoque não pode ter data futura.
+A reason is required to cancel.,É preciso um motivo para cancelar.
+Stock entry not found.,Lançamento de estoque não encontrado.
+This entry is already cancelled.,Este lançamento já foi cancelado.
+"Only deliveries, stock takes and wastage can be cancelled.","Só é possível cancelar entregas, contagens e perdas."

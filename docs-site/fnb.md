@@ -479,6 +479,26 @@ The **Ledger** has two tabs. **All movements** is this outlet's history, with
 the price on delivery lines. **Purchases** lists every outlet's deliveries:
 what was bought, the price, the supplier and invoice, and the cost after each.
 
+### Dating and cancelling entries
+
+**Receive**, **Stock take** and **Wastage** take a **Date and time**. Leave it
+empty for now, or pick a moment in the past. A stock take is true for its
+moment: if something dated earlier is entered or cancelled afterwards, the
+counted figure stays and its difference is worked out again. A stock take
+with no difference is saved for the same reason. The history is ordered by
+when things happened and says when a line was typed later, and by whom.
+
+Whoever holds **Cancel Stock** (Hotel Admin and System Manager at first) can
+**Cancel** a delivery, a stock take or a wastage from the ledger. A delivery
+or stock take goes as a whole; enter it again if only one line was wrong. The
+cancelled lines stay, struck through, with who, when and why. Kitchen and
+banquet usage is put right with a stock take instead.
+
+A back-dated delivery is costed with the stock and cost as they are now;
+with **Last price paid** it does not replace the price of a newer-dated
+delivery. Cancelling a delivery takes its price out of the cost only while the
+cost is still the one it set. Otherwise the screen asks you to check the cost.
+
 ### Ingredient cost
 
 **Settings → F&B → Kitchen stock → Ingredient cost** decides how a priced

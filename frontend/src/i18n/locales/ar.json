@@ -7163,5 +7163,17 @@
   "cost not complete": "التكلفة غير مكتملة",
   "Cost per portion": "تكلفة الحصة",
   "Menu price": "سعر القائمة",
-  "no cost": "لا تكلفة"
+  "no cost": "لا تكلفة",
+  "Cancel delivery": "إلغاء الاستلام",
+  "Cancel stock take": "إلغاء الجرد",
+  "Cancel this wastage?": "إلغاء هذا الهدر؟",
+  "Cancel this whole delivery?": "إلغاء عملية الاستلام بالكامل؟",
+  "Cancel this whole stock take?": "إلغاء الجرد بالكامل؟",
+  "Cancel wastage": "إلغاء الهدر",
+  "Cancelled {when} by {who}: {why}": "أُلغي في {when} بواسطة {who}: {why}",
+  "Cost not changed: it has moved since. Check it on the ingredient.": "لم تتغير التكلفة لأنها تغيرت منذ ذلك الحين. تحقق منها في المكوّن.",
+  "Date and time": "التاريخ والوقت",
+  "entered {when} by {who}": "أدخله {who} في {when}",
+  "Keep it": "الاحتفاظ بها",
+  "Leave empty for now.": "اتركه فارغًا للوقت الحالي."
 }

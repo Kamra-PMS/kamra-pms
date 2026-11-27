@@ -64,3 +64,9 @@ The buying unit of {0} changed. Close the window and open it again.,Đơn vị m
 The unit of {0} changed. Close the window and open it again.,Đơn vị của {0} đã thay đổi. Hãy đóng cửa sổ và mở lại.
 Give a buying unit both a name and how many {0} it holds.,Nhập cả tên đơn vị mua và số {0} mà nó chứa.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} đã có lịch sử kho hoặc có trong công thức, nên đơn vị vẫn là {1}."
+Pick a date and time.,Chọn ngày và giờ.
+A stock entry cannot be dated in the future.,Không thể ghi kho với ngày trong tương lai.
+A reason is required to cancel.,Cần có lý do để hủy.
+Stock entry not found.,Không tìm thấy bản ghi kho.
+This entry is already cancelled.,Bản ghi này đã bị hủy.
+"Only deliveries, stock takes and wastage can be cancelled.","Chỉ có thể hủy phiếu nhập, kiểm kê và hao hụt."

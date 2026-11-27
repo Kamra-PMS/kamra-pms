@@ -7163,5 +7163,17 @@
   "cost not complete": "chi phí chưa đầy đủ",
   "Cost per portion": "Chi phí mỗi phần",
   "Menu price": "Giá thực đơn",
-  "no cost": "chưa có chi phí"
+  "no cost": "chưa có chi phí",
+  "Cancel delivery": "Hủy phiếu nhập",
+  "Cancel stock take": "Hủy kiểm kê",
+  "Cancel this wastage?": "Hủy bản ghi hao hụt này?",
+  "Cancel this whole delivery?": "Hủy toàn bộ phiếu nhập này?",
+  "Cancel this whole stock take?": "Hủy toàn bộ lần kiểm kê này?",
+  "Cancel wastage": "Hủy hao hụt",
+  "Cancelled {when} by {who}: {why}": "{who} đã hủy lúc {when}: {why}",
+  "Cost not changed: it has moved since. Check it on the ingredient.": "Không đổi giá vốn: giá đã thay đổi từ đó. Hãy kiểm tra ở nguyên liệu.",
+  "Date and time": "Ngày và giờ",
+  "entered {when} by {who}": "{who} nhập lúc {when}",
+  "Keep it": "Giữ lại",
+  "Leave empty for now.": "Để trống để dùng thời điểm hiện tại."
 }

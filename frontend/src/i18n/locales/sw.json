@@ -7163,5 +7163,17 @@
   "cost not complete": "gharama haijakamilika",
   "Cost per portion": "Gharama kwa sahani",
   "Menu price": "Bei ya menyu",
-  "no cost": "hakuna gharama"
+  "no cost": "hakuna gharama",
+  "Cancel delivery": "Ghairi upokeaji",
+  "Cancel stock take": "Ghairi hesabu",
+  "Cancel this wastage?": "Ghairi upotevu huu?",
+  "Cancel this whole delivery?": "Ghairi upokeaji wote?",
+  "Cancel this whole stock take?": "Ghairi hesabu yote?",
+  "Cancel wastage": "Ghairi upotevu",
+  "Cancelled {when} by {who}: {why}": "Imeghairiwa {when} na {who}: {why}",
+  "Cost not changed: it has moved since. Check it on the ingredient.": "Gharama haikubadilishwa: imebadilika tangu wakati huo. Ikague kwenye kiungo.",
+  "Date and time": "Tarehe na saa",
+  "entered {when} by {who}": "imeingizwa {when} na {who}",
+  "Keep it": "Iache",
+  "Leave empty for now.": "Acha wazi kwa sasa."
 }
