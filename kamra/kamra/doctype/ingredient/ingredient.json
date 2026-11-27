@@ -16,7 +16,8 @@
   "buy_size",
   "cost_per_unit",
   "gst_rate",
-  "is_active"
+  "is_active",
+  "unit_locked"
  ],
  "fields": [
   {
@@ -85,10 +86,18 @@
    "fieldtype": "Check",
    "label": "Active",
    "default": "1"
+  },
+  {
+   "fieldname": "unit_locked",
+   "fieldtype": "Check",
+   "label": "Unit locked",
+   "is_virtual": 1,
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "links": [],
- "modified": "2026-11-26 14:00:00.000000",
+ "modified": "2026-11-27 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Ingredient",

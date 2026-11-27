@@ -2377,8 +2377,13 @@ def t_stock_cost_average():
 		P, "Average Cups", "pc", cost_per_unit=2000, buy_uom="box", buy_size=24)["name"]
 	settings.save_settings(P, "fnb", {"stock_cost_method": "Average of purchases"})
 	try:
+		# the edit form shows the unit read-only once the record says it is locked
+		assert frappe.get_doc("Ingredient", cups).as_dict().get("unit_locked") == 0, \
+			"an unused ingredient reports a locked unit"
 		inventory.adjust_stock(P, outlet, [{"ingredient": cups, "counted_qty": 12}],
 		                       note="eval opening")
+		assert frappe.get_doc("Ingredient", cups).as_dict().get("unit_locked") == 1, \
+			"an ingredient with stock history does not report its unit as locked"
 		inventory.receive_stock(P, outlet, [{
 			"ingredient": cups, "qty": 2, "in_buying_unit": 1, "buy_uom": "box",
 			"cost_per_unit": 60000}])

@@ -829,7 +829,7 @@ export const ingredientsConfig: ScreenConfig = {
     { field: "ingredient_name", label: "Ingredient", type: "data", required: true },
     { field: "category", label: "Category", type: "data",
       hint: "Produce, Dairy, Dry Goods, Bar - free text" },
-    { field: "uom", label: "Unit", type: "data", required: true,
+    { field: "uom", label: "Unit", type: "data", required: true, lockedBy: "unit_locked",
       options: ["kg", "g", "L", "ml", "pc", "bottle", "packet"],
       hint: "The one unit stock and recipes use, such as g, ml, pc or shot. It locks once stock or a recipe uses it." },
     { field: "buy_uom", label: "Buying unit", type: "data",

@@ -29,7 +29,7 @@ import ChoiceGroupsField from "./ChoiceGroupsField"
 import TagPills from "./TagPills"
 import { fmtAmount } from "../lib/money"
 import { fmtUnitCost } from "../lib/stockCost"
-import { formPayload } from "../lib/formPayload"
+import { formPayload, isLocked } from "../lib/formPayload"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
 import { downloadCsv } from "../lib/csv"
@@ -138,6 +138,8 @@ export interface FieldSpec {
   dependsOn?: (draft: Record<string, unknown>) => boolean
   /** Saved only when changed here, so an old value can't overwrite a newer one. */
   onlyIfChanged?: boolean
+  /** Text fields: read-only while this field of the saved record is set. */
+  lockedBy?: string
   /** Block dates before today unless the user may backdate (Finance / Hotel Admin). */
   notPast?: boolean
 }
@@ -285,6 +287,7 @@ function FieldInput(props: {
   /** Translate display labels; API values stay English. */
   t: (s: string) => string
   canBackdate?: boolean
+  locked?: boolean
 }) {
   useUILanguage()
   const { spec, value, onChange, t, canBackdate } = props
@@ -420,6 +423,7 @@ function FieldInput(props: {
         <>
           <input
             className={inputCls}
+            disabled={props.locked}
             list={suggests ? `masters-${spec.field}` : undefined}
             value={selected?.label ?? rawValue}
             onChange={(e) => {
@@ -1046,6 +1050,7 @@ export function ResourceScreen({
                         masterOptions={masterOptions}
                         t={t}
                         canBackdate={canBackdate}
+                        locked={isLocked(spec, loaded)}
                       />
                       {spec.hint && spec.type !== "image" && (
                         <span className="mt-1 block text-xs leading-relaxed text-zinc-400">

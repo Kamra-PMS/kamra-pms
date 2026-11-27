@@ -71,13 +71,48 @@ class TestUnits(StockCostTestCase):
 		self.receive(beans, 5)
 		self.refuses_new_unit(beans)
 
-	def test_the_unit_locks_once_it_is_on_a_recipe(self):
-		beans = self.ingredient()
+	def on_a_recipe(self, ing):
 		frappe.get_doc({
 			"doctype": "Menu Item", "property": PROP_A, "outlet": self.cafe,
 			"item_name": "UT Espresso", "price": 20,
-			"recipe": [{"ingredient": beans, "qty": 18}]}).insert(ignore_permissions=True)
+			"recipe": [{"ingredient": ing, "qty": 18}]}).insert(ignore_permissions=True)
+
+	def test_the_unit_locks_once_it_is_on_a_recipe(self):
+		beans = self.ingredient()
+		self.on_a_recipe(beans)
 		self.refuses_new_unit(beans)
+
+	def locked(self, ing):
+		"""What the edit form reads: the record as the REST read returns it."""
+		return frappe.get_doc("Ingredient", ing).as_dict().get("unit_locked")
+
+	def test_the_record_says_history_locked_its_unit(self):
+		beans = self.ingredient()
+		self.assertEqual(self.locked(beans), 0)
+		self.receive(beans, 5)
+		self.assertEqual(self.locked(beans), 1)
+
+	def test_the_record_says_a_recipe_locked_its_unit(self):
+		beans = self.ingredient()
+		self.on_a_recipe(beans)
+		self.assertEqual(self.locked(beans), 1)
+
+	def test_a_locked_record_saves_when_sent_back_whole(self):
+		# the desk sends every field back on save, the read-only flag included
+		beans = self.ingredient()
+		self.receive(beans, 5)
+		sent = frappe.get_doc("Ingredient", beans).as_dict()
+		sent.update(category="Dry Goods", unit_locked=0)
+		saved = frappe.get_doc(sent).save()
+		self.assertEqual((saved.category, saved.as_dict().get("unit_locked")), ("Dry Goods", 1))
+
+	def test_a_unit_longer_than_sixteen_characters_is_refused(self):
+		inventory.save_ingredient(PROP_A, "UT Edge", "u" * 16, buy_uom="b" * 16, buy_size=6)
+		for uom, buy_uom, buy_size in (("u" * 17, None, None), ("g", "b" * 17, 6)):
+			with self.subTest(uom=uom, buy_uom=buy_uom), \
+					self.assertRaises(frappe.CharacterLengthExceededError):
+				inventory.save_ingredient(PROP_A, "UT Long", uom,
+				                          buy_uom=buy_uom, buy_size=buy_size)
 
 	def test_an_unused_ingredient_may_change_its_unit(self):
 		beans = self.ingredient()
@@ -281,6 +316,6 @@ class TestWhatTheDeskReads(StockCostTestCase):
 	def test_every_new_refusal_is_translated(self):
 		from frappe.translate import clear_cache, get_all_translations
 		clear_cache()
-		for lang in ("ar", "es", "pt", "sw", "vi", "zh"):
+		for lang in ("ar", "es", "hi", "pt", "sw", "ta", "vi", "zh"):
 			known = get_all_translations(lang)
 			self.assertEqual([m for m in self.MESSAGES if m not in known], [], lang)

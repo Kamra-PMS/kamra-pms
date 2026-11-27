@@ -8,6 +8,16 @@ from frappe.utils import flt
 
 
 class Ingredient(Document):
+	@property
+	def unit_locked(self) -> int:
+		"""1 once stock history or a recipe uses the unit. The edit form reads
+		this to show the Unit field as read-only."""
+		if self.is_new():
+			return 0
+		used = {"ingredient": self.name}
+		return int(bool(frappe.db.exists("Ingredient Ledger Entry", used)
+		                or frappe.db.exists("Menu Item Ingredient", used)))
+
 	def validate(self):
 		self.uom = (self.uom or "").strip()
 		self.buy_uom = (self.buy_uom or "").strip() or None
@@ -27,7 +37,6 @@ class Ingredient(Document):
 		so changing it would turn 18 g into 18 kg."""
 		if self.is_new() or not self.has_value_changed("uom"):
 			return
-		if frappe.db.exists("Ingredient Ledger Entry", {"ingredient": self.name}) \
-				or frappe.db.exists("Menu Item Ingredient", {"ingredient": self.name}):
+		if self.unit_locked:
 			frappe.throw(_("{0} already has stock history or is on a recipe, so its unit stays {1}.")
 			             .format(self.ingredient_name, self.get_doc_before_save().uom))
