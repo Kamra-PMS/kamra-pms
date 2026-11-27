@@ -280,4 +280,58 @@ The buying unit of {0} changed. Close the window and open it again.,تغيّرت
 The unit of {0} changed. Close the window and open it again.,تغيّرت وحدة {0}. أغلق النافذة وافتحها من جديد.
 Give a buying unit both a name and how many {0} it holds.,أعطِ وحدة الشراء اسماً وعدد ما تحتويه من {0}.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.",{0} له حركة مخزون سابقة أو موجود في وصفة، لذا تبقى وحدته {1}.
-
+Pick a date and time.,اختر التاريخ والوقت.
+A stock entry cannot be dated in the future.,لا يمكن أن يكون تاريخ حركة المخزون في المستقبل.
+A reason is required to cancel.,يلزم ذكر سبب للإلغاء.
+Stock entry not found.,لم يتم العثور على حركة المخزون.
+This entry is already cancelled.,هذه الحركة ملغاة بالفعل.
+"Only deliveries, stock takes and wastage can be cancelled.",يمكن إلغاء عمليات الاستلام والجرد والهدر فقط.
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} يتتبع مخزونه الخاص: وصفته هي هذا الصنف فقط. أوقف التتبع لتغييرها.
+{0} has a recipe. Delete the recipe first.,{0} له وصفة. احذف الوصفة أولاً.
+{0} already tracks its own stock.,{0} يتتبع مخزونه بالفعل.
+An ingredient called {0} already exists. Pick it instead.,يوجد مكوّن باسم {0} بالفعل. اختره بدلاً من ذلك.
+Tracking stock also needs the right to manage stock.,يتطلب تتبع المخزون أيضًا صلاحية إدارة المخزون.
+Approved by,وافق عليه
+Given back as,أُعيد بواسطة
+POS refunds,استردادات نقطة البيع
+Refund,استرداد
+Refunded,مُسترد
+Refunded by,استردّه
+"Payment details are set by the till, not by editing the bill.",تفاصيل الدفع يسجلها الصندوق، لا تُعدَّل على الفاتورة.
+"Refunds are made at the till, and are never edited or deleted.",يتم الاسترداد عند الصندوق ولا يُعدَّل أو يُحذف.
+"This bill has a refund, so its payment mode can't change.",هذه الفاتورة عليها استرداد، لذا لا يمكن تغيير طريقة الدفع.
+Correct this on the room's bill at the desk.,صحّح هذا في فاتورة الغرفة عند الاستقبال.
+Only a bill paid at the outlet can be refunded.,لا يمكن استرداد سوى فاتورة مدفوعة في المنفذ.
+"This bill has no payment record, so it can't be refunded here.",لا يوجد سجل دفع لهذه الفاتورة، فلا يمكن استردادها هنا.
+Nothing is left to refund on this bill.,لم يتبق شيء لاسترداده في هذه الفاتورة.
+The amount must be above zero.,يجب أن يكون المبلغ أكبر من صفر.
+You can refund up to {0}.,يمكنك استرداد ما يصل إلى {0}.
+That line is not on this bill.,هذا السطر ليس في هذه الفاتورة.
+Pick at least one item.,اختر صنفًا واحدًا على الأقل.
+Only {0} of {1} left to refund.,تبقى {0} فقط من {1} للاسترداد.
+"Refund the whole bill, chosen items, or an amount.",استرد الفاتورة كاملة أو أصنافًا محددة أو مبلغًا.
+{0} can't go back to stock.,لا يمكن إعادة {0} إلى المخزون.
+Pick a refund reason.,اختر سبب الاسترداد.
+Say why in the note.,اذكر السبب في الملاحظة.
+An AI agent can never refund.,لا يمكن لوكيل الذكاء الاصطناعي الاسترداد أبدًا.
+Try again from the refund window.,حاول مرة أخرى من نافذة الاسترداد.
+Money goes back as {0}.,يعاد المبلغ بواسطة {0}.
+The amount to give back has changed: it is now {0}. Check it and refund again.,تغيّر المبلغ المراد رده: أصبح الآن {0}. تحقق منه ثم أعد الاسترداد.
+This attempt already refunded {0}. Close the window to see it.,هذه المحاولة ردّت بالفعل {0}. أغلق النافذة لعرضها.
+"{0} already has stock history, so ""Made here"" stays as it is.",لدى {0} سجل مخزون بالفعل، لذا يبقى خيار «يُصنع هنا» كما هو.
+"Say how much one batch makes, above zero.",حدد كمية ما تنتجه الدفعة الواحدة، بأكثر من صفر.
+Something made here needs at least one ingredient in its recipe.,ما يُصنع هنا يحتاج إلى مكوّن واحد على الأقل في وصفته.
+"{0} is used to make {1}, so it cannot be made here itself.",يُستخدم {0} لصنع {1}، لذا لا يمكن أن يُصنع هنا.
+{0} cannot be made from itself.,لا يمكن صنع {0} من نفسه.
+{0} is made here too. Use only bought ingredients.,{0} يُصنع هنا أيضًا. استخدم المكونات المشتراة فقط.
+{0} recipe(s) use this ingredient. Deactivate it instead.,{0} وصفة تستخدم هذا المكوّن. أوقفه بدلًا من حذفه.
+{0} (in {1}),{0} (ضمن {1})
+"{0} is made here. Record it with Produce, not as a delivery.",{0} يُصنع هنا. سجّله عبر «إنتاج» وليس كتوريد.
+"Say how much was made, above zero.",حدد الكمية المصنوعة، بأكثر من صفر.
+{0} is not made here.,{0} لا يُصنع هنا.
+The recipe of {0} just changed. Try again.,تغيّرت وصفة {0} للتو. حاول مرة أخرى.
+{0} is made here itself. Take it out of the recipe of {1}.,{0} يُصنع هنا أيضًا. أزله من وصفة {1}.
+That is too little to take anything from stock.,الكمية أقل من أن يُخصم بها شيء من المخزون.
+Every recipe line needs a quantity above zero.,يحتاج كل سطر في الوصفة إلى كمية أكبر من الصفر.
+{0} belongs to another property.,{0} يتبع منشأة أخرى.
+"Only deliveries, stock takes, wastage and production batches can be cancelled.",يمكن إلغاء عمليات الاستلام والجرد والهدر ودفعات الإنتاج فقط.

@@ -19,6 +19,8 @@ import { useT, t as translate, uiDateLocale } from "../../lib/i18n"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
 import { billHtml, printThermal, type BillData } from "../../lib/thermal"
+import { refundBadge, refundSlipHtml } from "../../lib/refunds"
+import RefundDialog from "./RefundDialog"
 
 
 export type ListState = "open" | "sent" | "paid" | "room" | "nc" | "closed" | "cancelled"
@@ -44,6 +46,8 @@ interface ListRow {
   cancel_reason: string | null
   served_by?: string | null
   cashier?: string | null
+  refunded?: number
+  paid_amount?: number
 }
 interface ListOut {
   from: string
@@ -93,6 +97,20 @@ interface ViewDetail {
   served_by?: string | null
   cashier?: string | null
   items: ViewItem[]
+  paid_amount: number
+  refunded_amount: number
+  refunds: RefundRow[]
+}
+interface RefundRow {
+  name: string
+  amount: number
+  mode: string
+  reason: string
+  note: string | null
+  approved_by_name: string
+  refunded_by_name: string
+  creation: string
+  lines: { item_name: string; qty: number; amount: number }[]
 }
 
 export interface GuestPanelData {
@@ -177,6 +195,17 @@ export function StateBadge({ state, className }: { state: ListState; className?:
   return (
     <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-semibold", BADGE[state], className)}>
       {label(state)}
+    </span>
+  )
+}
+
+export function RefundBadge({ paid, refunded }: { paid?: number; refunded?: number }) {
+  const { t } = useT()
+  const how = refundBadge(Number(paid ?? 0), Number(refunded ?? 0))
+  if (!how) return null
+  return (
+    <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-800">
+      {how === "full" ? t("Refunded") : t("Partly refunded")}
     </span>
   )
 }
@@ -448,6 +477,7 @@ function OrdersTab({ outlet, refreshKey, onOpenBill, onHistory }: {
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500">
                     <StateBadge state={r.state} />
+                    <RefundBadge paid={r.paid_amount} refunded={r.refunded} />
                     <span className="tabular-nums">{shortDay(dayOf(r.time))} {hhmm(r.time)}</span>
                     {r.kot_no ? <span>· {t("KOT {n}", { n: r.kot_no })}</span> : null}
                     {r.served_by ? <span>· {r.served_by}</span> : null}
@@ -532,6 +562,7 @@ export function OrderView({ name, onBack, onOpenBill }: {
       .then(setD).catch((e) => setErr(serverError(e)))
   }, [name])
   const [changing, setChanging] = useState(false)
+  const [refunding, setRefunding] = useState(false)
   const [busy, setBusy] = useState(false)
   async function changeMode(mode: string) {
     setBusy(true)
@@ -540,6 +571,24 @@ export function OrderView({ name, onBack, onOpenBill }: {
       setD(await call<ViewDetail>("kamra.pos.order_detail", { order: name }))
       setChanging(false); setErr(null)
     } catch (e) { setErr(serverError(e)) } finally { setBusy(false) }
+  }
+  const reload = () => call<ViewDetail>("kamra.pos.order_detail", { order: name })
+    .then(setD).catch((e) => setErr(serverError(e)))
+  async function printSlip(r: RefundRow) {
+    try {
+      const bill = await call<BillData>("kamra.pos.bill_data", { order: name })
+      printThermal(`Refund ${name}`, refundSlipHtml({
+        title: t("Refund"), outlet: bill.outlet_name, bill: name,
+        when: `${shortDay(dayOf(r.creation))} ${hhmm(r.creation)}`, total: `${cur()}${money(r.amount)}`,
+        lines: r.lines.map((x) => ({ name: x.item_name, qty: x.qty, amount: money(x.amount) })),
+        rows: [
+          [t("Money back as"), translate(r.mode)],
+          [t("Reason"), `${translate(r.reason)}${r.note ? `: ${r.note}` : ""}`],
+          [t("Approved by"), r.approved_by_name], [t("Refunded by"), r.refunded_by_name],
+        ],
+        sign: t("Received by"),
+      }))
+    } catch (e) { setErr(serverError(e)) }
   }
   async function printBill() {
     try {
@@ -573,7 +622,10 @@ export function OrderView({ name, onBack, onOpenBill }: {
                 </p>
               )}
             </div>
-            <StateBadge state={d.state} />
+            <div className="flex flex-wrap items-center justify-end gap-1">
+              <StateBadge state={d.state} />
+              <RefundBadge paid={d.paid_amount} refunded={d.refunded_amount} />
+            </div>
           </div>
           <ul className="divide-y divide-zinc-100 text-sm">
             {d.items.map((it) => (
@@ -620,14 +672,14 @@ export function OrderView({ name, onBack, onOpenBill }: {
                     ))}
                     <Button variant="ghost" className="h-9" onClick={() => setChanging(false)}>{t("Back")}</Button>
                   </div>
-                ) : (
+                ) : d.refunded_amount > 0 ? null : (
                   <button className="text-xs font-semibold text-brand-700 hover:underline" onClick={() => setChanging(true)}>
                     {t("Wrong payment mode? Change it")}
                   </button>
                 )}
               </div>
             )}
-            {d.state === "room" && <p className="text-xs text-violet-700">{t("Posted to the room folio")}</p>}
+            {d.state === "room" && <p className="text-xs text-violet-700">{t("Posted to the room folio")} · {t("Correct this on the room's bill at the desk.")}</p>}
             {d.state === "nc" && <p className="text-xs text-amber-700">{t("Complimentary, authorized by {who}", { who: d.nc_authorized_by || "" })}</p>}
           </div>
           {d.state === "cancelled" && (
@@ -637,7 +689,29 @@ export function OrderView({ name, onBack, onOpenBill }: {
               {d.cancelled_by && <p>{t("by {name}", { name: d.cancelled_by })}{d.cancel_approved_by ? ` · ${t("approved by {name}", { name: d.cancel_approved_by })}` : ""}</p>}
             </div>
           )}
+          {(d.refunds ?? []).length > 0 && (
+            <div className="space-y-2 rounded-lg border border-orange-200 bg-orange-50/60 p-2 text-xs text-zinc-700">
+              {d.refunds.map((r) => (
+                <div key={r.name} className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">
+                      {t("Refunded {amount} by {mode}", { amount: `${cur()}${money(r.amount)}`, mode: translate(r.mode) })}
+                      {` · ${translate(r.reason)}`}{r.note ? `: ${r.note}` : ""}
+                    </p>
+                    <p className="text-zinc-500">
+                      {shortDay(dayOf(r.creation))} {hhmm(r.creation)} · {t("by {name}", { name: r.refunded_by_name })} · {t("approved by {name}", { name: r.approved_by_name })}
+                    </p>
+                    {r.lines.length > 0 && <p className="text-zinc-500">{r.lines.map((x) => `${x.qty}× ${x.item_name}`).join(", ")}</p>}
+                  </div>
+                  <Button variant="outline" className="h-8 px-2 text-xs" onClick={() => printSlip(r)}>{t("Print slip")}</Button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
+            {d.state === "paid" && d.refunded_amount < d.paid_amount && (
+              <Button variant="outline" className="h-10" onClick={() => setRefunding(true)}>{t("Refund")}</Button>
+            )}
             {(d.state === "open" || d.state === "sent") && (
               <Button className="h-10" onClick={() => onOpenBill(d.name)}>{t("Open on the till")}</Button>
             )}
@@ -648,6 +722,10 @@ export function OrderView({ name, onBack, onOpenBill }: {
             )}
           </div>
         </div>
+      )}
+      {refunding && (
+        <RefundDialog order={name} onClose={() => setRefunding(false)}
+          onDone={() => { setRefunding(false); void reload() }} />
       )}
     </div>
   )

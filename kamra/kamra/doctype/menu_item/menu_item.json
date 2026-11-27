@@ -25,6 +25,7 @@
   "section_modifiers",
   "modifier_groups",
   "section_recipe",
+  "stock_ingredient",
   "recipe"
  ],
  "fields": [
@@ -138,6 +139,14 @@
    "label": "Recipe"
   },
   {
+   "fieldname": "stock_ingredient",
+   "fieldtype": "Link",
+   "label": "Own Stock",
+   "options": "Ingredient",
+   "read_only": 1,
+   "description": "Set when the item tracks its own stock: its recipe is then exactly one of this stock item. Use Track stock in the Recipes window."
+  },
+  {
    "fieldname": "recipe",
    "fieldtype": "Table",
    "label": "Recipe",
@@ -148,7 +157,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-25 22:00:00.000000",
+ "modified": "2026-11-26 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Menu Item",

@@ -16,7 +16,11 @@
   "buy_size",
   "cost_per_unit",
   "gst_rate",
-  "is_active"
+  "is_active",
+  "made_section",
+  "is_made",
+  "batch_qty",
+  "recipe"
  ],
  "fields": [
   {
@@ -85,10 +89,37 @@
    "fieldtype": "Check",
    "label": "Active",
    "default": "1"
+  },
+  {
+   "fieldname": "made_section",
+   "fieldtype": "Section Break",
+   "label": "Made here"
+  },
+  {
+   "fieldname": "is_made",
+   "fieldtype": "Check",
+   "label": "Made here (semi-finished)",
+   "default": "0",
+   "description": "Made in your kitchen from other ingredients, in batches. Its cost is worked out from the recipe, and it cannot be received as a delivery."
+  },
+  {
+   "fieldname": "batch_qty",
+   "fieldtype": "Float",
+   "label": "One batch makes",
+   "depends_on": "eval:doc.is_made",
+   "description": "In the stock unit."
+  },
+  {
+   "fieldname": "recipe",
+   "fieldtype": "Table",
+   "label": "Made from",
+   "options": "Menu Item Ingredient",
+   "depends_on": "eval:doc.is_made",
+   "description": "What one batch uses, from bought ingredients."
   }
  ],
  "links": [],
- "modified": "2026-11-26 14:00:00.000000",
+ "modified": "2026-11-26 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Ingredient",
@@ -106,7 +137,8 @@
    "share": 1,
    "write": 1,
    "manage_stock": 1,
-   "view_stock": 1
+   "view_stock": 1,
+   "cancel_stock": 1
   },
   {
    "create": 1,
@@ -119,7 +151,8 @@
    "share": 1,
    "write": 1,
    "manage_stock": 1,
-   "view_stock": 1
+   "view_stock": 1,
+   "cancel_stock": 1
   },
   {
    "create": 1,

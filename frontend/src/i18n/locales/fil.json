@@ -1080,5 +1080,18 @@
   "Last 4 (optional)": "Huling 4 (opsyonal)",
   "Last 4 digits of the card (optional)": "Huling 4 digit ng card (opsyonal)",
   "Choose the card type for the Card payment.": "Piliin ang uri ng card para sa bayad gamit ang card.",
-  "Give exactly the last 4 digits of the card, or leave them empty.": "Ilagay nang eksakto ang huling 4 digit ng card, o iwanang walang laman."
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Ilagay nang eksakto ang huling 4 digit ng card, o iwanang walang laman.",
+  "A foreign guest: record the visa or OCI card they entered on.": "Dayuhang bisita: itala ang visa o OCI card na ginamit niya sa pagpasok.",
+  "A foreign guest: record the visa they entered on.": "Dayuhang bisita: itala ang visa na ginamit niya sa pagpasok.",
+  "Ends before check-out ({date})": "Magtatapos bago ang check-out ({date})",
+  "OCI Card": "OCI Card",
+  "Photograph the visa": "Kunan ng larawan ang visa",
+  "Photograph the visa or OCI card": "Kunan ng larawan ang visa o OCI card",
+  "Visa": "Visa",
+  "Visa / OCI": "Visa / OCI",
+  "Visa / OCI number": "Numero ng visa / OCI",
+  "Visa number": "Numero ng visa",
+  "Visa type": "Uri ng visa",
+  "e-Visa": "e-Visa",
+  "New visa number (leave empty to keep)": "Bagong numero ng visa (iwanang blangko para panatilihin)"
 }

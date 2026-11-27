@@ -492,7 +492,13 @@ def _till(property: str) -> dict:
 
 
 def _flow_payload(res, steps, ctx, guest) -> dict:
-	from kamra.localization import front_desk_vocabulary, pack_for
+	from kamra.localization import (
+		default_nationality,
+		front_desk_vocabulary,
+		home_country_iso3,
+		is_foreign_national,
+		pack_for,
+	)
 	return {
 		"reservation": {
 			"name": res.name, "status": res.status,
@@ -524,6 +530,24 @@ def _flow_payload(res, steps, ctx, guest) -> dict:
 			if guest else "none",
 			"id_used_count": used_stays_count(guest.name) if guest else 0,
 			"has_photo": bool(guest and guest.get("photo")),
+			# a foreign national's visa / entry document (India Form C: visa or OCI)
+			"foreign": is_foreign_national(pack_for(res.property),
+			                               guest.get("nationality") if guest else None),
+			# what counts as the home nationality, so the desk can show the
+			# visa fields as soon as a foreign nationality is typed
+			"home_nationality": [x for x in (default_nationality(pack_for(res.property)),
+			                                 home_country_iso3(pack_for(res.property))) if x],
+			"visa_type": guest.get("visa_type") if guest else None,
+			# passport-grade PII: mask like id_number (last four only)
+			"visa_number": _mask(guest.get("visa_number")) if guest else None,
+			"visa_expiry_date": str(guest.get("visa_expiry_date") or "") or None if guest else None,
+			"visa_status": id_status(guest.get("visa_expiry_date"), bool(
+				guest.get("visa_number") or guest.get("visa_file") or guest.get("visa_type")))
+			if guest else "none",
+			"visa_on_file": bool(guest and guest.get("visa_file")),
+			# Verify & Discard refuses a visa photo on the profile; hide the upload
+			"keeps_id_images": (frappe.db.get_value("Property", res.property, "id_retention")
+			                    or "Store") != "Verify & Discard",
 			"gender": guest.get("gender") if guest else None,
 			"date_of_birth": str(guest.get("date_of_birth") or "") or None if guest else None,
 			"address": ", ".join(x for x in [guest.get("address_line"), guest.get("city")]
@@ -618,15 +642,19 @@ def save_guest_details(reservation: str, phone: str | None = None,
                        gender: str | None = None,
                        id_expiry_date: str | None = None,
                        address_line: str | None = None,
-                       city: str | None = None):
+                       city: str | None = None,
+                       visa_type: str | None = None,
+                       visa_number: str | None = None,
+                       visa_expiry_date: str | None = None):
 	"""Correct the primary guest's contact and ID details at the desk, or
 	keep what an ID scan read. Only what is passed changes; an ID type must
-	be one the country recognises."""
+	be one the country recognises. A foreign guest's visa (or India OCI
+	card) is kept beside the ID — types come from the country pack."""
 	res = _res(reservation)
 	_open(res)
 	if not res.guest:
 		frappe.throw(_("This booking has no guest profile."))
-	from kamra.localization import validate_id_type
+	from kamra.localization import validate_id_type, validate_visa_type
 	changes = {}
 	if phone is not None:
 		changes["phone"] = phone.strip() or None
@@ -635,9 +663,19 @@ def save_guest_details(reservation: str, phone: str | None = None,
 	if nationality is not None:
 		changes["nationality"] = nationality.strip() or None
 	from frappe.utils import getdate
-	for field, value in (("date_of_birth", date_of_birth), ("id_expiry_date", id_expiry_date)):
+	for field, value in (("date_of_birth", date_of_birth), ("id_expiry_date", id_expiry_date),
+	                     ("visa_expiry_date", visa_expiry_date)):
 		if value:
 			changes[field] = str(getdate(value))
+	if visa_type is not None:
+		if visa_type:
+			validate_visa_type(res.property, visa_type)
+		changes["visa_type"] = visa_type or None
+	if visa_number is not None and visa_number.strip():
+		# empty means keep what is on file; bullets are a masked re-send
+		raw = visa_number.strip()
+		if "•" not in raw:
+			changes["visa_number"] = raw[:140]
 	# Data fields hold 140 characters; an Aadhaar address can run longer
 	for field, value in (("address_line", address_line), ("city", city)):
 		if value and value.strip():

@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **562 endpoints**, generated from the source
+the UI and the AI use. **572 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2270,6 +2270,24 @@ accessible=1 keeps only rooms marked Accessible (#536).
 | `ready_now` | no | `0` |
 | `accessible` | no | `0` |
 
+### `kamra.api.rooms_to_sell`
+
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+For each room type on sale, how many stays can still be sold for these
+dates by the rules saving a booking applies. Stays with no room number
+count, so a figure can be lower than the rooms available_rooms lists.
+`without_room` is true when no room can be given for the whole stay but a
+booking without a room number would still be accepted. Pass ready_now=1
+for a guest taking the room now.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `ready_now` | no | `0` |
+
 ### `kamra.api.room_blocks`
 
 **GET/POST** · permission: `Room Block: manage_blocks` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
@@ -3409,6 +3427,65 @@ times how long it takes to arrive, which proves live updates work.
 | `property` | yes |  |
 | `outlet` | no | `None` |
 | `echo` | no | `0` |
+
+
+## POS refunds (money back on a paid outlet bill)
+
+> Refunds need the approve right, or an approver's user and cashier PIN; AI agents are refused. A repeated idempotency_key pays once.
+
+### `kamra.pos_refunds.refund_options`
+
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
+
+Everything the refund window needs: whether the bill can be refunded,
+what is left, its lines, the ways money may go back, the reasons, who may
+approve (and whether the caller can, and needs their own PIN to), and the
+refunds so far.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+
+### `kamra.pos_refunds.refund_quote`
+
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
+
+What a refund would give back, line by line, before anyone approves it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `kind` | yes |  |
+| `lines` | no | `None` |
+| `amount` | no | `None` |
+
+### `kamra.pos_refunds.refund_bill`
+
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
+
+Give money back on a paid bill: the whole of what is left ("whole"),
+chosen items ("items", lines = [{row, qty, back_to_stock}]), or an amount
+("amount"). The screen sends one idempotency_key per attempt, so a retried
+request answers with the refund already made and pays nothing twice. It also
+sends expected_amount, the figure it showed: if what would be recorded
+differs (another refund came in between), nothing is paid. seen_refunded is
+what the window showed as already given back: once that includes the refund
+made for this key, pressing again is refused rather than answered with it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `kind` | yes |  |
+| `mode` | yes |  |
+| `reason_code` | yes |  |
+| `supervisor` | no | `None` |
+| `supervisor_pin` | no | `None` |
+| `idempotency_key` | no | `None` |
+| `lines` | no | `None` |
+| `amount` | no | `None` |
+| `note` | no | `None` |
+| `expected_amount` | no | `None` |
+| `seen_refunded` | no | `None` |
 
 
 ## Setup checklist (finish setting up a property)
@@ -5211,7 +5288,8 @@ problem are skipped and listed; the rest go in.
 
 **GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
-The ingredient master - the picker behind the recipe editor.
+The ingredient master - the picker behind the recipe editor. A made one
+without a cost also names what in it still needs one (`missing`).
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5223,7 +5301,9 @@ The ingredient master - the picker behind the recipe editor.
 **GET/POST** · permission: `Menu Item: view_recipes` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 One dish's recipe, with each line's unit and what the dish's own outlet
-has on hand right now - so the editor can say "you have 0.4 kg left".
+has on hand right now - so the editor can say "you have 0.4 kg left". The
+menu price and each ingredient's cost come with it only for people who can
+see stock.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5236,6 +5316,9 @@ has on hand right now - so the editor can say "you have 0.4 kg left".
 Every dish and whether it has a recipe yet. Dishes without one are not
 a problem to be nagged about - most menus will only ever cost their big
 movers - but you cannot decide that without seeing the list.
+
+A dish with a recipe also says what one portion costs today and what is
+left of its price; `uncosted` names the ingredients that stop that.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5252,6 +5335,36 @@ Replace a dish's recipe wholesale. An empty list is valid and means
 | --- | --- | --- |
 | `menu_item` | yes |  |
 | `rows` | yes |  |
+
+### `kamra.inventory.track_item_stock`
+
+**POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
+
+Give a menu item its own stock: a stock item (a new one, or one that
+exists, such as the same bottle sold at another outlet) behind a fixed
+recipe of one. Receiving, counting, cost and reports then work on it as on
+any ingredient. A dish already made of 1 x an ingredient can adopt it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `menu_item` | yes |  |
+| `ingredient` | no | `None` |
+| `ingredient_name` | no | `None` |
+| `uom` | no | `None` |
+| `cost_per_unit` | no | `None` |
+| `buy_uom` | no | `None` |
+| `buy_size` | no | `None` |
+
+### `kamra.inventory.untrack_item_stock`
+
+**POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
+
+Stop tracking: selling the item takes no stock from now on. The stock
+item and its history stay.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `menu_item` | yes |  |
 
 ### `kamra.inventory.save_ingredient`
 
@@ -5296,7 +5409,8 @@ unit chosen: the stock unit, or the buying unit with in_buying_unit
 the units the screen showed, and a row is refused if either has changed
 since). One batch_id ties the delivery together, which is why
 this needs no Stock Receipt doctype: a receipt is just its ledger rows plus
-a supplier and an invoice number.
+a supplier and an invoice number. posted_at dates a delivery that happened
+earlier; it is costed with the stock and cost as they are now.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5305,6 +5419,7 @@ a supplier and an invoice number.
 | `rows` | yes |  |
 | `supplier` | no | `None` |
 | `invoice_no` | no | `None` |
+| `posted_at` | no | `None` |
 
 ### `kamra.inventory.adjust_stock`
 
@@ -5319,12 +5434,17 @@ The note is required on purpose. A write-off with no reason is precisely
 the silence this module exists to remove - the same call laundry's
 shortage guard makes when it refuses to deliver a short bag unexplained.
 
+Every count is recorded, a count with no difference too: it fixes what was
+on the shelf at that moment against anything dated earlier. posted_at says
+when the shelf was counted; the difference is against that moment.
+
 | Param | Required | Default |
 | --- | --- | --- |
 | `property` | yes |  |
 | `outlet` | yes |  |
 | `rows` | yes |  |
 | `note` | yes |  |
+| `posted_at` | no | `None` |
 
 ### `kamra.inventory.record_wastage`
 
@@ -5344,6 +5464,43 @@ a Wastage row too would deduct it twice. Use wastage_report() for those.
 | `ingredient` | yes |  |
 | `qty` | yes |  |
 | `reason_note` | yes |  |
+| `posted_at` | no | `None` |
+
+### `kamra.inventory.produce`
+
+**POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
+
+Record a batch made at an outlet: the made ingredient goes into stock and,
+in the recipe's proportion, what it is made from comes out (3 decimals). Too
+little of something goes below zero, as everywhere. The new stock's row is
+costed at what this batch used, each other row at that ingredient's cost now.
+One batch_id, so a cancel takes back the whole batch.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `outlet` | yes |  |
+| `ingredient` | yes |  |
+| `qty` | yes |  |
+| `posted_at` | no | `None` |
+| `note` | no | `None` |
+
+### `kamra.inventory.cancel_stock_entry`
+
+**POST** · permission: `Ingredient: cancel_stock` · default roles: `System Manager`, `Hotel Admin`
+
+Take back a delivery, a stock take or a wastage entry. `entry` is any
+line of it: a delivery or a stock take goes as a whole. The lines stay in
+history, marked cancelled, moving nothing on their date, and later
+balances and stock takes are worked again. A cancelled delivery's price is
+taken out of the cost only while that is safe; `cost_unchanged` names the
+ingredients to check by hand.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `entry` | yes |  |
+| `reason` | yes |  |
 
 ### `kamra.inventory.stock_list`
 
@@ -5368,8 +5525,10 @@ ingredient could never get one.
 
 **GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
 
-Where did my paneer go? Newest first, each row carrying the balance it
-produced, so the history explains the number on the shelf.
+Where did my paneer go? Newest first by when it happened, each row
+carrying the balance it produced, so the history explains the number on the
+shelf. Cancelled lines stay, saying who took them back and why;
+batch_ingredients names everything in the line's entry.
 
 purchases_only lists the deliveries alone, from every outlet of the
 property (an ingredient has one cost), with their own limit: kitchen usage
@@ -5382,6 +5541,42 @@ would otherwise push them off the end.
 | `ingredient` | yes |  |
 | `limit` | no | `50` |
 | `purchases_only` | no | `0` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+
+### `kamra.inventory.stock_summary`
+
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
+
+For a period: what each ingredient started with, what came in and went
+out by kind, and what was left - per outlet, never a merged total. Days are
+the calendar days entries are dated, so a back-dated entry changes its past
+period. A row shows with stock at the start or a standing movement in the
+period; cancelled lines move nothing. low_only keeps what is at or below
+its low-stock level now.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | yes |  |
+| `to_date` | yes |  |
+| `outlet` | no | `None` |
+| `search` | no | `None` |
+| `low_only` | no | `0` |
+
+### `kamra.inventory.stock_at`
+
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
+
+What the outlet's shelf held at a moment, per ingredient: today's figure
+less everything dated after it. The stock take screen compares against
+this when the count is dated in the past.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `outlet` | yes |  |
+| `at` | yes |  |
 
 ### `kamra.inventory.low_stock`
 

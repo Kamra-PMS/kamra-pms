@@ -275,8 +275,10 @@ class BillSettlementTestCase(AuditTestCase):
 	def test_paid_flag_without_a_payment_mode_is_refused(self):
 		doc = frappe.get_doc("POS Order", self.order("Takeaway"))
 		doc.paid, doc.status = 1, "Delivered"
+		# a client edit can't mark a bill paid at all; the till's own save still
+		# needs a mode
 		with self.assertRaisesRegex(frappe.ValidationError, "payment mode"):
-			doc.save()
+			doc.save(ignore_permissions=True)
 
 	def test_nc_closes_only_with_an_authorization(self):
 		o = self.order(table_no="T4")

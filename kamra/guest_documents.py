@@ -118,7 +118,9 @@ def guest_documents(guest: str, scope=None) -> dict:
 # size capped), saved as a private file, and read back through a role gated
 # endpoint rather than a /private/files link. All three are optional.
 
-GUEST_FILES = {"photo": "photo", "id": "id_file", "address": "address_proof_file"}
+GUEST_FILES = {"photo": "photo", "id": "id_file", "address": "address_proof_file",
+               # a foreign guest's visa / entry document (India: visa or OCI)
+               "visa": "visa_file"}
 
 
 def _retention(guest: str, stays=None) -> str | None:

@@ -132,11 +132,14 @@ Approvals are permissions too:
 - **POS Order: Approve voids** decides who may approve voiding food the
   kitchen has started, and who appears in the approver list at the till.
   Default: Hotel Admin, Finance and F&B Manager.
+- **POS Order: Approve refunds** decides who may refund a paid outlet bill,
+  and who may approve one at someone else's screen. Default: Hotel Admin,
+  Finance and F&B Manager.
 - **Corporate Account: Override Credit** decides who may book or bill past
   a company's credit limit. Default: Hotel Admin and Finance.
 
 The approver still enters their own cashier PIN where the property asks
-for one.
+for one. At someone else's screen the approver's PIN is always asked.
 
 Allowance requests waiting for a manager follow the property's allowance
 approval setting (**Settings > Finance**: Hotel Admin, or Hotel Admin and
@@ -216,8 +219,9 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Housekeeping Task | Do housekeeping (`do_housekeeping`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `api.hk_queue`, `api.hk_update_task`, `api.hk_upload_media` and 6 more |
 | Housekeeping Task | Supervise (`supervise`) | Front Desk, Hotel Admin, Housekeeping Supervisor, Kamra Agent, System Manager | `api.hk_staff` |
 | Hurdle Rate | Manage hurdles (`manage_hurdles`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `api.hurdle_rates`, `api.save_hurdle_rate`, `api.delete_hurdle_rate` |
-| Ingredient | Manage stock (`manage_stock`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_ingredient`, `inventory.delete_ingredient`, `inventory.receive_stock` and 3 more |
-| Ingredient | View stock (`view_stock`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.ingredients`, `inventory.recipe_overview`, `inventory.stock_list` and 3 more |
+| Ingredient | Cancel stock (`cancel_stock`) | Hotel Admin, System Manager | `inventory.cancel_stock_entry` |
+| Ingredient | Manage stock (`manage_stock`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_ingredient`, `inventory.delete_ingredient`, `inventory.receive_stock` and 4 more |
+| Ingredient | View stock (`view_stock`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.ingredients`, `inventory.recipe_overview`, `inventory.stock_list` and 5 more |
 | Itinerary | View trips (`view_trips`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `crs.get_itinerary`, `crs.list_itineraries` |
 | Kamra Custom Report | Run reports (`run_reports`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `custom_reports.list_report_datasets`, `custom_reports.list_report_packs`, `custom_reports.run_report_pack` and 6 more |
 | Kitchen Printer | Configure printers (`configure_printers`) | F&B Manager, Finance, Hotel Admin, System Manager | `printing.save_printer`, `printing.delete_printer`, `printing.test_print` |
@@ -226,7 +230,7 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Laundry Order | Handle laundry (`handle_laundry`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `laundry.request_pickup`, `laundry.collect_laundry`, `laundry.laundry_status` and 3 more |
 | Laundry Order | Price laundry (`price_laundry`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `laundry.save_laundry_rate`, `laundry.import_laundry_rates`, `laundry.laundry_revenue` |
 | Laundry Order | View laundry (`view_laundry`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `laundry.laundry_rates`, `laundry.laundry_board` |
-| Menu Item | Edit menu (`edit_menu`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_recipe`, `inventory.set_menu_availability`, `menu_import.preview_menu_import` and 2 more |
+| Menu Item | Edit menu (`edit_menu`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_recipe`, `inventory.track_item_stock`, `inventory.untrack_item_stock` and 4 more |
 | Menu Item | View menu lists (`view_menu_lists`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `settings.menu_masters` |
 | Menu Item | View recipes (`view_recipes`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.menu_recipe` |
 | Night Audit Run | Configure (`configure`) | Hotel Admin, System Manager | `api.gstr1_rows` |
@@ -235,9 +239,10 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Night Audit Run | Run audit (`run_audit`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.run_night_audit`, `night_audit.night_audit_precheck`, `night_audit.night_audit_pack` and 6 more |
 | Night Audit Run | Schedule audit (`schedule_audit`) | Finance, Hotel Admin, Night Auditor, System Manager | `night_audit.night_audit_schedule` |
 | Outbound Webhook | Configure (`configure`) | Hotel Admin, System Manager | `webhooks.webhook_events`, `webhooks.list_webhooks`, `webhooks.save_webhook` and 6 more |
+| POS Order | Approve refunds (`approve_refunds`) | F&B Manager, Finance, Hotel Admin, System Manager | checked inside Kamra |
 | POS Order | Approve voids (`approve_voids`) | F&B Manager, Finance, Hotel Admin, System Manager | checked inside Kamra |
 | POS Order | Manage outlet (`manage_outlet`) | Finance, Hotel Admin, System Manager | `pos.speed_check` |
-| POS Order | Take orders (`take_orders`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `pos.outlets`, `pos.pos_menu`, `pos.in_house_rooms` and 41 more |
+| POS Order | Take orders (`take_orders`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `pos.outlets`, `pos.pos_menu`, `pos.in_house_rooms` and 44 more |
 | POS Outlet | Manage waiters (`manage_waiters`) | F&B Manager, Finance, Hotel Admin, System Manager | `pos.save_outlet_waiter` |
 | Property | App admin (`app_admin`) | Hotel Admin, System Manager | checked inside Kamra |
 | Property | App booking engine (`app_booking_engine`) | Hotel Admin, Revenue Manager, System Manager | checked inside Kamra |
@@ -271,7 +276,7 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Reservation | Check in out (`check_in_out`) | Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.checkin_context`, `api.check_in`, `api.check_out` and 3 more |
 | Reservation | Follow instructions (`follow_instructions`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `api.stay_instructions`, `api.set_stay_instruction_status` |
 | Reservation | Guided check in (`guided_check_in`) | Front Desk, Hotel Admin, Night Auditor, System Manager | `checkin.complete_checkin_step`, `checkin.skip_checkin_step`, `checkin.save_guest_details` and 5 more |
-| Reservation | Handle stays (`handle_stays`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.registration_card`, `api.waive_security_deposit`, `api.release_access_instructions` and 34 more |
+| Reservation | Handle stays (`handle_stays`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.registration_card`, `api.waive_security_deposit`, `api.release_access_instructions` and 35 more |
 | Reservation | Plan stays (`plan_stays`) | Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `allocation.suggest_allocation`, `allocation.apply_allocation`, `api.set_pays_own_charges` and 2 more |
 | Reservation | Reinstate checkout (`reinstate_checkout`) | Finance, Front Desk, Hotel Admin, System Manager | `api.reinstate_checkout` |
 | Reservation | Set room charges (`set_room_charges`) | Finance, Front Desk, Hotel Admin, Night Auditor, System Manager | `checkin.set_room_charges` |
@@ -593,6 +598,12 @@ Record access over Desk and REST (standard rights, permission level 0):
 | POS Outlet | Kamra Agent | read, report |
 | POS Outlet | Night Auditor | read, report |
 | POS Outlet | F&B Manager | read, write, create, report |
+| POS Refund | System Manager | read, report, export |
+| POS Refund | Hotel Admin | read, report |
+| POS Refund | Finance | read, report |
+| POS Refund | F&B Manager | read, report |
+| POS Refund | Front Desk | read, report |
+| POS Refund | Kamra Agent | read, report |
 | POS Table Reservation | System Manager | read, write, create, delete, report, export |
 | POS Table Reservation | Hotel Admin | read, write, create, delete, report |
 | POS Table Reservation | Front Desk | read, write, create, report |

@@ -41,10 +41,17 @@ import frappe
 
 
 def pack_for(property: str | None = None):
+	"""The country pack for a property. An empty or missing country uses the
+	generic pack — not India — so a property that has not said where it is
+	never picks up India-only terms (OCI, Aadhaar, UPI) or treats every
+	nationality as foreign against India's home nationality."""
 	country = None
 	if property:
 		country = frappe.get_cached_value("Property", property, "country")
-	return pack_for_country(country or "India")
+	if not (country or "").strip():
+		from kamra.localization import generic
+		return generic
+	return pack_for_country(country)
 
 
 def pack_for_country(country: str):
@@ -178,6 +185,8 @@ def amount_in_words(pack, prop_doc, amount) -> str:
 # their own bucket (Cashier Session.system_upi).
 
 GENERIC_ID_TYPES = ["Passport", "National ID", "Driving License", "Other"]
+# country-neutral visa kinds for a foreign guest; India adds OCI Card
+GENERIC_VISA_TYPES = ["Visa", "e-Visa"]
 GENERIC_PAYMENT_MODES = ["Cash", "Card", "Bank Transfer"]
 # modes that are not a country's: any property may record them
 CORE_PAYMENT_MODES = ("Cash", "Foreign Cash", "Card", "Bank Transfer", "OTA Prepaid",
@@ -197,6 +206,26 @@ def withholding_taxes(pack) -> list[dict]:
 
 def id_types(pack) -> list[str]:
 	return list(getattr(pack, "ID_TYPES", None) or GENERIC_ID_TYPES)
+
+
+def visa_types(pack) -> list[str]:
+	"""Visa / entry-document kinds a foreign guest may present here.
+	India lists OCI Card; every other pack stays on Visa / e-Visa."""
+	return list(getattr(pack, "VISA_TYPES", None) or GENERIC_VISA_TYPES)
+
+
+def visa_labels(pack) -> dict:
+	"""Section copy for the foreign-guest visa fields. A pack may name its
+	own (India: Visa / OCI); otherwise the wording stays country-neutral."""
+	types = visa_types(pack)
+	return {
+		"types": types,
+		"section": getattr(pack, "VISA_SECTION", None) or "Visa",
+		"hint": getattr(pack, "VISA_HINT", None)
+		        or "A foreign guest: record the visa they entered on.",
+		"number": getattr(pack, "VISA_NUMBER_LABEL", None) or "Visa number",
+		"photo": getattr(pack, "VISA_PHOTO_LABEL", None) or "Photograph the visa",
+	}
 
 
 def instant_payment_modes(pack) -> list[str]:
@@ -242,10 +271,16 @@ def default_currency(pack) -> str:
 
 
 def front_desk_vocabulary(pack) -> dict:
+	visa = visa_labels(pack)
 	return {
 		"id_types": id_types(pack),
 		# a help line per ID type, e.g. which copy of a national ID is fine
 		"id_type_hints": dict(getattr(pack, "ID_TYPE_HINTS", None) or {}),
+		"visa_types": visa["types"],
+		"visa_section": visa["section"],
+		"visa_hint": visa["hint"],
+		"visa_number_label": visa["number"],
+		"visa_photo_label": visa["photo"],
 		"payment_modes": payment_modes(pack),
 		"instant_payment_modes": instant_payment_modes(pack),
 		"outlet_payment_modes": outlet_payment_modes(pack),
@@ -294,6 +329,22 @@ def is_minor(pack, age) -> bool:
 		return False
 
 
+def is_foreign_national(pack, nationality: str | None) -> bool:
+	"""A guest whose stated nationality is not the property country's own
+	("Indian" or a passport's "IND" in India). Blank is not foreign: the
+	desk has not said. A pack with no home nationality (the generic pack,
+	or a property whose country is empty) cannot tell locals from
+	foreigners, so nobody is treated as foreign."""
+	nat = (nationality or "").strip().casefold()
+	if not nat:
+		return False
+	home = {(getattr(pack, "DEFAULT_NATIONALITY", "") or "").strip().casefold(),
+	        (home_country_iso3(pack) or "").strip().casefold()} - {""}
+	if not home:
+		return False
+	return nat not in home
+
+
 def minor_id_kept(pack, nationality: str | None) -> bool:
 	"""May ID details be recorded for a minor of this nationality?"""
 	if minor_ids(pack) == "all":
@@ -332,6 +383,18 @@ def validate_id_type(property: str | None, id_type: str | None):
 		frappe.throw(
 			frappe._("Unknown ID type {0}. Use one of: {1}.").format(
 				id_type, ", ".join(allowed)))
+
+
+def validate_visa_type(property: str | None, visa_type: str | None):
+	"""A visa / entry-document type must be one this property's country
+	pack lists. Empty clears the field; India alone accepts OCI Card."""
+	if not visa_type:
+		return
+	allowed = visa_types(pack_for(property))
+	if visa_type not in allowed:
+		frappe.throw(
+			frappe._("Pick a visa type: {0}.").format(
+				", ".join(frappe._(v) for v in allowed)))
 
 
 # ── country integrations: payment gateways, tax returns, verification ────
@@ -524,6 +587,11 @@ def on_invoice_cancelled(pack, folio_name: str, invoice_number: str,
 
 def on_pos_bill_paid(pack, order_name: str, tax_rate: float):
 	return _hook(pack, "on_pos_bill_paid", order_name, tax_rate)
+
+
+def on_pos_refund(pack, refund_name: str):
+	"""Money went back on a paid outlet bill (kamra.pos_refunds)."""
+	return _hook(pack, "on_pos_refund", refund_name)
 
 
 def invoice_title(pack) -> str:

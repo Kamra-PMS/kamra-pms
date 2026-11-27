@@ -65,4 +65,55 @@ The buying unit of {0} changed. Close the window and open it again.,Kipimo cha k
 The unit of {0} changed. Close the window and open it again.,Kipimo cha {0} kimebadilika. Funga dirisha ulifungue tena.
 Give a buying unit both a name and how many {0} it holds.,Kipe kipimo cha kununulia jina na idadi ya {0} kilichonayo.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} tayari ina historia ya stoo au iko kwenye pishi, kwa hiyo kipimo chake kinabaki {1}."
-
+Pick a date and time.,Chagua tarehe na saa.
+A stock entry cannot be dated in the future.,Ingizo la hifadhi haliwezi kuwa na tarehe ya baadaye.
+A reason is required to cancel.,Sababu inahitajika ili kughairi.
+Stock entry not found.,Ingizo la hifadhi halikupatikana.
+This entry is already cancelled.,Ingizo hili tayari limeghairiwa.
+"Only deliveries, stock takes and wastage can be cancelled.","Ni upokeaji, hesabu za hifadhi na upotevu pekee vinavyoweza kughairiwa."
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} inafuatilia hifadhi yake: mapishi yake ni bidhaa hiyo moja. Acha kufuatilia ili kuyabadilisha.
+{0} has a recipe. Delete the recipe first.,{0} ina mapishi. Futa mapishi kwanza.
+{0} already tracks its own stock.,{0} tayari inafuatilia hifadhi yake.
+An ingredient called {0} already exists. Pick it instead.,Kiungo kinachoitwa {0} tayari kipo. Kichague badala yake.
+Tracking stock also needs the right to manage stock.,Kufuatilia hifadhi kunahitaji pia ruhusa ya kusimamia hifadhi.
+Given back as,Imerudishwa kama
+POS refunds,Marejesho ya POS
+Refunded by,Imerejeshwa na
+"Payment details are set by the till, not by editing the bill.","Maelezo ya malipo huwekwa na kaunta, si kwa kuhariri bili."
+"Refunds are made at the till, and are never edited or deleted.",Marejesho hufanyika kaunta na hayahaririwi wala kufutwa.
+"This bill has a refund, so its payment mode can't change.","Bili hii ina marejesho, njia ya malipo haiwezi kubadilishwa."
+Correct this on the room's bill at the desk.,Rekebisha hili kwenye bili ya chumba mapokezi.
+Only a bill paid at the outlet can be refunded.,Ni bili iliyolipwa kituoni tu inayoweza kurejeshwa.
+"This bill has no payment record, so it can't be refunded here.","Bili hii haina rekodi ya malipo, haiwezi kurejeshwa hapa."
+Nothing is left to refund on this bill.,Hakuna kilichobaki cha kurejesha kwenye bili hii.
+The amount must be above zero.,Kiasi lazima kiwe juu ya sifuri.
+You can refund up to {0}.,Unaweza kurejesha hadi {0}.
+That line is not on this bill.,Mstari huo haumo kwenye bili hii.
+Pick at least one item.,Chagua angalau kitu kimoja.
+Only {0} of {1} left to refund.,Zimebaki {0} tu za {1} za kurejesha.
+"Refund the whole bill, chosen items, or an amount.","Rejesha bili yote, vitu vilivyochaguliwa, au kiasi."
+{0} can't go back to stock.,{0} haiwezi kurudi hifadhini.
+Pick a refund reason.,Chagua sababu ya marejesho.
+Say why in the note.,Eleza sababu kwenye maelezo.
+An AI agent can never refund.,Wakala wa AI hawezi kamwe kurejesha pesa.
+Try again from the refund window.,Jaribu tena kutoka dirisha la marejesho.
+Money goes back as {0}.,Pesa hurudishwa kama {0}.
+The amount to give back has changed: it is now {0}. Check it and refund again.,Kiasi cha kurudisha kimebadilika: sasa ni {0}. Kikague kisha urejeshe tena.
+This attempt already refunded {0}. Close the window to see it.,Jaribio hili tayari limerejesha {0}. Funga dirisha ili uione.
+"{0} already has stock history, so ""Made here"" stays as it is.","{0} tayari ina historia ya stoo, kwa hiyo ""Hutengenezwa hapa"" inabaki ilivyo."
+"Say how much one batch makes, above zero.","Sema fungu moja hutoa kiasi gani, zaidi ya sifuri."
+Something made here needs at least one ingredient in its recipe.,Kitu kinachotengenezwa hapa kinahitaji angalau kiungo kimoja kwenye mapishi.
+"{0} is used to make {1}, so it cannot be made here itself.","{0} hutumika kutengeneza {1}, kwa hiyo haiwezi yenyewe kutengenezwa hapa."
+{0} cannot be made from itself.,{0} haiwezi kutengenezwa kutokana na yenyewe.
+{0} is made here too. Use only bought ingredients.,{0} pia hutengenezwa hapa. Tumia viungo vilivyonunuliwa tu.
+{0} recipe(s) use this ingredient. Deactivate it instead.,Mapishi {0} yanatumia kiungo hiki. Kizime badala yake.
+{0} (in {1}),{0} (ndani ya {1})
+"{0} is made here. Record it with Produce, not as a delivery.","{0} hutengenezwa hapa. Iandike kwa Zalisha, si kama mzigo."
+"Say how much was made, above zero.","Sema kiasi kilichotengenezwa, zaidi ya sifuri."
+{0} is not made here.,{0} haitengenezwi hapa.
+The recipe of {0} just changed. Try again.,Mapishi ya {0} yamebadilika sasa hivi. Jaribu tena.
+{0} is made here itself. Take it out of the recipe of {1}.,{0} yenyewe hutengenezwa hapa. Iondoe kwenye mapishi ya {1}.
+That is too little to take anything from stock.,Kiasi hicho ni kidogo mno kutoa chochote stoo.
+Every recipe line needs a quantity above zero.,Kila mstari wa mapishi unahitaji kiasi kilicho juu ya sifuri.
+{0} belongs to another property.,{0} ni ya jengo jingine.
+"Only deliveries, stock takes, wastage and production batches can be cancelled.","Ni upokeaji, hesabu za hifadhi, upotevu na mafungu ya uzalishaji pekee vinavyoweza kughairiwa."

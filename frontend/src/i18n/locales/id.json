@@ -357,5 +357,18 @@
   "Last 4 (optional)": "4 digit terakhir (opsional)",
   "Last 4 digits of the card (optional)": "4 digit terakhir kartu (opsional)",
   "Choose the card type for the Card payment.": "Pilih jenis kartu untuk pembayaran kartu.",
-  "Give exactly the last 4 digits of the card, or leave them empty.": "Isi tepat 4 digit terakhir kartu, atau kosongkan."
+  "Give exactly the last 4 digits of the card, or leave them empty.": "Isi tepat 4 digit terakhir kartu, atau kosongkan.",
+  "A foreign guest: record the visa or OCI card they entered on.": "Tamu asing: catat visa atau kartu OCI yang dipakai saat masuk.",
+  "A foreign guest: record the visa they entered on.": "Tamu asing: catat visa yang dipakai saat masuk.",
+  "Ends before check-out ({date})": "Berakhir sebelum check-out ({date})",
+  "OCI Card": "Kartu OCI",
+  "Photograph the visa": "Foto visa",
+  "Photograph the visa or OCI card": "Foto visa atau kartu OCI",
+  "Visa": "Visa",
+  "Visa / OCI": "Visa / OCI",
+  "Visa / OCI number": "Nomor visa / OCI",
+  "Visa number": "Nomor visa",
+  "Visa type": "Jenis visa",
+  "e-Visa": "e-Visa",
+  "New visa number (leave empty to keep)": "Nomor visa baru (kosongkan untuk mempertahankan)"
 }
