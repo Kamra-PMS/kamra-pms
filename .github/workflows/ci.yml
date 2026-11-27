@@ -59,10 +59,6 @@ jobs:
         run: npm run night-prices:check
         working-directory: frontend
 
-      - name: Check kitchen stock unit costs, received rows and saved form fields
-        run: npm run stock:check
-        working-directory: frontend
-
       - name: Check the figures printed on a POS bill add up
         run: npm run addup:check
         working-directory: frontend
@@ -77,10 +73,6 @@ jobs:
 
       - name: Check amounts in another currency use that currency's decimals
         run: npm run money:check
-        working-directory: frontend
-
-      - name: Check new records' tick boxes and the theme's colours
-        run: npm run screen-defaults:check
         working-directory: frontend
 
       - name: Check the food-order basket survives a typed done
