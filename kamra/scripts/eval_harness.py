@@ -12661,6 +12661,43 @@ def t_menu_modifiers():
 	assert not frappe.db.count("Menu Modifier Option", {"modifier_group": extras})
 
 
+@check("whole-unit currencies round line tax while cent currencies keep their existing precision")
+def t_whole_unit_currency_tax():
+	from kamra import folio as folio_mod
+
+	original_currency = frappe.db.get_value("Property", P, "currency")
+	original_fraction = frappe.db.get_value(
+		"Currency", "KHR", "smallest_currency_fraction_value")
+	try:
+		frappe.db.set_value("Currency", "KHR", "smallest_currency_fraction_value", 1)
+		frappe.clear_document_cache("Currency", "KHR")
+		frappe.db.set_value("Property", P, "currency", "KHR")
+		frappe.clear_document_cache("Property", P)
+		whole = frappe._dict(
+			property=P, status="Open",
+			charges=[frappe._dict(amount=10, gst_rate=5, gst_amount=0, total=0)],
+			payments=[frappe._dict(amount=11)],
+		)
+		folio_mod._recalculate(whole)
+		assert (whole.tax_total, whole.grand_total, whole.balance) == (1, 11, 0), whole
+
+		frappe.db.set_value("Property", P, "currency", "USD")
+		frappe.clear_document_cache("Property", P)
+		cent = frappe._dict(
+			property=P, status="Open",
+			charges=[frappe._dict(amount=50.23, gst_rate=5, gst_amount=0, total=0)],
+			payments=[],
+		)
+		folio_mod._recalculate(cent)
+		assert (cent.tax_total, cent.grand_total) == (2.5115, 52.7415), cent
+	finally:
+		frappe.db.set_value("Property", P, "currency", original_currency)
+		frappe.db.set_value(
+			"Currency", "KHR", "smallest_currency_fraction_value", original_fraction)
+		frappe.clear_document_cache("Property", P)
+		frappe.clear_document_cache("Currency", "KHR")
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12722,7 +12759,7 @@ def execute():
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
 		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent,
 		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
-		           t_stock_cost_average):
+		           t_stock_cost_average, t_whole_unit_currency_tax):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

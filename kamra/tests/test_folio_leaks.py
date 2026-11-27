@@ -247,6 +247,29 @@ class FolioLeaksTestCase(AuditTestCase):
 		api.refund_folio_payment(folio, 100, "Cash", reason="UT change")
 		self.assertTrue(folio_mod.close_folio(folio).startswith("INV-"))
 
+	def test_whole_currency_closes_after_tie_tax_is_paid(self):
+		# JPY has a whole-unit format in the Frappe Currency master.
+		make_property(PROP_A, currency="JPY", business_date=TODAY)
+		res = make_reservation(PROP_A, self.rt, d(-1), d(1),
+		                       status="Checked In", room=self.room)
+		folio = guest_folio(res.name)
+		api.add_folio_charge(folio, "Laundry", "Tax rounding", 10, gst_rate=5)
+		self.assertEqual(frappe.db.get_value("Folio", folio, "tax_total"), 1)
+		api.add_folio_payment(folio, "Cash", 10)
+		with self.assertRaisesRegex(frappe.ValidationError, "still owed"):
+			folio_mod.close_folio(folio)
+		api.add_folio_payment(folio, "Cash", 1)
+		self.assertTrue(folio_mod.close_folio(folio).startswith("INV-"))
+		self.assertEqual(frappe.db.get_value("Folio", folio, "balance"), 0)
+
+	def test_whole_currency_keeps_previously_issued_line_tax(self):
+		doc = frappe._dict(property=PROP_A, status="Closed", payments=[],
+		                   charges=[frappe._dict(amount=10, gst_rate=5, gst_amount=0.5)])
+		make_property(PROP_A, currency="JPY", business_date=TODAY)
+		folio_mod._recalculate(doc)
+		self.assertEqual(doc.charges[0].gst_amount, 0.5)
+		self.assertEqual(doc.grand_total, 10.5)
+
 	def test_city_ledger_transfer_then_close(self):
 		res = self.corporate_stay()
 		folio_mod.post_remaining_nights(res)

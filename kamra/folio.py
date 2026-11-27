@@ -6,7 +6,7 @@ a correct multi-rate invoice - the PRD's FR-60.
 """
 
 import json
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 import frappe
 from frappe.utils import add_days, getdate, now_datetime, nowdate
@@ -38,15 +38,39 @@ def _fnb_gst(property):
 	return pack_for(property).fnb_tax_rate(property)
 
 
+def _uses_whole_units(folio):
+	from kamra.ledger import home_currency
+
+	currency = home_currency(folio.property)
+	settings = frappe.get_cached_value(
+		"Currency", currency, ["smallest_currency_fraction_value", "number_format"]
+	)
+	if not settings:
+		return False
+	fraction, number_format = settings
+	if fraction:
+		return fraction == 1
+	# Frappe's two currency formats with no decimal places.
+	return number_format in ("#,###", "#.###")
+
+
 def _recalculate(folio):
+	whole_units = _uses_whole_units(folio)
 	charges = tax = Decimal(0)
 	for c in folio.charges:
 		amount = Decimal(str(c.amount or 0))
 		rate = Decimal(str(c.gst_rate or 0))
-		c.gst_amount = float(amount * rate / 100)
-		c.total = float(amount + amount * rate / 100)
+		line_tax = amount * rate / 100
+		if whole_units and folio.status == "Closed":
+			# A later settling payment must preserve the tax on an issued
+			# invoice, including invoices created before whole-unit rounding.
+			line_tax = Decimal(str(c.gst_amount or 0))
+		elif whole_units:
+			line_tax = line_tax.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+		c.gst_amount = float(line_tax)
+		c.total = float(amount + line_tax)
 		charges += amount
-		tax += amount * rate / 100
+		tax += line_tax
 	paid = sum(Decimal(str(p.amount or 0)) for p in folio.payments)
 	folio.charges_total = float(charges)
 	folio.tax_total = float(tax)
@@ -1105,7 +1129,10 @@ def close_folio(folio_name: str) -> str:
 		return folio.invoice_number
 	_recalculate(folio)
 	balance = float(folio.balance or 0)
-	if abs(balance) > 0.01:
+	# A whole unit is collectible. Keep the historical cent tolerance
+	# for fractional currencies, whose line taxes retain full precision.
+	tolerance = 0 if _uses_whole_units(folio) else 0.01
+	if abs(balance) > tolerance:
 		from kamra.localization import pack_for
 		symbol = pack_for(folio.property).locale(
 			frappe.get_cached_doc("Property", folio.property)).get(
