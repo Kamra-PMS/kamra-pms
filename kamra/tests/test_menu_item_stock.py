@@ -7,7 +7,7 @@ from unittest.mock import patch
 import frappe
 from frappe.utils import add_days
 
-from kamra import inventory, pos
+from kamra import inventory, menu_modifiers, pos
 from kamra.tests.audit_fixtures import (
 	PROP_A, PROP_B, TODAY, make_reservation, make_room, make_room_type)
 from kamra.tests.test_rbac import _grant, _user
@@ -254,6 +254,23 @@ class TestWhenStockLeaves(AtTheTill):
 		self.assertIsNone(self.line(
 			frappe.get_all("POS Order", pluck="name", order_by="creation desc", limit=1)[0],
 			coffee).stock_item)
+
+	def test_a_choice_on_a_line_never_sent_leaves_stock_too(self):
+		beans = self.ingredient()
+		inventory.receive_stock(PROP_A, self.cafe, [{"ingredient": beans, "qty": 100}])
+		coffee = self.dish("UT Coffee", 20000, recipe=[(beans, 18)])
+		extras = menu_modifiers.save_modifier_group(
+			self.cafe, "UT Extras", [{"option_name": "Extra shot", "price": 6000,
+			                          "ingredients": [{"ingredient": beans, "qty": 10}]}])["name"]
+		doc = frappe.get_doc("Menu Item", coffee)
+		doc.append("modifier_groups", {"modifier_group": extras})
+		doc.save(ignore_permissions=True)
+		shot = frappe.db.get_value("Menu Modifier Option", {"modifier_group": extras})
+		order = pos.create_order(
+			self.cafe, [{"menu_item": coffee, "qty": 2, "modifiers": [shot]}],
+			table_no="T1")["order"]
+		self.pay(order)
+		self.assertEqual(self.left(beans), 100 - 2 * (18 + 10))
 
 	def test_a_stock_fault_never_blocks_the_payment(self):
 		order = self.hold()

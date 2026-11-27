@@ -397,11 +397,14 @@ def consume_unsent_lines(order) -> None:
 	        if (it.kot_status or "New") == "New" and not it.voided and not it.stock_posted]
 	if not todo:
 		return
+	from kamra.menu_modifiers import option_ids_of
+
 	frappe.db.savepoint("stock_at_close")
 	try:
 		consume_for_lines(order, [
 			{"row": it.name, "menu_item": it.menu_item, "qty": it.qty,
-			 "stock_posted": it.stock_posted} for it in todo],
+			 "stock_posted": it.stock_posted,
+			 "modifiers": option_ids_of(it.modifiers)} for it in todo],
 			note="Closed without a kitchen ticket")
 	except (frappe.QueryDeadlockError, frappe.QueryTimeoutError):
 		raise
