@@ -206,11 +206,12 @@ def free_to_sell(
 	check_in_date: str,
 	check_out_date: str,
 	for_group: str | None = None,
+	ready_now: int = 0,
 ) -> int:
 	"""How many stays of the type can still be sold for these dates: its free
 	rooms, never more than it has left to sell. A whole-villa type with no
 	rooms of its own is one thing to sell - the property - unless one of the
-	member rooms is booked."""
+	member rooms is booked. Pass ready_now=1 for a guest taking the room now."""
 	from kamra.api import available_rooms
 	from kamra.kamra.doctype.reservation.reservation import (
 		uses_member_rooms,
@@ -219,13 +220,35 @@ def free_to_sell(
 
 	if not uses_member_rooms(property, room_type):
 		free = len(available_rooms(property, room_type, check_in_date,
-		                           check_out_date, group_booking=for_group))
+		                           check_out_date, group_booking=for_group,
+		                           ready_now=ready_now))
 	elif villa_lockout_conflict(property, room_type, check_in_date, check_out_date):
 		return 0
 	else:
 		free = 1
 	return cap_to_unsold(property, room_type, check_in_date, check_out_date, free,
 	                     for_group)
+
+
+def can_save_without_room(
+	property: str,
+	room_type: str,
+	check_in_date: str,
+	check_out_date: str,
+) -> bool:
+	"""True when saving a stay with no room number would be accepted: the type
+	has something left to sell on every night, overbooking allowance included,
+	and the villa <-> room lockout does not apply."""
+	from kamra.kamra.doctype.reservation.reservation import villa_lockout_conflict
+
+	left = unsold_by_night(
+		property, room_type, _nights(check_in_date, check_out_date)
+	)
+	if not left or not min(left):
+		return False
+	return not villa_lockout_conflict(
+		property, room_type, check_in_date, check_out_date
+	)
 
 
 def available_rooms_via_siu(

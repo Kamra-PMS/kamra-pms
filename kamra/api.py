@@ -8675,6 +8675,39 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 	return [frappe._dict(r) for r in (rooms or [])]
 
 
+@frappe.whitelist()
+@require_perm("Reservation", "handle_stays")
+def rooms_to_sell(property: str, check_in_date: str, check_out_date: str,
+                  ready_now: int = 0):
+	"""For each room type on sale, how many stays can still be sold for these
+	dates by the rules saving a booking applies. Stays with no room number
+	count, so a figure can be lower than the rooms available_rooms lists.
+	`without_room` is true when no room can be given for the whole stay but a
+	booking without a room number would still be accepted. Pass ready_now=1
+	for a guest taking the room now."""
+	from kamra.kamra.doctype.reservation.reservation import uses_member_rooms
+	from kamra.siu.availability import can_save_without_room, free_to_sell
+
+	if getdate(check_out_date) < getdate(check_in_date):
+		frappe.throw(_("Check-out cannot be before check-in."))
+	out = {}
+	for room_type in frappe.get_all(
+			"Room Type", filters={"property": property, "disabled": 0},
+			pluck="name"):
+		free = free_to_sell(property, room_type, check_in_date, check_out_date,
+		                    ready_now=cint(ready_now))
+		# a guest taking a room now needs one: a whole villa with no rooms of
+		# its own can be booked, but has none to hand over
+		if cint(ready_now) and uses_member_rooms(property, room_type):
+			free = 0
+		out[room_type] = {
+			"free": free,
+			"without_room": not free and can_save_without_room(
+				property, room_type, check_in_date, check_out_date),
+		}
+	return out
+
+
 def in_house_rooms(property: str) -> set[str]:
 	"""Rooms a guest is checked in to right now, whatever their departure
 	date says - they stay occupied until the guest checks out."""

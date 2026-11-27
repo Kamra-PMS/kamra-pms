@@ -17,7 +17,7 @@ import { useT, t as translate, useUILanguage } from "../../lib/i18n"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
 import {
-  OrderView, STATES, StateBadge, hhmm, localDay, money, shortDay, useStateLabel,
+  OrderView, RefundBadge, STATES, StateBadge, hhmm, localDay, money, shortDay, useStateLabel,
   type ListState,
 } from "./PosSidePanel"
 
@@ -41,6 +41,8 @@ interface Row {
   cancel_reason: string | null
   served_by?: string | null
   cashier?: string | null
+  refunded?: number
+  paid_amount?: number
 }
 interface Out {
   rows: Row[]
@@ -52,6 +54,8 @@ interface Out {
     bills: number
     sales: number
     cancelled: number
+    refunds: number | null
+    net: number | null
     by_mode: Record<string, number>
     by_type: Record<string, number>
   }
@@ -252,6 +256,12 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                 <Tile title={t("Bills")} value={String(totals.bills)} />
                 <Tile title={t("Sales")} value={`${cur()}${money(totals.sales)}`} strong />
+                {!!totals.refunds && (
+                  <>
+                    <Tile title={t("Refunds")} value={`-${cur()}${money(totals.refunds)}`} tone="rose" />
+                    <Tile title={t("Net")} value={`${cur()}${money(totals.net)}`} strong />
+                  </>
+                )}
                 {Object.entries(totals.by_mode).map(([m, v]) => (
                   <Tile key={m} title={t(m === "Room" ? "Posted to room" : m)} value={`${cur()}${money(v)}`} />
                 ))}
@@ -315,7 +325,8 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                             {r.cashier && <div className="truncate text-zinc-400">{t("Cashier: {name}", { name: r.cashier })}</div>}
                           </td>
                           <td className="px-3 py-2">
-                            <StateBadge state={r.state} />
+                            <StateBadge state={r.state} />{" "}
+                            <RefundBadge paid={r.paid_amount} refunded={r.refunded} />
                             {r.state === "cancelled" && r.cancel_reason
                               ? <span className="ms-1.5 text-xs text-rose-700">{r.cancel_reason}</span> : null}
                           </td>
@@ -354,6 +365,7 @@ export default function OrderHistory({ outlet, onClose, onOpenBill }: {
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
                           <StateBadge state={r.state} />
+                          <RefundBadge paid={r.paid_amount} refunded={r.refunded} />
                           <span>{shortDay(r.time.slice(0, 10))} {hhmm(r.time)}</span>
                           <span>· {r.name}</span>
                           {r.order_type ? <span>· {t(r.order_type)}</span> : null}
