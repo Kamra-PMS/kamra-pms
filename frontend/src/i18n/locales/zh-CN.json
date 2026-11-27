@@ -1,4 +1,5 @@
 {
+  "Back on {date}": "{date} 恢复使用",
   " - {n} row(s) skipped: ": " - 已跳过 {n} 行：",
   " - add the first item.": " - 添加第一项。",
   " - choose {v0}": " - 选择 {v0}",

@@ -11,7 +11,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cn } from "../lib/utils"
 import { sortFloors, type FloorOrder } from "../lib/floors"
-import { useT, t as translate } from "../lib/i18n"
+import { useT, t as translate, uiDateLocale } from "../lib/i18n"
 import { InspectionQuality, RoomStatusCases } from "../components/HkQuality"
 
 
@@ -63,7 +63,15 @@ const dot: Record<HkStatus, string> = {
 
 type Filter = "All" | HkStatus | "Out of service" | "Due out" | "Has task"
 
-const isBlocked = (r: BoardRoom) => r.occupancy_status !== "Occupied" && !!r.block
+// a live Room Block marks the room, occupied or not, as the Room Board does
+const isBlocked = (r: BoardRoom) => !!r.block
+
+// a block's to_date is exclusive: the room is back in service that day
+const backOn = (iso: string) =>
+  new Date(iso.slice(0, 10) + "T00:00:00").toLocaleDateString(uiDateLocale("en-GB"), {
+    day: "numeric",
+    month: "short",
+  })
 
 export default function HousekeepingBoard() {
   const { t } = useT()
@@ -308,7 +316,7 @@ export default function HousekeepingBoard() {
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-base font-semibold">{r.room_number}</span>
                           <span className="flex items-center gap-1">
-                            {isBlocked(r) && <Lock className="size-3.5" aria-hidden />}
+                            {isBlocked(r) && <Lock className="size-3.5" aria-label={t("Out of service")} />}
                             {r.due_out && (
                               <LogOut className="size-3.5 text-violet-600" aria-label={t("Due out")} />
                             )}
@@ -321,7 +329,14 @@ export default function HousekeepingBoard() {
                           {isBlocked(r) ? t("Out of service") : t(r.housekeeping_status)}
                         </div>
                         {isBlocked(r) && r.block?.reason && (
-                          <div className="mt-1 truncate text-xs opacity-80">{t(r.block.reason)}</div>
+                          <div className="mt-1 truncate text-xs opacity-80" title={t(r.block.reason)}>
+                            {t(r.block.reason)}
+                          </div>
+                        )}
+                        {isBlocked(r) && r.block?.to_date && (
+                          <div className="mt-0.5 text-xs opacity-80">
+                            {t("Back on {date}", { date: backOn(r.block.to_date) })}
+                          </div>
                         )}
                         {r.guest_name && (
                           <div className="mt-1 truncate text-xs opacity-80">{r.guest_name}</div>
