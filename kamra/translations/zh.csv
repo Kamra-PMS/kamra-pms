@@ -2131,3 +2131,27 @@ This entry is already cancelled.,该记录已取消。
 {0} already tracks its own stock.,{0} 已在独立跟踪库存。
 An ingredient called {0} already exists. Pick it instead.,已存在名为 {0} 的原料，请直接选择它。
 Tracking stock also needs the right to manage stock.,跟踪库存还需要库存管理权限。
+Given back as,退款方式
+POS refunds,餐饮收银退款
+Refunded by,退款人
+"Payment details are set by the till, not by editing the bill.",付款信息由收银记录，不能通过编辑账单修改。
+"Refunds are made at the till, and are never edited or deleted.",退款在收银台办理，不能编辑或删除。
+"This bill has a refund, so its payment mode can't change.",该账单已有退款，无法更改付款方式。
+Correct this on the room's bill at the desk.,请在前台的房间账单上更正。
+Only a bill paid at the outlet can be refunded.,只能对在门店付款的账单退款。
+"This bill has no payment record, so it can't be refunded here.",该账单没有付款记录，无法在此退款。
+Nothing is left to refund on this bill.,该账单已无可退金额。
+The amount must be above zero.,金额必须大于零。
+You can refund up to {0}.,最多可退 {0}。
+That line is not on this bill.,该行不在此账单中。
+Pick at least one item.,请至少选择一个项目。
+Only {0} of {1} left to refund.,{1} 仅剩 {0} 可退。
+"Refund the whole bill, chosen items, or an amount.",请退整单、所选项目或指定金额。
+{0} can't go back to stock.,{0} 无法退回库存。
+Pick a refund reason.,请选择退款原因。
+Say why in the note.,请在备注中说明原因。
+An AI agent can never refund.,AI 代理永远不能退款。
+Try again from the refund window.,请在退款窗口重试。
+Money goes back as {0}.,退款方式为 {0}。
+The amount to give back has changed: it is now {0}. Check it and refund again.,应退金额已变更:现在是 {0}。请核对后重新退款。
+This attempt already refunded {0}. Close the window to see it.,本次操作已退款 {0}。关闭窗口即可查看。

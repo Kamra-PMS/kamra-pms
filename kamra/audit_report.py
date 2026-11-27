@@ -129,6 +129,7 @@ def _outlets(property: str, start, end) -> list[dict]:
 		o["beverage"] += flt(r.bev) * keep
 		if not r.paid:
 			o["to_rooms"] += gross * keep
+	_take_off_refunds(out, property, start, end)
 	names = dict(frappe.get_all("POS Outlet", filters={"name": ("in", list(out) or [""])},
 	                            fields=["name", "outlet_name"], as_list=True))
 	for o in out.values():
@@ -137,6 +138,40 @@ def _outlets(property: str, start, end) -> list[dict]:
 		for k in ("food", "beverage", "to_rooms", "total"):
 			o[k] = round(o[k], 2)
 	return sorted(out.values(), key=lambda o: o["name"])
+
+
+def _take_off_refunds(out: dict, property: str, start, end) -> None:
+	"""Money given back at the till on these business days comes off food and
+	beverage - the items' part only, as the sales count them: no tax, no levy.
+	An item refund splits by the items returned; an amount, as its bill did."""
+	from kamra.pos_refunds import refunds_between
+
+	made = refunds_between(start, end, property=property, by="business_date")
+	if not made:
+		return
+	drinks, total = {}, {}
+	for x in frappe.get_all(
+			"POS Refund Line", filters={"parent": ["in", [r.name for r in made]],
+			                            "parenttype": "POS Refund"},
+			fields=["parent", "amount", "is_beverage"]):
+		total[x.parent] = total.get(x.parent, 0) + flt(x.amount)
+		if x.is_beverage:
+			drinks[x.parent] = drinks.get(x.parent, 0) + flt(x.amount)
+	bills = {r.pos_order: r for r in made}
+	as_sold = {row[0]: flt(row[1]) / flt(row[2]) for row in frappe.db.sql(
+		"""SELECT i.parent, SUM(CASE WHEN mi.is_alcohol = 1 THEN i.amount ELSE 0 END),
+		          SUM(i.amount)
+		   FROM `tabPOS Order Item` i LEFT JOIN `tabMenu Item` mi ON mi.name = i.menu_item
+		   WHERE i.voided = 0 AND i.parent IN %(b)s GROUP BY i.parent""",
+		{"b": tuple(bills)}) if flt(row[2])}
+	for r in made:
+		part = flt(r.amount) - flt(r.tax_amount) - flt(r.levy_amount)
+		share = (drinks.get(r.name, 0) / total[r.name] if total.get(r.name)
+		         else as_sold.get(r.pos_order, 0))
+		o = out.setdefault(r.outlet, {"outlet": r.outlet, "bills": 0, "food": 0.0,
+		                              "beverage": 0.0, "to_rooms": 0.0})
+		o["food"] -= part * (1 - share)
+		o["beverage"] -= part * share
 
 
 def _banquets(property: str, start, end) -> dict:

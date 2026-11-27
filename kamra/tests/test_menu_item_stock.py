@@ -241,7 +241,7 @@ class TestWhenStockLeaves(AtTheTill):
 	def test_a_rest_save_that_closes_the_bill_takes_it(self):
 		order = self.hold()
 		doc = frappe.get_doc("POS Order", order)
-		doc.update({"status": "Delivered", "paid": 1, "payment_mode": "Cash"})
+		doc.update({"status": "Delivered", "nc": 1, "nc_authorized_by": "Manager"})
 		doc.save()
 		self.assertEqual(self.left(), 9)
 

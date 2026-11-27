@@ -40,6 +40,8 @@ MODULES = [
     ("api", "Core (front desk, folios, guests, rooms)", ""),
     ("booking_requests", "Request to Book (accept / decline)", ""),
     ("pos", "Restaurant POS & kitchen", ""),
+    ("pos_refunds", "POS refunds (money back on a paid outlet bill)",
+     "Every refund needs a supervisor's cashier PIN; AI agents are refused. A repeated idempotency_key pays once."),
     ("onboarding", "Setup checklist (finish setting up a property)", ""),
     ("rates", "Rates (rate calendar, what moves a rate)", "These explain a price; they never set one. The quote is the only source of a charge."),
     ("tickets", "Service tickets (assign, resolve, timeline)", ""),

@@ -8132,6 +8132,122 @@
    ]
   },
   {
+   "name": "POS refunds (money back on a paid outlet bill)",
+   "item": [
+    {
+     "name": "refund_options",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos_refunds.refund_options",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos_refunds.refund_options"
+       ]
+      },
+      "description": "Everything the refund window needs: whether the bill can be refunded,\nwhat is left, its lines, the ways money may go back, the reasons, who may\napprove, and the refunds so far.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "refund_quote",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos_refunds.refund_quote",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos_refunds.refund_quote"
+       ]
+      },
+      "description": "What a refund would give back, line by line, before anyone approves it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"kind\": \"<kind>\",\n  \"amount\": 1000\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "refund_bill",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.pos_refunds.refund_bill",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.pos_refunds.refund_bill"
+       ]
+      },
+      "description": "Give money back on a paid bill: the whole of what is left (\"whole\"),\nchosen items (\"items\", lines = [{row, qty, back_to_stock}]), or an amount\n(\"amount\"). The screen sends one idempotency_key per attempt, so a retried\nrequest answers with the refund already made and pays nothing twice. It also\nsends expected_amount, the figure it showed: if what would be recorded\ndiffers (another refund came in between), nothing is paid. seen_refunded is\nwhat the window showed as already given back: once that includes the refund\nmade for this key, pressing again is refused rather than answered with it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"order\": \"ORD-2026-00001\",\n  \"kind\": \"<kind>\",\n  \"mode\": \"<mode>\",\n  \"reason_code\": \"<reason_code>\",\n  \"amount\": 1000\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
    "name": "Setup checklist (finish setting up a property)",
    "item": [
     {

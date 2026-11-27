@@ -962,7 +962,7 @@ Amenities,Amenities,المرافق,Comodidades,Comodidades,设施,components/Roo
 Amenities (one per line),Amenities (one per line),المرافق (واحد في كل سطر),Servicios e instalaciones (uno por línea),Amenidades (uma por linha),设施（每行一项）,components/RoomTypeMedia.tsx,,translated
 American,American,أمريكي,Estadounidense,Americano,美式,,,translated
 American Plan,American Plan,,Pensión Completa,Pensão Completa,,,,needs_translation
-Amount,Amount,المبلغ,Importe,Montante,金额,components/AgentGuide.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/RoomStayPanels.tsx; components/SecurityDepositPanel.tsx; lib/thermal.ts; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CRS.tsx; screens/CashierTill.tsx; screens/GroupQuotation.tsx; screens/PettyCash.tsx; screens/Receivables.tsx; screens/UnitOwners.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
+Amount,Amount,المبلغ,Importe,Montante,金额,components/AgentGuide.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/RoomStayPanels.tsx; components/SecurityDepositPanel.tsx; lib/thermal.ts; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CRS.tsx; screens/CashierTill.tsx; screens/GroupQuotation.tsx; screens/PettyCash.tsx; screens/Receivables.tsx; screens/UnitOwners.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx; screens/pos/RefundDialog.tsx,,translated
 Amount ({cur}),Amount ({cur}),مبلغ ({cur}),Importe ({cur}),Valor ({cur}),金额（{cur}）,components/FolioDiscount.tsx,cur,translated
 Amount (before tax),Amount (before tax),المبلغ (قبل الضريبة),Importe (antes de impuestos),Montante (antes de impostos),金额（税前）,components/RoomStayPanels.tsx,,translated
 Amount (held {amt}),Amount (held {amt}),المبلغ (المحتجز {amt}),Importe (retenido: {amt}),Montante (detido {amt}),金额（已收 {amt}）,components/SecurityDepositPanel.tsx,amt,translated
@@ -1026,7 +1026,7 @@ Apply discount,Apply discount,تطبيق الخصم,Aplicar descuento,Aplicar de
 Approve,Approve,موافقة,Aprobar,Aprovar,批准,components/AllowanceRequests.tsx; screens/CashierBoard.tsx; screens/Payables.tsx,,translated
 Approve and connect,Approve and connect,موافقة واتصال,Aprobar y conectar,Aprovar e conectar,批准并连接,components/ConnectApp.tsx,,translated
 Approved,Approved,تمت الموافقة,Aprobada,Aprovada,已批准,screens/AllowanceApprovals.tsx; screens/AllowanceVoucher.tsx,,translated
-Approved by,Approved by,وافق عليه,Aprobado por,Aprovado por,批准人,screens/AllowanceVoucher.tsx,,translated
+Approved by,Approved by,وافق عليه,Aprobado por,Aprovado por,批准人,screens/AllowanceVoucher.tsx; screens/pos/PosSidePanel.tsx,,translated
 approved by {name},approved by {name},بموافقة {name},aprobado por {name},aprovado por {name},由 {name} 批准,screens/VoidAllowanceReport.tsx; screens/pos/PosSidePanel.tsx,name,translated
 Approved by {who},Approved by {who},وافق عليه {who},Aprobado por {who},Aprovado por {who},批准人 {who},components/AllowanceRequests.tsx,who,translated
 Approved with PIN,Approved with PIN,تمت الموافقة بالرمز السري,Aprobado con PIN,Aprovado com PIN,已用 PIN 批准,screens/AllowanceVoucher.tsx,,translated
@@ -3379,7 +3379,7 @@ It asks to,It asks to,يطلب,Solicita,Ele solicita,请求执行以下操作,co
 It opens the agent with this check described. You approve what it changes.,It opens the agent with this check described. You approve what it changes.,يفتح الوكيل مع وصف هذا الفحص. أنت توافق على ما يغيّره.,Abre el agente con la descripción de esta comprobación. Usted aprueba los cambios que realice.,Abre o agente com esta verificação descrita. Você aprova o que isso muda.,将带着该检查项说明打开助手，其改动需你批准。,screens/EndOfDayWizard.tsx,,translated
 It speeds up arrival. Bring the original card either way.,It speeds up arrival. Bring the original card either way.,تُسرّع الوصول. أحضر البطاقة الأصلية في كل الأحوال.,"Así ahorrarás tiempo al llegar. De cualquier forma, trae el documento original.",Acelera a chegada. Traga o cartão original de qualquer maneira.,可加快入住办理。无论是否提前提交，仍请携带证件原件。,screens/PublicCheckin.tsx,,translated
 It was paid by,It was paid by,دُفعت بواسطة,Fue pagado por,Foi pago por,付款方为,screens/pos/PosSidePanel.tsx,,translated
-Item,Item,البند,Artículo,Artigo,项目,lib/thermal.ts; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/FolioView.tsx; screens/Laundry.tsx; screens/MenuImport.tsx; screens/banquet/Economics.tsx; screens/settings/cards.tsx,,translated
+Item,Item,البند,Artículo,Artigo,项目,lib/thermal.ts; screens/Banquet.tsx; screens/BanquetCatalogue.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/FolioView.tsx; screens/Laundry.tsx; screens/MenuImport.tsx; screens/banquet/Economics.tsx; screens/pos/RefundDialog.tsx; screens/settings/cards.tsx,,translated
 Item (Shirt…),Item (Shirt…),البند (قميص…),Prenda (camisa…),Item (camisa…),物品（衬衫…）,screens/Laundry.tsx; screens/settings/cards.tsx,,translated
 item name,item name,اسم البند,nombre del artículo,nome do item,项目名称,screens/MenuImport.tsx,,translated
 Item name,Item name,اسم البند,Nombre del artículo,Nome do item,项目名称,,,translated
@@ -3564,7 +3564,7 @@ Ledgers,Ledgers,دفتر الأستاذ,Libros contables,Livros contábeis,分�
 Ledgers agree with folios - Guest + Deposit net {v0} equals the {v1} folios carry. Debits exceed credits by what guests owe ({v2}); that is not an imbalance.,Ledgers agree with folios - Guest + Deposit net {v0} equals the {v1} folios carry. Debits exceed credits by what guests owe ({v2}); that is not an imbalance.,الدفاتر مطابقة للفواتير: صافي الضيوف + العربون {v0} يساوي {v1} المسجل على الفواتير. يزيد المدين على الدائن بقدر ما يدين به الضيوف ({v2})، وهذا ليس اختلالا.,Los libros coinciden con los folios: el neto de Huéspedes + Depósitos ({v0}) equivale al saldo de los folios ({v1}). La diferencia entre débitos y créditos corresponde a lo adeudado por los huéspedes ({v2}); no es un descuadre.,Os livros contábeis concordam com os fólios - Hóspede + Depósito líquido {v0} é igual ao transporte dos fólios {v1}. Os débitos excedem os créditos em relação ao que os hóspedes devem ({v2}); isso não é um desequilíbrio.,台账与客账一致 - 宾客 + 押金净额 {v0} 等于 {v1} 个客账的合计。借方超出贷方部分即宾客欠款（{v2}），并非不平。,,v0 v1 v2,translated
 Ledgers as of {v0}. Debits {v1} · credits {v2}. The check against folio balances runs for the current business date.,Ledgers as of {v0}. Debits {v1} · credits {v2}. The check against folio balances runs for the current business date.,الدفاتر حتى {v0}. المدين {v1} · الدائن {v2}. تتم المطابقة مع أرصدة الفواتير لتاريخ العمل الحالي.,Libros al {v0}. Débitos {v1} · créditos {v2}. La comparación con los saldos de folios utiliza la fecha operativa actual.,Razões em {v0}. Débitos {v1} · créditos {v2}. A verificação dos saldos dos fólios é executada para a data contábil atual.,截至 {v0} 的台账。借方 {v1} · 贷方 {v2}。与客账余额的核对按当前营业日运行。,,v0 v1 v2,translated
 left,left,متبقية,disponibles,esquerda,剩余,,,translated
-Left,Left,غادر,Se fue,Saiu,左,screens/RegistrationCard.tsx,,translated
+Left,Left,غادر,Se fue,Saiu,左,screens/RegistrationCard.tsx; screens/pos/RefundDialog.tsx,,translated
 Left {time},Left {time},غادر {time},Se fue {time},Saiu {time},{time} 离店,screens/RegistrationCard.tsx; screens/ReservationDetail.tsx,time,translated
 Left early: booked to {date}.,Left early: booked to {date}.,غادر مبكرًا: محجوز حتى {date}.,Salió antes: reservado hasta {date}.,Saiu antes: reservado até {date}.,提前离店：原订至 {date}。,screens/ReservationDetail.tsx,date,translated
 "Left empty, it is due {n} days after the bill date.","Left empty, it is due {n} days after the bill date.",إذا تُرك فارغًا، تستحق بعد {n} يومًا من تاريخ الفاتورة.,"Si lo dejas vacío, vence {n} días después de la fecha de la factura.","Se deixado em branco, vence {n} dias após a data da fatura.",留空则账单日期后 {n} 天到期。,screens/Payables.tsx,n,translated
@@ -3892,7 +3892,7 @@ Needs chasing{urgent},Needs chasing{urgent},يحتاج متابعة{urgent},Requ
 Needs you,Needs you,تحتاج إليك,Requiere su atención,Precisa de você,需要处理,screens/EndOfDayWizard.tsx,,translated
 NEGATIVE,NEGATIVE,سالب,NEGATIVO,NEGATIVO,负数,,,translated
 Negotiated rate plan,Negotiated rate plan,خطة سعر متفاوض عليها,Plan tarifario negociado,Plano tarifário negociado,协议房价计划,,,translated
-Net,Net,الصافي,Neto,Líquido,净额,screens/CashForecast.tsx,,translated
+Net,Net,الصافي,Neto,Líquido,净额,screens/CashForecast.tsx; screens/pos/OrderHistory.tsx,,translated
 Net Total (net_total),Net Total (net_total),صافي الإجمالي (net_total),Total neto (net_total),Total líquido (total_líquido),净额（net_total）,,,translated
 Network round trip {ms} ms - fine.,Network round trip {ms} ms - fine.,زمن ذهاب وإياب الشبكة {ms} ms، جيد.,Tiempo de respuesta de la red: {ms} ms. Adecuado.,Ida e volta da rede {ms} ms - tudo bem.,网络往返 {ms} 毫秒 - 正常。,screens/settings/cards.tsx,ms,translated
 Network round trip {ms} ms - slow. The server is far from the hotel or the connection is weak; every POS action waits this long.,Network round trip {ms} ms - slow. The server is far from the hotel or the connection is weak; every POS action waits this long.,زمن ذهاب وإياب الشبكة {ms} ms، بطيء. الخادم بعيد عن الفندق أو الاتصال ضعيف، وكل إجراء في POS ينتظر هذه المدة.,Tiempo de respuesta de la red: {ms} ms. Es lento. El servidor está lejos del hotel o la conexión es débil; cada acción del punto de venta tarda ese tiempo.,Ida e volta da rede {ms} ms - lento. O servidor está longe do hotel ou a conexão é fraca; toda ação de PDV espera tanto tempo.,网络往返 {ms} 毫秒 - 较慢。服务器远离酒店或网络较差；每次餐饮收银操作都要等待这么久。,screens/settings/cards.tsx,ms,translated
@@ -4283,7 +4283,7 @@ Not the right guest?,Not the right guest?,,,,,components/CheckInGuests.tsx,,need
 Not tied to a group,Not tied to a group,غير مرتبط بمجموعة,Sin vincular a un grupo,Não vinculado a um grupo,未关联团队,screens/BanquetFunction.tsx,,translated
 Not used yet,Not used yet,لم يُستخدم بعد,Aún no utilizado,Ainda não utilizado,尚未使用,screens/KitchenPrinters.tsx,,translated
 Not yet,Not yet,ليس بعد,Aún no,Ainda não,尚未,screens/BanquetFunction.tsx,,translated
-Note,Note,ملاحظة,Nota,Nota,备注,screens/Receivables.tsx,,translated
+Note,Note,ملاحظة,Nota,Nota,备注,screens/Receivables.tsx; screens/pos/RefundDialog.tsx,,translated
 Note (optional),Note (optional),ملاحظة (اختياري),Nota (opcional),Nota (opcional),备注（可选）,components/NoShowDialog.tsx; components/RoomChangeDialog.tsx; components/SecurityDepositPanel.tsx; screens/Receivables.tsx,,translated
 "Note (what is wrong, who is fixing it)","Note (what is wrong, who is fixing it)",ملاحظة (ما المشكلة، ومن يصلحها),"Nota (qué está mal, quién lo está solucionando)","Nota (o que está errado, quem está consertando)",备注（问题是什么、谁在处理）,components/RoomDrawer.tsx,,translated
 Notes,Notes,ملاحظات,Notas,Notas,备注,components/RoomDrawer.tsx; screens/BanquetFunction.tsx; screens/POS.tsx,,translated
@@ -5233,7 +5233,7 @@ Ready for go-live,Ready for go-live,جاهز للتشغيل الفعلي,Listo p
 Ready to check out,Ready to check out,جاهز لتسجيل المغادرة,Listo para registrar la salida,Pronto para conferir,可退房,components/CheckOutDialog.tsx,,translated
 Ready to sell,Ready to sell,جاهزة للبيع,Disponibles para reservar,Pronto para vender,可售,screens/Rooms.tsx,,translated
 Ready. Check the guest in.,Ready. Check the guest in.,جاهز. سجّل وصول الضيف.,Todo listo. Registre la entrada del huésped.,Pronto. Faça o check-in do hóspede.,已就绪，可为宾客办理入住。,components/CheckInDialog.tsx,,translated
-Reason,Reason,السبب,Motivo,Razão,原因,components/CancelPanel.tsx; components/CheckOutDialog.tsx; components/RoomChangeDialog.tsx; screens/AllowanceVoucher.tsx; screens/CashierTill.tsx; screens/EndOfDayWizard.tsx; screens/FolioView.tsx; screens/Inventory.tsx; screens/PettyCash.tsx; screens/Receivables.tsx,,translated
+Reason,Reason,السبب,Motivo,Razão,原因,components/CancelPanel.tsx; components/CheckOutDialog.tsx; components/RoomChangeDialog.tsx; screens/AllowanceVoucher.tsx; screens/CashierTill.tsx; screens/EndOfDayWizard.tsx; screens/FolioView.tsx; screens/Inventory.tsx; screens/PettyCash.tsx; screens/Receivables.tsx; screens/pos/PosSidePanel.tsx; screens/pos/RefundDialog.tsx,,translated
 Reason (goes on the record),Reason (goes on the record),السبب (يُسجَّل),Motivo (queda registrado),Motivo (fica registrado),原因（记入记录）,components/AgentCards.tsx,,translated
 "Reason (guest declined, duplicate…)","Reason (guest declined, duplicate…)",السبب (رفض الضيف، مكرر…),"Motivo (el huésped rechazó el servicio, solicitud duplicada…)","Motivo (hóspede recusou, duplicado…)",原因（宾客拒绝、重复等…）,screens/Laundry.tsx,,translated
 Reason (optional),Reason (optional),السبب (اختياري),Motivo (opcional),Motivo (opcional),原因（可选）,components/ChangeGuestDialog.tsx; screens/HkApp.tsx,,translated
@@ -5269,7 +5269,7 @@ Receive stock,Receive stock,استلام المخزون,Recibir existencias,Rece
 Received,Received,المستلم,Recibido,Recebido,已收到,components/DepositPanel.tsx; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/CashierBoard.tsx,,translated
 received {v0},received {v0},مستلمة في {v0},recibido el {v0},recebido em {v0},已收 {v0},screens/Receivables.tsx,v0,translated
 "Received {v0}, recorded by {v1}","Received {v0}, recorded by {v1}",استُلمت في {v0}، سجّلها {v1},"Recibido el {v0}, registrado por {v1}","Recebido em {v0}, registrado por {v1}",已收 {v0}，由 {v1} 记录,screens/Receivables.tsx,v0 v1,translated
-Received by,Received by,استلمه,Recibido por,Recebido por,接收人,,,translated
+Received by,Received by,استلمه,Recibido por,Recebido por,接收人,screens/pos/PosSidePanel.tsx,,translated
 Received on,Received on,تاريخ الاستلام,Recibido el,Recebido em,接收于,screens/CityLedgerPayment.tsx,,translated
 Received this month,Received this month,المستلم هذا الشهر,Cobrado este mes,Recebido este mês,本月已收,,,translated
 Received to date,Received to date,المستلم حتى تاريخه,Recibido a la fecha,Recebido até o momento,累计已收,screens/BanquetFunction.tsx,,translated
@@ -5316,8 +5316,8 @@ Reference (required),Reference (required),المرجع (مطلوب),Referencia (
 Reference (UTR / cheque no.),Reference (UTR / cheque no.),المرجع (UTR / رقم الشيك),Referencia (UTR / n.º de cheque),Referência (UTR / número de cheque),参考号（UTR / 支票号）,screens/CityLedgerPayment.tsx,,translated
 Referral,Referral,إحالة,Recomendación,Referência,推荐,,,translated
 Refresh,Refresh,تحديث,Actualizar,Atualizar,刷新,screens/HkApp.tsx; screens/HousekeepingBoard.tsx; screens/Inventory.tsx; screens/Kitchen.tsx; screens/Rooms.tsx; screens/SystemHealth.tsx,,translated
-Refund,Refund,استرداد,Reembolso,Reembolso,退款,screens/FolioView.tsx,,translated
-Refund {amount},Refund {amount},رد {amount},Reembolsar {amount},Reembolso {amount},退款 {amount},components/CheckOutDialog.tsx; components/NoShowDialog.tsx,amount,translated
+Refund,Refund,استرداد,Reembolso,Reembolso,退款,screens/FolioView.tsx; screens/pos/PosSidePanel.tsx; screens/pos/RefundDialog.tsx,,translated
+Refund {amount},Refund {amount},رد {amount},Reembolsar {amount},Reembolso {amount},退款 {amount},components/CheckOutDialog.tsx; components/NoShowDialog.tsx; screens/pos/RefundDialog.tsx,amount,translated
 Refund {amt},Refund {amt},استرداد {amt},Reembolsar {amt},Reembolso {amt},退款 {amt},components/SecurityDepositPanel.tsx,amt,translated
 Refund {v0}{v1} before departure.,Refund {v0}{v1} before departure.,استرد {v0}{v1} قبل المغادرة.,Reembolse {v0}{v1} antes de la salida.,Reembolsar {v0}{v1} antes da saída (check-out).,离店前退款 {v0}{v1}。,,v0 v1,translated
 Refund a payment,Refund a payment,استرداد دفعة,Reembolsar un pago,Reembolsar um pagamento,办理退款,,,translated
@@ -5334,7 +5334,7 @@ Refund reason,Refund reason,سبب الاسترداد,Motivo de reembolso,Motivo
 Refundable deposit held,Refundable deposit held,التأمين القابل للاسترداد المحتجز,Depósito de garantía reembolsable retenido,Depósito reembolsável mantido,已收可退押金,screens/BanquetFunction.tsx,,translated
 "Refundable deposit of {amount}, payable separately","Refundable deposit of {amount}, payable separately",تأمين قابل للاسترداد بقيمة {amount}، يُدفع بشكل منفصل,"Depósito de garantía reembolsable de {amount}, a pagar por separado","Depósito reembolsável de {amount}, pagável separadamente",可退押金 {amount}，单独支付,screens/PublicBooking.tsx,amount,translated
 Refundable deposit: {amount},Refundable deposit: {amount},تأمين قابل للاسترداد: {amount},Depósito de garantía reembolsable: {amount},Depósito reembolsável: {amount},可退押金：{amount},screens/PublicListing.tsx,amount,translated
-Refunded,Refunded,مُسترد,Reembolsado,Reembolsado,已退款,components/SecurityDepositPanel.tsx,,translated
+Refunded,Refunded,مُسترد,Reembolsado,Reembolsado,已退款,components/SecurityDepositPanel.tsx; screens/pos/PosSidePanel.tsx,,translated
 Region *,Region *,المنطقة *,Región *,Região *,地区 *,screens/Setup.tsx,,translated
 "Region, currency and tax","Region, currency and tax",المنطقة والعملة والضريبة,"Región, moneda e impuestos","Região, moeda e impostos",地区、货币与税,../../kamra/onboarding.py,,translated
 Register this property,Register this property,تسجيل هذه المنشأة,Registrar este alojamiento,Registrar esta propriedade,注册本酒店,screens/settings/UsageReportingPage.tsx,,translated
@@ -6205,7 +6205,7 @@ Suggested room plan for {date},Suggested room plan for {date},خطة غرف مق
 Sulphites,Sulphites,الكبريتيت,Sulfitos,Sulfitos,亚硫酸盐,../../kamra/settings.py,,translated
 Summary,Summary,الملخص,Resumen,Resumo,汇总,screens/FolioView.tsx,,translated
 Sunset,Sunset,الغروب,Atardecer,Pôr do sol,日落,,,translated
-Supervisor,Supervisor,المشرف,Supervisor,Supervisora ​​,主管,screens/pos/VoidApproval.tsx,,translated
+Supervisor,Supervisor,المشرف,Supervisor,Supervisora ​​,主管,screens/pos/RefundDialog.tsx; screens/pos/VoidApproval.tsx,,translated
 Supervisor passes,Supervisor passes,المشرف يعتمد الفحص,El supervisor aprueba la inspección,Supervisor passa,主管查房通过,screens/HkApp.tsx,,translated
 Supervisor PIN,Supervisor PIN,رمز المشرف,PIN de supervisor,PIN do Supervisor,主管 PIN,screens/pos/VoidApproval.tsx,,translated
 Supervisor…,Supervisor…,المشرف…,Supervisor…,Supervisor…,主管…,screens/pos/VoidApproval.tsx,,translated
@@ -7276,3 +7276,30 @@ Track this item's own stock,Track this item's own stock,تتبع مخزون هذ
 Tracks its own stock: {name} · {qty} {uom} at this outlet,Tracks its own stock: {name} · {qty} {uom} at this outlet,يتتبع مخزونه: {name} · {qty} {uom} في هذا المنفذ,Controla su propio stock: {name} · {qty} {uom} en este punto de venta,Controla o próprio estoque: {name} · {qty} {uom} neste ponto de venda,独立跟踪库存：{name} · 本门店 {qty} {uom},components/TrackStock.tsx,name qty uom,translated
 Use an existing one,Use an existing one,استخدام صنف موجود,Usar uno existente,Usar um existente,使用现有库存项,components/TrackStock.tsx,,translated
 "What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.","What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.",ما يخصمه كل طبق من مخزون منفذه: عند إرساله إلى المطبخ، أو عند إغلاق الفاتورة إذا لم يُرسل.,"Lo que cada plato descuenta del stock de su punto de venta: cuando va a cocina, o al cerrar la cuenta si nunca se envió.","O que cada prato retira do estoque do ponto de venda: quando vai para a cozinha, ou ao fechar a conta se nunca foi enviado.",每道菜从所在门店库存中扣减的内容：下单到厨房时扣减；若从未下单，则在结账时扣减。,screens/RecipeManager.tsx,,translated
+{n} refund,{n} refund,{n} استرداد,{n} reembolso,{n} reembolso,{n} 笔退款,screens/PosDashboard.tsx,n,translated
+{n} refunds,{n} refunds,{n} عمليات استرداد,{n} reembolsos,{n} reembolsos,{n} 笔退款,screens/PosDashboard.tsx,n,translated
+An amount,An amount,مبلغ,Un importe,Um valor,指定金额,screens/pos/RefundDialog.tsx,,translated
+Back to stock,Back to stock,إعادة إلى المخزون,Vuelve al stock,Volta ao estoque,退回库存,screens/pos/RefundDialog.tsx,,translated
+Chosen items,Chosen items,أصناف محددة,Artículos elegidos,Itens escolhidos,所选项目,screens/pos/RefundDialog.tsx,,translated
+Correct this on the room's bill at the desk.,Correct this on the room's bill at the desk.,صحّح هذا في فاتورة الغرفة عند الاستقبال.,Corríjalo en la cuenta de la habitación en recepción.,Corrija na conta do quarto na recepção.,请在前台的房间账单上更正。,screens/pos/PosSidePanel.tsx,,translated
+Given back as,Given back as,أُعيد بواسطة,Devuelto como,Devolvido como,退款方式,,,translated
+Guest complaint,Guest complaint,شكوى ضيف,Queja del huésped,Reclamação do hóspede,客人投诉,,,translated
+Money back as,Money back as,إعادة المبلغ بواسطة,Devolver como,Devolver como,退款方式,screens/pos/PosSidePanel.tsx; screens/pos/RefundDialog.tsx,,translated
+Net sales,Net sales,صافي المبيعات,Ventas netas,Vendas líquidas,净销售额,screens/PosDashboard.tsx,,translated
+No supervisor has a cashier PIN yet. One sets it the first time a money action asks.,No supervisor has a cashier PIN yet. One sets it the first time a money action asks.,لا يوجد مشرف لديه رمز أمين صندوق بعد. يعيّنه المشرف عند أول طلب في إجراء مالي.,Ningún supervisor tiene PIN de cajero. Se crea la primera vez que una operación de dinero lo pide.,Nenhum supervisor tem PIN de caixa ainda. Ele é criado na primeira vez que uma ação com dinheiro pedir.,尚无主管设置收银 PIN。首次进行资金操作时设置。,screens/pos/RefundDialog.tsx,,translated
+Note (required),Note (required),ملاحظة (مطلوبة),Nota (obligatoria),Observação (obrigatória),备注（必填）,screens/pos/RefundDialog.tsx,,translated
+Paid {paid} · already refunded {refunded},Paid {paid} · already refunded {refunded},المدفوع {paid} · المسترد سابقًا {refunded},Pagado {paid} · ya reembolsado {refunded},Pago {paid} · já reembolsado {refunded},已付 {paid} · 已退 {refunded},screens/pos/RefundDialog.tsx,paid refunded,translated
+Partly refunded,Partly refunded,مسترد جزئيًا,Reembolsado en parte,Reembolsado em parte,部分退款,screens/pos/PosSidePanel.tsx,,translated
+POS refunds,POS refunds,استردادات نقطة البيع,Reembolsos POS,Reembolsos do PDV,餐饮收银退款,,,translated
+Print slip,Print slip,طباعة الإيصال,Imprimir comprobante,Imprimir comprovante,打印小票,screens/pos/PosSidePanel.tsx,,translated
+Quality,Quality,الجودة,Calidad,Qualidade,质量问题,,,translated
+Refund bill {bill},Refund bill {bill},استرداد الفاتورة {bill},Reembolsar cuenta {bill},Reembolsar conta {bill},账单 {bill} 退款,screens/pos/RefundDialog.tsx,bill,translated
+Refunded {amount} by {mode},Refunded {amount} by {mode},استُرد {amount} بواسطة {mode},Reembolsado {amount} por {mode},Reembolsado {amount} por {mode},已通过 {mode} 退款 {amount},screens/pos/PosSidePanel.tsx,amount mode,translated
+Refunded by,Refunded by,استردّه,Reembolsado por,Reembolsado por,退款人,screens/pos/PosSidePanel.tsx,,translated
+Refunds,Refunds,عمليات الاسترداد,Reembolsos,Reembolsos,退款,screens/PosDashboard.tsx; screens/pos/OrderHistory.tsx,,translated
+Staff error,Staff error,خطأ من الموظفين,Error del personal,Erro da equipe,员工失误,,,translated
+Supervisor's PIN,Supervisor's PIN,رمز المشرف,PIN del supervisor,PIN do supervisor,主管 PIN,screens/pos/RefundDialog.tsx,,translated
+Total back,Total back,إجمالي المسترد,Total a devolver,Total a devolver,退款合计,screens/pos/RefundDialog.tsx,,translated
+Up to {amount},Up to {amount},حتى {amount},Hasta {amount},Até {amount},最多 {amount},screens/pos/RefundDialog.tsx,amount,translated
+Whole bill,Whole bill,الفاتورة كاملة,Cuenta completa,Conta inteira,整单,screens/pos/RefundDialog.tsx,,translated
+Wrong order,Wrong order,طلب خاطئ,Pedido equivocado,Pedido errado,点错单,,,translated

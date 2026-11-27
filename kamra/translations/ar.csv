@@ -290,3 +290,30 @@ This entry is already cancelled.,هذه الحركة ملغاة بالفعل.
 {0} already tracks its own stock.,{0} يتتبع مخزونه بالفعل.
 An ingredient called {0} already exists. Pick it instead.,يوجد مكوّن باسم {0} بالفعل. اختره بدلاً من ذلك.
 Tracking stock also needs the right to manage stock.,يتطلب تتبع المخزون أيضًا صلاحية إدارة المخزون.
+Approved by,وافق عليه
+Given back as,أُعيد بواسطة
+POS refunds,استردادات نقطة البيع
+Refund,استرداد
+Refunded,مُسترد
+Refunded by,استردّه
+"Payment details are set by the till, not by editing the bill.",تفاصيل الدفع يسجلها الصندوق، لا تُعدَّل على الفاتورة.
+"Refunds are made at the till, and are never edited or deleted.",يتم الاسترداد عند الصندوق ولا يُعدَّل أو يُحذف.
+"This bill has a refund, so its payment mode can't change.",هذه الفاتورة عليها استرداد، لذا لا يمكن تغيير طريقة الدفع.
+Correct this on the room's bill at the desk.,صحّح هذا في فاتورة الغرفة عند الاستقبال.
+Only a bill paid at the outlet can be refunded.,لا يمكن استرداد سوى فاتورة مدفوعة في المنفذ.
+"This bill has no payment record, so it can't be refunded here.",لا يوجد سجل دفع لهذه الفاتورة، فلا يمكن استردادها هنا.
+Nothing is left to refund on this bill.,لم يتبق شيء لاسترداده في هذه الفاتورة.
+The amount must be above zero.,يجب أن يكون المبلغ أكبر من صفر.
+You can refund up to {0}.,يمكنك استرداد ما يصل إلى {0}.
+That line is not on this bill.,هذا السطر ليس في هذه الفاتورة.
+Pick at least one item.,اختر صنفًا واحدًا على الأقل.
+Only {0} of {1} left to refund.,تبقى {0} فقط من {1} للاسترداد.
+"Refund the whole bill, chosen items, or an amount.",استرد الفاتورة كاملة أو أصنافًا محددة أو مبلغًا.
+{0} can't go back to stock.,لا يمكن إعادة {0} إلى المخزون.
+Pick a refund reason.,اختر سبب الاسترداد.
+Say why in the note.,اذكر السبب في الملاحظة.
+An AI agent can never refund.,لا يمكن لوكيل الذكاء الاصطناعي الاسترداد أبدًا.
+Try again from the refund window.,حاول مرة أخرى من نافذة الاسترداد.
+Money goes back as {0}.,يعاد المبلغ بواسطة {0}.
+The amount to give back has changed: it is now {0}. Check it and refund again.,تغيّر المبلغ المراد رده: أصبح الآن {0}. تحقق منه ثم أعد الاسترداد.
+This attempt already refunded {0}. Close the window to see it.,هذه المحاولة ردّت بالفعل {0}. أغلق النافذة لعرضها.

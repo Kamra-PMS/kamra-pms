@@ -75,3 +75,27 @@ This entry is already cancelled.,Bản ghi này đã bị hủy.
 {0} already tracks its own stock.,{0} đã theo dõi tồn kho riêng.
 An ingredient called {0} already exists. Pick it instead.,Đã có nguyên liệu tên {0}. Hãy chọn nguyên liệu đó.
 Tracking stock also needs the right to manage stock.,Theo dõi tồn kho còn cần quyền quản lý kho.
+Given back as,Hoàn bằng
+POS refunds,Hoàn tiền POS
+Refunded by,Người hoàn tiền
+"Payment details are set by the till, not by editing the bill.","Thông tin thanh toán do quầy thu ghi, không sửa trên hóa đơn."
+"Refunds are made at the till, and are never edited or deleted.",Hoàn tiền thực hiện tại quầy và không bao giờ sửa hay xóa.
+"This bill has a refund, so its payment mode can't change.",Hóa đơn này đã hoàn tiền nên không đổi được hình thức thanh toán.
+Correct this on the room's bill at the desk.,Hãy sửa trên hóa đơn phòng tại quầy lễ tân.
+Only a bill paid at the outlet can be refunded.,Chỉ hoàn được hóa đơn đã thanh toán tại điểm bán.
+"This bill has no payment record, so it can't be refunded here.",Hóa đơn này không có bản ghi thanh toán nên không hoàn được ở đây.
+Nothing is left to refund on this bill.,Hóa đơn này không còn gì để hoàn.
+The amount must be above zero.,Số tiền phải lớn hơn 0.
+You can refund up to {0}.,Bạn có thể hoàn tối đa {0}.
+That line is not on this bill.,Dòng đó không có trên hóa đơn này.
+Pick at least one item.,Chọn ít nhất một món.
+Only {0} of {1} left to refund.,Chỉ còn {0} {1} để hoàn.
+"Refund the whole bill, chosen items, or an amount.","Hoàn cả hóa đơn, món đã chọn hoặc một số tiền."
+{0} can't go back to stock.,{0} không thể nhập lại kho.
+Pick a refund reason.,Chọn lý do hoàn tiền.
+Say why in the note.,Ghi lý do vào ghi chú.
+An AI agent can never refund.,Tác nhân AI không bao giờ được hoàn tiền.
+Try again from the refund window.,Hãy thử lại từ cửa sổ hoàn tiền.
+Money goes back as {0}.,Tiền được hoàn bằng {0}.
+The amount to give back has changed: it is now {0}. Check it and refund again.,Số tiền hoàn đã thay đổi: hiện là {0}. Hãy kiểm tra rồi hoàn tiền lại.
+This attempt already refunded {0}. Close the window to see it.,Lần thử này đã hoàn {0}. Đóng cửa sổ để xem.

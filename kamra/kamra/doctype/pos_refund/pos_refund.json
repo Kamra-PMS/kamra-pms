@@ -1,0 +1,228 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:RFD-{YYYY}-{#####}",
+ "creation": "2026-11-26 22:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "property",
+  "outlet",
+  "pos_order",
+  "business_date",
+  "column_break_a",
+  "amount",
+  "tax_amount",
+  "levy_amount",
+  "mode",
+  "card_network",
+  "card_last4",
+  "section_why",
+  "reason_code",
+  "note",
+  "approved_by",
+  "refunded_by",
+  "cashier_session",
+  "idempotency_key",
+  "section_lines",
+  "lines"
+ ],
+ "fields": [
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "Property",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "outlet",
+   "fieldtype": "Link",
+   "label": "Outlet",
+   "options": "POS Outlet",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "pos_order",
+   "fieldtype": "Link",
+   "label": "Bill",
+   "options": "POS Order",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "business_date",
+   "fieldtype": "Date",
+   "label": "Business Date",
+   "search_index": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break",
+   "label": ""
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "in_list_view": 1,
+   "description": "Money given back, tax included.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tax_amount",
+   "fieldtype": "Currency",
+   "label": "Tax Part",
+   "read_only": 1
+  },
+  {
+   "fieldname": "levy_amount",
+   "fieldtype": "Currency",
+   "label": "Levy Part",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mode",
+   "fieldtype": "Data",
+   "label": "Given Back As",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "card_network",
+   "fieldtype": "Data",
+   "label": "Card Network",
+   "read_only": 1
+  },
+  {
+   "fieldname": "card_last4",
+   "fieldtype": "Data",
+   "label": "Card Last 4 Digits",
+   "length": 4,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_why",
+   "fieldtype": "Section Break",
+   "label": "Why"
+  },
+  {
+   "fieldname": "reason_code",
+   "fieldtype": "Link",
+   "label": "Reason",
+   "options": "Reason Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "refunded_by",
+   "fieldtype": "Link",
+   "label": "Refunded By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cashier_session",
+   "fieldtype": "Link",
+   "label": "Till",
+   "options": "Cashier Session",
+   "read_only": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Attempt Key",
+   "unique": 1,
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_lines",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "POS Refund Line",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-11-26 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kamra",
+ "name": "POS Refund",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "role": "System Manager",
+   "export": 1,
+   "share": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "role": "Hotel Admin"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "role": "Finance"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "role": "F&B Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "role": "Front Desk"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "role": "Kamra Agent"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

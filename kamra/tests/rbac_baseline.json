@@ -3239,6 +3239,33 @@
 "Hotel Admin",
 "System Manager"
 ],
+"pos_refunds.refund_bill": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Front Desk",
+ "Hotel Admin",
+ "Kamra Agent",
+ "System Manager"
+],
+"pos_refunds.refund_options": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Front Desk",
+ "Hotel Admin",
+ "Kamra Agent",
+ "System Manager"
+],
+"pos_refunds.refund_quote": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Front Desk",
+ "Hotel Admin",
+ "Kamra Agent",
+ "System Manager"
+],
 "pos.accept_ticket": [
 "Administrator",
 "F&B Manager",

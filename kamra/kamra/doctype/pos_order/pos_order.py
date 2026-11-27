@@ -8,8 +8,13 @@ from frappe.model.document import Document
 from kamra.localization import money_text
 
 
+# what was paid, how, and what went back
+PAYMENT_FIELDS = ("paid", "payment_mode", "paid_amount", "paid_tax", "refunded_amount")
+
+
 class POSOrder(Document):
 	def validate(self):
+		self.guard_payment_fields()
 		subtotal = 0.0
 		for it in self.items:
 			it.amount = 0.0 if it.voided else float(it.qty or 1) * float(it.rate or 0)
@@ -24,6 +29,18 @@ class POSOrder(Document):
 		self.guard_room_posting()
 		self.guard_bill_close()
 		self.stamp_cashier()
+
+	def guard_payment_fields(self):
+		"""The till's own code writes the payment (pay_order, a mode
+		correction, a refund), saving with ignore_permissions or db_set. A
+		client edit - REST, the desk - may not, or a bill could be marked paid
+		with no money taken and then refunded."""
+		if self.flags.ignore_permissions:
+			return
+		before = self.get_doc_before_save()
+		for field in PAYMENT_FIELDS:
+			if (self.get(field) or None) != ((before.get(field) if before else None) or None):
+				frappe.throw(_("Payment details are set by the till, not by editing the bill."))
 
 	def apply_levy(self, base: float) -> float:
 		"""The outlet's levy (a service charge) on the bill after discount, as one

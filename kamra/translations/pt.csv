@@ -96,3 +96,27 @@ This entry is already cancelled.,Este lançamento já foi cancelado.
 {0} already tracks its own stock.,{0} já controla o próprio estoque.
 An ingredient called {0} already exists. Pick it instead.,Já existe um ingrediente chamado {0}. Escolha-o.
 Tracking stock also needs the right to manage stock.,Controlar estoque também exige permissão para gerenciar o estoque.
+Given back as,Devolvido como
+POS refunds,Reembolsos do PDV
+Refunded by,Reembolsado por
+"Payment details are set by the till, not by editing the bill.","Os dados de pagamento são registrados pelo caixa, não editando a conta."
+"Refunds are made at the till, and are never edited or deleted.",Os reembolsos são feitos no caixa e nunca são editados ou excluídos.
+"This bill has a refund, so its payment mode can't change.",Esta conta tem reembolso; a forma de pagamento não pode mudar.
+Correct this on the room's bill at the desk.,Corrija na conta do quarto na recepção.
+Only a bill paid at the outlet can be refunded.,Só é possível reembolsar uma conta paga no ponto de venda.
+"This bill has no payment record, so it can't be refunded here.",Esta conta não tem registro de pagamento; não pode ser reembolsada aqui.
+Nothing is left to refund on this bill.,Não há mais nada a reembolsar nesta conta.
+The amount must be above zero.,O valor deve ser maior que zero.
+You can refund up to {0}.,Você pode reembolsar até {0}.
+That line is not on this bill.,Essa linha não está nesta conta.
+Pick at least one item.,Escolha pelo menos um item.
+Only {0} of {1} left to refund.,Restam apenas {0} de {1} para reembolsar.
+"Refund the whole bill, chosen items, or an amount.","Reembolse a conta inteira, itens escolhidos ou um valor."
+{0} can't go back to stock.,{0} não pode voltar ao estoque.
+Pick a refund reason.,Escolha um motivo de reembolso.
+Say why in the note.,Explique o motivo na observação.
+An AI agent can never refund.,Um agente de IA nunca pode reembolsar.
+Try again from the refund window.,Tente novamente pela janela de reembolso.
+Money goes back as {0}.,O dinheiro volta como {0}.
+The amount to give back has changed: it is now {0}. Check it and refund again.,O valor a devolver mudou: agora é {0}. Confira e faça o reembolso novamente.
+This attempt already refunded {0}. Close the window to see it.,Esta tentativa já reembolsou {0}. Feche a janela para ver.

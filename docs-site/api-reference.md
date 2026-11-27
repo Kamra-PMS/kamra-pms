@@ -3429,6 +3429,64 @@ times how long it takes to arrive, which proves live updates work.
 | `echo` | no | `0` |
 
 
+## POS refunds (money back on a paid outlet bill)
+
+> Every refund needs a supervisor's cashier PIN; AI agents are refused. A repeated idempotency_key pays once.
+
+### `kamra.pos_refunds.refund_options`
+
+**GET/POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
+
+Everything the refund window needs: whether the bill can be refunded,
+what is left, its lines, the ways money may go back, the reasons, who may
+approve, and the refunds so far.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+
+### `kamra.pos_refunds.refund_quote`
+
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
+
+What a refund would give back, line by line, before anyone approves it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `kind` | yes |  |
+| `lines` | no | `None` |
+| `amount` | no | `None` |
+
+### `kamra.pos_refunds.refund_bill`
+
+**POST** · permission: `POS Order: take_orders` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
+
+Give money back on a paid bill: the whole of what is left ("whole"),
+chosen items ("items", lines = [{row, qty, back_to_stock}]), or an amount
+("amount"). The screen sends one idempotency_key per attempt, so a retried
+request answers with the refund already made and pays nothing twice. It also
+sends expected_amount, the figure it showed: if what would be recorded
+differs (another refund came in between), nothing is paid. seen_refunded is
+what the window showed as already given back: once that includes the refund
+made for this key, pressing again is refused rather than answered with it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `order` | yes |  |
+| `kind` | yes |  |
+| `mode` | yes |  |
+| `reason_code` | yes |  |
+| `supervisor` | no | `None` |
+| `supervisor_pin` | no | `None` |
+| `idempotency_key` | no | `None` |
+| `lines` | no | `None` |
+| `amount` | no | `None` |
+| `note` | no | `None` |
+| `expected_amount` | no | `None` |
+| `seen_refunded` | no | `None` |
+
+
 ## Setup checklist (finish setting up a property)
 
 ### `kamra.onboarding.setup_checklist`

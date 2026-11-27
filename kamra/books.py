@@ -214,6 +214,10 @@ def _revenue(property: str, start, end) -> dict:
 		   WHERE property = %(p)s AND status = 'Delivered' AND IFNULL(nc, 0) = 0
 		     AND DATE(creation) BETWEEN %(s)s AND %(e)s""",
 		{"p": property, "s": start, "e": end})[0][0])
+	# less what the till gave back in the period, without its tax
+	from kamra import pos_refunds
+	rev["fnb"] -= sum(pos_refunds.before_tax(r) for r in
+	                  pos_refunds.refunds_between(start, end, property=property))
 	# a confirmed function counts once it has been held
 	rev["banquets"] += flt(frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- values are parameterized; the interpolated text is a module constant
 		f"""SELECT COALESCE(SUM(taxable_amount), 0) FROM `tabVenue Booking`

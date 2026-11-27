@@ -236,9 +236,10 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Night Audit Run | Run audit (`run_audit`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.run_night_audit`, `night_audit.night_audit_precheck`, `night_audit.night_audit_pack` and 6 more |
 | Night Audit Run | Schedule audit (`schedule_audit`) | Finance, Hotel Admin, Night Auditor, System Manager | `night_audit.night_audit_schedule` |
 | Outbound Webhook | Configure (`configure`) | Hotel Admin, System Manager | `webhooks.webhook_events`, `webhooks.list_webhooks`, `webhooks.save_webhook` and 6 more |
+| POS Order | Approve refunds (`approve_refunds`) | F&B Manager, Finance, Hotel Admin, System Manager | checked inside Kamra |
 | POS Order | Approve voids (`approve_voids`) | F&B Manager, Finance, Hotel Admin, System Manager | checked inside Kamra |
 | POS Order | Manage outlet (`manage_outlet`) | Finance, Hotel Admin, System Manager | `pos.speed_check` |
-| POS Order | Take orders (`take_orders`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `pos.outlets`, `pos.pos_menu`, `pos.in_house_rooms` and 41 more |
+| POS Order | Take orders (`take_orders`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `pos.outlets`, `pos.pos_menu`, `pos.in_house_rooms` and 44 more |
 | POS Outlet | Manage waiters (`manage_waiters`) | F&B Manager, Finance, Hotel Admin, System Manager | `pos.save_outlet_waiter` |
 | Property | App admin (`app_admin`) | Hotel Admin, System Manager | checked inside Kamra |
 | Property | App booking engine (`app_booking_engine`) | Hotel Admin, Revenue Manager, System Manager | checked inside Kamra |
@@ -594,6 +595,12 @@ Record access over Desk and REST (standard rights, permission level 0):
 | POS Outlet | Kamra Agent | read, report |
 | POS Outlet | Night Auditor | read, report |
 | POS Outlet | F&B Manager | read, write, create, report |
+| POS Refund | System Manager | read, report, export |
+| POS Refund | Hotel Admin | read, report |
+| POS Refund | Finance | read, report |
+| POS Refund | F&B Manager | read, report |
+| POS Refund | Front Desk | read, report |
+| POS Refund | Kamra Agent | read, report |
 | POS Table Reservation | System Manager | read, write, create, delete, report, export |
 | POS Table Reservation | Hotel Admin | read, write, create, delete, report |
 | POS Table Reservation | Front Desk | read, write, create, report |

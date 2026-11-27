@@ -75,3 +75,27 @@ This entry is already cancelled.,Ingizo hili tayari limeghairiwa.
 {0} already tracks its own stock.,{0} tayari inafuatilia hifadhi yake.
 An ingredient called {0} already exists. Pick it instead.,Kiungo kinachoitwa {0} tayari kipo. Kichague badala yake.
 Tracking stock also needs the right to manage stock.,Kufuatilia hifadhi kunahitaji pia ruhusa ya kusimamia hifadhi.
+Given back as,Imerudishwa kama
+POS refunds,Marejesho ya POS
+Refunded by,Imerejeshwa na
+"Payment details are set by the till, not by editing the bill.","Maelezo ya malipo huwekwa na kaunta, si kwa kuhariri bili."
+"Refunds are made at the till, and are never edited or deleted.",Marejesho hufanyika kaunta na hayahaririwi wala kufutwa.
+"This bill has a refund, so its payment mode can't change.","Bili hii ina marejesho, njia ya malipo haiwezi kubadilishwa."
+Correct this on the room's bill at the desk.,Rekebisha hili kwenye bili ya chumba mapokezi.
+Only a bill paid at the outlet can be refunded.,Ni bili iliyolipwa kituoni tu inayoweza kurejeshwa.
+"This bill has no payment record, so it can't be refunded here.","Bili hii haina rekodi ya malipo, haiwezi kurejeshwa hapa."
+Nothing is left to refund on this bill.,Hakuna kilichobaki cha kurejesha kwenye bili hii.
+The amount must be above zero.,Kiasi lazima kiwe juu ya sifuri.
+You can refund up to {0}.,Unaweza kurejesha hadi {0}.
+That line is not on this bill.,Mstari huo haumo kwenye bili hii.
+Pick at least one item.,Chagua angalau kitu kimoja.
+Only {0} of {1} left to refund.,Zimebaki {0} tu za {1} za kurejesha.
+"Refund the whole bill, chosen items, or an amount.","Rejesha bili yote, vitu vilivyochaguliwa, au kiasi."
+{0} can't go back to stock.,{0} haiwezi kurudi hifadhini.
+Pick a refund reason.,Chagua sababu ya marejesho.
+Say why in the note.,Eleza sababu kwenye maelezo.
+An AI agent can never refund.,Wakala wa AI hawezi kamwe kurejesha pesa.
+Try again from the refund window.,Jaribu tena kutoka dirisha la marejesho.
+Money goes back as {0}.,Pesa hurudishwa kama {0}.
+The amount to give back has changed: it is now {0}. Check it and refund again.,Kiasi cha kurudisha kimebadilika: sasa ni {0}. Kikague kisha urejeshe tena.
+This attempt already refunded {0}. Close the window to see it.,Jaribio hili tayari limerejesha {0}. Funga dirisha ili uione.

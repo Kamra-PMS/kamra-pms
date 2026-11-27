@@ -958,7 +958,7 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 # hand can be taken back; the rest (kitchen and banquet usage, the demo's
 # opening rows, anything added later) is put right with a stock take.
 CANCELLABLE = ("Received", "Count", "Wastage")
-NOT_CANCELLABLE = ("Opening", "Consumed")
+NOT_CANCELLABLE = ("Opening", "Consumed", "Return")
 
 
 @frappe.whitelist(methods=["POST"])

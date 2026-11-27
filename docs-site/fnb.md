@@ -195,7 +195,7 @@ the bill says **not sent**, **In kitchen** or **Prepared**.
 | Nothing sent to the kitchen | **Cancel** with a reason. The table is free at once. | The captain |
 | A line not sent yet | The bin icon on the line takes it off. No reason needed: nothing was cooked. | The captain |
 | Lines the kitchen has | **Void** the line, or **Cancel** the bill, with a void reason and a supervisor's approval. | A supervisor |
-| Paid, posted to a room or NC | Closed. Correct it on the folio, or refund. A bill on the wrong room moves with **Move to room** the same day. | Finance |
+| Paid, posted to a room or NC | Closed. A bill paid at the outlet can be [refunded](#refunds); a room bill is corrected on the room's bill. A bill on the wrong room moves with **Move to room** the same day. | Supervisor / Finance |
 
 **Nothing sent yet.** Open the bill, press **Cancel**, type why ("guests
 left before ordering") and press **Cancel bill**. The bill closes as
@@ -222,6 +222,41 @@ lock. Supervisors set their PIN the first time a money action asks for it.
 Every cancel and every void is in **Reports → Voids & Allowances** as
 *POS bill cancelled* or *POS void*, with who did it, who approved it and
 why, and on the F&B dashboard.
+
+## Refunds
+
+A bill **paid at the outlet** can be refunded from the bill view (**Orders**
+or **Order history**): press **Refund**.
+
+1. Pick **Whole bill** (everything left), **Chosen items** (quantities) or
+   **An amount**. Items give back their share of what was actually paid,
+   discount, service charge and tax included; the refund of the last item
+   takes whatever is left, so a full refund equals exactly what was paid.
+2. Pick the reason (**Other** needs a note) and how the money goes back: cash
+   for cash, the card machine for a card, otherwise the same way by hand,
+   cash or a bank transfer.
+3. A supervisor with the **Approve refunds** right (Hotel Admin, F&B Manager,
+   Finance and System Manager at first) types their PIN, every time, also
+   for their own refunds. AI agents can't refund.
+
+- The money comes out of **your own open till**, even if the sale's till is
+  closed. Without tills, the refund record is the money record.
+- Hand over what the button says. If another refund on the bill changed the
+  figure meanwhile, nothing is paid: the window shows the new one to confirm.
+- If the connection drops, press again: the same refund is never paid twice.
+  Once the window shows it went through, close it before refunding more.
+- Items with [their own stock](#items-with-their-own-stock) can be ticked
+  **Back to stock**. Dishes made from a recipe never return stock.
+- The bill shows **Partly refunded** or **Refunded** and lists each refund,
+  with a slip to print. A refund can't be edited or deleted, and the bill's
+  payment mode can no longer be changed.
+- Reports count a refund on the day the money went back: the F&B dashboard,
+  order history and its CSV, guest spend, the night audit's outlet figures,
+  profit and loss, custom reports (**POS refunds**) and **Voids &
+  Allowances**. Saudi sites issue a credit note per refund.
+- Bills paid before refunds existed can be refunded when the till records
+  what they took (or, without tills, at the tax rate on the day of the
+  upgrade). A room-charged bill is corrected on the room's bill instead.
 
 ## Orders list
 
@@ -535,7 +570,9 @@ today's ingredient prices.
 a range of up to 92 days): gross sales, average bill,
 covers, open bills, complimentary bills, the kitchen's average send-to-ready
 time, sales by order type and by payment, top items, and every NC bill,
-voided line and cancelled bill with its reason.
+voided line and cancelled bill with its reason. When money was given back in
+the period it also shows **Refunds** and **Net sales**, takes them off the
+payment totals and drops refunded items from the top items.
 
 ![The F&B dashboard](/img/fnb/dashboard.png)
 

@@ -589,6 +589,11 @@ def on_pos_bill_paid(pack, order_name: str, tax_rate: float):
 	return _hook(pack, "on_pos_bill_paid", order_name, tax_rate)
 
 
+def on_pos_refund(pack, refund_name: str):
+	"""Money went back on a paid outlet bill (kamra.pos_refunds)."""
+	return _hook(pack, "on_pos_refund", refund_name)
+
+
 def invoice_title(pack) -> str:
 	"""What a settled bill is called. "Tax Invoice" only where the law asks
 	for those words (a pack sets INVOICE_TITLE); everywhere else "Invoice"."""

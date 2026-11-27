@@ -285,7 +285,7 @@ _PROPERTY_SCOPED = (
 	"Laundry Order", "Laundry Rate", "Lost And Found Item", "MCP OAuth Grant",
 	"Meal Plan", "Menu Item", "Menu Modifier Group", "Menu Modifier Option", "Night Audit Log", "Night Audit Run", "Outbound Webhook",
 	"Outbound Webhook Delivery", "Payment Gateway Settings",
-	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Table Reservation",
+	"Petty Cash Voucher", "POS Order", "POS Outlet", "POS Refund", "POS Table Reservation",
 	"Print Job",
 	"Proforma Folio", "Property Setting", "Rate Guardrail", "Rate Plan", "Rate Restriction",
 	"Recreation Booking", "Recreation Customer", "Recreation Facility",

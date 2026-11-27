@@ -87,6 +87,10 @@ jobs:
         run: npm run screen-defaults:check
         working-directory: frontend
 
+      - name: Check the refund window's helpers
+        run: npm run refund:check
+        working-directory: frontend
+
       - name: Check the food-order basket survives a typed done
         run: npm run agent-order:check
         working-directory: frontend
