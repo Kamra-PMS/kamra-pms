@@ -162,6 +162,44 @@ def villa_locked_nights(property: str, room_type: str | None, start,
 	return locked
 
 
+def countable_rooms(property: str, room_type: str) -> int:
+	"""The rooms of a type there are to sell, as the capacity guard counts
+	them. A whole-villa type with no rooms of its own is one thing to sell:
+	the property. Any other type with no rooms is not set up yet (0)."""
+	return frappe.db.count("Room", {"room_type": room_type}) \
+		or int(uses_member_rooms(property, room_type))
+
+
+def overbooking_allowance(property: str, room_type: str) -> float:
+	"""The % a type may sell above its rooms: its own, else the property's.
+	Read from the database, not the document cache: enforcement must see the
+	committed value."""
+	return float(frappe.db.get_value("Room Type", room_type, "overbooking_pct") or 0) \
+		or float(frappe.db.get_value("Property", property, "overbooking_pct") or 0)
+
+
+def rooms_out_of_sale(room_type: str, dates: list[str]) -> dict[str, int]:
+	"""Rooms of this type that can't be sold on each night: Out of Order,
+	or held by an active Room Block. A stay already sitting in one of
+	those rooms is still counted as sold, so this can over-count by one
+	for a guest in house in a room marked Out of Order mid-stay; that
+	errs on refusing a booking, never on overbooking."""
+	rooms = frappe.get_all("Room", filters={"room_type": room_type},
+	                       fields=["name", "housekeeping_status"])
+	if not rooms:
+		return {d: 0 for d in dates}
+	ooo = {r.name for r in rooms if r.housekeeping_status == "Out of Order"}
+	blocks = frappe.get_all("Room Block", filters={
+		"room": ("in", [r.name for r in rooms]),
+		"block_status": "Active",
+		"from_date": ("<=", dates[-1]), "to_date": (">", dates[0])},
+		fields=["room", "from_date", "to_date"])
+	# a block holds its nights [from_date, to_date)
+	return {d: len(ooo | {b.room for b in blocks
+	                      if str(b.from_date) <= d < str(b.to_date)})
+	        for d in dates}
+
+
 class Reservation(Document):
 	def autoname(self):
 		# RES-<year>-00001, the year being the property's financial year, so
@@ -258,16 +296,16 @@ class Reservation(Document):
 		# category checks. The count below is a locking read so it sees a
 		# booking that committed while this one waited.
 		frappe.db.get_value("Room Type", self.room_type, "name", for_update=True)
-		total = frappe.db.count("Room", {"room_type": self.room_type})
+		total = countable_rooms(self.property, self.room_type)
 		if not total:
 			return  # setup-time bookings before rooms exist
-		pct = float(frappe.db.get_value(
-			"Room Type", self.room_type, "overbooking_pct") or 0)
-		if not pct:
-			# db read, not the document cache - enforcement must see the
-			# committed value, not a stale cached doc
-			pct = float(frappe.db.get_value(
-				"Property", self.property, "overbooking_pct") or 0)
+		if uses_member_rooms(self.property, self.room_type) \
+				and not self._takes_new_inventory():
+			# only new inventory holds a whole villa with no rooms to this:
+			# stays already saved over each other can still be checked in,
+			# edited and cancelled
+			return
+		pct = overbooking_allowance(self.property, self.room_type)
 		from frappe.utils import add_days, date_diff
 		nights = max(1, date_diff(self.check_out_date, self.check_in_date))
 		dates = [str(add_days(self.check_in_date, i))
@@ -287,7 +325,7 @@ class Reservation(Document):
 			before = self._nights_held_before()
 			new_nights = [d for d in dates if d not in before]
 			if new_nights:
-				out = self._rooms_out_of_sale(new_nights)
+				out = rooms_out_of_sale(self.room_type, new_nights)
 		for d in dates:
 			cnt = len(frappe.db.sql(
 				"""SELECT name FROM `tabReservation`
@@ -333,25 +371,6 @@ class Reservation(Document):
 			return set()
 		n = max(1, date_diff(old.check_out_date, old.check_in_date))
 		return {str(add_days(old.check_in_date, i)) for i in range(min(int(n), 366))}
-
-	def _rooms_out_of_sale(self, dates: list[str]) -> dict[str, int]:
-		"""Rooms of this type that can't be sold on each night: Out of Order,
-		or held by an active Room Block. A stay already sitting in one of
-		those rooms is still counted as sold, so this can over-count by one
-		for a guest in house in a room marked Out of Order mid-stay; that
-		errs on refusing a booking, never on overbooking."""
-		rooms = frappe.get_all("Room", filters={"room_type": self.room_type},
-		                       fields=["name", "housekeeping_status"])
-		ooo = {r.name for r in rooms if r.housekeeping_status == "Out of Order"}
-		blocks = frappe.get_all("Room Block", filters={
-			"room": ("in", [r.name for r in rooms]),
-			"block_status": "Active",
-			"from_date": ("<=", dates[-1]), "to_date": (">", dates[0])},
-			fields=["room", "from_date", "to_date"])
-		# a block holds its nights [from_date, to_date)
-		return {d: len(ooo | {b.room for b in blocks
-		                      if str(b.from_date) <= d < str(b.to_date)})
-		        for d in dates}
 
 	def _takes_new_inventory(self) -> bool:
 		"""True when this save starts holding rooms it did not hold before:

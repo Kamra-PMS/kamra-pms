@@ -6038,7 +6038,7 @@ def t160():
 	_stay(VP, villa, ci, co)
 	assert api._available_rooms_raw(VP, bed, ci, co) == [], "member rooms still on desk sale"
 	assert _left(VP, bed, ci, co) == 0, "member rooms still on the booking engine"
-	assert cm._sellable(VP, bed, ci, co) == 0
+	assert cm._sellable_by_night(VP, bed, ci, co) == [0, 0]
 	cal = api.availability_calendar(VP, ci, 3)
 	cells = {r["room_type"]: [c["available"] for c in r["cells"]] for r in cal["room_types"]}
 	assert cells[bed] == [0, 0, 2], cells
@@ -6185,7 +6185,7 @@ def t165():
 	api.save_group_blocks(name, [{"room_type": bed, "rooms_blocked": 3}],
 	                      status="Confirmed")
 	assert _left(GP, bed, ci, co) == 1, _left(GP, bed, ci, co)
-	assert cm._sellable(GP, bed, ci, co) == 1
+	assert cm._sellable_by_night(GP, bed, ci, co) == [1, 1]
 	api.pickup_group_room(name, bed, "Eval Bride")
 	# the pickup is a real reservation; the hold shrinks by one
 	assert api._block_hold(GP, bed, ci, co) == 2
@@ -11862,6 +11862,33 @@ def t_capacity_rooms_out_of_sale():
 	short_stay.check_out_date = n3
 	short_stay.save(ignore_permissions=True)
 
+@check("stays with no room number come off sale everywhere, and a whole villa sells once")
+def t_capacity_roomless_stays():
+	from kamra import api
+	from kamra import channel_manager as cm
+	from kamra.kamra.doctype.reservation.reservation import InventoryRefused
+	RP = "EVAL Inv Roomless"
+	bed, villa, _r = _inv_property(RP, "IRL", rooms=2)
+	ci, co = add_days(nowdate(), 74), add_days(nowdate(), 76)
+	_stay(RP, bed, ci, co, name="No Room Yet")  # as a channel booking arrives
+	_stay(RP, bed, ci, co, status="Pending Payment", name="Unpaid Hold")
+	assert _left(RP, bed, ci, co) == 0, "booking page still offers a sold type"
+	cal = api.availability_calendar(RP, ci, 2)
+	cells = {r["room_type"]: [c["available"] for c in r["cells"]] for r in cal["room_types"]}
+	assert cells[bed] == [0, 0], cells
+	assert cm._sellable_by_night(RP, bed, ci, co) == [0, 0], "channels still offered an unpaid hold"
+	# the villa type has no rooms of its own: it is one thing to sell
+	vci, vco = add_days(co, 3), add_days(co, 5)
+	_stay(RP, villa, vci, vco, name="Villa First")
+	frappe.db.savepoint("eval_villa_twice")
+	try:
+		_stay(RP, villa, vci, vco, name="Villa Second")
+		raise AssertionError("sold the whole villa twice")
+	except InventoryRefused:
+		pass
+	frappe.db.rollback(save_point="eval_villa_twice")
+	assert _left(RP, villa, vci, vco) == 0
+
 @check("a night the desk prices by hand is quoted, booked, locked and billed at that price")
 def t_night_prices_book():
 	from kamra.api import create_booking, get_quote
@@ -12609,6 +12636,7 @@ def execute():
 		           t_cash_count, t_export_gl, t_gl_stamp, t_mcp_occupancy_on_books,
 		           t_mcp_correct, t_mcp_refund,
 		           t_ar_tax_withheld,
+		           t_capacity_roomless_stays,
 		           t_mcp_transfer, t_no_show_credit, t_pos_till_with_tax,
 		           t_pos_outlet_bank_transfer_qris,
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,

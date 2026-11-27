@@ -29,9 +29,8 @@ DECLINE_REASON = "Other"
 def _availability(res) -> dict:
 	"""Can this request be accepted right now? {rooms_free, can_accept,
 	blocker}. Read-only: the same checks accept enforces."""
-	from kamra.api import available_rooms
-	from kamra.kamra.doctype.reservation.reservation import (
-		uses_member_rooms, villa_lockout_conflict)
+	from kamra.kamra.doctype.reservation.reservation import villa_lockout_conflict
+	from kamra.siu.availability import free_to_sell
 
 	ci, co = str(res.check_in_date), str(res.check_out_date)
 	if getdate(ci) < getdate(nowdate()):
@@ -43,16 +42,14 @@ def _availability(res) -> dict:
 		return {"rooms_free": 0, "can_accept": False,
 		        "blocker": _("Villa lockout: {0} is booked for these dates.").format(
 			        conflict)}
-	if uses_member_rooms(res.property, res.room_type):
-		return {"rooms_free": 1, "can_accept": True, "blocker": None}
-	free = available_rooms(res.property, res.room_type, ci, co,
-	                       group_booking=res.get("group_booking"))
+	free = free_to_sell(res.property, res.room_type, ci, co,
+	                    for_group=res.get("group_booking"))
 	if not free:
 		return {"rooms_free": 0, "can_accept": False,
 		        "blocker": _("No {0} room is free for these dates.").format(
 			        frappe.db.get_value("Room Type", res.room_type,
 			                            "room_type_name") or res.room_type)}
-	return {"rooms_free": len(free), "can_accept": True, "blocker": None}
+	return {"rooms_free": free, "can_accept": True, "blocker": None}
 
 
 @frappe.whitelist()

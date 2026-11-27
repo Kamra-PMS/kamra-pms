@@ -48,8 +48,8 @@ def crs_search(check_in_date: str, check_out_date: str,
                adults: int = 2, children: int = 0):
 	"""Find a room across the chain: for every property the user can access,
 	the room types with space for these dates and their all-in rate."""
-	from kamra.api import available_rooms
 	from kamra.pricing import quote
+	from kamra.siu.availability import free_to_sell
 
 	nights = max(1, date_diff(check_out_date, check_in_date))
 	results = []
@@ -65,7 +65,7 @@ def crs_search(check_in_date: str, check_out_date: str,
 			# capacity gate: skip a type that can't sleep the party
 			if rt.adults_capacity and int(adults) > rt.adults_capacity:
 				continue
-			free = available_rooms(prop, rt.name, check_in_date, check_out_date)
+			free = free_to_sell(prop, rt.name, check_in_date, check_out_date)
 			if not free:
 				continue
 			try:
@@ -77,7 +77,7 @@ def crs_search(check_in_date: str, check_out_date: str,
 			room_types.append({
 				"room_type": rt.name,
 				"room_type_name": rt.room_type_name,
-				"available": len(free),
+				"available": free,
 				"adults_capacity": rt.adults_capacity,
 				"children_capacity": rt.children_capacity,
 				"total": round(total, 0),
@@ -203,8 +203,9 @@ def quote_itinerary(legs, adults: int = 2, children: int = 0,
 	get_quote (the same engine create_booking uses), rooms free per leg,
 	and the combined total. legs: [{property, room_type, check_in_date,
 	check_out_date, adults?, children?, meal_plan?, rate_plan?}]."""
-	from kamra.api import available_rooms, get_quote
+	from kamra.api import get_quote
 	from kamra.booking_refs import resolve_room_type
+	from kamra.siu.availability import free_to_sell
 
 	out = []
 	for leg in _parse_legs(legs):
@@ -225,8 +226,8 @@ def quote_itinerary(legs, adults: int = 2, children: int = 0,
 			"room_type_name": frappe.db.get_value(
 				"Room Type", rt, "room_type_name"),
 			"nights": date_diff(leg["check_out_date"], leg["check_in_date"]),
-			"available": len(available_rooms(
-				prop, rt, leg["check_in_date"], leg["check_out_date"])),
+			"available": free_to_sell(
+				prop, rt, leg["check_in_date"], leg["check_out_date"]),
 			"amount_after_tax": q.get("amount_after_tax"),
 			# the advance this leg's dates ask for at its property
 			"advance_percent": q["advance"]["percent"],
