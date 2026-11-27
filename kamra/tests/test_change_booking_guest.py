@@ -10,11 +10,28 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
 
-from kamra.api import change_booking_guest, create_booking, guest_alert
+from kamra.api import (
+	add_occupant_names,
+	change_booking_guest,
+	create_booking,
+	guest_alert,
+	update_occupants,
+	upload_occupant_id,
+)
 
 DESK = "change.guest.desk@test.local"
 HOUSEKEEPER = "change.guest.hk@test.local"
 ADMIN = "change.guest.admin@test.local"
+
+
+def _png_data_url() -> str:
+	import base64
+	import io
+
+	from PIL import Image
+	buf = io.BytesIO()
+	Image.new("RGB", (320, 200), "white").save(buf, format="PNG")
+	return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
 class ChangeBookingGuestTestCase(IntegrationTestCase):
@@ -378,6 +395,77 @@ class ChangeBookingGuestTestCase(IntegrationTestCase):
 		self.assertEqual(self.res().guest, self.alice)
 		self.assertFalse(frappe.db.exists("Agent Action Log", {
 			"action_type": "blacklist_override", "reference_name": dora}))
+
+	# -- people listed in online check-in -------------------------------------
+
+	def _online_check_in(self, rows):
+		"""The people the old guest listed on the online check-in page."""
+		from kamra.public_api import _merge_precheckin_occupants
+		_merge_precheckin_occupants(self.res(), rows)
+		frappe.db.set_value("Reservation", self.name, "precheckin_status", "Submitted")
+
+	def _people(self) -> list[str]:
+		return sorted(o.full_name for o in self.res().occupants)
+
+	def _row(self, full_name: str) -> str:
+		return next(o.name for o in self.res().occupants if o.full_name == full_name)
+
+	def test_people_the_old_guest_listed_online_leave_with_them(self):
+		add_occupant_names(self.name, ["Desk Added"])
+		# the guest's list repeats the desk's name and adds two of their own
+		self._online_check_in([{"full_name": "Desk Added"},
+		                       {"full_name": "Friend Online", "id_type": "Passport", "id_number": "X1234567"},
+		                       {"full_name": "Child Online", "age": 5}])
+		self.assertEqual(self._people(), ["Child Online", "Desk Added", "Friend Online"])
+		out = self.swap()
+		# the desk's own row stays, even though the old guest sent its name back
+		self.assertEqual(self._people(), ["Desk Added"])
+		self.assertEqual(out["removed_occupants"], 2)
+		self.assertFalse(frappe.db.exists("Stay Occupant", {"id_number": "X1234567"}))
+		comments = frappe.get_all("Comment", filters={
+			"reference_doctype": "Reservation", "reference_name": self.name,
+			"comment_type": "Comment"}, pluck="content")
+		self.assertTrue(any("People listed in online check-in and removed: 2" in c for c in comments),
+		                comments)
+
+	def test_a_listed_person_the_desk_confirmed_stays_and_the_price_does_not_move(self):
+		self._online_check_in([{"full_name": "Child Online", "age": 5},
+		                       {"full_name": "Photographed Online"},
+		                       {"full_name": "Never Seen Online"}])
+		# at the counter the desk confirms the child's age and photographs another
+		update_occupants(self.name, [
+			{"row": self._row("Child Online"), "full_name": "Child Online", "age": 5},
+			{"row": self._row("Photographed Online"), "full_name": "Photographed Online"},
+			{"row": self._row("Never Seen Online"), "full_name": "Never Seen Online"}])
+		upload_occupant_id(self.name, self._row("Photographed Online"), _png_data_url(), kind="photo")
+		price = float(self.res().amount_after_tax)
+		out = self.swap()
+		self.assertEqual(self._people(), ["Child Online", "Photographed Online"])
+		self.assertEqual(out["removed_occupants"], 1)
+		self.assertEqual(float(self.res().amount_after_tax), price)
+		self.assertTrue(next(o for o in self.res().occupants if o.full_name == "Photographed Online").photo)
+
+	def test_a_listed_person_with_a_scanned_id_stays(self):
+		self._online_check_in([{"full_name": "Scanned Online"}])
+		upload_occupant_id(self.name, self._row("Scanned Online"), _png_data_url(), kind="id")
+		self.assertEqual(self.swap()["removed_occupants"], 0)
+		self.assertEqual(self._people(), ["Scanned Online"])
+
+	def test_the_mark_survives_a_desk_save_without_row_ids(self):
+		self._online_check_in([{"full_name": "Friend Online"}])
+		update_occupants(self.name, [{"full_name": "Friend Online"}, {"full_name": "Desk Added"}])
+		self.assertEqual(self.swap()["removed_occupants"], 1)
+		self.assertEqual(self._people(), ["Desk Added"])
+
+	def test_the_desks_own_list_is_left_alone(self):
+		add_occupant_names(self.name, ["Desk One", "Desk Two"])
+		out = self.swap()
+		self.assertEqual(out["removed_occupants"], 0)
+		self.assertEqual(self._people(), ["Desk One", "Desk Two"])
+		comments = frappe.get_all("Comment", filters={
+			"reference_doctype": "Reservation", "reference_name": self.name,
+			"comment_type": "Comment"}, pluck="content")
+		self.assertFalse(any("online check-in" in c for c in comments), comments)
 
 	# -- a number on the blacklist ------------------------------------------
 
