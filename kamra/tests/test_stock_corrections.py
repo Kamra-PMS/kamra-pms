@@ -187,7 +187,7 @@ class TestDatedEntries(WriterCase):
 		              lambda: self.count(cups, 1, outlet=theirs),
 		              lambda: self.waste(cups, 1, outlet=theirs),
 		              lambda: inventory.set_par_level(PROP_A, theirs, cups, 2)):
-			with self.assertRaisesRegex(frappe.ValidationError, "another property"):
+			with self.assertRaisesRegex(frappe.ValidationError, "not at this property"):
 				entry()
 		self.assertFalse(frappe.db.exists("Ingredient Stock", f"{theirs}::{cups}"))
 

@@ -307,7 +307,7 @@ class TestProducing(ProduceCase):
 		other = frappe.get_doc({
 			"doctype": "POS Outlet", "property": PROP_B, "outlet_name": "UT Their",
 			"outlet_type": "Restaurant"}).insert(ignore_permissions=True).name
-		refused("another property", outlet=other)
+		refused("not at this property", outlet=other)
 		# a recipe that slipped past the one-level rule
 		frappe.db.set_value("Ingredient", self.sugar, "is_made", 1)
 		refused("is made here itself")
