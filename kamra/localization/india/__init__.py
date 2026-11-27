@@ -119,6 +119,7 @@ SAC_CODES = {
 	"Spa": "999722",               # physical well-being incl. health club
 	"Taxi": "996412",              # taxi services
 	"Misc": "999799",              # other services n.e.c.
+	"Stolen / Damaged Items": "999799",  # recovery for room items taken or broken
 	# banquet line types
 	"Venue Rental": "997212",      # renting of non-residential property
 	"Alcohol": "996331",

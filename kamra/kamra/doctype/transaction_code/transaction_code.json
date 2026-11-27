@@ -81,7 +81,7 @@
    "fieldname": "charge_type",
    "fieldtype": "Select",
    "label": "Legacy Charge Type",
-   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nTaxi\nEarly Check-in\nLate Checkout\nEarly Departure\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nMisc\nAllowance\nRate Adjustment\nOpening Balance",
+   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nTaxi\nEarly Check-in\nLate Checkout\nEarly Departure\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nStolen / Damaged Items\nMisc\nAllowance\nRate Adjustment\nOpening Balance",
    "description": "Maps to Folio Charge.charge_type for display"
   },
   {
@@ -106,7 +106,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-12 12:00:00.000000",
+ "modified": "2026-11-27 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Transaction Code",

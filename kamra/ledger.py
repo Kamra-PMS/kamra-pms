@@ -42,6 +42,9 @@ CHARGE_TYPE_TO_CODE = {
 	"Rate Adjustment": ("1010", "Room Rate Adjustment", "Rooms", "Rate Adjustment"),
 	"Discount": ("9000", "Discount", "Adjustment", "Discount"),
 	"Misc": ("8000", "Miscellaneous", "Other", "Misc"),
+	# a guest made to pay for room items taken or broken: recovered income,
+	# not a service sold, so it sits with other income
+	"Stolen / Damaged Items": ("8100", "Stolen / Damaged Items", "Other", "Stolen / Damaged Items"),
 	"Allowance": ("9100", "Allowance", "Adjustment", "Allowance"),
 	# a balance carried over from the previous PMS at go-live (kamra.golive):
 	# not revenue of the day - the old system already counted it
