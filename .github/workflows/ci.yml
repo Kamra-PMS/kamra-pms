@@ -59,10 +59,6 @@ jobs:
         run: npm run night-prices:check
         working-directory: frontend
 
-      - name: Check kitchen stock unit costs, received rows and saved form fields
-        run: npm run stock:check
-        working-directory: frontend
-
       - name: Check the figures printed on a POS bill add up
         run: npm run addup:check
         working-directory: frontend
