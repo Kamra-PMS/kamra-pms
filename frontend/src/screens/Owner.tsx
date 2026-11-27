@@ -81,7 +81,7 @@ function Figure({ label, value }: { label: string; value: ReactNode }) {
 function Bar({ pct }: { pct: number }) {
   return (
     <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100">
-      <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+      <div className="h-full rounded-full bg-brand-600" style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
     </div>
   )
 }

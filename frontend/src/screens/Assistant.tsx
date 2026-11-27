@@ -657,7 +657,7 @@ export default function Assistant() {
           <span
             className={cn(
               "size-2 rounded-full",
-              aiEnabled === false ? "bg-zinc-300" : "bg-brand-500",
+              aiEnabled === false ? "bg-zinc-300" : "bg-brand-600",
             )}
             aria-hidden
           />

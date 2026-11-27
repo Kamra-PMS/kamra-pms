@@ -100,7 +100,7 @@ function BucketBars({ title, rows }: { title: string; rows: Bucket[] }) {
               </span>
             </div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100">
-              <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.round((r.total / max) * 100)}%` }} />
+              <div className="h-full rounded-full bg-brand-600" style={{ width: `${Math.round((r.total / max) * 100)}%` }} />
             </div>
           </li>
         ))}

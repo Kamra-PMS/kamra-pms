@@ -260,7 +260,7 @@ export const holidayPackagesConfig: ScreenConfig = {
     { field: "ota_strategy", label: "OTA strategy", type: "select", options: ["Markup", "Stop Sell", "None"] },
     { field: "ota_daily_rate", label: "OTA daily rate", type: "float", hint: "Nightly rate pushed to OTAs during package" },
     { field: "advance_percent", label: "Advance deposit %", type: "float", hint: "Deposit required (e.g. 50 or 100)" },
-    { field: "non_refundable", label: "Non-refundable", type: "check" },
+    { field: "non_refundable", label: "Non-refundable", type: "check", defaultValue: 1 },
     { field: "inclusions", label: "Inclusions", type: "data", hint: "Breakfast, gala dinner, late checkout" },
     { field: "priority", label: "Priority", type: "int" },
     { field: "disabled", label: "Disabled", type: "check" },
@@ -368,7 +368,7 @@ export const experiencesConfig: ScreenConfig = {
     { field: "duration", label: "Duration (e.g. 90 min, half day)", type: "data" },
     { field: "description", label: "Description (shown to guests)", type: "data" },
     { field: "image_url", label: "Photo", type: "image" },
-    { field: "show_on_booking_page", label: "Show on the public booking page", type: "check" },
+    { field: "show_on_booking_page", label: "Show on the public booking page", type: "check", defaultValue: 1 },
     { field: "disabled", label: "Disabled", type: "check" },
   ],
 }
@@ -836,7 +836,7 @@ export const ingredientsConfig: ScreenConfig = {
       hint: "Last known cost, used to value wastage. Indicative only - not FIFO and not on the books." },
     { field: "gst_rate", label: "Input GST %", type: "float",
       hint: "Tax paid when buying this." },
-    { field: "is_active", label: "Active", type: "check",
+    { field: "is_active", label: "Active", type: "check", defaultValue: 1,
       hint: "Turn off instead of deleting when a recipe or stock history uses it." },
   ],
 }
@@ -882,7 +882,7 @@ export const menuItemsConfig: ScreenConfig = {
     { field: "is_veg", label: "Vegetarian", type: "check" },
     { field: "is_alcohol", label: "Alcohol", type: "check", dependsOn: sellsAlcohol,
       hint: "Alcohol always bills the guest folio, never the company" },
-    { field: "available", label: "Available", type: "check" },
+    { field: "available", label: "Available", type: "check", defaultValue: 1 },
   ],
 }
 
@@ -918,7 +918,7 @@ export const channelConnectionsConfig: ScreenConfig = {
     { field: "tpl_precheckin", label: "Template: self check-in link", type: "data", hint: "Args: guest, link" },
     { field: "tpl_payment_request", label: "Template: payment request", type: "data", hint: "Args: guest, amount, note" },
     { field: "tpl_room_charge", label: "Template: room charge alert", type: "data", hint: "Args: guest, amount, what and where, balance. Sent only when Front Desk settings turn on room charge alerts" },
-    { field: "active", label: "Active", type: "check" },
+    { field: "active", label: "Active", type: "check", defaultValue: 1 },
   ],
 }
 
