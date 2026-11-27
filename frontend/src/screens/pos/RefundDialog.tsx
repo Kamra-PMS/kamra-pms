@@ -1,18 +1,19 @@
 /*  Giving money back on a paid bill: the whole of what is left, chosen items
-    or an amount, with a reason and a supervisor's PIN. The figures come from
+    or an amount, with a reason and an approval (see refundApproval). The figures come from
     kamra.pos_refunds (refund_options, refund_quote), so the screen never
     works money out itself; refund_bill pays an attempt's key only once. */
 
 import { useEffect, useState } from "react"
-import { X } from "lucide-react"
+import { ShieldCheck, X } from "lucide-react"
 import { call } from "../../lib/api"
 import { serverError } from "../../lib/resource"
 import { cur, fmtAmount } from "../../lib/money"
 import { useT, t as translate } from "../../lib/i18n"
-import { useAuth } from "../../lib/auth"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
-import { newAttemptKey, refundRequest, type RefundKind } from "../../lib/refunds"
+import { newAttemptKey, refundApproval, refundRequest, type RefundKind } from "../../lib/refunds"
+import { useCashierAuth } from "../../lib/cashierAuth"
+import CashierPinDialog from "../../components/CashierPinDialog"
 
 interface Options {
   eligible: boolean
@@ -24,6 +25,9 @@ interface Options {
   modes: string[]
   reasons: { code: string; label: string }[]
   approvers: { user: string; full_name: string }[]
+  can_approve: boolean
+  pin_required: boolean
+  has_pin: boolean
 }
 interface Quote { amount: number; lines: { row: string; qty: number; amount: number }[] }
 
@@ -33,7 +37,8 @@ export default function RefundDialog({ order, onClose, onDone }: {
   order: string; onClose: () => void; onDone: () => void
 }) {
   const { t } = useT()
-  const { user } = useAuth()
+  const { refresh: refreshPinStatus } = useCashierAuth()
+  const [settingPin, setSettingPin] = useState(false)
   const [opts, setOpts] = useState<Options | null>(null)
   const [kind, setKind] = useState<RefundKind>("whole")
   const [qtys, setQtys] = useState<Record<string, string>>({})
@@ -58,10 +63,9 @@ export default function RefundDialog({ order, onClose, onDone }: {
       setOpts(o)
       setMode((m) => m || (o.modes[0] ?? ""))
       setReason((r) => r || (o.reasons[0]?.code ?? ""))
-      const me = o.approvers.find((a) => a.user === user)
-      setSupervisor((s) => s || (me?.user ?? o.approvers[0]?.user ?? ""))
+      setSupervisor((s) => s || (o.approvers[0]?.user ?? ""))
     }).catch((e) => setError(serverError(e)))
-  }, [order, user, round])
+  }, [order, round])
 
   const request = refundRequest(kind, qtys, back, amount)
   const ask = request ? JSON.stringify(request) : ""
@@ -79,16 +83,17 @@ export default function RefundDialog({ order, onClose, onDone }: {
   const money = (n: number) => `${cur()}${fmtAmount(n)}`
   const needsNote = reason === "POS-REF-OTHER" && !note.trim()
   const problem = (refused?.ask === ask ? refused.why : null) ?? error
-  const ready = !!current && !!reason && !needsNote && !!mode && !!supervisor && !!pin
+  const approval = opts ? refundApproval(opts, supervisor, pin) : null
+  const ready = !!current && !!reason && !needsNote && !!mode && !!approval?.ready
 
   async function give() {
     if (!request) return
-    if (!current) return
+    if (!current || !approval) return
     setBusy(true); setError(null); setRefused(null)
     try {
       await call("kamra.pos_refunds.refund_bill", {
         order, ...request, mode, reason_code: reason, note: note.trim() || null,
-        supervisor, supervisor_pin: pin, idempotency_key: key, expected_amount: current.amount,
+        ...approval.args, idempotency_key: key, expected_amount: current.amount,
         // after a lost answer this tells "send it again" from "refund more"
         seen_refunded: opts?.refunded,
       })
@@ -186,21 +191,45 @@ export default function RefundDialog({ order, onClose, onDone }: {
                   </select>
                 </label>
                 <div />
-                <label className="flex flex-col gap-1">
-                  <span className="font-medium text-zinc-600">{t("Supervisor")}</span>
-                  <select className={box} value={supervisor} onChange={(e) => { setSupervisor(e.target.value); setPin("") }}>
-                    {opts.approvers.map((a) => <option key={a.user} value={a.user}>{a.full_name}</option>)}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="font-medium text-zinc-600">{t("Supervisor's PIN")}</span>
-                  <input className={box} type="password" inputMode="numeric" autoComplete="one-time-code"
-                    value={pin} onChange={(e) => setPin(e.target.value)} />
-                </label>
+                {approval?.ask === "supervisor" && (
+                  <>
+                    <label className="flex flex-col gap-1">
+                      <span className="font-medium text-zinc-600">{t("Supervisor")}</span>
+                      <select className={box} value={supervisor} onChange={(e) => { setSupervisor(e.target.value); setPin("") }}>
+                        {opts.approvers.map((a) => <option key={a.user} value={a.user}>{a.full_name}</option>)}
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="font-medium text-zinc-600">{t("Supervisor's PIN")}</span>
+                      <input className={box} type="password" inputMode="numeric" autoComplete="one-time-code"
+                        value={pin} onChange={(e) => setPin(e.target.value)} />
+                    </label>
+                  </>
+                )}
+                {approval?.ask === "own-pin" && (
+                  <label className="flex flex-col gap-1">
+                    <span className="font-medium text-zinc-600">{t("Your cashier PIN")}</span>
+                    <input className={box} type="password" inputMode="numeric" autoComplete="one-time-code"
+                      value={pin} onChange={(e) => setPin(e.target.value)} />
+                  </label>
+                )}
               </div>
-              {opts.approvers.length === 0 && (
+              {approval?.ask === "nothing" && (
+                <p className="flex items-center gap-1.5 text-emerald-800">
+                  <ShieldCheck className="size-4" aria-hidden />{t("You approve this as a supervisor.")}
+                </p>
+              )}
+              {approval?.ask === "set-pin" && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
+                  <span>{t("Set your cashier PIN to approve this refund.")}</span>
+                  <Button variant="outline" className="h-9" onClick={() => setSettingPin(true)}>
+                    {t("Set my cashier PIN")}
+                  </Button>
+                </div>
+              )}
+              {approval?.ask === "supervisor" && opts.approvers.length === 0 && (
                 <p className="rounded-lg bg-amber-50 px-3 py-2 text-amber-800">
-                  {t("No supervisor has a cashier PIN yet. One sets it the first time a money action asks.")}
+                  {t("No supervisor has a cashier PIN yet. A supervisor sets one from the account menu: Set my cashier PIN.")}
                 </p>
               )}
             </>
@@ -218,6 +247,10 @@ export default function RefundDialog({ order, onClose, onDone }: {
           </div>
         )}
       </div>
+      {settingPin && (
+        <CashierPinDialog onClose={() => setSettingPin(false)}
+          onSaved={() => { setSettingPin(false); setRound((n) => n + 1); void refreshPinStatus() }} />
+      )}
     </div>
   )
 }

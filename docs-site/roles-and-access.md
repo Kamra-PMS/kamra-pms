@@ -132,11 +132,14 @@ Approvals are permissions too:
 - **POS Order: Approve voids** decides who may approve voiding food the
   kitchen has started, and who appears in the approver list at the till.
   Default: Hotel Admin, Finance and F&B Manager.
+- **POS Order: Approve refunds** decides who may refund a paid outlet bill,
+  and who may approve one at someone else's screen. Default: Hotel Admin,
+  Finance and F&B Manager.
 - **Corporate Account: Override Credit** decides who may book or bill past
   a company's credit limit. Default: Hotel Admin and Finance.
 
 The approver still enters their own cashier PIN where the property asks
-for one.
+for one. At someone else's screen the approver's PIN is always asked.
 
 Allowance requests waiting for a manager follow the property's allowance
 approval setting (**Settings > Finance**: Hotel Admin, or Hotel Admin and

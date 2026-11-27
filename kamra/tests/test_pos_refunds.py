@@ -162,8 +162,8 @@ class TestThePatch(RefundCase):
 
 
 class Refunding(RefundCase):
-	"""Refunds by a cashier (here Administrator) with a supervisor's PIN, on a
-	property without tills unless the test turns them on."""
+	"""Refunds with a named supervisor and PIN (the way someone who can't
+	approve does it), on a property without tills unless the test turns them on."""
 
 	def setUp(self):
 		super().setUp()
@@ -313,22 +313,103 @@ class TestWhoAndWhy(Refunding):
 			self.refund(order, **kw)
 		self.assertEqual(self.refunds(order), [])
 
-	def test_a_supervisors_pin_every_time(self):
-		order = self.paid_bill()
-		self.refused(order, "SUPERVISOR_REQUIRED", supervisor=None)
-		self.refused(order, "SUPERVISOR_PIN_REQUIRED", supervisor_pin=None)
-		self.refused(order, "Wrong|wrong", supervisor_pin="0000")
-		desk = _user("ut-desk@example.com", "Front Desk")
-		self.pin(desk, "1111")
-		self.refused(order, "cannot approve", supervisor=desk, supervisor_pin="1111")
+	# who may approve is the protection; the PIN follows "Require cashier PIN"
 
-	def test_a_supervisor_refunding_still_types_their_pin(self):
+	def asking_for_pins(self, on: int = 1):
+		frappe.db.set_value("Property", PROP_A, "require_cashier_pin", on)
+
+	def desk(self):
+		return _user("ut-desk@example.com", "Front Desk")
+
+	def as_user(self, user):
+		frappe.set_user(user)  # nosemgrep: frappe-setuser -- test switches user
+
+	def test_someone_who_cannot_approve_needs_an_approvers_pin_either_way(self):
+		desk = self.desk()
+		self.pin(desk, "1111")
+		for asks in (0, 1):
+			with self.subTest(require_cashier_pin=asks):
+				self.as_user("Administrator")
+				self.asking_for_pins(0)
+				order = self.paid_bill()
+				self.asking_for_pins(asks)
+				self.as_user(desk)
+				self.refused(order, "SUPERVISOR_REQUIRED", supervisor=None, supervisor_pin=None)
+				self.refused(order, "SUPERVISOR_PIN_REQUIRED", supervisor_pin=None)
+				self.refused(order, "Wrong|wrong", supervisor_pin="0000")
+				self.refused(order, "cannot approve", supervisor=desk, supervisor_pin="1111")
+				self.refund(order)
+				made = self.refunds(order)[0]
+				self.assertEqual((made.approved_by, made.refunded_by), (SUPERVISOR, desk))
+
+	def test_an_approver_refunds_directly_where_no_pin_is_asked(self):
+		frappe.db.delete("Cashier PIN", {"name": ["in", [SUPERVISOR, "Administrator"]]})
+		for approver in (SUPERVISOR, "Administrator"):
+			with self.subTest(approver=approver):
+				self.as_user("Administrator")
+				order = self.paid_bill()
+				self.as_user(approver)
+				self.refund(order, supervisor=None, supervisor_pin=None)
+				made = self.refunds(order)[0]
+				self.assertEqual((made.approved_by, made.refunded_by), (approver, approver))
+
+	def test_an_approver_types_their_own_pin_where_the_property_asks(self):
+		self.pin("Administrator", "9753")
+		for approver, pin in ((SUPERVISOR, PIN), ("Administrator", "9753")):
+			with self.subTest(approver=approver):
+				self.as_user("Administrator")
+				self.asking_for_pins(0)
+				order = self.paid_bill()
+				self.asking_for_pins()
+				self.as_user(approver)
+				self.refused(order, "PIN_REQUIRED", supervisor=None, supervisor_pin=None)
+				self.refused(order, "Wrong|wrong", supervisor=None, supervisor_pin="0000")
+				self.refund(order, supervisor=None, supervisor_pin=pin)
+				made = self.refunds(order)[0]
+				self.assertEqual((made.approved_by, made.refunded_by), (approver, approver))
+
+	def test_a_pin_set_while_no_pin_is_asked_approves_at_another_persons_screen(self):
+		from kamra import api
+
+		frappe.db.delete("Cashier PIN", {"name": "Administrator"})
 		order = self.paid_bill()
-		frappe.set_user(SUPERVISOR)  # nosemgrep: frappe-setuser -- test switches user
-		self.refused(order, "SUPERVISOR_PIN_REQUIRED", supervisor_pin="")
-		self.assertTrue(self.refund(order)["refund"])
-		self.assertEqual(self.refunds(order)[0].approved_by, SUPERVISOR)
-		self.assertEqual(self.refunds(order)[0].refunded_by, SUPERVISOR)
+		api.set_cashier_pin("8642")
+		self.as_user(self.desk())
+		offered = [a["user"] for a in pos_refunds.refund_options(order)["approvers"]]
+		self.assertIn("Administrator", offered)
+		self.refund(order, supervisor="Administrator", supervisor_pin="8642")
+		self.assertEqual(self.refunds(order)[0].approved_by, "Administrator")
+
+	def test_the_refund_window_is_told_what_this_person_needs(self):
+		order = self.paid_bill()
+		desk = self.desk()
+		frappe.db.delete("Cashier PIN", {"name": desk})
+
+		def needs(user):
+			self.as_user(user)
+			told = pos_refunds.refund_options(order)
+			return told["can_approve"], told["pin_required"], told["has_pin"]
+
+		self.assertEqual(needs(desk), (False, False, False))
+		self.assertEqual(needs(SUPERVISOR), (True, False, True))
+		self.as_user("Administrator")
+		self.asking_for_pins()
+		frappe.db.set_value("Cashier PIN", SUPERVISOR, "must_reset", 1)
+		self.assertEqual(needs(SUPERVISOR), (True, True, False))
+		agent = _user("ut-agent@example.com", "Kamra Agent", "Hotel Admin")
+		self.assertFalse(needs(agent)[0])
+
+	def test_the_pin_option_is_offered_to_approvers(self):
+		from kamra import api
+
+		def offered(user):
+			self.as_user(user)
+			return api.cashier_pin_status(PROP_A)["approves"]
+
+		self.assertTrue(offered("Administrator"))
+		self.assertTrue(offered(SUPERVISOR))
+		self.assertTrue(offered(_user("ut-fnb@example.com", "F&B Manager")))
+		self.assertFalse(offered(self.desk()))
 
 	def test_agents_never_refund(self):
 		order = self.paid_bill()

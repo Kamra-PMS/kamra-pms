@@ -3,10 +3,11 @@
 """Giving money back on a bill paid at the outlet.
 
 A POS Refund record is the money record: written only here, never edited or
-deleted. Every refund takes a supervisor's PIN and a reason, pays from the
-caller's own open till (where the property uses tills), and is worked out
-under a lock on the bill, so money never goes out twice. The bill itself
-stays as printed; reports subtract refunds on the day money went back."""
+deleted. Every refund is approved by someone holding the approve right (see
+_approve) and has a reason, pays from the caller's own open till (where the
+property uses tills), and is worked out under a lock on the bill, so money
+never goes out twice. The bill itself stays as printed; reports subtract
+refunds on the day money went back."""
 
 from __future__ import annotations
 
@@ -175,14 +176,32 @@ def _reason(code: str | None, note: str | None) -> str:
 	return row.description
 
 
-def _approve(property: str, supervisor: str | None, pin) -> str:
-	"""A supervisor's PIN, every time - their own too. Never an AI agent."""
+def _is_agent() -> bool:
 	user = frappe.session.user
-	if frappe.flags.kamra_agent_call or frappe.flags.kamra_gate_bypass or (
-			user != "Administrator" and "Kamra Agent" in frappe.get_roles(user)):
-		frappe.throw(_("An AI agent can never refund."), frappe.PermissionError)
-	from kamra.authz import verify_supervisor
+	return bool(frappe.flags.kamra_agent_call or frappe.flags.kamra_gate_bypass or (
+		user != "Administrator" and "Kamra Agent" in frappe.get_roles(user)))
 
+
+def _asks_pins(property: str) -> bool:
+	"""The property's "Require cashier PIN on money actions" setting."""
+	return bool(frappe.db.get_value("Property", property, "require_cashier_pin"))
+
+
+def _approve(property: str, supervisor: str | None, pin) -> str:
+	"""Who approved. The approve right is the protection, and the PIN follows
+	the property's setting: someone who may approve refunds directly, typing
+	their own PIN only where the property asks for PINs; anyone else needs an
+	approver to pick their name and type their PIN, whatever the setting, as
+	that is the only proof the approver was there. Never an AI agent."""
+	if _is_agent():
+		frappe.throw(_("An AI agent can never refund."), frappe.PermissionError)
+	from kamra.authz import is_supervisor, verify_supervisor
+
+	user = frappe.session.user
+	if (supervisor or "").strip() in ("", user) and is_supervisor(user, APPROVE_REFUNDS):
+		if not _asks_pins(property):
+			return user
+		supervisor = user
 	return verify_supervisor(property, supervisor, pin, APPROVE_REFUNDS)
 
 
@@ -259,8 +278,9 @@ def history(order: str) -> list:
 def refund_options(order: str):
 	"""Everything the refund window needs: whether the bill can be refunded,
 	what is left, its lines, the ways money may go back, the reasons, who may
-	approve, and the refunds so far."""
-	from kamra.authz import supervisors_for
+	approve (and whether the caller can, and needs their own PIN to), and the
+	refunds so far."""
+	from kamra.authz import is_supervisor, supervisors_for
 	from kamra.ledger import ensure_default_reason_codes
 
 	doc = frappe.get_doc("POS Order", order)
@@ -285,6 +305,10 @@ def refund_options(order: str):
 				"Reason Code", filters={"category": REASON_CATEGORY, "disabled": 0},
 				fields=["name", "description"], order_by="creation asc, name asc")],
 		"approvers": supervisors_for(doc.property, APPROVE_REFUNDS),
+		"can_approve": not _is_agent() and is_supervisor(perm=APPROVE_REFUNDS),
+		"pin_required": _asks_pins(doc.property),
+		"has_pin": bool(frappe.db.exists(
+			"Cashier PIN", {"name": frappe.session.user, "must_reset": 0})),
 		"refunds": made,
 	}
 

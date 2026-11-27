@@ -217,7 +217,8 @@ deleted. When you cancel the bill, or void a line with the cross icon:
    voided counts as wastage in kitchen inventory.
 
 A wrong supervisor PIN is refused and counts towards that supervisor's PIN
-lock. Supervisors set their PIN the first time a money action asks for it.
+lock. Supervisors set or change their PIN from the account menu (**Set my
+cashier PIN**), or the first time a money action asks for it.
 
 Every cancel and every void is in **Reports → Voids & Allowances** as
 *POS bill cancelled* or *POS void*, with who did it, who approved it and
@@ -235,9 +236,19 @@ or **Order history**): press **Refund**.
 2. Pick the reason (**Other** needs a note) and how the money goes back: cash
    for cash, the card machine for a card, otherwise the same way by hand,
    cash or a bank transfer.
-3. A supervisor with the **Approve refunds** right (Hotel Admin, F&B Manager,
-   Finance and System Manager at first) types their PIN, every time, also
-   for their own refunds. AI agents can't refund.
+3. The refund is approved by someone with the **Approve refunds** right
+   (Hotel Admin, F&B Manager, Finance and System Manager at first). The
+   property's **Require cashier PIN on money actions** setting decides
+   whether an approver signed in on the screen types a PIN:
+
+   | Signed in | Setting off | Setting on |
+   |---|---|---|
+   | Someone who can approve | Refunds directly, no PIN | Types their own PIN |
+   | Someone who can't (Front Desk, say) | An approver picks their name and types their PIN | The same |
+
+   An approver sets their PIN at any time from the account menu, **Set my
+   cashier PIN**, whether the setting is on or off: without one they can't
+   approve at someone else's screen. AI agents can't refund.
 
 - The money comes out of **your own open till**, even if the sale's till is
   closed. Without tills, the refund record is the money record.

@@ -28,6 +28,30 @@ export function refundRequest(
   return lines.length ? { kind, lines } : null
 }
 
+/** What the refund window asks for before it can pay, from who is signed in.
+ *  The right to approve comes first, then "Require cashier PIN": an approver
+ *  types nothing, or their own PIN (setting one first if they have none);
+ *  anyone else needs an approver to pick their name and type their PIN. The
+ *  server decides again (kamra.pos_refunds._approve). */
+export function refundApproval(
+  who: { can_approve: boolean; pin_required: boolean; has_pin: boolean }, supervisor: string, pin: string,
+): {
+  ask: "nothing" | "own-pin" | "set-pin" | "supervisor"
+  ready: boolean
+  args: { supervisor: string | null; supervisor_pin: string | null }
+} {
+  const none = { supervisor: null, supervisor_pin: null }
+  if (!who.can_approve) {
+    return {
+      ask: "supervisor", ready: !!supervisor && !!pin,
+      args: { supervisor: supervisor || null, supervisor_pin: pin || null },
+    }
+  }
+  if (!who.pin_required) return { ask: "nothing", ready: true, args: none }
+  if (!who.has_pin) return { ask: "set-pin", ready: false, args: none }
+  return { ask: "own-pin", ready: !!pin, args: { supervisor: null, supervisor_pin: pin || null } }
+}
+
 /** One key per attempt: the server pays a repeated key once. */
 export function newAttemptKey(): string {
   const random = () => Math.random().toString(36).slice(2, 10)

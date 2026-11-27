@@ -14,7 +14,7 @@ await build({
   stdin: { contents: `export * from "./refunds"`, resolveDir: lib, loader: "ts" },
   bundle: true, format: "esm", platform: "node", outfile: path.join(dir, "refunds.mjs"), logLevel: "silent",
 })
-const { refundBadge, refundRequest, refundSlipHtml, newAttemptKey } =
+const { refundBadge, refundRequest, refundSlipHtml, newAttemptKey, refundApproval } =
   await import(pathToFileURL(path.join(dir, "refunds.mjs")).href)
 
 assert.equal(refundBadge(72600, 0), null)
@@ -38,6 +38,24 @@ assert.equal(refundRequest("amount", {}, {}, "-5"), null)
 
 assert.notEqual(newAttemptKey(), newAttemptKey())
 assert.ok(newAttemptKey().length >= 16)
+
+// who has to prove what: the right to approve first, then the property's PIN setting
+const who = (can_approve, pin_required = false, has_pin = false) => ({ can_approve, pin_required, has_pin })
+const none = { supervisor: null, supervisor_pin: null }
+// an approver where no PIN is asked: nothing to type
+assert.deepEqual(refundApproval(who(true), "x@y.z", "1234"), { ask: "nothing", ready: true, args: none })
+// an approver where PINs are asked: their own, once they have one
+assert.deepEqual(refundApproval(who(true, true, false), "", ""), { ask: "set-pin", ready: false, args: none })
+assert.deepEqual(refundApproval(who(true, true, true), "", ""), { ask: "own-pin", ready: false, args: none })
+assert.deepEqual(refundApproval(who(true, true, true), "x@y.z", "1234"),
+  { ask: "own-pin", ready: true, args: { supervisor: null, supervisor_pin: "1234" } })
+// anyone else, with the setting on or off: an approver's name and PIN
+for (const asks of [false, true]) {
+  assert.deepEqual(refundApproval(who(false, asks, true), "", "1234"), { ask: "supervisor", ready: false, args: { supervisor: null, supervisor_pin: "1234" } })
+  assert.equal(refundApproval(who(false, asks), "boss@y.z", "").ready, false)
+  assert.deepEqual(refundApproval(who(false, asks), "boss@y.z", "2468"),
+    { ask: "supervisor", ready: true, args: { supervisor: "boss@y.z", supervisor_pin: "2468" } })
+}
 
 // the slip says what, how, why and who - and escapes what staff typed
 const slip = refundSlipHtml({
