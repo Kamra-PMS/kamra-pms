@@ -7140,5 +7140,18 @@
   "Last price paid": "آخر سعر مدفوع",
   "Average of purchases": "متوسط المشتريات",
   "Last price paid: each priced delivery replaces the cost. Average of purchases: the cost becomes the weighted average of the stock held and what arrived.": "آخر سعر مدفوع: كل تسليم بسعر يستبدل التكلفة. متوسط المشتريات: تصبح التكلفة المتوسط المرجّح للمخزون الموجود وما وصل.",
-  "A price cannot be below zero.": "لا يمكن أن يكون السعر أقل من صفر."
+  "A price cannot be below zero.": "لا يمكن أن يكون السعر أقل من صفر.",
+  "A foreign guest: record the visa or OCI card they entered on.": "ضيف أجنبي: سجّل التأشيرة أو بطاقة OCI التي دخل بها.",
+  "A foreign guest: record the visa they entered on.": "ضيف أجنبي: سجّل التأشيرة التي دخل بها.",
+  "Ends before check-out ({date})": "تنتهي قبل المغادرة ({date})",
+  "OCI Card": "بطاقة OCI",
+  "Photograph the visa": "صوّر التأشيرة",
+  "Photograph the visa or OCI card": "صوّر التأشيرة أو بطاقة OCI",
+  "Visa": "تأشيرة",
+  "Visa / OCI": "تأشيرة / OCI",
+  "Visa / OCI number": "رقم التأشيرة / OCI",
+  "Visa number": "رقم التأشيرة",
+  "Visa type": "نوع التأشيرة",
+  "e-Visa": "تأشيرة إلكترونية",
+  "New visa number (leave empty to keep)": "رقم تأشيرة جديد (اتركه فارغًا للإبقاء على الحالي)"
 }

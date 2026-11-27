@@ -7140,5 +7140,18 @@
   "Last price paid": "最近一次进价",
   "Average of purchases": "进货平均价",
   "Last price paid: each priced delivery replaces the cost. Average of purchases: the cost becomes the weighted average of the stock held and what arrived.": "最近一次进价：每次带价格的进货直接替换成本。进货平均价：成本取现有库存与本次到货的加权平均。",
-  "A price cannot be below zero.": "价格不能小于零。"
+  "A price cannot be below zero.": "价格不能小于零。",
+  "A foreign guest: record the visa or OCI card they entered on.": "外籍客人：请登记其入境所用的签证或 OCI 卡。",
+  "A foreign guest: record the visa they entered on.": "外籍客人：请登记其入境所用的签证。",
+  "Ends before check-out ({date})": "在退房前到期（{date}）",
+  "OCI Card": "OCI 卡",
+  "Photograph the visa": "拍摄签证",
+  "Photograph the visa or OCI card": "拍摄签证或 OCI 卡",
+  "Visa": "签证",
+  "Visa / OCI": "签证 / OCI",
+  "Visa / OCI number": "签证 / OCI 号码",
+  "Visa number": "签证号码",
+  "Visa type": "签证类型",
+  "e-Visa": "电子签证",
+  "New visa number (leave empty to keep)": "新签证号码（留空则保留）"
 }

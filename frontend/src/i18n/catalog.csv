@@ -187,6 +187,14 @@
 . The secret is shown once - copy it now.,. The secret is shown once - copy it now.,. يظهر السر مرة واحدة فقط: انسخه الآن.,. El secreto se muestra una sola vez: cópielo ahora.,. O segredo é mostrado uma vez - copie-o agora.,。密文仅显示一次 - 请立即复制。,screens/Developers.tsx,,translated
 . There is no separate “create till” form - opening a session starts the shift.,. There is no separate “create till” form - opening a session starts the shift.,". لا يوجد نموذج منفصل لـ ""إنشاء صندوق"": فتح جلسة يبدأ الوردية.",. Al abrir una sesión se inicia el turno; no es necesario crear la caja por separado.,. Não existe um formulário separado de “criar caixa” - abrir uma sessão inicia o turno.,。无需单独「创建钱箱」- 开启班次即开始。,screens/CashierSessions.tsx,,translated
 Back on {date},Back on {date},يعود في {date},Disponible el {date},Disponível em {date},{date} 恢复使用,screens/HousekeepingBoard.tsx,date,translated
+A foreign guest: record the visa or OCI card they entered on.,A foreign guest: record the visa or OCI card they entered on.,ضيف أجنبي: سجّل التأشيرة أو بطاقة OCI التي دخل بها.,Huésped extranjero: registre el visado o la tarjeta OCI con la que entró.,Hóspede estrangeiro: registre o visto ou o cartão OCI com que entrou.,外籍客人：请登记其入境所用的签证或 OCI 卡。,components/CheckInDialog.tsx,,translated
+e-Visa,e-Visa,تأشيرة إلكترونية,Visado electrónico,Visto eletrônico,电子签证,components/CheckInDialog.tsx,,translated
+OCI Card,OCI Card,بطاقة OCI,Tarjeta OCI,Cartão OCI,OCI 卡,components/CheckInDialog.tsx,,translated
+Photograph the visa or OCI card,Photograph the visa or OCI card,صوّر التأشيرة أو بطاقة OCI,Fotografíe el visado o la tarjeta OCI,Fotografe o visto ou o cartão OCI,拍摄签证或 OCI 卡,components/CheckInDialog.tsx,,translated
+Visa,Visa,تأشيرة,Visado,Visto,签证,components/CheckInDialog.tsx,,translated
+Visa / OCI,Visa / OCI,تأشيرة / OCI,Visado / OCI,Visto / OCI,签证 / OCI,components/CheckInDialog.tsx,,translated
+Visa / OCI number,Visa / OCI number,رقم التأشيرة / OCI,Número de visado / OCI,Número do visto / OCI,签证 / OCI 号码,components/CheckInDialog.tsx,,translated
+Visa type,Visa type,نوع التأشيرة,Tipo de visado,Tipo de visto,签证类型,components/CheckInDialog.tsx,,translated
 …and {n} more,…and {n} more,…و{n} أخرى,…y {n} más,…e mais {n},…另有 {n} 项,screens/RoomsSetup.tsx,n,translated
 …or paste the rows here,…or paste the rows here,…أو الصق الصفوف هنا,…o pegue aquí las filas,…ou cole as linhas aqui,…或在此粘贴行,screens/MenuImport.tsx,,translated
 · in ,· in ,· خلال ,· dentro de ,· em ,· 在 ,screens/BanquetFunction.tsx,,translated
@@ -7226,3 +7234,8 @@ ZATCA: still needed for valid e-invoices - {fields}.,ZATCA: still needed for val
 "Zero balance: use Quick check out above, or Check out on the row.","Zero balance: use Quick check out above, or Check out on the row.",رصيد صفري: استخدم المغادرة السريعة أعلاه، أو تسجيل المغادرة في الصف.,Saldo cero: utilice Salida rápida arriba o Registrar salida en la fila.,Saldo zero: use Check-out rápido acima ou Check-out na linha.,余额为零：使用上方「快速退房」，或在行上点击「退房」。,,,translated
 Zero-rate and complimentary rooms,Zero-rate and complimentary rooms,غرف بسعر صفر ومجانية,Habitaciones con tarifa cero y de cortesía,Quartos cortesia ou com diária zerada,零房价与免单客房,screens/AuditPack.tsx,,translated
 Zero-rated on purpose,Zero-rated on purpose,خاضع لنسبة صفرية عمدًا,Tasa cero aplicada intencionalmente,Classificação zero propositalmente,确认为零税率,screens/BanquetFunction.tsx,,translated
+A foreign guest: record the visa they entered on.,A foreign guest: record the visa they entered on.,ضيف أجنبي: سجّل التأشيرة التي دخل بها.,Huésped extranjero: registre el visado con el que entró.,Hóspede estrangeiro: registre o visto com que entrou.,外籍客人：请登记其入境所用的签证。,components/CheckInDialog.tsx,,translated
+Ends before check-out ({date}),Ends before check-out ({date}),تنتهي قبل المغادرة ({date}),Caduca antes de la salida ({date}),Termina antes do check-out ({date}),在退房前到期（{date}）,components/CheckInDialog.tsx,date,translated
+Photograph the visa,Photograph the visa,صوّر التأشيرة,Fotografíe el visado,Fotografe o visto,拍摄签证,components/CheckInDialog.tsx,,translated
+Visa number,Visa number,رقم التأشيرة,Número de visado,Número do visto,签证号码,components/CheckInDialog.tsx,,translated
+New visa number (leave empty to keep),New visa number (leave empty to keep),رقم هوية جديد (اتركه فارغا للإبقاء على الحالي),Nuevo número de visado (déjelo vacío para conservar),Novo número do visto (deixe vazio para manter),新签证号码（留空则保留）,components/CheckInDialog.tsx,,translated

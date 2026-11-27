@@ -5212,14 +5212,20 @@ def _scrub_stay_ids(res):
 				                  ignore_permissions=True)
 			frappe.db.set_value("Stay Occupant", o.name, "id_file", None,
 			                    update_modified=False)
-	guest_id = frappe.db.get_value("Guest", res.guest, "id_number")
-	if guest_id:
+	guest_row = frappe.db.get_value("Guest", res.guest,
+	                                ["id_number", "visa_number"], as_dict=True) or {}
+	if guest_row.get("id_number"):
 		frappe.db.set_value("Guest", res.guest, "id_number",
-		                    _mask_id(guest_id), update_modified=False)
+		                    _mask_id(guest_row.id_number), update_modified=False)
+	# a visa number is passport-grade PII: same last-four mask as the ID
+	if guest_row.get("visa_number"):
+		frappe.db.set_value("Guest", res.guest, "visa_number",
+		                    _mask_id(guest_row.visa_number), update_modified=False)
 	from kamra.id_documents import discard_id_document
 	discard_id_document(res.name)  # logs and moves on; never breaks checkout
 	# the document photos are part of the same promise: verified, discarded
-	for field in ("id_file", "address_proof_file"):
+	# (visa_file too — a photo attached on the Guest form must leave as well)
+	for field in ("id_file", "address_proof_file", "visa_file"):
 		if frappe.db.get_value("Guest", res.guest, field):
 			for f in frappe.get_all("File", filters={
 					"attached_to_doctype": "Guest",

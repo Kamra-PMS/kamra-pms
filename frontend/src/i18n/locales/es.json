@@ -7178,5 +7178,18 @@
   "Last price paid": "Último precio pagado",
   "Average of purchases": "Promedio de compras",
   "Last price paid: each priced delivery replaces the cost. Average of purchases: the cost becomes the weighted average of the stock held and what arrived.": "Último precio pagado: cada entrega con precio reemplaza el costo. Promedio de compras: el costo pasa a ser el promedio ponderado de lo que hay y lo que llega.",
-  "A price cannot be below zero.": "El precio no puede ser menor que cero."
+  "A price cannot be below zero.": "El precio no puede ser menor que cero.",
+  "A foreign guest: record the visa or OCI card they entered on.": "Huésped extranjero: registre el visado o la tarjeta OCI con la que entró.",
+  "A foreign guest: record the visa they entered on.": "Huésped extranjero: registre el visado con el que entró.",
+  "Ends before check-out ({date})": "Caduca antes de la salida ({date})",
+  "OCI Card": "Tarjeta OCI",
+  "Photograph the visa": "Fotografíe el visado",
+  "Photograph the visa or OCI card": "Fotografíe el visado o la tarjeta OCI",
+  "Visa": "Visado",
+  "Visa / OCI": "Visado / OCI",
+  "Visa / OCI number": "Número de visado / OCI",
+  "Visa number": "Número de visado",
+  "Visa type": "Tipo de visado",
+  "e-Visa": "Visado electrónico",
+  "New visa number (leave empty to keep)": "Nuevo número de visado (déjelo vacío para conservar)"
 }
