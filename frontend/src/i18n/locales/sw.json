@@ -7140,5 +7140,20 @@
   "Last price paid": "Bei ya mwisho iliyolipwa",
   "Average of purchases": "Wastani wa manunuzi",
   "Last price paid: each priced delivery replaces the cost. Average of purchases: the cost becomes the weighted average of the stock held and what arrived.": "Bei ya mwisho iliyolipwa: kila mapokezi yenye bei hubadilisha gharama. Wastani wa manunuzi: gharama huwa wastani wenye uzito wa kilichopo stoo na kilichofika.",
-  "A price cannot be below zero.": "Bei haiwezi kuwa chini ya sifuri."
+  "A price cannot be below zero.": "Bei haiwezi kuwa chini ya sifuri.",
+  "A foreign guest: record the visa or OCI card they entered on.": "Mgeni wa kigeni: rekodi viza au kadi ya OCI aliyoingia nayo.",
+  "A foreign guest: record the visa they entered on.": "Mgeni wa kigeni: rekodi viza aliyoingia nayo.",
+  "Ends before check-out ({date})": "Inaisha kabla ya kuondoka ({date})",
+  "OCI Card": "Kadi ya OCI",
+  "Photograph the visa": "Piga picha ya viza",
+  "Photograph the visa or OCI card": "Piga picha ya viza au kadi ya OCI",
+  "Visa": "Viza",
+  "Visa / OCI": "Viza / OCI",
+  "Visa / OCI number": "Namba ya viza / OCI",
+  "Visa number": "Namba ya viza",
+  "Visa type": "Aina ya viza",
+  "e-Visa": "Viza ya kielektroniki",
+  "New visa number (leave empty to keep)": "Namba mpya ya viza (acha wazi ili kubaki)",
+  "{n} left": "Zimebaki: {n}",
+  "No room to assign": "Hakuna chumba cha kupanga"
 }

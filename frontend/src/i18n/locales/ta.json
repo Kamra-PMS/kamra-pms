@@ -7140,5 +7140,20 @@
   "Stock units per buying unit": "ஒரு வாங்கும் அலகில் உள்ள சரக்கு அலகுகள்",
   "Supplier, invoice": "சப்ளையர், இன்வாய்ஸ்",
   "The one unit stock and recipes use, such as g, ml, pc or shot. It locks once stock or a recipe uses it.": "சரக்கும் ரெசிபிகளும் பயன்படுத்தும் ஒரே அலகு, எ.கா. g, ml, pc அல்லது shot. சரக்கோ ரெசிபியோ அதைப் பயன்படுத்தியதும் அது பூட்டப்படும்.",
-  "Updated when stock is received (Settings, F&B: last price or average). Change it here to set it yourself.": "சரக்கு பெறப்படும்போது புதுப்பிக்கப்படும் (செட்டிங்ஸ், F&B: கடைசி விலை அல்லது சராசரி). நீங்களே அமைக்க இங்கே மாற்றவும்."
+  "Updated when stock is received (Settings, F&B: last price or average). Change it here to set it yourself.": "சரக்கு பெறப்படும்போது புதுப்பிக்கப்படும் (செட்டிங்ஸ், F&B: கடைசி விலை அல்லது சராசரி). நீங்களே அமைக்க இங்கே மாற்றவும்.",
+  "A foreign guest: record the visa or OCI card they entered on.": "வெளிநாட்டு விருந்தினர்: அவர் வந்த விசா அல்லது OCI அட்டையைப் பதிவு செய்யவும்.",
+  "A foreign guest: record the visa they entered on.": "வெளிநாட்டு விருந்தினர்: அவர் வந்த விசாவைப் பதிவு செய்யவும்.",
+  "Ends before check-out ({date})": "செக்-அவுட்டுக்கு முன் முடிகிறது ({date})",
+  "OCI Card": "OCI அட்டை",
+  "Photograph the visa": "விசாவைப் புகைப்படம் எடுக்கவும்",
+  "Photograph the visa or OCI card": "விசா அல்லது OCI அட்டையைப் புகைப்படம் எடுக்கவும்",
+  "Visa": "விசா",
+  "Visa / OCI": "விசா / OCI",
+  "Visa / OCI number": "விசா / OCI எண்",
+  "Visa number": "விசா எண்",
+  "Visa type": "விசா வகை",
+  "e-Visa": "இ-விசா",
+  "New visa number (leave empty to keep)": "புதிய விசா எண் (வைத்திருக்க காலியாக விடவும்)",
+  "{n} left": "மீதம்: {n}",
+  "No room to assign": "ஒதுக்க அறை இல்லை"
 }

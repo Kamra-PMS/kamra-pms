@@ -51,6 +51,10 @@ jobs:
         run: npm run booking-defaults:check
         working-directory: frontend
 
+      - name: Check the room counts on the booking screens
+        run: npm run rooms-to-sell:check
+        working-directory: frontend
+
       - name: Check lock messages after undoing a check-in
         run: npm run key-notice:check
         working-directory: frontend

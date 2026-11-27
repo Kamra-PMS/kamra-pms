@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **562 endpoints**, generated from the source
+the UI and the AI use. **563 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -2269,6 +2269,24 @@ accessible=1 keeps only rooms marked Accessible (#536).
 | `group_booking` | no | `None` |
 | `ready_now` | no | `0` |
 | `accessible` | no | `0` |
+
+### `kamra.api.rooms_to_sell`
+
+**GET/POST** · permission: `Reservation: handle_stays` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Kamra Agent`
+
+For each room type on sale, how many stays can still be sold for these
+dates by the rules saving a booking applies. Stays with no room number
+count, so a figure can be lower than the rooms available_rooms lists.
+`without_room` is true when no room can be given for the whole stay but a
+booking without a room number would still be accepted. Pass ready_now=1
+for a guest taking the room now.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `check_in_date` | yes |  |
+| `check_out_date` | yes |  |
+| `ready_now` | no | `0` |
 
 ### `kamra.api.room_blocks`
 

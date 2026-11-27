@@ -5243,6 +5243,43 @@
      }
     },
     {
+     "name": "rooms_to_sell",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.api.rooms_to_sell",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.api.rooms_to_sell"
+       ]
+      },
+      "description": "For each room type on sale, how many stays can still be sold for these\ndates by the rules saving a booking applies. Stays with no room number\ncount, so a figure can be lower than the rooms available_rooms lists.\n`without_room` is true when no room can be given for the whole stay but a\nbooking without a room number would still be accepted. Pass ready_now=1\nfor a guest taking the room now.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"check_in_date\": \"2026-08-01\",\n  \"check_out_date\": \"2026-08-03\",\n  \"ready_now\": 0\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "room_blocks",
      "request": {
       "method": "POST",

@@ -905,6 +905,13 @@
 "Revenue Manager",
 "System Manager"
 ],
+"api.rooms_to_sell": [
+"Administrator",
+"Front Desk",
+"Hotel Admin",
+"Kamra Agent",
+"System Manager"
+],
 "api.run_night_audit": [
 "Administrator",
 "Finance",

@@ -34,6 +34,12 @@
   "id_file",
   "address_proof_file",
   "photo",
+  "sb_visa",
+  "visa_type",
+  "visa_number",
+  "column_break_visa",
+  "visa_expiry_date",
+  "visa_file",
   "sb_marketing",
   "marketing_consent",
   "marketing_consent_date",
@@ -173,6 +179,38 @@
    "description": "Optional. Taken at the desk with the guest's consent, or uploaded. Stored privately."
   },
   {
+   "collapsible": 1,
+   "fieldname": "sb_visa",
+   "fieldtype": "Section Break",
+   "label": "Visa (foreign guests)"
+  },
+  {
+   "description": "For a guest who is not a national of the property's country: one of the visa types the country pack accepts (India: Visa, e-Visa, OCI Card).",
+   "fieldname": "visa_type",
+   "fieldtype": "Data",
+   "label": "Visa Type"
+  },
+  {
+   "fieldname": "visa_number",
+   "fieldtype": "Data",
+   "label": "Visa Number"
+  },
+  {
+   "fieldname": "column_break_visa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "visa_expiry_date",
+   "fieldtype": "Date",
+   "label": "Visa Valid Until"
+  },
+  {
+   "description": "Private photo of the visa page or entry document.",
+   "fieldname": "visa_file",
+   "fieldtype": "Attach",
+   "label": "Visa Document"
+  },
+  {
    "fieldname": "guest_category",
    "fieldtype": "Select",
    "label": "Guest Category",
@@ -221,7 +259,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 12:32:21.000000",
+ "modified": "2026-11-27 08:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Guest",

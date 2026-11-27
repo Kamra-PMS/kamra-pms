@@ -7140,5 +7140,20 @@
   "Last price paid": "Giá mua gần nhất",
   "Average of purchases": "Bình quân giá mua",
   "Last price paid: each priced delivery replaces the cost. Average of purchases: the cost becomes the weighted average of the stock held and what arrived.": "Giá mua gần nhất: mỗi lần nhập có giá sẽ thay chi phí. Bình quân giá mua: chi phí là bình quân gia quyền của tồn kho và hàng mới nhập.",
-  "A price cannot be below zero.": "Giá không được nhỏ hơn 0."
+  "A price cannot be below zero.": "Giá không được nhỏ hơn 0.",
+  "A foreign guest: record the visa or OCI card they entered on.": "Khách nước ngoài: ghi lại thị thực hoặc thẻ OCI khi nhập cảnh.",
+  "A foreign guest: record the visa they entered on.": "Khách nước ngoài: ghi lại thị thực khi nhập cảnh.",
+  "Ends before check-out ({date})": "Hết hạn trước trả phòng ({date})",
+  "OCI Card": "Thẻ OCI",
+  "Photograph the visa": "Chụp ảnh thị thực",
+  "Photograph the visa or OCI card": "Chụp ảnh thị thực hoặc thẻ OCI",
+  "Visa": "Thị thực",
+  "Visa / OCI": "Thị thực / OCI",
+  "Visa / OCI number": "Số thị thực / OCI",
+  "Visa number": "Số thị thực",
+  "Visa type": "Loại thị thực",
+  "e-Visa": "Thị thực điện tử",
+  "New visa number (leave empty to keep)": "Số thị thực mới (để trống để giữ nguyên)",
+  "{n} left": "Còn {n}",
+  "No room to assign": "Không còn phòng để xếp"
 }

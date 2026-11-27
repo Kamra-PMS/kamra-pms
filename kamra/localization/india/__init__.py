@@ -33,6 +33,12 @@ NOTICE_LANGUAGES = ["hi", "kn", "ta", "te", "ml", "mr", "bn"]
 # Form C / the guest register accept any of these for Indian nationals
 ID_TYPES = ["Aadhaar", "Passport", "Driving License", "Voter ID", "PAN", "Other"]
 ID_TYPE_HINTS = {"Aadhaar": "A masked Aadhaar (last 4 digits showing) is fine."}
+# Form C also asks for the visa or OCI card a foreign national entered on
+VISA_TYPES = ["Visa", "e-Visa", "OCI Card"]
+VISA_SECTION = "Visa / OCI"
+VISA_HINT = "A foreign guest: record the visa or OCI card they entered on."
+VISA_NUMBER_LABEL = "Visa / OCI number"
+VISA_PHOTO_LABEL = "Photograph the visa or OCI card"
 INVOICE_TAX_NOTE = "Amounts are inclusive of GST at the rates shown."
 PAYMENT_MODES = ["Cash", "Card", "UPI", "Bank Transfer"]
 # notes and coins the till counts at close, largest first

@@ -7140,5 +7140,20 @@
   "Stock units per buying unit": "प्रति खरीद यूनिट स्टॉक यूनिट",
   "Supplier, invoice": "सप्लायर, इनवॉइस",
   "The one unit stock and recipes use, such as g, ml, pc or shot. It locks once stock or a recipe uses it.": "वह एक यूनिट जो स्टॉक और रेसिपी इस्तेमाल करते हैं, जैसे g, ml, pc या shot। स्टॉक या रेसिपी में आने पर यह लॉक हो जाती है।",
-  "Updated when stock is received (Settings, F&B: last price or average). Change it here to set it yourself.": "स्टॉक प्राप्त होने पर अपडेट होती है (सेटिंग्स, F&B: आख़िरी कीमत या औसत)। खुद तय करने के लिए यहाँ बदलें।"
+  "Updated when stock is received (Settings, F&B: last price or average). Change it here to set it yourself.": "स्टॉक प्राप्त होने पर अपडेट होती है (सेटिंग्स, F&B: आख़िरी कीमत या औसत)। खुद तय करने के लिए यहाँ बदलें।",
+  "A foreign guest: record the visa or OCI card they entered on.": "विदेशी अतिथि: जिस वीज़ा या OCI कार्ड पर वे आए हैं, उसे दर्ज करें।",
+  "A foreign guest: record the visa they entered on.": "विदेशी अतिथि: जिस वीज़ा पर वे आए हैं, उसे दर्ज करें।",
+  "Ends before check-out ({date})": "चेक-आउट से पहले समाप्त ({date})",
+  "OCI Card": "OCI कार्ड",
+  "Photograph the visa": "वीज़ा की फ़ोटो लें",
+  "Photograph the visa or OCI card": "वीज़ा या OCI कार्ड की फ़ोटो लें",
+  "Visa": "वीज़ा",
+  "Visa / OCI": "वीज़ा / OCI",
+  "Visa / OCI number": "वीज़ा / OCI नंबर",
+  "Visa number": "वीज़ा नंबर",
+  "Visa type": "वीज़ा का प्रकार",
+  "e-Visa": "ई-वीज़ा",
+  "New visa number (leave empty to keep)": "नया वीज़ा नंबर (रखने के लिए खाली छोड़ें)",
+  "{n} left": "शेष: {n}",
+  "No room to assign": "आवंटन के लिए कोई कमरा नहीं"
 }
