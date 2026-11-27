@@ -294,6 +294,18 @@ def is_minor(pack, age) -> bool:
 		return False
 
 
+def is_foreign_national(pack, nationality: str | None) -> bool:
+	"""A guest whose stated nationality is not the property country's own
+	("Indian" or a passport's "IND" in India). Blank is not foreign: the
+	desk has not said."""
+	nat = (nationality or "").strip().casefold()
+	if not nat:
+		return False
+	home = {(getattr(pack, "DEFAULT_NATIONALITY", "") or "").strip().casefold(),
+	        (home_country_iso3(pack) or "").strip().casefold()} - {""}
+	return nat not in home
+
+
 def minor_id_kept(pack, nationality: str | None) -> bool:
 	"""May ID details be recorded for a minor of this nationality?"""
 	if minor_ids(pack) == "all":

@@ -93,6 +93,13 @@ interface Flow {
     id_used_count: number
     address: string
     has_photo: boolean
+    /** nationality is not the property country's own: record the visa / OCI card */
+    foreign: boolean
+    home_nationality: string[]
+    visa_type: string | null
+    visa_number: string | null
+    visa_expiry_date: string | null
+    visa_on_file: boolean
   }
   vocabulary: { id_types: string[] }
   steps: Step[]
@@ -218,6 +225,15 @@ const BUILT_IN: Record<string, { title: string; instruction: string }> = {
   },
 }
 
+// the Guest doctype's visa_type options
+const VISA_TYPES = ["Visa", "e-Visa", "OCI Card"]
+
+/** Not the property country's own nationality ("Indian" / "IND"); blank is not foreign. */
+function isForeign(nationality: string, home: string[]): boolean {
+  const n = nationality.trim().toLowerCase()
+  return !!n && !home.some((h) => h.trim().toLowerCase() === n)
+}
+
 const PAYER_LABEL: Record<string, string> = {
   "OTA prepaid": translate("OTA has paid the room"),
   "OTA, guest pays here": translate("OTA booking, guest pays here"),
@@ -317,7 +333,10 @@ export default function CheckInDialog(props: {
   } | null>(null)
 
   // per-step drafts
-  const [details, setDetails] = useState({ phone: "", email: "", nationality: "", id_type: "", id_number: "" })
+  const [details, setDetails] = useState({
+    phone: "", email: "", nationality: "", id_type: "", id_number: "",
+    visa_type: "", visa_number: "", visa_expiry_date: "",
+  })
   const [detailsDirty, setDetailsDirty] = useState(false)
   // what an ID scan read beyond the form's fields; saved with the details
   const [scanned, setScanned] = useState<IdRead | null>(null)
@@ -355,6 +374,9 @@ export default function CheckInDialog(props: {
         nationality: f.guest.nationality ?? "",
         id_type: f.guest.id_type ?? "",
         id_number: "",
+        visa_type: f.guest.visa_type ?? "",
+        visa_number: f.guest.visa_number ?? "",
+        visa_expiry_date: f.guest.visa_expiry_date ?? "",
       })
       setPayer((f.records.billing_check as { payer?: string } | undefined)?.payer ?? f.billing.payer)
       setKeyCount(f.keys.count || Math.max(1, Math.min(f.reservation.adults || 1, 4)))
@@ -457,6 +479,9 @@ export default function CheckInDialog(props: {
       id_expiry_date: scanned?.id_expiry_date ?? undefined,
       address_line: scanned?.address || undefined,
       city: scanned?.city || undefined,
+      visa_type: details.visa_type,
+      visa_number: details.visa_number,
+      visa_expiry_date: details.visa_expiry_date || undefined,
     }, false)
     if (f) {
       setDetailsDirty(false)
@@ -831,6 +856,67 @@ export default function CheckInDialog(props: {
                 onUploaded={load}
                 label={t("Photograph the guest's ID")}
               />
+              {(isForeign(details.nationality, flow.guest.home_nationality) || !!flow.guest.visa_type) && (
+                <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-800">{t("Visa / OCI")}</p>
+                    <p className="text-xs text-zinc-500">
+                      {t("A foreign guest: record the visa or OCI card they entered on.")}
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Visa type")}</span>
+                      <select
+                        className={inputCls}
+                        value={details.visa_type}
+                        onChange={(e) => {
+                          setDetails((d) => ({ ...d, visa_type: e.target.value }))
+                          setDetailsDirty(true)
+                        }}
+                      >
+                        <option value="">{t("Choose…")}</option>
+                        {VISA_TYPES.map((v) => (
+                          <option key={v} value={v}>{t(v)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Visa / OCI number")}</span>
+                      <input
+                        className={inputCls}
+                        value={details.visa_number}
+                        autoComplete="off"
+                        onChange={(e) => {
+                          setDetails((d) => ({ ...d, visa_number: e.target.value }))
+                          setDetailsDirty(true)
+                        }}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Valid until")}</span>
+                      <input
+                        className={inputCls}
+                        type="date"
+                        value={details.visa_expiry_date}
+                        onChange={(e) => {
+                          setDetails((d) => ({ ...d, visa_expiry_date: e.target.value }))
+                          setDetailsDirty(true)
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {flow.guest.name && (
+                    <IdDocumentField
+                      method="kamra.guest_documents.save_guest_file"
+                      params={{ guest: flow.guest.name, kind: "visa" }}
+                      uploaded={flow.guest.visa_on_file}
+                      onUploaded={load}
+                      label={t("Photograph the visa or OCI card")}
+                    />
+                  )}
+                </div>
+              )}
               <CheckInGuests
                 key={flow.ids.occupants.map((o) => o.row).join(",")}
                 reservation={r.name}

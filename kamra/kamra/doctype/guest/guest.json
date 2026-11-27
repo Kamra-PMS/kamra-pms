@@ -34,6 +34,12 @@
   "id_file",
   "address_proof_file",
   "photo",
+  "sb_visa",
+  "visa_type",
+  "visa_number",
+  "column_break_visa",
+  "visa_expiry_date",
+  "visa_file",
   "sb_marketing",
   "marketing_consent",
   "marketing_consent_date",
@@ -173,6 +179,39 @@
    "description": "Optional. Taken at the desk with the guest's consent, or uploaded. Stored privately."
   },
   {
+   "collapsible": 1,
+   "fieldname": "sb_visa",
+   "fieldtype": "Section Break",
+   "label": "Visa / OCI (foreign guests)"
+  },
+  {
+   "description": "For a guest who is not a national of the property's country: the visa or OCI card they entered on.",
+   "fieldname": "visa_type",
+   "fieldtype": "Select",
+   "label": "Visa Type",
+   "options": "\nVisa\ne-Visa\nOCI Card"
+  },
+  {
+   "fieldname": "visa_number",
+   "fieldtype": "Data",
+   "label": "Visa / OCI Number"
+  },
+  {
+   "fieldname": "column_break_visa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "visa_expiry_date",
+   "fieldtype": "Date",
+   "label": "Visa Valid Until"
+  },
+  {
+   "description": "Private photo of the visa page or OCI card.",
+   "fieldname": "visa_file",
+   "fieldtype": "Attach",
+   "label": "Visa / OCI Document"
+  },
+  {
    "fieldname": "guest_category",
    "fieldtype": "Select",
    "label": "Guest Category",
@@ -221,7 +260,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-30 12:32:21.000000",
+ "modified": "2026-11-25 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Guest",

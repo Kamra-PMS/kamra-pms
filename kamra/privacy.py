@@ -70,12 +70,13 @@ def erase_guest(guest: str, reason: str = "request") -> dict:
 	counts = {"files": 0, "messages": 0, "occupants": 0}
 
 	# 1. the profile itself, photos included
-	for field in ("id_file", "address_proof_file", "photo"):
+	for field in ("id_file", "address_proof_file", "photo", "visa_file"):
 		counts["files"] += _delete_files("Guest", guest, field)
 	counts["files"] += _delete_files("Guest", guest)
 	blank = {"first_name": alias, "last_name": "", "full_name": alias, "phone": "", "email": "",
 	         "id_type": "", "id_number": "", "id_place_of_issue": "", "id_issue_date": None,
 	         "id_expiry_date": None, "nationality": "", "address_line": "", "city": "",
+	         "visa_type": "", "visa_number": "", "visa_expiry_date": None, "visa_file": None,
 	         "id_file": None, "address_proof_file": None, "photo": None, "date_of_birth": None, "gender": "",
 	         "guest_notes": "Profile erased.", "vip": 0, "marketing_consent": 0}
 	frappe.db.set_value("Guest", guest, {k: v for k, v in blank.items() if g.meta.has_field(k)},
