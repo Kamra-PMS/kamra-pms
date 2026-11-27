@@ -283,9 +283,10 @@ def _option_recipes_of(options) -> dict:
 	return out
 
 
-def consume_for_lines(order, lines) -> list:
-	"""Take a fired order's recipes off the outlet's stock. Called from
-	fire_kot with the lines it just fired - never from a doc hook, see below.
+def consume_for_lines(order, lines, note: str | None = None) -> list:
+	"""Take lines' recipes off the outlet's stock. Called from fire_kot with
+	the lines it just fired - never from a doc hook, see below - and, for lines
+	never sent, from consume_unsent_lines when their bill closes.
 
 	Idempotent per line via stock_posted, so a re-fired later course, a
 	recall, a split or a retried request can never double-deduct.
@@ -310,7 +311,9 @@ def consume_for_lines(order, lines) -> list:
 	                            a greasy screen must not move stock.
 	  mark_prepared             ingredients left at fire, not here
 	  cancel_order              fired half was cooked; unfired half never moved
-	  deliver_order / pay_order money-time, far too late
+	  deliver_order / pay_order nothing for a sent line (it left at fire); a
+	                            line never sent leaves then, since it was handed
+	                            over all the same (consume_unsent_lines)
 	  mark_nc                   a comped dish consumed real paneer - that is
 	                            the entire point of costing an NC
 	  a recipe edited later     the ledger snapshotted qty at fire; history is
@@ -353,7 +356,7 @@ def consume_for_lines(order, lines) -> list:
 		after = _apply_move(
 			order.property, order.outlet, ing, -need[ing], "Consumed",
 			ref_dt="POS Order", ref_dn=order.name,
-			note=f"KOT {order.kot_no or '-'}")
+			note=note or f"KOT {order.kot_no or '-'}")
 		if after <= 0:
 			alerts.append({
 				"ingredient": ing,
@@ -367,10 +370,48 @@ def consume_for_lines(order, lines) -> list:
 	# touching the child docs: fire_kot has already saved, and a second save
 	# would re-run validate(), re-fire on_update (a duplicate realtime notify)
 	# and re-enter the folio branch.
+	# an item with its own stock remembers which stock item went: what a refund
+	# puts back, whatever the menu says by then
+	own = dict(frappe.get_all(
+		"Menu Item",
+		filters={"name": ["in", list({it["menu_item"] for it in todo})],
+		         "stock_ingredient": ["is", "set"]},
+		fields=["name", "stock_ingredient"], as_list=True))
 	for it in todo:
-		frappe.db.set_value("POS Order Item", it["row"], "stock_posted", 1,
-		                    update_modified=False)
+		values = {"stock_posted": 1}
+		if it["menu_item"] in own:
+			values["stock_item"] = own[it["menu_item"]]
+		frappe.db.set_value("POS Order Item", it["row"], values, update_modified=False)
 	return alerts
+
+
+def consume_unsent_lines(order) -> None:
+	"""The bill is closing: paid, charged to a room, or comped. What was never
+	sent to the kitchen was still handed over, so it leaves stock now (a sent
+	line left when it was fired, a voided one was never served).
+
+	Money first: a fault here is logged and the bill still closes. A database
+	clash is not a stock fault - it ends the request, to be tried again."""
+	todo = [it for it in order.items
+	        if (it.kot_status or "New") == "New" and not it.voided and not it.stock_posted]
+	if not todo:
+		return
+	frappe.db.savepoint("stock_at_close")
+	try:
+		consume_for_lines(order, [
+			{"row": it.name, "menu_item": it.menu_item, "qty": it.qty,
+			 "stock_posted": it.stock_posted} for it in todo],
+			note="Closed without a kitchen ticket")
+	except (frappe.QueryDeadlockError, frappe.QueryTimeoutError):
+		raise
+	except Exception:
+		frappe.db.rollback(save_point="stock_at_close")
+		frappe.log_error(title=f"Stock not taken at close: {order.name}")
+		return
+	# keep the open document in step, should anything save it again
+	for it in todo:
+		it.stock_posted, it.stock_item = frappe.db.get_value(
+			"POS Order Item", it.name, ["stock_posted", "stock_item"])
 
 
 # ---------------------------------------------------------------- recipes
@@ -419,8 +460,9 @@ def menu_recipe(menu_item: str):
 	has on hand right now - so the editor can say "you have 0.4 kg left". The
 	menu price and each ingredient's cost come with it only for people who can
 	see stock."""
-	mi = frappe.db.get_value("Menu Item", menu_item,
-	                         ["item_name", "property", "outlet", "price"], as_dict=True)
+	mi = frappe.db.get_value(
+		"Menu Item", menu_item,
+		["item_name", "property", "outlet", "price", "stock_ingredient"], as_dict=True)
 	if not mi:
 		frappe.throw(_("Menu item not found."))
 	rows = frappe.get_all(
@@ -438,7 +480,16 @@ def menu_recipe(menu_item: str):
 		r["qty_on_hand"] = frappe.db.get_value(
 			"Ingredient Stock", f"{mi.outlet}::{r.ingredient}", "qty_on_hand")
 	out = {"menu_item": menu_item, "item_name": mi.item_name,
-	       "outlet": mi.outlet, "property": mi.property, "recipe": rows}
+	       "outlet": mi.outlet, "property": mi.property, "recipe": rows,
+	       "stock_ingredient": mi.stock_ingredient}
+	if mi.stock_ingredient:
+		own = frappe.db.get_value("Ingredient", mi.stock_ingredient,
+		                          ["ingredient_name", "uom"], as_dict=True) or {}
+		out.update({
+			"stock_name": own.get("ingredient_name"), "stock_uom": own.get("uom"),
+			"stock_on_hand": float(frappe.db.get_value(
+				"Ingredient Stock", f"{mi.outlet}::{mi.stock_ingredient}", "qty_on_hand") or 0),
+		})
 	if costs:
 		out["price"] = mi.price
 	return out
@@ -455,7 +506,8 @@ def recipe_overview(property: str):
 	left of its price; `uncosted` names the ingredients that stop that."""
 	dishes = frappe.get_all(
 		"Menu Item", filters={"property": property},
-		fields=["name", "item_name", "outlet", "category", "available", "price"],
+		fields=["name", "item_name", "outlet", "category", "available", "price",
+		        "stock_ingredient"],
 		order_by="outlet asc, category asc, item_name asc")
 	if not dishes:
 		return []
@@ -480,6 +532,7 @@ def recipe_overview(property: str):
 	for d in dishes:
 		rows = lines.get(d.name, [])
 		d["lines"] = len(rows)
+		d["tracked"] = bool(d.pop("stock_ingredient"))
 		d["outlet_name"] = outlets.get(d.outlet)
 		d["cost"] = portion_cost(
 			[(r.qty, ings[r.ingredient].cost_per_unit) for r in rows])
@@ -513,6 +566,67 @@ def save_recipe(menu_item: str, rows):
 	doc.set("recipe", clean)
 	doc.save()
 	return {"ok": True, "lines": len(clean)}
+
+
+# ------------------------------------------------------ items' own stock
+
+def require_stock_rights() -> None:
+	"""Giving a menu item its own stock, or taking it away, is stock work too."""
+	if not frappe.has_permission("Ingredient", "manage_stock",
+	                             ignore_share_permissions=True):
+		frappe.throw(_("Tracking stock also needs the right to manage stock."),
+		             frappe.PermissionError)
+
+
+@frappe.whitelist(methods=["POST"])
+@require_perm("Menu Item", "edit_menu", scope={"menu_item": "Menu Item"})
+def track_item_stock(menu_item: str, ingredient: str | None = None,
+                     ingredient_name: str | None = None, uom: str | None = None,
+                     cost_per_unit: float | None = None, buy_uom: str | None = None,
+                     buy_size: float | None = None):
+	"""Give a menu item its own stock: a stock item (a new one, or one that
+	exists, such as the same bottle sold at another outlet) behind a fixed
+	recipe of one. Receiving, counting, cost and reports then work on it as on
+	any ingredient. A dish already made of 1 x an ingredient can adopt it."""
+	require_stock_rights()
+	doc = frappe.get_doc("Menu Item", menu_item)
+	if doc.stock_ingredient:
+		frappe.throw(_("{0} already tracks its own stock.").format(doc.item_name))
+	lines = [(r.ingredient, float(r.qty or 0)) for r in doc.recipe]
+	if lines and lines != [(ingredient, 1.0)]:
+		frappe.throw(_("{0} has a recipe. Delete the recipe first.").format(doc.item_name))
+	if not ingredient:
+		name = (ingredient_name or doc.item_name or "").strip()
+		if frappe.db.exists("Ingredient",
+		                    {"property": doc.property, "ingredient_name": name}):
+			frappe.throw(_("An ingredient called {0} already exists. Pick it instead.")
+			             .format(name))
+		new = frappe.get_doc({
+			"doctype": "Ingredient", "property": doc.property, "ingredient_name": name,
+			"uom": (uom or "").strip() or "pc", "category": doc.category,
+			"cost_per_unit": float(cost_per_unit or 0),
+			"buy_uom": (buy_uom or "").strip() or None, "buy_size": float(buy_size or 0),
+		})
+		new.insert()
+		ingredient = new.name
+	doc.stock_ingredient = ingredient
+	doc.set("recipe", [{"ingredient": ingredient, "qty": 1}])
+	doc.save()
+	return {"ok": True, "ingredient": ingredient}
+
+
+@frappe.whitelist(methods=["POST"])
+@require_perm("Menu Item", "edit_menu", scope={"menu_item": "Menu Item"})
+def untrack_item_stock(menu_item: str):
+	"""Stop tracking: selling the item takes no stock from now on. The stock
+	item and its history stay."""
+	require_stock_rights()
+	doc = frappe.get_doc("Menu Item", menu_item)
+	if doc.stock_ingredient:
+		doc.stock_ingredient = None
+		doc.set("recipe", [])
+		doc.save()
+	return {"ok": True}
 
 
 @frappe.whitelist(methods=["POST"])

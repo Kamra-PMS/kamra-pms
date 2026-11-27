@@ -7213,5 +7213,20 @@
   "Date and time": "Data e hora",
   "entered {when} by {who}": "lançado {when} por {who}",
   "Keep it": "Manter",
-  "Leave empty for now.": "Deixe em branco para usar agora."
+  "Leave empty for now.": "Deixe em branco para usar agora.",
+  "{name}: {qty} left. You can still sell it.": "{name}: restam {qty}. Você ainda pode vendê-lo.",
+  "Cost each": "Custo unitário",
+  "Each one sold takes 1 {uom}.": "Cada venda retira 1 {uom}.",
+  "For the same bottle sold at another outlet. Each outlet keeps its own stock.": "Para a mesma garrafa vendida em outro ponto de venda. Cada um tem o próprio estoque.",
+  "Keep tracking": "Continuar controlando",
+  "New stock item": "Novo item de estoque",
+  "own stock": "estoque próprio",
+  "Stop tracking": "Parar de controlar",
+  "Stop tracking? Selling it then takes no stock. The stock item and its history stay.": "Parar de controlar? Vendê-lo não baixará mais o estoque. O item e o histórico permanecem.",
+  "Track stock": "Controlar estoque",
+  "Track stock of {name}": "Controlar estoque de {name}",
+  "Track this item's own stock": "Controlar o estoque próprio deste item",
+  "Tracks its own stock: {name} · {qty} {uom} at this outlet": "Controla o próprio estoque: {name} · {qty} {uom} neste ponto de venda",
+  "Use an existing one": "Usar um existente",
+  "What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.": "O que cada prato retira do estoque do ponto de venda: quando vai para a cozinha, ou ao fechar a conta se nunca foi enviado."
 }

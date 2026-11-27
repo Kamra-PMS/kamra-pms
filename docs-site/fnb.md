@@ -462,8 +462,22 @@ is each line's quantity times that ingredient's cost, added up. If any of its
 ingredients has no cost yet, no total is shown and the screen names it. Costs
 show to people who can see stock. Nothing is saved on the dish or on bills.
 
+### Items with their own stock
+
+Something sold as it is bought, such as bottled water, can **track its own
+stock**. In **Recipes**, pick the item and choose **Track this item's own
+stock**: make a new stock item (unit, cost, buying unit), or use one that
+exists, such as the same bottle at another outlet. Its recipe is then fixed at
+one of that item, so receiving, stock takes, wastage and cost work on it as on
+any ingredient. A dish already made of one of something can adopt it. **Stop
+tracking** removes the link and the recipe; the stock item and its history
+stay. The till says when such an item has nothing left, and still sells it.
+Switching it needs the rights to edit the menu and to manage stock.
+
 - Ingredients leave stock when the KOT is sent - when cooking starts - not
-  when the bill is paid.
+  when the bill is paid. A line **never sent** to the kitchen (a bottle sold
+  and paid at the counter, say) leaves when its bill closes: paid, charged
+  to a room, or complimentary.
 - A line voided after it was sent counts as **wastage**, not a reversal:
   the food was made.
 - A shortage never blocks an order. It's reported, and a dish is never

@@ -5276,6 +5276,36 @@ Replace a dish's recipe wholesale. An empty list is valid and means
 | `menu_item` | yes |  |
 | `rows` | yes |  |
 
+### `kamra.inventory.track_item_stock`
+
+**POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
+
+Give a menu item its own stock: a stock item (a new one, or one that
+exists, such as the same bottle sold at another outlet) behind a fixed
+recipe of one. Receiving, counting, cost and reports then work on it as on
+any ingredient. A dish already made of 1 x an ingredient can adopt it.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `menu_item` | yes |  |
+| `ingredient` | no | `None` |
+| `ingredient_name` | no | `None` |
+| `uom` | no | `None` |
+| `cost_per_unit` | no | `None` |
+| `buy_uom` | no | `None` |
+| `buy_size` | no | `None` |
+
+### `kamra.inventory.untrack_item_stock`
+
+**POST** · permission: `Menu Item: edit_menu` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
+
+Stop tracking: selling the item takes no stock from now on. The stock
+item and its history stay.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `menu_item` | yes |  |
+
 ### `kamra.inventory.save_ingredient`
 
 **POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`

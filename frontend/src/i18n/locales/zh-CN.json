@@ -7175,5 +7175,20 @@
   "Date and time": "日期和时间",
   "entered {when} by {who}": "{who} 于 {when} 录入",
   "Keep it": "保留",
-  "Leave empty for now.": "留空表示现在。"
+  "Leave empty for now.": "留空表示现在。",
+  "{name}: {qty} left. You can still sell it.": "{name}：剩余 {qty}。仍可出售。",
+  "Cost each": "单件成本",
+  "Each one sold takes 1 {uom}.": "每售出一份扣减 1 {uom}。",
+  "For the same bottle sold at another outlet. Each outlet keeps its own stock.": "用于在其他门店出售的同一瓶装商品。各门店分别记库存。",
+  "Keep tracking": "继续跟踪",
+  "New stock item": "新建库存项",
+  "own stock": "独立库存",
+  "Stop tracking": "停止跟踪",
+  "Stop tracking? Selling it then takes no stock. The stock item and its history stay.": "停止跟踪？此后出售将不扣库存。库存项及其记录会保留。",
+  "Track stock": "跟踪库存",
+  "Track stock of {name}": "跟踪 {name} 的库存",
+  "Track this item's own stock": "跟踪此商品的独立库存",
+  "Tracks its own stock: {name} · {qty} {uom} at this outlet": "独立跟踪库存：{name} · 本门店 {qty} {uom}",
+  "Use an existing one": "使用现有库存项",
+  "What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.": "每道菜从所在门店库存中扣减的内容：下单到厨房时扣减；若从未下单，则在结账时扣减。"
 }

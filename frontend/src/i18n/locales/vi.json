@@ -7175,5 +7175,20 @@
   "Date and time": "Ngày và giờ",
   "entered {when} by {who}": "{who} nhập lúc {when}",
   "Keep it": "Giữ lại",
-  "Leave empty for now.": "Để trống để dùng thời điểm hiện tại."
+  "Leave empty for now.": "Để trống để dùng thời điểm hiện tại.",
+  "{name}: {qty} left. You can still sell it.": "{name}: còn {qty}. Bạn vẫn có thể bán.",
+  "Cost each": "Giá vốn mỗi cái",
+  "Each one sold takes 1 {uom}.": "Mỗi phần bán ra trừ 1 {uom}.",
+  "For the same bottle sold at another outlet. Each outlet keeps its own stock.": "Dùng cho cùng loại chai bán ở điểm bán khác. Mỗi điểm bán có tồn kho riêng.",
+  "Keep tracking": "Tiếp tục theo dõi",
+  "New stock item": "Mặt hàng kho mới",
+  "own stock": "tồn kho riêng",
+  "Stop tracking": "Ngừng theo dõi",
+  "Stop tracking? Selling it then takes no stock. The stock item and its history stay.": "Ngừng theo dõi? Khi bán sẽ không trừ kho nữa. Mặt hàng kho và lịch sử vẫn được giữ.",
+  "Track stock": "Theo dõi tồn kho",
+  "Track stock of {name}": "Theo dõi tồn kho của {name}",
+  "Track this item's own stock": "Theo dõi tồn kho riêng của món này",
+  "Tracks its own stock: {name} · {qty} {uom} at this outlet": "Theo dõi tồn kho riêng: {name} · {qty} {uom} tại điểm bán này",
+  "Use an existing one": "Dùng mặt hàng có sẵn",
+  "What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.": "Những gì mỗi món trừ vào kho của điểm bán: khi gửi bếp, hoặc khi đóng hóa đơn nếu chưa gửi."
 }

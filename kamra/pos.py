@@ -81,12 +81,23 @@ def pos_menu(outlet: str):
 		"Menu Item",
 		filters={"outlet": outlet, "available": 1},
 		fields=["name", "item_name", "category", "price", "is_veg",
-		        "is_alcohol", "image", "description", "prep_station"],
+		        "is_alcohol", "image", "description", "prep_station",
+		        "stock_ingredient"],
 		order_by="category, item_name")
 	# the choice groups a dish asks about (milk, size, extras): each group once,
 	# and per dish only the ids of the groups it offers
 	from kamra.menu_modifiers import menu_payload
 	groups, offered = menu_payload([it.name for it in items])
+	# items with their own stock say what this outlet has left of them, so the
+	# till can warn at zero (it never refuses a sale)
+	own = [i.stock_ingredient for i in items if i.stock_ingredient]
+	held = dict(frappe.get_all(
+		"Ingredient Stock", filters={"outlet": outlet, "ingredient": ["in", own]},
+		fields=["ingredient", "qty_on_hand"], as_list=True)) if own else {}
+	for it in items:
+		stock = it.pop("stock_ingredient")
+		if stock:
+			it["stock_left"] = float(held.get(stock) or 0)
 	cats: dict[str, list] = {}
 	for it in items:
 		if offered.get(it.name):
@@ -702,6 +713,7 @@ def split_order(order: str, item_rows, table_no: str | None = None):
 			# a split moves food that is already cooked and already deducted;
 			# carrying the flag is what stops the new bill deducting it twice
 			"stock_posted": it.stock_posted,
+			"stock_item": it.stock_item,
 		} for it in move],
 	})
 	new.insert(ignore_permissions=True)

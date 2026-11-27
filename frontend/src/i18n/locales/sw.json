@@ -7175,5 +7175,20 @@
   "Date and time": "Tarehe na saa",
   "entered {when} by {who}": "imeingizwa {when} na {who}",
   "Keep it": "Iache",
-  "Leave empty for now.": "Acha wazi kwa sasa."
+  "Leave empty for now.": "Acha wazi kwa sasa.",
+  "{name}: {qty} left. You can still sell it.": "{name}: zimebaki {qty}. Bado unaweza kuiuza.",
+  "Cost each": "Gharama ya kila moja",
+  "Each one sold takes 1 {uom}.": "Kila inayouzwa inatoa 1 {uom}.",
+  "For the same bottle sold at another outlet. Each outlet keeps its own stock.": "Kwa chupa ileile inayouzwa kituo kingine. Kila kituo kina hifadhi yake.",
+  "Keep tracking": "Endelea kufuatilia",
+  "New stock item": "Bidhaa mpya ya hifadhi",
+  "own stock": "hifadhi yake",
+  "Stop tracking": "Acha kufuatilia",
+  "Stop tracking? Selling it then takes no stock. The stock item and its history stay.": "Uache kufuatilia? Kuiuza hakutapunguza hifadhi. Bidhaa na historia yake zitabaki.",
+  "Track stock": "Fuatilia hifadhi",
+  "Track stock of {name}": "Fuatilia hifadhi ya {name}",
+  "Track this item's own stock": "Fuatilia hifadhi ya bidhaa hii",
+  "Tracks its own stock: {name} · {qty} {uom} at this outlet": "Inafuatilia hifadhi yake: {name} · {qty} {uom} kwenye kituo hiki",
+  "Use an existing one": "Tumia iliyopo",
+  "What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.": "Kile ambacho kila chakula kinatoa kwenye hifadhi ya kituo: jikoni inapoanza kupika, au bili ikifungwa ikiwa hakikutumwa."
 }

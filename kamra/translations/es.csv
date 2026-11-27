@@ -1151,3 +1151,8 @@ A reason is required to cancel.,Se necesita un motivo para cancelar.
 Stock entry not found.,No se encontró el movimiento de existencias.
 This entry is already cancelled.,Este movimiento ya está cancelado.
 "Only deliveries, stock takes and wastage can be cancelled.","Solo se pueden cancelar entregas, inventarios y mermas."
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} controla su propio stock: su receta es ese único artículo. Deje de controlarlo para cambiarla.
+{0} has a recipe. Delete the recipe first.,{0} tiene una receta. Elimínela primero.
+{0} already tracks its own stock.,{0} ya controla su propio stock.
+An ingredient called {0} already exists. Pick it instead.,Ya existe un ingrediente llamado {0}. Elíjalo.
+Tracking stock also needs the right to manage stock.,Controlar stock requiere también permiso para gestionar existencias.

@@ -13158,6 +13158,80 @@
      }
     },
     {
+     "name": "track_item_stock",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.inventory.track_item_stock",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.inventory.track_item_stock"
+       ]
+      },
+      "description": "Give a menu item its own stock: a stock item (a new one, or one that\nexists, such as the same bottle sold at another outlet) behind a fixed\nrecipe of one. Receiving, counting, cost and reports then work on it as on\nany ingredient. A dish already made of 1 x an ingredient can adopt it.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"menu_item\": \"<menu_item>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "untrack_item_stock",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.inventory.untrack_item_stock",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.inventory.untrack_item_stock"
+       ]
+      },
+      "description": "Stop tracking: selling the item takes no stock from now on. The stock\nitem and its history stay.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"menu_item\": \"<menu_item>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "save_ingredient",
      "request": {
       "method": "POST",

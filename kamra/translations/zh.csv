@@ -2126,3 +2126,8 @@ A reason is required to cancel.,取消时必须填写原因。
 Stock entry not found.,未找到该库存记录。
 This entry is already cancelled.,该记录已取消。
 "Only deliveries, stock takes and wastage can be cancelled.",只能取消收货、盘点和损耗记录。
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} 独立跟踪库存：配方仅含该库存项。停止跟踪后才能修改。
+{0} has a recipe. Delete the recipe first.,{0} 已有配方。请先删除配方。
+{0} already tracks its own stock.,{0} 已在独立跟踪库存。
+An ingredient called {0} already exists. Pick it instead.,已存在名为 {0} 的原料，请直接选择它。
+Tracking stock also needs the right to manage stock.,跟踪库存还需要库存管理权限。

@@ -135,6 +135,9 @@ class POSOrder(Document):
 		old_status = previous.status if previous else None
 		if self.status != "Delivered" or old_status == "Delivered":
 			return
+		# the bill is closing, however it closes: unsent lines leave stock now
+		from kamra.inventory import consume_unsent_lines
+		consume_unsent_lines(self)
 		from kamra.business_date import get_business_date
 		self.db_set("business_date", get_business_date(self.property), update_modified=False)
 		if self.posted_to_folio or not self.reservation:

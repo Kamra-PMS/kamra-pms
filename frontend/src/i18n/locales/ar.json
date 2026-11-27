@@ -7175,5 +7175,20 @@
   "Date and time": "التاريخ والوقت",
   "entered {when} by {who}": "أدخله {who} في {when}",
   "Keep it": "الاحتفاظ بها",
-  "Leave empty for now.": "اتركه فارغًا للوقت الحالي."
+  "Leave empty for now.": "اتركه فارغًا للوقت الحالي.",
+  "{name}: {qty} left. You can still sell it.": "{name}: المتبقي {qty}. لا يزال بإمكانك بيعه.",
+  "Cost each": "تكلفة الوحدة",
+  "Each one sold takes 1 {uom}.": "كل قطعة مباعة تخصم 1 {uom}.",
+  "For the same bottle sold at another outlet. Each outlet keeps its own stock.": "للزجاجة نفسها المباعة في منفذ آخر. يحتفظ كل منفذ بمخزونه.",
+  "Keep tracking": "مواصلة التتبع",
+  "New stock item": "صنف مخزون جديد",
+  "own stock": "مخزون خاص",
+  "Stop tracking": "إيقاف التتبع",
+  "Stop tracking? Selling it then takes no stock. The stock item and its history stay.": "إيقاف التتبع؟ لن يخصم بيعه من المخزون بعد ذلك. يبقى صنف المخزون وسجله.",
+  "Track stock": "تتبع المخزون",
+  "Track stock of {name}": "تتبع مخزون {name}",
+  "Track this item's own stock": "تتبع مخزون هذا الصنف",
+  "Tracks its own stock: {name} · {qty} {uom} at this outlet": "يتتبع مخزونه: {name} · {qty} {uom} في هذا المنفذ",
+  "Use an existing one": "استخدام صنف موجود",
+  "What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.": "ما يخصمه كل طبق من مخزون منفذه: عند إرساله إلى المطبخ، أو عند إغلاق الفاتورة إذا لم يُرسل."
 }

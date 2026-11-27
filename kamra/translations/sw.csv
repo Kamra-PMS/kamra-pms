@@ -70,3 +70,8 @@ A reason is required to cancel.,Sababu inahitajika ili kughairi.
 Stock entry not found.,Ingizo la hifadhi halikupatikana.
 This entry is already cancelled.,Ingizo hili tayari limeghairiwa.
 "Only deliveries, stock takes and wastage can be cancelled.","Ni upokeaji, hesabu za hifadhi na upotevu pekee vinavyoweza kughairiwa."
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} inafuatilia hifadhi yake: mapishi yake ni bidhaa hiyo moja. Acha kufuatilia ili kuyabadilisha.
+{0} has a recipe. Delete the recipe first.,{0} ina mapishi. Futa mapishi kwanza.
+{0} already tracks its own stock.,{0} tayari inafuatilia hifadhi yake.
+An ingredient called {0} already exists. Pick it instead.,Kiungo kinachoitwa {0} tayari kipo. Kichague badala yake.
+Tracking stock also needs the right to manage stock.,Kufuatilia hifadhi kunahitaji pia ruhusa ya kusimamia hifadhi.

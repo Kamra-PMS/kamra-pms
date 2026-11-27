@@ -6,6 +6,8 @@ import { cn } from "../lib/utils"
 import { t as translate, useUILanguage } from "../lib/i18n"
 import { cur } from "../lib/money"
 import { fmtCost, recipeTotals } from "../lib/recipeCost"
+import { useAuth } from "../lib/auth"
+import { TrackStockForm, TrackedStock } from "../components/TrackStock"
 
 /* Recipes: what a dish takes off the shelf when it is fired.
    Deliberately reachable from the Menu screen rather than bolted into the
@@ -23,6 +25,7 @@ interface Dish {
   price: number
   cost: number | null
   margin_pct: number | null
+  tracked: boolean
 }
 interface IngredientRow {
   name: string
@@ -32,6 +35,15 @@ interface IngredientRow {
   cost_per_unit: number | null
   is_active: 0 | 1
 }
+interface MenuRecipe {
+  recipe: RecipeLine[]
+  price?: number
+  stock_ingredient?: string | null
+  stock_name?: string
+  stock_uom?: string
+  stock_on_hand?: number
+}
+const STOCK_ROLES = ["Finance", "F&B Manager", "Hotel Admin", "System Manager", "Administrator"]
 interface RecipeLine {
   ingredient: string
   ingredient_name?: string
@@ -53,6 +65,16 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [own, setOwn] = useState<MenuRecipe | null>(null)
+  const [tracking, setTracking] = useState(false)
+  const { allowed } = useAuth()
+  const canTrack = allowed("Menu Item", "edit_menu", STOCK_ROLES) && allowed("Ingredient", "manage_stock", STOCK_ROLES)
+
+  const loadIngredients = useCallback(() => {
+    // inactive ones too: a recipe may still hold one, and it still costs
+    call<IngredientRow[]>("kamra.inventory.ingredients", { property: getCurrentProperty(), active_only: 0 })
+      .then(setIngs).catch(() => {})
+  }, [])
 
   const loadDishes = useCallback(() => {
     call<Dish[]>("kamra.inventory.recipe_overview", { property: getCurrentProperty() })
@@ -61,10 +83,8 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     loadDishes()
-    // inactive ones too: a recipe may still hold one, and it still costs
-    call<IngredientRow[]>("kamra.inventory.ingredients", { property: getCurrentProperty(), active_only: 0 })
-      .then(setIngs).catch(() => {})
-  }, [loadDishes])
+    loadIngredients()
+  }, [loadDishes, loadIngredients])
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose()
@@ -73,10 +93,15 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
   }, [onClose])
 
   const open = useCallback((d: Dish) => {
-    setPicked(d); setSaved(false); setErr(null); setLines([]); setPrice(null)
-    call<{ recipe: RecipeLine[]; price?: number }>("kamra.inventory.menu_recipe", { menu_item: d.name })
-      .then((r) => { setLines(r.recipe); setPrice(r.price ?? null) }).catch((e) => setErr(String(e)))
+    setPicked(d); setSaved(false); setErr(null); setLines([]); setPrice(null); setOwn(null); setTracking(false)
+    call<MenuRecipe>("kamra.inventory.menu_recipe", { menu_item: d.name })
+      .then((r) => { setOwn(r); setLines(r.recipe); setPrice(r.price ?? null) }).catch((e) => setErr(String(e)))
   }, [])
+  const reopen = () => { if (picked) open(picked); loadDishes(); loadIngredients() }
+  const tracked = !!own?.stock_ingredient
+  // an item can take its own stock while it has no recipe, or one that is just 1 x something
+  const saved1 = own?.recipe.length === 1 && Number(own.recipe[0].qty) === 1 ? own.recipe[0].ingredient : null
+  const canStart = canTrack && !!own && !tracked && (own.recipe.length === 0 || !!saved1)
 
   const save = useCallback(async () => {
     if (!picked) return
@@ -110,7 +135,7 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3">
           <div>
             <h2 className="text-lg font-bold text-zinc-800">{translate("Recipes")}</h2>
-            <p className="text-xs text-zinc-500">{translate("What each dish takes off its outlet's stock when the kitchen fires it.")}</p>
+            <p className="text-xs text-zinc-500">{translate("What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.")}</p>
           </div>
           <button onClick={onClose} aria-label={translate("Close")}
             className="grid size-9 place-items-center rounded-lg border border-zinc-300 text-zinc-500 hover:bg-zinc-100">
@@ -138,7 +163,9 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
                         {d.lines || "-"}
                       </span>
                     </div>
-                    <div className="truncate text-xs text-zinc-400">{d.outlet_name}</div>
+                    <div className="truncate text-xs text-zinc-400">{d.outlet_name}
+                      {d.tracked && <span className="ml-1 text-emerald-700">· {translate("own stock")}</span>}
+                    </div>
                     {d.lines > 0 && (
                       <div className={cn("truncate text-xs tabular-nums",
                         d.cost === null ? "text-amber-700"
@@ -170,7 +197,10 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
                       {translate(err)}
                     </div>
                   )}
-                  {lines.length === 0 ? (
+                  {tracked && own ? (
+                    <TrackedStock menuItem={picked.name} name={own.stock_name ?? ""} uom={own.stock_uom ?? ""}
+                      onHand={own.stock_on_hand ?? 0} canChange={canTrack} onDone={reopen} />
+                  ) : lines.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-zinc-300 p-6 text-center">
                       <CircleAlert className="mx-auto mb-2 size-5 text-zinc-300" />
                       <p className="text-sm font-semibold text-zinc-600">{translate("No recipe")}</p>
@@ -244,9 +274,20 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
                     </table>
                   )}
 
-                  <Button variant="outline" className="mt-3"
-                    onClick={() => setLines([...lines, { ingredient: "", qty: "" }])}>
-                    <Plus className="size-4" />{translate("Add ingredient")}</Button>
+                  {!tracked && (
+                    <Button variant="outline" className="mt-3"
+                      onClick={() => setLines([...lines, { ingredient: "", qty: "" }])}>
+                      <Plus className="size-4" />{translate("Add ingredient")}</Button>
+                  )}
+                  {canStart && !tracking && (
+                    <Button variant="outline" className="ml-2 mt-3" onClick={() => setTracking(true)}>
+                      {translate("Track this item's own stock")}</Button>
+                  )}
+                  {canStart && tracking && (
+                    <TrackStockForm key={picked.name} menuItem={picked.name} itemName={picked.item_name}
+                      ingredients={ings.filter((x) => x.is_active || x.name === saved1)} adopt={saved1}
+                      onDone={reopen} onClose={() => setTracking(false)} />
+                  )}
 
                   {totals && lines.length > 0 && (
                     <div className="mt-4 rounded-xl border border-zinc-200 px-4 py-3 text-sm">
@@ -277,10 +318,12 @@ export default function RecipeManager({ onClose }: { onClose: () => void }) {
                   <p className="mt-4 text-xs text-zinc-400">{translate("Quantities are per one dish, in each ingredient's own unit - there are no conversions. Editing a recipe never rewrites history: past consumption was recorded at the quantity in force when it was fired.")}</p>
                 </div>
 
-                <div className="flex items-center gap-3 border-t border-zinc-200 p-4">
-                  {saved && <span className="text-sm font-medium text-emerald-600">{translate("Saved")}</span>}
-                  <Button className="ml-auto h-11 px-6" disabled={busy} onClick={save}>{translate("Save recipe")}</Button>
-                </div>
+                {!tracked && (
+                  <div className="flex items-center gap-3 border-t border-zinc-200 p-4">
+                    {saved && <span className="text-sm font-medium text-emerald-600">{translate("Saved")}</span>}
+                    <Button className="ml-auto h-11 px-6" disabled={busy} onClick={save}>{translate("Save recipe")}</Button>
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -285,3 +285,8 @@ A reason is required to cancel.,يلزم ذكر سبب للإلغاء.
 Stock entry not found.,لم يتم العثور على حركة المخزون.
 This entry is already cancelled.,هذه الحركة ملغاة بالفعل.
 "Only deliveries, stock takes and wastage can be cancelled.",يمكن إلغاء عمليات الاستلام والجرد والهدر فقط.
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} يتتبع مخزونه الخاص: وصفته هي هذا الصنف فقط. أوقف التتبع لتغييرها.
+{0} has a recipe. Delete the recipe first.,{0} له وصفة. احذف الوصفة أولاً.
+{0} already tracks its own stock.,{0} يتتبع مخزونه بالفعل.
+An ingredient called {0} already exists. Pick it instead.,يوجد مكوّن باسم {0} بالفعل. اختره بدلاً من ذلك.
+Tracking stock also needs the right to manage stock.,يتطلب تتبع المخزون أيضًا صلاحية إدارة المخزون.

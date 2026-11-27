@@ -7213,5 +7213,20 @@
   "Date and time": "Fecha y hora",
   "entered {when} by {who}": "registrado {when} por {who}",
   "Keep it": "Conservar",
-  "Leave empty for now.": "Déjelo vacío para usar ahora."
+  "Leave empty for now.": "Déjelo vacío para usar ahora.",
+  "{name}: {qty} left. You can still sell it.": "{name}: quedan {qty}. Puede venderlo igualmente.",
+  "Cost each": "Costo por unidad",
+  "Each one sold takes 1 {uom}.": "Cada venta descuenta 1 {uom}.",
+  "For the same bottle sold at another outlet. Each outlet keeps its own stock.": "Para la misma botella vendida en otro punto de venta. Cada uno lleva su propio stock.",
+  "Keep tracking": "Seguir controlando",
+  "New stock item": "Nuevo artículo de stock",
+  "own stock": "stock propio",
+  "Stop tracking": "Dejar de controlar",
+  "Stop tracking? Selling it then takes no stock. The stock item and its history stay.": "¿Dejar de controlar? Venderlo ya no descontará stock. El artículo y su historial se conservan.",
+  "Track stock": "Controlar stock",
+  "Track stock of {name}": "Controlar stock de {name}",
+  "Track this item's own stock": "Controlar el stock propio de este artículo",
+  "Tracks its own stock: {name} · {qty} {uom} at this outlet": "Controla su propio stock: {name} · {qty} {uom} en este punto de venta",
+  "Use an existing one": "Usar uno existente",
+  "What each dish takes off its outlet's stock: when the kitchen fires it, or when the bill closes if it was never sent.": "Lo que cada plato descuenta del stock de su punto de venta: cuando va a cocina, o al cerrar la cuenta si nunca se envió."
 }

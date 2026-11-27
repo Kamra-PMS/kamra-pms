@@ -2648,6 +2648,13 @@
 "Hotel Admin",
 "System Manager"
 ],
+"inventory.track_item_stock": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Hotel Admin",
+ "System Manager"
+],
 "inventory.set_par_level": [
 "Administrator",
 "F&B Manager",
@@ -2663,6 +2670,13 @@
 "Hotel Admin",
 "Kamra Agent",
 "System Manager"
+],
+"inventory.untrack_item_stock": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Hotel Admin",
+ "System Manager"
 ],
 "inventory.wastage_report": [
 "Administrator",

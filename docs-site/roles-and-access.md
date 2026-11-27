@@ -227,7 +227,7 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Laundry Order | Handle laundry (`handle_laundry`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `laundry.request_pickup`, `laundry.collect_laundry`, `laundry.laundry_status` and 3 more |
 | Laundry Order | Price laundry (`price_laundry`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `laundry.save_laundry_rate`, `laundry.import_laundry_rates`, `laundry.laundry_revenue` |
 | Laundry Order | View laundry (`view_laundry`) | Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `laundry.laundry_rates`, `laundry.laundry_board` |
-| Menu Item | Edit menu (`edit_menu`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_recipe`, `inventory.set_menu_availability`, `menu_import.preview_menu_import` and 2 more |
+| Menu Item | Edit menu (`edit_menu`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_recipe`, `inventory.track_item_stock`, `inventory.untrack_item_stock` and 4 more |
 | Menu Item | View menu lists (`view_menu_lists`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `settings.menu_masters` |
 | Menu Item | View recipes (`view_recipes`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.menu_recipe` |
 | Night Audit Run | Configure (`configure`) | Hotel Admin, System Manager | `api.gstr1_rows` |

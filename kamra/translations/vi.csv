@@ -70,3 +70,8 @@ A reason is required to cancel.,Cần có lý do để hủy.
 Stock entry not found.,Không tìm thấy bản ghi kho.
 This entry is already cancelled.,Bản ghi này đã bị hủy.
 "Only deliveries, stock takes and wastage can be cancelled.","Chỉ có thể hủy phiếu nhập, kiểm kê và hao hụt."
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} theo dõi tồn kho riêng: công thức chỉ gồm mặt hàng đó. Ngừng theo dõi để thay đổi.
+{0} has a recipe. Delete the recipe first.,{0} đã có công thức. Hãy xóa công thức trước.
+{0} already tracks its own stock.,{0} đã theo dõi tồn kho riêng.
+An ingredient called {0} already exists. Pick it instead.,Đã có nguyên liệu tên {0}. Hãy chọn nguyên liệu đó.
+Tracking stock also needs the right to manage stock.,Theo dõi tồn kho còn cần quyền quản lý kho.
