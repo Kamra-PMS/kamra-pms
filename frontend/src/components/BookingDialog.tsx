@@ -1419,7 +1419,7 @@ export function BookingDialog(props: {
                   >
                     {options?.room_types.map((rt) => (
                       <option key={rt.name} value={rt.name}>
-                        {rt.room_type_name} · {t("BAR")} {cur()}
+                        {rt.room_type_name} · {cur()}
                         {inr(rt.base_price)}/{t("night")}
                       </option>
                     ))}
