@@ -2,7 +2,7 @@
 /** Checks for the kitchen stock screens' pure helpers: unit costs (lib/stockCost.ts), what a Receive row
  *  adds up to and sends, which fields a form saves (lib/formPayload.ts), and what a recipe costs
  *  (lib/recipeCost.ts), an entry's date (lib/stockDates.ts) and the till's out-of-stock notice
- *  (lib/stockNotice.ts). Pure Node: bundled with small
+ *  (lib/stockNotice.ts) and the stock report's periods (lib/periods.ts). Pure Node: bundled with small
  *  stand-ins for React, the API client and the language module. */
 import assert from "node:assert/strict"
 import fs from "node:fs"
@@ -21,7 +21,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stock-check-"))
 // one bundle, so the helpers share the same money.ts (it holds the property's locale)
 await build({
   stdin: {
-    contents: `export * from "./money"; export * from "./stockCost"; export * from "./formPayload"; export * from "./recipeCost"; export * from "./stockDates"; export * from "./stockNotice"`,
+    contents: `export * from "./money"; export * from "./stockCost"; export * from "./formPayload"; export * from "./recipeCost"; export * from "./stockDates"; export * from "./stockNotice"; export * from "./periods"`,
     resolveDir: lib, loader: "ts",
   },
   bundle: true, format: "esm", platform: "node", outfile: path.join(dir, "stock.mjs"), logLevel: "silent",
@@ -35,7 +35,7 @@ await build({
 })
 // money.ts remembers the locale in localStorage when there is one; there is none here
 Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true })
-const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost, postedAt, enteredLater, stockNotice } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
+const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost, postedAt, enteredLater, stockNotice, periodRange } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
 
 // a cost per unit keeps up to 4 decimals, whatever the currency
 adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
@@ -128,6 +128,22 @@ assert.equal(stockNotice({ item_name: "Water", stock_left: 3 }), null)
 assert.equal(stockNotice({ item_name: "Water", stock_left: 0.0005 }), null)
 assert.deepEqual(stockNotice({ item_name: "Water", stock_left: 0 }), { name: "Water", qty: "0" })
 assert.deepEqual(stockNotice({ item_name: "Water", stock_left: -2.5 }), { name: "Water", qty: "-2.5" })
+
+// the report's periods: weeks start on Monday
+const on = (day) => Object.fromEntries(["today", "yesterday", "thisWeek", "lastWeek", "thisMonth", "lastMonth"]
+  .map((p) => [p, periodRange(p, day).join("..")]))
+assert.deepEqual(on("2026-11-26"), {
+  today: "2026-11-26..2026-11-26", yesterday: "2026-11-25..2026-11-25",
+  thisWeek: "2026-11-23..2026-11-26", lastWeek: "2026-11-16..2026-11-22",
+  thisMonth: "2026-11-01..2026-11-26", lastMonth: "2026-10-01..2026-10-31",
+})
+assert.equal(periodRange("thisWeek", "2026-11-01").join(".."), "2026-10-26..2026-11-01", "a Sunday ends its week")
+assert.deepEqual(on("2027-01-01"), {
+  today: "2027-01-01..2027-01-01", yesterday: "2026-12-31..2026-12-31",
+  thisWeek: "2026-12-28..2027-01-01", lastWeek: "2026-12-21..2026-12-27",
+  thisMonth: "2027-01-01..2027-01-01", lastMonth: "2026-12-01..2026-12-31",
+})
+assert.equal(periodRange("lastMonth", "2028-03-01").join(".."), "2028-02-01..2028-02-29")
 
 fs.rmSync(dir, { recursive: true, force: true })
 console.log("stock checks passed")

@@ -241,7 +241,7 @@ Visa type,Visa type,نوع التأشيرة,Tipo de visado,Tipo de visto,签证�
 {done} of {total} done,{done} of {total} done,تم {done} من {total},{done} de {total} completados,{done} de {total} concluído,已完成 {done}/{total},screens/FinishSetup.tsx,done total,translated
 {f} Floor,{f} Floor,طابق {f},Piso {f},{f} Piso,{f} 楼,,f,translated
 {free} free · {booked} booked · {blocked} held,{free} free · {booked} booked · {blocked} held,{free} متاحة · {booked} محجوزة · {blocked} موقوفة,{free} disponibles · {booked} reservadas · {blocked} bloqueadas,{free} livre · {booked} reservado · {blocked} retido,空房 {free} · 已订 {booked} · 预留 {blocked},components/RoomDrawer.tsx,free booked blocked,translated
-{from} to {to},{from} to {to},من {from} إلى {to},{from} a {to},{from} a {to},{from} 至 {to},components/RoomDrawer.tsx; screens/Dashboard.tsx,from to,translated
+{from} to {to},{from} to {to},من {from} إلى {to},{from} a {to},{from} a {to},{from} 至 {to},components/RoomDrawer.tsx; screens/Dashboard.tsx; screens/Inventory.tsx,from to,translated
 "{from} to {to}, nights up to last night","{from} to {to}, nights up to last night",من {from} إلى {to}، حتى الليلة الماضية,"Del {from} al {to}, con las noches hasta anoche","{from} a {to}, noites até ontem à noite",{from} 至 {to}，间夜计至最后一晚,components/RoomInsights.tsx,from to,translated
 {guest} · check out or open registration,{guest} · check out or open registration,{guest} · تسجيل المغادرة أو فتح بطاقة التسجيل,{guest} · registrar la salida o abrir la ficha de registro,{guest} · check-out ou abrir ficha de registro,{guest} · 退房或打开登记,screens/Today.tsx,guest,translated
 {guest} · open registration,{guest} · open registration,{guest} · فتح التسجيل,{guest} · abrir ficha de registro,{guest} · abrir ficha de registro,{guest} · 待登记,,guest,translated
@@ -800,7 +800,7 @@ Address proof (optional),Address proof (optional),إثبات العنوان (ا�
 Address proof on file,Address proof on file,إثبات العنوان محفوظ,Comprobante de domicilio guardado,Comprovante de endereço arquivado,住址证明已存档,components/GuestDocuments.tsx,,translated
 Adds to the price,Adds to the price,يُضاف إلى السعر,Se suma al precio,Soma ao preço,加价,screens/ModifierManager.tsx,,translated
 Adjust,Adjust,تعديل,Ajustar,Ajustar,调整,,,translated
-Adjustment,Adjustment,تسوية,Ajuste,Ajuste,调整,,,translated
+Adjustment,Adjustment,تسوية,Ajuste,Ajuste,调整,screens/StockSummary.tsx,,translated
 Admin,Admin,الإدارة,Administración,Administrador,管理员,,,translated
 Admin · Staff & Access,Admin · Staff & Access,الإدارة · الموظفون والوصول,Administración · Personal y acceso,Administrador · Equipe e acesso,管理 · 员工与权限,,,translated
 Administrator,Administrator,مسؤول النظام,Administrador,Administrador,系统管理员,,,translated
@@ -904,7 +904,7 @@ All Nights,All Nights,كل الليالي,Todas las noches,Todas as noites,全�
 All of it ({amount}),All of it ({amount}),المبلغ كاملاً ({amount}),Todo ({amount}),Tudo ({amount}),全部（{amount}）,components/AgentGuide.tsx,amount,translated
 All order types,All order types,كل أنواع الطلبات,Todos los tipos de pedidos,Todos os tipos de pedidos,全部订单类型,screens/pos/OrderHistory.tsx,,translated
 All orders,All orders,كل الطلبات,Todos los pedidos,Todos os pedidos,全部订单,screens/POS.tsx; screens/pos/PosSidePanel.tsx,,translated
-All outlets,All outlets,كل المنافذ,Todos los puntos de venta,Todos os pontos de venda,全部营业点,screens/Kitchen.tsx,,translated
+All outlets,All outlets,كل المنافذ,Todos los puntos de venta,Todos os pontos de venda,全部营业点,screens/Kitchen.tsx; screens/StockSummary.tsx,,translated
 All payment modes,All payment modes,كل طرق الدفع,Todos los medios de pago,Todas as formas de pagamento,全部支付方式,screens/pos/OrderHistory.tsx,,translated
 All properties,All properties,كل العقارات,Todos los alojamientos,Todas as propriedades,全部酒店,screens/Dashboard.tsx; screens/PublicListing.tsx; screens/settings/AccessPages.tsx,,translated
 "All properties, including ones added later","All properties, including ones added later",كل العقارات، بما فيها التي تُضاف لاحقًا,"Todos los alojamientos, incluidos los que se agreguen después","Todas as propriedades, incluindo aquelas adicionadas posteriormente",全部酒店，含后续新增,screens/settings/AccessPages.tsx,,translated
@@ -1551,7 +1551,7 @@ Cashier:,Cashier:,أمين الصندوق:,Cajero:,Caixa:,收银员：,lib/therm
 Cashier: {name},Cashier: {name},أمين الصندوق: {name},Cajero: {name},Caixa: {name},收银员：{name},screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,name,translated
 Categories,Categories,الفئات,Categorías,Categorias,分类,screens/POS.tsx,,translated
 Categories with occupancy-based pricing.,Categories with occupancy-based pricing.,فئات بأسعار حسب الإشغال.,Categorías con tarifas según la ocupación.,Categorias com preços baseados na ocupação.,按入住人数定价的房型。,,,translated
-Category,Category,الفئة,Categoría,Categoria,分类,components/RoomDrawer.tsx; screens/BanquetCatalogue.tsx; screens/BookingEngine.tsx; screens/GoLiveImport.tsx; screens/Inventory.tsx; screens/MenuImport.tsx; screens/OpsSLA.tsx; screens/Payables.tsx; screens/PettyCash.tsx; screens/Recreation.tsx; screens/Setup.tsx; screens/Tickets.tsx,,translated
+Category,Category,الفئة,Categoría,Categoria,分类,components/RoomDrawer.tsx; screens/BanquetCatalogue.tsx; screens/BookingEngine.tsx; screens/GoLiveImport.tsx; screens/Inventory.tsx; screens/MenuImport.tsx; screens/OpsSLA.tsx; screens/Payables.tsx; screens/PettyCash.tsx; screens/Recreation.tsx; screens/Setup.tsx; screens/StockSummary.tsx; screens/Tickets.tsx,,translated
 CCY,CCY,العملة,Código de moneda,CCY,币种,screens/CurrencyDesk.tsx,,translated
 Ceiling {v0},Ceiling {v0},الحد الأعلى {v0},Máximo {v0},Teto {v0},上限 {v0},,v0,translated
 Ceiling price / night,Ceiling price / night,السعر الأعلى / ليلة,Precio máximo / noche,Preço teto / noite,价格上限 / 晚,,,translated
@@ -2097,7 +2097,7 @@ Currency Desk,Currency Desk,مكتب العملات,Cambio de moneda,Balcão de 
 Currency exchange,Currency exchange,صرف العملات,Cambio de moneda,Câmbio,货币兑换,,,translated
 Currency the guest pays in,Currency the guest pays in,العملة التي يدفع بها الضيف,Moneda en la que paga el huésped,Moeda em que o hóspede paga,宾客支付所用货币,screens/FolioView.tsx,,translated
 Current password,Current password,كلمة المرور الحالية,Contraseña actual,Senha atual,当前密码,screens/UpdatePassword.tsx,,translated
-Custom,Custom,مخصص,Personalizado,Personalizado,自定义,,,translated
+Custom,Custom,مخصص,Personalizado,Personalizado,自定义,screens/StockSummary.tsx,,translated
 Custom Hours,Custom Hours,ساعات مخصصة,Horario personalizado,Horário personalizado,自定义时段,,,translated
 Custom report builder,Custom report builder,منشئ التقارير المخصصة,Generador de informes personalizados,Construtor de relatórios personalizados,自定义报表生成器,,,translated
 Custom reports,Custom reports,تقارير مخصصة,Informes personalizados,Relatórios personalizados,自定义报表,,,translated
@@ -2597,7 +2597,7 @@ Expires {date},Expires {date},تنتهي في {date},Expira {date},Expira {date}
 "explains, doesn't act","explains, doesn't act",يشرح ولا ينفذ,"explica los pasos, sin ejecutar acciones","explica, não age",只解释，不执行,components/HelpPanel.tsx,,translated
 Export,Export,تصدير,Exportar,Exportar,导出,components/ResourceScreen.tsx; screens/Guests.tsx,,translated
 Export as CSV,Export as CSV,تصدير كـ CSV,Exportar como CSV,Exportar como CSV,导出为 CSV,components/ResourceScreen.tsx,,translated
-Export CSV,Export CSV,تصدير CSV,Exportar CSV,Exportar CSV,导出 CSV,components/ui/data-table.tsx; screens/AuditPack.tsx; screens/EndOfDay.tsx; screens/pos/OrderHistory.tsx; screens/settings/cards.tsx,,translated
+Export CSV,Export CSV,تصدير CSV,Exportar CSV,Exportar CSV,导出 CSV,components/ui/data-table.tsx; screens/AuditPack.tsx; screens/EndOfDay.tsx; screens/StockSummary.tsx; screens/pos/OrderHistory.tsx; screens/settings/cards.tsx,,translated
 Export guest data,Export guest data,تصدير بيانات الضيف,Exportar datos del huésped,Exportar dados de hóspedes,导出宾客数据,screens/GuestJourney.tsx,,translated
 Export selected,Export selected,تصدير المحدد,Exportar selección,Exportar selecionadas,导出所选,screens/Receivables.tsx,,translated
 Exposure,Exposure,المكشوف,Exposición crediticia,Exposição,风险敞口,,,translated
@@ -3509,7 +3509,7 @@ Last entry,Last entry,آخر قيد,Último asiento,Último lançamento,最近�
 Last full sync,Last full sync,آخر مزامنة كاملة,Última sincronización completa,Última sincronização completa,近 30 天查房通过率与清洁用时,components/ChannelConnectionActions.tsx,,translated
 "Last known cost, used to value wastage. Indicative only - not FIFO and not on the books.","Last known cost, used to value wastage. Indicative only - not FIFO and not on the books.",آخر تكلفة معروفة، تُستخدم لتقييم الهدر. إرشادية فقط، ليست FIFO ولا تُسجل في الحسابات.,"Último costo conocido, utilizado para valorar las mermas. Es orientativo; no aplica FIFO ni se registra en la contabilidad.","Último custo conhecido, utilizado para valorizar o desperdício. Apenas indicativo - não FIFO e não nos livros.",最近已知成本，用于损耗计价。仅供参考 - 非先进先出，也不入账册。,,,translated
 Last MCP action: ,Last MCP action: ,آخر إجراء MCP: ,Última acción MCP: ,Última ação do MCP: ,最近 MCP 操作：,screens/Agents.tsx,,translated
-Last month,Last month,الشهر الماضي,Mes pasado,Mês passado,上月,screens/ManagementBooks.tsx,,translated
+Last month,Last month,الشهر الماضي,Mes pasado,Mês passado,上月,screens/ManagementBooks.tsx; screens/StockSummary.tsx,,translated
 Last paid,Last paid,آخر دفعة,Último pago,Último pagamento,上次全量同步,screens/Receivables.tsx,,translated
 Last payment,Last payment,آخر دفعة,Último pago,Último pagamento,最近付款,,,translated
 Last price paid,Last price paid,آخر سعر مدفوع,Último precio pagado,Último preço pago,最近一次进价,,,translated
@@ -5127,7 +5127,7 @@ Provider's property ID,Provider's property ID,معرّف العقار لدى ا�
 Provisional Bill,Provisional Bill,فاتورة مؤقتة,Cuenta provisional,Fatura Provisória,临时账单,screens/FolioView.tsx,,translated
 Public booking page is live,Public booking page is live,صفحة الحجز العامة منشورة,Página pública de reservas activa,A página de reserva pública está ativa,公开预订页已上线,,,translated
 Public listing URL slug (/stay/…),Public listing URL slug (/stay/…),المعرّف النصي لـ URL القائمة العامة (/stay/…),Identificador de la URL pública (/stay/…),Slug de URL de listagem pública (/stay/…),公开房源路径（/stay/…）,,,translated
-Purchases,Purchases,المشتريات,Compras,Compras,进货记录,screens/Inventory.tsx,,translated
+Purchases,Purchases,المشتريات,Compras,Compras,进货记录,screens/Inventory.tsx; screens/StockSummary.tsx,,translated
 Purpose of visit,Purpose of visit,الغرض من الزيارة,Motivo de la visita,Objetivo da visita,住宿目的,components/BookingDialog.tsx,,translated
 "Push events out instead of polling, and let a third-party POS post to guest folios.","Push events out instead of polling, and let a third-party POS post to guest folios.",أرسل الأحداث بدلاً من الاستعلام الدوري، واسمح لنظام POS خارجي بالترحيل إلى فواتير الضيوف.,Envíe eventos sin consultas periódicas y permita que un punto de venta externo registre cargos en los folios de huéspedes.,Envie os eventos em vez de fazer pesquisas e deixe que um PDV de terceiros publique nos extratos dos hóspedes.,主动推送事件而非轮询，并允许第三方餐饮收银向宾客客账入账。,screens/Developers.tsx,,translated
 Put some lines on it first.,Put some lines on it first.,أضف بعض البنود أولاً.,Agregue primero algunos conceptos.,Coloque algumas linhas primeiro.,请先添加行项。,,,translated
@@ -5775,7 +5775,7 @@ Search staff,Search staff,البحث عن موظف,Buscar personal,Equipe de pes
 Search table…,Search table…,بحث في الجدول…,Buscar mesa…,Tabela de pesquisa…,搜索桌台…,screens/POS.tsx,,translated
 "Search the next stop, then add it.","Search the next stop, then add it.",ابحث عن المحطة التالية ثم أضفها.,Busca la siguiente parada y añádela.,Busque a próxima parada e adicione.,搜索下一站后添加。,screens/CRS.tsx,,translated
 "Search: find a guest or booking, or jump anywhere - press {combo}","Search: find a guest or booking, or jump anywhere - press {combo}",بحث: اعثر على ضيف أو حجز، أو انتقل لأي مكان - اضغط {combo},"Buscar: busque un huésped o una reserva, o salte a cualquier lugar: presione {combo}","Pesquisa: encontre um hóspede ou reserva, ou vá para qualquer lugar - pressione {combo}",搜索：查找宾客或预订，或跳转到任意位置 - 按 {combo},AppShell.tsx,combo,translated
-Search…,Search…,بحث…,Buscar…,Pesquisar…,搜索…,components/ResourceScreen.tsx; screens/BanquetCatalogue.tsx; screens/BanquetFunction.tsx; screens/Inventory.tsx,,translated
+Search…,Search…,بحث…,Buscar…,Pesquisar…,搜索…,components/ResourceScreen.tsx; screens/BanquetCatalogue.tsx; screens/BanquetFunction.tsx; screens/Inventory.tsx; screens/StockSummary.tsx,,translated
 Season,Season,الموسم,Temporada,Temporada,季节价,screens/RateCalendar.tsx,,translated
 Seasonal pricing,Seasonal pricing,التسعير الموسمي,Tarifas por temporada,Preços sazonais,季节定价,,,translated
 Seasons,Seasons,المواسم,Temporadas,Temporadas,季节价,,,translated
@@ -6181,7 +6181,7 @@ still open - the slots worth selling first.,still open - the slots worth selling
 Still to be agreed,Still to be agreed,بانتظار الاتفاق,Pendiente de acordar,Ainda a combinar,待商定,screens/BanquetDocument.tsx,,translated
 Still to choose:,Still to choose:,بانتظار الاختيار:,Pendiente de seleccionar:,Ainda por escolher:,待选择：,screens/banquet/MenuComposer.tsx,,translated
 Still to pay,Still to pay,المتبقي للدفع,Por pagar,A pagar,待付款,components/GroupControl.tsx; screens/Payables.tsx,,translated
-Stock,Stock,المخزون,Existencias,Estoque,库存,,,translated
+Stock,Stock,المخزون,Existencias,Estoque,库存,screens/Inventory.tsx,,translated
 "Stock destroyed outside a sale - spoiled, broken, dropped. Food that was cooked and then voided is already accounted for; it shows in the wastage report on its own.","Stock destroyed outside a sale - spoiled, broken, dropped. Food that was cooked and then voided is already accounted for; it shows in the wastage report on its own.",مخزون أُتلف خارج عملية بيع: فاسد أو مكسور أو سقط. الطعام الذي طُهي ثم أُلغي محسوب مسبقًا، ويظهر في تقرير الهدر وحده.,"Existencias descartadas fuera de una venta por deterioro, rotura o caída. Los alimentos preparados y luego anulados ya se incluyen automáticamente en el informe de mermas.","Estoque destruído fora de uma venda - estragado, quebrado, caído. Os alimentos que foram cozinhados e depois anulados já são contabilizados; ele aparece sozinho no relatório de desperdício.",非销售导致的库存损毁 - 变质、破损、掉落。已制作后作废的菜品已单独核算，会自行显示在损耗报表中。,screens/Inventory.tsx,,translated
 Stock take,Stock take,جرد المخزون,Recuento de existencias,Levantamento de estoque,库存盘点,screens/Inventory.tsx,,translated
 Stock units per buying unit,Stock units per buying unit,عدد وحدات المخزون في وحدة الشراء,Unidades de existencias por unidad de compra,Unidades de estoque por unidade de compra,每个采购单位包含的库存单位数,,,translated
@@ -6203,7 +6203,7 @@ Subtotals by cashier and transaction code,Subtotals by cashier and transaction c
 Success,Success,نجاح,Correcto,Sucesso,成功,,,translated
 Suggested room plan for {date},Suggested room plan for {date},خطة غرف مقترحة لـ {date},Propuesta de asignación de habitaciones para {date},Plano de quarto sugerido para {date},{date} 的建议分房方案,screens/TapeChart.tsx,date,translated
 Sulphites,Sulphites,الكبريتيت,Sulfitos,Sulfitos,亚硫酸盐,../../kamra/settings.py,,translated
-Summary,Summary,الملخص,Resumen,Resumo,汇总,screens/FolioView.tsx,,translated
+Summary,Summary,الملخص,Resumen,Resumo,汇总,screens/FolioView.tsx; screens/Inventory.tsx,,translated
 Sunset,Sunset,الغروب,Atardecer,Pôr do sol,日落,,,translated
 Supervisor,Supervisor,المشرف,Supervisor,Supervisora ​​,主管,screens/pos/RefundDialog.tsx; screens/pos/VoidApproval.tsx,,translated
 Supervisor passes,Supervisor passes,المشرف يعتمد الفحص,El supervisor aprueba la inspección,Supervisor passa,主管查房通过,screens/HkApp.tsx,,translated
@@ -6548,7 +6548,7 @@ This is a computer-generated tax invoice under the GST Act.,This is a computer-g
 This kitchen has no dishes on its menu yet.,This kitchen has no dishes on its menu yet.,لا توجد أطباق في قائمة هذا المطبخ بعد.,Esta cocina aún no tiene platos en su menú.,Esta cozinha ainda não tem pratos no cardápio.,此厨房菜单暂无菜品。,components/AgentGuide.tsx,,translated
 This language switches the interface to right-to-left.,This language switches the interface to right-to-left.,هذه اللغة تحوّل الواجهة لتُقرأ من اليمين إلى اليسار.,Este idioma cambia la interfaz para que se lea de derecha a izquierda.,Este idioma muda a interface para se ler da direita para a esquerda.,此语言会将界面切换为从右到左。,screens/settings/cards.tsx,,translated
 "This module is off, so its apps are hidden for everyone. Settings are kept for when you switch it back on.","This module is off, so its apps are hidden for everyone. Settings are kept for when you switch it back on.",هذه الوحدة متوقفة، لذا تطبيقاتها مخفية عن الجميع. تُحفظ الإعدادات لحين إعادة تفعيلها.,Este módulo está desactivado y sus aplicaciones están ocultas para todos. La configuración se conserva para cuando vuelva a activarlo.,"Este módulo está desativado, portanto seus aplicativos ficam ocultos para todos. As configurações são mantidas para quando você ligá-lo novamente.",此模块已关闭，相关应用对所有人隐藏。设置会保留，重新开启后恢复。,screens/settings/SettingsHub.tsx,,translated
-This month,This month,هذا الشهر,Este mes,Este mês,本月,screens/BanquetMonth.tsx; screens/ManagementBooks.tsx; screens/pos/OrderHistory.tsx,,translated
+This month,This month,هذا الشهر,Este mes,Este mês,本月,screens/BanquetMonth.tsx; screens/ManagementBooks.tsx; screens/StockSummary.tsx; screens/pos/OrderHistory.tsx,,translated
 This outlet has never held this ingredient. Writing it off will take the balance below zero.,This outlet has never held this ingredient. Writing it off will take the balance below zero.,هذا المنفذ لم يحتفظ بهذا المكوّن من قبل. شطبه يأخذ الرصيد إلى أقل من صفر.,Este punto de venta nunca ha tenido este ingrediente. Darlo de baja dejará el saldo por debajo de cero.,Este ponto de venda nunca teve este ingrediente. Baixá-lo deixa o saldo abaixo de zero.,本营业点从未有过这种食材。报损后结存会低于零。,screens/Inventory.tsx,,translated
 This outlet has no choice groups yet. Make them under Menu → Choices.,This outlet has no choice groups yet. Make them under Menu → Choices.,لا توجد لهذا المنفذ مجموعات خيارات بعد. أنشئها من القائمة ← الخيارات.,Este punto de venta aún no tiene grupos de opciones. Créelos en Menú → Opciones.,Este ponto de venda ainda não tem grupos de opções. Crie-os em Cardápio → Opções.,该营业点尚无选项分组。请在 菜单 → 选项 中创建。,components/ChoiceGroupsField.tsx,,translated
 "This package has no dishes attached yet - add them to its courses under Menus & Services, and the customer can start choosing.","This package has no dishes attached yet - add them to its courses under Menus & Services, and the customer can start choosing.",لا توجد أطباق مرتبطة بهذه الباقة بعد. أضفها إلى مراحل التقديم في القوائم والخدمات ليبدأ العميل الاختيار.,Este paquete aún no tiene platos asociados. Agréguelos a sus tiempos en Menús y servicios para que el cliente pueda elegir.,Este pacote ainda não possui pratos anexados - adicione-os aos seus pratos em Menus e Serviços e o cliente pode começar a escolher.,此套餐尚未关联菜品 - 请在「菜单与服务」中按菜序添加，客户即可开始选择。,screens/banquet/MenuComposer.tsx,,translated
@@ -6638,7 +6638,7 @@ to take the payment,to take the payment,لاستلام الدفعة,para aceptar
 to take the walk-in's payment,to take the walk-in's payment,لاستلام دفعة النزيل بدون حجز,para cobrar al huésped sin reserva previa,receber o pagamento do walk-in,以收取散客的付款,components/BookingDialog.tsx,,translated
 to the quote,to the quote,إلى عرض السعر,a la cotización,para a cotação,至报价,screens/banquet/MenuComposer.tsx,,translated
 today,today,اليوم,hoy,hoje,今天,components/AgentGuide.tsx; screens/Dashboard.tsx; screens/Inventory.tsx,,translated
-Today,Today,اليوم,Hoy,Hoje,今日,components/AgentGuide.tsx; screens/BanquetDiary.tsx; screens/CashForecast.tsx; screens/Dashboard.tsx; screens/Owner.tsx; screens/Today.tsx; screens/pos/OrderHistory.tsx,,translated
+Today,Today,اليوم,Hoy,Hoje,今日,components/AgentGuide.tsx; screens/BanquetDiary.tsx; screens/CashForecast.tsx; screens/Dashboard.tsx; screens/Owner.tsx; screens/StockSummary.tsx; screens/Today.tsx; screens/pos/OrderHistory.tsx,,translated
 "Today and month to date by department, or the whole portfolio.","Today and month to date by department, or the whole portfolio.",اليوم والشهر حتى اليوم حسب القسم، أو المحفظة كاملة.,"Hoy y el mes a la fecha por departamento, o toda la cartera.","Hoje e mês atualizado por departamento, ou todo o portfólio.",按部门或整体组合的今日与本月至今数据。,,,translated
 Today at a glance,Today at a glance,اليوم في لمحة,Hoy de un vistazo,Hoje num relance,今日一览,components/AgentGuide.tsx,,translated
 "Today at this property, by department.","Today at this property, by department.",اليوم في هذا العقار، حسب القسم.,"Actividad de hoy en este alojamiento, por departamento.","Hoje nesta propriedade, por departamento.",本酒店今日各部门数据。,screens/Dashboard.tsx,,translated
@@ -6745,7 +6745,7 @@ Undo - put it back on the board,Undo - put it back on the board,تراجع - أ�
 Undo check-in,Undo check-in,التراجع عن تسجيل الوصول,Deshacer entrada,Desfazer check-in,撤销入住,components/ReverseCheckInPanel.tsx,,translated
 Undo checkout,Undo checkout,التراجع عن المغادرة,Deshacer salida,Desfazer check-out,撤销退房,components/ReinstatePanel.tsx,,translated
 Undo NC,Undo NC,تراجع عن المجاني,Quitar cortesía,Desfazer NC,撤销免单,screens/POS.tsx,,translated
-Unit,Unit,الوحدة,Unidad,Unidade,单位,components/TrackStock.tsx; screens/Inventory.tsx; screens/UnitOwners.tsx,,translated
+Unit,Unit,الوحدة,Unidad,Unidade,单位,components/TrackStock.tsx; screens/Inventory.tsx; screens/StockSummary.tsx; screens/UnitOwners.tsx,,translated
 "Unit / room numbers per listing, comma-separated.","Unit / room numbers per listing, comma-separated.",أرقام الوحدات / الغرف لكل قائمة، مفصولة بفواصل.,"Números de unidad/habitación por anuncio, separados por comas.","Números de unidades/quartos por anúncio, separados por vírgula.",各房源的单元 / 房号，逗号分隔。,screens/Setup.tsx,,translated
 Unit kind,Unit kind,نوع الوحدة,Tipo de unidad,Tipo de unidade,单元类型,,,translated
 Unit owners,Unit owners,ملاك الوحدات,Propietarios de unidades,Proprietários de unidades,单元业主,screens/UnitOwners.tsx,,translated
@@ -6816,7 +6816,7 @@ Use the scanner,Use the scanner,استخدام الماسح,Usar el escáner,Usa
 Use the usual schedule,Use the usual schedule,استخدام الجدول المعتاد,Usar el calendario habitual,Utilize o horário habitual,使用常规计划,screens/BanquetFunction.tsx,,translated
 Use this picture,Use this picture,استخدم هذه الصورة,Utilice esta imagen,Use esta imagem,使用此照片,components/CameraCapture.tsx,,translated
 Use this when a different person arrives for the booking. The booking and its bill move to them. The old guest's profile and other stays are not touched.,Use this when a different person arrives for the booking. The booking and its bill move to them. The old guest's profile and other stays are not touched.,,,,,components/ChangeGuestDialog.tsx,,needs_translation
-Used,Used,مستخدم,Usado,Usado,已使用,,,translated
+Used,Used,مستخدم,Usado,Usado,已使用,screens/StockSummary.tsx,,translated
 Used for every row - unless your file has its own,Used for every row - unless your file has its own,يُستخدم لكل صف، ما لم يتضمن ملفك عمودًا خاصًا بـ,"Se utiliza para todas las filas, salvo que el archivo tenga su propia columna de",Usado para cada linha - a menos que seu arquivo tenha seu próprio,用于每一行 - 除非你的文件自带该列,screens/MenuImport.tsx,,translated
 Used on {n} earlier stays,Used on {n} earlier stays,استُخدمت في {n} إقامات سابقة,Usado en {n} estancias anteriores,Usado em estadias anteriores {n},在此前 {n} 次住宿中使用过,components/CheckInDialog.tsx; components/GuestDocuments.tsx,n,translated
 Used on 1 earlier stay,Used on 1 earlier stay,استُخدمت في إقامة سابقة واحدة,Usado en 1 estancia anterior,Usado em 1 estadia anterior,在此前 1 次住宿中使用过,components/CheckInDialog.tsx; components/GuestDocuments.tsx,,translated
@@ -6954,7 +6954,7 @@ Warning,Warning,تحذير,Advertencia,Aviso,警告,,,translated
 Warnings,Warnings,التحذيرات,Advertencias,Avisos,警告,,,translated
 Warnings do not stop the close. Look them over first.,Warnings do not stop the close. Look them over first.,التحذيرات لا توقف الإغلاق. راجعها أولًا.,Las advertencias no impiden el cierre. Revíselas antes.,Os avisos não impedem o fechamento. Dê uma olhada antes.,警告不会阻止日结，请先查看。,screens/EndOfDayWizard.tsx,,translated
 Wash & Iron,Wash & Iron,غسيل وكي,Lavado y planchado,Lavar e passar,水洗与熨烫,,,translated
-Wastage,Wastage,الهدر,Mermas,Desperdício,损耗,screens/Inventory.tsx,,translated
+Wastage,Wastage,الهدر,Mermas,Desperdício,损耗,screens/Inventory.tsx; screens/StockSummary.tsx,,translated
 We already have this from your last visit - we'll use it. Add a photo below only to replace it with a newer one.,We already have this from your last visit - we'll use it. Add a photo below only to replace it with a newer one.,لدينا هذا من زيارتك السابقة وسنستخدمه. أضف صورة أدناه فقط لاستبداله بنسخة أحدث.,Ya tenemos este documento de tu última visita y lo usaremos. Agrega una foto abajo solo si quieres reemplazarlo por una versión más reciente.,Já temos isso da sua última visita - vamos usá-lo. Adicione uma foto abaixo apenas para substituí-la por uma mais recente.,我们已从你上次入住获得此信息，将直接使用。如需更换为更新的照片，可在下方添加。,screens/PublicCheckin.tsx,,translated
 We couldn't find that property,We couldn't find that property,لم نعثر على هذا العقار,No encontramos ese alojamiento,Não encontramos esse alojamento,未找到该酒店,screens/PublicBooking.tsx,,translated
 "We couldn't load prices for these dates. Try different dates, or contact the property.","We couldn't load prices for these dates. Try different dates, or contact the property.",تعذّر تحميل الأسعار لهذه التواريخ. جرّب تواريخ أخرى، أو تواصل مع العقار.,No pudimos cargar los precios para estas fechas. Pruebe con otras fechas o contacte con el alojamiento.,Não foi possível carregar os preços para estas datas. Experimente outras datas ou contacte o alojamento.,无法加载这些日期的价格。请尝试其他日期，或联系酒店。,screens/PublicBooking.tsx,,translated
@@ -7173,7 +7173,7 @@ Year,Year,سنة,Año,Ano,年,screens/Recreation.tsx,,translated
 Year to date,Year to date,منذ بداية السنة,Acumulado del año,Acumulado do ano,本年至今,screens/Dashboard.tsx,,translated
 Yes,Yes,نعم,Sí,Sim,是,components/RoomDrawer.tsx; screens/AuditPack.tsx; screens/BanquetFunction.tsx; screens/EndOfDayWizard.tsx; screens/Reports.tsx; screens/Today.tsx,,translated
 yesterday,yesterday,أمس,ayer,ontem,昨天,screens/Inventory.tsx,,translated
-Yesterday,Yesterday,أمس,Ayer,Ontem,昨天,screens/Owner.tsx; screens/pos/OrderHistory.tsx,,translated
+Yesterday,Yesterday,أمس,Ayer,Ontem,昨天,screens/Owner.tsx; screens/StockSummary.tsx; screens/pos/OrderHistory.tsx,,translated
 You,You,أنت,Tú,Você,你,screens/WhatsAppChat.tsx; screens/settings/AccessPages.tsx,,translated
 You already have an API key. Rotate it below to get a fresh key + secret.,You already have an API key. Rotate it below to get a fresh key + secret.,لديك مفتاح API بالفعل. جدّده أدناه للحصول على مفتاح وسر جديدين.,Ya tiene una clave de API. Renuévela abajo para obtener una clave y un secreto nuevos.,Você já tem uma chave de API. Gire abaixo para obter uma nova chave + segredo.,你已有 API 密钥。在下方轮换可获取新的密钥与密文。,screens/Developers.tsx,,translated
 You approve this as a supervisor.,You approve this as a supervisor.,أنت توافق على هذا بصفتك مشرفًا.,Usted aprueba esto como supervisor.,Você aprova isso como supervisor.,你以主管身份批准。,screens/pos/VoidApproval.tsx,,translated
@@ -7303,3 +7303,10 @@ Total back,Total back,إجمالي المسترد,Total a devolver,Total a devol
 Up to {amount},Up to {amount},حتى {amount},Hasta {amount},Até {amount},最多 {amount},screens/pos/RefundDialog.tsx,amount,translated
 Whole bill,Whole bill,الفاتورة كاملة,Cuenta completa,Conta inteira,整单,screens/pos/RefundDialog.tsx,,translated
 Wrong order,Wrong order,طلب خاطئ,Pedido equivocado,Pedido errado,点错单,,,translated
+Beginning,Beginning,بداية المدة,Inicial,Inicial,期初,screens/StockSummary.tsx,,translated
+Ending,Ending,نهاية المدة,Final,Final,期末,screens/StockSummary.tsx,,translated
+Last week,Last week,الأسبوع الماضي,La semana pasada,Semana passada,上周,screens/StockSummary.tsx,,translated
+Low only,Low only,المنخفض فقط,Solo bajos,Apenas baixos,仅低库存,screens/StockSummary.tsx,,translated
+No stock or movements in this period.,No stock or movements in this period.,لا مخزون ولا حركات في هذه الفترة.,No hay existencias ni movimientos en este periodo.,Sem estoque nem movimentos neste período.,此期间没有库存或变动。,screens/StockSummary.tsx,,translated
+Period,Period,الفترة,Periodo,Período,期间,screens/StockSummary.tsx,,translated
+This week,This week,هذا الأسبوع,Esta semana,Esta semana,本周,screens/StockSummary.tsx,,translated

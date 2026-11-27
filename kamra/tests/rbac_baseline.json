@@ -2648,6 +2648,15 @@
 "Hotel Admin",
 "System Manager"
 ],
+"inventory.stock_summary": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Front Desk",
+ "Hotel Admin",
+ "Kamra Agent",
+ "System Manager"
+],
 "inventory.track_item_stock": [
  "Administrator",
  "F&B Manager",

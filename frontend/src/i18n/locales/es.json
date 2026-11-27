@@ -7255,5 +7255,12 @@
   "Wrong order": "Pedido equivocado",
   "Quality": "Calidad",
   "Guest complaint": "Queja del huésped",
-  "Staff error": "Error del personal"
+  "Staff error": "Error del personal",
+  "Beginning": "Inicial",
+  "Ending": "Final",
+  "Period": "Periodo",
+  "This week": "Esta semana",
+  "Last week": "La semana pasada",
+  "Low only": "Solo bajos",
+  "No stock or movements in this period.": "No hay existencias ni movimientos en este periodo."
 }

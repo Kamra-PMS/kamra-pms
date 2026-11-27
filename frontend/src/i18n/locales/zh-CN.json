@@ -7217,5 +7217,12 @@
   "Wrong order": "点错单",
   "Quality": "质量问题",
   "Guest complaint": "客人投诉",
-  "Staff error": "员工失误"
+  "Staff error": "员工失误",
+  "Beginning": "期初",
+  "Ending": "期末",
+  "Period": "期间",
+  "This week": "本周",
+  "Last week": "上周",
+  "Low only": "仅低库存",
+  "No stock or movements in this period.": "此期间没有库存或变动。"
 }

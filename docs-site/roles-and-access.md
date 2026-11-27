@@ -218,7 +218,7 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Hurdle Rate | Manage hurdles (`manage_hurdles`) | Finance, Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `api.hurdle_rates`, `api.save_hurdle_rate`, `api.delete_hurdle_rate` |
 | Ingredient | Cancel stock (`cancel_stock`) | Hotel Admin, System Manager | `inventory.cancel_stock_entry` |
 | Ingredient | Manage stock (`manage_stock`) | F&B Manager, Finance, Hotel Admin, System Manager | `inventory.save_ingredient`, `inventory.delete_ingredient`, `inventory.receive_stock` and 3 more |
-| Ingredient | View stock (`view_stock`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.ingredients`, `inventory.recipe_overview`, `inventory.stock_list` and 4 more |
+| Ingredient | View stock (`view_stock`) | F&B Manager, Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `inventory.ingredients`, `inventory.recipe_overview`, `inventory.stock_list` and 5 more |
 | Itinerary | View trips (`view_trips`) | Finance, Front Desk, Hotel Admin, Kamra Agent, System Manager | `crs.get_itinerary`, `crs.list_itineraries` |
 | Kamra Custom Report | Run reports (`run_reports`) | F&B Manager, Finance, Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, Night Auditor, Revenue Manager, System Manager | `custom_reports.list_report_datasets`, `custom_reports.list_report_packs`, `custom_reports.run_report_pack` and 6 more |
 | Kitchen Printer | Configure printers (`configure_printers`) | F&B Manager, Finance, Hotel Admin, System Manager | `printing.save_printer`, `printing.delete_printer`, `printing.test_print` |

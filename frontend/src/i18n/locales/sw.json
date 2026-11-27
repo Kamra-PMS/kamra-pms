@@ -7217,5 +7217,12 @@
   "Wrong order": "Oda isiyo sahihi",
   "Quality": "Ubora",
   "Guest complaint": "Malalamiko ya mgeni",
-  "Staff error": "Kosa la mfanyakazi"
+  "Staff error": "Kosa la mfanyakazi",
+  "Beginning": "Mwanzo",
+  "Ending": "Mwisho",
+  "Period": "Kipindi",
+  "This week": "Wiki hii",
+  "Last week": "Wiki iliyopita",
+  "Low only": "Chache tu",
+  "No stock or movements in this period.": "Hakuna hifadhi wala miamala katika kipindi hiki."
 }

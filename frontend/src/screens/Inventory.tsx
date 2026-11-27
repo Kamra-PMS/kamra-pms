@@ -12,6 +12,7 @@ import {
   defaultEntry, fmtUnitCost, receiveLine, receiveRow, type ReceiveEntry,
 } from "../lib/stockCost"
 import { enteredLater, postedAt } from "../lib/stockDates"
+import StockSummary from "./StockSummary"
 
 /* Kitchen stock. Two things here are deliberate and read as bugs if you don't
    know why:
@@ -179,7 +180,9 @@ export default function Inventory() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [modal, setModal] = useState<"receive" | "count" | "waste" | null>(null)
-  const [ledgerOf, setLedgerOf] = useState<StockRow | null>(null)
+  // the history window: one ingredient at one outlet, maybe for one period
+  const [ledgerOf, setLedgerOf] = useState<History | null>(null)
+  const [view, setView] = useState<"stock" | "summary">("stock")
   const [parOf, setParOf] = useState<StockRow | null>(null)
 
   useEffect(() => {
@@ -250,6 +253,19 @@ export default function Inventory() {
         </div>
       </div>
 
+      <div className="flex gap-1.5">
+        {(["stock", "summary"] as const).map((k) => (
+          <button key={k} type="button" aria-pressed={view === k} onClick={() => setView(k)}
+            className={cn("rounded-lg px-3 py-1.5 text-sm font-medium",
+              view === k ? "bg-brand-600 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200")}>
+            {k === "stock" ? translate("Stock") : translate("Summary")}
+          </button>
+        ))}
+      </div>
+      {view === "summary" ? (
+        <StockSummary key={getCurrentProperty()} outlets={outlets} outlet={outlet}
+          onOpen={(r, from, to) => setLedgerOf({ row: r, outlet: r.outlet, period: { from, to } })} />
+      ) : (<>
       {err && (
         <div className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">
           {translate(err)}
@@ -349,7 +365,7 @@ export default function Inventory() {
                   </td>
                   <td className="px-4 py-2 text-right">
                     <Button variant="ghost" className="h-8 px-2 text-xs"
-                      onClick={() => setLedgerOf(r)}>
+                      onClick={() => setLedgerOf({ row: r, outlet })}>
                       <History className="size-3.5" />{translate("Ledger")}</Button>
                   </td>
                 </tr>
@@ -358,6 +374,8 @@ export default function Inventory() {
           </table>
         </div>
       )}
+
+      </>)}
 
       {modal === "receive" && (
         <ReceiveModal rows={shelf} outlet={outlet} busy={busy} error={err}
@@ -377,7 +395,7 @@ export default function Inventory() {
           onClose={() => setParOf(null)} onSubmit={(p) => act("set_par_level", p)} />
       )}
       {ledgerOf && (
-        <LedgerModal row={ledgerOf} outlet={outlet} canCancel={canCancel} onChanged={load}
+        <LedgerModal {...ledgerOf} canCancel={canCancel} onChanged={load}
           onClose={() => setLedgerOf(null)} />
       )}
     </div>
@@ -735,8 +753,14 @@ function pricedAt(e: LedgerRow): number | null {
   return e.price_entry === "Entered" || cost > 0 ? cost : null
 }
 
-function LedgerModal({ row, outlet, canCancel, onChanged, onClose }: {
-  row: StockRow; outlet: string; canCancel: boolean; onChanged: () => void; onClose: () => void
+interface History {
+  row: Pick<StockRow, "ingredient" | "ingredient_name" | "uom">
+  outlet: string
+  period?: { from: string; to: string }
+}
+
+function LedgerModal({ row, outlet, period, canCancel, onChanged, onClose }: History & {
+  canCancel: boolean; onChanged: () => void; onClose: () => void
 }) {
   useUILanguage()
   const [tab, setTab] = useState<"all" | "purchases">("all")
@@ -747,12 +771,13 @@ function LedgerModal({ row, outlet, canCancel, onChanged, onClose }: {
   useEffect(() => {
     let live = true
     call<LedgerRow[]>("kamra.inventory.ingredient_ledger", {
-      property: getCurrentProperty(), outlet, ingredient: row.ingredient, limit: 50,
+      property: getCurrentProperty(), outlet, ingredient: row.ingredient, limit: period ? 500 : 50,
       purchases_only: tab === "purchases" ? 1 : 0,
+      from_date: period?.from, to_date: period?.to,
     }).then((entries) => { if (live) setLoaded({ tab, entries }) })
       .catch(() => { if (live) setLoaded({ tab, entries: [] }) })
     return () => { live = false }
-  }, [row.ingredient, outlet, tab, version])
+  }, [row.ingredient, outlet, tab, version, period?.from, period?.to])
   const entries = loaded && loaded.tab === tab ? loaded.entries : null
   // a cancelled line moves nothing now: show what it had moved
   const change = (e: LedgerRow) => Number(e.cancelled ? e.original_qty_change ?? 0 : e.qty_change)
@@ -761,6 +786,9 @@ function LedgerModal({ row, outlet, canCancel, onChanged, onClose }: {
   })
   return (
     <Modal title={translate("{v0} · where it went", { v0: String(row.ingredient_name) })} onClose={onClose} wide>
+      {period && (
+        <p className="mb-2 text-xs text-zinc-500">{translate("{from} to {to}", period)}</p>
+      )}
       <div className="mb-3 flex gap-1.5">
         {(["all", "purchases"] as const).map((k) => (
           <button key={k} type="button" aria-pressed={tab === k} onClick={() => setTab(k)}

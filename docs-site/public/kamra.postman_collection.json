@@ -13634,7 +13634,44 @@
       "description": "Where did my paneer go? Newest first by when it happened, each row\ncarrying the balance it produced, so the history explains the number on the\nshelf. Cancelled lines stay, saying who took them back and why;\nbatch_ingredients names everything in the line's entry.\n\npurchases_only lists the deliveries alone, from every outlet of the\nproperty (an ingredient has one cost), with their own limit: kitchen usage\nwould otherwise push them off the end.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"ingredient\": \"<ingredient>\",\n  \"limit\": 50,\n  \"purchases_only\": 0\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"ingredient\": \"<ingredient>\",\n  \"limit\": 50,\n  \"purchases_only\": 0,\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
+     "name": "stock_summary",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.inventory.stock_summary",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.inventory.stock_summary"
+       ]
+      },
+      "description": "For a period: what each ingredient started with, what came in and went\nout by kind, and what was left - per outlet, never a merged total. Days are\nthe calendar days entries are dated, so a back-dated entry changes its past\nperiod. A row shows with stock at the start or a standing movement in the\nperiod; cancelled lines move nothing. low_only keeps what is at or below\nits low-stock level now.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"from_date\": \"2026-08-01\",\n  \"to_date\": \"2026-08-31\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"low_only\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

@@ -548,6 +548,18 @@ with **Last price paid** it does not replace the price of a newer-dated
 delivery. Cancelling a delivery takes its price out of the cost only while the
 cost is still the one it set. Otherwise the screen asks you to check the cost.
 
+### Stock summary
+
+The **Summary** tab shows a period for one outlet or **All outlets** (one row
+per ingredient per outlet): **Beginning** stock, **Purchases** (deliveries),
+**Used** (kitchen and banquet usage, less bottles returned by refunds),
+**Wastage**, **Adjustment** (stock-take differences), and **Ending**, which is
+the beginning plus those four. Pick Today, Yesterday, This or Last week (weeks
+start Monday), This or Last month, or Custom; days are the dates entries are
+dated, so a back-dated entry changes its past period. **Low only** keeps what
+is at or below its low-stock level now. Select a row to see its history for the
+period, or **Export CSV**.
+
 ### Ingredient cost
 
 **Settings → F&B → Kitchen stock → Ingredient cost** decides how a priced

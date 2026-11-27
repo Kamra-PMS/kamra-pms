@@ -5520,6 +5520,28 @@ would otherwise push them off the end.
 | `ingredient` | yes |  |
 | `limit` | no | `50` |
 | `purchases_only` | no | `0` |
+| `from_date` | no | `None` |
+| `to_date` | no | `None` |
+
+### `kamra.inventory.stock_summary`
+
+**GET/POST** · permission: `Ingredient: view_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `Front Desk`, `Kamra Agent`, `F&B Manager`
+
+For a period: what each ingredient started with, what came in and went
+out by kind, and what was left - per outlet, never a merged total. Days are
+the calendar days entries are dated, so a back-dated entry changes its past
+period. A row shows with stock at the start or a standing movement in the
+period; cancelled lines move nothing. low_only keeps what is at or below
+its low-stock level now.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
+| `from_date` | yes |  |
+| `to_date` | yes |  |
+| `outlet` | no | `None` |
+| `search` | no | `None` |
+| `low_only` | no | `0` |
 
 ### `kamra.inventory.stock_at`
 

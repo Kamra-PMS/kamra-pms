@@ -38,7 +38,7 @@ import uuid
 
 import frappe
 from frappe import _
-from frappe.utils import cint
+from frappe.utils import add_days, cint, getdate, nowdate
 
 from kamra.authz import require_perm
 from kamra.localization import money_text
@@ -1130,7 +1130,8 @@ def stock_list(property: str, outlet: str, status: str | None = None,
 @frappe.whitelist()
 @require_perm("Ingredient", "view_stock")
 def ingredient_ledger(property: str, outlet: str, ingredient: str,
-                      limit: int = 50, purchases_only: int = 0):
+                      limit: int = 50, purchases_only: int = 0,
+                      from_date: str | None = None, to_date: str | None = None):
 	"""Where did my paneer go? Newest first by when it happened, each row
 	carrying the balance it produced, so the history explains the number on the
 	shelf. Cancelled lines stay, saying who took them back and why;
@@ -1145,6 +1146,10 @@ def ingredient_ledger(property: str, outlet: str, ingredient: str,
 		filters["reason"] = "Received"
 	else:
 		filters["outlet"] = outlet
+	if from_date or to_date:
+		filters["posted_at"] = ["between", [
+			f"{getdate(from_date or '1900-01-01')} 00:00:00",
+			f"{getdate(to_date or nowdate())} 23:59:59.999999"]]
 	rows = frappe.get_all(
 		"Ingredient Ledger Entry", filters=filters,
 		fields=["name", "creation", "outlet", "qty_change", "balance_after", "reason",
@@ -1180,6 +1185,83 @@ def _name_the_entries(rows: list) -> None:
 		held.setdefault(x.batch_id, {})[names.get(x.ingredient, x.ingredient)] = 1
 	for r in rows:
 		r["batch_ingredients"] = list(held.get(r.batch_id, {}))
+
+
+# which column of the summary each ledger reason counts in (a test keeps every
+# reason listed)
+SUMMARY_BUCKETS = {
+	"Received": "purchases", "Consumed": "used", "Return": "used",
+	"Wastage": "wastage", "Count": "adjustment", "Opening": "adjustment",
+}
+
+
+@frappe.whitelist()
+@require_perm("Ingredient", "view_stock")
+def stock_summary(property: str, from_date: str, to_date: str,
+                  outlet: str | None = None, search: str | None = None,
+                  low_only: int = 0):
+	"""For a period: what each ingredient started with, what came in and went
+	out by kind, and what was left - per outlet, never a merged total. Days are
+	the calendar days entries are dated, so a back-dated entry changes its past
+	period. A row shows with stock at the start or a standing movement in the
+	period; cancelled lines move nothing. low_only keeps what is at or below
+	its low-stock level now."""
+	start, end = getdate(from_date), getdate(to_date)
+	if end < start:
+		start, end = end, start
+	columns = list(dict.fromkeys(SUMMARY_BUCKETS.values()))
+	params = {"property": property, "outlet": outlet,
+	          "start": f"{start} 00:00:00", "after": f"{add_days(end, 1)} 00:00:00"}
+	sums = []
+	for column in columns:
+		params[column] = tuple(r for r, c in SUMMARY_BUCKETS.items() if c == column)
+		sums.append(f"""sum(case when posted_at >= %(start)s and reason in %({column})s
+			then qty_change else 0 end) as {column}""")
+	moved = frappe.db.sql(  # nosemgrep: frappe-sql-format-injection -- the interpolated column names are the constants above; values are parameters
+		f"""select outlet, ingredient,
+			sum(case when posted_at < %(start)s then qty_change else 0 end) as beginning,
+			sum(case when posted_at >= %(start)s and ifnull(cancelled, 0) = 0
+				then 1 else 0 end) as moves,
+			{", ".join(sums)}
+		from `tabIngredient Ledger Entry`
+		where property = %(property)s and posted_at < %(after)s
+			{"and outlet = %(outlet)s" if outlet else ""}
+		group by outlet, ingredient""", params, as_dict=True)
+	moved = [m for m in moved if m.moves or round(float(m.beginning or 0), 6)]
+	if not moved:
+		return {"from": str(start), "to": str(end), "rows": []}
+	ings = {i.name: i for i in frappe.get_all(
+		"Ingredient", filters={"name": ["in", [m.ingredient for m in moved]]},
+		fields=["name", "ingredient_name", "category", "uom"])}
+	outlets = dict(frappe.get_all(
+		"POS Outlet", filters={"name": ["in", [m.outlet for m in moved]]},
+		fields=["name", "outlet_name"], as_list=True))
+	shelf = {(s.outlet, s.ingredient): s for s in frappe.get_all(
+		"Ingredient Stock", filters={"property": property,
+		                             "ingredient": ["in", [m.ingredient for m in moved]]},
+		fields=["outlet", "ingredient", "qty_on_hand", "par_level"])}
+	wanted = (search or "").strip().lower()
+	rows = []
+	for m in moved:
+		ing = ings.get(m.ingredient) or frappe._dict(ingredient_name=m.ingredient)
+		now = shelf.get((m.outlet, m.ingredient))
+		low = bool(now and float(now.par_level or 0) > 0
+		           and float(now.qty_on_hand or 0) <= float(now.par_level))
+		if (wanted and wanted not in (ing.ingredient_name or "").lower()) \
+				or (cint(low_only) and not low):
+			continue
+		row = {
+			"ingredient": m.ingredient, "ingredient_name": ing.ingredient_name,
+			"category": ing.category, "uom": ing.uom, "outlet": m.outlet,
+			"outlet_name": outlets.get(m.outlet, m.outlet),
+			"beginning": round(float(m.beginning or 0), 6),
+			**{c: round(float(m.get(c) or 0), 6) for c in columns},
+			"low": low,
+		}
+		row["ending"] = round(row["beginning"] + sum(row[c] for c in columns), 6)
+		rows.append(row)
+	rows.sort(key=lambda r: ((r["ingredient_name"] or "").lower(), r["outlet_name"]))
+	return {"from": str(start), "to": str(end), "rows": rows}
 
 
 @frappe.whitelist()
