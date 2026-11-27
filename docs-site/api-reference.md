@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **563 endpoints**, generated from the source
+the UI and the AI use. **572 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -3431,7 +3431,7 @@ times how long it takes to arrive, which proves live updates work.
 
 ## POS refunds (money back on a paid outlet bill)
 
-> Every refund needs a supervisor's cashier PIN; AI agents are refused. A repeated idempotency_key pays once.
+> Refunds need the approve right, or an approver's user and cashier PIN; AI agents are refused. A repeated idempotency_key pays once.
 
 ### `kamra.pos_refunds.refund_options`
 
@@ -3439,7 +3439,8 @@ times how long it takes to arrive, which proves live updates work.
 
 Everything the refund window needs: whether the bill can be refunded,
 what is left, its lines, the ways money may go back, the reasons, who may
-approve, and the refunds so far.
+approve (and whether the caller can, and needs their own PIN to), and the
+refunds so far.
 
 | Param | Required | Default |
 | --- | --- | --- |

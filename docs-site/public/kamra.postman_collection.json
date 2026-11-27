@@ -8159,7 +8159,7 @@
         "kamra.pos_refunds.refund_options"
        ]
       },
-      "description": "Everything the refund window needs: whether the bill can be refunded,\nwhat is left, its lines, the ways money may go back, the reasons, who may\napprove, and the refunds so far.",
+      "description": "Everything the refund window needs: whether the bill can be refunded,\nwhat is left, its lines, the ways money may go back, the reasons, who may\napprove (and whether the caller can, and needs their own PIN to), and the\nrefunds so far.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"order\": \"ORD-2026-00001\"\n}",
