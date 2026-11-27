@@ -570,10 +570,12 @@
 "300 pax sangeet, veg buffet, DJ till 1am, green room for the bride…","300 pax sangeet, veg buffet, DJ till 1am, green room for the bride…",300 ضيف سانجيت، بوفيه نباتي، دي جي حتى الساعة 1 صباحاً، غرفة للعروس…,"Sangeet para 300 personas, buffet vegetariano, DJ hasta la 1 a. m., camerino para la novia…","Sangeet para 300 pessoas, buffet vegetariano, DJ até 1h, sala verde para a noiva…",300 人婚前音乐会、素食自助、DJ 至凌晨 1 点、新娘休息室…,screens/Banquet.tsx,,translated
 31 to 60,31 to 60,31 إلى 60,De 31 a 60,31 a 60,31 至 60,screens/Receivables.tsx,,translated
 31-60,31-60,31-60,31-60,31-60,31-60 天,,,translated
+3p,3p,,3p,3p,,,,needs_translation
 4 · Reconcile,4 · Reconcile,4 · المطابقة,4 · Conciliar,4 · Reconciliar,4 · 对账,,,translated
 4 digits,4 digits,4 خانات,4 dígitos,4 dígitos,4 位数字,,,translated
 4 Star,4 Star,4 نجوم,4 estrellas,4 estrelas,4 星,,,translated
 4-8 digits. Required for money actions at this property.,4-8 digits. Required for money actions at this property.,4-8 خانات. مطلوب للعمليات المالية في هذا العقار.,De 4 a 8 dígitos. Se requiere para operaciones de dinero en este alojamiento.,4-8 dígitos. Obrigatório para ações monetárias nesta propriedade.,4-8 位数字。本酒店进行资金操作时必填。,lib/cashierAuth.tsx,,translated
+4p,4p,,4p,4p,,,,needs_translation
 5 digits,5 digits,5 خانات,5 dígitos,5 dígitos,5 位数字,,,translated
 5 Star,5 Star,5 نجوم,5 estrellas,5 estrelas,5 星,,,translated
 61 to 90,61 to 90,61 إلى 90,De 61 a 90,61 a 90,61 至 90,screens/Receivables.tsx,,translated
@@ -776,6 +778,8 @@ Add-ons (incl. {tax}),Add-ons (incl. {tax}),الإضافات (شامل {tax}),Co
 "Added automatically: the night audit posts room nights, the restaurant and laundry post their bills, the desk adds charges and takes payments, check-out moves company bills to the city ledger.","Added automatically: the night audit posts room nights, the restaurant and laundry post their bills, the desk adds charges and takes payments, check-out moves company bills to the city ledger.",يُضاف تلقائياً: التدقيق الليلي يرحّل ليالي الغرف، والمطعم والمغسلة يرحّلان فواتيرهما، والاستقبال يضيف الرسوم ويستلم الدفعات، والمغادرة تنقل فواتير الشركات إلى حساب المدينين.,"Se suma solo: la auditoría nocturna carga las noches, el restaurante y la lavandería cargan sus cuentas, la recepción añade cargos y cobra, y el check-out pasa las cuentas de empresa al libro de empresas.","Entra sozinho: a auditoria noturna lança as diárias, o restaurante e a lavanderia lançam suas contas, a recepção adiciona cobranças e recebe pagamentos, e o check-out passa as contas de empresa para o razão de empresas.",自动增加：夜审入账间夜、餐厅与洗衣入账其账单、前台添加费用并收款、退房将公司账单转入城市挂账。,screens/Ledgers.tsx,,translated
 "Added when an advance or security deposit is taken on a booking; moved out at check-in, by a no-show or cancellation fee, or by a refund.","Added when an advance or security deposit is taken on a booking; moved out at check-in, by a no-show or cancellation fee, or by a refund.",يُضاف عند استلام عربون أو تأمين على الحجز، ويخرج عند الوصول، أو برسوم عدم الحضور أو الإلغاء، أو بالاسترداد.,"Se suma cuando se cobra un anticipo o depósito en una reserva; sale en el check-in, con un cargo por no presentarse o por cancelación, o con un reembolso.","Entra quando se recebe um adiantamento ou caução numa reserva; sai no check-in, com uma taxa de não comparecimento ou cancelamento, ou com um reembolso.",在预订收取预付款或押金时增加；入住、未到店/取消费或退款时转出。,screens/Ledgers.tsx,,translated
 Additional charge per child per night (0 = free),Additional charge per child per night (0 = free),رسوم إضافية لكل طفل في الليلة (0 = مجاناً),Cargo adicional por menor por noche (0 = gratis),Valor adicional por criança por noite (0 = gratuito),每名儿童每晚加收（0 = 免费）,,,translated
+Additional night fixed rate (overrides %),Additional night fixed rate (overrides %),,Tarifa fija de noche adicional (anula el %),Valor fixo da diária extra (substitui o %),,,,needs_translation
+Additional night rate as % of base package,Additional night rate as % of base package,,Tarifa de noche adicional como % del paquete base,Valor da diária extra como % do pacote base,,,,needs_translation
 Additional number,Additional number,رقم إضافي,Número adicional,Número adicional,其他电话号码,,,translated
 Address,Address,العنوان,Dirección,Endereço,地址,screens/FolioView.tsx; screens/PublicCheckin.tsx; screens/RegistrationCard.tsx,,translated
 Address Line,Address Line,سطر العنوان,Dirección,Linha de endereço,地址行,screens/BookingEngine.tsx,,translated
@@ -945,6 +949,7 @@ Always required,Always required,مطلوب دائما,Siempre obligatorio,Sempre
 Amenities,Amenities,المرافق,Comodidades,Comodidades,设施,components/RoomDrawer.tsx; screens/PublicBooking.tsx,,translated
 Amenities (one per line),Amenities (one per line),المرافق (واحد في كل سطر),Servicios e instalaciones (uno por línea),Amenidades (uma por linha),设施（每行一项）,components/RoomTypeMedia.tsx,,translated
 American,American,أمريكي,Estadounidense,Americano,美式,,,translated
+American Plan,American Plan,,Pensión Completa,Pensão Completa,,,,needs_translation
 Amount,Amount,المبلغ,Importe,Montante,金额,components/AgentGuide.tsx; components/CheckOutDialog.tsx; components/DepositPanel.tsx; components/GroupBookingDialog.tsx; components/RoomStayPanels.tsx; components/SecurityDepositPanel.tsx; lib/thermal.ts; screens/BanquetDocument.tsx; screens/BanquetFunction.tsx; screens/BanquetRegisters.tsx; screens/CRS.tsx; screens/CashierTill.tsx; screens/GroupQuotation.tsx; screens/PettyCash.tsx; screens/Receivables.tsx; screens/UnitOwners.tsx; screens/pos/OrderHistory.tsx; screens/pos/PosSidePanel.tsx,,translated
 Amount ({cur}),Amount ({cur}),مبلغ ({cur}),Importe ({cur}),Valor ({cur}),金额（{cur}）,components/FolioDiscount.tsx,cur,translated
 Amount (before tax),Amount (before tax),المبلغ (قبل الضريبة),Importe (antes de impuestos),Montante (antes de impostos),金额（税前）,components/RoomStayPanels.tsx,,translated
@@ -989,6 +994,7 @@ Anything the staff should know (optional),Anything the staff should know (option
 Anything we should know?,Anything we should know?,هل هناك ما يجب أن نعرفه؟,¿Algo que debamos saber?,Algo que devemos saber?,还有什么需要说明的？,screens/PublicCheckin.tsx,,translated
 "Anything we should know? (bag by the door, after 3pm…)","Anything we should know? (bag by the door, after 3pm…)",هل هناك ما يجب أن نعرفه؟ (الحقيبة عند الباب، بعد 3 مساءً…),"¿Debemos saber algo? (bolsa junto a la puerta, después de las 15:00…)","Algo que devemos saber? (bolsa na porta, depois das 15h…)",有什么需要说明的？（袋子放门口、下午 3 点后…）,screens/laundry/GuestLaundryCard.tsx,,translated
 Anything worth remembering (optional),Anything worth remembering (optional),أي شيء يستحق التذكر (اختياري),Cualquier cosa que valga la pena recordar (opcional),Qualquer coisa que valha a pena lembrar (opcional),需要记录的事项（可选）,components/CancelPanel.tsx,,translated
+AP,AP,,PC (Pensión Completa),Pensão Completa,,,,needs_translation
 API endpoint override,API endpoint override,تجاوز عنوان API,URL alternativa de la API,Substituição do endpoint da API,API 端点覆盖,,,translated
 api key,api key,مفتاح API,clave de API,chave de API,API 密钥,,,translated
 API key,API key,مفتاح API,Clave API,Chave API,API 密钥,screens/Developers.tsx; screens/settings/cards.tsx,,translated
@@ -1194,11 +1200,13 @@ BAR {r},BAR {r},BAR {r},BAR {r},BARRA {r},最优可用房价 {r},components/Rate
 "BAR is the best available rate: the room type's base price. A season or a busy-house (demand) rule can move it for a date. A rate plan then adjusts the whole stay, and a voucher comes off the total.","BAR is the best available rate: the room type's base price. A season or a busy-house (demand) rule can move it for a date. A rate plan then adjusts the whole stay, and a voucher comes off the total.",BAR هو أفضل سعر متاح: السعر الأساسي لنوع الغرفة. يمكن للموسم أو قاعدة الإشغال المرتفع (الطلب) تغييره لتاريخ معين. ثم تعدّل خطة السعر الإقامة كاملة، وتُخصم القسيمة من الإجمالي.,"BAR es la mejor tarifa disponible: el precio base del tipo de habitación. Una temporada o una regla de alta ocupación (demanda) puede ajustarla para una fecha concreta. Después, el plan tarifario modifica el precio de toda la estancia y el cupón se resta del total.",BAR é a melhor tarifa disponível: o preço base do tipo de quarto. Uma temporada ou uma regra de ocupação (demanda) pode movê-lo para uma data. Um plano de tarifas ajusta toda a estadia e um voucher sai do total.,BAR 即最优可用房价，是房型的基础房价。季节价或高入住率（需求）调价规则可按日期调整。房价计划再调整整段住宿，优惠券则从总额中扣减。,components/RateOptions.tsx,,translated
 BAR is your base rate for a room. Seasons and rate plans raise or lower it by date or by deal.,BAR is your base rate for a room. Seasons and rate plans raise or lower it by date or by deal.,BAR هو السعر الأساسي للغرفة. ترفعه المواسم وخطط الأسعار أو تخفّضه حسب التاريخ أو الاتفاق.,BAR es la tarifa base de una habitación. Las temporadas y los planes tarifarios la ajustan según la fecha o el acuerdo.,BAR é a tarifa básica de um quarto. As temporadas e os planos de tarifas aumentam ou diminuem por data ou por acordo.,BAR 是客房的基础房价。季节价与房价计划会按日期或协议上调、下调房价。,,,translated
 Bar setup,Bar setup,تجهيز البار,Montaje de la barra,Montagem do bar,吧台布置,screens/BanquetFunction.tsx,,translated
+Base (2p),Base (2p),,Base (2p),Base (2p),,,,needs_translation
 Base {v0}/night,Base {v0}/night,الأساسي {v0}/ليلة,Base {v0}/noche,Base {v0}/noite,基础价 {v0}/间夜,,v0,translated
 Base occ.,Base occ.,الإشغال الأساسي,Ocupación base,Base occ.,基础入住人数,,,translated
 base price,base price,السعر الأساسي,precio base,preço base,基础价,,,translated
 Base price,Base price,السعر الأساسي,Precio base,Preço base,基础价,components/ChannelConnectionActions.tsx,,translated
 Base price / night,Base price / night,السعر الأساسي / ليلة,Precio base / noche,Preço base / noite,基础价 / 晚,,,translated
+Base price for 2 occupants,Base price for 2 occupants,,Precio base para 2 ocupantes,Preço base para 2 ocupantes,,,,needs_translation
 base rate,base rate,السعر الأساسي,tarifa base,taxa básica,基础房价,,,translated
 Base URL,Base URL,URL الأساسي,URL base,URL base,基础 URL,screens/settings/cards.tsx,,translated
 Base URL ,Base URL ,URL الأساسي ,URL base ,URL base ,基础 URL ,screens/Developers.tsx,,translated
@@ -1271,7 +1279,7 @@ Blacklist guest,Blacklist guest,إضافة الضيف إلى القائمة ال
 Blacklisted,Blacklisted,في القائمة السوداء,En la lista negra,Na lista negra,已列入黑名单,components/BookingDialog.tsx; screens/GuestJourney.tsx; screens/ReservationDetail.tsx,,translated
 Blank = all properties. Set only for a property-specific override.,Blank = all properties. Set only for a property-specific override.,فارغ = كل العقارات. حدّده فقط لإعداد خاص بعقار.,En blanco = todos los alojamientos. Indique uno solo para una configuración específica.,Em branco = todas as propriedades. Definido apenas para uma substituição específica da propriedade.,留空 = 全部酒店。仅在需针对某酒店覆盖时填写。,,,translated
 Blank = every day,Blank = every day,فارغ = كل يوم,En blanco = todos los días,Em branco = todos os dias,留空 = 每天,,,translated
-Blank = every day. Lets a weekend floor sit above the midweek one,Blank = every day. Lets a weekend floor sit above the midweek one,فارغ = كل يوم. يتيح حداً أدنى لعطلة نهاية الأسبوع أعلى من منتصف الأسبوع,En blanco = todos los días. Permite un mínimo de fin de semana superior al de los demás días,Em branco = todos os dias. Deixa o andar do fim de semana ficar acima do do meio da semana,留空 = 每天。可让周末下限高于平日,,,translated
+Blank = every day. Lets a weekend floor sit above the midweek one,Blank = every day. Lets a weekend floor sit above the midweek one,فارغ = كل يوم. يتيح حداً أدنى لعطلة نهاية الأسبوع أعلى من منتصف الأسبوع,En blanco = todos los días. Permite que el piso del fin de semana sea superior al de entre semana,Em branco = todos os dias. Permite que o piso tarifário do fim de semana seja superior ao dos dias úteis,留空 = 每天。可让周末下限高于平日,,,translated
 Blank for a single day,Blank for a single day,اتركه فارغاً ليوم واحد,En blanco para un solo día,Em branco por um único dia,单日则留空,screens/Banquet.tsx; screens/BanquetFunction.tsx,,translated
 Blank line,Blank line,سطر فارغ,Línea en blanco,Linha em branco,空行,screens/BanquetFunction.tsx,,translated
 block,block,يوقف,bloquear,bloquear,封房,,,translated
@@ -1954,6 +1962,7 @@ Contact email,Contact email,بريد جهة الاتصال,Correo de contacto,E-
 Contact name,Contact name,اسم جهة الاتصال,Nombre de contacto,Nome do contato,联系人姓名,components/GroupBookingDialog.tsx; screens/BanquetFunction.tsx,,translated
 Contact phone,Contact phone,هاتف جهة الاتصال,Teléfono de contacto,Telefone de contato,联系电话,,,translated
 Contact us for a quote,Contact us for a quote,تواصل معنا للحصول على عرض سعر,Solicite una cotización,Fale conosco para um orçamento,联系我们获取报价,screens/Marketplace.tsx,,translated
+Continental Plan,Continental Plan,,Alojamiento y Desayuno,Café da Manhã,,,,needs_translation
 Continue,Continue,متابعة,Continuar,Continuar,继续,components/CheckInDialog.tsx; components/StepFlow.tsx; screens/PublicBooking.tsx; screens/Setup.tsx,,translated
 Continue to check-in,Continue to check-in,تابع إلى تسجيل الوصول,Continuar con el registro de entrada,Continuar o check-in,继续入住,components/BookingDialog.tsx,,translated
 Continue without deposit,Continue without deposit,المتابعة بدون عربون,Continuar sin depósito de garantía,Continuar sem depósito,不收押金继续,components/CheckInDialog.tsx,,translated
@@ -2030,6 +2039,7 @@ Courses,Courses,الأطباق,Tiempos del menú,Cursos,菜序,screens/BanquetCa
 Cover count,Cover count,عدد الأغطية,Número de comensales,Contagem de capas,就餐人数,,,translated
 Covers,Covers,عدد الضيوف,Comensales,Capas,就餐人数,screens/PosDashboard.tsx,,translated
 Covers actually served,Covers actually served,الأغطية المقدّمة فعلياً,Comensales atendidos,Capas realmente veiculadas,实际就餐人数,screens/BanquetFunction.tsx; screens/banquet/Economics.tsx,,translated
+CP,CP,,AD (Alojamiento y Desayuno),Café da Manhã,,,,needs_translation
 Create {n} rooms,Create {n} rooms,إنشاء {n} غرف,Crear {n} habitaciones,Criar {n} quartos,创建 {n} 间客房,screens/AdminRooms.tsx,n,translated
 Create a reservation (guest deduped by phone),Create a reservation (guest deduped by phone),إنشاء حجز (يُعرَّف الضيف برقم الهاتف لتجنب التكرار),Crear reserva (identifica al huésped por teléfono para evitar duplicados),Criar uma reserva (hóspede desduplicado por telefone),创建预订（按电话去重宾客）,,,translated
 Create a run of rooms on one floor. Numbers that already exist are skipped.,Create a run of rooms on one floor. Numbers that already exist are skipped.,أنشئ سلسلة من الغرف في طابق واحد. يتم تخطي الأرقام الموجودة مسبقًا.,Crea una serie de habitaciones en un piso. Los números que ya existen se omiten.,Crie uma sequência de quartos em um andar. Os números que já existem são ignorados.,在同一楼层批量创建客房，已存在的房号将跳过。,screens/AdminRooms.tsx,,translated
@@ -2129,6 +2139,7 @@ Days sales outstanding (DSO),Days sales outstanding (DSO),متوسط أيام ا
 Days shown,Days shown,الأيام المعروضة,Días mostrados,Dias mostrados,显示天数,screens/RateCalendar.tsx,,translated
 Days to pay after the invoice date,Days to pay after the invoice date,أيام السداد بعد تاريخ الفاتورة,Días para pagar desde la fecha de factura,Dias para pagar após a data da fatura,发票日期后的付款天数,screens/Receivables.tsx,,translated
 Days to push,Days to push,أيام الإرسال,Días a sincronizar,Dias para empurrar,推送天数,,,translated
+Deactivate package without deleting,Deactivate package without deleting,,Desactivar el paquete sin eliminarlo,Desativar o pacote sem excluir,,,,needs_translation
 Deactivated,Deactivated,معطّل,Desactivado,Desativado,已停用,screens/settings/AccessPages.tsx,,translated
 Deactivated staff can't sign in. Their history stays.,Deactivated staff can't sign in. Their history stays.,لا يمكن للموظفين المعطّلين تسجيل الدخول. يبقى سجلهم محفوظاً.,El personal desactivado no puede iniciar sesión. Su historial permanece.,A equipe desativada não pode fazer login. Seu histórico permanece.,已停用员工无法登录，其历史保留。,screens/settings/AccessPages.tsx,,translated
 Dear ,Dear ,عزيزي ,Estimado/a ,Querido ,尊敬的 ,screens/CancellationLetter.tsx,,translated
@@ -2468,6 +2479,7 @@ Entries,Entries,القيود,Asientos,Entradas,分录,screens/Ledgers.tsx,,trans
 Entry,Entry,القيد,Asiento,Lançamento,分录,screens/Receivables.tsx,,translated
 Environment (Phase 2),Environment (Phase 2),البيئة (المرحلة 2),Entorno (fase 2),Ambiente (Fase 2),环境（第二阶段）,,,translated
 EOD,EOD,نهاية اليوم,Cierre del día,EOD,日结,,,translated
+EP,EP,,SA (Solo Alojamiento),Somente Hospedagem,,,,needs_translation
 Equipment,Equipment,المعدات,Equipos,Equipamentos,设备,screens/Banquet.tsx,,translated
 Equipment calendar,Equipment calendar,تقويم المعدات,Calendario de equipos,Calendário de equipamentos,设备日历,screens/Banquet.tsx,,translated
 Erase guest data after,Erase guest data after,حذف بيانات الضيوف بعد,Eliminar datos de huéspedes después de,Exclua os dados dos hóspedes após,宾客数据保留期限,,,translated
@@ -2476,6 +2488,7 @@ Error,Error,خطأ,Error,Erro,错误,,,translated
 es,es,es,s,é,西,screens/banquet/Economics.tsx; screens/banquet/MenuComposer.tsx,,translated
 ETA,ETA,وقت الوصول المتوقع,Hora prevista de llegada,Hora prevista de chegada,预计到店时间,screens/ReservationDetail.tsx,,translated
 ETA {eta},ETA {eta},الوصول المتوقع {eta},ETA {eta},HEC {eta},预计到店 {eta},components/RoomDrawer.tsx,eta,translated
+European Plan,European Plan,,Solo Alojamiento,Somente Hospedagem,,,,needs_translation
 Evening,Evening,مساء,Vespertino,Noite,晚间,,,translated
 Event,Event,الفعالية,Evento,Evento,宴会活动,components/LinkedRecords.tsx; screens/BanquetRegisters.tsx,,translated
 Event / Wedding,Event / Wedding,فعالية / حفل زفاف,Evento / boda,Evento / Casamento,活动 / 婚礼,components/BookingDialog.tsx,,translated
@@ -2589,11 +2602,14 @@ Extra Bed Policy:,Extra Bed Policy:,سياسة السرير الإضافي:,Pol�
 Extra beds,Extra beds,أسرّة إضافية,Camas adicionales,Camas extras,加床,components/BookingDialog.tsx; components/RoomDrawer.tsx,,translated
 Extra child / night,Extra child / night,سعر الطفل الإضافي / ليلة,Precio menor extra / noche,Preço criança extra / noite,额外儿童费 / 晚,,,translated
 "Extra delay, for a bar or restaurant still posting after the set time.","Extra delay, for a bar or restaurant still posting after the set time.",تأخير إضافي، لبار أو مطعم ما زال يسجل الرسوم بعد الوقت المحدد.,"Retraso adicional, para un bar o restaurante que sigue registrando cargos después de la hora fijada.","Atraso extra, para um bar ou restaurante que ainda lança cobranças após o horário definido.",额外延时，用于设定时间后仍在入账的酒吧或餐厅。,,,translated
+Extra Fixed,Extra Fixed,,Extra fijo,Extra fixo,,,,needs_translation
 Extra guest price / night,Extra guest price / night,سعر الضيف الإضافي / ليلة,Tarifa por huésped adicional y por noche,Preço do hóspede extra / noite,加客费 / 晚,screens/Setup.tsx,,translated
 Extra guests,Extra guests,ضيوف إضافيون,Huéspedes adicionales,Hóspedes adicionais,额外入住人,components/BookingDialog.tsx,,translated
 Extra Guests,Extra Guests,ضيوف إضافيون,Huéspedes adicionales,Hóspedes Adicionais,额外入住人,,,translated
 "Extra guests by arrangement - up to {beds} above the {cap} it sleeps, at a price you agree","Extra guests by arrangement - up to {beds} above the {cap} it sleeps, at a price you agree",ضيوف إضافيون بالاتفاق، حتى {beds} فوق السعة البالغة {cap}، بسعر تتفقون عليه,"Huéspedes adicionales sujetos a acuerdo: hasta {beds} personas por encima de la capacidad de {cap}, con una tarifa acordada","Hóspedes extras mediante agendamento - até {beds} acima do {cap} que dorme, a um preço que você concorda",额外宾客可协商安排 - 最多在可住 {cap} 人基础上加 {beds} 人，价格另议,components/BookingDialog.tsx,beds cap,translated
 Extra instructions,Extra instructions,تعليمات إضافية,Instrucciones adicionales,Instruções extras,补充说明,screens/settings/cards.tsx,,translated
+Extra Night %,Extra Night %,,% noche adicional,% diária extra,,,,needs_translation
+Extra Night Fixed,Extra Night Fixed,,Precio fijo noche adicional,Valor fixo diária extra,,,,needs_translation
 "Extra night, new dates, another room","Extra night, new dates, another room",ليلة إضافية، تواريخ جديدة، غرفة أخرى,"Noche adicional, nuevas fechas, otra habitación","Noite extra, novas datas, outro quarto",续住一晚、修改日期、更换客房,components/AgentGuide.tsx,,translated
 Extra sign-in addresses,Extra sign-in addresses,عناوين تسجيل دخول إضافية,Direcciones de inicio de sesión adicionales,Endereços de login extras,额外登录地址,screens/settings/McpAccessPage.tsx,,translated
 Extra staff (female),Extra staff (female),موظفات إضافيات,Personal adicional (mujeres),Equipe extra (feminina),加派员工（女）,screens/BanquetFunction.tsx,,translated
@@ -2700,6 +2716,8 @@ Fix the issue below to see a price.,Fix the issue below to see a price.,أصلح
 "Fix what is listed below, import again (already-posted rows are skipped), then reconcile again.","Fix what is listed below, import again (already-posted rows are skipped), then reconcile again.",أصلح ما هو مدرج أدناه، ثم استورد مجددا (يتم تخطي الصفوف المرحّلة)، ثم طابق مجددا.,"Corrija los elementos indicados abajo e importe de nuevo. Las filas ya registradas se omitirán; después, vuelva a conciliar.","Corrija o que está listado abaixo, importe novamente (as linhas já lançadas serão ignoradas) e reconcilie novamente.",修正下列问题，重新导入（已入账行将跳过），然后再次对账。,screens/GoLiveImport.tsx,,translated
 "Fix whichever side is wrong: check the guest in or out, or update the room's status.","Fix whichever side is wrong: check the guest in or out, or update the room's status.",أصلح الجانب الخاطئ: سجّل وصول الضيف أو مغادرته، أو حدّث حالة الغرفة.,"Corrija el dato incorrecto: registre la llegada o salida del huésped, o actualice el estado de la habitación.",Corrija o lado errado: faça check-in ou check-out do hóspede ou atualize o status do quarto.,修正有误的一方：办理入住或退房，或更新客房状态。,,,translated
 Fixed,Fixed,ثابت,Fija,Corrigido,固定,,,translated
+Fixed daily rate pushed to OTAs during package dates,Fixed daily rate pushed to OTAs during package dates,,Tarifa diaria fija enviada a las OTAs durante las fechas del paquete,Diária fixa enviada para as OTAs durante o período do pacote,,,,needs_translation
+"Fixed holiday packages with tiered occupancy pricing (Carnaval, Réveillon, long weekends) and OTA markup strategies.","Fixed holiday packages with tiered occupancy pricing (Carnaval, Réveillon, long weekends) and OTA markup strategies.",,"Paquetes vacacionales cerrados con tarifas escalonadas por ocupación (Carnaval, Réveillon, fines de semana largos) y estrategias de markup para OTAs.","Pacotes fechados para feriados com tarifas escalonadas por ocupação (Carnaval, Réveillon, feriados prolongados) e estratégias de markup para OTAs.",,,,needs_translation
 Flag a bill not sent to the kitchen after,Flag a bill not sent to the kitchen after,نبّه عن فاتورة لم تُرسل للمطبخ بعد,Avisar de una cuenta sin enviar a cocina después de,Sinalizar fatura não enviada para a cozinha após,账单未送厨提醒时限,,,translated
 Flag in-house folios owing more than,Flag in-house folios owing more than,نبّه لفواتير المقيمين التي تتجاوز,Marcar los folios de huéspedes alojados cuyo saldo supere,Sinalizar fólios internos devidos a mais de,在住客账高余额提醒阈值,,,translated
 Flight / train no.,Flight / train no.,رقم الرحلة / القطار,N.º de vuelo o tren,Voo / trem não.,航班 / 车次号,components/BookingDialog.tsx,,translated
@@ -2715,6 +2733,7 @@ Floor price / night,Floor price / night,السعر الأدنى / ليلة,Preci
 Floors,Floors,الطوابق,Pisos,Andares,楼层,,,translated
 Floors and ceilings no rate can cross.,Floors and ceilings no rate can cross.,حدود دنيا وعليا لا يتجاوزها أي سعر.,Precios mínimo y máximo que ninguna tarifa puede superar.,Pisos e tetos nenhuma taxa pode ultrapassar.,任何房价均不得突破的上下限。,,,translated
 Floors are set up in Admin > Floors. Pick one or add a new floor here.,Floors are set up in Admin > Floors. Pick one or add a new floor here.,تُعدّ الطوابق من الإدارة > الطوابق. اختر طابقًا أو أضف طابقًا جديدًا هنا.,Los pisos se configuran en Administración > Pisos. Elige uno o añade un piso nuevo aquí.,Os andares são configurados em Administrador > Andares. Escolha um ou adicione um novo aqui.,楼层在「管理 > 楼层」中设置。请选择或在此外添加新楼层。,,,translated
+Flyer Image,Flyer Image,,Imagen del folleto,Imagem do panfleto / flyer,,,,needs_translation
 Focus mode - hide PMS menus,Focus mode - hide PMS menus,وضع التركيز - إخفاء قوائم النظام,Modo de enfoque: ocultar menús de PMS,Modo de foco - ocultar menus PMS,专注模式 - 隐藏 PMS 菜单,screens/Kitchen.tsx; screens/POS.tsx,,translated
 Folio,Folio,الفاتورة,Folio,Conta / Fólio,客账,components/RoomStayPanels.tsx; screens/AllowanceVoucher.tsx; screens/Billing.tsx; screens/Laundry.tsx; screens/Ledgers.tsx; screens/VoidAllowanceReport.tsx,,translated
 folio ,folio ,فاتورة ,folio ,extrato da conta ,客账 ,,,translated
@@ -2930,7 +2949,7 @@ GSTIN,GSTIN,GSTIN,GSTIN,GSTIN,GSTIN,,,translated
 "GSTIN, VAT or TRN - printed on invoices.","GSTIN, VAT or TRN - printed on invoices.",GSTIN أو ضريبة القيمة المضافة أو TRN، يُطبع على الفواتير.,"GSTIN, IVA o TRN; aparece en las facturas.","GSTIN, VAT ou TRN - impressos nas faturas.",GSTIN、VAT 或 TRN - 打印在发票上。,,,translated
 Guaranteed {v0}. The bill uses whichever is higher.,Guaranteed {v0}. The bill uses whichever is higher.,الحد الأدنى المضمون {v0}. تُحتسب الفاتورة على الأعلى.,Mínimo garantizado: {v0}. Se factura la cantidad mayor.,Garantido {v0}. A fatura utiliza o maior valor.,担保 {v0}，按二者较高计费。,screens/BanquetFunction.tsx,v0,translated
 Guaranteed pax,Guaranteed pax,عدد الضيوف المضمون,Mínimo de asistentes garantizado,Pax garantido,保底人数,screens/BanquetFunction.tsx,,translated
-Guardrails,Guardrails,حدود الأسعار,Límites de tarifas,Guarda-corpos,房价限制,,,translated
+Guardrails,Guardrails,حدود الأسعار,Límites de tarifas,Limites Tarifários,房价限制,,,translated
 guest,guest,ضيف,huésped,hóspede,宾客,,,translated
 Guest,Guest,ضيف,Huésped,Hóspede,宾客,components/BookingDialog.tsx; components/CheckOutDialog.tsx; components/CommandPalette.tsx; components/GroupBookingDialog.tsx; components/GroupControl.tsx; components/LinkedRecords.tsx; screens/AllowanceVoucher.tsx; screens/Billing.tsx; screens/CityLedgerPayment.tsx; screens/FolioHistory.tsx; screens/FolioView.tsx; screens/InHouse.tsx; screens/Laundry.tsx; screens/Ledgers.tsx; screens/RegistrationCard.tsx; screens/ReservationDetail.tsx; screens/Today.tsx; screens/pos/PosSidePanel.tsx,,translated
 Guest · Deposit · AR · Package trial balance,Guest · Deposit · AR · Package trial balance,الضيف · العربون · الذمم المدينة · ميزان مراجعة الباقات,"Balance de comprobación: huéspedes, depósitos, cuentas por cobrar y paquetes",Hóspede · Depósito · AR · Balancete do pacote,宾客 · 押金 · 应收 · 套餐试算平衡,,,translated
@@ -3083,6 +3102,8 @@ Holds & selling,Holds & selling,الحجز المبدئي والبيع,Reservas 
 Holds also show on the Tape Chart and in,Holds also show on the Tape Chart and in,تظهر الإيقافات أيضًا في مخطط الحجوزات وفي,Los bloqueos también se muestran en el calendario de ocupación y en,As retenções também aparecem no Tape Chart e em,预留也会显示在房态日历与,components/RoomDrawer.tsx,,translated
 Holds must be above zero.,Holds must be above zero.,يجب أن تكون سعة العبوة أكبر من صفر.,El contenido debe ser mayor que cero.,O conteúdo deve ser maior que zero.,每包装含量必须大于零。,screens/Inventory.tsx,,translated
 Holiday / long weekend,Holiday / long weekend,عطلة / عطلة نهاية أسبوع طويلة,Festivo / fin de semana largo,Feriado/fim de semana prolongado,假日 / 长周末,,,translated
+Holiday Package,Holiday Package,,Paquete vacacional,Pacote de feriado,,,,needs_translation
+Holiday Packages,Holiday Packages,,Paquetes vacacionales,Pacotes de feriados,,,,needs_translation
 Home,Home,الرئيسية,Inicio,Lar,主页,AppShell.tsx,,translated
 Homestay,Homestay,إقامة منزلية,Alojamiento familiar,Hospedagem em casa de família,民宿,,,translated
 Host,Host,المضيف,Anfitrión,Anfitrião,主机,,,translated
@@ -3150,6 +3171,7 @@ How room keys are issued at check-in and cancelled at check-out.,How room keys a
 How the items print on this outlet's bills. Everything else on the receipt is the same in both. Pick one. The samples use example food and plain numbers; your real bills use your own currency.,How the items print on this outlet's bills. Everything else on the receipt is the same in both. Pick one. The samples use example food and plain numbers; your real bills use your own currency.,طريقة طباعة الأصناف على فواتير هذا المنفذ. كل ما عدا ذلك في الإيصال متطابق في التصميمين. اختر واحداً. تستخدم النماذج أطعمة وأرقاماً للتوضيح فقط؛ فواتيرك الفعلية تستخدم عملتك.,Cómo se imprimen los artículos en las cuentas de este punto de venta. Todo lo demás del recibo es igual en ambos. Elija uno. Los ejemplos usan comida y números de muestra; sus cuentas reales usan su propia moneda.,Como os itens são impressos nas contas deste ponto de venda. O resto do recibo é igual nos dois. Escolha um. Os exemplos usam pratos e números fictícios; suas contas reais usam sua própria moeda.,此营业点账单上菜品的打印方式。小票上的其他内容两种样式相同。请选择一种。示例使用的是示范菜品和普通数字；实际账单使用您的币种。,components/OutletExtras.tsx,,translated
 How the price moved,How the price moved,كيف تغير السعر,Evolución del precio,Como o preço mudou,价格变动过程,screens/BanquetFunction.tsx,,translated
 How the till works,How the till works,كيف يعمل الصندوق,Cómo funciona la caja,Como funciona o caixa,钱箱使用说明,screens/CashierTill.tsx,,translated
+How this package is sold on OTAs,How this package is sold on OTAs,,Cómo se comercializa este paquete en OTAs,Como este pacote é vendido em OTAs,,,,needs_translation
 How to clear this,How to clear this,كيفية حل ذلك,Cómo resolverlo,Como solucionar esta pendência,如何处理此项,screens/EndOfDayWizard.tsx,,translated
 How to upgrade,How to upgrade,كيفية الترقية,Cómo actualizar,Como atualizar,如何升级,screens/SystemHealth.tsx,,translated
 How was your stay with us? Is there anything we could have done better?,How was your stay with us? Is there anything we could have done better?,كيف كانت إقامتك معنا؟ هل هناك ما كان بإمكاننا فعله بشكل أفضل؟,¿Cómo fue su estancia con nosotros? ¿Hay algo que podríamos haber hecho mejor?,Como foi sua estadia conosco? Existe algo que poderíamos ter feito melhor?,本次住宿体验如何？有哪些可以做得更好？,,,translated
@@ -3643,6 +3665,7 @@ Manual,Manual,يدوي,Manual,Manual,手动,screens/CurrencyDesk.tsx; screens/Ti
 Manual only,Manual only,يدوي فقط,Solo manual,Somente manual,仅手动,screens/settings/cards.tsx,,translated
 Manual: staff encode key cards at the lock's own encoder. Lock vendor connectors plug in here (see the integrations docs).,Manual: staff encode key cards at the lock's own encoder. Lock vendor connectors plug in here (see the integrations docs).,يدوي: يبرمج الموظفون بطاقات المفاتيح على جهاز ترميز القفل نفسه. تُربط موصلات موردي الأقفال هنا (راجع وثائق التكاملات).,Manual: el personal programa las tarjetas en el codificador de la cerradura. Aquí se conectan las integraciones de proveedores; consulte la guía de integraciones.,Manual: o pessoal codifica os cartões-chave no codificador próprio da fechadura. Bloqueie os conectores do fornecedor aqui (consulte os documentos de integração).,手动：员工在门锁自带制卡机写卡。门锁厂商连接器在此接入（见集成文档）。,,,translated
 Map,Map,الخريطة,Mapa,Mapa,地图,screens/PublicListing.tsx,,translated
+MAP,MAP,,MP (Media Pensión),Meia Pensão,,,,needs_translation
 Map location not set,Map location not set,لم يُحدد موقع الخريطة,No se indicó la ubicación en el mapa,Localização do mapa não definida,未设置地图位置,,,translated
 Map Preview,Map Preview,معاينة الخريطة,Vista previa del mapa,Visualização do mapa,地图预览,screens/BookingEngine.tsx,,translated
 "Mapping imported: {created} created, {updated} updated.","Mapping imported: {created} created, {updated} updated.",تم استيراد الربط: {created} أُنشئ، {updated} حُدّث.,"Correspondencia importada: {created} filas nuevas, {updated} actualizadas.","Mapeamentos importados: {created} criados, {updated} atualizados.",映射已导入：新建 {created} 个，更新 {updated} 个。,components/ChannelConnectionActions.tsx,created updated,translated
@@ -3663,6 +3686,7 @@ Mark solved,Mark solved,تعليم كمحلول,Marcar como resuelto,Marca resol
 Mark this lost,Mark this lost,تعليم كمفقود,Marcar como perdido,Marque isso como perdido,标记为遗失,screens/BanquetFunction.tsx,,translated
 Market segment,Market segment,شريحة السوق,Segmento de mercado,Segmento de mercado,市场细分,components/BookingDialog.tsx,,translated
 Marketplace,Marketplace,السوق,Catálogo de integraciones,Mercado,应用市场,screens/AppLauncher.tsx; screens/Marketplace.tsx,,translated
+Markup percentage over direct package rate,Markup percentage over direct package rate,,Porcentaje de recargo sobre la tarifa directa del paquete,Percentual de markup sobre a tarifa direta do pacote,,,,needs_translation
 Matches,Matches,مطابق,Coincide,Correspondências,匹配项,screens/GoLiveImport.tsx,,translated
 Max {n} nights,Max {n} nights,الحد الأقصى {n} ليالٍ,Máx. {n} noches,Máx. {n} noites,最多 {n} 晚,screens/RateCalendar.tsx,n,translated
 Max adults,Max adults,الحد الأقصى للبالغين,Máximo de adultos,Máximo de adultos,成人数上限,,,translated
@@ -3739,6 +3763,7 @@ Mixed currencies,Mixed currencies,عملات مختلطة,Monedas distintas,Moed
 Mobile number,Mobile number,رقم الهاتف المحمول,Número de teléfono móvil,Número de celular,手机号码,components/PhoneInput.tsx,,translated
 Mode,Mode,الوضع,Modo,Modo,模式,screens/BanquetRegisters.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/CityLedgerPayment.tsx,,translated
 Model,Model,الطراز,Modelo,Modelo,型号,screens/settings/cards.tsx,,translated
+Modified American Plan,Modified American Plan,,Media Pensión,Meia Pensão,,,,needs_translation
 Modifier,Modifier,معدّل,Ajuste,Modificador,修改项,,,translated
 Modifier type,Modifier type,نوع المعدّل,Tipo de ajuste,Tipo de modificador,修改项类型,,,translated
 Modifier value (-10 = 10% off),Modifier value (-10 = 10% off),قيمة المعدّل (-10 = خصم 10%),Valor del ajuste (-10 = 10 % de descuento),Valor do modificador (-10 = 10% de desconto),修改值（-10 = 减 10%）,,,translated
@@ -4578,9 +4603,13 @@ Orders history,Orders history,سجل الطلبات,Historial de pedidos,Histór
 OTA,OTA,OTA,OTA,OTA,OTA,components/BookingRequests.tsx; screens/InHouse.tsx; screens/TapeChart.tsx; screens/Today.tsx,,translated
 OTA booking ref,OTA booking ref,مرجع حجز OTA,Ref. de reserva OTA,Ref. da reserva na OTA,OTA 预订号,components/BookingDialog.tsx,,translated
 "OTA booking, guest pays here","OTA booking, guest pays here",حجز عبر وكالة، والضيف يدفع هنا,"Reserva OTA, el huésped paga aquí","Reserva OTA, o hóspede paga aqui",OTA 预订，宾客现场支付,components/CheckInDialog.tsx,,translated
+OTA Daily Rate,OTA Daily Rate,,Tarifa diaria OTA,Diária OTA,,,,needs_translation
 OTA has paid the room,OTA has paid the room,وكالة الحجز دفعت ثمن الغرفة,OTA ha pagado la habitación,A OTA pagou o quarto,OTA 已支付房费,components/CheckInDialog.tsx,,translated
+OTA Markup %,OTA Markup %,,% markup OTA,% markup OTA,,,,needs_translation
 OTA prepaid,OTA prepaid,OTA مدفوع مسبقا,Agencia en línea: prepago,OTA pré-paga,OTA 预付,,,translated
+OTA Rate,OTA Rate,,Tarifa OTA,Diária OTA,,,,needs_translation
 OTA Room Mappings,OTA Room Mappings,ربط غرف OTA,Correspondencia de tipos de habitación con agencias en línea,Mapeamentos de quartos OTA,OTA 房型映射,,,translated
+OTA Strategy,OTA Strategy,,Estrategia OTA,Estratégia OTA,,,,needs_translation
 "OTA, guest pays here","OTA, guest pays here",OTA، يدفع الضيف هنا,Agencia en línea: el huésped paga aquí,"OTA, hóspede paga aqui",OTA，宾客现场支付,,,translated
 Other,Other,أخرى,Otro,Outros,其他,components/AgentGuide.tsx; components/BookingDialog.tsx; screens/Owner.tsx,,translated
 Other countries run on a simple flat-tax setup - enter the currency code below.,Other countries run on a simple flat-tax setup - enter the currency code below.,الدول الأخرى تعمل بإعداد ضريبة ثابتة بسيط - أدخل رمز العملة أدناه.,Otros países utilizan una configuración de impuesto con tasa única. Ingrese el código de moneda a continuación.,Outros países funcionam com uma configuração simples de imposto fixo - insira o código da moeda abaixo.,其他国家采用简易单一税率设置 - 请在下方填写货币代码。,screens/Setup.tsx,,translated
@@ -4656,12 +4685,16 @@ Owner for new cases,Owner for new cases,المسؤول عن الحالات ال�
 Owner name,Owner name,اسم المالك,Nombre del propietario,Nome do proprietário,业主姓名,screens/UnitOwners.tsx,,translated
 Owner stay,Owner stay,إقامة المالك,Estancia del propietario,Proprietário fica,业主住宿,,,translated
 Owner view,Owner view,عرض المالك,Vista del propietario,Visão do proprietário,业主视图,screens/Dashboard.tsx; screens/Owner.tsx,,translated
-Owner-set floor and ceiling. No rate move - human or AI agent - can price outside these rails. Toggle Disabled to activate or pause a rail.,Owner-set floor and ceiling. No rate move - human or AI agent - can price outside these rails. Toggle Disabled to activate or pause a rail.,حد أدنى وأعلى يحددهما المالك. لا يمكن لأي تغيير في السعر، بشري أو عبر وكيل ذكاء اصطناعي، أن يتجاوز هذه الحدود. استخدم معطل لتفعيل حد أو إيقافه مؤقتا.,Precio mínimo y máximo definidos por el propietario. Ningún ajuste de una persona o agente de IA puede superarlos. Use Desactivado para activar o pausar un límite.,Piso e teto definidos pelo proprietário. Nenhum movimento de taxa - humano ou agente de IA - pode precificar fora desses trilhos. Alterne Desativado para ativar ou pausar um trilho.,由业主设定的房价上下限。任何改价（人工或 AI 智能体）均不能超出此范围。切换「已停用」可启用或暂停某条限制。,,,translated
+Owner-set floor and ceiling. No rate move - human or AI agent - can price outside these rails. Toggle Disabled to activate or pause a rail.,Owner-set floor and ceiling. No rate move - human or AI agent - can price outside these rails. Toggle Disabled to activate or pause a rail.,حد أدنى وأعلى يحددهما المالك. لا يمكن لأي تغيير في السعر، بشري أو عبر وكيل ذكاء اصطناعي، أن يتجاوز هذه الحدود. استخدم معطل لتفعيل حد أو إيقافه مؤقتا.,Piso y techo establecidos por el propietario. Ningún cambio de tarifa (humano o agente de IA) puede cotizar fuera de estos límites. Marque Desactivado para pausar o activar un límite.,Piso e teto definidos pelo proprietário. Nenhuma alteração tarifária (humana ou por agente de IA) pode precificar fora desses limites. Marque Desativado para pausar ou ativar um limite.,由业主设定的房价上下限。任何改价（人工或 AI 智能体）均不能超出此范围。切换「已停用」可启用或暂停某条限制。,,,translated
 Owner: {who},Owner: {who},المسؤول: {who},Propietario: {who},Responsável: {who},负责人：{who},components/HkQuality.tsx,who,translated
 Owners,Owners,الملاك,Propietarios,Proprietários,业主,screens/UnitOwners.tsx,,translated
 Pack list,Pack list,قائمة التجهيز,Lista de materiales,Lista de pacotes,物料清单,,,translated
 PACK TO GO,PACK TO GO,للتغليف والأخذ,EMPACAR PARA LLEVAR,PACOTE PARA IR,打包外带,,,translated
 Package,Package,الباقة,Paquete,Pacote,套餐,,,translated
+Package Nights,Package Nights,,Noches del paquete,Noites do pacote,,,,needs_translation
+Package price for 3 occupants,Package price for 3 occupants,,Precio del paquete para 3 ocupantes,Preço do pacote para 3 ocupantes,,,,needs_translation
+Package price for 4 occupants,Package price for 4 occupants,,Precio del paquete para 4 ocupantes,Preço do pacote para 4 ocupantes,,,,needs_translation
+Packages,Packages,,Paquetes,Pacotes,,,,needs_translation
 packed,packed,تم التجهيز,incluido en la lista de materiales,embalado,已打包,screens/BanquetCatalogue.tsx,,translated
 Page ,Page ,صفحة ,Página ,Página ,第 ,screens/Agents.tsx,,translated
 Page {n},Page {n},صفحة {n},Página {n},Página {n},第 {n} 页,components/ResourceScreen.tsx; screens/Agents.tsx,n,translated
@@ -4965,6 +4998,9 @@ Previous period,Previous period,الفترة السابقة,Período anterior,Pe
 Previous photo,Previous photo,الصورة السابقة,Foto anterior,Foto anterior,上一张照片,screens/PublicBooking.tsx,,translated
 price,price,السعر,precio,preço,价格,screens/MenuImport.tsx,,translated
 Price,Price,السعر,Precio,Preço,价格,screens/BanquetCatalogue.tsx; screens/Inventory.tsx; screens/MenuImport.tsx; screens/Receivables.tsx; screens/Recreation.tsx,,translated
+Price (2 Guests),Price (2 Guests),,Precio (2 huéspedes),Preço (2 hóspedes),,,,needs_translation
+Price (3 Guests),Price (3 Guests),,Precio (3 huéspedes),Preço (3 hóspedes),,,,needs_translation
+Price (4 Guests),Price (4 Guests),,Precio (4 huéspedes),Preço (4 hóspedes),,,,needs_translation
 Price {v0},Price {v0},السعر {v0},Precio {v0},Preço {v0},价格 {v0},,v0,translated
 Price and confirm,Price and confirm,التسعير والتأكيد,Precio y confirmación,Preço e confirmação,定价并确认,components/GroupBookingDialog.tsx,,translated
 price by date,price by date,السعر حسب التاريخ,precio por fecha,preço por data,按日期价格,,,translated
@@ -5039,6 +5075,7 @@ Proforma,Proforma,فاتورة أولية,Proforma,Pró-forma,形式发票,scree
 "Projectors, LED walls, DJ, podium, stage, decor, bar. Add it free to give it away.","Projectors, LED walls, DJ, podium, stage, decor, bar. Add it free to give it away.",أجهزة عرض، شاشات LED، DJ، منصة خطابة، مسرح، ديكور، بار. أضفه مجاناً لتقديمه هدية.,"Proyectores, pantallas LED, DJ, atril, escenario, decoración y bar. Márquelo sin cargo para incluirlo de cortesía.","Projetores, paredes de LED, DJ, pódio, palco, decoração, bar. Adicione-o gratuitamente para distribuí-lo.",投影仪、LED 屏、DJ、讲台、舞台、装饰、吧台。免费添加即为赠送。,screens/BanquetFunction.tsx,,translated
 Promo code,Promo code,رمز ترويجي,Código promocional,Código promocional,促销码,components/FolioDiscount.tsx; screens/PublicBooking.tsx,,translated
 Promoted from waitlist,Promoted from waitlist,تمت الترقية من قائمة الانتظار,Reserva trasladada desde la lista de espera,Promovido da lista de espera,已从候补转为预订,,,translated
+Promotional flyer or banner for the package,Promotional flyer or banner for the package,,Folleto o banner promocional del paquete,Panfleto ou banner promocional do pacote,,,,needs_translation
 Properties,Properties,العقارات,Alojamientos,Propriedades,酒店,screens/Dashboard.tsx,,translated
 Property,Property,العقار,Alojamiento,Propriedade,酒店,AppShell.tsx; screens/Dashboard.tsx; screens/EndOfDay.tsx; screens/Owner.tsx,,translated
 Property access,Property access,الوصول إلى العقارات,Acceso a alojamientos,Acesso à propriedade,酒店访问权限,screens/settings/AccessPages.tsx,,translated
@@ -5106,7 +5143,7 @@ Quotes say these are holiday dates,Quotes say these are holiday dates,عروض �
 "R means a stay restriction applies (minimum or maximum nights, closed to arrival or departure, stop-sell).","R means a stay restriction applies (minimum or maximum nights, closed to arrival or departure, stop-sell).",R تعني وجود قيد على الإقامة (حد أدنى أو أقصى لليالي، مغلق للوصول أو المغادرة، إيقاف البيع).,"R indica que se aplica una restricción de estancia (mínimo o máximo de noches, cerrado a la llegada o a la salida, venta cerrada).","R indica que há uma restrição de estadia (mínimo ou máximo de noites, fechado para chegada ou saída, stop-sell).",R 表示有住店限制（最少或最多晚数、禁止到店或离店、停售）。,screens/RateCalendar.tsx,,translated
 Rack,Rack,السعر المعلن,Tarifa base,Rack,门市价,screens/BanquetFunction.tsx,,translated
 rack rate,rack rate,السعر المعلن,tarifa publicada,taxa de rack,门市价,,,translated
-Rail,Rail,قطار,Tren,Ferroviário,房价限制,components/BookingDialog.tsx,,translated
+Rail,Rail,قطار,Código,Código,房价限制,components/BookingDialog.tsx,,translated
 Raise a service ticket,Raise a service ticket,إنشاء تذكرة خدمة,Crear una solicitud de servicio,Abrir chamado de serviço,提交服务工单,,,translated
 Raise a ticket for {q}: {what}.,Raise a ticket for {q}: {what}.,افتح تذكرة لـ {q}: {what}.,Crea una solicitud de servicio para {q}: {what}.,Abra um chamado para {q}: {what}.,为 {q} 提交工单：{what}。,components/AgentGuide.tsx,q what,translated
 Raise invoice for {v0},Raise invoice for {v0},إصدار فاتورة بمبلغ {v0},Emitir factura por {v0},Emitir fatura de {v0},为 {v0} 开票,screens/Receivables.tsx,v0,translated
@@ -5130,8 +5167,8 @@ Rate Change,Rate Change,تغيير السعر,Cambio de tarifa,Alteração de ta
 Rate changes in house,Rate changes in house,تغييرات السعر أثناء الإقامة,Cambios de tarifa durante la estancia,Alterações de tarifa durante a estadia,在住房价变更,,,translated
 Rate check,Rate check,فحص الأسعار,Verificación de tarifas,Conferência de diárias,房价核对,,,translated
 Rate correction,Rate correction,تصحيح السعر,Corrección de tarifa,Correção de tarifa,房价修正,,,translated
-Rate Guardrail,Rate Guardrail,حد السعر,Límite de tarifa,Avaliar Guarda-corpo,房价限制,,,translated
-Rate Guardrails,Rate Guardrails,حدود الأسعار,Límites de tarifas,Avaliar Guarda-corpos,房价限制,,,translated
+Rate Guardrail,Rate Guardrail,حد السعر,Límite de tarifa,Limite Tarifário,房价限制,,,translated
+Rate Guardrails,Rate Guardrails,حدود الأسعار,Límites de tarifas,Limites Tarifários,房价限制,,,translated
 Rate per night,Rate per night,السعر لليلة,Tarifa por noche,Tarifa por noite,每晚房价,components/RoomChangeDialog.tsx,,translated
 Rate per pax,Rate per pax,السعر لكل شخص,Tarifa por persona,Taxa por pessoa,每人价格,screens/BanquetCatalogue.tsx,,translated
 Rate plan,Rate plan,خطة السعر,Plan tarifario,Plano tarifário,房价计划,components/BookingDialog.tsx; screens/ReservationDetail.tsx,,translated
@@ -6608,6 +6645,7 @@ Total for {n} night,Total for {n} night,المجموع لليلة {n},Total por 
 "Total for {n} night, taxes and fees included","Total for {n} night, taxes and fees included",المجموع لليلة {n}، شاملًا الضرائب والرسوم,"Total por {n} noche, impuestos y cargos incluidos","Total para {n} noite, impostos e taxas incluídos",{n} 晚合计，含税费,screens/PublicBooking.tsx,n,translated
 Total for {n} nights,Total for {n} nights,المجموع لـ {n} ليالٍ,Total por {n} noches,Total para {n} noites,{n} 晚合计,screens/PublicBooking.tsx,n,translated
 "Total for {n} nights, taxes and fees included","Total for {n} nights, taxes and fees included",المجموع لـ {n} ليالٍ، شاملًا الضرائب والرسوم,"Total por {n} noches, impuestos y cargos incluidos","Total para {n} noites, impostos e taxas incluídos",{n} 晚合计，含税费,screens/PublicBooking.tsx,n,translated
+Total nights included in the package,Total nights included in the package,,Noches totales incluidas en el paquete,Total de noites incluídas no pacote,,,,needs_translation
 Total revenue,Total revenue,إجمالي الإيرادات,Ingresos totales,Receita total,收入合计,screens/AuditPack.tsx; screens/Dashboard.tsx; screens/ManagementBooks.tsx,,translated
 total spend / guest · {pax} pax,total spend / guest · {pax} pax,إجمالي الإنفاق / ضيف · {pax} ضيف,gasto total / huésped · {pax} personas,gasto total / hóspede · {pax} pax,每位宾客总消费 · {pax} 人,screens/Reports.tsx,pax,translated
 Total Taxes (total_taxes_and_charges),Total Taxes (total_taxes_and_charges),إجمالي الضرائب (total_taxes_and_charges),Total de impuestos (total_taxes_and_charges),Total de impostos (total_taxes_and_charges),税额合计（total_taxes_and_charges）,,,translated
