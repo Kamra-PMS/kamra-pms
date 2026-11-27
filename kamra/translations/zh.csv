@@ -1583,6 +1583,7 @@ Still owed,仍欠
 "Still pending: {0}. Return everything, or deliver with a shortage note.",仍未送回：{0}。请全部送回，或附短缺说明后交付。
 Still to take: {0}.,仍需收取：{0}。
 Stock Posted,库存已扣减
+Stolen / Damaged Items,被盗 / 损坏物品
 Street,街道
 Subgroup,分组
 Subject,主题
@@ -2120,3 +2121,4 @@ The buying unit of {0} changed. Close the window and open it again.,{0} 的采�
 The unit of {0} changed. Close the window and open it again.,{0} 的单位已变更。请关闭窗口后重新打开。
 Give a buying unit both a name and how many {0} it holds.,请同时填写采购单位的名称及其包含的 {0} 数量。
 "{0} already has stock history or is on a recipe, so its unit stays {1}.",{0} 已有库存记录或已用于配方，因此单位保持为 {1}。
+

@@ -49,7 +49,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Charge Type",
-   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nTaxi\nEarly Check-in\nLate Checkout\nEarly Departure\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nMisc\nAllowance\nRate Adjustment\nOpening Balance",
+   "options": "Room\nMeal Plan\nFood & Beverage\nMinibar\nLaundry\nSpa\nTaxi\nEarly Check-in\nLate Checkout\nEarly Departure\nCleaning Fee\nExtra Guests\nPet Charge\nRoom Levy\nDiscount\nStolen / Damaged Items\nMisc\nAllowance\nRate Adjustment\nOpening Balance",
    "reqd": 1
   },
   {

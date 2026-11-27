@@ -161,6 +161,7 @@ Source,المصدر
 Statement of account,كشف حساب
 Statement of account from {0},كشف حساب من {0}
 Status,الحالة
+Stolen / Damaged Items,أغراض مسروقة / تالفة
 Subject,الموضوع
 Task,المهمة
 Tasks,المهام
@@ -279,3 +280,4 @@ The buying unit of {0} changed. Close the window and open it again.,تغيّرت
 The unit of {0} changed. Close the window and open it again.,تغيّرت وحدة {0}. أغلق النافذة وافتحها من جديد.
 Give a buying unit both a name and how many {0} it holds.,أعطِ وحدة الشراء اسماً وعدد ما تحتويه من {0}.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.",{0} له حركة مخزون سابقة أو موجود في وصفة، لذا تبقى وحدته {1}.
+

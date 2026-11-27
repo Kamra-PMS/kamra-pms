@@ -1,4 +1,5 @@
 "Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","Sự đồng ý nhận tin tiếp thị được thay đổi từ hồ sơ khách, trang đặt phòng hoặc khi khách trả lời STOP / START."
+Stolen / Damaged Items,Đồ bị mất cắp / hư hỏng
 This guest has no phone number on file.,Khách này chưa có số điện thoại trong hồ sơ.
 This guest has not agreed to marketing messages.,Khách này chưa đồng ý nhận tin nhắn tiếp thị.
 You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Bạn sẽ nhận ưu đãi từ {0} qua WhatsApp. Trả lời STOP bất cứ lúc nào để hủy đăng ký.
@@ -64,3 +65,4 @@ The buying unit of {0} changed. Close the window and open it again.,Đơn vị m
 The unit of {0} changed. Close the window and open it again.,Đơn vị của {0} đã thay đổi. Hãy đóng cửa sổ và mở lại.
 Give a buying unit both a name and how many {0} it holds.,Nhập cả tên đơn vị mua và số {0} mà nó chứa.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} đã có lịch sử kho hoặc có trong công thức, nên đơn vị vẫn là {1}."
+

@@ -1,4 +1,5 @@
 "Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","சந்தைப்படுத்தல் அப்ரூவல் கெஸ்ட் சுயவிவரம், புக்கிங் பக்கம் அல்லது STOP / START பதில் மூலம் மாற்றப்படும்."
+Stolen / Damaged Items,திருடப்பட்ட / சேதமடைந்த பொருட்கள்
 This guest has no phone number on file.,இந்த விருந்தினருக்குப் பதிவில் தொலைபேசி எண் இல்லை.
 This guest has not agreed to marketing messages.,இந்த கெஸ்ட் சந்தைப்படுத்தல் செய்திகளுக்கு ஒப்புக்கொள்ளவில்லை.
 You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,WhatsApp-இல் {0}-இலிருந்து சலுகைகளைப் பெறுவீர்கள். விலக எப்போது வேண்டுமானாலும் STOP என்று பதிலளிக்கவும்.
@@ -64,3 +65,4 @@ The buying unit of {0} changed. Close the window and open it again.,{0}-இன�
 The unit of {0} changed. Close the window and open it again.,{0}-இன் அலகு மாறிவிட்டது. சாளரத்தை மூடி மீண்டும் திறக்கவும்.
 Give a buying unit both a name and how many {0} it holds.,வாங்கும் அலகுக்குப் பெயரும் அதில் எத்தனை {0} உள்ளன என்பதும் கொடுக்கவும்.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0}-க்கு ஏற்கனவே சரக்கு வரலாறு உள்ளது அல்லது அது ரெசிபியில் உள்ளது, எனவே அதன் அலகு {1} ஆகவே இருக்கும்."
+

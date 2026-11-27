@@ -7138,6 +7138,7 @@
   "Price per unit": "प्रति यूनिट कीमत",
   "Purchases": "खरीद",
   "Stock units per buying unit": "प्रति खरीद यूनिट स्टॉक यूनिट",
+  "Stolen / Damaged Items": "चोरी / क्षतिग्रस्त सामान",
   "Supplier, invoice": "सप्लायर, इनवॉइस",
   "The one unit stock and recipes use, such as g, ml, pc or shot. It locks once stock or a recipe uses it.": "वह एक यूनिट जो स्टॉक और रेसिपी इस्तेमाल करते हैं, जैसे g, ml, pc या shot। स्टॉक या रेसिपी में आने पर यह लॉक हो जाती है।",
   "Updated when stock is received (Settings, F&B: last price or average). Change it here to set it yourself.": "स्टॉक प्राप्त होने पर अपडेट होती है (सेटिंग्स, F&B: आख़िरी कीमत या औसत)। खुद तय करने के लिए यहाँ बदलें।"

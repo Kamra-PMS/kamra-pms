@@ -1060,7 +1060,7 @@ export const transactionCodesConfig: ScreenConfig = {
       options: [
         "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
         "Early Check-in", "Late Checkout", "Early Departure", "Cleaning Fee", "Extra Guests",
-        "Pet Charge", "Room Levy", "Discount", "Misc", "Allowance", "Opening Balance",
+        "Pet Charge", "Room Levy", "Discount", "Stolen / Damaged Items", "Misc", "Allowance", "Opening Balance",
       ],
       hint: "Maps to Folio Charge.charge_type for display on older lines." },
     { field: "disabled", label: "Disabled", type: "check",

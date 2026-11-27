@@ -9,6 +9,7 @@ No payment link has been sent for this booking.,No se envió ningún enlace de p
 Only a housekeeping supervisor can pass an inspection or verify a clean.,Solo un supervisor de pisos puede aprobar una inspección o verificar una limpieza.
 Only a housekeeping supervisor can assign tasks.,Solo un supervisor de pisos puede asignar tareas.
 Say why the company changes - it goes on the record.,Indique por qué cambia la empresa: queda registrado.
+Stolen / Damaged Items,Artículos robados / dañados
 move must be rules or guest.,move debe ser rules o guest.
 The stay already bills to that company.,La estancia ya se factura a esa empresa.
 Pick an active company.,Elija una empresa activa.
@@ -1145,3 +1146,4 @@ The buying unit of {0} changed. Close the window and open it again.,La unidad de
 The unit of {0} changed. Close the window and open it again.,La unidad de {0} cambió. Cierre la ventana y ábrala de nuevo.
 Give a buying unit both a name and how many {0} it holds.,Indique el nombre de la unidad de compra y cuántos {0} contiene.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} ya tiene historial de existencias o está en una receta, así que su unidad sigue siendo {1}."
+
