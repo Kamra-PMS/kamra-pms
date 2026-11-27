@@ -79,54 +79,64 @@ def _with_meta(html: str, path: str) -> str:
 	head_tags = list(tags)
 	body_tags = []
 
-	gtm_id = meta.get("gtm_id")
-	if gtm_id and re.match(r"^[A-Za-z0-9_-]+$", gtm_id):
-		head_tags.append(
-			"<!-- Google Tag Manager -->\n"
-			"<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':\n"
-			"new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],\n"
-			"j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=\n"
-			"'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);\n"
-			f"}})(window,document,'script','dataLayer','{gtm_id}');</script>\n"
-			"<!-- End Google Tag Manager -->"
-		)
-		body_tags.append(
-			"<!-- Google Tag Manager (noscript) -->\n"
-			f'<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={gtm_id}"\n'
-			'height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>\n'
-			"<!-- End Google Tag Manager (noscript) -->"
-		)
+	# Off by default: do not inject GTM / Meta / custom scripts until the
+	# hotel has opted in (guest consent collected, or handled in GTM).
+	if meta.get("tracking_consent_granted"):
+		gtm_id = meta.get("gtm_id")
+		if gtm_id and re.match(r"^GTM-[A-Z0-9]+$", gtm_id):
+			head_tags.append(
+				"<!-- Google Tag Manager -->\n"
+				"<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':\n"
+				"new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],\n"
+				"j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=\n"
+				"'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);\n"
+				f"}})(window,document,'script','dataLayer','{gtm_id}');</script>\n"
+				"<!-- End Google Tag Manager -->"
+			)
+			body_tags.append(
+				"<!-- Google Tag Manager (noscript) -->\n"
+				f'<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={gtm_id}"\n'
+				'height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>\n'
+				"<!-- End Google Tag Manager (noscript) -->"
+			)
 
-	pixel_id = meta.get("meta_pixel_id")
-	if pixel_id and re.match(r"^[0-9]+$", pixel_id):
-		head_tags.append(
-			"<!-- Meta Pixel Code -->\n"
-			"<script>\n"
-			"!function(f,b,e,v,n,t,s)\n"
-			"{if(f.fbq)return;n=f.fbq=function(){n.callMethod?\n"
-			"n.callMethod.apply(n,arguments):n.queue.push(arguments)};\n"
-			"if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\n"
-			"n.queue=[];t=b.createElement(e);t.async=!0;\n"
-			"t.src=v;s=b.getElementsByTagName(e)[0];\n"
-			"s.parentNode.insertBefore(t,s)}(window, document,'script',\n"
-			"'https://connect.facebook.net/en_US/fbevents.js');\n"
-			f"fbq('init', '{pixel_id}');\n"
-			"fbq('track', 'PageView');\n"
-			"</script>\n"
-			"<noscript><img height=\"1\" width=\"1\" style=\"display:none\"\n"
-			f'src="https://www.facebook.com/tr?id={pixel_id}&ev=PageView&noscript=1"\n'
-			"/></noscript>\n"
-			"<!-- End Meta Pixel Code -->"
-		)
+		pixel_id = meta.get("meta_pixel_id")
+		if pixel_id and re.match(r"^[0-9]+$", pixel_id):
+			head_tags.append(
+				"<!-- Meta Pixel Code -->\n"
+				"<script>\n"
+				"!function(f,b,e,v,n,t,s)\n"
+				"{if(f.fbq)return;n=f.fbq=function(){n.callMethod?\n"
+				"n.callMethod.apply(n,arguments):n.queue.push(arguments)};\n"
+				"if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\n"
+				"n.queue=[];t=b.createElement(e);t.async=!0;\n"
+				"t.src=v;s=b.getElementsByTagName(e)[0];\n"
+				"s.parentNode.insertBefore(t,s)}(window, document,'script',\n"
+				"'https://connect.facebook.net/en_US/fbevents.js');\n"
+				f"fbq('init', '{pixel_id}');\n"
+				"fbq('track', 'PageView');\n"
+				"</script>\n"
+				"<noscript><img height=\"1\" width=\"1\" style=\"display:none\"\n"
+				f'src="https://www.facebook.com/tr?id={pixel_id}&ev=PageView&noscript=1"\n'
+				"/></noscript>\n"
+				"<!-- End Meta Pixel Code -->"
+			)
 
-	if meta.get("custom_header_script"):
-		head_tags.append(meta["custom_header_script"])
+		if meta.get("custom_header_script"):
+			head_tags.append(meta["custom_header_script"])
 
-	if meta.get("custom_body_script"):
-		body_tags.append(meta["custom_body_script"])
+		if meta.get("custom_body_script"):
+			body_tags.append(meta["custom_body_script"])
 
 	if body_tags:
-		html = re.sub(r"(<body[^>]*>)", r"\1\n" + "\n".join(body_tags) + "\n", html, count=1, flags=re.IGNORECASE)
+		# Function replacement: a string with \1 (or other backrefs) in the
+		# custom HTML must not be parsed as a re.sub replacement template.
+		body_html = "\n" + "\n".join(body_tags) + "\n"
+
+		def _inject_after_body(match):
+			return match.group(0) + body_html
+
+		html = re.sub(r"(<body[^>]*>)", _inject_after_body, html, count=1, flags=re.IGNORECASE)
 
 	return html.replace("</head>", "".join(head_tags) + "</head>", 1)
 
@@ -166,6 +176,7 @@ def _guest_meta(slug: str | None) -> dict | None:
 		"description": " ".join(description.split())[:160],
 		"lang": public_booking_language(prop.get("booking_language")),
 		"image": prop.get("og_image") or prop.get("hero_image") or prop.get("logo_url"),
+		"tracking_consent_granted": int(prop.get("tracking_consent_granted") or 0),
 		"gtm_id": (prop.get("google_tag_manager_id") or "").strip(),
 		"meta_pixel_id": (prop.get("meta_pixel_id") or "").strip(),
 		"custom_header_script": (prop.get("custom_header_script") or "").strip(),

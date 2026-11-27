@@ -3426,19 +3426,7 @@ Keys {range} · {all} all,Keys {range} · {all} all,المفاتيح {range} · 
 Keys: between 1 and 10.,Keys: between 1 and 10.,المفاتيح: بين 1 و10.,Llaves: entre 1 y 10.,Chaves: entre 1 e 10.,房卡：1 至 10 张。,,,translated
 Kind,Kind,النوع,Tipo,Tipo,类型,screens/BanquetRegisters.tsx; screens/CashierBoard.tsx; screens/CashierShiftReport.tsx; screens/CashierTill.tsx; screens/banquet/Economics.tsx,,translated
 King,King,كينغ,King,Rei,大床,,,translated
-"King bed
-Lake view
-Free Wi-Fi","King bed
-Lake view
-Free Wi-Fi","سرير كينج
-إطلالة على البحيرة
-واي فاي مجاني","Cama king
-Vista al lago
-Wifi gratuito","Cama king size
-Vista para o lago
-Wi-Fi grátis","大床
-湖景
-免费 Wi-Fi",components/RoomTypeMedia.tsx,,translated
+King bedLake viewFree Wi-Fi,King bedLake viewFree Wi-Fi,سرير كينجإطلالة على البحيرةواي فاي مجاني,Cama kingVista al lagoWifi gratuito,Cama king sizeVista para o lagoWi-Fi grátis,大床湖景免费 Wi-Fi,components/RoomTypeMedia.tsx,,translated
 Kitchen,Kitchen,مطبخ,Cocina,Cozinha,厨房,../../kamra/settings.py; components/RoomDrawer.tsx,,translated
 kitchen average,kitchen average,متوسط المطبخ,promedio de cocina,média da cozinha,厨房平均用时,screens/PosDashboard.tsx,,translated
 Kitchen Display,Kitchen Display,شاشة المطبخ,Pantalla de cocina,Expositor de cozinha,厨房显示屏,screens/KitchenPrinters.tsx,,translated
@@ -6199,31 +6187,7 @@ Supplier bills the hotel pays later. Cash paid from the till stays in Petty Cash
 Supplier's bill number,Supplier's bill number,رقم فاتورة المورد,Número de factura del proveedor,Número da fatura do fornecedor,供应商账单号,,,translated
 Supplies,Supplies,المستلزمات,Suministros,Suprimentos,用品,,,translated
 swap room,swap room,تبديل الغرفة,cambiar habitación,trocar quarto,换房,,,translated
-"Swimming Pool
-Free Parking
-Complimentary Wi-Fi
-Fine-dining Restaurant
-Spa & Wellness","Swimming Pool
-Free Parking
-Complimentary Wi-Fi
-Fine-dining Restaurant
-Spa & Wellness","مسبح
-موقف سيارات مجاني
-واي فاي مجاني
-مطعم راقٍ
-سبا وعافية","Piscina
-Estacionamiento gratuito
-Wifi de cortesía
-Restaurante de alta cocina
-Spa y bienestar","Piscina
-Estacionamento Gratuito
-Wi-Fi gratuito
-Restaurante requintado
-Spa e Bem-Estar","游泳池
-免费停车
-免费 Wi-Fi
-精致餐厅
-水疗与康体",screens/BookingEngine.tsx,,translated
+Swimming PoolFree ParkingComplimentary Wi-FiFine-dining RestaurantSpa & Wellness,Swimming PoolFree ParkingComplimentary Wi-FiFine-dining RestaurantSpa & Wellness,مسبحموقف سيارات مجانيواي فاي مجانيمطعم راقٍسبا وعافية,PiscinaEstacionamiento gratuitoWifi de cortesíaRestaurante de alta cocinaSpa y bienestar,PiscinaEstacionamento GratuitoWi-Fi gratuitoRestaurante requintadoSpa e Bem-Estar,游泳池免费停车免费 Wi-Fi精致餐厅水疗与康体,screens/BookingEngine.tsx,,translated
 Switch app,Switch app,تبديل التطبيق,Cambiar aplicación,Trocar de aplicativo,切换应用,AppShell.tsx,,translated
 Switch between the front and back camera,Switch between the front and back camera,التبديل بين الكاميرا الأمامية والخلفية,Cambiar entre la cámara frontal y trasera,Alternar entre a câmera frontal e traseira,切换前后摄像头,components/CameraCapture.tsx,,translated
 Switch camera,Switch camera,تبديل الكاميرا,Cambiar cámara,Trocar câmera,切换摄像头,components/CameraCapture.tsx,,translated
@@ -7226,17 +7190,21 @@ ZATCA: still needed for valid e-invoices - {fields}.,ZATCA: still needed for val
 "Zero balance: use Quick check out above, or Check out on the row.","Zero balance: use Quick check out above, or Check out on the row.",رصيد صفري: استخدم المغادرة السريعة أعلاه، أو تسجيل المغادرة في الصف.,Saldo cero: utilice Salida rápida arriba o Registrar salida en la fila.,Saldo zero: use Check-out rápido acima ou Check-out na linha.,余额为零：使用上方「快速退房」，或在行上点击「退房」。,,,translated
 Zero-rate and complimentary rooms,Zero-rate and complimentary rooms,غرف بسعر صفر ومجانية,Habitaciones con tarifa cero y de cortesía,Quartos cortesia ou com diária zerada,零房价与免单客房,screens/AuditPack.tsx,,translated
 Zero-rated on purpose,Zero-rated on purpose,خاضع لنسبة صفرية عمدًا,Tasa cero aplicada intencionalmente,Classificação zero propositalmente,确认为零税率,screens/BanquetFunction.tsx,,translated
-"Analytics & Tracking","Analytics & Tracking",,"Analítica y seguimiento","Análise e Rastreamento",,screens/BookingEngine.tsx,,needs_translation
-"Container ID for Google Tag Manager or GA4 measurement ID.","Container ID for Google Tag Manager or GA4 measurement ID.",,"ID de contenedor de Google Tag Manager o ID de medición de GA4.","ID do contêiner do Google Tag Manager ou ID de medição do GA4.",,screens/BookingEngine.tsx,,needs_translation
-"Custom Body Tracking Code (<body>)","Custom Body Tracking Code (<body>)",,"Código de seguimiento personalizado en el cuerpo (<body>)","Código de rastreamento personalizado no corpo (<body>)",,screens/BookingEngine.tsx,,needs_translation
-"Custom Header Tracking Code (<head>)","Custom Header Tracking Code (<head>)",,"Código de seguimiento personalizado en el encabezado (<head>)","Código de rastreamento personalizado no cabeçalho (<head>)",,screens/BookingEngine.tsx,,needs_translation
+Analytics & Tracking,Analytics & Tracking,,Analítica y seguimiento,Análise e Rastreamento,,screens/BookingEngine.tsx,,needs_translation
+Custom Body Tracking Code (<body>),Custom Body Tracking Code (<body>),,Código de seguimiento personalizado en el cuerpo (<body>),Código de rastreamento personalizado no corpo (<body>),,screens/BookingEngine.tsx,,needs_translation
+Custom Header Tracking Code (<head>),Custom Header Tracking Code (<head>),,Código de seguimiento personalizado en el encabezado (<head>),Código de rastreamento personalizado no cabeçalho (<head>),,screens/BookingEngine.tsx,,needs_translation
 Facebook & Instagram Pixel ID for retargeting and ad conversion tracking.,Facebook & Instagram Pixel ID for retargeting and ad conversion tracking.,,ID del píxel de Facebook e Instagram para retargeting y seguimiento de conversiones de anuncios.,ID do pixel do Facebook e Instagram para retargeting e rastreamento de conversões de anúncios.,,screens/BookingEngine.tsx,,needs_translation
-Google Tag Manager / GA4 ID,Google Tag Manager / GA4 ID,,ID de Google Tag Manager / GA4,ID do Google Tag Manager / GA4,,screens/BookingEngine.tsx,,needs_translation
-"Injected before </head> on public booking pages (TikTok Pixel, verification tags, custom scripts).","Injected before </head> on public booking pages (TikTok Pixel, verification tags, custom scripts).",,"Inyectado antes de </head> en las páginas públicas de reservas (píxel de TikTok, etiquetas de verificación, scripts personalizados).","Injetado antes de </head> nas páginas públicas de reservas (Pixel do TikTok, tags de verificação, scripts personalizados).",,screens/BookingEngine.tsx,,needs_translation
 Injected immediately after <body> on public booking pages.,Injected immediately after <body> on public booking pages.,,Inyectado inmediatamente después de <body> en las páginas públicas de reservas.,Injetado imediatamente após <body> nas páginas públicas de reservas.,,screens/BookingEngine.tsx,,needs_translation
 Measure visitors, ad campaign performance and booking engine conversion events.,Measure visitors, ad campaign performance and booking engine conversion events.,,Mida visitantes, rendimiento de campañas publicitarias y eventos de conversión del motor de reservas.,Avalie visitantes, desempenho de campanhas publicitárias e eventos de conversão do motor de reservas.,,screens/BookingEngine.tsx,,needs_translation
 Meta Pixel ID,Meta Pixel ID,,ID del píxel de Meta,ID do Pixel da Meta,,screens/BookingEngine.tsx,,needs_translation
-"e.g. 123456789012345","e.g. 123456789012345",,"p. ej., 123456789012345","ex.: 123456789012345",,screens/BookingEngine.tsx,,needs_translation
-"e.g. <noscript><iframe src="..."></iframe></noscript>","e.g. <noscript><iframe src="..."></iframe></noscript>",,"p. ej., <noscript><iframe src="..."></iframe></noscript>","ex.: <noscript><iframe src="..."></iframe></noscript>",,screens/BookingEngine.tsx,,needs_translation
-"e.g. <script>...</script> or <meta name="google-site-verification" content="..." />","e.g. <script>...</script> or <meta name="google-site-verification" content="..." />",,"p. ej., <script>...</script> o <meta name="google-site-verification" content="..." />","ex.: <script>...</script> ou <meta name="google-site-verification" content="..." />",,screens/BookingEngine.tsx,,needs_translation
-e.g. GTM-XXXXXXX or G-XXXXXXXXXX,e.g. GTM-XXXXXXX or G-XXXXXXXXXX,,p. ej., GTM-XXXXXXX o G-XXXXXXXXXX,ex.: GTM-XXXXXXX ou G-XXXXXXXXXX,,screens/BookingEngine.tsx,,needs_translation
+e.g. 123456789012345,e.g. 123456789012345,,"p. ej., 123456789012345",ex.: 123456789012345,,screens/BookingEngine.tsx,,needs_translation
+"e.g. <noscript><iframe src=...""></iframe></noscript>""","e.g. <noscript><iframe src=...""></iframe></noscript>""",,"p. ej., <noscript><iframe src=...""></iframe></noscript>""","ex.: <noscript><iframe src=...""></iframe></noscript>""",,screens/BookingEngine.tsx,,needs_translation
+"e.g. <script>...</script> or <meta name=google-site-verification"" content=""..."" />""","e.g. <script>...</script> or <meta name=google-site-verification"" content=""..."" />""",,"p. ej., <script>...</script> o <meta name=google-site-verification"" content=""..."" />""","ex.: <script>...</script> ou <meta name=google-site-verification"" content=""..."" />""",,screens/BookingEngine.tsx,,needs_translation
+Guest tracking consent is in place,Guest tracking consent is in place,,El consentimiento de seguimiento del huésped está en vigor,O consentimento de rastreamento do hóspede está em vigor,,screens/BookingEngine.tsx,,needs_translation
+"Off by default. Turn on only when guests can consent, or when consent is handled in GTM. Until then, GTM, Meta Pixel, custom scripts and booking conversion events stay off.","Off by default. Turn on only when guests can consent, or when consent is handled in GTM. Until then, GTM, Meta Pixel, custom scripts and booking conversion events stay off.",,"Desactivado por defecto. Actívelo solo cuando los huéspedes puedan consentir, o cuando el consentimiento se gestione en GTM. Hasta entonces, GTM, Meta Pixel, scripts personalizados y eventos de conversión de reservas permanecen desactivados.","Desligado por padrão. Ative somente quando os hóspedes puderem consentir, ou quando o consentimento for tratado no GTM. Até lá, GTM, Meta Pixel, scripts personalizados e eventos de conversão de reservas permanecem desligados.",,screens/BookingEngine.tsx,,needs_translation
+Google Tag Manager ID,Google Tag Manager ID,,ID de Google Tag Manager,ID do Google Tag Manager,,screens/BookingEngine.tsx,,needs_translation
+e.g. GTM-XXXXXXX,e.g. GTM-XXXXXXX,,"p. ej., GTM-XXXXXXX",ex.: GTM-XXXXXXX,,screens/BookingEngine.tsx,,needs_translation
+"GTM container ID only (GTM-…). For GA4 (G-…), paste gtag.js in Custom Header Tracking Code.","GTM container ID only (GTM-…). For GA4 (G-…), paste gtag.js in Custom Header Tracking Code.",,"Solo ID de contenedor GTM (GTM-…). Para GA4 (G-…), pegue gtag.js en el código de seguimiento del encabezado personalizado.","Somente ID do contêiner GTM (GTM-…). Para GA4 (G-…), cole o gtag.js no código de rastreamento do cabeçalho personalizado.",,screens/BookingEngine.tsx,,needs_translation
+Warning: custom header and body code runs as script on every guest booking page. Only a System Manager can edit these fields.,Warning: custom header and body code runs as script on every guest booking page. Only a System Manager can edit these fields.,,Advertencia: el código personalizado de encabezado y cuerpo se ejecuta como script en cada página de reservas para huéspedes. Solo un System Manager puede editar estos campos.,Aviso: o código personalizado de cabeçalho e corpo é executado como script em cada página de reservas para hóspedes. Somente um System Manager pode editar esses campos.,,screens/BookingEngine.tsx,,needs_translation
+"Injected before </head> on public booking pages (gtag.js, TikTok Pixel, verification tags, custom scripts).","Injected before </head> on public booking pages (gtag.js, TikTok Pixel, verification tags, custom scripts).",,"Inyectado antes de </head> en las páginas públicas de reservas (gtag.js, píxel de TikTok, etiquetas de verificación, scripts personalizados).","Injetado antes de </head> nas páginas públicas de reservas (gtag.js, Pixel do TikTok, tags de verificação, scripts personalizados).",,screens/BookingEngine.tsx,,needs_translation
+Custom header and body tracking scripts are System Manager only. Ask IT to paste gtag.js or other raw scripts there.,Custom header and body tracking scripts are System Manager only. Ask IT to paste gtag.js or other raw scripts there.,,Los scripts de seguimiento personalizados de encabezado y cuerpo son solo para System Manager. Pida a TI que pegue allí gtag.js u otros scripts.,Os scripts de rastreamento personalizados de cabeçalho e corpo são somente para System Manager. Peça à TI para colar gtag.js ou outros scripts ali.,,screens/BookingEngine.tsx,,needs_translation

@@ -47,7 +47,14 @@ const inr = (n: number) =>
   fmtAmount(n)
 const money = (n: number) => `${cur()}${inr(n)}`
 
-function trackEvent(name: string, payload: Record<string, unknown>) {
+function trackEvent(
+  name: string,
+  payload: Record<string, unknown>,
+  consentGranted?: boolean | number | null,
+) {
+  // Hotel must opt in (consent collected, or handled in GTM) before any
+  // Search / InitiateCheckout / Purchase reaches dataLayer or fbq.
+  if (!consentGranted) return
   try {
     const win = window as unknown as {
       dataLayer?: unknown[]
@@ -120,6 +127,7 @@ interface Showcase {
     meta_description: string | null
     og_image: string | null
     page_slug: string | null
+    tracking_consent_granted?: number | null
     google_tag_manager_id?: string | null
     meta_pixel_id?: string | null
   }
@@ -745,7 +753,7 @@ export default function PublicBooking() {
         adults: search.adults,
         children: search.children,
         rooms_count: rows.length,
-      })
+      }, data?.property.tracking_consent_granted)
       // a selection the new search can no longer sell is dropped
       const pick = linkPick.current
       if (pick) {
@@ -832,7 +840,7 @@ export default function PublicBooking() {
         check_out_date: checkOut,
         adults: search.adults,
         children: search.children,
-      })
+      }, data?.property.tracking_consent_granted)
     } catch (e) {
       setError(serverError(e))
     } finally {
@@ -1002,7 +1010,7 @@ export default function PublicBooking() {
         check_out_date: checkOut,
         adults: search.adults,
         children: search.children,
-      })
+      }, data?.property.tracking_consent_granted)
     }
   }
 

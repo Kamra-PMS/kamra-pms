@@ -105,6 +105,7 @@
   "booking_language",
   "og_image",
   "page_slug",
+  "tracking_consent_granted",
   "google_tag_manager_id",
   "meta_pixel_id",
   "custom_header_script",
@@ -720,7 +721,14 @@
    "label": "Page Slug"
   },
   {
-   "description": "GTM container ID (e.g. GTM-XXXXXXX) or GA4 measurement ID (e.g. G-XXXXXXXXXX) for analytics and booking conversion tracking.",
+   "default": "0",
+   "description": "Off by default. Turn on only when guests can consent on the booking page, or when consent is handled inside GTM. Until then, GTM, Meta Pixel, custom scripts and booking conversion events stay off.",
+   "fieldname": "tracking_consent_granted",
+   "fieldtype": "Check",
+   "label": "Guest tracking consent is in place"
+  },
+  {
+   "description": "GTM container ID only (e.g. GTM-XXXXXXX). For GA4 (G-…), paste the gtag.js snippet in Custom Header Tracking Code.",
    "fieldname": "google_tag_manager_id",
    "fieldtype": "Data",
    "label": "Google Tag Manager ID"
@@ -732,16 +740,18 @@
    "label": "Meta Pixel ID"
   },
   {
-   "description": "Custom scripts, verification tags, or pixels injected before </head> on public booking pages.",
+   "description": "WARNING: runs as script on every guest booking page. System Manager only. Custom scripts, verification tags, gtag.js, or pixels injected before </head> on public booking pages.",
    "fieldname": "custom_header_script",
    "fieldtype": "Code",
-   "label": "Custom Header Tracking Code"
+   "label": "Custom Header Tracking Code",
+   "permlevel": 1
   },
   {
-   "description": "Custom code (e.g. <noscript> fallbacks) injected immediately after <body> on public booking pages.",
+   "description": "WARNING: runs as script on every guest booking page. System Manager only. Custom code (e.g. <noscript> fallbacks) injected immediately after <body> on public booking pages.",
    "fieldname": "custom_body_script",
    "fieldtype": "Code",
-   "label": "Custom Body Tracking Code"
+   "label": "Custom Body Tracking Code",
+   "permlevel": 1
   },
   {
    "fieldname": "overbooking_pct",
@@ -786,7 +796,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-23 10:00:00.000000",
+ "modified": "2026-11-27 06:20:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",
@@ -828,6 +838,12 @@
    "app_admin": 1,
    "view_modules": 1,
    "view_settings": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
   },
   {
    "create": 1,
