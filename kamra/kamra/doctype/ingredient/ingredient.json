@@ -17,6 +17,7 @@
   "cost_per_unit",
   "gst_rate",
   "is_active",
+  "unit_locked",
   "made_section",
   "is_made",
   "batch_qty",
@@ -91,6 +92,14 @@
    "default": "1"
   },
   {
+   "fieldname": "unit_locked",
+   "fieldtype": "Check",
+   "label": "Unit locked",
+   "is_virtual": 1,
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
    "fieldname": "made_section",
    "fieldtype": "Section Break",
    "label": "Made here"
@@ -119,7 +128,7 @@
   }
  ],
  "links": [],
- "modified": "2026-11-26 23:30:00.000000",
+ "modified": "2026-11-27 18:08:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Ingredient",
