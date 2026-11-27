@@ -119,7 +119,7 @@ def guest_documents(guest: str, scope=None) -> dict:
 # endpoint rather than a /private/files link. All three are optional.
 
 GUEST_FILES = {"photo": "photo", "id": "id_file", "address": "address_proof_file",
-               # a foreign guest's visa page or OCI card
+               # a foreign guest's visa / entry document (India: visa or OCI)
                "visa": "visa_file"}
 
 

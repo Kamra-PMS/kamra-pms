@@ -65,6 +65,7 @@ def erase_guest(guest: str, reason: str = "request") -> dict:
 	g = frappe.get_doc("Guest", guest)
 	alias = f"Guest {frappe.generate_hash(length=6).upper()}"
 	secrets = [s for s in {g.full_name, g.phone, g.email, g.id_number,
+	                       g.get("visa_number"),
 	                       f"{g.first_name or ''} {g.last_name or ''}".strip()} if s and len(s) >= 4]
 	reservations = frappe.get_all("Reservation", filters={"guest": guest}, pluck="name")
 	counts = {"files": 0, "messages": 0, "occupants": 0}

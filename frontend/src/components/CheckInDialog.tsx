@@ -93,15 +93,25 @@ interface Flow {
     id_used_count: number
     address: string
     has_photo: boolean
-    /** nationality is not the property country's own: record the visa / OCI card */
+    /** nationality is not the property country's own: record the visa / entry doc */
     foreign: boolean
     home_nationality: string[]
     visa_type: string | null
     visa_number: string | null
     visa_expiry_date: string | null
+    visa_status: "none" | "valid" | "expiring" | "expired"
     visa_on_file: boolean
+    /** false under Verify & Discard — profile uploads of ID/visa photos are refused */
+    keeps_id_images: boolean
   }
-  vocabulary: { id_types: string[] }
+  vocabulary: {
+    id_types: string[]
+    visa_types: string[]
+    visa_section: string
+    visa_hint: string
+    visa_number_label: string
+    visa_photo_label: string
+  }
   steps: Step[]
   /** Hard blockers only (room). */
   missing_required: string[]
@@ -225,13 +235,12 @@ const BUILT_IN: Record<string, { title: string; instruction: string }> = {
   },
 }
 
-// the Guest doctype's visa_type options
-const VISA_TYPES = ["Visa", "e-Visa", "OCI Card"]
-
-/** Not the property country's own nationality ("Indian" / "IND"); blank is not foreign. */
+/** Not the property country's own nationality ("Indian" / "IND"); blank is not foreign.
+ *  An empty home list (generic pack / no country) never marks anyone foreign. */
 function isForeign(nationality: string, home: string[]): boolean {
   const n = nationality.trim().toLowerCase()
-  return !!n && !home.some((h) => h.trim().toLowerCase() === n)
+  if (!n || home.length === 0) return false
+  return !home.some((h) => h.trim().toLowerCase() === n)
 }
 
 const PAYER_LABEL: Record<string, string> = {
@@ -486,7 +495,8 @@ export default function CheckInDialog(props: {
     if (f) {
       setDetailsDirty(false)
       setScanned(null)
-      setDetails((d) => ({ ...d, id_number: "" }))
+      // leave the masked numbers off the form so a re-save does not send bullets
+      setDetails((d) => ({ ...d, id_number: "", visa_number: "" }))
     }
     return !!f
   }
@@ -858,11 +868,28 @@ export default function CheckInDialog(props: {
               />
               {(isForeign(details.nationality, flow.guest.home_nationality) || !!flow.guest.visa_type) && (
                 <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-800">{t("Visa / OCI")}</p>
-                    <p className="text-xs text-zinc-500">
-                      {t("A foreign guest: record the visa or OCI card they entered on.")}
-                    </p>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-800">{t(flow.vocabulary.visa_section)}</p>
+                      <p className="text-xs text-zinc-500">
+                        {t(flow.vocabulary.visa_hint)}
+                      </p>
+                    </div>
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      {flow.guest.visa_status === "expired" && (
+                        <Badge tone="rose">{t("Expired {date}", { date: flow.guest.visa_expiry_date ?? "" })}</Badge>
+                      )}
+                      {flow.guest.visa_status === "expiring" && (
+                        <Badge tone="amber">{t("Expires {date}", { date: flow.guest.visa_expiry_date ?? "" })}</Badge>
+                      )}
+                      {details.visa_expiry_date && flow.reservation.check_out_date
+                        && details.visa_expiry_date < flow.reservation.check_out_date
+                        && flow.guest.visa_status !== "expired" && (
+                        <Badge tone="amber">
+                          {t("Ends before check-out ({date})", { date: details.visa_expiry_date })}
+                        </Badge>
+                      )}
+                    </span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <label className="block">
@@ -876,13 +903,17 @@ export default function CheckInDialog(props: {
                         }}
                       >
                         <option value="">{t("Choose…")}</option>
-                        {VISA_TYPES.map((v) => (
+                        {(flow.vocabulary.visa_types ?? []).map((v) => (
                           <option key={v} value={v}>{t(v)}</option>
                         ))}
                       </select>
                     </label>
                     <label className="block">
-                      <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Visa / OCI number")}</span>
+                      <span className="mb-1 block text-xs font-medium text-zinc-500">
+                        {flow.guest.visa_number
+                          ? t("New visa number (leave empty to keep)")
+                          : t(flow.vocabulary.visa_number_label)}
+                      </span>
                       <input
                         className={inputCls}
                         value={details.visa_number}
@@ -906,13 +937,13 @@ export default function CheckInDialog(props: {
                       />
                     </label>
                   </div>
-                  {flow.guest.name && (
+                  {flow.guest.name && flow.guest.keeps_id_images && (
                     <IdDocumentField
                       method="kamra.guest_documents.save_guest_file"
                       params={{ guest: flow.guest.name, kind: "visa" }}
                       uploaded={flow.guest.visa_on_file}
                       onUploaded={load}
-                      label={t("Photograph the visa or OCI card")}
+                      label={t(flow.vocabulary.visa_photo_label)}
                     />
                   )}
                 </div>

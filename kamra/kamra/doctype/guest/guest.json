@@ -182,19 +182,18 @@
    "collapsible": 1,
    "fieldname": "sb_visa",
    "fieldtype": "Section Break",
-   "label": "Visa / OCI (foreign guests)"
+   "label": "Visa (foreign guests)"
   },
   {
-   "description": "For a guest who is not a national of the property's country: the visa or OCI card they entered on.",
+   "description": "For a guest who is not a national of the property's country: one of the visa types the country pack accepts (India: Visa, e-Visa, OCI Card).",
    "fieldname": "visa_type",
-   "fieldtype": "Select",
-   "label": "Visa Type",
-   "options": "\nVisa\ne-Visa\nOCI Card"
+   "fieldtype": "Data",
+   "label": "Visa Type"
   },
   {
    "fieldname": "visa_number",
    "fieldtype": "Data",
-   "label": "Visa / OCI Number"
+   "label": "Visa Number"
   },
   {
    "fieldname": "column_break_visa",
@@ -206,10 +205,10 @@
    "label": "Visa Valid Until"
   },
   {
-   "description": "Private photo of the visa page or OCI card.",
+   "description": "Private photo of the visa page or entry document.",
    "fieldname": "visa_file",
    "fieldtype": "Attach",
-   "label": "Visa / OCI Document"
+   "label": "Visa Document"
   },
   {
    "fieldname": "guest_category",
@@ -260,7 +259,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-25 12:00:00.000000",
+ "modified": "2026-11-27 08:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Guest",
