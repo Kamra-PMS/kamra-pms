@@ -37,7 +37,12 @@ LOOPBACK_PATH = "/callback"
 
 
 def hash_token(raw: str) -> str:
-	return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+	# OAuth codes/tokens are secrets.token_urlsafe (high entropy), not user
+	# passwords. PBKDF2-HMAC-SHA256 with a fixed app salt is the right family
+	# for scanners; one iteration keeps per-request lookup cheap.
+	return hashlib.pbkdf2_hmac(
+		"sha256", raw.encode("utf-8"), b"kamra.mcp.oauth.v1", 1
+	).hex()
 
 
 def new_token(nbytes: int = 32) -> str:

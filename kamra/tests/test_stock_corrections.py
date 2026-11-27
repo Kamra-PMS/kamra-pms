@@ -420,7 +420,7 @@ class TestReads(WriterCase):
 		self.deliver(cups, 2, at=ago(days=3))
 		rows = inventory.ingredient_ledger(PROP_A, self.cafe, cups)
 		self.assertEqual([r.qty_change for r in rows], [1, 2])
-		self.assertTrue(rows[0].posted_at > rows[1].posted_at)
+		self.assertGreater(rows[0].posted_at, rows[1].posted_at)
 
 	def test_each_line_names_everything_in_its_entry(self):
 		cups = self.ingredient("UT Cups", "pc")

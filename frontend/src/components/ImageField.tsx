@@ -4,7 +4,11 @@ import { uploadFile } from "../lib/api"
 import { t as translate, useUILanguage } from "../lib/i18n"
 
 /** An image input that accepts an upload OR a pasted URL, with the
- * recommended size/format spelled out so galleries stay tidy. */
+ * recommended size/format spelled out so galleries stay tidy.
+ *
+ * Thumbnail is kept in local state and only set from uploadFile (a
+ * server path) — never from a pasted URL — so a javascript: paste
+ * cannot become an <img src>. */
 export default function ImageField(props: {
   label?: string
   hint: string
@@ -21,6 +25,7 @@ export default function ImageField(props: {
   const fileRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [thumb, setThumb] = useState<string | null>(null)
 
   const pick = async (f: File | undefined) => {
     if (!f) return
@@ -28,6 +33,7 @@ export default function ImageField(props: {
     setErr(null)
     try {
       const url = await uploadFile(f, props.attach)
+      setThumb(url)
       props.onChange(url)
       props.onUploaded?.(url)
     } catch (e) {
@@ -50,9 +56,9 @@ export default function ImageField(props: {
         </span>
       )}
       <div className="flex items-center gap-2">
-        {props.value ? (
+        {thumb ? (
           <img
-            src={props.value}
+            src={thumb}
             alt=""
             className="size-9 shrink-0 rounded-md border border-zinc-200 bg-zinc-50 object-cover"
           />
@@ -61,7 +67,10 @@ export default function ImageField(props: {
           className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:outline-2 focus:outline-offset-1 focus:outline-brand-600"
           placeholder={(props.placeholder ? translate(props.placeholder) : translate("Upload, or paste an image URL"))}
           value={props.value}
-          onChange={(e) => props.onChange(e.target.value)}
+          onChange={(e) => {
+            setThumb(null)
+            props.onChange(e.target.value)
+          }}
         />
         <button
           type="button"

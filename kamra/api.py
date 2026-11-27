@@ -6721,6 +6721,8 @@ def stay_rates(reservation: str) -> dict:
 		                    children=res.children, meal_plan=res.get("meal_plan"))
 		card = {str(n["date"]): n["rate"] for n in opts.get("nights") or []}
 	except frappe.ValidationError:
+		# rate card is optional chrome next to each night; keep the booking's
+		# own prices when the quote refuses (closed dates, stop-sell, …)
 		pass
 	nights = []
 	for r in sorted(res.get("night_rates") or [], key=lambda x: str(x.stay_date)):

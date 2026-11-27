@@ -16,7 +16,6 @@ from frappe.utils import add_days, nowdate
 from kamra.api import (
 	PriceConfirmationRequired,
 	create_booking,
-	get_quote,
 	set_stay_prices,
 	stay_prices_preview,
 	stay_rates,
