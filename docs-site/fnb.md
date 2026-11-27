@@ -195,7 +195,7 @@ the bill says **not sent**, **In kitchen** or **Prepared**.
 | Nothing sent to the kitchen | **Cancel** with a reason. The table is free at once. | The captain |
 | A line not sent yet | The bin icon on the line takes it off. No reason needed: nothing was cooked. | The captain |
 | Lines the kitchen has | **Void** the line, or **Cancel** the bill, with a void reason and a supervisor's approval. | A supervisor |
-| Paid, posted to a room or NC | Closed. Correct it on the folio, or refund. A bill on the wrong room moves with **Move to room** the same day. | Finance |
+| Paid, posted to a room or NC | Closed. A bill paid at the outlet can be [refunded](#refunds); a room bill is corrected on the room's bill. A bill on the wrong room moves with **Move to room** the same day. | Supervisor / Finance |
 
 **Nothing sent yet.** Open the bill, press **Cancel**, type why ("guests
 left before ordering") and press **Cancel bill**. The bill closes as
@@ -217,11 +217,58 @@ deleted. When you cancel the bill, or void a line with the cross icon:
    voided counts as wastage in kitchen inventory.
 
 A wrong supervisor PIN is refused and counts towards that supervisor's PIN
-lock. Supervisors set their PIN the first time a money action asks for it.
+lock. Supervisors set or change their PIN from the account menu (**Set my
+cashier PIN**), or the first time a money action asks for it.
 
 Every cancel and every void is in **Reports → Voids & Allowances** as
 *POS bill cancelled* or *POS void*, with who did it, who approved it and
 why, and on the F&B dashboard.
+
+## Refunds
+
+A bill **paid at the outlet** can be refunded from the bill view (**Orders**
+or **Order history**): press **Refund**.
+
+1. Pick **Whole bill** (everything left), **Chosen items** (quantities) or
+   **An amount**. Items give back their share of what was actually paid,
+   discount, service charge and tax included; the refund of the last item
+   takes whatever is left, so a full refund equals exactly what was paid.
+2. Pick the reason (**Other** needs a note) and how the money goes back: cash
+   for cash, the card machine for a card, otherwise the same way by hand,
+   cash or a bank transfer.
+3. The refund is approved by someone with the **Approve refunds** right
+   (Hotel Admin, F&B Manager, Finance and System Manager at first). The
+   property's **Require cashier PIN on money actions** setting decides
+   whether an approver signed in on the screen types a PIN:
+
+   | Signed in | Setting off | Setting on |
+   |---|---|---|
+   | Someone who can approve | Refunds directly, no PIN | Types their own PIN |
+   | Someone who can't (Front Desk, say) | An approver picks their name and types their PIN | The same |
+
+   An approver sets their PIN at any time from the account menu, **Set my
+   cashier PIN**, whether the setting is on or off: without one they can't
+   approve at someone else's screen. AI agents can't refund.
+
+- The money comes out of **your own open till**, even if the sale's till is
+  closed. Without tills, the refund record is the money record.
+- Hand over what the button says. If another refund on the bill changed the
+  figure meanwhile, nothing is paid: the window shows the new one to confirm.
+- If the connection drops, press again: the same refund is never paid twice.
+  Once the window shows it went through, close it before refunding more.
+- Items with [their own stock](#items-with-their-own-stock) can be ticked
+  **Back to stock**: the item itself returns, not what its choices took.
+  Dishes made from a recipe never return stock.
+- The bill shows **Partly refunded** or **Refunded** and lists each refund,
+  with a slip to print. A refund can't be edited or deleted, and the bill's
+  payment mode can no longer be changed.
+- Reports count a refund on the day the money went back: the F&B dashboard,
+  order history and its CSV, guest spend, the night audit's outlet figures,
+  profit and loss, custom reports (**POS refunds**) and **Voids &
+  Allowances**. Saudi sites issue a credit note per refund.
+- Bills paid before refunds existed can be refunded when the till records
+  what they took (or, without tills, at the tax rate on the day of the
+  upgrade). A room-charged bill is corrected on the room's bill instead.
 
 ## Orders list
 
@@ -437,10 +484,36 @@ stock them or put them on a recipe.
   received (see [Ingredient cost](#ingredient-cost)); change it here to set
   it yourself. Saving the form without touching the cost leaves it as it is.
 
+### Made here (semi-finished)
+
+Something your kitchen makes first and uses later, such as a syrup or a
+sauce, can be **made here**. Tick **Made here (semi-finished)**, say how much
+**one batch makes** (in its unit) and list what a batch is **made from**, for
+example 1,000 ml of syrup from 500 g sugar and 600 ml water.
+
+- It is made from **bought** ingredients only: one made item cannot go into
+  another. Dishes and banquet dishes then use the syrup like any ingredient,
+  so selling a latte takes syrup stock, not sugar.
+- Its **cost** is worked out from the recipe and cannot be typed: the cost of
+  one batch divided by what it makes. It follows when a part's cost or the
+  recipe changes, a moment after the change is saved. While any part has no
+  cost it has none, and the recipe screen names the part.
+- It **cannot be received** as a delivery. If you sometimes buy it ready, keep
+  the bought one as a second ingredient.
+- **Made here** cannot be switched once there is stock history, and the unit
+  locks while it has a recipe.
+
+**Record a batch** with **Produce** in Kitchen inventory: pick the outlet,
+what was made, how much, and when. The window shows what it will use and
+warns when there is not enough; it still saves, and that stock goes below
+zero. The batch adds the made quantity and takes each part in proportion (to 3
+decimals). Producing needs the right to manage stock.
+
 ## Kitchen inventory
 
 **F&B → Kitchen Inventory** is stock at each outlet: on hand, par level,
-**Receive**, **Stock take**, **Wastage** and the **Ledger**.
+**Receive**, **Stock take**, **Wastage**, **Produce** (for what is
+[made here](#made-here-semi-finished)) and the **Ledger**.
 
 ![Kitchen inventory: each ingredient's stock on hand, par level and status, with Receive, Stock take and Wastage](/img/fnb/inventory.png)
 
@@ -456,8 +529,28 @@ Each row shows status (OK, low, out or negative) against its par level.
 To set that level, select the figure (or **Set**) in the **Par** column;
 0 means no warning. Recipes are set on the **Menu** screen (**Recipes**).
 
+Each dish with a recipe shows there what one portion **costs** today and the
+**margin** left from its menu price (before tax and service charge). The cost
+is each line's quantity times that ingredient's cost, added up. If any of its
+ingredients has no cost yet, no total is shown and the screen names it. Costs
+show to people who can see stock. Nothing is saved on the dish or on bills.
+
+### Items with their own stock
+
+Something sold as it is bought, such as bottled water, can **track its own
+stock**. In **Recipes**, pick the item and choose **Track this item's own
+stock**: make a new stock item (unit, cost, buying unit), or use one that
+exists, such as the same bottle at another outlet. Its recipe is then fixed at
+one of that item, so receiving, stock takes, wastage and cost work on it as on
+any ingredient. A dish already made of one of something can adopt it. **Stop
+tracking** removes the link and the recipe; the stock item and its history
+stay. The till says when such an item has nothing left, and still sells it.
+Switching it needs the rights to edit the menu and to manage stock.
+
 - Ingredients leave stock when the KOT is sent - when cooking starts - not
-  when the bill is paid.
+  when the bill is paid. A line **never sent** to the kitchen (a bottle sold
+  and paid at the counter, say) leaves when its bill closes: paid, charged
+  to a room, or complimentary.
 - A line voided after it was sent counts as **wastage**, not a reversal:
   the food was made.
 - A shortage never blocks an order. It's reported, and a dish is never
@@ -472,6 +565,41 @@ what it costs. Leave the price empty to keep the cost; enter 0 for free goods.
 The **Ledger** has two tabs. **All movements** is this outlet's history, with
 the price on delivery lines. **Purchases** lists every outlet's deliveries:
 what was bought, the price, the supplier and invoice, and the cost after each.
+
+### Dating and cancelling entries
+
+**Receive**, **Stock take**, **Wastage** and **Produce** take a **Date and
+time**. Leave it
+empty for now, or pick a moment in the past. A stock take is true for its
+moment: if something dated earlier is entered or cancelled afterwards, the
+counted figure stays and its difference is worked out again. A stock take
+with no difference is saved for the same reason. The history is ordered by
+when things happened and says when a line was typed later, and by whom.
+
+Whoever holds **Cancel Stock** (Hotel Admin and System Manager at first) can
+**Cancel** a delivery, a stock take, a wastage or a batch from the ledger. A
+delivery, stock take or batch goes as a whole; enter it again if only one line
+was wrong. The
+cancelled lines stay, struck through, with who, when and why. Kitchen and
+banquet usage is put right with a stock take instead.
+
+A back-dated delivery is costed with the stock and cost as they are now;
+with **Last price paid** it does not replace the price of a newer-dated
+delivery. Cancelling a delivery takes its price out of the cost only while the
+cost is still the one it set. Otherwise the screen asks you to check the cost.
+
+### Stock summary
+
+The **Summary** tab shows a period for one outlet or **All outlets** (one row
+per ingredient per outlet): **Beginning** stock, **Purchases** (deliveries),
+**Production** (batches made, and what they used), **Used** (kitchen and
+banquet usage, less bottles returned by refunds), **Wastage**, **Adjustment**
+(stock-take differences), and **Ending**, which is the beginning plus those
+five. Pick Today, Yesterday, This or Last week (weeks
+start Monday), This or Last month, or Custom; days are the dates entries are
+dated, so a back-dated entry changes its past period. **Low only** keeps what
+is at or below its low-stock level now. Select a row to see its history for the
+period, or **Export CSV**.
 
 ### Ingredient cost
 
@@ -495,7 +623,9 @@ today's ingredient prices.
 a range of up to 92 days): gross sales, average bill,
 covers, open bills, complimentary bills, the kitchen's average send-to-ready
 time, sales by order type and by payment, top items, and every NC bill,
-voided line and cancelled bill with its reason.
+voided line and cancelled bill with its reason. When money was given back in
+the period it also shows **Refunds** and **Net sales**, takes them off the
+payment totals and drops refunded items from the top items.
 
 ![The F&B dashboard](/img/fnb/dashboard.png)
 

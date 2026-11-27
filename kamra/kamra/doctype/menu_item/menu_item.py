@@ -4,11 +4,13 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import flt
 
 
 class MenuItem(Document):
 	def validate(self):
 		self.check_modifier_groups()
+		self.keep_own_stock()
 
 	def check_modifier_groups(self):
 		"""A dish offers its own outlet's groups, each once. A group from
@@ -25,3 +27,22 @@ class MenuItem(Document):
 			if outlet != self.outlet:
 				frappe.throw(_("{0}: {1} belongs to another outlet.")
 				             .format(self.item_name, row.modifier_group))
+
+	def keep_own_stock(self):
+		"""An item that tracks its own stock is one stock item behind a fixed
+		one-line recipe, never edited apart. Here and not only in the API,
+		because the menu form saves through REST."""
+		before = self.get_doc_before_save()
+		was = before.stock_ingredient if before else None
+		if (self.stock_ingredient or None) != (was or None) \
+				and not self.flags.ignore_permissions:
+			from kamra.inventory import require_stock_rights
+			require_stock_rights()
+		if not self.stock_ingredient:
+			return
+		if frappe.db.get_value("Ingredient", self.stock_ingredient, "property") != self.property:
+			frappe.throw(_("{0} belongs to another property.").format(self.stock_ingredient))
+		if [(r.ingredient, flt(r.qty)) for r in self.recipe] != [(self.stock_ingredient, 1.0)]:
+			frappe.throw(_(
+				"{0} tracks its own stock: its recipe is that one item. Stop tracking to change it."
+			).format(self.item_name))

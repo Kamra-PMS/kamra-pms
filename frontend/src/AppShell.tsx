@@ -5,6 +5,7 @@ import {
   IndianRupee,
   KeyRound,
   LayoutGrid,
+  LockKeyhole,
   LogOut,
   Menu,
   Moon,
@@ -51,6 +52,8 @@ import { getSiteInfo, versionLabel } from "./lib/siteInfo"
 import AlertSettings from "./components/AlertSettings"
 import NotificationHost from "./components/NotificationHost"
 import NotificationBell from "./components/NotificationBell"
+import CashierPinDialog from "./components/CashierPinDialog"
+import { useCashierAuth } from "./lib/cashierAuth"
 
 
 // On-demand UI kept out of the entry chunk: the booking dialog opens on
@@ -127,6 +130,8 @@ function AccountMenu({
   const { t } = useT()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const { status: pinStatus, refresh: refreshPinStatus } = useCashierAuth()
+  const [settingPin, setSettingPin] = useState(false)
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains("dark"),
   )
@@ -230,6 +235,20 @@ function AccountMenu({
             <KeyRound className="size-4 shrink-0 text-zinc-500" aria-hidden />
             {t("Change password")}
           </button>
+          {pinStatus?.approves && (
+            <button
+              type="button"
+              role="menuitem"
+              className={itemCls}
+              onClick={() => {
+                setOpen(false)
+                setSettingPin(true)
+              }}
+            >
+              <LockKeyhole className="size-4 shrink-0 text-zinc-500" aria-hidden />
+              {t("Set my cashier PIN")}
+            </button>
+          )}
           <div className="my-1 border-t border-zinc-100" />
           <button
             type="button"
@@ -244,6 +263,10 @@ function AccountMenu({
             {t("Sign out")}
           </button>
         </div>
+      )}
+      {settingPin && (
+        <CashierPinDialog onClose={() => setSettingPin(false)}
+          onSaved={() => { setSettingPin(false); void refreshPinStatus() }} />
       )}
     </div>
   )

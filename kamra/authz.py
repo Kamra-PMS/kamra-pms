@@ -683,6 +683,10 @@ def cashier_unlock_status(property: str) -> dict:
 		"required": required,
 		"has_pin": has_pin,
 		"must_reset": must_reset,
+		# may approve at someone else's till, so setting a PIN is worth offering
+		# even where the property asks no PIN of its own staff
+		"approves": any(is_supervisor(user, perm) for perm in (
+			APPROVE, POS_APPROVE, ("POS Order", "approve_refunds"))),
 		"locked": locked,
 		"unlocked": unlocked or not required or user == "Administrator",
 		# how long an unlock lasts here (Settings -> Finance, pin_lock_minutes)

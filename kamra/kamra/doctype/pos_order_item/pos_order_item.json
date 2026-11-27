@@ -21,6 +21,7 @@
   "prepared_at",
   "picked_up_at",
   "stock_posted",
+  "stock_item",
   "voided",
   "void_reason",
   "void_seen",
@@ -125,7 +126,14 @@
    "fieldtype": "Check",
    "label": "Stock Posted",
    "read_only": 1,
-   "description": "This line's recipe has come off the outlet's stock. Set when the line is fired and never cleared - cooked food cannot be un-cooked, so no void, cancel or recall puts it back."
+   "description": "This line's recipe has come off the outlet's stock. Set when the line is fired - or when the bill closes, for a line never sent - and never cleared: cooked food cannot be un-cooked, so no void, cancel or recall puts it back."
+  },
+  {
+   "fieldname": "stock_item",
+   "fieldtype": "Data",
+   "label": "Own Stock Taken",
+   "read_only": 1,
+   "description": "For an item with its own stock: the stock item this line took."
   },
   {
    "fieldname": "voided",
@@ -163,7 +171,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-11-25 22:00:00.000000",
+ "modified": "2026-11-26 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order Item",
