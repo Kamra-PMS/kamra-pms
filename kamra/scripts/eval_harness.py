@@ -12032,6 +12032,21 @@ def t_change_booking_guest():
 		frappe.db.set_value("Reservation", res.name, "status", "Confirmed")
 
 
+@check("a guest change removes the people the old guest listed in online check-in, not the desk's own")
+def t_change_guest_online_companions():
+	from kamra import api
+	from kamra.public_api import _merge_precheckin_occupants
+	out = api.create_booking(P, RT, "2033-12-10", "2033-12-12", "Eval Online Party",
+	                         phone="+91 70000 00641")
+	res = frappe.get_doc("Reservation", out["reservation"])
+	api.add_occupant_names(res.name, ["Eval Desk Row"])
+	_merge_precheckin_occupants(res, [{"full_name": "Eval Desk Row"}, {"full_name": "Eval Online Row"}])
+	swap = api.change_booking_guest(res.name, guest_name="Eval Other Party", phone="+91 70000 00642")
+	res.reload()
+	assert swap["removed_occupants"] == 1, swap
+	assert [o.full_name for o in res.occupants] == ["Eval Desk Row"], res.occupants
+
+
 @check("a blacklisted phone number still stops a booking; a Hotel Admin's override books the name typed")
 def t_blacklisted_number_books_typed_name():
 	from kamra import api
@@ -12814,6 +12829,7 @@ def execute():
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_saved_stay, t_change_booking_guest,
 		           t_blacklisted_number_books_typed_name,
+		           t_change_guest_online_companions,
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,

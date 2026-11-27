@@ -331,6 +331,8 @@
 {n} owned,{n} owned,{n} مملوكة,{n} en propiedad,{n} próprios,拥有 {n},screens/Banquet.tsx,n,translated
 {n} pc,{n} pc,{n} قطعة,{n} pzas.,{n} pc,{n} 件,screens/Laundry.tsx,n,translated
 {n} pending,{n} pending,{n} قيد الانتظار,Pendientes: {n},{n} pendente,{n} 项待处理,screens/Laundry.tsx,n,translated
+{n} people listed in online check-in were removed.,{n} people listed in online check-in were removed.,,,,,components/ChangeGuestDialog.tsx,n,needs_translation
+{n} person listed in online check-in was removed.,{n} person listed in online check-in was removed.,,,,,components/ChangeGuestDialog.tsx,n,needs_translation
 {n} photo,{n} photo,{n} صورة,{n} foto,{n} foto,{n} 张照片,screens/PublicBooking.tsx,n,translated
 {n} photos,{n} photos,{n} صور,{n} fotos,{n} fotos,{n} 张照片,screens/PublicBooking.tsx,n,translated
 {n} piece(s) short - why? (required),{n} piece(s) short - why? (required),{n} قطعة ناقصة - لماذا؟ (مطلوب),Faltan {n} prendas. Indique el motivo (obligatorio),{n} peça(s) curta(s) - por quê? (obrigatório),缺少 {n} 件 - 原因？（必填）,screens/Laundry.tsx,n,translated
@@ -4872,6 +4874,7 @@ Pending Payment,Pending Payment,بانتظار الدفع,Pago pendiente,Pagamen
 People only,People only,الأشخاص فقط,Solo personas,Somente pessoas,仅按人数,screens/Agents.tsx,,translated
 People staying with you,People staying with you,المقيمون معك,Personas que se alojan contigo,Pessoas hospedadas com você,同行入住人,screens/PublicCheckin.tsx,,translated
 People tasting,People tasting,عدد المتذوقين,Personas en la degustación,Pessoas na degustação,试菜人数,screens/BanquetFunction.tsx,,translated
+People they listed in online check-in that the desk has not confirmed are removed.,People they listed in online check-in that the desk has not confirmed are removed.,,,,,components/ChangeGuestDialog.tsx,,needs_translation
 Per,Per,لكل,Por,Por,每,screens/BanquetFunction.tsx; screens/banquet/Economics.tsx,,translated
 "Per company: city ledger billed and paid in the period, the balance at its end, and DSO = closing balance / billed x days. The last row is all companies.","Per company: city ledger billed and paid in the period, the balance at its end, and DSO = closing balance / billed x days. The last row is all companies.",لكل شركة: المفوتر والمحصّل في الذمم المدينة خلال الفترة، والرصيد في نهايتها، ومتوسط أيام التحصيل = الرصيد الختامي / المفوتر × الأيام. الصف الأخير لجميع الشركات.,"Por empresa: lo facturado y cobrado en cuentas por cobrar en el período, el saldo al final y DSO = saldo final / facturado x días. La última fila es el total de todas las empresas.","Por empresa: o faturado e o recebido em contas a receber no período, o saldo no final e DSO = saldo final / faturado x dias. A última linha é o total de todas as empresas.",按公司：本期应收开票与收款、期末余额，以及 DSO = 期末余额 / 开票额 × 天数。最后一行为全部公司。,,,translated
 Per Day,Per Day,لكل يوم,Por día,Por dia,每天,,,translated

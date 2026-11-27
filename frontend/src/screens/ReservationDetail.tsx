@@ -847,6 +847,7 @@ export default function ReservationDetail({
           reservation={d.name}
           guestName={d.guest?.full_name ?? ""}
           guestPhone={d.guest?.phone}
+          onlineCheckIn={["Submitted", "Verified"].includes(d.precheckin_status ?? "")}
           onClose={() => setChangingGuest(false)}
           onDone={() => {
             setChangingGuest(false)
