@@ -289,6 +289,29 @@ def consume_for_lines(order, lines) -> list:
 
 # ---------------------------------------------------------------- recipes
 
+def portion_cost(parts: list) -> float | None:
+	"""What one portion costs, from (quantity, cost per unit) pairs. None when
+	there is nothing to add up, or when any part has no cost yet (0): a part
+	total would read as a fine margin."""
+	if not parts or any(float(cost or 0) <= 0 for _qty, cost in parts):
+		return None
+	return round(sum(float(qty or 0) * float(cost) for qty, cost in parts), 6)
+
+
+def margin_of(price: float, cost: float | None) -> tuple:
+	"""(price - cost, the same as a percent of the price); None where unknown."""
+	if cost is None:
+		return None, None
+	price = float(price or 0)
+	margin = round(price - cost, 6)
+	return margin, (margin / price * 100 if price > 0 else None)
+
+
+def _sees_costs() -> bool:
+	"""Ingredient costs are for the people who can see stock."""
+	return bool(frappe.has_permission("Ingredient", "view_stock",
+	                                  ignore_share_permissions=True))
+
 @frappe.whitelist()
 @require_perm("Ingredient", "view_stock")
 def ingredients(property: str, active_only: int = 1):
@@ -307,23 +330,32 @@ def ingredients(property: str, active_only: int = 1):
 @require_perm("Menu Item", "view_recipes")
 def menu_recipe(menu_item: str):
 	"""One dish's recipe, with each line's unit and what the dish's own outlet
-	has on hand right now - so the editor can say "you have 0.4 kg left"."""
+	has on hand right now - so the editor can say "you have 0.4 kg left". The
+	menu price and each ingredient's cost come with it only for people who can
+	see stock."""
 	mi = frappe.db.get_value("Menu Item", menu_item,
-	                         ["item_name", "property", "outlet"], as_dict=True)
+	                         ["item_name", "property", "outlet", "price"], as_dict=True)
 	if not mi:
 		frappe.throw(_("Menu item not found."))
 	rows = frappe.get_all(
 		"Menu Item Ingredient", filters={"parent": menu_item, "parenttype": "Menu Item"},
 		fields=["name", "ingredient", "qty", "note"], order_by="idx asc")
+	costs = _sees_costs()
 	for r in rows:
-		meta = frappe.db.get_value("Ingredient", r.ingredient,
-		                           ["ingredient_name", "uom"], as_dict=True) or {}
+		meta = frappe.db.get_value(
+			"Ingredient", r.ingredient,
+			["ingredient_name", "uom", "cost_per_unit"], as_dict=True) or {}
 		r["ingredient_name"] = meta.get("ingredient_name")
 		r["uom"] = meta.get("uom")
+		if costs:
+			r["cost_per_unit"] = meta.get("cost_per_unit")
 		r["qty_on_hand"] = frappe.db.get_value(
 			"Ingredient Stock", f"{mi.outlet}::{r.ingredient}", "qty_on_hand")
-	return {"menu_item": menu_item, "item_name": mi.item_name,
-	        "outlet": mi.outlet, "property": mi.property, "recipe": rows}
+	out = {"menu_item": menu_item, "item_name": mi.item_name,
+	       "outlet": mi.outlet, "property": mi.property, "recipe": rows}
+	if costs:
+		out["price"] = mi.price
+	return out
 
 
 @frappe.whitelist()
@@ -331,28 +363,44 @@ def menu_recipe(menu_item: str):
 def recipe_overview(property: str):
 	"""Every dish and whether it has a recipe yet. Dishes without one are not
 	a problem to be nagged about - most menus will only ever cost their big
-	movers - but you cannot decide that without seeing the list."""
+	movers - but you cannot decide that without seeing the list.
+
+	A dish with a recipe also says what one portion costs today and what is
+	left of its price; `uncosted` names the ingredients that stop that."""
 	dishes = frappe.get_all(
 		"Menu Item", filters={"property": property},
-		fields=["name", "item_name", "outlet", "category", "available"],
+		fields=["name", "item_name", "outlet", "category", "available", "price"],
 		order_by="outlet asc, category asc, item_name asc")
 	if not dishes:
 		return []
-	counts = {}
+	lines = {}
 	for r in frappe.get_all(
 		"Menu Item Ingredient",
 		filters={"parent": ["in", [d.name for d in dishes]], "parenttype": "Menu Item"},
-		fields=["parent"],
+		fields=["parent", "ingredient", "qty"], order_by="idx asc",
 	):
-		counts[r.parent] = counts.get(r.parent, 0) + 1
+		lines.setdefault(r.parent, []).append(r)
+	used = {r.ingredient for rows in lines.values() for r in rows}
+	ings = {
+		i.name: i for i in frappe.get_all(
+			"Ingredient", filters={"name": ["in", list(used) or [""]]},
+			fields=["name", "ingredient_name", "cost_per_unit"])
+	}
 	outlets = {
 		o.name: o.outlet_name for o in frappe.get_all(
 			"POS Outlet", filters={"name": ["in", list({d.outlet for d in dishes})]},
 			fields=["name", "outlet_name"])
 	}
 	for d in dishes:
-		d["lines"] = counts.get(d.name, 0)
+		rows = lines.get(d.name, [])
+		d["lines"] = len(rows)
 		d["outlet_name"] = outlets.get(d.outlet)
+		d["cost"] = portion_cost(
+			[(r.qty, ings[r.ingredient].cost_per_unit) for r in rows])
+		d["margin"], d["margin_pct"] = margin_of(d.price, d["cost"])
+		d["uncosted"] = list(dict.fromkeys(
+			ings[r.ingredient].ingredient_name for r in rows
+			if float(ings[r.ingredient].cost_per_unit or 0) <= 0))
 	return dishes
 
 

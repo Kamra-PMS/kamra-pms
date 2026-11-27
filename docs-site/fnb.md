@@ -456,6 +456,12 @@ Each row shows status (OK, low, out or negative) against its par level.
 To set that level, select the figure (or **Set**) in the **Par** column;
 0 means no warning. Recipes are set on the **Menu** screen (**Recipes**).
 
+Each dish with a recipe shows there what one portion **costs** today and the
+**margin** left from its menu price (before tax and service charge). The cost
+is each line's quantity times that ingredient's cost, added up. If any of its
+ingredients has no cost yet, no total is shown and the screen names it. Costs
+show to people who can see stock. Nothing is saved on the dish or on bills.
+
 - Ingredients leave stock when the KOT is sent - when cooking starts - not
   when the bill is paid.
 - A line voided after it was sent counts as **wastage**, not a reversal:

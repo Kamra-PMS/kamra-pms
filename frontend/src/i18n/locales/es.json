@@ -7193,5 +7193,13 @@
   "e-Visa": "Visado electrónico",
   "New visa number (leave empty to keep)": "Nuevo número de visado (déjelo vacío para conservar)",
   "{n} left": "Disponibles: {n}",
-  "No room to assign": "Sin habitación para asignar"
+  "No room to assign": "Sin habitación para asignar",
+  "Add a cost for: {names}": "Agregue un costo para: {names}",
+  "before tax and service charge": "antes de impuestos y cargo por servicio",
+  "cost {cost}": "costo {cost}",
+  "cost {cost} · margin {pct}%": "costo {cost} · margen {pct}%",
+  "cost not complete": "costo incompleto",
+  "Cost per portion": "Costo por porción",
+  "Menu price": "Precio de carta",
+  "no cost": "sin costo"
 }

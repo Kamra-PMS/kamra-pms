@@ -7155,5 +7155,13 @@
   "e-Visa": "Thị thực điện tử",
   "New visa number (leave empty to keep)": "Số thị thực mới (để trống để giữ nguyên)",
   "{n} left": "Còn {n}",
-  "No room to assign": "Không còn phòng để xếp"
+  "No room to assign": "Không còn phòng để xếp",
+  "Add a cost for: {names}": "Thêm chi phí cho: {names}",
+  "before tax and service charge": "trước thuế và phí dịch vụ",
+  "cost {cost}": "chi phí {cost}",
+  "cost {cost} · margin {pct}%": "chi phí {cost} · biên lợi nhuận {pct}%",
+  "cost not complete": "chi phí chưa đầy đủ",
+  "Cost per portion": "Chi phí mỗi phần",
+  "Menu price": "Giá thực đơn",
+  "no cost": "chưa có chi phí"
 }

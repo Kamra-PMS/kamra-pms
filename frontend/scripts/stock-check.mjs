@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Checks for the kitchen stock screens' pure helpers: unit costs (lib/stockCost.ts), what a Receive row
- *  adds up to and sends, and which fields a form saves (lib/formPayload.ts). Pure Node: bundled with small
+ *  adds up to and sends, which fields a form saves (lib/formPayload.ts), and what a recipe costs
+ *  (lib/recipeCost.ts). Pure Node: bundled with small
  *  stand-ins for React, the API client and the language module. */
 import assert from "node:assert/strict"
 import fs from "node:fs"
@@ -19,7 +20,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stock-check-"))
 // one bundle, so the helpers share the same money.ts (it holds the property's locale)
 await build({
   stdin: {
-    contents: `export * from "./money"; export * from "./stockCost"; export * from "./formPayload"`,
+    contents: `export * from "./money"; export * from "./stockCost"; export * from "./formPayload"; export * from "./recipeCost"`,
     resolveDir: lib, loader: "ts",
   },
   bundle: true, format: "esm", platform: "node", outfile: path.join(dir, "stock.mjs"), logLevel: "silent",
@@ -33,7 +34,7 @@ await build({
 })
 // money.ts remembers the locale in localStorage when there is one; there is none here
 Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true })
-const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
+const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
 
 // a cost per unit keeps up to 4 decimals, whatever the currency
 adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
@@ -78,6 +79,38 @@ assert.equal(receiveRow(cups, { ...box, price: "0" }).cost_per_unit, 0)
 assert.ok(!("cost_per_unit" in receiveRow(cups, { ...box, price: "" })))
 assert.deepEqual(receiveRow(cups, { qty: "10", unit: "stock", size: "", price: "2500" }),
   { ingredient: "ING-1", uom: "pc", qty: 10, cost_per_unit: 2500 })
+
+// a recipe's cost per portion and margin: the same rule as kamra/inventory.py
+const ings = [
+  { name: "M", ingredient_name: "Milk", cost_per_unit: 20 },
+  { name: "B", ingredient_name: "Beans", cost_per_unit: 220 },
+  { name: "C", ingredient_name: "Cup", cost_per_unit: 2400 },
+  { name: "W", ingredient_name: "Water", cost_per_unit: 0 },
+  { name: "S", ingredient_name: "Syrup", cost_per_unit: 6000 },
+]
+const costed = recipeTotals(
+  [{ ingredient: "M", qty: "150" }, { ingredient: "B", qty: 18 }, { ingredient: "C", qty: 1 }], ings, 25000)
+assert.deepEqual([costed.lines, costed.cost, costed.margin, costed.pct.toFixed(1), costed.missing],
+  [[3000, 3960, 2400], 9360, 15640, "62.6", []])
+assert.deepEqual(recipeTotals([{ ingredient: "M", qty: 150 }, { ingredient: "W", qty: 5 }, { ingredient: "W", qty: 5 }], ings, 25000),
+  { lines: [3000, null, null], cost: null, margin: null, pct: null, missing: ["Water"] })
+const dear = recipeTotals([{ ingredient: "S", qty: 2 }], ings, 10000)
+assert.deepEqual([dear.cost, dear.margin, dear.pct.toFixed(1)], [12000, -2000, "-20.0"])
+const free = recipeTotals([{ ingredient: "M", qty: 150 }], ings, 0)
+assert.deepEqual([free.cost, free.margin, free.pct], [3000, -3000, null])
+assert.equal(recipeTotals([{ ingredient: "M", qty: 100 }, { ingredient: "M", qty: 50 }], ings, 5000).cost, 3000)
+// lines still being typed don't count, and don't blank the total
+const typing = recipeTotals([{ ingredient: "", qty: "" }, { ingredient: "M", qty: "" }, { ingredient: "M", qty: 100 }], ings, 5000)
+assert.deepEqual([typing.lines, typing.cost], [[null, null, 2000], 2000])
+assert.deepEqual(recipeTotals([{ ingredient: "", qty: "" }], ings, 5000),
+  { lines: [null], cost: null, margin: null, pct: null, missing: [] })
+// money to the currency's decimals, and 2 where the figure needs them
+adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
+assert.equal(fmtCost(334.285722), "334.29")
+assert.equal(fmtCost(9360), "9,360.00")
+adoptUiLocale({ currency: "JPY", locale: "en-US", currency_symbol: "¥" })
+assert.equal(fmtCost(9360), "9,360")
+assert.equal(fmtCost(334.285722), "334.29")
 
 fs.rmSync(dir, { recursive: true, force: true })
 console.log("stock checks passed")

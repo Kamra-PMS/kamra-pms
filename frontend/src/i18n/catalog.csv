@@ -710,6 +710,7 @@ Ad/Ch,Ad/Ch,بالغ/طفل,Ad./Ni.,Ad/Cr,成人/儿童,,,translated
 Add,Add,إضافة,Agregar,Adicionar,添加,components/OutletWaiters.tsx; components/StayInstructions.tsx; screens/BanquetFunction.tsx; screens/PublicBooking.tsx,,translated
 Add a cash office (central safe),Add a cash office (central safe),إضافة مكتب نقدي (الخزنة المركزية),Agregar caja central,Adicionar caixa (cofre central),添加现金办公室（中心保险柜）,screens/Setup.tsx,,translated
 Add a charge,Add a charge,إضافة رسوم,Agregar un cargo,Adicionar cobrança,添加费用,components/AgentGuide.tsx,,translated
+Add a cost for: {names},Add a cost for: {names},أضف تكلفة لـ: {names},Agregue un costo para: {names},Adicione um custo para: {names},请为以下项目添加成本：{names},screens/RecipeManager.tsx,names,translated
 Add a customer email on the Enquiry step first,Add a customer email on the Enquiry step first,أضف بريد العميل في خطوة الاستفسار أولًا,Agregue primero el correo del cliente en la etapa Consulta,Adicione primeiro um e-mail do cliente na etapa de Consulta,请先在询价步骤填写客户邮箱,screens/BanquetFunction.tsx,,translated
 Add a customer phone on the Enquiry step first,Add a customer phone on the Enquiry step first,أضف هاتف العميل في خطوة الاستفسار أولًا,Agregue primero el teléfono del cliente en la etapa Consulta,Adicione primeiro um telefone do cliente na etapa de Consulta,请先在询价步骤填写客户电话,screens/BanquetFunction.tsx,,translated
 Add a facility or a plan,Add a facility or a plan,أضف مرفقاً أو خطة,Agregar una instalación o un plan,Adicionar instalação ou plano,添加设施或套餐,screens/Recreation.tsx,,translated
@@ -1231,6 +1232,7 @@ before {tax},before {tax},قبل {tax},antes de {tax},antes de {tax},税前（{t
 "Before check-out: withhold anything for damage, then refund the rest.","Before check-out: withhold anything for damage, then refund the rest.",قبل المغادرة: احتجز ما يلزم مقابل الأضرار، ثم أعد الباقي.,"Antes de registrar la salida, retenga cualquier importe por daños y reembolse el saldo.",Antes do check-out: retenha qualquer coisa por danos e devolva o resto.,退房前：扣除损坏费用后退还其余。,components/SecurityDepositPanel.tsx,,translated
 before GST,before GST,قبل GST,antes del GST,antes do GST,税前（GST）,,,translated
 before tax,before tax,قبل الضريبة,antes de impuestos,antes dos impostos,税前,screens/banquet/Economics.tsx,,translated
+before tax and service charge,before tax and service charge,قبل الضريبة ورسوم الخدمة,antes de impuestos y cargo por servicio,antes dos impostos e da taxa de serviço,不含税费和服务费,screens/RecipeManager.tsx,,translated
 Before tax. Room levy and go-live balances are not revenue.,Before tax. Room levy and go-live balances are not revenue.,قبل الضريبة. رسوم الغرف وأرصدة بدء التشغيل ليست إيرادات.,Antes de impuestos. La tasa municipal y los saldos de la puesta en marcha no son ingresos.,Antes de impostos. A taxa municipal e os saldos da implantação não são receita.,税前。客房税与上线余额不计入收入。,screens/ManagementBooks.tsx,,translated
 Below BAR,Below BAR,أقل من BAR,Por debajo de BAR,Abaixo da BAR,低于最优可用房价,screens/RateCalendar.tsx,,translated
 Below this hall's usual minimum - check the minimum spend.,Below this hall's usual minimum - check the minimum spend.,أقل من الحد الأدنى المعتاد لهذه القاعة، راجع الحد الأدنى للإنفاق.,La cantidad es inferior al mínimo habitual de este salón. Revise el consumo mínimo.,Abaixo do mínimo usual deste salão - verifique o gasto mínimo.,低于该宴会厅的常规最低消费 - 请确认。,screens/BanquetDiary.tsx,,translated
@@ -2011,9 +2013,13 @@ Correct,Correct,تصحيح,Corregir,Corrigir,正确,screens/FolioView.tsx,,trans
 Correct back-dated rates,Correct back-dated rates,تصحيح أسعار التواريخ السابقة,Corregir tarifas de fechas pasadas,Corrigir tarifas de datas passadas,更正历史房价,,,translated
 Correct charged nights,Correct charged nights,تصحيح الليالي المحتسبة,Corregir noches cargadas,Corrigir noites lançadas,更正已入账间夜,screens/FolioView.tsx,,translated
 Correcting a mistake,Correcting a mistake,تصحيح خطأ,Corregir un error,Corrigir um erro,纠正错误,screens/Ledgers.tsx,,translated
-Cost,Cost,التكلفة,Costo,Custo,成本,screens/BanquetCatalogue.tsx; screens/banquet/Economics.tsx,,translated
+Cost,Cost,التكلفة,Costo,Custo,成本,screens/BanquetCatalogue.tsx; screens/RecipeManager.tsx; screens/banquet/Economics.tsx,,translated
+cost {cost},cost {cost},التكلفة {cost},costo {cost},custo {cost},成本 {cost},screens/RecipeManager.tsx,cost,translated
+cost {cost} · margin {pct}%,cost {cost} · margin {pct}%,التكلفة {cost} · الهامش {pct}%,costo {cost} · margen {pct}%,custo {cost} · margem {pct}%,成本 {cost} · 毛利率 {pct}%,screens/RecipeManager.tsx,cost pct,translated
 Cost / unit,Cost / unit,التكلفة / وحدة,Costo / unidad,Custo/unidade,成本 / 单位,,,translated
 Cost after,Cost after,التكلفة بعدها,Costo después,Custo depois,进货后成本,screens/Inventory.tsx,,translated
+cost not complete,cost not complete,التكلفة غير مكتملة,costo incompleto,custo incompleto,成本不完整,screens/RecipeManager.tsx,,translated
+Cost per portion,Cost per portion,تكلفة الحصة,Costo por porción,Custo por porção,每份成本,screens/RecipeManager.tsx,,translated
 Cost/unit,Cost/unit,التكلفة/وحدة,Costo/unidad,Custo/unidade,单位成本,,,translated
 Costs,Costs,التكاليف,Costos,Custos,费用,screens/UnitOwners.tsx,,translated
 Costs {v0} a portion,Costs {v0} a portion,تكلفة الحصة {v0},Costo de {v0} por porción,Custa {v0} uma parcela,每份成本 {v0},screens/BanquetCatalogue.tsx,v0,translated
@@ -3687,7 +3693,7 @@ Map Preview,Map Preview,معاينة الخريطة,Vista previa del mapa,Visual
 "Mapping imported: {created} created, {updated} updated.","Mapping imported: {created} created, {updated} updated.",تم استيراد الربط: {created} أُنشئ، {updated} حُدّث.,"Correspondencia importada: {created} filas nuevas, {updated} actualizadas.","Mapeamentos importados: {created} criados, {updated} atualizados.",映射已导入：新建 {created} 个，更新 {updated} 个。,components/ChannelConnectionActions.tsx,created updated,translated
 Mapping preview,Mapping preview,معاينة الربط,Vista previa de la correspondencia,Prévia dos mapeamentos,映射预览,components/ChannelConnectionActions.tsx,,translated
 Maps to Folio Charge.charge_type for display on older lines.,Maps to Folio Charge.charge_type for display on older lines.,يقابل Folio Charge.charge_type لعرض البنود القديمة.,Corresponde a Folio Charge.charge_type para mostrar líneas antiguas.,Mapeia para Folio Charge.charge_type para exibição em linhas mais antigas.,映射到 Folio Charge.charge_type，用于旧行项显示。,,,translated
-Margin,Margin,الهامش,Margen,Margem,毛利率,screens/BanquetFunction.tsx; screens/banquet/Economics.tsx,,translated
+Margin,Margin,الهامش,Margen,Margem,毛利率,screens/BanquetFunction.tsx; screens/RecipeManager.tsx; screens/banquet/Economics.tsx,,translated
 Margin on the market rate,Margin on the market rate,الهامش على سعر السوق,Margen sobre el tipo de mercado,Margem sobre a cotação de mercado,相对市场价的毛利,,,translated
 Mark {status},Mark {status},تعليم كـ {status},Marcar como {status},Marcar {status},标记为{status},screens/HousekeepingBoard.tsx,status,translated
 Mark all read,Mark all read,تعليم الكل كمقروء,Marcar todo como leído,Marcar tudo como lido,全部标为已读,components/NotificationBell.tsx,,translated
@@ -3735,6 +3741,7 @@ Menu imported,Menu imported,تم استيراد القائمة,Menú importado,C
 Menu Item,Menu Item,صنف القائمة,Artículo del menú,Item de menu,菜单项,,,translated
 Menu master lists,Menu master lists,القوائم الرئيسية للقائمة,Listas del menú,Listas mestres de menu,菜单主列表,,,translated
 Menu name,Menu name,اسم القائمة,Nombre del menú,Nome do cardápio,菜单名称,screens/BanquetCatalogue.tsx,,translated
+Menu price,Menu price,سعر القائمة,Precio de carta,Preço no cardápio,菜单价,screens/RecipeManager.tsx,,translated
 Menus,Menus,القوائم,Menús,Cardápios,菜单,screens/BanquetDocument.tsx,,translated
 Menus & Services,Menus & Services,القوائم والخدمات,Menús y servicios,Ementas e Serviços,菜单与服务,,,translated
 Menus bill on the higher of this and the guarantee,Menus bill on the higher of this and the guarantee,تُفوتر القوائم على الأعلى بين هذا العدد والعدد المضمون,Los menús se facturan por la cantidad mayor entre los comensales atendidos y el mínimo garantizado,Os cardápios cobram o maior disso e a garantia,按此值与保底人数中的较高者计费,screens/banquet/Economics.tsx,,translated
@@ -4030,6 +4037,7 @@ No company is over its credit limit.,No company is over its credit limit.,لا �
 No company: the guest pays,No company: the guest pays,بلا شركة: يدفع الضيف,Sin empresa: paga el huésped,Sem empresa: o hóspede paga,无公司：由宾客支付,components/ChangeCompany.tsx,,translated
 No conversations yet,No conversations yet,لا محادثات بعد,Aún no hay conversaciones,Nenhuma conversa ainda,暂无对话,screens/WhatsAppChat.tsx,,translated
 No corporate account on this stay - the guest pays the full bill.,No corporate account on this stay - the guest pays the full bill.,لا حساب شركة على هذه الإقامة، يدفع الضيف الفاتورة كاملة.,No hay cuenta corporativa en esta estadía: el huésped paga la cuenta completa.,Sem faturamento corporativo nesta estadia - o hóspede quita o total da fatura.,此住宿无企业账户 - 宾客支付全部账单。,components/CheckOutDialog.tsx,,translated
+no cost,no cost,لا تكلفة,sin costo,sem custo,无成本,screens/RecipeManager.tsx,,translated
 "No courses yet - Starters, Main course, Live counter, Desserts.","No courses yet - Starters, Main course, Live counter, Desserts.",لا مراحل تقديم بعد: المقبلات، الطبق الرئيسي، محطة الطهي المباشر، الحلويات.,"Aún no hay tiempos del menú: entradas, plato principal, estación de cocina en vivo o postres.","Ainda não há pratos - Entradas, Prato principal, Balcão ao vivo, Sobremesas.",暂无菜序 - 前菜、主菜、现做柜台、甜点。,screens/BanquetCatalogue.tsx,,translated
 no credit claimable,no credit claimable,لا ائتمان ضريبي قابل للمطالبة,sin derecho a crédito fiscal,nenhum crédito exigível,无可抵扣进项税,screens/banquet/Economics.tsx,,translated
 No deliveries yet.,No deliveries yet.,لا تسليمات بعد.,Aún no hay entregas.,Ainda não há entregas.,暂无配送。,screens/Inventory.tsx; screens/settings/WebhooksPage.tsx,,translated

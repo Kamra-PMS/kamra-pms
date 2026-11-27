@@ -7155,5 +7155,13 @@
   "e-Visa": "Viza ya kielektroniki",
   "New visa number (leave empty to keep)": "Namba mpya ya viza (acha wazi ili kubaki)",
   "{n} left": "Zimebaki: {n}",
-  "No room to assign": "Hakuna chumba cha kupanga"
+  "No room to assign": "Hakuna chumba cha kupanga",
+  "Add a cost for: {names}": "Ongeza gharama kwa: {names}",
+  "before tax and service charge": "kabla ya kodi na ada ya huduma",
+  "cost {cost}": "gharama {cost}",
+  "cost {cost} · margin {pct}%": "gharama {cost} · faida {pct}%",
+  "cost not complete": "gharama haijakamilika",
+  "Cost per portion": "Gharama kwa sahani",
+  "Menu price": "Bei ya menyu",
+  "no cost": "hakuna gharama"
 }

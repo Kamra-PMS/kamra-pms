@@ -7155,5 +7155,13 @@
   "e-Visa": "电子签证",
   "New visa number (leave empty to keep)": "新签证号码（留空则保留）",
   "{n} left": "剩余 {n}",
-  "No room to assign": "暂无可分配房间"
+  "No room to assign": "暂无可分配房间",
+  "Add a cost for: {names}": "请为以下项目添加成本：{names}",
+  "before tax and service charge": "不含税费和服务费",
+  "cost {cost}": "成本 {cost}",
+  "cost {cost} · margin {pct}%": "成本 {cost} · 毛利率 {pct}%",
+  "cost not complete": "成本不完整",
+  "Cost per portion": "每份成本",
+  "Menu price": "菜单价",
+  "no cost": "无成本"
 }

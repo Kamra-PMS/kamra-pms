@@ -7155,5 +7155,13 @@
   "e-Visa": "تأشيرة إلكترونية",
   "New visa number (leave empty to keep)": "رقم تأشيرة جديد (اتركه فارغًا للإبقاء على الحالي)",
   "{n} left": "المتبقي: {n}",
-  "No room to assign": "لا توجد غرفة للتخصيص"
+  "No room to assign": "لا توجد غرفة للتخصيص",
+  "Add a cost for: {names}": "أضف تكلفة لـ: {names}",
+  "before tax and service charge": "قبل الضريبة ورسوم الخدمة",
+  "cost {cost}": "التكلفة {cost}",
+  "cost {cost} · margin {pct}%": "التكلفة {cost} · الهامش {pct}%",
+  "cost not complete": "التكلفة غير مكتملة",
+  "Cost per portion": "تكلفة الحصة",
+  "Menu price": "سعر القائمة",
+  "no cost": "لا تكلفة"
 }

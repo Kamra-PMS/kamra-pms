@@ -5241,7 +5241,9 @@ The ingredient master - the picker behind the recipe editor.
 **GET/POST** · permission: `Menu Item: view_recipes` · default roles: `System Manager`, `Hotel Admin`, `Front Desk`, `Finance`, `Kamra Agent`, `F&B Manager`
 
 One dish's recipe, with each line's unit and what the dish's own outlet
-has on hand right now - so the editor can say "you have 0.4 kg left".
+has on hand right now - so the editor can say "you have 0.4 kg left". The
+menu price and each ingredient's cost come with it only for people who can
+see stock.
 
 | Param | Required | Default |
 | --- | --- | --- |
@@ -5254,6 +5256,9 @@ has on hand right now - so the editor can say "you have 0.4 kg left".
 Every dish and whether it has a recipe yet. Dishes without one are not
 a problem to be nagged about - most menus will only ever cost their big
 movers - but you cannot decide that without seeing the list.
+
+A dish with a recipe also says what one portion costs today and what is
+left of its price; `uncosted` names the ingredients that stop that.
 
 | Param | Required | Default |
 | --- | --- | --- |

@@ -13071,7 +13071,7 @@
         "kamra.inventory.menu_recipe"
        ]
       },
-      "description": "One dish's recipe, with each line's unit and what the dish's own outlet\nhas on hand right now - so the editor can say \"you have 0.4 kg left\".",
+      "description": "One dish's recipe, with each line's unit and what the dish's own outlet\nhas on hand right now - so the editor can say \"you have 0.4 kg left\". The\nmenu price and each ingredient's cost come with it only for people who can\nsee stock.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"menu_item\": \"<menu_item>\"\n}",
@@ -13108,7 +13108,7 @@
         "kamra.inventory.recipe_overview"
        ]
       },
-      "description": "Every dish and whether it has a recipe yet. Dishes without one are not\na problem to be nagged about - most menus will only ever cost their big\nmovers - but you cannot decide that without seeing the list.",
+      "description": "Every dish and whether it has a recipe yet. Dishes without one are not\na problem to be nagged about - most menus will only ever cost their big\nmovers - but you cannot decide that without seeing the list.\n\nA dish with a recipe also says what one portion costs today and what is\nleft of its price; `uncosted` names the ingredients that stop that.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\"\n}",
