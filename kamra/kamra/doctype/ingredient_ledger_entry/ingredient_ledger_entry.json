@@ -22,7 +22,14 @@
   "supplier",
   "invoice_no",
   "batch_id",
-  "cost_per_unit"
+  "cost_per_unit",
+  "purchase_qty",
+  "purchase_uom",
+  "purchase_size",
+  "purchase_price",
+  "price_entry",
+  "cost_before",
+  "cost_after"
  ],
  "fields": [
   {
@@ -140,12 +147,59 @@
    "fieldtype": "Currency",
    "label": "Cost / Unit",
    "read_only": 1,
-   "description": "Snapshot at the moment of the move, so later price changes never rewrite history."
+   "description": "On a delivery with a price: what was paid per stock unit. Otherwise the cost at the moment of the move, so later price changes never rewrite history."
+  },
+  {
+   "fieldname": "purchase_qty",
+   "fieldtype": "Float",
+   "label": "Bought Qty",
+   "description": "On a delivery: the quantity as received, in the unit bought.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_uom",
+   "fieldtype": "Data",
+   "label": "Bought Unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_size",
+   "fieldtype": "Float",
+   "label": "Units per Bought Unit",
+   "description": "Stock units in one bought unit, kept as received.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_price",
+   "fieldtype": "Currency",
+   "label": "Price per Bought Unit",
+   "description": "The price typed for one bought unit.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "price_entry",
+   "fieldtype": "Select",
+   "label": "Price",
+   "options": "\nEntered\nNot entered",
+   "description": "Blank on lines from before prices were recorded this way.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_before",
+   "fieldtype": "Currency",
+   "label": "Cost Before",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_after",
+   "fieldtype": "Currency",
+   "label": "Cost After",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "links": [],
- "modified": "2026-10-30 14:00:00.000000",
+ "modified": "2026-11-26 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Ingredient Ledger Entry",

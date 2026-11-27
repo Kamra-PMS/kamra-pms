@@ -272,3 +272,10 @@ Check out,تسجيل المغادرة
 Discounts and allowances,الخصومات والتسويات
 "{0} is not a Kamra language.","{0} ليست لغة في Kamra."
 "{0} is switched off. Turn it on from Languages in Settings.","{0} متوقفة. فعّلها من اللغات في الإعدادات."
+A price cannot be below zero.,لا يمكن أن يكون السعر أقل من صفر.
+{0} has no buying unit.,{0} ليس له وحدة شراء.
+A buying unit must hold more than zero {0}.,يجب أن تحتوي وحدة الشراء على أكثر من صفر {0}.
+The buying unit of {0} changed. Close the window and open it again.,تغيّرت وحدة شراء {0}. أغلق النافذة وافتحها من جديد.
+The unit of {0} changed. Close the window and open it again.,تغيّرت وحدة {0}. أغلق النافذة وافتحها من جديد.
+Give a buying unit both a name and how many {0} it holds.,أعطِ وحدة الشراء اسماً وعدد ما تحتويه من {0}.
+"{0} already has stock history or is on a recipe, so its unit stays {1}.",{0} له حركة مخزون سابقة أو موجود في وصفة، لذا تبقى وحدته {1}.

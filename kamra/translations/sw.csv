@@ -57,3 +57,10 @@ Bills still open,Bili ambazo bado ziko wazi
 Use Check out to check a guest out: it makes sure every bill is cleared first.,Tumia Toa mgeni kumtoa mgeni: inahakikisha kila bili imelipwa kwanza.
 Check out,Toa mgeni
 Discounts and allowances,Punguzo na makato
+A price cannot be below zero.,Bei haiwezi kuwa chini ya sifuri.
+{0} has no buying unit.,{0} haina kipimo cha kununulia.
+A buying unit must hold more than zero {0}.,Kipimo cha kununulia lazima kiwe na zaidi ya sifuri {0}.
+The buying unit of {0} changed. Close the window and open it again.,Kipimo cha kununulia cha {0} kimebadilika. Funga dirisha ulifungue tena.
+The unit of {0} changed. Close the window and open it again.,Kipimo cha {0} kimebadilika. Funga dirisha ulifungue tena.
+Give a buying unit both a name and how many {0} it holds.,Kipe kipimo cha kununulia jina na idadi ya {0} kilichonayo.
+"{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} tayari ina historia ya stoo au iko kwenye pishi, kwa hiyo kipimo chake kinabaki {1}."

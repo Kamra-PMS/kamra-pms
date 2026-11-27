@@ -57,3 +57,10 @@ Bills still open,अभी खुले बिल
 Use Check out to check a guest out: it makes sure every bill is cleared first.,गेस्ट का चेक-आउट करने के लिए Check out का उपयोग करें: यह पहले सुनिश्चित करता है कि हर बिल चुका दिया गया है。
 Check out,चेक-आउट करें
 Discounts and allowances,छूट और अलाउंस
+A price cannot be below zero.,कीमत शून्य से कम नहीं हो सकती।
+{0} has no buying unit.,{0} की कोई खरीद यूनिट नहीं है।
+A buying unit must hold more than zero {0}.,खरीद यूनिट में शून्य से अधिक {0} होने चाहिए।
+The buying unit of {0} changed. Close the window and open it again.,{0} की खरीद यूनिट बदल गई है। विंडो बंद करके फिर खोलें।
+The unit of {0} changed. Close the window and open it again.,{0} की यूनिट बदल गई है। विंडो बंद करके फिर खोलें।
+Give a buying unit both a name and how many {0} it holds.,"खरीद यूनिट का नाम और उसमें कितने {0} हैं, दोनों दें।"
+"{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} का स्टॉक इतिहास है या वह किसी रेसिपी में है, इसलिए उसकी यूनिट {1} ही रहेगी।"

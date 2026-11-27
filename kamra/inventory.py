@@ -20,6 +20,11 @@ why it is there, so each is spelled out where it lives:
    and last_counted_at exist. The honest claim is "here is what you SHOULD
    have; go count and tell me what you DO."
 
+COST is one figure per ingredient (Ingredient.cost_per_unit), shared by every
+outlet. A priced delivery either replaces it or averages it into the stock
+held, as the property's "Ingredient cost" setting says: cost_after_receipt()
+is the whole rule.
+
 Permissions: consume_for_lines() runs under a captain's session, which cannot
 write Ingredient Stock or Ingredient Ledger Entry by design - only Finance can move
 stock deliberately. The writes in _apply_move() therefore use
@@ -33,6 +38,7 @@ import uuid
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 
 from kamra.authz import require_perm
 from kamra.localization import money_text
@@ -47,6 +53,8 @@ INVENTORY_READ = ("Front Desk", "Finance", "F&B Manager", "Kamra Agent", "Hotel 
 INVENTORY_WRITE = ("Finance", "F&B Manager")
 
 STATUS_OK, STATUS_LOW, STATUS_OUT, STATUS_NEGATIVE = "OK", "LOW", "OUT", "NEGATIVE"
+
+AVERAGE_COST = "Average of purchases"
 
 
 def _status(qty: float, par: float) -> str:
@@ -111,7 +119,8 @@ def _apply_move(property: str, outlet: str, ingredient: str,
                 ref_dn: str | None = None, note: str | None = None,
                 supplier: str | None = None, invoice_no: str | None = None,
                 batch_id: str | None = None, set_counted: bool = False,
-                set_qty: float | None = None) -> float:
+                set_qty: float | None = None, cost: float | None = None,
+                extra: dict | None = None) -> float:
 	"""THE only writer of qty_on_hand. One move = one locked row + one ledger
 	entry, in one transaction. Never blocks: a move that takes the balance
 	negative still lands, because a stale count must not stop service.
@@ -133,7 +142,9 @@ def _apply_move(property: str, outlet: str, ingredient: str,
 		qty_change = after - current
 	else:
 		after = current + float(qty_change)
-	cost = frappe.db.get_value("Ingredient", ingredient, "cost_per_unit")
+	# a delivery names the price paid; any other move snapshots today's cost
+	if cost is None:
+		cost = frappe.db.get_value("Ingredient", ingredient, "cost_per_unit")
 
 	frappe.db.set_value("Ingredient Stock", name, "qty_on_hand", after,
 	                    update_modified=False)
@@ -149,7 +160,7 @@ def _apply_move(property: str, outlet: str, ingredient: str,
 		"balance_after": after, "reason": reason,
 		"reference_doctype": ref_dt, "reference_name": ref_dn, "note": note,
 		"supplier": supplier, "invoice_no": invoice_no, "batch_id": batch_id,
-		"cost_per_unit": cost,
+		"cost_per_unit": cost, **(extra or {}),
 	}).insert(ignore_permissions=True)
 	return after
 
@@ -373,18 +384,27 @@ def save_recipe(menu_item: str, rows):
 @frappe.whitelist(methods=["POST"])
 @require_perm("Ingredient", "manage_stock", scope={"name": "Ingredient"})
 def save_ingredient(property: str, ingredient_name: str, uom: str,
-                    category: str | None = None, cost_per_unit: float = 0,
+                    category: str | None = None, cost_per_unit: float | None = None,
                     gst_rate: float | None = None, is_active: int = 1,
-                    name: str | None = None):
-	"""Create or update one ingredient."""
+                    name: str | None = None, buy_uom: str | None = None,
+                    buy_size: float | None = None):
+	"""Create or update one ingredient. A cost or buying unit that isn't sent is
+	left as it is: the cost follows deliveries, and editing something else must
+	not put an old figure back."""
 	if not (ingredient_name or "").strip():
 		frappe.throw(_("An ingredient needs a name."))
 	doc = frappe.get_doc("Ingredient", name) if name else frappe.new_doc("Ingredient")
 	doc.update({
 		"property": property, "ingredient_name": ingredient_name.strip(),
 		"uom": uom, "category": (category or "").strip() or None,
-		"cost_per_unit": float(cost_per_unit or 0), "is_active": int(is_active or 0),
+		"is_active": int(is_active or 0),
 	})
+	if cost_per_unit not in (None, ""):
+		doc.cost_per_unit = float(cost_per_unit)
+	if buy_uom is not None:
+		doc.buy_uom = buy_uom
+	if buy_size is not None:
+		doc.buy_size = float(buy_size or 0)
 	if gst_rate is not None:
 		doc.gst_rate = float(gst_rate)
 	doc.save()
@@ -408,32 +428,139 @@ def delete_ingredient(name: str):
 
 # ------------------------------------------------------------ stock moves
 
+def cost_after_receipt(method: str, on_hand: float, cost: float, qty: float,
+                       price: float | None) -> float:
+	"""What an ingredient costs after `qty` stock units arrive at `price` each
+	(None: no price given). on_hand is the stock before, across every outlet."""
+	if price is None:
+		return cost
+	if method != AVERAGE_COST:
+		return round(price, 6)
+	if on_hand > 0 and cost > 0:
+		return round((on_hand * cost + qty * price) / (on_hand + qty), 6)
+	# no priced stock to average with: free goods must not turn a cost into 0
+	return round(price, 6) if price > 0 else cost
+
+
+def _lock_ingredients(names: list) -> None:
+	"""Hold these ingredients until the request commits, so two deliveries of
+	one ingredient are costed one after the other. Sorted: one lock order."""
+	for name in sorted(names):
+		frappe.db.get_value("Ingredient", name, "name", for_update=True)
+
+
+def _lock_stock(names: list) -> None:
+	"""Then their balance rows at every outlet, so the stock a delivery is
+	averaged into holds still. Ingredient first, as consume_for_lines locks."""
+	frappe.db.sql(
+		"""select name from `tabIngredient Stock` where ingredient in %(names)s
+		order by ingredient, name for update""", {"names": tuple(names)})
+
+
+def _number(value) -> float:
+	"""A finite number, or NaN, which fails every "above zero" check."""
+	try:
+		out = float(value)
+	except (TypeError, ValueError):
+		return math.nan
+	return out if math.isfinite(out) else math.nan
+
+
+def _delivery_line(row: dict, ing: dict) -> dict:
+	"""One received row in stock units, plus what was bought as typed. Refuses
+	the row before anything moves."""
+	qty = _number(row.get("qty") or 0)
+	if not qty > 0:
+		frappe.throw(_("Received quantity must be above zero."))
+	price = None
+	if row.get("cost_per_unit") not in (None, ""):
+		price = _number(row["cost_per_unit"])
+		if not price >= 0:
+			frappe.throw(_("A price cannot be below zero."))
+	# the screen says which stock unit it showed: a changed one is not guessed at
+	if row.get("uom") and str(row["uom"]).strip() != ing["uom"]:
+		frappe.throw(_("The unit of {0} changed. Close the window and open it again.")
+		             .format(ing["ingredient_name"]))
+	unit, size = ing["uom"], 1.0
+	if cint(row.get("in_buying_unit")):
+		unit = ing["buy_uom"]
+		if not unit:
+			frappe.throw(_("{0} has no buying unit.").format(ing["ingredient_name"]))
+		if row.get("buy_uom") and row["buy_uom"].strip() != unit:
+			frappe.throw(_("The buying unit of {0} changed. Close the window and open it again.")
+			             .format(ing["ingredient_name"]))
+		typed = row.get("buy_size")
+		size = _number(ing["buy_size"] if typed in (None, "") else typed)
+		if not size > 0:
+			frappe.throw(_("A buying unit must hold more than zero {0}.").format(ing["uom"]))
+	return {
+		"ingredient": ing["name"], "note": row.get("note"),
+		"qty": qty * size, "price": None if price is None else price / size,
+		"purchase_qty": qty, "purchase_uom": unit, "purchase_size": size,
+		"purchase_price": price or 0,
+	}
+
+
 @frappe.whitelist(methods=["POST"])
 @require_perm("Ingredient", "manage_stock")
 def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
                   invoice_no: str | None = None):
-	"""Goods in. rows = [{ingredient, qty, cost_per_unit?}]. One batch_id ties
-	the delivery together, which is why this needs no Stock Receipt doctype:
-	a receipt is just its ledger rows plus a supplier and an invoice number."""
+	"""Goods in. rows = [{ingredient, qty, cost_per_unit?, note?, uom?,
+	in_buying_unit?, buy_uom?, buy_size?}]. qty and cost_per_unit are in the
+	unit chosen: the stock unit, or the buying unit with in_buying_unit
+	(buy_size changes the pack size for this delivery only; uom and buy_uom are
+	the units the screen showed, and a row is refused if either has changed
+	since). One batch_id ties the delivery together, which is why
+	this needs no Stock Receipt doctype: a receipt is just its ledger rows plus
+	a supplier and an invoice number."""
+	from kamra.settings import get_setting
+
 	if isinstance(rows, str):
 		rows = frappe.parse_json(rows)
 	if not rows:
 		frappe.throw(_("Nothing to receive."))
 	check_outlet(property, outlet)
+	names = sorted({r["ingredient"] for r in rows})
+	# One delivery at a time per ingredient, with stock and cost read after the
+	# lock. The transaction this request has been reading in ends first: its
+	# snapshot would not show a delivery that committed while this one waited.
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- nothing written yet; the reads after the lock need a fresh snapshot
+	_lock_ingredients(names)
+	_lock_stock(names)
+
+	held = {}
+	for name in names:
+		ing = frappe.db.get_value(
+			"Ingredient", name,
+			["name", "property", "ingredient_name", "uom", "buy_uom", "buy_size"],
+			as_dict=True)
+		if not ing or ing.property != property:
+			frappe.throw(_("{0} belongs to another property.").format(name))
+		held[name] = ing
+	# every row is checked before any of them moves
+	lines = [_delivery_line(r, held[r["ingredient"]]) for r in rows]
+
+	method = get_setting(property, "stock_cost_method")
 	batch = uuid.uuid4().hex[:12]
 	out = []
-	for r in rows:
-		qty = float(r.get("qty") or 0)
-		if qty <= 0:
-			frappe.throw(_("Received quantity must be above zero."))
-		ing = r["ingredient"]
-		if r.get("cost_per_unit") not in (None, ""):
-			# the price we actually paid becomes the price we value waste at
-			frappe.db.set_value("Ingredient", ing, "cost_per_unit",
-			                    float(r["cost_per_unit"]))
-		after = _apply_move(property, outlet, ing, qty, "Received",
-		                    supplier=supplier, invoice_no=invoice_no,
-		                    batch_id=batch, note=r.get("note"))
+	for line in lines:
+		ing, price = line["ingredient"], line["price"]
+		on_hand = sum(float(q or 0) for q in frappe.get_all(
+			"Ingredient Stock", filters={"ingredient": ing}, pluck="qty_on_hand"))
+		cost = float(frappe.db.get_value("Ingredient", ing, "cost_per_unit") or 0)
+		new_cost = cost_after_receipt(method, on_hand, cost, line["qty"], price)
+		if new_cost != cost:
+			frappe.db.set_value("Ingredient", ing, "cost_per_unit", new_cost)
+		after = _apply_move(
+			property, outlet, ing, line["qty"], "Received",
+			supplier=supplier, invoice_no=invoice_no, batch_id=batch,
+			note=line["note"], cost=cost if price is None else round(price, 6),
+			extra={
+				**{k: line[k] for k in ("purchase_qty", "purchase_uom",
+				                        "purchase_size", "purchase_price")},
+				"price_entry": "Not entered" if price is None else "Entered",
+				"cost_before": cost, "cost_after": new_cost,
+			})
 		out.append({"ingredient": ing, "qty_on_hand": after})
 
 	from kamra.savings import log_action
@@ -554,7 +681,8 @@ def stock_list(property: str, outlet: str, status: str | None = None,
 	for r in rows:
 		meta = frappe.db.get_value(
 			"Ingredient", r.ingredient,
-			["ingredient_name", "uom", "category", "cost_per_unit", "is_active"],
+			["ingredient_name", "uom", "buy_uom", "buy_size", "category",
+			 "cost_per_unit", "is_active"],
 			as_dict=True) or {}
 		r.update(meta)
 		r["status"] = _status(float(r.qty_on_hand or 0), float(r.par_level or 0))
@@ -570,16 +698,33 @@ def stock_list(property: str, outlet: str, status: str | None = None,
 @frappe.whitelist()
 @require_perm("Ingredient", "view_stock")
 def ingredient_ledger(property: str, outlet: str, ingredient: str,
-                      limit: int = 50):
+                      limit: int = 50, purchases_only: int = 0):
 	"""Where did my paneer go? Newest first, each row carrying the balance it
-	produced, so the history explains the number on the shelf."""
+	produced, so the history explains the number on the shelf.
+
+	purchases_only lists the deliveries alone, from every outlet of the
+	property (an ingredient has one cost), with their own limit: kitchen usage
+	would otherwise push them off the end."""
+	purchases = cint(purchases_only)
+	filters = {"property": property, "ingredient": ingredient}
+	if purchases:
+		filters["reason"] = "Received"
+	else:
+		filters["outlet"] = outlet
 	rows = frappe.get_all(
-		"Ingredient Ledger Entry",
-		filters={"property": property, "outlet": outlet, "ingredient": ingredient},
-		fields=["name", "creation", "qty_change", "balance_after", "reason",
+		"Ingredient Ledger Entry", filters=filters,
+		fields=["name", "creation", "outlet", "qty_change", "balance_after", "reason",
 		        "reference_doctype", "reference_name", "note", "supplier",
-		        "invoice_no", "cost_per_unit", "owner"],
+		        "invoice_no", "cost_per_unit", "purchase_qty", "purchase_uom",
+		        "purchase_size", "purchase_price", "price_entry", "cost_after",
+		        "owner"],
 		order_by="creation desc", limit=int(limit or 50))
+	if purchases and rows:
+		names = {o.name: o.outlet_name for o in frappe.get_all(
+			"POS Outlet", filters={"name": ["in", list({r.outlet for r in rows})]},
+			fields=["name", "outlet_name"])}
+		for r in rows:
+			r["outlet_name"] = names.get(r.outlet)
 	return rows
 
 

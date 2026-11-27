@@ -28,6 +28,8 @@ import ImageField from "./ImageField"
 import ChoiceGroupsField from "./ChoiceGroupsField"
 import TagPills from "./TagPills"
 import { fmtAmount } from "../lib/money"
+import { fmtUnitCost } from "../lib/stockCost"
+import { formPayload } from "../lib/formPayload"
 import { useT, t as translate, useUILanguage } from "../lib/i18n"
 import { useAuth } from "../lib/auth"
 import { downloadCsv } from "../lib/csv"
@@ -134,6 +136,8 @@ export interface FieldSpec {
   defaultValue?: unknown
   hint?: string // for image: recommended size/format
   dependsOn?: (draft: Record<string, unknown>) => boolean
+  /** Saved only when changed here, so an old value can't overwrite a newer one. */
+  onlyIfChanged?: boolean
   /** Block dates before today unless the user may backdate (Finance / Hotel Admin). */
   notPast?: boolean
 }
@@ -148,6 +152,8 @@ export interface ScreenConfig {
     badge?: boolean
     /** Map a Check field (0/1) to Active / Disabled badges. */
     statusCheck?: boolean
+    /** A cost per unit: keeps the decimals a small unit needs. */
+    format?: "unitCost"
   }[]
   form: FieldSpec[]
   propertyScoped?: boolean
@@ -408,11 +414,13 @@ function FieldInput(props: {
       }))
       const rawValue = String(value ?? "")
       const selected = suggestions.find((option) => option.value === rawValue)
+      // a text field may suggest fixed options too, while still taking any text
+      const suggests = !!spec.optionsFrom || (spec.type === "data" && !!spec.options)
       return (
         <>
           <input
             className={inputCls}
-            list={spec.optionsFrom ? `masters-${spec.field}` : undefined}
+            list={suggests ? `masters-${spec.field}` : undefined}
             value={selected?.label ?? rawValue}
             onChange={(e) => {
               const entered = e.target.value
@@ -421,7 +429,7 @@ function FieldInput(props: {
               onChange(suggestion?.value ?? entered)
             }}
           />
-          {spec.optionsFrom && suggestions.length > 0 && (
+          {suggests && suggestions.length > 0 && (
             <datalist id={`masters-${spec.field}`}>
               {suggestions.map((option) => (
                 <option key={option.value} value={option.label} />
@@ -466,6 +474,8 @@ export function ResourceScreen({
   const [rows, setRows] = useState<Row[]>([])
   const [editing, setEditing] = useState<Row | "new" | null>(null)
   const [draft, setDraft] = useState<Record<string, unknown>>({})
+  // the record as the form opened it, to tell what was changed (null: new)
+  const [loaded, setLoaded] = useState<Record<string, unknown> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [linkOptions, setLinkOptions] = useState<Record<string, string[]>>({})
@@ -642,6 +652,7 @@ export function ResourceScreen({
         if (spec.defaultValue !== undefined) defaults[spec.field] = spec.defaultValue
       }
       setDraft(defaults)
+      setLoaded(null)
       return
     }
     // List rows only carry column fields - fetch the full document so
@@ -653,24 +664,21 @@ export function ResourceScreen({
       return copy
     }
     setDraft(withoutSecrets(row))
+    setLoaded(withoutSecrets(row))
     frappeFetch<{ data: Row }>(
       `/api/resource/${encodeURIComponent(config.doctype)}/${encodeURIComponent(row.name)}`,
     )
-      .then((r) => setDraft(withoutSecrets(r.data)))
+      .then((r) => {
+        setDraft(withoutSecrets(r.data))
+        setLoaded(withoutSecrets(r.data))
+      })
       .catch((e) => setError(serverError(e)))
   }
 
   async function save() {
     setBusy(true)
     try {
-      // Only persist form fields - never the raw list-row or full-doc dump.
-      const payload: Record<string, unknown> = {}
-      for (const f of config.form) {
-        if (f.type === "readonly") continue
-        // an empty secret keeps the stored one
-        if (f.type === "password" && !draft[f.field]) continue
-        if (f.field in draft) payload[f.field] = draft[f.field]
-      }
+      const payload = formPayload(config.form, draft, editing === "new" ? null : loaded)
       if (config.propertyScoped) payload.property = getCurrentProperty()
       if (editing === "new") {
         await createResource(config.doctype, payload)
@@ -883,6 +891,8 @@ export function ResourceScreen({
                         >
                           {t(String(row[c.field]))}
                         </Badge>
+                      ) : c.format === "unitCost" && typeof row[c.field] === "number" ? (
+                        fmtUnitCost(row[c.field])
                       ) : (
                         cellValue(row[c.field], t)
                       )}

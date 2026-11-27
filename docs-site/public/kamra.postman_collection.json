@@ -13145,10 +13145,10 @@
         "kamra.inventory.save_ingredient"
        ]
       },
-      "description": "Create or update one ingredient.",
+      "description": "Create or update one ingredient. A cost or buying unit that isn't sent is\nleft as it is: the cost follows deliveries, and editing something else must\nnot put an old figure back.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"ingredient_name\": \"<ingredient_name>\",\n  \"uom\": \"<uom>\",\n  \"cost_per_unit\": 0,\n  \"is_active\": 1\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"ingredient_name\": \"<ingredient_name>\",\n  \"uom\": \"<uom>\",\n  \"is_active\": 1\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -13219,7 +13219,7 @@
         "kamra.inventory.receive_stock"
        ]
       },
-      "description": "Goods in. rows = [{ingredient, qty, cost_per_unit?}]. One batch_id ties\nthe delivery together, which is why this needs no Stock Receipt doctype:\na receipt is just its ledger rows plus a supplier and an invoice number.",
+      "description": "Goods in. rows = [{ingredient, qty, cost_per_unit?, note?, uom?,\nin_buying_unit?, buy_uom?, buy_size?}]. qty and cost_per_unit are in the\nunit chosen: the stock unit, or the buying unit with in_buying_unit\n(buy_size changes the pack size for this delivery only; uom and buy_uom are\nthe units the screen showed, and a row is refused if either has changed\nsince). One batch_id ties the delivery together, which is why\nthis needs no Stock Receipt doctype: a receipt is just its ledger rows plus\na supplier and an invoice number.",
       "body": {
        "mode": "raw",
        "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"rows\": \"<rows>\"\n}",
@@ -13367,10 +13367,10 @@
         "kamra.inventory.ingredient_ledger"
        ]
       },
-      "description": "Where did my paneer go? Newest first, each row carrying the balance it\nproduced, so the history explains the number on the shelf.",
+      "description": "Where did my paneer go? Newest first, each row carrying the balance it\nproduced, so the history explains the number on the shelf.\n\npurchases_only lists the deliveries alone, from every outlet of the\nproperty (an ingredient has one cost), with their own limit: kitchen usage\nwould otherwise push them off the end.",
       "body": {
        "mode": "raw",
-       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"ingredient\": \"<ingredient>\",\n  \"limit\": 50\n}",
+       "raw": "{\n  \"property\": \"Your Property\",\n  \"outlet\": \"Your Property-Restaurant\",\n  \"ingredient\": \"<ingredient>\",\n  \"limit\": 50,\n  \"purchases_only\": 0\n}",
        "options": {
         "raw": {
          "language": "json"

@@ -78,3 +78,10 @@ The channel manager has {0} rooms of {1}; Kamra has {2}.,O gerenciador de canais
 The channel manager sells in {0}; this property is in {1}.,O gerenciador de canais vende em {0}; esta propriedade está em {1}.
 The channel manager's property time zone is {0}; this property's is {1}.,O fuso horário da propriedade no gerenciador de canais é {0}; o desta propriedade é {1}.
 {0} does not take ARI changes.,{0} não aceita o envio de disponibilidade e tarifas por mudanças.
+A price cannot be below zero.,O preço não pode ser menor que zero.
+{0} has no buying unit.,{0} não tem unidade de compra.
+A buying unit must hold more than zero {0}.,Uma unidade de compra deve conter mais de zero {0}.
+The buying unit of {0} changed. Close the window and open it again.,A unidade de compra de {0} mudou. Feche a janela e abra-a novamente.
+The unit of {0} changed. Close the window and open it again.,A unidade de {0} mudou. Feche a janela e abra-a novamente.
+Give a buying unit both a name and how many {0} it holds.,Informe o nome da unidade de compra e quantos {0} ela contém.
+"{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} já tem histórico de estoque ou está em uma receita, então sua unidade continua {1}."

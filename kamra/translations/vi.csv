@@ -57,3 +57,10 @@ Bills still open,Hóa đơn vẫn đang mở
 Use Check out to check a guest out: it makes sure every bill is cleared first.,Dùng Trả phòng để trả phòng cho khách: thao tác này bảo đảm mọi hóa đơn đã được xử lý trước.
 Check out,Trả phòng
 Discounts and allowances,Giảm giá và giảm trừ
+A price cannot be below zero.,Giá không được nhỏ hơn 0.
+{0} has no buying unit.,{0} không có đơn vị mua.
+A buying unit must hold more than zero {0}.,Một đơn vị mua phải chứa nhiều hơn 0 {0}.
+The buying unit of {0} changed. Close the window and open it again.,Đơn vị mua của {0} đã thay đổi. Hãy đóng cửa sổ và mở lại.
+The unit of {0} changed. Close the window and open it again.,Đơn vị của {0} đã thay đổi. Hãy đóng cửa sổ và mở lại.
+Give a buying unit both a name and how many {0} it holds.,Nhập cả tên đơn vị mua và số {0} mà nó chứa.
+"{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} đã có lịch sử kho hoặc có trong công thức, nên đơn vị vẫn là {1}."

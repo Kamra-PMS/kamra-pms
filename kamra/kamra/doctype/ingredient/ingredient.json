@@ -12,6 +12,8 @@
   "category",
   "column_break_a",
   "uom",
+  "buy_uom",
+  "buy_size",
   "cost_per_unit",
   "gst_rate",
   "is_active"
@@ -44,20 +46,32 @@
   },
   {
    "fieldname": "uom",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "label": "Unit",
-   "options": "kg\ng\nL\nml\npc\nbottle\npacket",
+   "length": 16,
    "default": "kg",
    "reqd": 1,
    "in_list_view": 1,
-   "description": "One unit per ingredient, always. Recipes and purchases both use it, so there is never a conversion to get wrong. Buying in kg but cooking in g? Define the ingredient in g."
+   "description": "The one unit stock, recipes, counts and wastage use. It cannot change once the ingredient has stock history or is on a recipe. Buying by the box or sack? Set a buying unit."
+  },
+  {
+   "fieldname": "buy_uom",
+   "fieldtype": "Data",
+   "label": "Buying unit",
+   "length": 16,
+   "description": "Optional, e.g. box or sack."
+  },
+  {
+   "fieldname": "buy_size",
+   "fieldtype": "Float",
+   "label": "Stock units per buying unit"
   },
   {
    "fieldname": "cost_per_unit",
    "fieldtype": "Currency",
    "label": "Cost / Unit",
    "in_list_view": 1,
-   "description": "Last known cost, used to value wastage. Indicative only - this is not FIFO or moving-average costing and does not tie to the books."
+   "description": "What one stock unit costs, used for wastage and dish costs. A priced delivery updates it. Indicative only - it does not tie to the books."
   },
   {
    "fieldname": "gst_rate",
@@ -74,7 +88,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-31 12:00:00.000000",
+ "modified": "2026-11-26 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Ingredient",
