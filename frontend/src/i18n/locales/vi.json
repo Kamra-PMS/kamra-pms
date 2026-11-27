@@ -7153,5 +7153,7 @@
   "Visa number": "Số thị thực",
   "Visa type": "Loại thị thực",
   "e-Visa": "Thị thực điện tử",
-  "New visa number (leave empty to keep)": "Số thị thực mới (để trống để giữ nguyên)"
+  "New visa number (leave empty to keep)": "Số thị thực mới (để trống để giữ nguyên)",
+  "{n} left": "Còn {n}",
+  "No room to assign": "Không còn phòng để xếp"
 }

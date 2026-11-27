@@ -308,6 +308,7 @@ Visa type,Visa type,نوع التأشيرة,Tipo de visado,Tipo de visto,签证�
 {n} items left for after check-in. The guest can go to the room now.,{n} items left for after check-in. The guest can go to the room now.,{n} بند متبقٍ لما بعد تسجيل الوصول. يمكن للضيف التوجه إلى الغرفة الآن.,{n} tareas pendientes para después del registro de entrada. El huésped ya puede pasar a su habitación.,{n} itens restantes para após o check-in. O hóspede já pode ir para o quarto.,还有 {n} 项入住后处理。宾客现在可进入客房。,components/CheckInDialog.tsx,n,translated
 {n} key(s) handed over.,{n} key(s) handed over.,تم تسليم {n} مفتاح.,Llaves entregadas: {n}.,{n} chave(s) entregue(s).,已交接 {n} 把钥匙。,components/CheckInDialog.tsx,n,translated
 {n} late arrival(s) held,{n} late arrival(s) held,{n} وصول متأخر محجوز,Reservas mantenidas por llegada tardía: {n},{n} chegada(s) tardia(s) retida(s),已保留 {n} 个晚到订单,screens/Billing.tsx,n,translated
+{n} left,{n} left,المتبقي: {n},Disponibles: {n},Disponíveis: {n},剩余 {n},components/BookingDialog.tsx,n,translated
 {n} line,{n} line,{n} سطر,{n} línea,{n} linha,{n} 行,screens/FolioView.tsx,n,translated
 {n} line · {amount},{n} line · {amount},{n} بند · {amount},{n} concepto · {amount},Linha {n} · {amount},{n} 行 · {amount},screens/banquet/Steps.tsx,n amount,translated
 {n} line · {cur}{amount} selected,{n} line · {cur}{amount} selected,{n} سطر · {cur}{amount} محدد,{n} línea · {cur}{amount} seleccionado,{n} linha · {cur}{amount} selecionada,已选 {n} 行 · {cur}{amount},screens/FolioView.tsx,n cur amount,translated
@@ -4150,6 +4151,7 @@ No room charges,No room charges,بلا رسوم على الغرفة,Sin cargos p
 No room free,No room free,لا توجد غرفة متاحة,Sin habitación libre,Nenhum quarto livre,无空房,screens/CRS.tsx,,translated
 No room matches these filters.,No room matches these filters.,لا توجد غرفة تطابق هذه الفلاتر.,Ninguna habitación coincide con estos filtros.,Nenhum quarto corresponde a esses filtros.,无匹配这些筛选的客房。,screens/Rooms.tsx,,translated
 No room number yet,No room number yet,لا يوجد رقم غرفة بعد,Aún sin número de habitación,Sem número de quarto atribuído,尚未分配房号,components/GroupControl.tsx,,translated
+No room to assign,No room to assign,لا توجد غرفة للتخصيص,Sin habitación para asignar,Sem quarto para atribuir,暂无可分配房间,components/BookingDialog.tsx,,translated
 No room yet,No room yet,لا غرفة بعد,Sin habitación asignada,Ainda não há espaço,暂无客房,components/AgentCards.tsx; components/AgentGuide.tsx; screens/Today.tsx,,translated
 No rooms across the chain for these dates and party.,No rooms across the chain for these dates and party.,لا غرف عبر السلسلة لهذه التواريخ والعدد.,No hay habitaciones disponibles en la cadena para las fechas y el número de huéspedes indicados.,Não há quartos disponíveis em toda a rede para estas datas e este grupo de hóspedes.,这些日期与人数下全连锁均无客房。,screens/CRS.tsx,,translated
 No rooms match.,No rooms match.,لا توجد غرف مطابقة.,No hay coincidencias de habitaciones.,Nenhum quarto corresponde.,无匹配客房。,components/RoomChangeDialog.tsx; screens/HousekeepingBoard.tsx,,translated
@@ -6054,7 +6056,7 @@ Soft hold you can sell over,Soft hold you can sell over,حجز مرن يمكن �
 Soft hold you can sell over:,Soft hold you can sell over:,حجز مرن يمكن البيع فوقه:,Reserva provisional que permite otra venta:,Soft hold que você pode vender:,可超售的临时预留：,screens/BanquetDiary.tsx,,translated
 Sold for (incl. tax),Sold for (incl. tax),سعر البيع (شامل الضريبة),Vendida por (imp. incl.),Vendido por (com impostos),售价（含税）,components/BookingDialog.tsx,,translated
 "Sold for, all rooms (incl. tax)","Sold for, all rooms (incl. tax)",سعر البيع لكل الغرف (شامل الضريبة),"Vendido por, todas las habitaciones (imp. incl.)","Vendido por, todos os quartos (com impostos)",全部客房成交价（含税）,components/BookingDialog.tsx,,translated
-Sold out,Sold out,نفدت,Sin disponibilidad,Esgotado,已售完,components/BookingRequests.tsx; screens/PublicListing.tsx,,translated
+Sold out,Sold out,نفدت,Sin disponibilidad,Esgotado,已售完,components/BookingDialog.tsx; components/BookingRequests.tsx; screens/PublicListing.tsx,,translated
 Sold out for these dates,Sold out for these dates,لا يوجد توفر لهذه التواريخ,Sin disponibilidad para estas fechas,Esgotado para essas datas,这些日期已售完,screens/PublicBooking.tsx,,translated
 Solved,Solved,تم حلها,Resueltas,Resolvido,已解决,screens/OpsSLA.tsx,,translated
 Solved by,Solved by,تم الحل بواسطة,Resuelto por,Resolvido por,解决人,screens/OpsSLA.tsx; screens/Tickets.tsx,,translated

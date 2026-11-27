@@ -7191,5 +7191,7 @@
   "Visa number": "Número de visado",
   "Visa type": "Tipo de visado",
   "e-Visa": "Visado electrónico",
-  "New visa number (leave empty to keep)": "Nuevo número de visado (déjelo vacío para conservar)"
+  "New visa number (leave empty to keep)": "Nuevo número de visado (déjelo vacío para conservar)",
+  "{n} left": "Disponibles: {n}",
+  "No room to assign": "Sin habitación para asignar"
 }

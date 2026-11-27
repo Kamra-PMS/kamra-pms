@@ -7153,5 +7153,7 @@
   "Visa number": "वीज़ा नंबर",
   "Visa type": "वीज़ा का प्रकार",
   "e-Visa": "ई-वीज़ा",
-  "New visa number (leave empty to keep)": "नया वीज़ा नंबर (रखने के लिए खाली छोड़ें)"
+  "New visa number (leave empty to keep)": "नया वीज़ा नंबर (रखने के लिए खाली छोड़ें)",
+  "{n} left": "शेष: {n}",
+  "No room to assign": "आवंटन के लिए कोई कमरा नहीं"
 }

@@ -7153,5 +7153,7 @@
   "Visa number": "விசா எண்",
   "Visa type": "விசா வகை",
   "e-Visa": "இ-விசா",
-  "New visa number (leave empty to keep)": "புதிய விசா எண் (வைத்திருக்க காலியாக விடவும்)"
+  "New visa number (leave empty to keep)": "புதிய விசா எண் (வைத்திருக்க காலியாக விடவும்)",
+  "{n} left": "மீதம்: {n}",
+  "No room to assign": "ஒதுக்க அறை இல்லை"
 }

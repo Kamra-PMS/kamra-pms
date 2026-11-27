@@ -271,7 +271,7 @@ Generated from the code by `docs-site/gen_permissions.py`.
 | Reservation | Check in out (`check_in_out`) | Front Desk, Hotel Admin, Kamra Agent, Night Auditor, System Manager | `api.checkin_context`, `api.check_in`, `api.check_out` and 3 more |
 | Reservation | Follow instructions (`follow_instructions`) | Front Desk, Hotel Admin, Housekeeping, Housekeeping Supervisor, Kamra Agent, System Manager | `api.stay_instructions`, `api.set_stay_instruction_status` |
 | Reservation | Guided check in (`guided_check_in`) | Front Desk, Hotel Admin, Night Auditor, System Manager | `checkin.complete_checkin_step`, `checkin.skip_checkin_step`, `checkin.save_guest_details` and 5 more |
-| Reservation | Handle stays (`handle_stays`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.registration_card`, `api.waive_security_deposit`, `api.release_access_instructions` and 34 more |
+| Reservation | Handle stays (`handle_stays`) | Front Desk, Hotel Admin, Kamra Agent, System Manager | `api.registration_card`, `api.waive_security_deposit`, `api.release_access_instructions` and 35 more |
 | Reservation | Plan stays (`plan_stays`) | Front Desk, Hotel Admin, Kamra Agent, Revenue Manager, System Manager | `allocation.suggest_allocation`, `allocation.apply_allocation`, `api.set_pays_own_charges` and 2 more |
 | Reservation | Reinstate checkout (`reinstate_checkout`) | Finance, Front Desk, Hotel Admin, System Manager | `api.reinstate_checkout` |
 | Reservation | Set room charges (`set_room_charges`) | Finance, Front Desk, Hotel Admin, Night Auditor, System Manager | `checkin.set_room_charges` |
