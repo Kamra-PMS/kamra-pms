@@ -43,6 +43,9 @@
   "payment_mode",
   "card_network",
   "card_last4",
+  "paid_amount",
+  "paid_tax",
+  "refunded_amount",
   "guests",
   "customer_name",
   "customer_phone",
@@ -288,6 +291,29 @@
    "read_only": 1
   },
   {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "Paid Amount",
+   "no_copy": 1,
+   "read_only": 1,
+   "description": "What the guest paid, tax included: the most a refund can give back."
+  },
+  {
+   "fieldname": "paid_tax",
+   "fieldtype": "Currency",
+   "label": "Tax Paid",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "refunded_amount",
+   "fieldtype": "Currency",
+   "label": "Refunded",
+   "no_copy": 1,
+   "read_only": 1,
+   "description": "The refunds so far, for lists. POS Refund records are the truth."
+  },
+  {
    "fieldname": "guests",
    "fieldtype": "Int",
    "label": "Guests"
@@ -376,7 +402,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-25 10:00:00.000000",
+ "modified": "2026-11-26 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "POS Order",
@@ -396,7 +422,8 @@
    "write": 1,
    "manage_outlet": 1,
    "take_orders": 1,
-   "approve_voids": 1
+   "approve_voids": 1,
+   "approve_refunds": 1
   },
   {
    "create": 1,
@@ -410,7 +437,8 @@
    "write": 1,
    "manage_outlet": 1,
    "take_orders": 1,
-   "approve_voids": 1
+   "approve_voids": 1,
+   "approve_refunds": 1
   },
   {
    "create": 1,
@@ -430,7 +458,8 @@
    "role": "Finance",
    "manage_outlet": 1,
    "take_orders": 1,
-   "approve_voids": 1
+   "approve_voids": 1,
+   "approve_refunds": 1
   },
   {
    "create": 1,
@@ -457,6 +486,7 @@
    "write": 1,
    "role": "F&B Manager",
    "approve_voids": 1,
+   "approve_refunds": 1,
    "take_orders": 1
   }
  ],

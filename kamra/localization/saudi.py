@@ -107,6 +107,11 @@ def on_pos_bill_paid(order_name: str, tax_rate: float):
 	return zatca.issue_for_pos_order(order_name, tax_rate)
 
 
+def on_pos_refund(refund_name: str):
+	from kamra import zatca
+	return zatca.credit_note_for_pos_refund(refund_name)
+
+
 def invoice_print_block(source_doctype: str, source_name: str,
                         number: str | None = None):
 	from kamra import zatca

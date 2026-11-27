@@ -22,6 +22,7 @@ import uuid as uuidlib
 import frappe
 from frappe import _
 from frappe.utils import now_datetime
+from lxml import etree
 
 from kamra.zatca import tlv, ubl
 
@@ -235,6 +236,48 @@ def issue_for_pos_order(order_name: str, vat_rate: float):
 	             source_doctype="POS Order", source_name=o.name,
 	             buyer={"name": o.customer_name} if o.customer_name else None,
 	             payment_mode=o.payment_mode)
+
+
+def _stated_rate(xml: str) -> float:
+	"""The VAT percent on a till invoice (all its lines carry the outlet's)."""
+	root = etree.fromstring(xml.encode("utf-8"))
+	return float(root.findtext(f".//{ubl.CBC}Percent") or 0)
+
+
+def credit_note_for_pos_refund(refund_name: str):
+	"""One credit note per POS refund, built like the till's invoice: the
+	refunded items and their share of the discount, and no levy (the invoice
+	leaves it out) - so the notes on a bill never exceed its invoice."""
+	r = frappe.get_doc("POS Refund", refund_name)
+	o = frappe.get_doc("POS Order", r.pos_order)
+	invoice = frappe.db.get_value(
+		RECORD, {"property": r.property, "invoice_number": o.name, "document_type": "Invoice"},
+		"xml")
+	if not invoice:
+		return None  # paid before ZATCA was on - nothing to reverse
+	# the rate the invoice states, whatever the outlet charges by now. It cannot
+	# be worked back from the totals: 0.98 VAT on 6.50 would read as 15.08%
+	rate = _stated_rate(invoice)
+	net = round(float(r.amount or 0) - float(r.tax_amount or 0) - float(r.levy_amount or 0), 2)
+	sold = {it.name: it for it in o.items}
+	lines = [{"name": x.item_name, "qty": float(x.qty or 1), "rate": rate,
+	          "net": round(float(sold[x.order_item].amount or 0) * float(x.qty or 0)
+	                       / float(sold[x.order_item].qty or 1), 2)}
+	         for x in r.lines if x.order_item in sold]
+	diff = round(net - sum(x["net"] for x in lines), 2)
+	if not lines:
+		lines = [{"name": "Refund", "qty": 1, "net": net, "rate": rate}]
+	elif diff < 0:
+		lines.append({"name": "Discount", "qty": 1, "net": diff, "rate": rate})
+	elif diff:
+		lines[-1]["net"] = round(lines[-1]["net"] + diff, 2)
+	number = frappe.db.count("POS Refund", {"pos_order": o.name})
+	return issue(r.property, f"{o.name}-R{number}", lines,
+	             source_doctype="POS Refund", source_name=r.name,
+	             doc_type="Credit Note", billing_reference=o.name,
+	             reason=frappe.db.get_value("Reason Code", r.reason_code, "description"),
+	             buyer={"name": o.customer_name} if o.customer_name else None,
+	             payment_mode=r.mode)
 
 
 # ── what the printed bill needs ──────────────────────────────────────────

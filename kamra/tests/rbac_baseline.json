@@ -2556,6 +2556,11 @@
 "Hotel Admin",
 "System Manager"
 ],
+"inventory.cancel_stock_entry": [
+ "Administrator",
+ "Hotel Admin",
+ "System Manager"
+],
 "inventory.delete_ingredient": [
 "Administrator",
 "F&B Manager",
@@ -2597,6 +2602,13 @@
 "Front Desk",
 "Hotel Admin",
 "Kamra Agent",
+"System Manager"
+],
+"inventory.produce": [
+"Administrator",
+"F&B Manager",
+"Finance",
+"Hotel Admin",
 "System Manager"
 ],
 "inventory.receive_stock": [
@@ -2643,6 +2655,22 @@
 "Hotel Admin",
 "System Manager"
 ],
+"inventory.stock_summary": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Front Desk",
+ "Hotel Admin",
+ "Kamra Agent",
+ "System Manager"
+],
+"inventory.track_item_stock": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Hotel Admin",
+ "System Manager"
+],
 "inventory.set_par_level": [
 "Administrator",
 "F&B Manager",
@@ -2658,6 +2686,13 @@
 "Hotel Admin",
 "Kamra Agent",
 "System Manager"
+],
+"inventory.untrack_item_stock": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Hotel Admin",
+ "System Manager"
 ],
 "inventory.wastage_report": [
 "Administrator",
@@ -3219,6 +3254,33 @@
 "Finance",
 "Hotel Admin",
 "System Manager"
+],
+"pos_refunds.refund_bill": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Front Desk",
+ "Hotel Admin",
+ "Kamra Agent",
+ "System Manager"
+],
+"pos_refunds.refund_options": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Front Desk",
+ "Hotel Admin",
+ "Kamra Agent",
+ "System Manager"
+],
+"pos_refunds.refund_quote": [
+ "Administrator",
+ "F&B Manager",
+ "Finance",
+ "Front Desk",
+ "Hotel Admin",
+ "Kamra Agent",
+ "System Manager"
 ],
 "pos.accept_ticket": [
 "Administrator",

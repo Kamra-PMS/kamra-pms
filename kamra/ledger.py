@@ -2515,6 +2515,12 @@ DEFAULT_REASONS = [
 	("REV-BOUNCE", "Cheque bounced", "Payment Reversal", 0),
 	("REV-ACCOUNT", "Posted to the wrong account", "Payment Reversal", 0),
 	("REV-ERR", "Entered in error", "Payment Reversal", 0),
+	# a POS refund always needs a supervisor's PIN, so none needs one itself
+	("POS-REF-WRONG", "Wrong order", "POS Refund", 0),
+	("POS-REF-QUAL", "Quality", "POS Refund", 0),
+	("POS-REF-COMPL", "Guest complaint", "POS Refund", 0),
+	("POS-REF-STAFF", "Staff error", "POS Refund", 0),
+	("POS-REF-OTHER", "Other", "POS Refund", 0),
 ]
 
 

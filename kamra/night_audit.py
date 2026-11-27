@@ -748,7 +748,7 @@ def _void_and_allowance_spikes(property: str, bd: str) -> list[dict]:
 	voids = frappe.db.sql(
 		"""SELECT actor, DATE(creation), reference_doctype, reference_name
 		   FROM `tabAgent Action Log`
-		   WHERE property = %s AND action_type IN ('void_charge', 'pos_void_item')
+		   WHERE property = %s AND action_type IN ('void_charge', 'pos_void_item', 'pos_refund')
 		     AND DATE(creation) BETWEEN %s AND %s""", (property, since, bd))
 	allowances = frappe.db.sql(
 		"""SELECT requested_by, DATE(requested_on), 'Allowance Request', name
