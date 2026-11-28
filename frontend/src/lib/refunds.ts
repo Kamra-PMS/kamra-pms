@@ -52,6 +52,19 @@ export function refundApproval(
   return { ask: "own-pin", ready: !!pin, args: { supervisor: null, supervisor_pin: pin || null } }
 }
 
+/** What a click on the refund button does. Where nothing is typed (an approver,
+ *  PINs off) one tap would hand money back, so the first click asks. `what`
+ *  names what is being refunded: if that changed since the question, it asks
+ *  again. The second tap of a double tap is ignored, wherever it lands. */
+export function refundClick(
+  ask: ReturnType<typeof refundApproval>["ask"],
+  asked: { what: string; at: number } | null, what: string, at: number,
+): "ask" | "ignore" | "pay" {
+  if (ask !== "nothing") return "pay"
+  if (asked?.what !== what) return "ask"
+  return at - asked.at < 600 ? "ignore" : "pay"
+}
+
 /** One key per attempt: the server pays a repeated key once. */
 export function newAttemptKey(): string {
   const random = () => Math.random().toString(36).slice(2, 10)

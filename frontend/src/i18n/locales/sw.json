@@ -7254,5 +7254,7 @@
   "How far back a stock entry can be dated.": "Ingizo la stoo linaweza kuwekewa tarehe ya nyuma kiasi gani.",
   "Back-date stock entries up to": "Maingizo ya stoo yarudi nyuma hadi",
   "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: hakuna kikomo. 1: nyuma kabisa ni jana. Inahusu upokeaji, hesabu za stoo, upotevu na mafungu yaliyotengenezwa. Kughairi ingizo hakuathiriwi.",
-  "Earliest: {date}": "Tarehe ya mwanzo kabisa: {date}"
+  "Earliest: {date}": "Tarehe ya mwanzo kabisa: {date}",
+  "Give back {amount} by {mode}?": "Rudisha {amount} kama {mode}?",
+  "Yes, refund {amount}": "Ndiyo, rejesha {amount}"
 }

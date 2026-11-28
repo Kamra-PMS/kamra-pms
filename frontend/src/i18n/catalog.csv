@@ -2934,6 +2934,7 @@ Give {v0} room(s) a free room number?,Give {v0} room(s) a free room number?,تخ
 Give a discount,Give a discount,منح خصم,Dar un descuento,Dar um desconto,给予折扣,components/FolioDiscount.tsx,,translated
 Give a discount before collecting,Give a discount before collecting,منح خصم قبل التحصيل,Dar un descuento antes de cobrar,Dar um desconto antes de cobrar,收款前给予折扣,components/CheckOutDialog.tsx,,translated
 Give a reason for acknowledging this check.,Give a reason for acknowledging this check.,اذكر سببا لإقرار هذا الفحص.,Indique un motivo para autorizar esta comprobación.,Dê uma razão para reconhecer esta verificação.,确认此检查需填写原因。,,,translated
+Give back {amount} by {mode}?,Give back {amount} by {mode}?,إعادة {amount} بواسطة {mode}؟,¿Devolver {amount} como {mode}?,Devolver {amount} como {mode}?,确认以{mode}退还 {amount}？,screens/pos/RefundDialog.tsx,amount mode,translated
 Give discount,Give discount,منح الخصم,Dar descuento,Dar desconto,给予折扣,components/FolioDiscount.tsx,,translated
 "Give exactly the last 4 digits of the card, or leave them empty.","Give exactly the last 4 digits of the card, or leave them empty.",أدخل آخر 4 أرقام من البطاقة بالضبط، أو اتركها فارغة.,"Escriba exactamente los últimos 4 dígitos de la tarjeta, o déjelos en blanco.",Informe exatamente os últimos 4 dígitos do cartão ou deixe em branco.,请准确填写卡号后4位，或留空。,,,translated
 Give room numbers ({v0}),Give room numbers ({v0}),تخصيص أرقام الغرف ({v0}),Asignar números de habitación ({v0}),Atribuir números de quartos ({v0}),分配房号（{v0}）,components/GroupControl.tsx,v0,translated
@@ -7271,6 +7272,7 @@ x regular,x regular,أضعاف السعر العادي,veces la normal,x normal,
 Year,Year,سنة,Año,Ano,年,screens/Recreation.tsx,,translated
 Year to date,Year to date,منذ بداية السنة,Acumulado del año,Acumulado do ano,本年至今,screens/Dashboard.tsx,,translated
 Yes,Yes,نعم,Sí,Sim,是,components/RoomDrawer.tsx; screens/AuditPack.tsx; screens/BanquetFunction.tsx; screens/EndOfDayWizard.tsx; screens/Reports.tsx; screens/Today.tsx,,translated
+"Yes, refund {amount}","Yes, refund {amount}",نعم، رد {amount},"Sí, reembolsar {amount}","Sim, reembolsar {amount}",是，退款 {amount},screens/pos/RefundDialog.tsx,amount,translated
 yesterday,yesterday,أمس,ayer,ontem,昨天,screens/Inventory.tsx,,translated
 Yesterday,Yesterday,أمس,Ayer,Ontem,昨天,screens/Owner.tsx; screens/StockSummary.tsx; screens/pos/OrderHistory.tsx,,translated
 You,You,أنت,Tú,Você,你,screens/WhatsAppChat.tsx; screens/settings/AccessPages.tsx,,translated

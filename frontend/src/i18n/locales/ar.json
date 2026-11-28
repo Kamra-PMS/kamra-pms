@@ -7254,5 +7254,7 @@
   "How far back a stock entry can be dated.": "إلى أي مدى يمكن تأريخ قيد المخزون في الماضي.",
   "Back-date stock entries up to": "أقصى مدة لتأريخ قيود المخزون بأثر رجعي",
   "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: بلا حد. 1: أقدم تاريخ مسموح به هو الأمس. يشمل الاستلامات والجرد والهدر والدفعات المصنّعة. لا يتأثر إلغاء القيود.",
-  "Earliest: {date}": "أقدم تاريخ: {date}"
+  "Earliest: {date}": "أقدم تاريخ: {date}",
+  "Give back {amount} by {mode}?": "إعادة {amount} بواسطة {mode}؟",
+  "Yes, refund {amount}": "نعم، رد {amount}"
 }

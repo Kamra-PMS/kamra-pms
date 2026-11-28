@@ -14,7 +14,7 @@ await build({
   stdin: { contents: `export * from "./refunds"`, resolveDir: lib, loader: "ts" },
   bundle: true, format: "esm", platform: "node", outfile: path.join(dir, "refunds.mjs"), logLevel: "silent",
 })
-const { refundBadge, refundRequest, refundSlipHtml, newAttemptKey, refundApproval } =
+const { refundBadge, refundRequest, refundSlipHtml, newAttemptKey, refundApproval, refundClick } =
   await import(pathToFileURL(path.join(dir, "refunds.mjs")).href)
 
 assert.equal(refundBadge(72600, 0), null)
@@ -56,6 +56,16 @@ for (const asks of [false, true]) {
   assert.deepEqual(refundApproval(who(false, asks), "boss@y.z", "2468"),
     { ask: "supervisor", ready: true, args: { supervisor: "boss@y.z", supervisor_pin: "2468" } })
 }
+
+// one tap must not pay: where nothing is typed, the first click asks
+const asked = { what: "a", at: 1000 }
+assert.equal(refundClick("nothing", null, "a", 1000), "ask")
+assert.equal(refundClick("nothing", asked, "a", 1100), "ignore", "the second tap of a double tap")
+assert.equal(refundClick("nothing", asked, "a", 1000 + 599), "ignore")
+assert.equal(refundClick("nothing", asked, "a", 1000 + 600), "pay")
+assert.equal(refundClick("nothing", asked, "b", 5000), "ask", "what was asked about has changed: ask again")
+// a typed PIN is already the second step
+for (const ask of ["own-pin", "set-pin", "supervisor"]) assert.equal(refundClick(ask, null, "a", 1000), "pay", ask)
 
 // the slip says what, how, why and who - and escapes what staff typed
 const slip = refundSlipHtml({

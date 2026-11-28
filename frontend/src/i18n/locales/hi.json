@@ -7254,5 +7254,7 @@
   "How far back a stock entry can be dated.": "स्टॉक प्रविष्टि कितनी पुरानी तारीख़ की हो सकती है।",
   "Back-date stock entries up to": "स्टॉक प्रविष्टि पिछली तारीख़ में, अधिकतम",
   "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: कोई सीमा नहीं। 1: सबसे पुरानी तारीख़ कल की। डिलीवरी, स्टॉक गिनती, वेस्टेज और बनाए गए बैच पर लागू। प्रविष्टि रद्द करने पर असर नहीं।",
-  "Earliest: {date}": "सबसे पुरानी तारीख़: {date}"
+  "Earliest: {date}": "सबसे पुरानी तारीख़: {date}",
+  "Give back {amount} by {mode}?": "{amount} {mode} से वापस करें?",
+  "Yes, refund {amount}": "हाँ, {amount} रिफ़ंड करें"
 }

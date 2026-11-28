@@ -7292,5 +7292,7 @@
   "How far back a stock entry can be dated.": "Hasta qué fecha anterior puede fecharse un movimiento de existencias.",
   "Back-date stock entries up to": "Retroactividad máxima de los movimientos de existencias",
   "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: sin límite. 1: como muy atrás, ayer. Se aplica a entregas, inventarios, mermas y lotes elaborados. No afecta a la anulación de movimientos.",
-  "Earliest: {date}": "Fecha más antigua: {date}"
+  "Earliest: {date}": "Fecha más antigua: {date}",
+  "Give back {amount} by {mode}?": "¿Devolver {amount} como {mode}?",
+  "Yes, refund {amount}": "Sí, reembolsar {amount}"
 }
