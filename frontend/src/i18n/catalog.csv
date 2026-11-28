@@ -6784,7 +6784,7 @@ Trigger,Trigger,المشغّل,Origen de la ejecución,Gatilho,触发条件,scre
 Trip {ref},Trip {ref},الرحلة {ref},Viaje {ref},Viagem {ref},行程 {ref},screens/CRS.tsx,ref,translated
 Trip {ref} booked: {n} stays.,Trip {ref} booked: {n} stays.,تم حجز الرحلة {ref}: {n} إقامات.,Viaje {ref} reservado: {n} estancias.,Viagem {ref} reservada: {n} estadias.,行程 {ref} 已预订：{n} 段住宿。,screens/CRS.tsx,ref n,translated
 TRIP CONFIRMATION,TRIP CONFIRMATION,تأكيد الرحلة,CONFIRMACIÓN DEL VIAJE,CONFIRMAÇÃO DA VIAGEM,行程确认单,screens/TripConfirmation.tsx,,translated
-"Trip total, taxes in","Trip total, taxes in",إجمالي الرحلة شامل الضرائب,"Total del viaje, impuestos incluidos","Total da viagem, impostos inclusos",行程合计，含税,screens/CRS.tsx; screens/TripConfirmation.tsx,,translated
+Trip total (taxes included),Trip total (taxes included),إجمالي الرحلة (شامل الضرائب),Total del viaje (impuestos incluidos),Total da viagem (impostos inclusos),行程合计（含税）,screens/CRS.tsx; screens/TripConfirmation.tsx,,translated
 TripAdvisor,TripAdvisor,TripAdvisor,Tripadvisor,TripAdvisor,TripAdvisor,screens/PublicBooking.tsx,,translated
 TripAdvisor URL,TripAdvisor URL,عنوان URL لـ TripAdvisor,URL de TripAdvisor,URL do TripAdvisor,TripAdvisor 链接,screens/BookingEngine.tsx,,translated
 Trips,Trips,الرحلات,Viajes,Viagens,行程,screens/CRS.tsx,,translated
