@@ -14,7 +14,7 @@ concurrency:
 jobs:
   assets:
     name: Pre-build assets
-    uses: frappe/pilot/.github/workflows/app-assets.yml@develop
+    uses: frappe/pilot/.github/workflows/app-assets.yml@b7a7e74a2d526f6695bfb980f790989e696a81fd # develop
     with:
       frappe-branch: version-16
     permissions:
