@@ -38,6 +38,7 @@
   "room_levy_percent",
   "room_levy_taxable",
   "rates_include_levy",
+  "levy_room_only",
   "default_company_billing",
   "access_instructions",
   "require_precheckin_for_access",
@@ -277,13 +278,13 @@
   {
    "fieldname": "room_levy_label",
    "fieldtype": "Data",
-   "label": "Room levy name",
-   "description": "A per-night levy charged on the room rate - municipality fee (Saudi Arabia, UAE), tourism or city tax. Leave the % at 0 when none applies."
+   "label": "Levy name",
+   "description": "A levy charged on the room rate - municipality fee (Saudi Arabia, UAE), tourism or city tax, or a service charge. Leave the % at 0 when none applies."
   },
   {
    "fieldname": "room_levy_percent",
    "fieldtype": "Percent",
-   "label": "Room levy %",
+   "label": "Levy %",
    "default": "0"
   },
   {
@@ -297,7 +298,14 @@
    "fieldtype": "Check",
    "label": "Displayed rates include the levy",
    "default": "0",
-   "description": "On: configured room prices already contain the room levy; the engine backs the levy out of the price and shows it as its own line. Only has an effect when the levy % is above 0."
+   "description": "On: configured prices already contain the levy; the engine backs the levy out of the price and shows it as its own line. Only has an effect when the levy % is above 0."
+  },
+  {
+   "default": "1",
+   "description": "On: the levy is added to room charges only. Off: it is also added to extra guests, meal plans and other charges on the guest's bill, such as mini bar and laundry. Café and banquet bills keep their own service charge.",
+   "fieldname": "levy_room_only",
+   "fieldtype": "Check",
+   "label": "Levy applies to room only"
   },
   {
    "default": "Room and F&B (liquor to guest)",
@@ -758,7 +766,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-23 10:00:00.000000",
+ "modified": "2026-11-28 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kamra",
  "name": "Property",

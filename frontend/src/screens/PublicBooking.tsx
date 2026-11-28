@@ -140,6 +140,8 @@ interface Showcase {
     description: string | null
     image_url: string | null
     gst_rate: number
+    /** what the guest pays for one, where extras carry the levy */
+    levy_gross?: number
   }[]
 }
 
@@ -1840,7 +1842,7 @@ export default function PublicBooking() {
                               )}
                             </div>
                             <div className="truncate text-xs text-zinc-500">
-                              {money(exp.price)}
+                              {money(exp.levy_gross ?? exp.price)}
                               {exp.duration ? `, ${exp.duration}` : ""}
                             </div>
                           </div>
@@ -1870,7 +1872,7 @@ export default function PublicBooking() {
                     })}
                   </div>
                   {(() => {
-                    const addonTotal = data.experiences.reduce((s, e) => s + (addons[e.name] || 0) * e.price, 0)
+                    const addonTotal = data.experiences.reduce((s, e) => s + (addons[e.name] || 0) * (e.levy_gross ?? e.price), 0)
                     return addonTotal > 0 ? (
                       <p className="mt-2 text-end text-xs text-zinc-500">
                         {t("Experiences: +{amount} · added to your bill at the hotel", { amount: money(addonTotal) })}

@@ -40,6 +40,8 @@ interface Locale {
   fnb_charge_words?: string[]
   /** Off for a dry property: alcohol fields and labels are hidden. */
   sells_alcohol?: boolean
+  /** the levy's name where staff choose it on an extra */
+  levy_choice?: string | null
 }
 
 export interface Integrations {

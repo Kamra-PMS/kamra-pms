@@ -452,6 +452,77 @@ def rates_include_levy(property: str) -> bool:
 	return bool(prop.get("rates_include_levy")) and _dec(prop.get("room_levy_percent")) > 0
 
 
+def levy_on_extras(property: str) -> bool:
+	"""Is "Levy applies to room only" switched off, so extras carry the levy
+	too? Unset counts as on, and a property with no levy has nothing to add."""
+	prop = frappe.get_cached_doc("Property", property)
+	only = prop.get("levy_room_only")
+	return (only is not None and not cint(only)
+	        and _dec(prop.get("room_levy_percent")) > 0)
+
+
+def extra_reading(property: str, carries_levy: bool | None = None) -> dict:
+	"""How an extra's price is read now: whether it carries the levy, and what
+	is already inside the figure. A quote keeps this, so a later change of
+	settings does not re-price what a stay was quoted. `carries_levy` holds a
+	stay to whether its extras carried the levy when it was sold."""
+	extras = levy_on_extras(property) if carries_levy is None else carries_levy
+	return {"levy_on_extras": extras, "tax_included": rates_include_tax(property),
+	        "levy_included": extras and rates_include_levy(property)}
+
+
+def extra_net(property: str, price, gst, reading: dict | None = None,
+              levy: bool = True) -> Decimal:
+	"""The amount before tax (and levy) of an extra priced at `price`. Where
+	extras carry the levy the price is read as room prices are: tax and levy
+	come out of it when displayed rates include them (`levy=False`: this charge
+	carries none, so only the tax). Room only: just the tax."""
+	reading = reading or extra_reading(property)
+	tax = _dec(gst) / Decimal(100) if reading["tax_included"] else Decimal(0)
+	factor = Decimal(1) + tax
+	if levy and reading["levy_on_extras"] and reading["levy_included"]:
+		prop = frappe.get_cached_doc("Property", property)
+		pct = _dec(prop.get("room_levy_percent")) / Decimal(100)
+		if reading["tax_included"] and not levy_is_taxed(property):
+			factor += pct
+		else:
+			factor *= Decimal(1) + pct
+	return _dec(price) / factor
+
+
+def extra_total(property: str, price, gst, reading: dict) -> Decimal:
+	"""What the guest pays for an extra priced `price` that carries the levy."""
+	net = extra_net(property, price, gst, reading)
+	pct = _dec(frappe.get_cached_doc("Property", property).get("room_levy_percent"))
+	tax = Decimal(1) + _dec(gst) / Decimal(100)
+	levy = net * pct / Decimal(100)
+	return net * tax + levy * (tax if levy_is_taxed(property) else Decimal(1))
+
+
+def levy_for_screen(property: str) -> str | None:
+	"""The levy's name where staff may choose it on an extra (the switch is
+	off); None otherwise."""
+	if not levy_on_extras(property):
+		return None
+	return frappe.get_cached_value("Property", property, "room_levy_label") or "Levy"
+
+
+def offered_extras(property: str, experiences: list) -> list:
+	"""Add-ons for a booking screen. Where extras carry the levy, each also says
+	what the guest pays for one (`levy_gross`)."""
+	reading = extra_reading(property)
+	if reading["levy_on_extras"]:
+		for extra in experiences:
+			extra["levy_gross"] = float(extra_total(
+				property, extra.get("price") or 0, extra.get("gst_rate") or 0, reading))
+	return experiences
+
+
+def levy_is_taxed(property: str) -> bool:
+	value = frappe.get_cached_doc("Property", property).get("room_levy_taxable")
+	return bool(cint(value if value is not None else 1))
+
+
 def room_rate_digits(property: str) -> int:
 	"""Decimals a stored room-night rate keeps.
 
@@ -463,27 +534,15 @@ def room_rate_digits(property: str) -> int:
 	return 6 if rates_include_tax(property) or rates_include_levy(property) else 2
 
 
-def meal_night_net(property: str, plan, adults, children) -> Decimal:
-	"""One night of a meal plan before tax - what the quote adds up, the
-	booking locks and the folio bills. `plan` is the Meal Plan (or its two
-	prices), which carry the F&B tax when the property's rates include tax."""
+def meal_night_net(property: str, plan, adults, children,
+                   reading: dict | None = None) -> Decimal:
+	"""One night of a meal plan before tax (and levy) - what the quote adds up,
+	the booking locks and the folio bills. `plan` is the Meal Plan (or its two
+	prices), read like any extra (`extra_net`)."""
 	price = (int(adults or 0) * _dec(plan.get("price_per_adult"))
 	         + int(children or 0) * _dec(plan.get("price_per_child")))
-	if rates_include_tax(property):
-		from kamra.folio import _fnb_gst
-		price /= Decimal(1) + _dec(_fnb_gst(property)) / Decimal(100)
-	return price
-
-
-def over_capacity_net(property: str, charge, gst,
-                      tax_included: bool | None = None) -> Decimal:
-	"""One night of the agreed extra-guest charge before tax - what the quote
-	adds up and the folio bills. The desk types it as it types room prices:
-	with the tax inside when the property's rates include tax. `tax_included`
-	overrides the setting for a booking already quoted under it."""
-	taxed = rates_include_tax(property) if tax_included is None else tax_included
-	charge = _dec(charge)
-	return charge / (Decimal(1) + _dec(gst) / Decimal(100)) if taxed else charge
+	from kamra.folio import _fnb_gst
+	return extra_net(property, price, _fnb_gst(property), reading)
 
 
 def levy_digits(property: str) -> int:
@@ -494,7 +553,8 @@ def levy_digits(property: str) -> int:
 
 
 def room_net_rate(property: str, room_type_doc, displayed, over_cap=0, *,
-                  tax_included: bool | None = None) -> tuple[Decimal, Decimal]:
+                  tax_included: bool | None = None,
+                  bed_holds_levy: bool | None = None) -> tuple[Decimal, Decimal]:
 	"""(pre-tax room rate, tax %) for one displayed room price.
 
 	The one place a displayed price is split. What the desk types is what the
@@ -522,17 +582,24 @@ def room_net_rate(property: str, room_type_doc, displayed, over_cap=0, *,
 		return (displayed / (Decimal(1) + gst / Decimal(100)) if taxed else displayed), gst
 	levy_taxed = cint(prop.get("room_levy_taxable")
 	                  if prop.get("room_levy_taxable") is not None else 1)
+	# an extra-bed amount that carries the levy holds it too: the slab reads it without
+	if bed_holds_levy is None:
+		bed_holds_levy = levy_on_extras(property)
 	if not taxed or levy_taxed:
 		without_levy = displayed / (Decimal(1) + levy)
-		gst = room_gst_rate(property, room_type_doc, without_levy + over_cap)
+		bed = over_cap / (Decimal(1) + levy) if bed_holds_levy else over_cap
+		gst = room_gst_rate(property, room_type_doc, without_levy + bed)
 		return (without_levy / (Decimal(1) + gst / Decimal(100)) if taxed else without_levy), gst
 	# tax and an untaxed levy are both inside: the slab reads net x (1 + tax),
 	# which depends on the tax it picks, so let the two settle
 	gst = room_gst_rate(property, room_type_doc, displayed + over_cap)
 	for _round in range(4):
 		net = displayed / (Decimal(1) + gst / Decimal(100) + levy)
+		bed = over_cap
+		if bed_holds_levy:
+			bed *= (Decimal(1) + gst / Decimal(100)) / (Decimal(1) + gst / Decimal(100) + levy)
 		again = room_gst_rate(property, room_type_doc,
-		                      net * (Decimal(1) + gst / Decimal(100)) + over_cap)
+		                      net * (Decimal(1) + gst / Decimal(100)) + bed)
 		if again == gst:
 			break
 		gst = again
@@ -924,6 +991,7 @@ def quote(
 	check_out_time: str | None = None,
 	night_prices=None,
 	check_restrictions: bool = True,
+	extras_carry_levy: bool | None = None,
 ) -> dict:
 	# a stay for a company is priced on the plan the company negotiated,
 	# unless the caller named a plan of its own
@@ -944,6 +1012,9 @@ def quote(
 	rt = frappe.get_doc("Room Type", room_type)
 	inclusive = rates_include_tax(property)
 	levy_inside = rates_include_levy(property)
+	# how extras (extra beds, meals, fees) are priced, kept on the quote
+	reading = extra_reading(property, extras_carry_levy)
+	bed_levy = reading["levy_on_extras"]
 	small_ok = small_group_allows_stay(rt, check_in_date, check_out_date)
 	# holiday dates can charge a small party the house rate, as a weekend does
 	stay_rules = stay_season_rules(property, check_in_date, check_out_date,
@@ -1010,9 +1081,10 @@ def quote(
 				rate = (pkg_base_rate - accum) if i == billable_nights - 1 else base_per_night
 				accum += rate
 
-				rate, gst = room_net_rate(property, rt, rate, night_over_cap)
+				rate, gst = room_net_rate(property, rt, rate, night_over_cap,
+					bed_holds_levy=bed_levy)
 				if night_over_cap:
-					net = over_capacity_net(property, night_over_cap, gst)
+					net = extra_net(property, night_over_cap, gst, reading)
 					over_cap += net
 					over_cap_tax += net * gst / Decimal(100)
 
@@ -1070,9 +1142,10 @@ def quote(
 					rate = extra_night_rate
 					label = f"{pkg.package_name} (Diária Adicional)"
 
-				rate, gst = room_net_rate(property, rt, rate, night_over_cap)
+				rate, gst = room_net_rate(property, rt, rate, night_over_cap,
+					bed_holds_levy=bed_levy)
 				if night_over_cap:
-					net = over_capacity_net(property, night_over_cap, gst)
+					net = extra_net(property, night_over_cap, gst, reading)
 					over_cap += net
 					over_cap_tax += net * gst / Decimal(100)
 
@@ -1124,7 +1197,8 @@ def quote(
 				            _dec(tier["min_rate"]) if tier else Decimal(0))
 				floor = min(rate, floor)
 				off = max(off, floor)
-				net_off, _gst_off = room_net_rate(property, rt, off, night_over_cap)
+				net_off, _gst_off = room_net_rate(property, rt, off, night_over_cap,
+					bed_holds_levy=bed_levy)
 				# what a displayed amount is worth before tax (and levy) on this night
 				share = net_off / off if (inclusive or levy_inside) and off else Decimal(1)
 				saved = rate - off
@@ -1137,9 +1211,10 @@ def quote(
 			# with 2,000 of extra beds is a 9,000 night, so 18%, not 5%.
 			# the configured price is what the guest is shown: back the levy
 			# and / or the tax out of it to get the taxable room rate
-			rate, gst = room_net_rate(property, rt, rate, night_over_cap)
+			rate, gst = room_net_rate(property, rt, rate, night_over_cap,
+					bed_holds_levy=bed_levy)
 			if night_over_cap:
-				net = over_capacity_net(property, night_over_cap, gst)
+				net = extra_net(property, night_over_cap, gst, reading)
 				over_cap += net
 				over_cap_tax += net * gst / Decimal(100)
 			nightly.append({"date": str(date), "rate": float(rate),
@@ -1163,7 +1238,8 @@ def quote(
 			property, rate_plan, check_in_time, check_out_time, nightly_gross)
 		if day_use_meta:
 			gross = _dec(day_use_meta["amount"])
-			rate, gst = room_net_rate(property, rt, gross, night_over_cap)
+			rate, gst = room_net_rate(property, rt, gross, night_over_cap,
+					bed_holds_levy=bed_levy)
 			nightly[0] = {
 				"date": str(check_in_date), "rate": float(rate),
 				"gst_rate": float(gst),
@@ -1200,7 +1276,8 @@ def quote(
 	meal_total = Decimal(0)
 	if meal_plan:
 		mp = frappe.get_doc("Meal Plan", meal_plan)
-		meal_total = billable_nights * meal_night_net(property, mp, adults, children)
+		meal_total = billable_nights * meal_night_net(property, mp, adults, children,
+		                                              reading)
 	meal_tax = meal_total * _dec(FNB_GST) / Decimal(100)
 
 	subtotal = room_total + meal_total
@@ -1231,10 +1308,11 @@ def quote(
 	if cleaning > 0:
 		# Use the stay's average room GST as the cleaning tax rate.
 		avg_gst = (room_tax / room_total * Decimal(100)) if room_total else Decimal(0)
-		if cint(prop.get("cleaning_fee_taxable") if prop.get("cleaning_fee_taxable") is not None else 1):
-			if inclusive:
-				cleaning = cleaning / (Decimal(1) + avg_gst / Decimal(100))
-			cleaning_tax = cleaning * avg_gst / Decimal(100)
+		if not cint(prop.get("cleaning_fee_taxable")
+		            if prop.get("cleaning_fee_taxable") is not None else 1):
+			avg_gst = Decimal(0)
+		cleaning = extra_net(property, cleaning, avg_gst, reading)
+		cleaning_tax = cleaning * avg_gst / Decimal(100)
 		tax += cleaning_tax
 		total_base = taxable + cleaning
 	else:
@@ -1255,8 +1333,7 @@ def quote(
 	pet_tax = Decimal(0)
 	if pet_fee > 0:
 		avg_gst = (room_tax / room_total * Decimal(100)) if room_total else Decimal(0)
-		if inclusive:
-			pet_fee = pet_fee / (Decimal(1) + avg_gst / Decimal(100))
+		pet_fee = extra_net(property, pet_fee, avg_gst, reading)
 		pet_tax = pet_fee * avg_gst / Decimal(100)
 		tax += pet_tax
 		total_base += pet_fee
@@ -1273,6 +1350,18 @@ def quote(
 			levy_tax = levy * avg_gst / Decimal(100)
 		tax += levy_tax
 		total_base += levy
+
+	# "Levy applies to room only" switched off: the extras carry it too, each
+	# on its price before any voucher, billed as a line of its own
+	extras_levy = extras_levy_tax = Decimal(0)
+	if reading["levy_on_extras"]:
+		for amount, amount_tax in ((over_cap, over_cap_tax), (meal_total, meal_tax),
+		                           (cleaning, cleaning_tax), (pet_fee, pet_tax)):
+			extras_levy += amount * levy_pct / Decimal(100)
+			if levy_is_taxed(property):
+				extras_levy_tax += amount_tax * levy_pct / Decimal(100)
+		tax += extras_levy_tax
+		total_base += extras_levy
 
 	total = total_base + tax
 	effective_pct = float(tax / total_base * 100) if total_base else 0
@@ -1341,6 +1430,15 @@ def quote(
 			"tax_amount": float(levy_tax),
 			"nights_applied": billable_nights,
 		})
+	if extras_levy:
+		line_items.append({
+			"component": "extras_levy",
+			"description": _("{0} on extras").format(
+				prop.get("room_levy_label") or "Levy"),
+			"amount": float(extras_levy),
+			"tax_amount": float(extras_levy_tax),
+			"nights_applied": billable_nights,
+		})
 	if discount:
 		line_items.append({
 			"component": "promotion",
@@ -1364,6 +1462,11 @@ def quote(
 		"pets": pets,
 		"pet_charge": float(pet_fee),
 		"room_levy": float(levy),
+		"extras_levy": float(extras_levy),
+		"levy_label": prop.get("room_levy_label")
+		              or ("Levy" if reading["levy_on_extras"] else "Room levy"),
+		# how this quote read its extras: the folio bills them the same way
+		**reading,
 		"discount": float(discount),
 		"voucher": voucher_name,
 		# the long-stay discount already taken off the room nights
@@ -1393,7 +1496,7 @@ def quote(
 		"amount_after_tax": float(total),
 		"line_items": line_items,
 		"totals": {
-			"subtotal": float(subtotal + cleaning + pet_fee + levy),
+			"subtotal": float(subtotal + cleaning + pet_fee + levy + extras_levy),
 			"discount": float(discount),
 			"tax": float(tax),
 			"total": float(total),

@@ -494,6 +494,8 @@ export interface BookingOptions {
     category: string | null
     price: number
     gst_rate: number
+    /** what the guest pays for one, where extras carry the levy */
+    levy_gross?: number
   }[]
   property: {
     sell_message: string | null
@@ -523,6 +525,11 @@ export interface Quote {
   /** guests above the room's capacity, at the price agreed on the booking */
   over_capacity_total?: number
   pet_charge?: number
+  /** the levy on the room, and on the extras where they carry it */
+  room_levy?: number
+  extras_levy?: number
+  levy_on_extras?: boolean
+  levy_label?: string
   discount: number
   /** long-stay discount already taken off room_total */
   long_stay?: { rule: string; min_nights: number; percent: number; amount: number } | null

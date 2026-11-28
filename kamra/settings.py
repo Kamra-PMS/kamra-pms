@@ -436,13 +436,17 @@ MODULES: tuple[Module, ...] = (
 				S("rates_include_tax", "Displayed rates include tax", "check", 0, P),
 			)),
 			Section("fees", "Fees & levies", "", (
-				S("room_levy_label", "Room levy name", store=P, hint="Municipality fee, city or tourism tax."),
-				S("room_levy_percent", "Room levy", "number", 0, P, min=0, max=100, unit="%"),
+				S("room_levy_label", "Levy name", store=P, hint="Municipality fee, city or tourism tax."),
+				S("room_levy_percent", "Levy", "number", 0, P, min=0, max=100, unit="%"),
 				S("room_levy_taxable", "Tax applies to the levy", "check", 1, P),
 				S("rates_include_levy", "Displayed rates include the levy", "check", 0, P,
-				  hint="On: your room prices already contain the levy and Kamra backs it out. "
-				       "Changing this changes what your room prices mean for new quotes; "
+				  hint="On: your prices already contain the levy and Kamra backs it out. "
+				       "Changing this changes what your prices mean for new quotes; "
 				       "bookings already made keep their rates."),
+				S("levy_room_only", "Levy applies to room only", "check", 1, P,
+				  hint="On: the levy is added to room charges only. Off: it is also added to "
+				       "extra guests, meal plans and other charges on the guest's bill, such as "
+				       "mini bar and laundry. Café and banquet bills keep their own service charge."),
 				S("cleaning_fee", "Cleaning fee per stay", "number", 0, P, min=0),
 				S("cleaning_fee_taxable", "Cleaning fee is taxable", "check", 1, P),
 				S("pets_allowed", "Pets allowed", "check", 0, P,

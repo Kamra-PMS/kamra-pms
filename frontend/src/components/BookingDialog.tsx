@@ -917,7 +917,7 @@ export function BookingDialog(props: {
     if (!quote) return 0
     const addonsGross = Object.entries(addonQty).reduce((s, [n, q]) => {
       const x = options?.experiences.find((e) => e.name === n)
-      return x && q > 0 ? s + q * x.price * (1 + x.gst_rate / 100) : s
+      return x && q > 0 ? s + q * (x.levy_gross ?? x.price * (1 + x.gst_rate / 100)) : s
     }, 0)
     // the OTA's sold price covers every room of the booking
     return (
@@ -982,7 +982,7 @@ export function BookingDialog(props: {
 
   const addonsGross = Object.entries(addonQty).reduce((s, [n, q]) => {
     const x = options?.experiences.find((e) => e.name === n)
-    return x && q > 0 ? s + q * x.price * (1 + x.gst_rate / 100) : s
+    return x && q > 0 ? s + q * (x.levy_gross ?? x.price * (1 + x.gst_rate / 100)) : s
   }, 0)
 
   return (
@@ -2291,7 +2291,7 @@ export function BookingDialog(props: {
                                     }
                                   >
                                     {x.experience_name} · {cur()}
-                                    {inr(x.price)}
+                                    {inr(x.levy_gross ?? x.price)}
                                   </button>
                                 )
                               })}
@@ -2575,6 +2575,15 @@ export function BookingDialog(props: {
                         <span className="tabular-nums">
                           −{cur()}
                           {inr(quote.long_stay.amount)}
+                        </span>
+                      </div>
+                    )}
+                    {quote.levy_on_extras && (
+                      <div className="flex justify-between text-zinc-600">
+                        <span>{quote.levy_label}</span>
+                        <span className="tabular-nums">
+                          {cur()}
+                          {inr((quote.room_levy ?? 0) + (quote.extras_levy ?? 0))}
                         </span>
                       </div>
                     )}

@@ -6472,6 +6472,32 @@ def t_extra_guest_tax_inside():
 		frappe.db.set_value("Property", P, "rates_include_tax", saved)
 		frappe.clear_document_cache("Property", P)
 
+@check("levy on extras: a typed charge bills as typed, with its levy, and voids as one")
+def t_levy_on_extras():
+	from kamra import api
+	saved = frappe.db.get_value("Property", P, ["rates_include_tax", "rates_include_levy",
+		"room_levy_percent", "levy_room_only"], as_dict=True)
+	frappe.db.set_value("Property", P, {"rates_include_tax": 1, "rates_include_levy": 1,
+		"room_levy_percent": 10, "levy_room_only": 0})
+	frappe.clear_document_cache("Property", P)
+	try:
+		_res, folio = _in_house("Eval Levy Extras", "+91 70000 00759", "2036-06-09",
+		                        "2036-06-10", _ledger_room("L759"))
+		before = float(frappe.db.get_value("Folio", folio, "balance") or 0)
+		# levy=1 is what the bill screen sends with its levy box ticked
+		api.add_folio_charge(folio, "Misc", "Eval airport pickup", 1298, gst_rate=18,
+		                     levy=1)
+		lines = [c for c in frappe.get_doc("Folio", folio).charges if c.levy_link]
+		assert sorted(c.charge_type for c in lines) == ["Misc", "Room Levy"], lines
+		assert abs(sum(c.total for c in lines) - 1298) < 0.001, [c.total for c in lines]
+		charge = next(c for c in lines if c.charge_type == "Misc")
+		api.void_folio_charge(folio, charge.name, "Eval: not taken")
+		after = float(frappe.db.get_value("Folio", folio, "balance") or 0)
+		assert abs(after - before) < 0.001, (before, after)
+	finally:
+		frappe.db.set_value("Property", P, dict(saved))
+		frappe.clear_document_cache("Property", P)
+
 @check("ledger: night audit room nights and the no-show fee land on the ledger")
 def t132():
 	from kamra.folio import run_night_audit
@@ -12896,7 +12922,7 @@ def execute():
 		           t_blacklisted_number_books_typed_name,
 		           t_change_guest_online_companions,
 		           t_night_prices_refused, t_folio_no_close_in_house,
-		           t_extra_guest_tax_inside,
+		           t_extra_guest_tax_inside, t_levy_on_extras,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,

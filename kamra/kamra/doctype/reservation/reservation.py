@@ -737,9 +737,15 @@ class Reservation(Document):
 		in the house's occupancy. Used by the save path and the amendment
 		previews, so a preview and the save that follows agree."""
 		from kamra.pricing import quote
+		# a stay already sold keeps whether its extras carry the levy: nights
+		# and fees already billed could not follow a changed switch
+		carries = None
+		if not self.is_new() and self.get("quote_snapshot"):
+			from kamra.folio import booking_reading
+			carries = booking_reading(self)["levy_on_extras"]
 		# restrictions are checked in validate_minimum_nights, which knows
 		# whether the stay changed and whether it came from a channel
-		return quote(**self.quote_inputs(),
+		return quote(**self.quote_inputs(), extras_carry_levy=carries,
 		             check_voucher_limits=check_voucher_limits,
 		             check_restrictions=False,
 		             exclude_reservation=None if self.is_new() else self.name)
@@ -827,9 +833,10 @@ class Reservation(Document):
 			mp = frappe.db.get_value(
 				"Meal Plan", self.meal_plan,
 				["price_per_adult", "price_per_child"], as_dict=True) or {}
-			from kamra.pricing import meal_night_net
+			from kamra.pricing import extra_reading, meal_night_net
 			meal = round(float(meal_night_net(
-				self.property, mp, self.adults or 1, self.children)), 6)
+				self.property, mp, self.adults or 1, self.children,
+				extra_reading(self.property, q.get("levy_on_extras")))), 6)
 		# a price shown with tax / the levy inside it is split by division; the
 		# pieces only add back up to the shown price at 6 decimals
 		from kamra.pricing import room_rate_digits
