@@ -1178,7 +1178,7 @@ That is not a valid URL.,Das ist keine gültige URL.
 The host {0} can't be resolved.,Der Host {0} kann nicht aufgelöst werden.
 Unknown event {0}. Use one of: {1}.,Unbekanntes Ereignis {0}. Eines verwenden aus: {1}.
 Kamra front-end is not built. Run <code>cd apps/kamra/frontend && yarn install && yarn build</code> (Frappe Cloud runs this automatically on deploy).,Das Kamra-Frontend ist nicht gebaut. <code>cd apps/kamra/frontend && yarn install && yarn build</code> ausführen (Frappe Cloud führt dies beim Deployment automatisch aus).
-"VAT number (15 digits, starting and ending with 3)","USt-IdNr. (15 Ziffern, beginnend und endend mit 3)"
+"VAT number (15 digits, starting and ending with 3)","Umsatzsteuernummer (15 Ziffern, beginnend und endend mit 3)"
 Seller name,Name des Verkäufers
 Commercial Registration,Handelsregistereintrag
 Street,Straße
