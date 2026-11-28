@@ -80,8 +80,10 @@ def crs_search(check_in_date: str, check_out_date: str,
 				"available": free,
 				"adults_capacity": rt.adults_capacity,
 				"children_capacity": rt.children_capacity,
-				"total": round(total, 0),
-				"per_night": round(total / nights, 0) if nights else total,
+				# the quote's own figures: the screen rounds them to the
+				# hotel's currency
+				"total": round(total, 3),
+				"per_night": round(total / nights, 3),
 			})
 		if room_types:
 			p = frappe.db.get_value(
@@ -90,12 +92,14 @@ def crs_search(check_in_date: str, check_out_date: str,
 				"property": prop,
 				"property_name": p.property_name,
 				"city": p.city,
+				**_locale(prop),
 				"available_rooms": sum(r["available"] for r in room_types),
 				"from_rate": min(r["per_night"] for r in room_types),
 				"room_types": room_types,
 			})
-	# cheapest-entry-point first
-	results.sort(key=lambda r: r["from_rate"])
+	# grouped by currency, cheapest entry point first inside each: a bare
+	# number can't rank two currencies
+	results.sort(key=lambda r: (r["currency"] or "", r["from_rate"]))
 	return {
 		"check_in_date": check_in_date,
 		"check_out_date": check_out_date,
@@ -187,12 +191,24 @@ def _locale(property: str) -> dict:
 	        "currency_symbol": loc.get("currency_symbol") or ""}
 
 
+def _printed(row: dict, key: str) -> float:
+	"""One leg's figure as the screens print it: half up, in its currency's
+	decimals."""
+	from kamra.ledger import currency_digits, round_to
+	return round_to(row.get(key), currency_digits(row["currency"]))
+
+
 def _sum(rows: list[dict], key: str):
 	"""A combined figure only when every leg is in one currency - two
-	currencies don't add up to one number."""
+	currencies don't add up to one number. It adds the legs as printed, so a
+	total is never a cent off the figures above it."""
+	from kamra.ledger import currency_digits, round_to
 	if len({r["currency"] for r in rows}) > 1:
 		return None
-	return round(sum(float(r.get(key) or 0) for r in rows), 2)
+	if not rows:
+		return 0
+	return round_to(sum(_printed(r, key) for r in rows),
+	                currency_digits(rows[0]["currency"]))
 
 
 @frappe.whitelist()
@@ -570,7 +586,7 @@ def _trip_advance(itinerary: str, amount=None) -> dict:
 		frappe.throw(_("The stays on this trip are in different currencies. "
 		               "Take the advance on each stay instead."))
 	rows = [{"due": float(leg["deposit_due"] or 0),
-	         "open": max(0.0, round(float(leg["amount_after_tax"] or 0)
+	         "open": max(0.0, round(_printed(leg, "amount_after_tax")
 	                                - float(leg["advance_paid"] or 0), 2))}
 	        for leg in legs]
 	due = round(sum(r["due"] for r in rows), 2)

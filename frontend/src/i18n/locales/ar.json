@@ -2070,7 +2070,7 @@
   "Travel Agents": "وكلاء السفر",
   "Trial balance": "ميزان المراجعة",
   "Trigger": "المشغّل",
-  "Trip total, taxes in": "إجمالي الرحلة شامل الضرائب",
+  "Trip total (taxes included)": "إجمالي الرحلة (شامل الضرائب)",
   "Trip {ref}": "الرحلة {ref}",
   "Trip {ref} booked: {n} stays.": "تم حجز الرحلة {ref}: {n} إقامات.",
   "Twin": "سريران منفصلان",

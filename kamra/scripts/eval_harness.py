@@ -1137,6 +1137,27 @@ def t23():
 	assert d.escalation_level == 2, d.escalation_level
 
 
+@check("CRS search: each hotel comes with its currency, and its rates are the quote's own")
+def t_crs_search_currency():
+	from kamra import crs
+	from kamra.pricing import quote
+	found = [p for p in crs.crs_search("2036-02-03", "2036-02-05")["properties"]
+	         if p["property"] == P]
+	assert found, "the harness hotel has no room to offer"
+	assert found[0].get("currency") == crs._locale(P)["currency"], found[0].keys()
+	room = found[0]["room_types"][0]
+	total = quote(P, room["room_type"], "2036-02-03", "2036-02-05", 2, 0)["amount_after_tax"]
+	assert room["total"] == round(total, 3), (room["total"], total)
+
+
+@check("CRS trip total: the stays as printed add up to it")
+def t_crs_trip_total():
+	from kamra import crs
+	two = [{"currency": "INR", "amount": 100.125}, {"currency": "INR", "amount": 100.125}]
+	assert crs._sum(two, "amount") == 200.26, crs._sum(two, "amount")
+	assert crs._sum([], "amount") == 0, crs._sum([], "amount")
+
+
 @check("CRS access guard: a property-restricted user is blocked from others")
 def t24():
 	from kamra.crs import assert_property_access, permitted_properties
@@ -6405,6 +6426,32 @@ def t131():
 		_assert_level(folio)
 	finally:
 		frappe.db.set_value("Property", P, "room_levy_percent", saved.room_levy_percent)
+		frappe.clear_document_cache("Property", P)
+
+@check("meal plan: with tax inside the price, the bill's meal lines equal the quote")
+def t_meal_plan_tax_inside():
+	from kamra.folio import post_room_night
+	saved = frappe.db.get_value("Property", P, "rates_include_tax")
+	frappe.db.set_value("Property", P, "rates_include_tax", 1)
+	frappe.clear_document_cache("Property", P)
+	try:
+		mp = frappe.db.get_value("Meal Plan", {"property": P, "code": "CP"}) or \
+			frappe.get_doc({"doctype": "Meal Plan", "property": P, "code": "CP",
+			                "label": "Eval Breakfast", "price_per_adult": 300,
+			                }).insert(ignore_permissions=True).name
+		price = float(frappe.db.get_value("Meal Plan", mp, "price_per_adult"))
+		res, folio = _in_house("Eval Meal Tax", "+91 70000 00757", "2036-06-03",
+		                       "2036-06-04", _ledger_room("L757"))
+		res.meal_plan = mp
+		res.save(ignore_permissions=True)
+		post_room_night(frappe.get_doc("Reservation", res.name), "2036-06-03")
+		lines = [c for c in frappe.get_doc("Folio", folio).charges
+		         if c.charge_type == "Meal Plan"]
+		shown = price * (res.adults or 1)
+		billed = sum(c.total for c in lines)
+		assert abs(billed - shown) < 0.001, (billed, shown)
+	finally:
+		frappe.db.set_value("Property", P, "rates_include_tax", saved)
 		frappe.clear_document_cache("Property", P)
 
 @check("ledger: night audit room nights and the no-show fee land on the ledger")
@@ -12823,7 +12870,7 @@ def execute():
 		RT, ROOM = setup()
 		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t530, t3i, t3j, t4,
 		           t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16,
-		           t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28,
+		           t17, t18, t19, t20, t21, t22, t23, t24, t_crs_search_currency, t_crs_trip_total, t25, t26, t27, t28,
 		           t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39, t39b, t39c, t39d,
 		           t40, t41, t42, t43, t44, t45, t46, t47, t47b, t47c, t47d, t48,
 		           t49, t50, t51, t53, t54, t55, t56, t57, t58, t59, t60, t61,
@@ -12870,7 +12917,8 @@ def execute():
 		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
 		           t_stock_cost_average, t_stock_backdate_and_cancel,
 		           t_unsent_lines_take_stock, t_pos_refunds,
-		           t_pos_refunds_whole_units):
+		           t_pos_refunds_whole_units,
+		           t_meal_plan_tax_inside):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
