@@ -1867,6 +1867,7 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 	from frappe.utils import getdate, nowdate
 	prop = frappe.db.get_value("POS Outlet", outlet, "property")
 	from kamra.crs import assert_property_access
+	from kamra.csv_cells import safe_cell
 	assert_property_access(prop)
 	today = getdate(nowdate())
 	start = getdate(date) if date else today
@@ -1914,6 +1915,11 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 	buf = io.StringIO()
 	w = csv.writer(buf)
 	w.writerow(EXPORT_COLUMNS)
+
+	def write(cells):
+		# names, tables and reasons are typed by people: none may run as a formula
+		w.writerow([safe_cell(c) for c in cells])
+
 	n = 0
 	for r in rows:
 		st = _order_list_state(r)
@@ -1921,7 +1927,7 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 			continue
 		n += 1
 		created = frappe.utils.get_datetime(r.creation)
-		w.writerow([
+		write([
 			r.name, r.kot_no or "", created.date().isoformat(),
 			created.strftime("%H:%M"), outlet_name, r.order_type or "",
 			r.table_no or "", (r.room or "").split("-")[-1] if r.room else "",
@@ -1943,7 +1949,7 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 			b = bills[x.pos_order]
 			when = frappe.utils.get_datetime(x.creation)
 			n += 1
-			w.writerow([
+			write([
 				x.pos_order, b.kot_no or "", when.date().isoformat(), when.strftime("%H:%M"),
 				outlet_name, bill_type, b.table_no or "",
 				(b.room or "").split("-")[-1] if b.room else "",
