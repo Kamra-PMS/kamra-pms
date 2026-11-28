@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom"
 import { Globe, Plus, Trash2, Eye } from "lucide-react"
 
 import { getCurrentProperty, frappeFetch } from "../lib/api"
+import { useAuth } from "../lib/auth"
 import ImageField from "../components/ImageField"
 import BookingLinks from "../components/BookingLinks"
 import { PRESETS, accentHex } from "../lib/accents"
@@ -11,6 +12,8 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { cur } from "../lib/money"
 import { useOfferedLanguages, t as translate, useUILanguage } from "../lib/i18n"
+
+const SCRIPT_ADMIN_ROLES = ["System Manager", "Administrator"]
 
 type Doc = Record<string, any>
 
@@ -24,6 +27,8 @@ const isVideo = (u: string) =>
 export default function BookingEngine() {
   useUILanguage()
   const offered = useOfferedLanguages()
+  const { roles } = useAuth()
+  const canEditScripts = SCRIPT_ADMIN_ROLES.some((r) => roles.includes(r))
   const property = getCurrentProperty()
   const { section = "profile" } = useParams()
 
@@ -86,6 +91,18 @@ export default function BookingEngine() {
         page_slug: doc?.page_slug,
         meta_title: doc?.meta_title,
         meta_description: doc?.meta_description,
+        tracking_consent_granted: doc?.tracking_consent_granted ? 1 : 0,
+        google_tag_manager_id: doc?.google_tag_manager_id,
+        meta_pixel_id: doc?.meta_pixel_id,
+        // Custom header/body scripts are permlevel 1 (System Manager only).
+        // Hotel Admin must not send them — Frappe would ignore or error, and
+        // a partial PUT without them preserves the stored values.
+        ...(canEditScripts
+          ? {
+              custom_header_script: doc?.custom_header_script,
+              custom_body_script: doc?.custom_body_script,
+            }
+          : {}),
         booking_language: offered.some((l) => l.code === (doc?.booking_language ?? ""))
           ? (doc?.booking_language || "")
           : "",
@@ -831,6 +848,84 @@ export default function BookingEngine() {
                       />
                       <p className="mt-1 text-xs text-zinc-400">{translate("Used when several properties share one site: guests reach this property at /book?property=your-slug or /stay/your-slug. Room types have their own /stay/listing-slug.")}</p>
                     </label>
+                  </div>
+
+                  <div className="border-t border-zinc-200/80 pt-5 space-y-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-zinc-900">{translate("Analytics & Tracking")}</h4>
+                      <p className="text-xs text-zinc-500">{translate("Measure visitors, ad campaign performance and booking engine conversion events.")}</p>
+                    </div>
+
+                    <label className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2.5">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 size-4 rounded border-zinc-300"
+                        checked={!!doc.tracking_consent_granted}
+                        onChange={(e) => updateField("tracking_consent_granted", e.target.checked ? 1 : 0)}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-zinc-800">{translate("Guest tracking consent is in place")}</span>
+                        <span className="mt-0.5 block text-xs text-zinc-600">{translate("Off by default. Turn on only when guests can consent, or when consent is handled in GTM. Until then, GTM, Meta Pixel, custom scripts and booking conversion events stay off.")}</span>
+                      </span>
+                    </label>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Google Tag Manager ID")}</span>
+                        <input
+                          className={inputCls}
+                          placeholder={translate("e.g. GTM-XXXXXXX")}
+                          value={doc.google_tag_manager_id ?? ""}
+                          onChange={(e) => updateField("google_tag_manager_id", e.target.value)}
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">{translate("GTM container ID only (GTM-…). For GA4 (G-…), paste gtag.js in Custom Header Tracking Code.")}</p>
+                      </label>
+
+                      <label className="block">
+                        <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Meta Pixel ID")}</span>
+                        <input
+                          className={inputCls}
+                          placeholder={translate("e.g. 123456789012345")}
+                          value={doc.meta_pixel_id ?? ""}
+                          onChange={(e) => updateField("meta_pixel_id", e.target.value)}
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">{translate("Facebook & Instagram Pixel ID for retargeting and ad conversion tracking.")}</p>
+                      </label>
+                    </div>
+
+                    {canEditScripts ? (
+                      <>
+                        <div className="rounded-lg border border-rose-200 bg-rose-50/80 px-3 py-2 text-xs text-rose-900">
+                          {translate("Warning: custom header and body code runs as script on every guest booking page. Only a System Manager can edit these fields.")}
+                        </div>
+
+                        <label className="block">
+                          <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Custom Header Tracking Code (<head>)")}</span>
+                          <textarea
+                            rows={3}
+                            className={`${inputCls} font-mono text-xs`}
+                            placeholder={translate("e.g. <script>...</script> or <meta name=\"google-site-verification\" content=\"...\" />")}
+                            value={doc.custom_header_script ?? ""}
+                            onChange={(e) => updateField("custom_header_script", e.target.value)}
+                          />
+                          <p className="mt-1 text-xs text-zinc-400">{translate("Injected before </head> on public booking pages (gtag.js, TikTok Pixel, verification tags, custom scripts).")}</p>
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1 block text-sm font-medium text-zinc-600">{translate("Custom Body Tracking Code (<body>)")}</span>
+                          <textarea
+                            rows={2}
+                            className={`${inputCls} font-mono text-xs`}
+                            placeholder={translate("e.g. <noscript><iframe src=\"...\"></iframe></noscript>")}
+                            value={doc.custom_body_script ?? ""}
+                            onChange={(e) => updateField("custom_body_script", e.target.value)}
+                          />
+                          <p className="mt-1 text-xs text-zinc-400">{translate("Injected immediately after <body> on public booking pages.")}</p>
+                        </label>
+                      </>
+                    ) : (
+                      <p className="text-xs text-zinc-500">{translate("Custom header and body tracking scripts are System Manager only. Ask IT to paste gtag.js or other raw scripts there.")}</p>
+                    )}
                   </div>
                 </div>
               )}

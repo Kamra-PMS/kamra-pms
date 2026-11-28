@@ -8,6 +8,8 @@ from frappe import _
 from frappe.model.document import Document
 
 SHORT_CODE = re.compile(r"^[A-Z0-9]{2,6}$")
+GTM_ID = re.compile(r"^GTM-[A-Z0-9]+$")
+META_PIXEL_ID = re.compile(r"^[0-9]+$")
 
 
 def default_short_code(name: str, exclude: str | None = None) -> str:
@@ -36,6 +38,7 @@ class Property(Document):
 	def validate(self):
 		self._validate_short_code()
 		self._validate_booking_language()
+		self._validate_tracking_ids()
 		# setup, Settings and the booking engine all save the hotel's phone
 		# here: read it with the hotel's own country (#468), as typed if not
 		if self.phone and (self.is_new() or self.has_value_changed("phone")
@@ -78,6 +81,22 @@ class Property(Document):
 		if code and changed:
 			from kamra.languages import assert_enabled_language
 			self.booking_language = assert_enabled_language(code)
+
+	def _validate_tracking_ids(self):
+		# GTM container only (GTM-…). GA4 gtag.js (G-…) goes in Custom Header.
+		gtm = (self.get("google_tag_manager_id") or "").strip()
+		if gtm != (self.get("google_tag_manager_id") or ""):
+			self.google_tag_manager_id = gtm
+		if gtm and not GTM_ID.match(gtm):
+			frappe.throw(_(
+				"Google Tag Manager ID must look like GTM-XXXXXXX. "
+				"Put a GA4 measurement ID (G-…) in Custom Header Tracking Code with gtag.js."
+			))
+		pixel = (self.get("meta_pixel_id") or "").strip()
+		if pixel != (self.get("meta_pixel_id") or ""):
+			self.meta_pixel_id = pixel
+		if pixel and not META_PIXEL_ID.match(pixel):
+			frappe.throw(_("Meta Pixel ID must be digits only (e.g. 123456789012345)."))
 
 	def after_insert(self):
 		# A new property starts with allowances signed off by a Hotel Admin,

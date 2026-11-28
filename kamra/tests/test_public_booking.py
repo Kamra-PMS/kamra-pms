@@ -92,6 +92,140 @@ class PublicBookingTestCase(IntegrationTestCase):
 		self.assertIn("noindex", _with_meta(shell, "/kamra/folio/F-1"))
 		self.assertIn("noindex", _with_meta(shell, "/kamra/checkin/abc"))
 
+	def test_seo_and_analytics_tracking_scripts_injected_on_public_pages_only(self):
+		from kamra.booking_slugs import slugify
+		from kamra.www.kamra import _with_meta
+
+		frappe.db.set_value(
+			"Property",
+			self.property,
+			{
+				"tracking_consent_granted": 1,
+				"google_tag_manager_id": "GTM-TEST999",
+				"meta_pixel_id": "987654321012345",
+				"custom_header_script": '<meta name="custom-verification" content="verified123" />',
+				"custom_body_script": "<!-- custom body tracking tag -->",
+			},
+		)
+		shell = '<html lang="en"><head><title>Kamra PMS</title></head><body><div id="root"></div></body></html>'
+		frappe.form_dict.property = slugify(frappe.db.get_value("Property", self.property, "property_name"))
+		try:
+			page = _with_meta(shell, "/kamra/book")
+		finally:
+			frappe.form_dict.pop("property", None)
+
+		# GTM container script in head and noscript iframe in body
+		self.assertIn("googletagmanager.com/gtm.js?id=GTM-TEST999", page)
+		self.assertIn("googletagmanager.com/ns.html?id=GTM-TEST999", page)
+
+		# Meta Pixel script and initialization in head
+		self.assertIn("connect.facebook.net/en_US/fbevents.js", page)
+		self.assertIn("fbq('init', '987654321012345')", page)
+
+		# Custom scripts in head and body
+		self.assertIn('<meta name="custom-verification" content="verified123" />', page)
+		self.assertIn("<!-- custom body tracking tag -->", page)
+
+		# Public showcase API exposes tracking IDs and consent flag
+		prop_data = showcase(self.property)["property"]
+		self.assertEqual(prop_data.get("google_tag_manager_id"), "GTM-TEST999")
+		self.assertEqual(prop_data.get("meta_pixel_id"), "987654321012345")
+		self.assertEqual(prop_data.get("tracking_consent_granted"), 1)
+
+		# Staff pages must stay private: no tracking scripts, no custom scripts, strictly noindex
+		for staff_route in ("/kamra/folio/F-1", "/kamra/checkin/abc", "/kamra/audit"):
+			staff_page = _with_meta(shell, staff_route)
+			self.assertIn("noindex", staff_page)
+			self.assertNotIn("googletagmanager.com", staff_page)
+			self.assertNotIn("connect.facebook.net", staff_page)
+			self.assertNotIn("custom-verification", staff_page)
+			self.assertNotIn("custom body tracking tag", staff_page)
+
+	def test_tracking_scripts_stay_off_until_consent(self):
+		from kamra.booking_slugs import slugify
+		from kamra.www.kamra import _with_meta
+
+		frappe.db.set_value(
+			"Property",
+			self.property,
+			{
+				"tracking_consent_granted": 0,
+				"google_tag_manager_id": "GTM-TEST999",
+				"meta_pixel_id": "987654321012345",
+				"custom_header_script": '<meta name="custom-verification" content="verified123" />',
+				"custom_body_script": "<!-- custom body tracking tag -->",
+			},
+		)
+		shell = '<html lang="en"><head><title>Kamra PMS</title></head><body><div id="root"></div></body></html>'
+		frappe.form_dict.property = slugify(frappe.db.get_value("Property", self.property, "property_name"))
+		try:
+			page = _with_meta(shell, "/kamra/book")
+		finally:
+			frappe.form_dict.pop("property", None)
+
+		self.assertNotIn("googletagmanager.com", page)
+		self.assertNotIn("connect.facebook.net", page)
+		self.assertNotIn("custom-verification", page)
+		self.assertNotIn("custom body tracking tag", page)
+		self.assertEqual(showcase(self.property)["property"].get("tracking_consent_granted"), 0)
+
+	def test_custom_body_script_with_backrefs_does_not_break_page(self):
+		from kamra.booking_slugs import slugify
+		from kamra.www.kamra import _with_meta
+
+		# A string replacement would treat \1 as a backreference and corrupt HTML.
+		frappe.db.set_value(
+			"Property",
+			self.property,
+			{
+				"tracking_consent_granted": 1,
+				"custom_body_script": r'<script>var x="\1";</script>',
+			},
+		)
+		shell = '<html lang="en"><head><title>Kamra PMS</title></head><body><div id="root"></div></body></html>'
+		frappe.form_dict.property = slugify(frappe.db.get_value("Property", self.property, "property_name"))
+		try:
+			page = _with_meta(shell, "/kamra/book")
+		finally:
+			frappe.form_dict.pop("property", None)
+
+		self.assertIn(r'<script>var x="\1";</script>', page)
+		self.assertIn('<div id="root"></div>', page)
+
+	def test_tracking_script_injection_sanitizes_malicious_ids(self):
+		from kamra.booking_slugs import slugify
+		from kamra.www.kamra import _with_meta
+
+		# Bypass Property.validate so we can assert injection-time sanitisation.
+		frappe.db.set_value(
+			"Property",
+			self.property,
+			{
+				"tracking_consent_granted": 1,
+				"google_tag_manager_id": 'GTM-TEST"><script>alert(1)</script>',
+				"meta_pixel_id": "12345'; alert(2); //",
+			},
+			update_modified=False,
+		)
+		shell = '<html lang="en"><head><title>Kamra PMS</title></head><body><div id="root"></div></body></html>'
+		frappe.form_dict.property = slugify(frappe.db.get_value("Property", self.property, "property_name"))
+		try:
+			page = _with_meta(shell, "/kamra/book")
+		finally:
+			frappe.form_dict.pop("property", None)
+
+		# Malformed IDs rejected by regex; script tags must not be injected
+		self.assertNotIn("googletagmanager.com", page)
+		self.assertNotIn("connect.facebook.net", page)
+		self.assertNotIn("alert(1)", page)
+		self.assertNotIn("alert(2)", page)
+
+	def test_property_rejects_ga4_id_in_gtm_field(self):
+		doc = frappe.get_doc("Property", self.property)
+		doc.google_tag_manager_id = "G-ABCDEF1234"
+		with self.assertRaises(frappe.ValidationError):
+			doc.save()
+
 	def test_co_branding_uses_the_hotels_own_name_and_never_frappes_default(self):
 		from kamra.public_api import site_info
 
