@@ -7197,7 +7197,7 @@
   "GTM container ID only (GTM-…). For GA4 (G-…), paste gtag.js in Custom Header Tracking Code.": "Somente ID do contêiner GTM (GTM-…). Para GA4 (G-…), cole o gtag.js no código de rastreamento do cabeçalho personalizado.",
   "Warning: custom header and body code runs as script on every guest booking page. Only a System Manager can edit these fields.": "Aviso: o código personalizado de cabeçalho e corpo é executado como script em cada página de reservas para hóspedes. Somente um System Manager pode editar esses campos.",
   "Injected before </head> on public booking pages (gtag.js, TikTok Pixel, verification tags, custom scripts).": "Injetado antes de </head> nas páginas públicas de reservas (gtag.js, Pixel do TikTok, tags de verificação, scripts personalizados).",
-  "Custom header and body tracking scripts are System Manager only. Ask IT to paste gtag.js or other raw scripts there.": "Os scripts de rastreamento personalizados de cabeçalho e corpo são somente para System Manager. Peça à TI para colar gtag.js ou outros scripts ali."
+  "Custom header and body tracking scripts are System Manager only. Ask IT to paste gtag.js or other raw scripts there.": "Os scripts de rastreamento personalizados de cabeçalho e corpo são somente para System Manager. Peça à TI para colar gtag.js ou outros scripts ali.",
   "A foreign guest: record the visa or OCI card they entered on.": "Hóspede estrangeiro: registre o visto ou o cartão OCI com que entrou.",
   "A foreign guest: record the visa they entered on.": "Hóspede estrangeiro: registre o visto com que entrou.",
   "Ends before check-out ({date})": "Termina antes do check-out ({date})",
