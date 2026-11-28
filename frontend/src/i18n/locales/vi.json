@@ -6256,7 +6256,7 @@
   "Trip {ref}": "Chuyến đi {ref}",
   "Trip {ref} booked: {n} stays.": "Đã đặt chuyến đi {ref}: {n} kỳ lưu trú.",
   "TRIP CONFIRMATION": "XÁC NHẬN CHUYẾN ĐI",
-  "Trip total, taxes in": "Tổng chuyến đi, đã gồm thuế",
+  "Trip total (taxes included)": "Tổng chuyến đi (đã gồm thuế)",
   "TripAdvisor": "TripAdvisor",
   "TripAdvisor URL": "URL TripAdvisor",
   "Trips": "Chuyến đi",

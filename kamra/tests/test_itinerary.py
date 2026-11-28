@@ -229,6 +229,24 @@ class ItineraryTestCase(_TripBase):
 		self.assertFalse(frappe.db.exists("Reservation", {"guest_name": "UT Traveller"}))
 
 
+	def test_search_gives_each_hotels_currency_and_keeps_its_decimals(self):
+		"""Central reservations shows each hotel's rates in that hotel's money."""
+		frappe.db.set_value("Property", PROP_B, "currency", "USD")
+		frappe.clear_document_cache("Property", PROP_B)
+		frappe.db.set_value("Room Type", self.rt_b, "base_price", 2000.55)
+		found = {p["property"]: p for p in crs.crs_search(d(3), d(6))["properties"]}
+		self.assertEqual((found[PROP_A]["currency"], found[PROP_B]["currency"]), ("INR", "USD"))
+		leg = crs.quote_itinerary(legs=self.legs())["legs"][1]
+		self.assertEqual(found[PROP_B]["currency_symbol"], leg["currency_symbol"])
+		quote = api.get_quote(property=PROP_B, room_type=self.rt_b,
+		                      check_in_date=d(3), check_out_date=d(6))
+		room = found[PROP_B]["room_types"][0]
+		self.assertEqual(room["total"], round(quote["amount_after_tax"], 3))
+		self.assertNotEqual(room["total"], round(room["total"]), "the cents were rounded away")
+		self.assertEqual(room["per_night"], round(quote["amount_after_tax"] / 3, 3))
+		self.assertEqual(found[PROP_B]["from_rate"], room["per_night"])
+
+
 class TripAdvanceTestCase(_TripBase):
 	"""One advance for the whole trip, split across the legs' folios, each
 	leg owing the advance % its own dates ask for."""

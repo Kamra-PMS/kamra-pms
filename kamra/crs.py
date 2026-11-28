@@ -80,8 +80,10 @@ def crs_search(check_in_date: str, check_out_date: str,
 				"available": free,
 				"adults_capacity": rt.adults_capacity,
 				"children_capacity": rt.children_capacity,
-				"total": round(total, 0),
-				"per_night": round(total / nights, 0) if nights else total,
+				# the quote's own figures: the screen rounds them to the
+				# hotel's currency
+				"total": round(total, 3),
+				"per_night": round(total / nights, 3),
 			})
 		if room_types:
 			p = frappe.db.get_value(
@@ -90,6 +92,7 @@ def crs_search(check_in_date: str, check_out_date: str,
 				"property": prop,
 				"property_name": p.property_name,
 				"city": p.city,
+				**_locale(prop),
 				"available_rooms": sum(r["available"] for r in room_types),
 				"from_rate": min(r["per_night"] for r in room_types),
 				"room_types": room_types,

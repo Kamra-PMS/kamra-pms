@@ -1137,6 +1137,19 @@ def t23():
 	assert d.escalation_level == 2, d.escalation_level
 
 
+@check("CRS search: each hotel comes with its currency, and its rates are the quote's own")
+def t_crs_search_currency():
+	from kamra import crs
+	from kamra.pricing import quote
+	found = [p for p in crs.crs_search("2036-02-03", "2036-02-05")["properties"]
+	         if p["property"] == P]
+	assert found, "the harness hotel has no room to offer"
+	assert found[0].get("currency") == crs._locale(P)["currency"], found[0].keys()
+	room = found[0]["room_types"][0]
+	total = quote(P, room["room_type"], "2036-02-03", "2036-02-05", 2, 0)["amount_after_tax"]
+	assert room["total"] == round(total, 3), (room["total"], total)
+
+
 @check("CRS access guard: a property-restricted user is blocked from others")
 def t24():
 	from kamra.crs import assert_property_access, permitted_properties
@@ -12791,7 +12804,7 @@ def execute():
 		RT, ROOM = setup()
 		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t530, t3i, t3j, t4,
 		           t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16,
-		           t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28,
+		           t17, t18, t19, t20, t21, t22, t23, t24, t_crs_search_currency, t25, t26, t27, t28,
 		           t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39, t39b, t39c, t39d,
 		           t40, t41, t42, t43, t44, t45, t46, t47, t47b, t47c, t47d, t48,
 		           t49, t50, t51, t53, t54, t55, t56, t57, t58, t59, t60, t61,

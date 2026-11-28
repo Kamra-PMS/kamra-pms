@@ -17,7 +17,7 @@ const stubs = {
 }
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "money-check-"))
 await build({
-  entryPoints: { money: lib + "money.ts", tripMoney: lib + "tripMoney.ts" }, bundle: true, format: "esm", platform: "node", outdir: dir, logLevel: "silent",
+  entryPoints: { money: lib + "money.ts", tripMoney: lib + "tripMoney.ts" }, bundle: true, splitting: true, format: "esm", platform: "node", outdir: dir, logLevel: "silent",
   plugins: [{
     name: "stand-ins",
     setup(b) {
@@ -29,7 +29,11 @@ await build({
 // money.ts remembers the locale in localStorage when there is one; there is none here
 Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true })
 const { fmtAmount, fmtMoney, adoptUiLocale } = await import(pathToFileURL(path.join(dir, "money.js")).href)
-const { tripMoney } = await import(pathToFileURL(path.join(dir, "tripMoney.js")).href)
+const { tripMoney, moneyOf, amt, mixedCurrency } = await import(pathToFileURL(path.join(dir, "tripMoney.js")).href)
+
+// until the desk's own currency is known, no stay is called foreign
+const early = await import(pathToFileURL(path.join(dir, "tripMoney.js")).href)
+assert.equal(early.amt(5000, early.moneyOf({ currency: "IDR", currency_symbol: "Rp" })), "Rp5,000")
 
 // a property that keeps its books in rupees
 adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
@@ -68,6 +72,26 @@ adoptUiLocale({ currency: "IDR", locale: "id-ID", currency_symbol: "Rp" })
 assert.equal(fmtAmount(35000), "35.000")
 assert.equal(fmtAmount(35000, "IDR"), "35.000")
 assert.equal(fmtAmount(5.5, "USD"), "5,50", "dollars keep their cents next to a rupiah property")
+
+// a stay in another currency than the desk's, or any stay of a trip that mixes currencies, is
+// printed with its ISO code: "$" is shared by several dollars
+const NB = "\u00a0" // the code never wraps away from its figure
+const stay = (currency, currency_symbol) => moneyOf({ currency, currency_symbol })
+adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
+assert.equal(amt(5000, stay("INR", "₹")), "₹5,000.00", "the desk's own currency keeps its symbol")
+assert.equal(amt(5000, stay("IDR", "Rp")), `IDR${NB}5,000`, "a rupiah stay seen from a rupee desk")
+assert.equal(amt(1234.5, stay("USD", "$")), `USD${NB}1,234.50`)
+assert.equal(amt(5000, stay("INR", "₹"), true), `INR${NB}5,000.00`, "on a mixed trip the desk's own stays show the code too")
+assert.equal(amt(undefined, stay("IDR", "Rp")), `IDR${NB}0`)
+assert.equal(amt(5000, stay(undefined, "")), "5,000.00", "a stay without a code prints as the property's own")
+assert.equal(amt(5000, stay(null, "₹"), true), "₹5,000.00", "there is no code to show")
+adoptUiLocale({ currency: "IDR", locale: "id-ID", currency_symbol: "Rp" })
+assert.equal(amt(35000, stay("IDR", "Rp")), "Rp35.000")
+assert.equal(amt(5.5, stay("USD", "$")), `USD${NB}5,50`)
+assert.equal(mixedCurrency([idr("Confirmed"), idr("Cancelled")]), false)
+assert.equal(mixedCurrency([idr("Confirmed"), usd("Cancelled")]), true, "a cancelled stay still shows on the trip")
+assert.equal(mixedCurrency([idr("Confirmed"), { status: "Confirmed" }]), false, "a stay without a code adds none")
+assert.equal(mixedCurrency([]), false)
 
 fs.rmSync(dir, { recursive: true, force: true })
 console.log("money-check: ok")

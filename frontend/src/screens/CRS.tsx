@@ -8,15 +8,12 @@ import { serverError } from "../lib/resource"
 import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
-import { cur, useLocale, fmtAmount } from "../lib/money"
-import { tripMoney } from "../lib/tripMoney"
+import { useLocale } from "../lib/money"
+import { amt, mixedCurrency, moneyOf, tripMoney } from "../lib/tripMoney"
 import { useT, t as translate } from "../lib/i18n"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { shiftDate } from "../lib/stay"
 
-
-const inr = (n: unknown, currency?: string | null) =>
-  fmtAmount(n ?? 0, currency)
 
 const inputCls =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm " +
@@ -36,6 +33,9 @@ interface PropAvail {
   city: string
   available_rooms: number
   from_rate: number
+  /** the hotel's own currency: its rates are shown in it */
+  currency?: string | null
+  currency_symbol: string
   room_types: RoomTypeAvail[]
 }
 interface Results {
@@ -149,6 +149,7 @@ export default function CRS() {
     property: string
     property_name: string
     rt: RoomTypeAvail
+    money: ReturnType<typeof moneyOf>
   } | null>(null)
   const [guest, setGuest] = useState({ name: "", phone: "" })
   const [done, setDone] = useState<string | null>(null)
@@ -160,6 +161,8 @@ export default function CRS() {
   const [openTrip, setOpenTrip] = useState<string | null>(null)
 
   const checkOut = shiftDate(checkIn, Math.max(1, nights))
+  useLocale() // which currency is the desk's own: other hotels' rates are shown with their code
+  const newTripMixed = mixedCurrency(tripQuote?.legs ?? [])
 
   const loadTrips = () =>
     call<TripRow[]>("kamra.crs.list_itineraries", { search: tripSearch || null })
@@ -319,7 +322,7 @@ export default function CRS() {
                     <span className="font-medium">{leg.property_name}</span>
                     <span className="text-zinc-500">{leg.room_type_name} · {leg.check_in_date} → {leg.check_out_date}</span>
                     {q && q.available < 1 && <Badge tone="rose">{t("No room free")}</Badge>}
-                    <span className="ml-auto font-medium">{q ? `${q.currency_symbol}${inr(q.amount_after_tax, q.currency)}` : "…"}</span>
+                    <span className="ml-auto font-medium">{q ? amt(q.amount_after_tax, moneyOf(q), newTripMixed) : "…"}</span>
                     <Button variant="ghost" aria-label={t("Remove stay")}
                       onClick={() => setTrip(trip.filter((_, j) => j !== i))}>
                       <X className="size-4" />
@@ -329,10 +332,10 @@ export default function CRS() {
               })}
             </ol>
             <div className="flex justify-between border-t border-zinc-100 pt-2 text-sm font-semibold">
-              <span>{t("Trip total, taxes in")}</span>
+              <span>{t("Trip total (taxes included)")}</span>
               <span>
                 {tripQuote?.total != null
-                  ? `${tripQuote.legs[0]?.currency_symbol ?? ""}${inr(tripQuote.total, tripQuote.legs[0]?.currency)}`
+                  ? amt(tripQuote.total, moneyOf(tripQuote.legs[0]), newTripMixed)
                   : tripQuote ? t("Each stay is billed in its own currency") : "…"}
               </span>
             </div>
@@ -340,7 +343,7 @@ export default function CRS() {
               <div className="flex justify-between text-sm text-zinc-600">
                 <span>{t("Advance due at booking ({pcts})", {
                   pcts: tripQuote!.legs.map((l) => `${l.advance_percent}%`).join(", ") })}</span>
-                <span>{`${tripQuote!.legs[0]?.currency_symbol ?? ""}${inr(tripQuote!.advance_due, tripQuote!.legs[0]?.currency)}`}</span>
+                <span>{amt(tripQuote!.advance_due, moneyOf(tripQuote!.legs[0]), newTripMixed)}</span>
               </div>
             )}
             <div className="grid gap-3 sm:grid-cols-3">
@@ -384,7 +387,7 @@ export default function CRS() {
                   <span className="text-xs text-zinc-500">
                     {t("{n} rooms · from {rate}/night", {
                       n: p.available_rooms,
-                      rate: `${cur()}${inr(p.from_rate)}`,
+                      rate: amt(p.from_rate, moneyOf(p)),
                     })}
                   </span>
                 </div>
@@ -398,16 +401,16 @@ export default function CRS() {
                           {t("{avail} left · sleeps {cap} · {rate}/night", {
                             avail: rt.available,
                             cap: rt.adults_capacity,
-                            rate: `${cur()}${inr(rt.per_night)}`,
+                            rate: amt(rt.per_night, moneyOf(p)),
                           })}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-semibold">{cur()}{inr(rt.total)}</div>
+                        <div className="text-sm font-semibold">{amt(rt.total, moneyOf(p))}</div>
                         <div className="text-[11px] text-zinc-400">{t("total, taxes in")}</div>
                       </div>
                       <Button variant="outline"
-                        onClick={() => { setBooking({ property: p.property, property_name: p.property_name, rt }); setGuest({ name: "", phone: "" }) }}>
+                        onClick={() => { setBooking({ property: p.property, property_name: p.property_name, rt, money: moneyOf(p) }); setGuest({ name: "", phone: "" }) }}>
                         {t("Book")}
                       </Button>
                       <Button variant="ghost" title={t("Add this stay to a trip across properties")}
@@ -460,7 +463,7 @@ export default function CRS() {
       {booking && (
         <Sheet
           title={t("Book {type}", { type: booking.rt.room_type_name })}
-          description={(`${booking.property_name} · ${checkIn} → ${checkOut} · ${cur()}${inr(booking.rt.total)} ${t("total")}`)}
+          description={(`${booking.property_name} · ${checkIn} → ${checkOut} · ${amt(booking.rt.total, booking.money)} ${t("total")}`)}
           onClose={() => setBooking(null)}
           footer={
             <div className="flex justify-end gap-2">
@@ -556,6 +559,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
   }
 
   const { live, held } = tripMoney(d?.legs ?? [])
+  const mixed = mixedCurrency(d?.legs ?? [])
   const canAdvance = d?.legs.some((l) => ["Confirmed", "Pending Payment", "Held"].includes(l.status))
   const cancellable = d?.legs.some((l) => l.status === "Confirmed")
   return (
@@ -587,15 +591,15 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
             {d.total != null && (
               <span className="text-sm text-zinc-600">
                 {t("Total {amount} · advance paid {paid}", {
-                  amount: `${live.sym}${inr(d.total, live.code)}`, paid: `${live.sym}${inr(d.advance_paid ?? 0, live.code)}` })}
+                  amount: amt(d.total, live, mixed), paid: amt(d.advance_paid, live, mixed) })}
                 {(d.advance_due ?? 0) > 0 && (
                   <span className="text-amber-700">
-                    {" · "}{t("advance due {amount}", { amount: `${live.sym}${inr(d.advance_due, live.code)}` })}
+                    {" · "}{t("advance due {amount}", { amount: amt(d.advance_due, live, mixed) })}
                   </span>
                 )}
                 {(d.advance_held_cancelled ?? 0) > 0 && (
                   <span>
-                    {" · "}{t("still held on cancelled stays {amount}", { amount: `${held.sym}${inr(d.advance_held_cancelled, held.code)}` })}
+                    {" · "}{t("still held on cancelled stays {amount}", { amount: amt(d.advance_held_cancelled, held, mixed) })}
                   </span>
                 )}
               </span>
@@ -613,9 +617,9 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
                 <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-zinc-600">
                   <span>{l.check_in_date} → {l.check_out_date}</span>
                   <span>{l.room_type_name}{l.room ? ` · ${l.room}` : ""}</span>
-                  <span>{l.currency_symbol}{inr(l.amount_after_tax, l.currency)}</span>
-                  {l.advance_paid > 0 && <span>{t("Paid {amount}", { amount: `${l.currency_symbol}${inr(l.advance_paid, l.currency)}` })}</span>}
-                  {l.deposit_due > 0 && <span className="text-amber-700">{t("Advance due {amount} ({pct}%)", { amount: `${l.currency_symbol}${inr(l.deposit_due, l.currency)}`, pct: String(l.advance_percent) })}</span>}
+                  <span>{amt(l.amount_after_tax, moneyOf(l), mixed)}</span>
+                  {l.advance_paid > 0 && <span>{t("Paid {amount}", { amount: amt(l.advance_paid, moneyOf(l), mixed) })}</span>}
+                  {l.deposit_due > 0 && <span className="text-amber-700">{t("Advance due {amount} ({pct}%)", { amount: amt(l.deposit_due, moneyOf(l), mixed), pct: String(l.advance_percent) })}</span>}
                   {l.cancellation_number && <span>{l.cancellation_number}</span>}
                 </div>
                 <button className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline"
@@ -646,8 +650,8 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
                   {adv.plan.legs.map((l) => (
                     <div key={l.reservation} className="flex justify-between gap-2">
                       <span>{l.property_name} · {l.check_in_date} · {t("due {amount} ({pct}%)", {
-                        amount: `${adv.plan!.currency_symbol}${inr(l.advance_due, adv.plan!.currency)}`, pct: String(l.advance_percent) })}</span>
-                      <span className="font-medium">{adv.plan!.currency_symbol}{inr(l.share, adv.plan!.currency)}</span>
+                        amount: amt(l.advance_due, moneyOf(adv.plan!), mixed), pct: String(l.advance_percent) })}</span>
+                      <span className="font-medium">{amt(l.share, moneyOf(adv.plan!), mixed)}</span>
                     </div>
                   ))}
                 </>
@@ -655,7 +659,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setAdv(null)}>{t("Close")}</Button>
                 <Button disabled={busy || !adv.plan || Number(adv.amount) !== adv.plan.amount} onClick={takeAdvance}>
-                  {adv.plan ? t("Take {amount}", { amount: `${adv.plan.currency_symbol}${inr(adv.plan.amount, adv.plan.currency)}` }) : t("Take advance")}
+                  {adv.plan ? t("Take {amount}", { amount: amt(adv.plan.amount, moneyOf(adv.plan), mixed) }) : t("Take advance")}
                 </Button>
               </div>
             </div>
@@ -666,7 +670,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
               {preview.legs.map((l) => (
                 <div key={l.reservation} className="flex justify-between">
                   <span>{l.property} · {l.reservation}</span>
-                  <span>{l.estimated_fee > 0 ? `${l.currency_symbol}${inr(l.estimated_fee, l.currency)}` : t("No fee")}</span>
+                  <span>{l.estimated_fee > 0 ? amt(l.estimated_fee, moneyOf(l), mixed) : t("No fee")}</span>
                 </div>
               ))}
               {preview.not_cancellable.length > 0 && (
@@ -682,7 +686,7 @@ function TripSheet({ name, onClose, onChanged }: { name: string; onClose: () => 
                 <Button variant="outline" onClick={() => setPreview(null)}>{t("Keep trip")}</Button>
                 <Button disabled={busy} onClick={cancelTrip}>
                   {preview.total_fee
-                    ? t("Cancel trip, fees {amount}", { amount: `${preview.legs[0]?.currency_symbol ?? ""}${inr(preview.total_fee, preview.legs[0]?.currency)}` })
+                    ? t("Cancel trip, fees {amount}", { amount: amt(preview.total_fee, moneyOf(preview.legs[0]), mixed) })
                     : t("Cancel trip")}
                 </Button>
               </div>
