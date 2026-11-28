@@ -271,7 +271,7 @@ export default function ChangeGuestDialog(props: {
                     to: who(to.name, to.phone),
                   })}
                   {props.onlineCheckIn &&
-                    ` ${t("People they listed in online check-in that the desk has not confirmed are removed.")}`}
+                    ` ${t("People they listed in online check-in are removed unless the desk has entered their age, scanned their ID or taken their photo.")}`}
                 </p>
               )}
               {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-rose-700">{error}</p>}
