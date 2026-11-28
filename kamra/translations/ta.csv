@@ -118,3 +118,4 @@ The recipe of {0} just changed. Try again.,{0}-இன் ரெசிபி இ�
 {0} is made here itself. Take it out of the recipe of {1}.,{0} தானே இங்கே தயாரிக்கப்படுகிறது. {1}-இன் ரெசிபியிலிருந்து அதை நீக்கவும்.
 That is too little to take anything from stock.,சரக்கிலிருந்து எதையும் எடுக்க இது மிகக் குறைவு.
 "Only deliveries, stock takes, wastage and production batches can be cancelled.","டெலிவரிகள், சரக்கு சரிபார்ப்புகள், விரயம், உற்பத்தித் தொகுதிகள் மட்டுமே ரத்துசெய்யப்படலாம்."
+A stock entry cannot be dated before {0}.,சரக்குப் பதிவுக்கு {0} தேதிக்கு முந்தைய தேதி இருக்க முடியாது.

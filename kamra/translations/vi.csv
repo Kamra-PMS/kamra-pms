@@ -117,3 +117,4 @@ That is too little to take anything from stock.,"Lượng này quá nhỏ, khôn
 Every recipe line needs a quantity above zero.,Mỗi dòng công thức cần số lượng lớn hơn 0.
 {0} belongs to another property.,{0} thuộc cơ sở khác.
 "Only deliveries, stock takes, wastage and production batches can be cancelled.","Chỉ có thể hủy phiếu nhập, kiểm kê, hao hụt và mẻ sản xuất."
+A stock entry cannot be dated before {0}.,Bút toán kho không thể ghi ngày trước {0}.

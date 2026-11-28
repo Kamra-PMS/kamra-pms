@@ -12821,6 +12821,32 @@ def t_pos_refunds():
 		st.save_settings(P, "finance", {"use_cashier_tills": tills})
 
 
+@check("kitchen stock: an entry dated further back than the hotel allows is refused")
+def t_stock_backdate_limit():
+	from frappe.utils import add_days, nowdate
+
+	from kamra import inventory, settings
+
+	outlet, _dish = _eval_bill_outlet("Eval Backdate Limit")
+	cups = inventory.save_ingredient(P, "Eval Limit Cups", "pc", cost_per_unit=10)["name"]
+	day = lambda back: f"{add_days(nowdate(), -back)} 12:00:00"
+	line = [{"ingredient": cups, "qty": 1}]
+	settings.save_settings(P, "finance", {"stock_backdate_days": 2})
+	try:
+		try:
+			inventory.receive_stock(P, outlet, line, posted_at=day(3))
+			raise AssertionError("a delivery dated three days back was accepted with a two day limit")
+		except frappe.ValidationError as e:
+			assert "cannot be dated before" in str(e), e
+		inventory.receive_stock(P, outlet, line, posted_at=day(2))
+		assert inventory.entry_limit(P) == {"earliest": str(add_days(nowdate(), -2))}
+	finally:
+		settings.save_settings(P, "finance", {"stock_backdate_days": 0})
+	inventory.receive_stock(P, outlet, line, posted_at=day(30))
+	held = frappe.db.get_value("Ingredient Stock", f"{outlet}::{cups}", "qty_on_hand")
+	assert held == 2, held
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12885,7 +12911,7 @@ def execute():
 		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
 		           t_stock_cost_average, t_stock_backdate_and_cancel,
 		           t_unsent_lines_take_stock, t_pos_refunds,
-		           t_meal_plan_tax_inside):
+		           t_meal_plan_tax_inside, t_stock_backdate_limit):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

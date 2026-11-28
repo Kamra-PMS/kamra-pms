@@ -7249,5 +7249,10 @@
   "Repeat new PIN": "Nhập lại mã PIN mới",
   "Set my cashier PIN": "Đặt mã PIN thu ngân của tôi",
   "Set your cashier PIN to approve this refund.": "Đặt mã PIN thu ngân của bạn để duyệt khoản hoàn tiền này.",
-  "The two PINs don't match.": "Hai mã PIN không khớp."
+  "The two PINs don't match.": "Hai mã PIN không khớp.",
+  "Kitchen stock entries": "Bút toán kho bếp",
+  "How far back a stock entry can be dated.": "Bút toán kho có thể ghi lùi ngày bao xa.",
+  "Back-date stock entries up to": "Cho phép ghi lùi ngày bút toán kho tối đa",
+  "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: không giới hạn. 1: sớm nhất là hôm qua. Áp dụng cho phiếu nhập, kiểm kê, hao hụt và mẻ tự làm. Việc hủy bút toán không bị ảnh hưởng.",
+  "Earliest: {date}": "Sớm nhất: {date}"
 }

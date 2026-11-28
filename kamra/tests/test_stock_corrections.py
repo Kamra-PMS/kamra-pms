@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import frappe
-from frappe.utils import add_to_date, get_datetime, now_datetime
+from frappe.utils import add_days, add_to_date, get_datetime, now_datetime, nowdate
 
-from kamra import inventory
+from kamra import inventory, settings
 from kamra.tests.audit_fixtures import PROP_A, PROP_B
 from kamra.tests.test_rbac import _user
 from kamra.tests.test_stock_cost import AVERAGE, StockCostTestCase
@@ -459,10 +459,85 @@ class TestReads(WriterCase):
 		self.assertEqual(self.alerts(), ["Low stock - UT Cups: 0 pc left (minimum 5)"])
 
 
+class TestBackDateLimit(WriterCase):
+	"""Settings -> Finance: how many days back a stock entry may be dated."""
+
+	def setUp(self):
+		super().setUp()
+		# settings are cached outside the transaction the test rolls back
+		frappe.cache().hdel(settings.CACHE_KEY, PROP_B)
+		self.addCleanup(frappe.cache().hdel, settings.CACHE_KEY, PROP_B)
+		self.cups = self.ingredient("UT Cups", "pc", cost=10)
+
+	def limit(self, days, prop=PROP_A):
+		settings.save_settings(prop, "finance", {"stock_backdate_days": days})
+
+	def day(self, back, time="12:00:00"):
+		return f"{add_days(nowdate(), -back)} {time}"
+
+	def test_no_limit_by_default(self):
+		self.deliver(self.cups, 5, at=self.day(400))
+		self.assertStock(self.cups, 5)
+
+	def test_the_earliest_day_is_allowed_and_the_day_before_refused(self):
+		self.limit(3)
+		with self.assertRaisesRegex(frappe.ValidationError, "cannot be dated before"):
+			self.deliver(self.cups, 1, at=self.day(4, "23:59:59"))
+		self.deliver(self.cups, 2, at=self.day(3, "00:00:00"))
+		self.assertStock(self.cups, 2)
+
+	def test_every_dated_entry_is_held_to_it(self):
+		self.deliver(self.cups, 10, price=10)
+		before = self.rows(self.cups)
+		self.limit(3)
+		old = self.day(4)
+		for entry in (
+			lambda: self.deliver(self.cups, 5, price=99, at=old),
+			lambda: self.count(self.cups, 1, at=old),
+			lambda: self.waste(self.cups, 1, at=old),
+			lambda: inventory.produce(PROP_A, self.cafe, self.cups, 1, posted_at=old),
+		):
+			with self.assertRaisesRegex(frappe.ValidationError, "cannot be dated before"):
+				entry()
+		self.assertEqual(len(self.rows(self.cups)), len(before))
+		self.assertEqual(self.on_hand(self.cups), 10)
+		self.assertEqual(self.cost(self.cups), 10)
+
+	def test_an_entry_without_a_date_is_always_taken(self):
+		self.limit(1)
+		self.deliver(self.cups, 4)
+		self.assertStock(self.cups, 4)
+
+	def test_one_hotels_limit_does_not_bind_another(self):
+		self.limit(3, prop=PROP_B)
+		self.deliver(self.cups, 5, at=self.day(30))
+		self.assertStock(self.cups, 5)
+
+	def test_a_fraction_counts_as_whole_days(self):
+		self.limit(1.5)
+		with self.assertRaisesRegex(frappe.ValidationError, "cannot be dated before"):
+			self.deliver(self.cups, 1, at=self.day(2, "23:59:59"))
+		self.deliver(self.cups, 1, at=self.day(1, "00:00:00"))
+
+	def test_the_screen_is_told_the_earliest_day(self):
+		self.assertEqual(inventory.entry_limit(PROP_A), {"earliest": None})
+		self.limit(7)
+		self.assertEqual(inventory.entry_limit(PROP_A), {"earliest": str(add_days(nowdate(), -7))})
+
+	def test_an_f_and_b_manager_cannot_change_the_limit(self):
+		self.limit(3)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(_user("ut-fnb@example.com", "F&B Manager"))  # nosemgrep: frappe-setuser -- test switches user
+		with self.assertRaises(frappe.PermissionError):
+			self.limit(0)
+		self.assertEqual(inventory.entry_limit(PROP_A)["earliest"], str(add_days(nowdate(), -3)))
+
+
 class TestMessages(WriterCase):
 	MESSAGES = (
 		"Pick a date and time.",
 		"A stock entry cannot be dated in the future.",
+		"A stock entry cannot be dated before {0}.",
 		"A reason is required to cancel.",
 		"Stock entry not found.",
 		"This entry is already cancelled.",

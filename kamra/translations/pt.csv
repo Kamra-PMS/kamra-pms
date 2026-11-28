@@ -138,3 +138,4 @@ That is too little to take anything from stock.,É pouco demais para tirar algo 
 Every recipe line needs a quantity above zero.,Cada linha da receita precisa de uma quantidade acima de zero.
 {0} belongs to another property.,{0} pertence a outra propriedade.
 "Only deliveries, stock takes, wastage and production batches can be cancelled.","Só é possível cancelar entregas, contagens, perdas e lotes de produção."
+A stock entry cannot be dated before {0}.,Um lançamento de estoque não pode ter data anterior a {0}.

@@ -1199,3 +1199,4 @@ The recipe of {0} just changed. Try again.,La receta de {0} acaba de cambiar. In
 {0} is made here itself. Take it out of the recipe of {1}.,{0} también se hace aquí. Quítelo de la receta de {1}.
 That is too little to take anything from stock.,Es demasiado poco para descontar algo de las existencias.
 "Only deliveries, stock takes, wastage and production batches can be cancelled.","Solo se pueden cancelar entregas, inventarios, mermas y lotes de producción."
+A stock entry cannot be dated before {0}.,Un movimiento de existencias no puede tener fecha anterior a {0}.

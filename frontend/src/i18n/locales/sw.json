@@ -7249,5 +7249,10 @@
   "Repeat new PIN": "Rudia PIN mpya",
   "Set my cashier PIN": "Weka PIN yangu ya keshia",
   "Set your cashier PIN to approve this refund.": "Weka PIN yako ya keshia ili kuidhinisha urejeshaji huu.",
-  "The two PINs don't match.": "PIN hizo mbili hazilingani."
+  "The two PINs don't match.": "PIN hizo mbili hazilingani.",
+  "Kitchen stock entries": "Maingizo ya stoo ya jikoni",
+  "How far back a stock entry can be dated.": "Ingizo la stoo linaweza kuwekewa tarehe ya nyuma kiasi gani.",
+  "Back-date stock entries up to": "Maingizo ya stoo yarudi nyuma hadi",
+  "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: hakuna kikomo. 1: nyuma kabisa ni jana. Inahusu upokeaji, hesabu za stoo, upotevu na mafungu yaliyotengenezwa. Kughairi ingizo hakuathiriwi.",
+  "Earliest: {date}": "Tarehe ya mwanzo kabisa: {date}"
 }

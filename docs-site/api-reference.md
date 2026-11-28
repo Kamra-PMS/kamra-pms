@@ -5,7 +5,7 @@ outline: 2
 # REST API reference
 
 Every endpoint below is a whitelisted function - the same governed layer
-the UI and the AI use. **572 endpoints**, generated from the source
+the UI and the AI use. **573 endpoints**, generated from the source
 (`docs-site/gen_api.py`), so this page always matches the code.
 
 ## Calling convention
@@ -5397,6 +5397,17 @@ recipe or punch a hole in the ledger. Deactivate instead.
 | Param | Required | Default |
 | --- | --- | --- |
 | `name` | yes |  |
+
+### `kamra.inventory.entry_limit`
+
+**GET/POST** · permission: `Ingredient: manage_stock` · default roles: `System Manager`, `Hotel Admin`, `Finance`, `F&B Manager`
+
+What the date fields of the stock screens allow: `earliest` is the first
+day an entry may be dated, or null when there is no limit.
+
+| Param | Required | Default |
+| --- | --- | --- |
+| `property` | yes |  |
 
 ### `kamra.inventory.receive_stock`
 

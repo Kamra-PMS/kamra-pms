@@ -125,12 +125,26 @@ function StatusChip({ s }: { s: Status }) {
 function DateField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   useUILanguage()
   const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+  // the hotel may limit how far back an entry can be dated; the server decides
+  const [earliest, setEarliest] = useState<string | null>(null)
+  useEffect(() => {
+    call<{ earliest: string | null }>("kamra.inventory.entry_limit", { property: getCurrentProperty() })
+      .then((r) => setEarliest(r.earliest)).catch(() => {})
+  }, [])
   return (
     <label className="mb-3 flex flex-wrap items-center gap-2 text-sm text-zinc-600">
       <span className="font-medium">{translate("Date and time")}</span>
-      <input type="datetime-local" max={now} value={value} onChange={(e) => onChange(e.target.value)}
+      <input type="datetime-local" min={earliest ? `${earliest}T00:00` : undefined} max={now}
+        value={value} onChange={(e) => onChange(e.target.value)}
         className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm tabular-nums" />
       {!value && <span className="text-xs text-zinc-400">{translate("Leave empty for now.")}</span>}
+      {earliest && (
+        <span className="text-xs text-zinc-400">
+          {translate("Earliest: {date}", {
+            date: new Date(`${earliest}T00:00`).toLocaleDateString(uiDateLocale([]), { dateStyle: "medium" }),
+          })}
+        </span>
+      )}
     </label>
   )
 }

@@ -7249,5 +7249,10 @@
   "What one batch uses, from bought ingredients.": "ஒரு தொகுதி வாங்கிய மூலப்பொருட்களில் பயன்படுத்துவது.",
   "Whole bill": "முழு பில்",
   "worked out from the recipe": "ரெசிபியிலிருந்து கணக்கிடப்பட்டது",
-  "Wrong order": "தவறான ஆர்டர்"
+  "Wrong order": "தவறான ஆர்டர்",
+  "Kitchen stock entries": "சமையலறைச் சரக்குப் பதிவுகள்",
+  "How far back a stock entry can be dated.": "ஒரு சரக்குப் பதிவுக்கு எவ்வளவு பின்தேதி இடலாம்.",
+  "Back-date stock entries up to": "சரக்குப் பதிவுகளுக்குப் பின்தேதி இடும் வரம்பு",
+  "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: வரம்பு இல்லை. 1: மிகப் பழைய தேதி நேற்று. டெலிவரி, சரக்கு சரிபார்ப்பு, விரயம், தயாரித்த தொகுதிகள் ஆகியவற்றுக்குப் பொருந்தும். பதிவை ரத்துசெய்வது பாதிக்கப்படாது.",
+  "Earliest: {date}": "மிகப் பழைய தேதி: {date}"
 }

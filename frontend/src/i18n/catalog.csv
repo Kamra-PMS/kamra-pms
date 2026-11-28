@@ -551,6 +551,7 @@
 0 never oversells. A room type can override this.,0 never oversells. A room type can override this.,0 يمنع البيع الزائد. يمكن لنوع الغرفة تجاوز ذلك.,0 impide la sobreventa. Cada tipo de habitación puede tener su propio límite.,0 nunca exagera. Um tipo de quarto pode substituir isso.,0 表示不超订。房型可覆盖此设置。,,,translated
 0 turns the high-balance check off.,0 turns the high-balance check off.,0 يوقف فحص الرصيد المرتفع.,0 desactiva la comprobación de saldos elevados.,0 desativa a verificação de saldo alto.,0 表示关闭高余额检查。,,,translated
 0-30,0-30,0-30,0-30,0-30,0-30 天,,,translated
+"0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.","0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.",0: بلا حد. 1: أقدم تاريخ مسموح به هو الأمس. يشمل الاستلامات والجرد والهدر والدفعات المصنّعة. لا يتأثر إلغاء القيود.,"0: sin límite. 1: como muy atrás, ayer. Se aplica a entregas, inventarios, mermas y lotes elaborados. No afecta a la anulación de movimientos.","0: sem limite. 1: a data mais antiga é ontem. Vale para entregas, contagens, perdas e lotes produzidos. Não afeta o cancelamento de lançamentos.",0：不限制。1：最早只能填昨天。适用于收货、盘点、损耗和自制批次。取消记录不受影响。,,,translated
 0.5 means one portion feeds two,0.5 means one portion feeds two,0.5 تعني أن حصة واحدة تكفي شخصين,"0,5 significa que una porción alcanza para dos personas","0,5 significa que uma porção alimenta duas",0.5 表示一份供两人,screens/BanquetCatalogue.tsx,,translated
 03:00 held,03:00 held,موقوف عند 03:00,03:00 en espera,03:00 realizada,03:00 保留,,,translated
 1 · Bookings,1 · Bookings,1 · الحجوزات,1 · Reservas,1 · Reservas,1 · 预订,,,translated
@@ -1184,6 +1185,7 @@ Back to the group,Back to the group,العودة إلى المجموعة,Volver 
 Back to the hotel default.,Back to the hotel default.,عدت إلى الإعداد الافتراضي للفندق.,Volver al valor predeterminado del hotel.,De volta ao padrão do hotel.,恢复酒店默认。,components/CustomizeToday.tsx,,translated
 Back to till,Back to till,العودة إلى الصندوق,Volver a la caja,Voltar ao caixa,返回钱箱,screens/pos/OpenBillsPopup.tsx,,translated
 Back to today,Back to today,العودة إلى اليوم,Volver a hoy,De volta a hoje,返回今日,screens/InHouse.tsx,,translated
+Back-date stock entries up to,Back-date stock entries up to,أقصى مدة لتأريخ قيود المخزون بأثر رجعي,Retroactividad máxima de los movimientos de existencias,Retroatividade máxima dos lançamentos de estoque,库存记录最多可补录,,,translated
 Bad debt write-off,Bad debt write-off,شطب دين معدوم,Cancelación por cuenta incobrable,Baixa como dívida incobrável,坏账核销,components/AllowanceRequests.tsx,,translated
 Bag is back: mark ready,Bag is back: mark ready,عادت الحقيبة: اجعلها جاهزة,Prendas devueltas: marcar como listas,A bolsa voltou: marca pronta,袋子已送回：标记就绪,components/CheckOutDialog.tsx,,translated
 Bakery,Bakery,المخبز,Panadería,Padaria,烘焙,,,translated
@@ -2434,6 +2436,7 @@ Each request becomes a task for the right team. A price goes on the guest's bill
 Each stay is billed in its own currency,Each stay is billed in its own currency,تُحاسب كل إقامة بعملتها الخاصة,Cada estancia se cobra en su propia moneda,Cada estadia é cobrada na sua própria moeda,每次住宿按各自货币结算,screens/CRS.tsx; screens/TripConfirmation.tsx,,translated
 Each unit / room sells on its own (hotel-style inventory).,Each unit / room sells on its own (hotel-style inventory).,كل وحدة / غرفة تُباع بمفردها (مخزون بأسلوب الفندق).,"Cada unidad o habitación se reserva por separado, como en un hotel.",Cada unidade/quarto é vendido por conta própria (inventário estilo hotel).,每个单元 / 客房单独销售（酒店式库存）。,screens/Setup.tsx,,translated
 Earlier,Earlier,السابق,Anterior,Anteriormente,更早,screens/BanquetDiary.tsx; screens/RateCalendar.tsx,,translated
+Earliest: {date},Earliest: {date},أقدم تاريخ: {date},Fecha más antigua: {date},Data mais antiga: {date},最早日期：{date},screens/Inventory.tsx,date,translated
 Early check-in,Early check-in,وصول مبكر,Entrada anticipada,Check-in antecipado,提前入住,,,translated
 Early Check-in,Early Check-in,وصول مبكر,Entrada anticipada,Check-in antecipado,提前入住,,,translated
 Early Departure,Early Departure,مغادرة مبكرة,Salida anticipada,Saída antecipada,提前离店,,,translated
@@ -3206,6 +3209,7 @@ How do I check a guest in?,How do I check a guest in?,كيف أسجّل وصول
 How do I waitlist a booking?,How do I waitlist a booking?,كيف أضع حجزا في قائمة الانتظار؟,¿Cómo agrego una reserva a la lista de espera?,Como coloco uma reserva na lista de espera?,如何将预订转入候补？,,,translated
 How do I…?,How do I…?,كيف أفعل…؟,¿Cómo puedo…?,Como faço para…?,如何操作…？,components/HelpPanel.tsx,,translated
 How entries get here,How entries get here,كيف تصل القيود إليه,Cómo llegan los asientos,Como os lançamentos chegam,记录来源说明,screens/Ledgers.tsx,,translated
+How far back a stock entry can be dated.,How far back a stock entry can be dated.,إلى أي مدى يمكن تأريخ قيد المخزون في الماضي.,Hasta qué fecha anterior puede fecharse un movimiento de existencias.,Até que data anterior um lançamento de estoque pode ser datado.,库存记录的日期最早可以往前填多久。,,,translated
 "How far the house may oversell, plus demand pricing.","How far the house may oversell, plus demand pricing.",الحد المسموح لزيادة الحجز، مع التسعير حسب الطلب.,Límite de sobreventa y tarifas según la demanda.,"Até que ponto a casa pode vender mais, mais o preço de demanda.",酒店可超订的幅度，以及需求定价。,,,translated
 How it bills,How it bills,طريقة الفوترة,Forma de facturación,Como fatura,计费方式,screens/BanquetFunction.tsx,,translated
 How long a guest request may stay open before it is overdue.,How long a guest request may stay open before it is overdue.,المدة المسموح بها لبقاء طلب الضيف مفتوحا قبل أن يتأخر.,Tiempo máximo para atender una solicitud de huésped antes de quedar fuera de plazo.,Quanto tempo uma solicitação de hóspede pode permanecer aberta antes de expirar.,客需可保持未结的时长，超时即逾期。,,,translated
@@ -3498,6 +3502,7 @@ Kitchen presses Start,Kitchen presses Start,المطبخ يضغط بدء,Inicio 
 Kitchen printers,Kitchen printers,طابعات المطبخ,Impresoras de cocina,Impressoras de cozinha,厨房打印机,../../kamra/onboarding.py; screens/KitchenPrinters.tsx; screens/settings/cards.tsx,,translated
 Kitchen stations,Kitchen stations,محطات المطبخ,Estaciones de cocina,Estações de cozinha,厨房档口,screens/Setup.tsx,,translated
 Kitchen stock,Kitchen stock,مخزون المطبخ,Existencias de cocina,Estoque da cozinha,厨房库存,,,translated
+Kitchen stock entries,Kitchen stock entries,قيود مخزون المطبخ,Movimientos de existencias de cocina,Lançamentos do estoque da cozinha,厨房库存记录,,,translated
 Kitchen times,Kitchen times,أوقات المطبخ,Tiempos de cocina,Tempos de cozinha,厨房用时,,,translated
 Kitchen turnaround,Kitchen turnaround,سرعة المطبخ,Tiempos de cocina por punto de venta,Tempo de resposta da cozinha,厨房出餐时长,,,translated
 KOT,KOT,أمر المطبخ,Comanda (KOT),Comanda,厨房单,screens/POS.tsx,,translated

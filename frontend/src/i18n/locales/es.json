@@ -7287,5 +7287,10 @@
   "Repeat new PIN": "Repita el PIN nuevo",
   "Set my cashier PIN": "Configurar mi PIN de caja",
   "Set your cashier PIN to approve this refund.": "Configure su PIN de caja para aprobar este reembolso.",
-  "The two PINs don't match.": "Los dos PIN no coinciden."
+  "The two PINs don't match.": "Los dos PIN no coinciden.",
+  "Kitchen stock entries": "Movimientos de existencias de cocina",
+  "How far back a stock entry can be dated.": "Hasta qué fecha anterior puede fecharse un movimiento de existencias.",
+  "Back-date stock entries up to": "Retroactividad máxima de los movimientos de existencias",
+  "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: sin límite. 1: como muy atrás, ayer. Se aplica a entregas, inventarios, mermas y lotes elaborados. No afecta a la anulación de movimientos.",
+  "Earliest: {date}": "Fecha más antigua: {date}"
 }

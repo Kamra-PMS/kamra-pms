@@ -7249,5 +7249,10 @@
   "Repeat new PIN": "أعد إدخال رمز PIN الجديد",
   "Set my cashier PIN": "تعيين PIN أمين الصندوق الخاص بي",
   "Set your cashier PIN to approve this refund.": "عيّن PIN أمين الصندوق للموافقة على هذا الاسترداد.",
-  "The two PINs don't match.": "رمزا PIN غير متطابقين."
+  "The two PINs don't match.": "رمزا PIN غير متطابقين.",
+  "Kitchen stock entries": "قيود مخزون المطبخ",
+  "How far back a stock entry can be dated.": "إلى أي مدى يمكن تأريخ قيد المخزون في الماضي.",
+  "Back-date stock entries up to": "أقصى مدة لتأريخ قيود المخزون بأثر رجعي",
+  "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: بلا حد. 1: أقدم تاريخ مسموح به هو الأمس. يشمل الاستلامات والجرد والهدر والدفعات المصنّعة. لا يتأثر إلغاء القيود.",
+  "Earliest: {date}": "أقدم تاريخ: {date}"
 }
