@@ -41,3 +41,4 @@ kamra.patches.v47.create_floors_from_rooms
 kamra.patches.v47.move_policy_fee_advances_to_guest_ledger
 kamra.patches.v48.date_the_stock_ledger
 kamra.patches.v48.fill_paid_amounts
+kamra.patches.v48.take_tax_out_of_meal_nights

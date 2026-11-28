@@ -463,6 +463,18 @@ def room_rate_digits(property: str) -> int:
 	return 6 if rates_include_tax(property) or rates_include_levy(property) else 2
 
 
+def meal_night_net(property: str, plan, adults, children) -> Decimal:
+	"""One night of a meal plan before tax - what the quote adds up, the
+	booking locks and the folio bills. `plan` is the Meal Plan (or its two
+	prices), which carry the F&B tax when the property's rates include tax."""
+	price = (int(adults or 0) * _dec(plan.get("price_per_adult"))
+	         + int(children or 0) * _dec(plan.get("price_per_child")))
+	if rates_include_tax(property):
+		from kamra.folio import _fnb_gst
+		price /= Decimal(1) + _dec(_fnb_gst(property)) / Decimal(100)
+	return price
+
+
 def levy_digits(property: str) -> int:
 	"""Decimals a posted levy line keeps: 6 only when the levy sits inside the
 	displayed price, where it has to add back to that price exactly. Otherwise
@@ -1180,12 +1192,7 @@ def quote(
 	meal_total = Decimal(0)
 	if meal_plan:
 		mp = frappe.get_doc("Meal Plan", meal_plan)
-		meal_total = billable_nights * (
-			adults * _dec(mp.price_per_adult)
-			+ children * _dec(mp.price_per_child)
-		)
-		if inclusive:
-			meal_total /= Decimal(1) + _dec(FNB_GST) / Decimal(100)
+		meal_total = billable_nights * meal_night_net(property, mp, adults, children)
 	meal_tax = meal_total * _dec(FNB_GST) / Decimal(100)
 
 	subtotal = room_total + meal_total

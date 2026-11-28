@@ -827,8 +827,9 @@ class Reservation(Document):
 			mp = frappe.db.get_value(
 				"Meal Plan", self.meal_plan,
 				["price_per_adult", "price_per_child"], as_dict=True) or {}
-			meal = ((self.adults or 1) * float(mp.get("price_per_adult") or 0)
-			        + (self.children or 0) * float(mp.get("price_per_child") or 0))
+			from kamra.pricing import meal_night_net
+			meal = round(float(meal_night_net(
+				self.property, mp, self.adults or 1, self.children)), 6)
 		# a price shown with tax / the levy inside it is split by division; the
 		# pieces only add back up to the shown price at 6 decimals
 		from kamra.pricing import room_rate_digits

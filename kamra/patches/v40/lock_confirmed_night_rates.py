@@ -75,8 +75,9 @@ def lock(doc) -> None:
 			mp = frappe.db.get_value(
 				"Meal Plan", doc.meal_plan,
 				["price_per_adult", "price_per_child"], as_dict=True) or {}
-			meal = ((doc.adults or 1) * float(mp.get("price_per_adult") or 0)
-			        + (doc.children or 0) * float(mp.get("price_per_child") or 0))
+			from kamra.pricing import meal_night_net
+			meal = round(float(meal_night_net(
+				doc.property, mp, doc.adults or 1, doc.children)), 6)
 		for d in _stay_dates(doc):
 			doc.append("night_rates", {
 				"stay_date": d,
