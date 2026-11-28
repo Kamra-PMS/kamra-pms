@@ -707,6 +707,40 @@ def advance_percent(property: str, stay_rules: dict) -> tuple[float, str | None]
 	                                     "deposit_pct") or 0), None
 
 
+def advance_digits(currency: str | None) -> int:
+	"""Decimals an advance is kept in: two, or the currency's own where it has
+	more (a dinar's fils). Never fewer than two: a bill can carry cents even
+	where the screens show whole money, and an advance rounded below its bill
+	would leave it unsettled."""
+	from kamra.ledger import currency_digits
+	return max(2, currency_digits(currency))
+
+
+def advance_round(value, currency: str | None) -> float:
+	"""An advance figure in its currency's advance decimals. At two it rounds
+	as advances always have: a bill ending in half a cent can't be settled in
+	cents whichever way that goes (#753). Beyond two, half up."""
+	digits = advance_digits(currency)
+	if digits == 2:
+		return round(float(value or 0), 2)
+	from kamra.ledger import round_to
+	return round_to(value, digits)
+
+
+def advance_amount(property: str | None, total, pct: float | None = None) -> float:
+	"""An advance figure at this hotel: pct% of total, or total itself."""
+	from kamra.ledger import home_currency
+	currency = home_currency(property) if property else None
+	value = total
+	if pct is not None and advance_digits(currency) == 2:
+		# the float arithmetic advances have always used: an exact product
+		# would move some half cents by one
+		value = float(total or 0) * pct / 100
+	elif pct is not None:
+		value = Decimal(str(total or 0)) * Decimal(str(pct)) / 100
+	return advance_round(value, currency)
+
+
 def validate_voucher(property: str, voucher_code: str, nights: int,
                      check_limits: bool = True):
 	"""Return the voucher doc if valid, else throw with a guest-readable reason.
@@ -1366,7 +1400,7 @@ def quote(
 		# what the booking should secure in advance: the % its dates ask
 		# for (a season's advance %, else the property's usual deposit %)
 		"advance": {"percent": adv_pct, "season": adv_season,
-		            "amount": round(float(total) * adv_pct / 100, 2)},
+		            "amount": advance_amount(property, float(total), adv_pct)},
 		"package": {
 			"name": pkg.name,
 			"package_name": pkg.package_name,

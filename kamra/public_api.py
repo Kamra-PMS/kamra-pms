@@ -899,7 +899,8 @@ def _advance_terms(prop, total: float, rules: dict | None = None) -> tuple[float
 		return total, f"Full payment ({sym}{total:,.0f}) on booking for these dates"
 	if mode == "Advance percent" or (season_pct and mode != "Pay at hotel"):
 		pct = season_pct or float(prop.get("advance_percent") or 0)
-		due = round(total * pct / 100, 2)
+		from kamra.pricing import advance_amount
+		due = advance_amount(prop.get("name"), total, pct)
 		return due, f"{pct:g}% advance ({sym}{due:,.0f}) now, rest at the hotel"
 	if mode == "Registration fee":
 		due = min(float(prop.get("registration_fee") or 0), total)
@@ -912,11 +913,12 @@ def _advance_terms(prop, total: float, rules: dict | None = None) -> tuple[float
 def _payment_split(prop, total: float, rules: dict | None = None) -> dict:
 	"""Server-computed split the booking page shows: what is due now and
 	what is left to pay at the hotel. The browser never derives these."""
+	from kamra.pricing import advance_amount
 	total = float(total or 0)
 	due, policy = _advance_terms(prop, total, rules)
 	return {
 		"advance_due": due,
-		"balance_at_hotel": round(max(0.0, total - due), 2),
+		"balance_at_hotel": advance_amount(prop.get("name"), max(0.0, total - due)),
 		"payment_policy": policy,
 	}
 
@@ -984,6 +986,7 @@ def book(property: str, room_type: str, check_in_date: str,
 	]
 
 	from kamra.api import create_booking
+	from kamra.pricing import advance_amount
 	from kamra.pricing import quote as price_quote
 	from kamra.reservation_state import resolve_instant_status
 
@@ -1082,8 +1085,8 @@ def book(property: str, room_type: str, check_in_date: str,
 		"reservation": result["reservation"],
 		"amount_after_tax": result["amount_after_tax"],
 		"advance_due": advance_due,
-		"balance_at_hotel": round(
-			max(0.0, float(result["amount_after_tax"] or 0) - advance_due), 2),
+		"balance_at_hotel": advance_amount(
+			property, max(0.0, float(result["amount_after_tax"] or 0) - advance_due)),
 		"payment_policy": policy,
 		"pay_at_hotel": advance_due <= 0,
 		"status": final_status,

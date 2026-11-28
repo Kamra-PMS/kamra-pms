@@ -553,9 +553,11 @@ def cancel_itinerary(itinerary: str, reason: str = "Guest request",
 
 # ── one advance for the whole trip ───────────────────────────────────────
 
-def allocate_trip_advance(rows: list[dict], amount: float) -> list[float]:
+def allocate_trip_advance(rows: list[dict], amount: float,
+                          currency: str | None = None) -> list[float]:
 	"""Split one trip payment across its legs (rows in date order, each
-	{due, open}: advance still due, and the bill not yet paid).
+	{due, open}: advance still due, and the bill not yet paid), in the
+	currency's advance decimals.
 
 	First every leg gets up to its own advance still due, earliest stay
 	first, so each hotel is secured to its own policy before any money
@@ -563,19 +565,22 @@ def allocate_trip_advance(rows: list[dict], amount: float) -> list[float]:
 	unpaid bill, then the next: one leg is never paid more than it costs,
 	so no hotel ends the stay holding money it has to refund. A payment
 	larger than the whole trip's unpaid total is refused by the caller."""
+	from kamra.pricing import advance_round
+
 	shares = [0.0] * len(rows)
-	left = round(float(amount), 2)
+	left = advance_round(amount, currency)
 	for key in ("due", "open"):
 		for i, r in enumerate(rows):
-			room = round(float(r[key]) - shares[i], 2)
+			room = advance_round(float(r[key]) - shares[i], currency)
 			take = min(left, max(room, 0.0))
-			shares[i] = round(shares[i] + take, 2)
-			left = round(left - take, 2)
+			shares[i] = advance_round(shares[i] + take, currency)
+			left = advance_round(left - take, currency)
 	return shares
 
 
 def _trip_advance(itinerary: str, amount=None) -> dict:
 	from kamra.api import _DEPOSIT_STATUSES
+	from kamra.pricing import advance_digits, advance_round
 
 	trip = get_itinerary(itinerary)
 	legs = [leg for leg in trip["legs"] if leg["status"] in _DEPOSIT_STATUSES]
@@ -585,19 +590,27 @@ def _trip_advance(itinerary: str, amount=None) -> dict:
 	if len({leg["currency"] for leg in legs}) > 1:
 		frappe.throw(_("The stays on this trip are in different currencies. "
 		               "Take the advance on each stay instead."))
-	rows = [{"due": float(leg["deposit_due"] or 0),
-	         "open": max(0.0, round(_printed(leg, "amount_after_tax")
-	                                - float(leg["advance_paid"] or 0), 2))}
-	        for leg in legs]
-	due = round(sum(r["due"] for r in rows), 2)
-	unpaid = round(sum(r["open"] for r in rows), 2)
-	amount = round(float(amount), 2) if amount not in (None, "") else due
+	currency = legs[0]["currency"]
+	rows = []
+	for leg in legs:
+		# a stay can take what the screens print for it, or its own bill where
+		# printing rounds that down (whole rupiah on a bill with sen)
+		bill = max(_printed(leg, "amount_after_tax"),
+		           advance_round(leg["amount_after_tax"], currency))
+		rows.append({"due": float(leg["deposit_due"] or 0),
+		             "open": max(0.0, advance_round(
+			             bill - float(leg["advance_paid"] or 0), currency))})
+	due = advance_round(sum(r["due"] for r in rows), currency)
+	unpaid = advance_round(sum(r["open"] for r in rows), currency)
+	amount = (advance_round(amount, currency)
+	          if amount not in (None, "") else due)
 	if amount <= 0:
 		frappe.throw(_("Enter the advance amount."))
-	if amount > unpaid + 0.005:
+	if amount > unpaid:
+		digits = advance_digits(currency)
 		frappe.throw(_("{0} is more than the trip still owes ({1}).").format(
-			f"{amount:,.2f}", f"{unpaid:,.2f}"))
-	shares = allocate_trip_advance(rows, amount)
+			f"{amount:,.{digits}f}", f"{unpaid:,.{digits}f}"))
+	shares = allocate_trip_advance(rows, amount, currency)
 	return {
 		"itinerary": trip["name"], "amount": amount,
 		"currency": legs[0]["currency"],
