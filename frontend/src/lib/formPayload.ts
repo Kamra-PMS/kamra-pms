@@ -6,6 +6,13 @@ export interface PayloadField {
   /** Sent only when the user changed it: another action (a delivery) may have
    *  written a newer value while the form was open. */
   onlyIfChanged?: boolean
+  /** A field of the saved record: while it is set, this input is read-only. */
+  lockedBy?: string
+}
+
+/** Whether the record says this field can no longer change. `loaded` is null for a new record. */
+export function isLocked(field: PayloadField, loaded: Record<string, unknown> | null): boolean {
+  return !!field.lockedBy && !!Number(loaded?.[field.lockedBy] ?? 0)
 }
 
 const same = (a: unknown, b: unknown) =>

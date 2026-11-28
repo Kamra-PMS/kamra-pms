@@ -2362,6 +2362,10 @@ def update_occupants(reservation: str, occupants):
 	# keeps each guest's times: match by name
 	times_by_name = {(o.full_name or "").strip().casefold(): existing_times[o.name]
 	                 for o in (doc.get("occupants") or [])}
+	# and so does the mark of a row the guest listed in online check-in
+	listed_online = {o.name: o.get("from_precheckin") for o in (doc.get("occupants") or [])}
+	online_by_name = {(o.full_name or "").strip().casefold(): o.get("from_precheckin")
+	                  for o in (doc.get("occupants") or [])}
 	in_house_now = now_datetime().replace(microsecond=0) \
 		if doc.status == "Checked In" else None
 	doc.set("occupants", [])
@@ -2395,6 +2399,8 @@ def update_occupants(reservation: str, occupants):
 			           or existing_scans.get(o.get("row")) or None,
 			"guest_stated_age": stated_ages.get(o.get("row")) or None,
 			"photo": existing_photos.get(o.get("row")) or None,
+			"from_precheckin": listed_online[o["row"]] if o.get("row") in listed_online
+			                   else online_by_name.get(o["full_name"].strip().casefold()) or 0,
 		}
 		row.update(_occupant_times(
 			o, existing_times.get(o.get("row"))
@@ -3960,7 +3966,9 @@ def change_booking_guest(reservation: str, guest: str | None = None,
 	profile, and WhatsApp messages already sent stay with the person they went
 	to. A pre-check-in link or form the old guest already used is cleared, and
 	so is the ID scan they uploaded for this booking (the file is deleted), so
-	their link stops working and the new guest starts again.
+	their link stops working and the new guest starts again. People they listed
+	in online check-in are removed from the stay, unless the desk has since
+	confirmed one (an age, an ID scan or a photo).
 
 	Refused once the guest has checked in, checked out or the booking is
 	cancelled, and for a blacklisted guest unless a Hotel Admin gives a
@@ -4009,6 +4017,14 @@ def change_booking_guest(reservation: str, guest: str | None = None,
 		            "precheckin_signature": None, "precheckin_consent": 0,
 		            "precheckin_verified_by": None, "precheckin_verified_on": None})
 	res.precheckin_link_sent = None
+	# the people the old guest listed in online check-in leave with them, unless
+	# the desk has since confirmed one at the counter (an age, an ID scan or a
+	# photo): that person is here, and an age also decides who stays free
+	def only_listed_online(o):
+		return o.get("from_precheckin") and not (o.age or o.get("id_file") or o.get("photo"))
+	left = [o for o in res.get("occupants") or [] if only_listed_online(o)]
+	if left:
+		res.set("occupants", [o for o in res.get("occupants") if not only_listed_online(o)])
 	res.save()
 
 	# the ID scan the old guest uploaded for this booking leaves with them: the
@@ -4042,14 +4058,18 @@ def change_booking_guest(reservation: str, guest: str | None = None,
 	def who(name, number):
 		return f"{name} ({number})" if number else (name or "-")
 	text = _("Guest changed from {0} to {1}.").format(who(*was), who(now.full_name, now.phone))
+	if left:
+		text += " " + _("People listed in online check-in and removed: {0}.").format(len(left))
 	note = (reason or "").strip()
 	res.add_comment("Comment", text + (f" {_('Reason')}: {note}" if note else ""))
 	log_action("change_booking_guest", "Reservation", res.name, res.property,
 	           rationale=f"{who(*was)} -> {who(now.full_name, now.phone)}"
 	                     + (f"; {note}" if note else "")
-	                     + ("; moved " + ", ".join(f"{k}x{v}" for k, v in moved.items()) if moved else ""))
+	                     + ("; moved " + ", ".join(f"{k}x{v}" for k, v in moved.items()) if moved else "")
+	                     + (f"; removed {len(left)} listed in online check-in" if left else ""))
 	return {"ok": True, "guest": new, "guest_name": now.full_name,
-	        "new_profile": frappe.db.count("Guest") > profiles_before, "moved": moved}
+	        "new_profile": frappe.db.count("Guest") > profiles_before, "moved": moved,
+	        "removed_occupants": len(left)}
 
 
 @frappe.whitelist()
@@ -5212,14 +5232,20 @@ def _scrub_stay_ids(res):
 				                  ignore_permissions=True)
 			frappe.db.set_value("Stay Occupant", o.name, "id_file", None,
 			                    update_modified=False)
-	guest_id = frappe.db.get_value("Guest", res.guest, "id_number")
-	if guest_id:
+	guest_row = frappe.db.get_value("Guest", res.guest,
+	                                ["id_number", "visa_number"], as_dict=True) or {}
+	if guest_row.get("id_number"):
 		frappe.db.set_value("Guest", res.guest, "id_number",
-		                    _mask_id(guest_id), update_modified=False)
+		                    _mask_id(guest_row.id_number), update_modified=False)
+	# a visa number is passport-grade PII: same last-four mask as the ID
+	if guest_row.get("visa_number"):
+		frappe.db.set_value("Guest", res.guest, "visa_number",
+		                    _mask_id(guest_row.visa_number), update_modified=False)
 	from kamra.id_documents import discard_id_document
 	discard_id_document(res.name)  # logs and moves on; never breaks checkout
 	# the document photos are part of the same promise: verified, discarded
-	for field in ("id_file", "address_proof_file"):
+	# (visa_file too — a photo attached on the Guest form must leave as well)
+	for field in ("id_file", "address_proof_file", "visa_file"):
 		if frappe.db.get_value("Guest", res.guest, field):
 			for f in frappe.get_all("File", filters={
 					"attached_to_doctype": "Guest",
@@ -8647,6 +8673,39 @@ def available_rooms(property: str, room_type: str, check_in_date: str,
 		rooms = [r for r in rooms or [] if r["name"] in ok]
 	# Always frappe._dict so callers can use row["name"] or row.name.
 	return [frappe._dict(r) for r in (rooms or [])]
+
+
+@frappe.whitelist()
+@require_perm("Reservation", "handle_stays")
+def rooms_to_sell(property: str, check_in_date: str, check_out_date: str,
+                  ready_now: int = 0):
+	"""For each room type on sale, how many stays can still be sold for these
+	dates by the rules saving a booking applies. Stays with no room number
+	count, so a figure can be lower than the rooms available_rooms lists.
+	`without_room` is true when no room can be given for the whole stay but a
+	booking without a room number would still be accepted. Pass ready_now=1
+	for a guest taking the room now."""
+	from kamra.kamra.doctype.reservation.reservation import uses_member_rooms
+	from kamra.siu.availability import can_save_without_room, free_to_sell
+
+	if getdate(check_out_date) < getdate(check_in_date):
+		frappe.throw(_("Check-out cannot be before check-in."))
+	out = {}
+	for room_type in frappe.get_all(
+			"Room Type", filters={"property": property, "disabled": 0},
+			pluck="name"):
+		free = free_to_sell(property, room_type, check_in_date, check_out_date,
+		                    ready_now=cint(ready_now))
+		# a guest taking a room now needs one: a whole villa with no rooms of
+		# its own can be booked, but has none to hand over
+		if cint(ready_now) and uses_member_rooms(property, room_type):
+			free = 0
+		out[room_type] = {
+			"free": free,
+			"without_room": not free and can_save_without_room(
+				property, room_type, check_in_date, check_out_date),
+		}
+	return out
 
 
 def in_house_rooms(property: str) -> set[str]:

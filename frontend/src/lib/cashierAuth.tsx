@@ -19,6 +19,8 @@ type PinStatus = {
   must_reset: boolean
   locked: boolean
   unlocked: boolean
+  /** may approve at someone else's till: offered "Set my cashier PIN" */
+  approves?: boolean
   /** How long an unlock lasts at this property (Settings → Finance). */
   unlock_minutes?: number
 }

@@ -1,4 +1,5 @@
 "Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","சந்தைப்படுத்தல் அப்ரூவல் கெஸ்ட் சுயவிவரம், புக்கிங் பக்கம் அல்லது STOP / START பதில் மூலம் மாற்றப்படும்."
+Stolen / Damaged Items,திருடப்பட்ட / சேதமடைந்த பொருட்கள்
 This guest has no phone number on file.,இந்த விருந்தினருக்குப் பதிவில் தொலைபேசி எண் இல்லை.
 This guest has not agreed to marketing messages.,இந்த கெஸ்ட் சந்தைப்படுத்தல் செய்திகளுக்கு ஒப்புக்கொள்ளவில்லை.
 You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,WhatsApp-இல் {0}-இலிருந்து சலுகைகளைப் பெறுவீர்கள். விலக எப்போது வேண்டுமானாலும் STOP என்று பதிலளிக்கவும்.
@@ -64,3 +65,56 @@ The buying unit of {0} changed. Close the window and open it again.,{0}-இன�
 The unit of {0} changed. Close the window and open it again.,{0}-இன் அலகு மாறிவிட்டது. சாளரத்தை மூடி மீண்டும் திறக்கவும்.
 Give a buying unit both a name and how many {0} it holds.,வாங்கும் அலகுக்குப் பெயரும் அதில் எத்தனை {0} உள்ளன என்பதும் கொடுக்கவும்.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0}-க்கு ஏற்கனவே சரக்கு வரலாறு உள்ளது அல்லது அது ரெசிபியில் உள்ளது, எனவே அதன் அலகு {1} ஆகவே இருக்கும்."
+Pick a date and time.,தேதியையும் நேரத்தையும் தேர்ந்தெடுக்கவும்.
+A stock entry cannot be dated in the future.,சரக்குப் பதிவுக்கு எதிர்காலத் தேதி இருக்க முடியாது.
+A reason is required to cancel.,ரத்துசெய்ய காரணம் தேவை.
+Stock entry not found.,சரக்குப் பதிவு கிடைக்கவில்லை.
+This entry is already cancelled.,இந்தப் பதிவு ஏற்கனவே ரத்துசெய்யப்பட்டது.
+"Only deliveries, stock takes and wastage can be cancelled.","டெலிவரிகள், சரக்கு சரிபார்ப்புகள், விரயம் மட்டுமே ரத்துசெய்யப்படலாம்."
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,"{0} தனது சொந்த சரக்கைக் கண்காணிக்கிறது: அதன் ரெசிபி அந்த ஒரே பொருள். மாற்ற, கண்காணிப்பை நிறுத்தவும்."
+{0} has a recipe. Delete the recipe first.,{0}-க்கு ரெசிபி உள்ளது. முதலில் ரெசிபியை நீக்கவும்.
+{0} already tracks its own stock.,{0} ஏற்கனவே தனது சொந்த சரக்கைக் கண்காணிக்கிறது.
+An ingredient called {0} already exists. Pick it instead.,{0} என்ற மூலப்பொருள் ஏற்கனவே உள்ளது. அதைத் தேர்ந்தெடுக்கவும்.
+Tracking stock also needs the right to manage stock.,சரக்கைக் கண்காணிக்க சரக்கு நிர்வகிக்கும் உரிமையும் தேவை.
+Approved by,அங்கீகரித்தவர்
+Given back as,திருப்பித் தரப்பட்ட முறை
+POS refunds,POS ரீஃபண்ட்கள்
+Refund,ரீஃபண்ட்
+Refunded,பணம் திருப்பிச் செலுத்தப்பட்டது
+Refunded by,ரீஃபண்ட் செய்தவர்
+"Payment details are set by the till, not by editing the bill.","கட்டண விவரங்கள் கல்லாவால் அமைக்கப்படுகின்றன, பில்லைத் திருத்தி அல்ல."
+"Refunds are made at the till, and are never edited or deleted.",ரீஃபண்ட்கள் கல்லாவில் செய்யப்படுகின்றன; அவை ஒருபோதும் திருத்தப்படவோ நீக்கப்படவோ மாட்டா.
+"This bill has a refund, so its payment mode can't change.",இந்த பில்லில் ரீஃபண்ட் உள்ளதால் கட்டண முறையை மாற்ற முடியாது.
+Correct this on the room's bill at the desk.,இதை வரவேற்பில் அறையின் பில்லில் திருத்தவும்.
+Only a bill paid at the outlet can be refunded.,விற்பனை நிலையத்தில் செலுத்தப்பட்ட பில் மட்டுமே ரீஃபண்ட் செய்யப்படும்.
+"This bill has no payment record, so it can't be refunded here.",இந்த பில்லுக்கு கட்டணப் பதிவு இல்லாததால் இங்கு ரீஃபண்ட் செய்ய முடியாது.
+Nothing is left to refund on this bill.,இந்த பில்லில் ரீஃபண்ட் செய்ய எதுவும் இல்லை.
+The amount must be above zero.,தொகை பூஜ்யத்திற்கு மேல் இருக்க வேண்டும்.
+You can refund up to {0}.,{0} வரை ரீஃபண்ட் செய்யலாம்.
+That line is not on this bill.,அந்த வரி இந்த பில்லில் இல்லை.
+Pick at least one item.,குறைந்தது ஒரு பொருளைத் தேர்ந்தெடுக்கவும்.
+Only {0} of {1} left to refund.,ரீஃபண்ட் செய்ய {1}-இல் {0} மட்டுமே மீதம்.
+"Refund the whole bill, chosen items, or an amount.","முழு பில், தேர்ந்தெடுத்த பொருட்கள் அல்லது ஒரு தொகையை ரீஃபண்ட் செய்யவும்."
+{0} can't go back to stock.,{0}-ஐ சரக்கிற்குத் திருப்ப முடியாது.
+Pick a refund reason.,ரீஃபண்ட் காரணத்தைத் தேர்ந்தெடுக்கவும்.
+Say why in the note.,குறிப்பில் காரணத்தை எழுதவும்.
+An AI agent can never refund.,AI முகவர் ஒருபோதும் ரீஃபண்ட் செய்ய முடியாது.
+Try again from the refund window.,ரீஃபண்ட் சாளரத்திலிருந்து மீண்டும் முயற்சிக்கவும்.
+Money goes back as {0}.,பணம் {0} ஆகத் திரும்பும்.
+The amount to give back has changed: it is now {0}. Check it and refund again.,திருப்பித் தர வேண்டிய தொகை மாறியுள்ளது: இப்போது {0}. சரிபார்த்து மீண்டும் ரீஃபண்ட் செய்யவும்.
+This attempt already refunded {0}. Close the window to see it.,இந்த முயற்சியில் {0} ஏற்கனவே ரீஃபண்ட் ஆகிவிட்டது. பார்க்க சாளரத்தை மூடவும்.
+"{0} already has stock history, so ""Made here"" stays as it is.","{0}-க்கு ஏற்கனவே சரக்கு வரலாறு உள்ளதால் ""இங்கே தயாரிக்கப்பட்டது"" அப்படியே இருக்கும்."
+"Say how much one batch makes, above zero.",ஒரு தொகுதியில் எவ்வளவு கிடைக்கும் என்று பூஜ்யத்திற்கு மேல் குறிப்பிடவும்.
+Something made here needs at least one ingredient in its recipe.,இங்கே தயாரிக்கப்படுவதன் ரெசிபியில் குறைந்தது ஒரு மூலப்பொருள் தேவை.
+"{0} is used to make {1}, so it cannot be made here itself.",{0} {1} தயாரிக்கப் பயன்படுவதால் அதுவே இங்கே தயாரிக்கப்பட்டதாக இருக்க முடியாது.
+{0} cannot be made from itself.,{0}-ஐ அதிலிருந்தே தயாரிக்க முடியாது.
+{0} is made here too. Use only bought ingredients.,{0}-உம் இங்கே தயாரிக்கப்படுகிறது. வாங்கிய மூலப்பொருட்களை மட்டும் பயன்படுத்தவும்.
+{0} recipe(s) use this ingredient. Deactivate it instead.,{0} ரெசிபி(கள்) இந்த மூலப்பொருளைப் பயன்படுத்துகின்றன. அதற்குப் பதிலாக முடக்கவும்.
+{0} (in {1}),{0} ({1}-இல்)
+"{0} is made here. Record it with Produce, not as a delivery.","{0} இங்கே தயாரிக்கப்படுகிறது. டெலிவரியாக அல்ல, ""உற்பத்தி செய்"" மூலம் பதிவிடவும்."
+"Say how much was made, above zero.",எவ்வளவு தயாரிக்கப்பட்டது என்று பூஜ்யத்திற்கு மேல் குறிப்பிடவும்.
+{0} is not made here.,{0} இங்கே தயாரிக்கப்படுவதில்லை.
+The recipe of {0} just changed. Try again.,{0}-இன் ரெசிபி இப்போது மாறியது. மீண்டும் முயற்சிக்கவும்.
+{0} is made here itself. Take it out of the recipe of {1}.,{0} தானே இங்கே தயாரிக்கப்படுகிறது. {1}-இன் ரெசிபியிலிருந்து அதை நீக்கவும்.
+That is too little to take anything from stock.,சரக்கிலிருந்து எதையும் எடுக்க இது மிகக் குறைவு.
+"Only deliveries, stock takes, wastage and production batches can be cancelled.","டெலிவரிகள், சரக்கு சரிபார்ப்புகள், விரயம், உற்பத்தித் தொகுதிகள் மட்டுமே ரத்துசெய்யப்படலாம்."

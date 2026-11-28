@@ -17,6 +17,7 @@ import {
   type Quote,
 } from "../lib/api"
 import { pickDefaultRoomType } from "../lib/bookingDefaults"
+import { freeCounts, saleState, sellableRooms, type RoomSales } from "../lib/roomsToSell"
 import { Button } from "./ui/button"
 import { cur, useLocale, fmtAmount } from "../lib/money"
 import { isPhoneComplete } from "../lib/phone"
@@ -297,6 +298,8 @@ export function BookingDialog(props: {
   // the room clicked on the tape chart; dropped once the desk picks another type
   const pinnedRoom = !!props.initial.room && !walkIn && form.room_type === props.initial.room_type
   const [freeRooms, setFreeRooms] = useState<FreeRoom[] | null>(null)
+  // what can still be sold of each room type; null until the server answers
+  const [sales, setSales] = useState<RoomSales | null>(null)
   const [walk, setWalk] = useState({
     room: "",
     id_type: "",
@@ -448,32 +451,31 @@ export function BookingDialog(props: {
     if (moreRooms.length === 0) setPricesOpen([])
   }, [moreRooms.length])
 
+  // by the rules a save applies, so a type sold to stays with no room number
+  // does not look free
   useEffect(() => {
-    if (!autoRoomType.current || !options?.room_types.length || badDate) return
+    setSales(null)
+    if (badDate) return
     let live = true
-    const types = options.room_types
-    Promise.all(
-      types.map((rt) =>
-        call<FreeRoom[]>("kamra.api.available_rooms", {
-          property: getCurrentProperty(),
-          room_type: rt.name,
-          check_in_date: form.check_in_date,
-          check_out_date: checkOut,
-          ...(walkIn ? { ready_now: 1 } : {}),
-        })
-          .then((rs) => ({ name: rt.name, n: rs.length }))
-          .catch(() => ({ name: rt.name, n: 0 })),
-      ),
-    ).then((hits) => {
-      if (!live || !autoRoomType.current) return
-      const counts = Object.fromEntries(hits.map((h) => [h.name, h.n]))
-      const pick = pickDefaultRoomType(types, counts)
-      setForm((f) => (f.room_type === pick ? f : { ...f, room_type: pick }))
+    call<RoomSales>("kamra.api.rooms_to_sell", {
+      property: getCurrentProperty(),
+      check_in_date: form.check_in_date,
+      check_out_date: checkOut,
+      ...(walkIn ? { ready_now: 1 } : {}),
     })
+      .then((answer) => live && setSales(answer))
+      // unknown: no counts are shown and the first type is picked
+      .catch(() => live && setSales({}))
     return () => {
       live = false
     }
-  }, [options, form.check_in_date, checkOut, walkIn, badDate])
+  }, [form.check_in_date, checkOut, walkIn, badDate])
+
+  useEffect(() => {
+    if (!autoRoomType.current || !options?.room_types.length || !sales) return
+    const pick = pickDefaultRoomType(options.room_types, freeCounts(sales))
+    setForm((f) => (f.room_type === pick ? f : { ...f, room_type: pick }))
+  }, [options, sales])
 
   // a blacklisted guest needs an explicit, reasoned confirmation (Hotel
   // Admin only - the server enforces it); a multi-room group can't override
@@ -619,6 +621,27 @@ export function BookingDialog(props: {
       live = false
     }
   }, [walkIn, form.room_type, form.check_in_date, checkOut])
+
+  // a walk-in is offered no room of a type with nothing left to sell, however
+  // empty its rooms look
+  const walkRooms = freeRooms && sellableRooms(freeRooms, sales?.[form.room_type])
+  useEffect(() => {
+    if (!walkIn || !walkRooms) return
+    setWalk((w) =>
+      walkRooms.some((r) => r.name === w.room)
+        ? w
+        : { ...w, room: walkRooms[0]?.name ?? "" },
+    )
+  }, [walkIn, form.room_type, freeRooms, sales])
+
+  function saleSuffix(roomType: string): string {
+    const sale = sales?.[roomType]
+    const state = saleState(sale)
+    if (!state) return ""
+    if (state === "without_room") return ` · ${t("No room to assign")}`
+    if (state === "sold_out") return ` · ${t("Sold out")}`
+    return ` · ${t("{n} left", { n: String(sale?.free ?? 0) })}`
+  }
 
   function shortErr(e: unknown): string {
     const body = (e as { body?: string }).body
@@ -1421,6 +1444,7 @@ export function BookingDialog(props: {
                       <option key={rt.name} value={rt.name}>
                         {rt.room_type_name} · {cur()}
                         {inr(rt.base_price)}/{t("night")}
+                        {saleSuffix(rt.name)}
                       </option>
                     ))}
                   </select>
@@ -1446,15 +1470,15 @@ export function BookingDialog(props: {
                     <select
                       className={inputCls}
                       value={walk.room}
-                      disabled={!freeRooms?.length}
+                      disabled={!walkRooms?.length}
                       onChange={(e) => setW("room", e.target.value)}
                     >
-                      {freeRooms === null ? (
+                      {walkRooms === null ? (
                         <option value="">{t("Loading…")}</option>
-                      ) : freeRooms.length === 0 ? (
+                      ) : walkRooms.length === 0 ? (
                         <option value="">{t("No free room tonight")}</option>
                       ) : (
-                        freeRooms.map((r) => (
+                        walkRooms.map((r) => (
                           <option key={r.name} value={r.name}>
                             {r.room_number}
                             {r.housekeeping_status
@@ -1464,13 +1488,13 @@ export function BookingDialog(props: {
                         ))
                       )}
                     </select>
-                    {freeRooms?.length === 0 && (
+                    {walkRooms?.length === 0 && (
                       <p className="mt-1.5 text-xs text-rose-600">
                         {t("This type is full tonight - try another room type.")}
                       </p>
                     )}
                     {(() => {
-                      const r = freeRooms?.find((x) => x.name === walk.room)
+                      const r = walkRooms?.find((x) => x.name === walk.room)
                       return r?.housekeeping_status &&
                         !["Clean", "Inspected"].includes(r.housekeeping_status) ? (
                         <p className="mt-1.5 text-xs text-amber-700">
@@ -1924,6 +1948,7 @@ export function BookingDialog(props: {
                       {options?.room_types.map((rt) => (
                         <option key={rt.name} value={rt.name}>
                           {rt.room_type_name}
+                          {saleSuffix(rt.name)}
                         </option>
                       ))}
                     </select>

@@ -1137,6 +1137,27 @@ def t23():
 	assert d.escalation_level == 2, d.escalation_level
 
 
+@check("CRS search: each hotel comes with its currency, and its rates are the quote's own")
+def t_crs_search_currency():
+	from kamra import crs
+	from kamra.pricing import quote
+	found = [p for p in crs.crs_search("2036-02-03", "2036-02-05")["properties"]
+	         if p["property"] == P]
+	assert found, "the harness hotel has no room to offer"
+	assert found[0].get("currency") == crs._locale(P)["currency"], found[0].keys()
+	room = found[0]["room_types"][0]
+	total = quote(P, room["room_type"], "2036-02-03", "2036-02-05", 2, 0)["amount_after_tax"]
+	assert room["total"] == round(total, 3), (room["total"], total)
+
+
+@check("CRS trip total: the stays as printed add up to it")
+def t_crs_trip_total():
+	from kamra import crs
+	two = [{"currency": "INR", "amount": 100.125}, {"currency": "INR", "amount": 100.125}]
+	assert crs._sum(two, "amount") == 200.26, crs._sum(two, "amount")
+	assert crs._sum([], "amount") == 0, crs._sum([], "amount")
+
+
 @check("CRS access guard: a property-restricted user is blocked from others")
 def t24():
 	from kamra.crs import assert_property_access, permitted_properties
@@ -2377,8 +2398,13 @@ def t_stock_cost_average():
 		P, "Average Cups", "pc", cost_per_unit=2000, buy_uom="box", buy_size=24)["name"]
 	settings.save_settings(P, "fnb", {"stock_cost_method": "Average of purchases"})
 	try:
+		# the edit form shows the unit read-only once the record says it is locked
+		assert frappe.get_doc("Ingredient", cups).as_dict().get("unit_locked") == 0, \
+			"an unused ingredient reports a locked unit"
 		inventory.adjust_stock(P, outlet, [{"ingredient": cups, "counted_qty": 12}],
 		                       note="eval opening")
+		assert frappe.get_doc("Ingredient", cups).as_dict().get("unit_locked") == 1, \
+			"an ingredient with stock history does not report its unit as locked"
 		inventory.receive_stock(P, outlet, [{
 			"ingredient": cups, "qty": 2, "in_buying_unit": 1, "buy_uom": "box",
 			"cost_per_unit": 60000}])
@@ -6400,6 +6426,32 @@ def t131():
 		_assert_level(folio)
 	finally:
 		frappe.db.set_value("Property", P, "room_levy_percent", saved.room_levy_percent)
+		frappe.clear_document_cache("Property", P)
+
+@check("meal plan: with tax inside the price, the bill's meal lines equal the quote")
+def t_meal_plan_tax_inside():
+	from kamra.folio import post_room_night
+	saved = frappe.db.get_value("Property", P, "rates_include_tax")
+	frappe.db.set_value("Property", P, "rates_include_tax", 1)
+	frappe.clear_document_cache("Property", P)
+	try:
+		mp = frappe.db.get_value("Meal Plan", {"property": P, "code": "CP"}) or \
+			frappe.get_doc({"doctype": "Meal Plan", "property": P, "code": "CP",
+			                "label": "Eval Breakfast", "price_per_adult": 300,
+			                }).insert(ignore_permissions=True).name
+		price = float(frappe.db.get_value("Meal Plan", mp, "price_per_adult"))
+		res, folio = _in_house("Eval Meal Tax", "+91 70000 00757", "2036-06-03",
+		                       "2036-06-04", _ledger_room("L757"))
+		res.meal_plan = mp
+		res.save(ignore_permissions=True)
+		post_room_night(frappe.get_doc("Reservation", res.name), "2036-06-03")
+		lines = [c for c in frappe.get_doc("Folio", folio).charges
+		         if c.charge_type == "Meal Plan"]
+		shown = price * (res.adults or 1)
+		billed = sum(c.total for c in lines)
+		assert abs(billed - shown) < 0.001, (billed, shown)
+	finally:
+		frappe.db.set_value("Property", P, "rates_include_tax", saved)
 		frappe.clear_document_cache("Property", P)
 
 @check("ledger: night audit room nights and the no-show fee land on the ledger")
@@ -12027,6 +12079,21 @@ def t_change_booking_guest():
 		frappe.db.set_value("Reservation", res.name, "status", "Confirmed")
 
 
+@check("a guest change removes the people the old guest listed in online check-in, not the desk's own")
+def t_change_guest_online_companions():
+	from kamra import api
+	from kamra.public_api import _merge_precheckin_occupants
+	out = api.create_booking(P, RT, "2033-12-10", "2033-12-12", "Eval Online Party",
+	                         phone="+91 70000 00641")
+	res = frappe.get_doc("Reservation", out["reservation"])
+	api.add_occupant_names(res.name, ["Eval Desk Row"])
+	_merge_precheckin_occupants(res, [{"full_name": "Eval Desk Row"}, {"full_name": "Eval Online Row"}])
+	swap = api.change_booking_guest(res.name, guest_name="Eval Other Party", phone="+91 70000 00642")
+	res.reload()
+	assert swap["removed_occupants"] == 1, swap
+	assert [o.full_name for o in res.occupants] == ["Eval Desk Row"], res.occupants
+
+
 @check("a blacklisted phone number still stops a booking; a Hotel Admin's override books the name typed")
 def t_blacklisted_number_books_typed_name():
 	from kamra import api
@@ -12661,6 +12728,99 @@ def t_menu_modifiers():
 	assert not frappe.db.count("Menu Modifier Option", {"modifier_group": extras})
 
 
+@check("kitchen stock: back-dated entries and a cancel keep the shelf and the summary agreeing")
+def t_stock_backdate_and_cancel():
+	from frappe.utils import add_days, add_to_date, now_datetime, nowdate
+
+	from kamra import inventory
+	outlet, _dish = _eval_bill_outlet("Eval Corrections")
+	cups = frappe.get_doc({"doctype": "Ingredient", "property": P, "ingredient_name": "Eval Correction Cups",
+	                       "uom": "pc"}).insert(ignore_permissions=True).name
+	ago = lambda hours: str(add_to_date(now_datetime(), hours=-hours))
+	shelf = lambda: frappe.db.get_value("Ingredient Stock", f"{outlet}::{cups}", "qty_on_hand")
+	inventory.adjust_stock(P, outlet, [{"ingredient": cups, "counted_qty": 40}], note="eval count",
+	                       posted_at=ago(24))
+	# goods that arrived before that count are already inside it
+	inventory.receive_stock(P, outlet, [{"ingredient": cups, "qty": 10}], posted_at=ago(48))
+	assert shelf() == 40, ("a delivery dated before the count moved today's stock", shelf())
+	got = inventory.receive_stock(P, outlet, [{"ingredient": cups, "qty": 5}])
+	assert shelf() == 45, shelf()
+	row = frappe.db.get_value("Ingredient Ledger Entry", {"batch_id": got["batch_id"]})
+	inventory.cancel_stock_entry(P, row, "eval: entered twice")
+	assert shelf() == 40, ("cancelling the delivery left", shelf())
+	rows = inventory.stock_summary(P, add_days(nowdate(), -7), nowdate(), outlet=outlet)["rows"]
+	ending = [r["ending"] for r in rows if r["ingredient"] == cups]
+	assert ending == [40], ("the summary disagrees with the shelf", ending)
+
+
+@check("kitchen stock: a bill closed without a kitchen ticket takes the dish and its choices")
+def t_unsent_lines_take_stock():
+	from kamra import inventory, menu_modifiers as mm, pos
+	from kamra import settings as st
+	outlet, dish = _eval_bill_outlet("Eval Held")
+	beans = frappe.get_doc({"doctype": "Ingredient", "property": P, "ingredient_name": "Eval Held Beans",
+	                        "uom": "g"}).insert(ignore_permissions=True).name
+	inventory.receive_stock(P, outlet, [{"ingredient": beans, "qty": 500}])
+	doc = frappe.get_doc("Menu Item", dish)
+	doc.set("recipe", [{"ingredient": beans, "qty": 18}])
+	doc.save(ignore_permissions=True)
+	group = mm.save_modifier_group(
+		outlet, "Held extras", [{"option_name": "Shot", "price": 60,
+		                         "ingredients": [{"ingredient": beans, "qty": 10}]}], items=[dish])["name"]
+	shot = frappe.db.get_value("Menu Modifier Option", {"modifier_group": group})
+	shelf = lambda: frappe.db.get_value("Ingredient Stock", f"{outlet}::{beans}", "qty_on_hand")
+	tills = st.get_setting(P, "use_cashier_tills")
+	st.save_settings(P, "finance", {"use_cashier_tills": 0})
+	try:
+		order = pos.create_order(outlet, [{"menu_item": dish, "qty": 2, "modifiers": [shot]}],
+		                         table_no="H1")["order"]
+		assert shelf() == 500, "an unsent bill took stock before it closed"
+		pos.pay_order(order, "Cash")
+		assert shelf() == 500 - 2 * (18 + 10), ("held then paid left", shelf())
+	finally:
+		st.save_settings(P, "finance", {"use_cashier_tills": tills})
+
+
+@check("POS refunds: never more than was paid, own stock comes back, the PIN follows the setting")
+def t_pos_refunds():
+	from kamra import inventory, pos, pos_refunds
+	from kamra import settings as st
+	outlet, dish = _eval_bill_outlet("Eval Refunds")
+	bottle = inventory.track_item_stock(dish, uom="bottle")["ingredient"]
+	inventory.receive_stock(P, outlet, [{"ingredient": bottle, "qty": 10}])
+	shelf = lambda: frappe.db.get_value("Ingredient Stock", f"{outlet}::{bottle}", "qty_on_hand")
+	tills = st.get_setting(P, "use_cashier_tills")
+	pins = frappe.db.get_value("Property", P, "require_cashier_pin")
+	st.save_settings(P, "finance", {"use_cashier_tills": 0})
+	frappe.db.set_value("Property", P, "require_cashier_pin", 0)
+	try:
+		order = pos.create_order(outlet, [{"menu_item": dish, "qty": 3}], table_no="R1")["order"]
+		pos.pay_order(order, "Cash")
+		paid = frappe.db.get_value("POS Order", order, "paid_amount")
+		assert paid > 0 and shelf() == 7, (paid, shelf())
+		row = frappe.get_doc("POS Order", order).items[0].name
+
+		def give(kind="whole", **kw):
+			return pos_refunds.refund_bill(order, kind, "Cash", "POS-REF-WRONG",
+			                               idempotency_key=frappe.generate_hash(length=16), **kw)
+
+		# someone who may approve, where the property asks no PIN: nothing to type
+		first = give("items", lines=[{"row": row, "qty": 1, "back_to_stock": 1}])
+		assert abs(first["amount"] - round(paid / 3, 2)) < 0.005 and shelf() == 8, (first, shelf())
+		frappe.db.set_value("Property", P, "require_cashier_pin", 1)
+		frappe.db.delete("Cashier PIN", {"name": "Administrator"})
+		_refused(give)
+		frappe.db.set_value("Property", P, "require_cashier_pin", 0)
+		give()
+		given = sum(frappe.get_all("POS Refund", filters={"pos_order": order}, pluck="amount"))
+		assert abs(given - paid) < 0.005, ("gave back", given, "of", paid)
+		_refused(give)
+		assert shelf() == 8, "an unticked refund moved stock"
+	finally:
+		frappe.db.set_value("Property", P, "require_cashier_pin", pins or 0)
+		st.save_settings(P, "finance", {"use_cashier_tills": tills})
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12678,7 +12838,7 @@ def execute():
 		RT, ROOM = setup()
 		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t530, t3i, t3j, t4,
 		           t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16,
-		           t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28,
+		           t17, t18, t19, t20, t21, t22, t23, t24, t_crs_search_currency, t_crs_trip_total, t25, t26, t27, t28,
 		           t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39, t39b, t39c, t39d,
 		           t40, t41, t42, t43, t44, t45, t46, t47, t47b, t47c, t47d, t48,
 		           t49, t50, t51, t53, t54, t55, t56, t57, t58, t59, t60, t61,
@@ -12716,13 +12876,16 @@ def execute():
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_saved_stay, t_change_booking_guest,
 		           t_blacklisted_number_books_typed_name,
+		           t_change_guest_online_companions,
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
 		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent,
 		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
-		           t_stock_cost_average):
+		           t_stock_cost_average, t_stock_backdate_and_cancel,
+		           t_unsent_lines_take_stock, t_pos_refunds,
+		           t_meal_plan_tax_inside):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

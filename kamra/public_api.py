@@ -605,7 +605,8 @@ def _merge_precheckin_occupants(res, rows) -> None:
 			id_type = id_number = ""
 		row = by_row.get(o.get("row")) or by_name.get(name.lower())
 		if row is None:
-			row = doc.append("occupants", {"full_name": name, "nationality": default_nat})
+			row = doc.append("occupants", {"full_name": name, "nationality": default_nat,
+			                               "from_precheckin": 1})
 			by_name[name.lower()] = row
 		elif not locked(row):
 			row.full_name = name

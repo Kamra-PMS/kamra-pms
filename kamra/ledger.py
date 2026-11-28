@@ -42,6 +42,9 @@ CHARGE_TYPE_TO_CODE = {
 	"Rate Adjustment": ("1010", "Room Rate Adjustment", "Rooms", "Rate Adjustment"),
 	"Discount": ("9000", "Discount", "Adjustment", "Discount"),
 	"Misc": ("8000", "Miscellaneous", "Other", "Misc"),
+	# a guest made to pay for room items taken or broken: recovered income,
+	# not a service sold, so it sits with other income
+	"Stolen / Damaged Items": ("8100", "Stolen / Damaged Items", "Other", "Stolen / Damaged Items"),
 	"Allowance": ("9100", "Allowance", "Adjustment", "Allowance"),
 	# a balance carried over from the previous PMS at go-live (kamra.golive):
 	# not revenue of the day - the old system already counted it
@@ -2430,7 +2433,25 @@ def _money(value) -> Decimal:
 
 def round_cents(value) -> float:
 	"""Half up to the cent, in Decimal (float round(2.345, 2) gives 2.34)."""
-	return float(_money(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+	return round_to(value, 2)
+
+
+def round_to(value, digits: int) -> float:
+	"""Half up to `digits` decimals, in Decimal."""
+	return float(_money(value).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
+
+
+# Where Babel's copy of the CLDR currency data differs from the browser's, which
+# the screens print with: a till showing whole rupiah must not record sen.
+_DIGITS_AS_SHOWN = {"COP": 0, "HUF": 0, "IDR": 0, "PKR": 0, "RSD": 2}
+
+
+def currency_digits(currency: str | None) -> int:
+	"""How many decimals an amount in this currency has, as the screens show it."""
+	from babel.numbers import get_currency_precision
+
+	code = (currency or "").upper()
+	return _DIGITS_AS_SHOWN.get(code, get_currency_precision(code))
 
 
 def fx_to_home(fx_amount, rate) -> float:
@@ -2515,6 +2536,12 @@ DEFAULT_REASONS = [
 	("REV-BOUNCE", "Cheque bounced", "Payment Reversal", 0),
 	("REV-ACCOUNT", "Posted to the wrong account", "Payment Reversal", 0),
 	("REV-ERR", "Entered in error", "Payment Reversal", 0),
+	# a POS refund always needs a supervisor's PIN, so none needs one itself
+	("POS-REF-WRONG", "Wrong order", "POS Refund", 0),
+	("POS-REF-QUAL", "Quality", "POS Refund", 0),
+	("POS-REF-COMPL", "Guest complaint", "POS Refund", 0),
+	("POS-REF-STAFF", "Staff error", "POS Refund", 0),
+	("POS-REF-OTHER", "Other", "POS Refund", 0),
 ]
 
 

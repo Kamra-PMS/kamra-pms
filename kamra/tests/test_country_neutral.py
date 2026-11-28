@@ -55,6 +55,16 @@ class TestCountryNeutralCore(unittest.TestCase):
 		self.assertEqual(localization.front_desk_vocabulary(generic)["id_type_hints"], {})
 		self.assertIn("GST", localization.invoice_tax_note(india))
 		self.assertEqual(localization.invoice_tax_note(generic), "")
+		# OCI is India-only; the generic pack never offers it
+		self.assertIn("OCI Card", localization.visa_types(india))
+		self.assertNotIn("OCI Card", localization.visa_types(generic))
+		self.assertEqual(localization.front_desk_vocabulary(generic)["visa_section"], "Visa")
+
+	def test_empty_property_country_uses_the_generic_pack(self):
+		with patch.object(frappe, "get_cached_value", return_value=""):
+			pack = localization.pack_for("P")
+		self.assertIs(pack, generic)
+		self.assertFalse(localization.is_foreign_national(pack, "British"))
 
 	def test_instant_modes_come_from_the_pack(self):
 		from kamra.localization import saudi, thailand

@@ -591,10 +591,10 @@ def post_room_night(reservation, date, folios=None) -> bool:
 		if locked is not None:
 			meal_amount = float(locked.meal_amount or 0)
 		else:
-			meal_amount = (
-				(reservation.adults or 1) * float(mp.price_per_adult or 0)
-				+ (reservation.children or 0) * float(mp.price_per_child or 0)
-			)
+			from kamra.pricing import meal_night_net
+			meal_amount = round(float(meal_night_net(
+				reservation.property, mp, reservation.adults or 1,
+				reservation.children)), 6)
 		if meal_amount:
 			_append_charge(folios, reservation, "Meal Plan", {
 				"posting_date": date,

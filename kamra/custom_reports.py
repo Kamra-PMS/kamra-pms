@@ -325,8 +325,30 @@ DATASETS: dict[str, Dataset] = {
 			_col("room", "Room"),
 			_col("covers", "Covers", "number"),
 			_col("grand_total", "Total", "number"),
+			_col("refunded", "Refunded", "number"),
 			_col("served_by", "Served by"),
 			_col("cashier", "Cashier"),
+		],
+	},
+	"pos_refunds": {
+		"id": "pos_refunds",
+		"label": "POS refunds",
+		"description": "Money given back on paid outlet bills, by refund date.",
+		"module": "fnb",
+		"roles": ("Finance", "Hotel Admin", "Kamra Agent", "Front Desk", "F&B Manager"),
+		"date_field": "creation",
+		"needs_range": True,
+		"columns": [
+			_col("name", "Refund"),
+			_col("order", "Order"),
+			_col("outlet", "Outlet"),
+			_col("posting_date", "Date", "date"),
+			_col("amount", "Amount", "number"),
+			_col("tax", "Tax", "number"),
+			_col("mode", "Given back as"),
+			_col("reason", "Reason"),
+			_col("approved_by", "Approved by"),
+			_col("refunded_by", "Refunded by"),
 		],
 	},
 	"pos_items": {
@@ -887,6 +909,18 @@ def _fetch_lost_found(property: str, from_date: str, to_date: str,
 	return [{**r, "items": 1} for r in rows]
 
 
+def _refunded_before_tax(orders: list) -> dict:
+	"""bill -> what went back on it, without tax, as the bill's total is shown."""
+	from kamra.pos_refunds import before_tax
+
+	out: dict = {}
+	for r in frappe.get_all(
+			"POS Refund", filters={"pos_order": ["in", orders or [""]]},
+			fields=["pos_order", "amount", "tax_amount"], limit_page_length=0):
+		out[r.pos_order] = round(out.get(r.pos_order, 0.0) + before_tax(r), 2)
+	return out
+
+
 def _fetch_pos_orders(property: str, from_date: str, to_date: str,
                       **_) -> list[dict]:
 	rows = frappe.get_all(
@@ -902,6 +936,7 @@ def _fetch_pos_orders(property: str, from_date: str, to_date: str,
 		order_by="creation desc",
 		limit_page_length=MAX_ROWS,
 	)
+	back = _refunded_before_tax([r.name for r in rows])
 	out = []
 	for r in rows:
 		out.append({
@@ -913,10 +948,28 @@ def _fetch_pos_orders(property: str, from_date: str, to_date: str,
 			"room": r.get("room"),
 			"covers": int(r.get("guests") or 0),
 			"grand_total": float(r.get("order_total") or 0),
+			"refunded": back.get(r.name, 0.0),
 			"served_by": _served_by(r) or "",
 			"cashier": _full_name(r.settled_by) or "",
 		})
 	return out
+
+
+def _fetch_pos_refunds(property: str, from_date: str, to_date: str,
+                       **_) -> list[dict]:
+	from kamra.pos_refunds import refunds_between
+
+	made = refunds_between(from_date, to_date, property=property)[-MAX_ROWS:]
+	reasons = dict(frappe.get_all(
+		"Reason Code", filters={"name": ["in", [r.reason_code for r in made] or [""]]},
+		fields=["name", "description"], as_list=True))
+	return [{
+		"name": r.name, "order": r.pos_order, "outlet": r.outlet,
+		"posting_date": str(r.creation)[:10], "amount": float(r.amount or 0),
+		"tax": float(r.tax_amount or 0), "mode": r.mode,
+		"reason": reasons.get(r.reason_code, r.reason_code),
+		"approved_by": r.approved_by, "refunded_by": r.refunded_by,
+	} for r in reversed(made)]
 
 
 def _fetch_kitchen_times(property: str, from_date: str, to_date: str,
@@ -1196,6 +1249,7 @@ FETCHERS: dict[str, Callable[..., list[dict]]] = {
 	"room_status": _fetch_room_status,
 	"lost_found": _fetch_lost_found,
 	"pos_orders": _fetch_pos_orders,
+	"pos_refunds": _fetch_pos_refunds,
 	"pos_items": _fetch_pos_items,
 	"kitchen_times": _fetch_kitchen_times,
 	"service_tickets": _fetch_service_tickets,

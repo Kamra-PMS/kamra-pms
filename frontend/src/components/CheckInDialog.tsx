@@ -93,8 +93,25 @@ interface Flow {
     id_used_count: number
     address: string
     has_photo: boolean
+    /** nationality is not the property country's own: record the visa / entry doc */
+    foreign: boolean
+    home_nationality: string[]
+    visa_type: string | null
+    visa_number: string | null
+    visa_expiry_date: string | null
+    visa_status: "none" | "valid" | "expiring" | "expired"
+    visa_on_file: boolean
+    /** false under Verify & Discard — profile uploads of ID/visa photos are refused */
+    keeps_id_images: boolean
   }
-  vocabulary: { id_types: string[] }
+  vocabulary: {
+    id_types: string[]
+    visa_types: string[]
+    visa_section: string
+    visa_hint: string
+    visa_number_label: string
+    visa_photo_label: string
+  }
   steps: Step[]
   /** Hard blockers only (room). */
   missing_required: string[]
@@ -218,6 +235,14 @@ const BUILT_IN: Record<string, { title: string; instruction: string }> = {
   },
 }
 
+/** Not the property country's own nationality ("Indian" / "IND"); blank is not foreign.
+ *  An empty home list (generic pack / no country) never marks anyone foreign. */
+function isForeign(nationality: string, home: string[]): boolean {
+  const n = nationality.trim().toLowerCase()
+  if (!n || home.length === 0) return false
+  return !home.some((h) => h.trim().toLowerCase() === n)
+}
+
 const PAYER_LABEL: Record<string, string> = {
   "OTA prepaid": translate("OTA has paid the room"),
   "OTA, guest pays here": translate("OTA booking, guest pays here"),
@@ -317,7 +342,10 @@ export default function CheckInDialog(props: {
   } | null>(null)
 
   // per-step drafts
-  const [details, setDetails] = useState({ phone: "", email: "", nationality: "", id_type: "", id_number: "" })
+  const [details, setDetails] = useState({
+    phone: "", email: "", nationality: "", id_type: "", id_number: "",
+    visa_type: "", visa_number: "", visa_expiry_date: "",
+  })
   const [detailsDirty, setDetailsDirty] = useState(false)
   // what an ID scan read beyond the form's fields; saved with the details
   const [scanned, setScanned] = useState<IdRead | null>(null)
@@ -355,6 +383,9 @@ export default function CheckInDialog(props: {
         nationality: f.guest.nationality ?? "",
         id_type: f.guest.id_type ?? "",
         id_number: "",
+        visa_type: f.guest.visa_type ?? "",
+        visa_number: f.guest.visa_number ?? "",
+        visa_expiry_date: f.guest.visa_expiry_date ?? "",
       })
       setPayer((f.records.billing_check as { payer?: string } | undefined)?.payer ?? f.billing.payer)
       setKeyCount(f.keys.count || Math.max(1, Math.min(f.reservation.adults || 1, 4)))
@@ -457,11 +488,15 @@ export default function CheckInDialog(props: {
       id_expiry_date: scanned?.id_expiry_date ?? undefined,
       address_line: scanned?.address || undefined,
       city: scanned?.city || undefined,
+      visa_type: details.visa_type,
+      visa_number: details.visa_number,
+      visa_expiry_date: details.visa_expiry_date || undefined,
     }, false)
     if (f) {
       setDetailsDirty(false)
       setScanned(null)
-      setDetails((d) => ({ ...d, id_number: "" }))
+      // leave the masked numbers off the form so a re-save does not send bullets
+      setDetails((d) => ({ ...d, id_number: "", visa_number: "" }))
     }
     return !!f
   }
@@ -831,12 +866,95 @@ export default function CheckInDialog(props: {
                 onUploaded={load}
                 label={t("Photograph the guest's ID")}
               />
+              {(isForeign(details.nationality, flow.guest.home_nationality) || !!flow.guest.visa_type) && (
+                <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-800">{t(flow.vocabulary.visa_section)}</p>
+                      <p className="text-xs text-zinc-500">
+                        {t(flow.vocabulary.visa_hint)}
+                      </p>
+                    </div>
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      {flow.guest.visa_status === "expired" && (
+                        <Badge tone="rose">{t("Expired {date}", { date: flow.guest.visa_expiry_date ?? "" })}</Badge>
+                      )}
+                      {flow.guest.visa_status === "expiring" && (
+                        <Badge tone="amber">{t("Expires {date}", { date: flow.guest.visa_expiry_date ?? "" })}</Badge>
+                      )}
+                      {details.visa_expiry_date && flow.reservation.check_out_date
+                        && details.visa_expiry_date < flow.reservation.check_out_date
+                        && flow.guest.visa_status !== "expired" && (
+                        <Badge tone="amber">
+                          {t("Ends before check-out ({date})", { date: details.visa_expiry_date })}
+                        </Badge>
+                      )}
+                    </span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Visa type")}</span>
+                      <select
+                        className={inputCls}
+                        value={details.visa_type}
+                        onChange={(e) => {
+                          setDetails((d) => ({ ...d, visa_type: e.target.value }))
+                          setDetailsDirty(true)
+                        }}
+                      >
+                        <option value="">{t("Choose…")}</option>
+                        {(flow.vocabulary.visa_types ?? []).map((v) => (
+                          <option key={v} value={v}>{t(v)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-zinc-500">
+                        {flow.guest.visa_number
+                          ? t("New visa number (leave empty to keep)")
+                          : t(flow.vocabulary.visa_number_label)}
+                      </span>
+                      <input
+                        className={inputCls}
+                        value={details.visa_number}
+                        autoComplete="off"
+                        onChange={(e) => {
+                          setDetails((d) => ({ ...d, visa_number: e.target.value }))
+                          setDetailsDirty(true)
+                        }}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-zinc-500">{t("Valid until")}</span>
+                      <input
+                        className={inputCls}
+                        type="date"
+                        value={details.visa_expiry_date}
+                        onChange={(e) => {
+                          setDetails((d) => ({ ...d, visa_expiry_date: e.target.value }))
+                          setDetailsDirty(true)
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {flow.guest.name && flow.guest.keeps_id_images && (
+                    <IdDocumentField
+                      method="kamra.guest_documents.save_guest_file"
+                      params={{ guest: flow.guest.name, kind: "visa" }}
+                      uploaded={flow.guest.visa_on_file}
+                      onUploaded={load}
+                      label={t(flow.vocabulary.visa_photo_label)}
+                    />
+                  )}
+                </div>
+              )}
               <CheckInGuests
                 key={flow.ids.occupants.map((o) => o.row).join(",")}
                 reservation={r.name}
                 guest={flow.guest.name}
                 guestName={flow.guest.full_name}
                 guestPhone={flow.guest.phone}
+                onlineCheckIn={["Submitted", "Verified"].includes(flow.ids.precheckin_status)}
                 guestHasPhoto={flow.guest.has_photo}
                 adults={flow.reservation.adults}
                 children={flow.reservation.children}
