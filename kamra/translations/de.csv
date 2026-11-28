@@ -1,0 +1,2385 @@
+1 to 30,1 bis 30
+15 days overdue,15 Tage überfällig
+31 to 60,31 bis 60
+61 to 90,61 bis 90
+90+,90+
+ADR,ADR
+Action,Aktion
+Actor,Akteur
+Actual check-out,Tatsächlicher Check-out
+Adults,Erwachsene
+Aging by days overdue,Alterung nach überfälligen Tagen
+All companies,Alle Firmen
+Amount,Betrag
+Approver,Freigebende Person
+Arrivals,Anreisen
+Arrivals by source,Anreisen nach Quelle
+As of {0},Stand {0}
+Assigned to,Zugewiesen an
+Balance,Saldo
+Balance due,Offener Saldo
+Balance due: {0},Offener Saldo: {0}
+Billed,Abgerechnet
+Bookings,Buchungen
+Breached,Verstoßen
+By item,Nach Artikel
+By status,Nach Status
+Cash collected,Bar eingenommen
+Category,Kategorie
+Channel,Kanal
+Charges by type,Posten nach Typ
+Check-in,Check-in
+Check-out,Check-out
+Children,Kinder
+Clean minutes,Reinigungsminuten
+Closing balance,Schlusssaldo
+Closing cash,Kassenendbestand
+Collected at,Eingezogen um
+Collections by mode,Einnahmen nach Zahlungsart
+Company,Firma
+Condition,Zustand
+Contribution by source,Deckungsbeitrag nach Quelle
+Covers,Gedecke
+Created,Angelegt
+DSO (days),DSO (Tage)
+Date,Datum
+Days overdue,Tage überfällig
+Days sales outstanding (DSO),Days Sales Outstanding (DSO)
+"Dear {0},","Guten Tag {0},"
+Delivered at,Geliefert um
+Departures,Abreisen
+Description,Beschreibung
+Detail,Detail
+Due by,Fällig bis
+Due date,Fälligkeitsdatum
+ETA,ETA
+Early departures,Frühe Abreisen
+Engineering pack,Technikpaket
+Express,Express
+F&B pack,F&B-Paket
+F&B revenue,F&B-Umsatz
+Floor,Etage
+Folio,Gästekonto
+Folio charges,Gästekontoposten
+Found by,Gefunden von
+Found on,Gefunden am
+Front Office pack,Rezeptionspaket
+Guest,Gast
+HK status,HK-Status
+Handed over to,Übergeben an
+Handover,Übergabe
+Handover notes,Übergabenotizen
+Hotel Manager pack,Paket Hotelleitung
+Housekeeping pack,Housekeeping-Paket
+Housekeeping tasks,Housekeeping-Aufgaben
+In house by room type,Im Haus nach Einheitentyp
+In-house guests,Gäste vor Ort
+Invoice,Rechnung
+Invoice date,Rechnungsdatum
+Invoice {0} for {1} is due on {2}.,Rechnung {0} über {1} ist am {2} fällig.
+Invoice {0} for {1} is due today.,Rechnung {0} über {1} ist heute fällig.
+Invoice {0} for {1} was due on {2} and is {3} days overdue.,Rechnung {0} über {1} war am {2} fällig und ist {3} Tage überfällig.
+Item,Artikel
+Items,Artikel
+Items by menu,Artikel nach Karte
+Kamra report,Kamra-Bericht
+Laundry orders,Wäscheaufträge
+Laundry pack,Wäschereipaket
+Lost and found,Fundsachen
+Metric,Kennzahl
+Mode,Modus
+Nights,Nächte
+Nights short,Nächte zu wenig
+No-shows & cancellations,No-Shows & Stornierungen
+No-shows and cancellations,No-Shows und Stornierungen
+Not due,Nicht fällig
+"Not sent, no billing contact email: {0}","Nicht gesendet, keine E-Mail-Adresse beim Rechnungskontakt: {0}"
+Occ %,Ausl. %
+Occupancy,Auslastung
+Occupancy & revenue by day,Auslastung & Umsatz pro Tag
+Occupancy and revenue,Auslastung und Umsatz
+Occupancy by day,Auslastung nach Tag
+Oldest due date,Ältestes Fälligkeitsdatum
+Open bills,Offene Rechnungen
+Open tickets,Offene Tickets
+Opening cash,Anfangsbargeld
+Order,Bestellung
+Order type,Bestellart
+Orders by status,Bestellungen nach Status
+Other revenue,Sonstiger Umsatz
+Allowances,Nachlässe
+Outlet,Verkaufsstelle
+Outstanding,Offen
+Overdue,Überfällig
+Overdue by company,Überfällig nach Firma
+POS items,POS-Artikel
+POS order,POS-Bestellung
+POS orders,POS-Bestellungen
+Paid,Bezahlt
+Pax,Pers.
+Payment reminder from {0},Zahlungserinnerung von {0}
+Payment reminders at {0},Zahlungserinnerungen bei {0}
+Payment terms: {0} days,Zahlungsbedingungen: {0} Tage
+Payments,Zahlungen
+Payouts,Auszahlungen
+Previous period,Vorheriger Zeitraum
+Priority,Priorität
+Qty,Menge
+Rate,Preis
+Recent payments,Letzte Zahlungen
+Reference,Referenz
+Report,Bericht
+Reservation,Reservierung
+Resolution minutes,Lösungsminuten
+Resolved on,Gelöst am
+Response minutes,Reaktionsminuten
+Returned,Zurückgegeben
+Returned on,Zurückgegeben am
+RevPAR,RevPAR
+RevPAX,RevPAX
+Revenue,Umsatz
+Revenue by source,Umsatz nach Quelle
+Room,Einheit
+Room nights,Zimmernächte
+Room revenue,Einheitenumsatz
+Room status,Einheitenstatus
+Room type,Einheitentyp
+Rooms,Einheiten
+Rooms sold,Verkaufte Einheiten
+SLA breaches,SLA-Verstöße
+Sales by outlet,Umsatz nach Verkaufsstelle
+Scheduled check-out,Geplanter Check-out
+Service,Service
+Service tickets,Servicetickets
+Commission,Provision
+Share %,Anteil %
+Shift,Schicht
+Shift date,Schichtdatum
+Shift handover,Schichtübergabe
+Shift handovers,Schichtübergaben
+Source,Quelle
+Statement of account,Kontoauszug
+Statement of account from {0},Kontoauszug von {0}
+Status,Status
+Stolen / Damaged Items,Gestohlene / beschädigte Gegenstände
+Subject,Betreff
+Task,Aufgabe
+Tasks,Aufgaben
+Tasks by attendant,Aufgaben nach Person
+Tasks by type,Aufgaben nach Typ
+Terms (days),Zahlungsziel (Tage)
+The report is attached.,Der Bericht ist angehängt.
+This period,Dieser Zeitraum
+Ticket,Ticket
+Tickets,Tickets
+Tickets by category,Tickets nach Kategorie
+Tickets by priority,Tickets nach Priorität
+Total,Gesamt
+Total revenue,Gesamtumsatz
+Turnaround,Durchlaufzeit
+Turnaround hours,Durchlaufstunden
+Type,Typ
+Unapplied credit,Nicht zugeordnetes Guthaben
+Variance,Abweichung
+Variance %,Abweichung %
+Voids & allowances,Stornos & Nachlässe
+Voids and allowances,Stornos und Nachlässe
+Volume by guest vs house,Volumen nach Gast und Haus
+When,Wann
+Your statement of account is attached.,Der Kontoauszug ist angehängt.
+due in 3 days,in 3 Tagen fällig
+due today,heute fällig
+vs previous period,ggü. Vorperiode
+{0} has no billing contact email. Add one on the corporate account or type an address.,{0} hat keine E-Mail-Adresse für den Rechnungskontakt. Eine im Firmenkonto hinzufügen oder eine Adresse eingeben.
+{0}: reminder sent for {1} ({2}),{0}: Erinnerung gesendet für {1} ({2})
+{0} rows,{0} Zeilen
+"Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","Die Werbeeinwilligung wird im Gästeprofil, auf der Buchungsseite oder per Antwort STOP / START geändert."
+This guest has no phone number on file.,Für diesen Gast ist keine Telefonnummer hinterlegt.
+This guest has not agreed to marketing messages.,Dieser Gast hat Werbenachrichten nicht zugestimmt.
+You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,"Angebote von {0} kommen per WhatsApp. Jederzeit mit STOP antworten, um sich abzumelden."
+You will no longer get offers from {0}. Booking and stay messages continue. Reply START to opt in again.,"Angebote von {0} werden nicht mehr gesendet. Buchungs- und Aufenthaltsnachrichten laufen weiter. Mit START antworten, um sich wieder anzumelden."
+AI Provider,KI-Anbieter
+"Your AI provider will act as {0}, within your role. Prices, taxes and availability stay in Kamra. Every action is recorded under your name in the Activity log.","Der KI-Anbieter handelt als {0}, im Rahmen der eigenen Rolle. Preise, Steuern und Verfügbarkeit bleiben in Kamra. Jede Aktion wird im Aktivitätsprotokoll unter dem eigenen Namen erfasst."
+Tax,Steuer
+{0} bill from {1},{0}-Rechnung von {1}
+{0} to {1},{0} bis {1}
+Billed this month,In diesem Monat berechnet
+Bills this month,Rechnungen dieses Monats
+Brought forward,Übertrag
+"Each bill above is a tax invoice of its own; this is a summary of the month, not a tax invoice. Taxable value and tax show where the whole invoice is on this account.","Jede Rechnung oben ist eine eigene Steuerrechnung; dies ist eine Monatsübersicht und keine Steuerrechnung. Steuerpflichtiger Wert und Steuer zeigen, wo die gesamte Rechnung auf diesem Konto steht."
+Monthly bill,Monatsrechnung
+No such account.,Dieses Konto gibt es nicht.
+Paid this month,In diesem Monat gezahlt
+Payments this month,Zahlungen dieses Monats
+"Pick a month, like 2026-10.","Einen Monat wählen, z. B. 2026-10."
+Taxable value,Steuerpflichtiger Wert
+"Your bill for {0} is attached: {1} billed, {2} due.","Die Rechnung für {0} ist angehängt: {1} berechnet, {2} fällig."
+Reason,Grund
+Cashier,Kasse
+KOT,KOT
+Kitchen times,Küchenzeiten
+Kitchen turnaround,Küchendurchlauf
+Order to pickup minutes,Minuten von Bestellung bis Abholung
+Order to start minutes,Minuten von Bestellung bis Beginn
+Ordered at,Bestellt um
+Picked up at,Abgeholt um
+Plated at,Angerichtet um
+Plated to pickup minutes,Minuten von angerichtet bis Abholung
+Served by,Serviert von
+Start to plated minutes,Minuten von Beginn bis angerichtet
+Started at,Gestartet um
+Your AI key is out of credit. Top it up with your provider or change the key in Settings > AI assistant.,Das Guthaben des KI-Schlüssels ist aufgebraucht. Beim Anbieter aufladen oder den Schlüssel unter Einstellungen > KI-Assistent ändern.
+Sells alcohol,Verkauft Alkohol
+"Off for a dry property: every alcohol field, tick box and label is hidden, in every language. Nothing posted before changes.","Aus bei einem alkoholfreien Objekt: Jedes Alkoholfeld, Kästchen und Label wird in jeder Sprache ausgeblendet. Bereits Gebuchtes ändert sich nicht."
+Extend unchecked-out departures one night,Nicht ausgecheckte Abreisen um eine Nacht verlängern
+"On: a guest still Checked In past their departure date is extended by one night when the audit runs, and that night is posted like any other. A stay that can't be extended (the room is booked) stays on the checklist.","An: Ein Gast, der nach dem Abreisedatum noch eingecheckt ist, wird beim Lauf der Prüfung um eine Nacht verlängert, und diese Nacht wird wie jede andere gebucht. Ein Aufenthalt, der sich nicht verlängern lässt (die Einheit ist gebucht), bleibt auf der Checkliste."
+The guest owes {0} - nothing is due back to refund.,Der Gast schuldet {0} – es ist nichts zu erstatten.
+Only {0} is due back to the guest - can't refund more than that.,Nur {0} sind dem Gast zurückzuzahlen – mehr kann nicht erstattet werden.
+Room type code {0} is already used at this property.,Der Einheitentyp-Code {0} wird in diesem Objekt bereits verwendet.
+There are no room nights on this bill yet. A discount comes off posted nights: give it after night audit or at check-out.,Auf dieser Rechnung gibt es noch keine Zimmernächte. Ein Rabatt wird von gebuchten Nächten abgezogen: nach der Nachtprüfung oder beim Check-out gewähren.
+Enter a discount above zero.,Einen Rabatt über null eingeben.
+A discount can't be more than 100%.,Ein Rabatt darf nicht mehr als 100 % betragen.
+The discount is more than the room nights on the bill ({0}).,Der Rabatt ist höher als die Zimmernächte auf der Rechnung ({0}).
+"This folio is settled - give the discount on the guest's open folio, or cancel the invoice first.",Dieses Gästekonto ist beglichen – den Rabatt auf dem offenen Gästekonto des Gastes gewähren oder zuerst die Rechnung stornieren.
+"Pick a percent or an amount, per night or for the stay.","Einen Prozentsatz oder einen Betrag wählen, pro Nacht oder für den Aufenthalt."
+Promo code {0} is already on this stay.,Der Aktionscode {0} gilt für diesen Aufenthalt bereits.
+Promo code {0},Aktionscode {0}
+Discount {0}%,Rabatt {0} %
+Discount {0} per night,Rabatt {0} pro Nacht
+A discount needs a reason - it goes on the record.,Ein Rabatt braucht einen Grund – er wird aktenkundig.
+Monthly,Monatlich
+Shop,Shop
+Revenue by department,Umsatz nach Abteilung
+Department,Abteilung
+"Rooms, each outlet, banquets and each minor department (laundry, spa, taxi...), as on the night audit report.","Einheiten, jede Verkaufsstelle, Bankette und jede kleinere Abteilung (Wäscherei, Spa, Taxi …), wie im Nachtprüfungsbericht."
+Food and beverage on folios,Speisen und Getränke auf Gästekonten
+Meal plans and minibar,Verpflegungspläne und Minibar
+Banquets,Bankette
+Laundry,Wäscherei
+Spa,Spa
+Taxi,Taxi
+Misc,Sonstiges
+Early Check-in,Früher Check-in
+Late Checkout,Später Check-out
+Early Departure,Frühe Abreise
+Cleaning Fee,Reinigungsgebühr
+Extra Guests,Zusätzliche Gäste
+Pet Charge,Haustiergebühr
+Bills paid,Bezahlte Rechnungen
+{0} bill(s) for this stay are not on the guest's bill yet: {1}. Post them to the room or settle them before check-out.,{0} Rechnung(en) dieses Aufenthalts stehen noch nicht auf der Rechnung des Gastes: {1}. Vor dem Check-out auf die Einheit buchen oder begleichen.
+Bills still open,Noch offene Rechnungen
+Use Check out to check a guest out: it makes sure every bill is cleared first.,"Zum Auschecken eines Gastes „Check-out“ verwenden: Es stellt zuerst sicher, dass jede Rechnung beglichen ist."
+Check out,Check-out
+Discounts and allowances,Rabatte und Nachlässe
+{0} is not a Kamra language.,{0} ist keine Sprache von Kamra.
+{0} is switched off. Turn it on from Languages in Settings.,{0} ist ausgeschaltet. Unter „Sprachen“ in den Einstellungen einschalten.
+A price cannot be below zero.,Ein Preis darf nicht unter null liegen.
+{0} has no buying unit.,{0} hat keine Einkaufseinheit.
+A buying unit must hold more than zero {0}.,Eine Einkaufseinheit muss mehr als null {0} enthalten.
+The buying unit of {0} changed. Close the window and open it again.,Die Einkaufseinheit von {0} hat sich geändert. Das Fenster schließen und erneut öffnen.
+The unit of {0} changed. Close the window and open it again.,Die Einheit von {0} hat sich geändert. Das Fenster schließen und erneut öffnen.
+Give a buying unit both a name and how many {0} it holds.,Für eine Einkaufseinheit sowohl einen Namen als auch die Menge an {0} angeben.
+"{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} hat bereits einen Bestandsverlauf oder steht in einem Rezept, daher bleibt die Einheit {1}."
+Pick a date and time.,Datum und Uhrzeit wählen.
+A stock entry cannot be dated in the future.,Ein Bestandseintrag kann nicht in die Zukunft datiert werden.
+A reason is required to cancel.,Zum Stornieren ist ein Grund erforderlich.
+Stock entry not found.,Bestandseintrag nicht gefunden.
+This entry is already cancelled.,Dieser Eintrag ist bereits storniert.
+"Only deliveries, stock takes and wastage can be cancelled.","Nur Lieferungen, Inventuren und Schwund können storniert werden."
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} führt einen eigenen Bestand: Das Rezept ist dieser eine Artikel. Zum Ändern die Verfolgung beenden.
+{0} has a recipe. Delete the recipe first.,{0} hat ein Rezept. Zuerst das Rezept löschen.
+{0} already tracks its own stock.,{0} führt bereits einen eigenen Bestand.
+An ingredient called {0} already exists. Pick it instead.,Eine Zutat namens {0} existiert bereits. Stattdessen diese wählen.
+Tracking stock also needs the right to manage stock.,"Die Bestandsverfolgung erfordert auch das Recht, den Bestand zu verwalten."
+Approved by,Freigegeben von
+Given back as,Zurückgegeben als
+POS refunds,POS-Erstattungen
+Refund,Erstattung
+Refunded,Erstattet
+Refunded by,Erstattet von
+"Payment details are set by the till, not by editing the bill.","Zahlungsdetails werden an der Kasse festgelegt, nicht durch Bearbeiten der Rechnung."
+"Refunds are made at the till, and are never edited or deleted.",Erstattungen erfolgen an der Kasse und werden nie bearbeitet oder gelöscht.
+"This bill has a refund, so its payment mode can't change.","Diese Rechnung hat eine Erstattung, daher kann die Zahlungsart nicht geändert werden."
+Correct this on the room's bill at the desk.,Dies an der Rezeption auf der Rechnung der Einheit korrigieren.
+Only a bill paid at the outlet can be refunded.,Nur eine an der Verkaufsstelle bezahlte Rechnung kann erstattet werden.
+"This bill has no payment record, so it can't be refunded here.",Diese Rechnung hat keinen Zahlungsbeleg und kann hier nicht erstattet werden.
+Nothing is left to refund on this bill.,Auf dieser Rechnung ist nichts mehr zu erstatten.
+The amount must be above zero.,Der Betrag muss über null liegen.
+You can refund up to {0}.,Erstattet werden können bis zu {0}.
+That line is not on this bill.,Diese Zeile steht nicht auf dieser Rechnung.
+Pick at least one item.,Mindestens einen Artikel wählen.
+Only {0} of {1} left to refund.,Nur noch {0} von {1} zu erstatten.
+"Refund the whole bill, chosen items, or an amount.","Die gesamte Rechnung, gewählte Artikel oder einen Betrag erstatten."
+{0} can't go back to stock.,{0} kann nicht in den Bestand zurück.
+Pick a refund reason.,Einen Erstattungsgrund wählen.
+Say why in the note.,Den Grund in der Notiz angeben.
+An AI agent can never refund.,Ein KI-Agent kann nie erstatten.
+Try again from the refund window.,Im Erstattungsfenster erneut versuchen.
+Money goes back as {0}.,Das Geld geht zurück als {0}.
+The amount to give back has changed: it is now {0}. Check it and refund again.,Der zurückzugebende Betrag hat sich geändert: Er beträgt jetzt {0}. Prüfen und erneut erstatten.
+This attempt already refunded {0}. Close the window to see it.,"Bei diesem Versuch wurden bereits {0} erstattet. Das Fenster schließen, um es zu sehen."
+"{0} already has stock history, so ""Made here"" stays as it is.","{0} hat bereits einen Bestandsverlauf, daher bleibt „Hier hergestellt“ unverändert."
+"Say how much one batch makes, above zero.","Angeben, wie viel eine Charge ergibt, über null."
+Something made here needs at least one ingredient in its recipe.,Etwas hier Hergestelltes braucht mindestens eine Zutat im Rezept.
+"{0} is used to make {1}, so it cannot be made here itself.",{0} wird zur Herstellung von {1} verwendet und kann daher nicht selbst hier hergestellt werden.
+{0} cannot be made from itself.,{0} kann nicht aus sich selbst hergestellt werden.
+{0} is made here too. Use only bought ingredients.,{0} wird ebenfalls hier hergestellt. Nur gekaufte Zutaten verwenden.
+{0} recipe(s) use this ingredient. Deactivate it instead.,{0} Rezept(e) verwenden diese Zutat. Stattdessen deaktivieren.
+{0} (in {1}),{0} (in {1})
+"{0} is made here. Record it with Produce, not as a delivery.","{0} wird hier hergestellt. Mit „Produzieren“ erfassen, nicht als Lieferung."
+"Say how much was made, above zero.","Angeben, wie viel hergestellt wurde, über null."
+{0} is not made here.,{0} wird nicht hier hergestellt.
+The recipe of {0} just changed. Try again.,Das Rezept von {0} hat sich gerade geändert. Erneut versuchen.
+{0} is made here itself. Take it out of the recipe of {1}.,{0} wird hier selbst hergestellt. Aus dem Rezept von {1} entfernen.
+That is too little to take anything from stock.,"Das ist zu wenig, um etwas aus dem Bestand zu entnehmen."
+Every recipe line needs a quantity above zero.,Jede Rezeptzeile braucht eine Menge über null.
+{0} belongs to another property.,{0} gehört zu einem anderen Objekt.
+"Only deliveries, stock takes, wastage and production batches can be cancelled.","Nur Lieferungen, Inventuren, Schwund und Produktionschargen können storniert werden."
+Set access instructions on the Property first.,Zuerst die Zugangsanweisungen im Objekt festlegen.
+Invalid link.,Ungültiger Link.
+Cannot release access yet. Failed gates: {0},Der Zugang kann noch nicht freigegeben werden. Nicht bestandene Prüfungen: {0}
+Enter the deposit amount.,Den Betrag der Anzahlung eingeben.
+No deposit is due - enter the amount to request.,Es ist keine Anzahlung fällig – den anzufordernden Betrag eingeben.
+"Hello {guest}, please pay the deposit of {cur} {amount} to secure your booking {ref} at {property} ({checkin} → {checkout}): {url}","Guten Tag {guest}, bitte die Anzahlung von {cur} {amount} zahlen, um die Buchung {ref} bei {property} ({checkin} → {checkout}) zu sichern: {url}"
+Only available while the payment gateway is in test mode.,"Nur verfügbar, solange sich das Zahlungsgateway im Testmodus befindet."
+No payment link has been sent for this booking.,Für diese Buchung wurde kein Zahlungslink gesendet.
+Only a housekeeping supervisor can pass an inspection or verify a clean.,Nur eine Housekeeping-Aufsicht kann eine Kontrolle bestehen oder eine Reinigung bestätigen.
+Only a housekeeping supervisor can assign tasks.,Nur eine Housekeeping-Aufsicht kann Aufgaben zuweisen.
+Say why the company changes - it goes on the record.,Den Grund für den Firmenwechsel angeben – er wird aktenkundig.
+move must be rules or guest.,„move“ muss „rules“ oder „guest“ sein.
+The stay already bills to that company.,Der Aufenthalt wird dieser Firma bereits berechnet.
+Pick an active company.,Eine aktive Firma wählen.
+That reservation is not part of this group.,Diese Reservierung gehört nicht zu dieser Gruppe.
+Only a room of a group booking can pay its own charges.,Nur eine Einheit einer Gruppenbuchung kann ihre eigenen Posten zahlen.
+This group has no open group bill.,Diese Gruppe hat keine offene Gruppenrechnung.
+"This folio is settled - pass the allowance on the guest's open folio, or cancel the invoice first.",Dieses Gästekonto ist beglichen – den Nachlass auf dem offenen Gästekonto des Gastes erteilen oder zuerst die Rechnung stornieren.
+Allowance amount is required.,Der Nachlassbetrag ist erforderlich.
+An allowance needs a reason - it goes on the record.,Ein Nachlass braucht einen Grund – er wird aktenkundig.
+An AI agent can't approve or reject an allowance. Ask a manager.,Ein KI-Agent kann einen Nachlass weder freigeben noch ablehnen. Eine Leitung fragen.
+You asked for this allowance; another manager approves it.,Dieser Nachlass wurde beantragt; eine andere Leitung gibt ihn frei.
+No such allowance.,Diesen Nachlass gibt es nicht.
+Only a posted allowance has a voucher.,Nur ein gebuchter Nachlass hat einen Beleg.
+A reason is required.,Ein Grund ist erforderlich.
+Write the instruction.,Die Anweisung eintragen.
+Status must be Open or Done.,Der Status muss „Offen“ oder „Erledigt“ sein.
+That instruction is not on this stay.,Diese Anweisung gehört nicht zu diesem Aufenthalt.
+Payment amount cannot be negative.,Der Zahlungsbetrag darf nicht negativ sein.
+Say why the checkout is being undone.,"Angeben, warum der Check-out rückgängig gemacht wird."
+Only a checked-out stay can be reinstated.,Nur ein ausgecheckter Aufenthalt kann wiederhergestellt werden.
+"The night audit has run since this checkout, so it can't be undone. Make a new booking, or ask Finance to correct the bills.","Seit diesem Check-out ist die Nachtprüfung gelaufen, daher lässt er sich nicht rückgängig machen. Eine neue Buchung anlegen oder die Finanzabteilung um Korrektur der Rechnungen bitten."
+The security deposit was applied to the bill at checkout and stays applied. Take a new deposit if the guest needs one.,"Die Kaution wurde beim Check-out auf die Rechnung angerechnet und bleibt angerechnet. Eine neue Kaution erheben, falls der Gast eine benötigt."
+The guest's ID was discarded at checkout. Capture it again in the check-in steps.,Der Ausweis des Gastes wurde beim Check-out verworfen. In den Check-in-Schritten erneut erfassen.
+"Correcting charged nights is off. Choose Correct back-dated rates under Settings, Stay policies, Rate changes in house.","Die Korrektur berechneter Nächte ist ausgeschaltet. Unter Einstellungen, Aufenthaltsrichtlinien, Preisänderungen im Haus „Rückwirkende Preise korrigieren“ wählen."
+This stay is priced by hand; its rates are not re-quoted.,Dieser Aufenthalt ist von Hand bepreist; seine Preise werden nicht neu kalkuliert.
+Only a stay with charged nights can be corrected.,Nur ein Aufenthalt mit berechneten Nächten kann korrigiert werden.
+Every charged night already has the current rate.,Jede berechnete Nacht hat bereits den aktuellen Preis.
+A correction needs a reason. It goes on the record.,Eine Korrektur braucht einen Grund. Er wird aktenkundig.
+Only an arrival that has not checked in can be flagged late.,Nur eine noch nicht eingecheckte Anreise kann als verspätet markiert werden.
+Only a Hotel Admin can book a blacklisted guest.,Nur ein Hotel-Admin kann einen gesperrten Gast buchen.
+A day-use slot must end after it starts.,Ein Tagesnutzungs-Slot muss nach seinem Beginn enden.
+Departure must be after arrival.,Die Abreise muss nach der Anreise liegen.
+Allowed shortfall must be between 0 and 100%.,Der zulässige Fehlbetrag muss zwischen 0 und 100 % liegen.
+Block at least one room.,Mindestens eine Einheit blockieren.
+Only a Revenue Manager or Hotel Admin can set a group rate.,Nur Revenue Manager oder Hotel-Admin können einen Gruppenpreis festlegen.
+Name the main room's guest in the rooming list.,Den Gast der Haupteinheit in der Rooming-Liste benennen.
+company change,Firmenwechsel
+Only a company group can go to the city ledger.,Nur eine Firmengruppe kann an das City Ledger gehen.
+{0} room(s) of the group are still in house. Their new charges open a new group bill.,{0} Einheit(en) der Gruppe sind noch im Haus. Deren neue Posten eröffnen eine neue Gruppenrechnung.
+Discount,Rabatt
+That reason code is not in use.,Dieser Grundcode wird nicht verwendet.
+Pick an Adjust reason code for an allowance.,Für einen Nachlass einen Grundcode vom Typ „Adjust“ wählen.
+This folio is settled now. Reject this request and pass the allowance on the guest's open folio.,Dieses Gästekonto ist jetzt beglichen. Diese Anfrage ablehnen und den Nachlass auf dem offenen Gästekonto des Gastes erteilen.
+Say why the allowance is rejected - it goes on the record.,"Angeben, warum der Nachlass abgelehnt wird – es wird aktenkundig."
+Settle before check-out,Vor dem Check-out begleichen
+Only a Revenue Manager or Hotel Admin can enter a new rate.,Nur Revenue Management oder Hotel-Admin kann einen neuen Preis eingeben.
+Enter the new nightly rate.,Den neuen Preis pro Nacht eingeben.
+This booking is priced by hand; change its amount instead.,Diese Buchung ist von Hand bepreist; stattdessen den Betrag ändern.
+Confirm the new price,Den neuen Preis bestätigen
+Idempotency key already used,Idempotenzschlüssel bereits verwendet
+"Times are HH:MM, e.g. 10:00.","Zeiten im Format HH:MM, z. B. 10:00."
+Every rooming list row needs a guest name.,Jede Zeile der Rooming-Liste braucht einen Gastnamen.
+Only a Revenue Manager or Hotel Admin can change a group rate.,Nur Revenue Management oder Hotel-Admin kann einen Gruppenpreis ändern.
+Unknown module(s): {0},Unbekannte(s) Modul(e): {0}
+A deposit is taken before arrival - this booking is {0}. Take in-house payments on the folio.,Eine Anzahlung wird vor der Anreise erhoben – diese Buchung ist {0}. Zahlungen im Haus werden auf dem Gästekonto angenommen.
+Pick a payment mode: {0}.,Eine Zahlungsart wählen: {0}.
+Task {0} is already {1}.,Aufgabe {0} ist bereits {1}.
+{0} is not housekeeping staff at this property.,{0} gehört in diesem Objekt nicht zum Housekeeping-Personal.
+{0} cannot leave before they arrived.,{0} kann nicht vor der Anreise abreisen.
+A guest,Ein Gast
+This stay is {0}; its company can't change now.,Dieser Aufenthalt ist {0}; die Firma kann jetzt nicht mehr geändert werden.
+The guest has no open folio to take these charges.,"Der Gast hat kein offenes Gästekonto, auf das diese Posten gebucht werden können."
+Choose how the group bill is paid.,"Wählen, wie die Gruppenrechnung bezahlt wird."
+This allowance was already {0}.,Dieser Nachlass war bereits {0}.
+{0} can't approve allowances here. It needs: {1}.,{0} kann hier keine Nachlässe freigeben. Erforderlich: {1}.
+Provisional Bill,Vorläufige Rechnung
+Guest profile {0} not found.,Gästeprofil {0} nicht gefunden.
+Reservation {0} not found.,Reservierung {0} nicht gefunden.
+Instruction must be for one of: {0}.,Die Anweisung muss zu einem von diesen gehören: {0}.
+This stay is {0} - no new instructions.,Dieser Aufenthalt ist {0} – keine neuen Anweisungen.
+Check-out must be today (day use) or later ({0}).,Der Check-out muss heute (Tagesnutzung) oder später erfolgen ({0}).
+Room {0} is not a {1} room here.,Einheit {0} ist hier keine Einheit vom Typ {1}.
+"Cannot check out: {0}{1:,.2f} is still owed. Collect payment or transfer it to the city ledger before departure.","Check-out nicht möglich: {0}{1:,.2f} sind noch offen. Vor der Abreise die Zahlung einziehen oder auf das City Ledger übertragen."
+"Cannot check out: the guest is owed {0}{1:,.2f}. Issue the refund before departure.","Check-out nicht möglich: Dem Gast stehen {0}{1:,.2f} zu. Vor der Abreise die Erstattung vornehmen."
+"The room has been given to {0} since the checkout, so it can't be undone. Move that stay first, or make a new booking.","Die Einheit wurde seit dem Check-out an {0} vergeben, daher lässt er sich nicht rückgängig machen. Zuerst diesen Aufenthalt verlegen oder eine neue Buchung anlegen."
+Leaving early,Frühe Abreise
+Room {0} not found.,Einheit {0} nicht gefunden.
+Only a housekeeping supervisor can set a room to {0}.,Nur eine Housekeeping-Aufsicht kann eine Einheit auf {0} setzen.
+Room {0} is not in this property.,Einheit {0} gehört nicht zu diesem Objekt.
+Unknown rate option: {0},Unbekannte Preisoption: {0}
+"This change re-prices the stay from {0} to {1}. Show the guest the new price, then confirm it (confirm_price=1).","Diese Änderung berechnet den Aufenthalt von {0} auf {1} neu. Dem Gast den neuen Preis zeigen, dann bestätigen (confirm_price=1)."
+{0} cannot approve this. A rate correction needs a Finance or Hotel Admin user.,{0} kann dies nicht freigeben. Eine Preiskorrektur erfordert eine Person aus Finanzen oder Hotel-Admin.
+"This idempotency_key ({0}) was already used for a different booking ({1}: {2}, {3} to {4}, {5}). Use a new key for a new booking.","Dieser idempotency_key ({0}) wurde bereits für eine andere Buchung verwendet ({1}: {2}, {3} bis {4}, {5}). Für eine neue Buchung einen neuen Schlüssel verwenden."
+master_pays must be one of: {0},master_pays muss einer von diesen sein: {0}
+"No room could be booked, so the group was not created. {0}","Es konnte keine Einheit gebucht werden, daher wurde die Gruppe nicht angelegt. {0}"
+Check-in {0} has already passed. Pick today or a later date.,Die Anreise {0} liegt bereits in der Vergangenheit. Heute oder ein späteres Datum wählen.
+Not enough rooms for these dates. {0},Nicht genug Einheiten für diese Daten. {0}
+This guest's own nights fall outside the new dates.,Die eigenen Nächte dieses Gastes liegen außerhalb der neuen Daten.
+No ZATCA record for {0}.,Kein ZATCA-Eintrag für {0}.
+The guest list changed since you opened it. Reload and save again.,Die Gästeliste hat sich seit dem Öffnen geändert. Neu laden und erneut speichern.
+"Invoice {0} was already issued to the old company. Cancel that invoice first, then change the company.","Die Rechnung {0} wurde bereits an die alte Firma ausgestellt. Diese Rechnung zuerst stornieren, dann die Firma ändern."
+The company bill {0} already has payments or was moved to the city ledger. Settle that with the old company first.,Die Firmenrechnung {0} hat bereits Zahlungen oder wurde auf das City Ledger verschoben. Das zuerst mit der alten Firma klären.
+{0} is leaving {1} night(s) early (booked to {2}). Give the reason (early_reason) so the stay is shortened and the property's early departure charge ({3}) applies.,"{0} reist {1} Nacht/Nächte früher ab (gebucht bis {2}). Den Grund angeben (early_reason), damit der Aufenthalt verkürzt wird und die Gebühr des Objekts für frühe Abreise ({3}) gilt."
+OTA booking {0} is already reservation {1}.,Die OTA-Buchung {0} ist bereits Reservierung {1}.
+{0}: the stay must be inside the group's dates.,{0}: Der Aufenthalt muss innerhalb der Daten der Gruppe liegen.
+No rooms blocked for {0}.,Keine Einheiten für {0} blockiert.
+The rooms kept for this group are not free on those dates. {0},Die für diese Gruppe gehaltenen Einheiten sind an diesen Daten nicht frei. {0}
+"{0}: {1} blocked, {2} free","{0}: {1} blockiert, {2} frei"
+"{0} on {1}: {2} blocked, {3} free","{0} am {1}: {2} blockiert, {3} frei"
+More guests than blocked rooms for {0} on {1}.,Mehr Gäste als blockierte Einheiten für {0} am {1}.
+"{0}: {1} kept, {2} free","{0}: {1} gehalten, {2} frei"
+Comfortably profitable at this price.,Zu diesem Preis komfortabel profitabel.
+The menu needs a name.,Die Karte braucht einen Namen.
+A plate price can't be negative.,Ein Tellerpreis darf nicht negativ sein.
+The service needs a name.,Die Leistung braucht einen Namen.
+Whose function is this? A customer name is required.,Für wen ist die Veranstaltung? Ein Kundenname ist erforderlich.
+This function is closed. Reopen it before editing.,Diese Veranstaltung ist abgeschlossen. Vor dem Bearbeiten wieder öffnen.
+"Close the function out instead - close-out counts the covers, settles the deposit and then marks it Completed.","Stattdessen die Veranstaltung abschließen – der Abschluss zählt die Gedecke, begleicht die Anzahlung und setzt sie dann auf „Abgeschlossen“."
+This function is closed. Reopen it (with a reason) before moving it.,Diese Veranstaltung ist abgeschlossen. Vor dem Verschieben (mit Begründung) wieder öffnen.
+That menu belongs to another property.,Diese Karte gehört zu einem anderen Objekt.
+That service belongs to another property.,Diese Leistung gehört zu einem anderen Objekt.
+The advance and interim add up to more than the bill.,Anzahlung und Zwischenzahlung ergeben mehr als die Rechnung.
+Booking advance,Buchungsanzahlung
+Before the function,Vor der Veranstaltung
+On completion,Bei Abschluss
+A receipt has to be a positive amount - use kind 'Refund' to give money back.,Ein Beleg muss einen positiven Betrag haben – zum Zurückgeben von Geld die Art „Erstattung“ verwenden.
+There's nothing to quote yet - put some lines on it.,Es gibt noch nichts zu kalkulieren – zuerst einige Zeilen hinzufügen.
+There's nothing to invoice.,Es gibt nichts zu fakturieren.
+"There's no bill to post to. Tie the function to a group booking, or pass a folio.",Es gibt keine Rechnung zum Buchen. Die Veranstaltung mit einer Gruppenbuchung verknüpfen oder ein Gästekonto angeben.
+Alcohol can't ride a company bill - settle those lines separately.,Alkohol darf nicht auf eine Firmenrechnung – diese Zeilen gesondert begleichen.
+Damages can't be negative.,Schäden dürfen nicht negativ sein.
+Say what was damaged - a deduction the customer can't see the reason for is a dispute waiting.,"Angeben, was beschädigt wurde – ein Abzug ohne erkennbaren Grund für den Kunden ist ein Streitfall in Wartestellung."
+Say why - reopening a closed function needs a reason.,Den Grund angeben – das Wiedereröffnen einer geschlossenen Veranstaltung braucht einen Grund.
+Reopened by {0}: {1},Wieder geöffnet von {0}: {1}
+No such receipt on this function.,Diesen Beleg gibt es bei dieser Veranstaltung nicht.
+Receipt,Beleg
+Selected Menu,Gewählte Karte
+Function register,Veranstaltungsregister
+Quotations issued,Ausgestellte Angebote
+Enquiries received,Eingegangene Anfragen
+Receipts,Belege
+Sales summary,Umsatzübersicht
+The dish needs a name.,Das Gericht braucht einen Namen.
+No such menu.,Diese Karte gibt es nicht.
+Set the guaranteed pax first - an indent without a headcount is a guess.,Zuerst die garantierte Personenzahl festlegen – eine Anforderung ohne Personenzahl ist geraten.
+"Nothing chosen yet. Compose the menu, then the kitchen can be told what to pull.","Noch nichts gewählt. Die Karte zusammenstellen, dann kann der Küche mitgeteilt werden, was zu ziehen ist."
+A supplementary needs a positive quantity.,Ein Nachtrag braucht eine positive Menge.
+That discount is more than the quote itself.,Dieser Rabatt ist höher als das Angebot selbst.
+"Nothing on this quote carries a cost yet, so any margin shown is imaginary. Choose the menu's dishes and put cost rates on the services before trusting the number.","Keine Position dieses Angebots trägt bisher Kosten, daher ist jede angezeigte Marge fiktiv. Vor dem Vertrauen auf die Zahl die Gerichte der Karte wählen und Kostensätze für die Leistungen hinterlegen."
+"Some lines still cost nothing, so the real margin is lower than this. Treat it as a ceiling, not an answer.","Einige Zeilen kosten noch nichts, daher liegt die tatsächliche Marge niedriger. Als Obergrenze betrachten, nicht als Antwort."
+This hall has no chargeable extras on it.,Dieser Saal hat keine kostenpflichtigen Extras.
+Say why - a cancelled or lost function needs a reason so the pipeline stays honest.,"Den Grund angeben – eine stornierte oder verlorene Veranstaltung braucht einen Grund, damit die Pipeline ehrlich bleibt."
+A rate can't be negative.,Ein Preis darf nicht negativ sein.
+This function has no venue rental line to move.,Diese Veranstaltung hat keine Saalmietzeile zum Verschieben.
+"Reviewed, no change","Geprüft, keine Änderung"
+No such payment term on this function.,Diese Zahlungsbedingung gibt es bei dieser Veranstaltung nicht.
+The function has passed - close it and settle the bill.,Die Veranstaltung ist vorbei – abschließen und die Rechnung begleichen.
+Quotation,Angebot
+Function Contract,Veranstaltungsvertrag
+Banquet Event Order,Banquet Event Order
+Pack List,Packliste
+Authorised signatory,Zeichnungsberechtigte Person
+Client,Kunde
+Settle separately (alcohol can't ride a company bill): {0},Gesondert begleichen (Alkohol darf nicht auf eine Firmenrechnung): {0}
+Damage recovery,Schadenersatz
+Customer,Kunde
+Banquet manager,Bankettleitung
+A served quantity can't be negative.,Eine servierte Menge darf nicht negativ sein.
+No such guest.,Diesen Gast gibt es nicht.
+This loses money at the current price.,Zum aktuellen Preis entsteht ein Verlust.
+Unknown category: {0},Unbekannte Kategorie: {0}
+Unknown session {0}. Pick one of: {1}.,Unbekannte Sitzung {0}. Eine wählen aus: {1}.
+Not editable here: {0},Hier nicht bearbeitbar: {0}
+This function is already billed to {0} - its group can't change now.,Diese Veranstaltung wird bereits {0} berechnet – die Gruppe kann jetzt nicht mehr geändert werden.
+A {0} function can't go straight to {1}. From here: {2}.,Eine Veranstaltung mit Status {0} kann nicht direkt auf {1} gehen. Von hier aus: {2}.
+nowhere,nirgends
+Unknown receipt kind: {0},Unbekannte Belegart: {0}
+No guaranteed pax - the kitchen can't order.,Keine garantierte Personenzahl – die Küche kann nicht bestellen.
+The contract is still unsigned.,Der Vertrag ist noch nicht unterschrieben.
+Banquet: {0} at {1} on {2} - {3},Bankett: {0} in {1} am {2} – {3}
+Unknown document: {0},Unbekanntes Dokument: {0}
+Quote v{0} issued,Angebot v{0} ausgestellt
+Only a confirmed function gets an event order - this one is {0}.,Nur eine bestätigte Veranstaltung erhält eine Event Order – diese ist {0}.
+"Invoice a confirmed function, not a {0} one.","Eine bestätigte Veranstaltung fakturieren, keine mit Status {0}."
+This function has already been billed to {0}.,Diese Veranstaltung wurde bereits {0} berechnet.
+"Bill a confirmed function, not a {0} one.","Eine bestätigte Veranstaltung abrechnen, keine mit Status {0}."
+Only a confirmed function can be closed out - this one is {0}.,Nur eine bestätigte Veranstaltung kann abgeschlossen werden – diese ist {0}.
+This function was already closed out on {0}.,Diese Veranstaltung wurde bereits am {0} abgeschlossen.
+Damages of {0} exceed the {1} held. Bill the difference as a charge instead of over-deducting.,"Die Schäden von {0} übersteigen die gehaltenen {1}. Die Differenz als Posten berechnen, statt zu viel abzuziehen."
+Damages were settled at the first close-out ({0}). Bill anything further as a charge on the function.,Schäden wurden beim ersten Abschluss beglichen ({0}). Alles Weitere als Posten der Veranstaltung berechnen.
+{0} of deposit is still held. Record the refund as a receipt before closing again.,{0} Anzahlung werden noch gehalten. Vor dem erneuten Schließen die Erstattung als Beleg erfassen.
+Only a closed (Completed) function can be reopened - this one is {0}.,Nur eine geschlossene (abgeschlossene) Veranstaltung kann wieder geöffnet werden – diese ist {0}.
+This function is already billed to {0}. Correct the bill there (void / reverse) rather than reopening.,"Diese Veranstaltung wird bereits {0} berechnet. Die Rechnung dort korrigieren (stornieren / umkehren), statt wieder zu öffnen."
+Unknown register: {0},Unbekanntes Register: {0}
+{0} - upgrades,{0} – Upgrades
+"Issue against a confirmed function, not a {0} one.","Gegen eine bestätigte Veranstaltung ausstellen, nicht gegen eine mit Status {0}."
+"Below the {0}% floor. Worth taking only for the rooms it brings, or a date that would otherwise sit empty.",Unter der Untergrenze von {0} %. Nur sinnvoll wegen der mitgebrachten Einheiten oder eines sonst leeren Datums.
+"Workable, though under the {0}% a banquet normally holds.","Machbar, wenn auch unter den {0} %, die ein Bankett üblicherweise erreicht."
+Group booking {0} not found.,Gruppenbuchung {0} nicht gefunden.
+Group {0} belongs to another property - a function can only ride a group at its own hotel.,Die Gruppe {0} gehört zu einem anderen Objekt – eine Veranstaltung kann sich nur an eine Gruppe im eigenen Hotel hängen.
+Group {0} is cancelled.,Die Gruppe {0} ist storniert.
+Group {0} is already tied to function {1}. Untie it there first.,Die Gruppe {0} ist bereits mit der Veranstaltung {1} verknüpft. Dort zuerst lösen.
+No such line on this function: {0},Diese Zeile gibt es bei dieser Veranstaltung nicht: {0}
+Green room ({0}),Umkleideraum ({0})
+Follow-up was due {0}.,Nachverfolgung war fällig am {0}.
+The tentative hold on {0} runs out {1}.,Die vorläufige Reservierung für {0} läuft {1} ab.
+Chosen,Gewählt
+Deposit returned,Kaution zurückgegeben
+Banquet indent for {0},Bankettanforderung für {0}
+"And some lines still cost nothing, so it loses more.","Und einige Zeilen kosten noch nichts, daher ist der Verlust größer."
+{0} rental,Miete {0}
+{0}: {1} due {2}.,{0}: {1} fällig {2}.
+No event order yet and the function is in {0} days.,"Noch keine Event Order, und die Veranstaltung ist in {0} Tagen."
+Nothing received yet against {0}.,Zu {0} ist noch nichts eingegangen.
+{0} open item(s) still unsettled.,{0} offene(r) Posten noch nicht beglichen.
+{0} on {1} - not yet agreed.,{0} am {1} – noch nicht vereinbart.
+emailed,per E-Mail gesendet
+issued,ausgestellt
+Banquet confirmed: {customer} · {venue} on {date} · {total},Bankett bestätigt: {customer} · {venue} am {date} · {total}
+Stamp a quotation first (Issue → Stamp quote).,Zuerst ein Angebot stempeln (Ausstellen → Angebot stempeln).
+Add a customer email or phone before sending.,Vor dem Senden eine E-Mail-Adresse oder Telefonnummer des Kunden hinzufügen.
+Nothing was sent — check channels and guest contact.,Es wurde nichts gesendet – Kanäle und Gastkontakt prüfen.
+Customer email is required to send by email.,Zum Senden per E-Mail ist die E-Mail-Adresse des Kunden erforderlich.
+Quotation {0} — {1},Angebot {0} — {1}
+Quote {0} was {1} on {2} with no guest response yet.,"Angebot {0} wurde am {2} {1}, ohne Antwort des Gastes bisher."
+Unknown guest response: {0},Unbekannte Gastantwort: {0}
+Unknown channel: {0},Unbekannter Kanal: {0}
+Quotation {num} for {event} on {date}: total {total}. Please reply to confirm or request changes.,Angebot {num} für {event} am {date}: Gesamt {total}. Bitte zur Bestätigung oder für Änderungswünsche antworten.
+Following up: quotation {0},Nachfassen: Angebot {0}
+"<p>Dear {name},</p><p>We sent a quotation for your event on {date} and have not heard back. Please reply to this email, call us, or message on WhatsApp so we can hold the hall for you.</p><p>Thank you.</p>","<p>Guten Tag {name},</p><p>wir haben ein Angebot für die Veranstaltung am {date} gesendet und noch keine Antwort erhalten. Bitte auf diese E-Mail antworten, anrufen oder per WhatsApp schreiben, damit der Saal gehalten werden kann.</p><p>Vielen Dank.</p>"
+The arrival date has passed.,Das Anreisedatum ist vorbei.
+Give a reason for declining the request.,Einen Grund für die Ablehnung der Anfrage angeben.
+Not a booking request,Keine Buchungsanfrage
+Request expired,Anfrage abgelaufen
+No inventory left,Kein Kontingent mehr
+Reason required,Grund erforderlich
+Decline it on the OTA's extranet too ({0}).,Auch im Extranet der OTA ablehnen ({0}).
+Your stay at {0} is confirmed,Der Aufenthalt bei {0} ist bestätigt
+"Good news, {0}: {1} accepted your booking request for {2} to {3}. Reference {4}.","Gute Nachricht, {0}: {1} hat die Buchungsanfrage für {2} bis {3} angenommen. Referenz {4}."
+Your booking request at {0},Buchungsanfrage bei {0}
+"Sorry, {0}: {1} can't accept your booking request for {2} to {3}. Reason: {4}. Reference {5}.","Leider, {0}: {1} kann die Buchungsanfrage für {2} bis {3} nicht annehmen. Grund: {4}. Referenz {5}."
+Villa lockout: {0} is booked for these dates.,Villa-Sperre: {0} ist für diese Daten gebucht.
+No {0} room is free for these dates.,Für diese Daten ist keine Einheit vom Typ {0} frei.
+"{0} is {1}, not a pending request.","{0} ist {1}, keine offene Anfrage."
+The arrival date of {0} has passed - decline it.,Das Anreisedatum von {0} ist vorbei – ablehnen.
+"Can't accept {0}: the villa and its rooms can't both be sold, and {1} is already booked for these dates. Decline the request or offer other dates.","{0} kann nicht angenommen werden: Villa und ihre Einheiten können nicht beide verkauft werden, und {1} ist für diese Daten bereits gebucht. Die Anfrage ablehnen oder andere Daten anbieten."
+"Can't accept {0}: no {1} room is free for {2} to {3} any more. Decline the request, or move it to another room type first.",{0} kann nicht angenommen werden: Für {2} bis {3} ist keine Einheit vom Typ {1} mehr frei. Die Anfrage ablehnen oder zuerst auf einen anderen Einheitentyp verschieben.
+"Choose 5, 15 or 30 days.","5, 15 oder 30 Tage wählen."
+The end date is before the start date.,Das Enddatum liegt vor dem Startdatum.
+Pick a period of a year or less.,Einen Zeitraum von höchstens einem Jahr wählen.
+Pick today or a date in the past.,Heute oder ein Datum in der Vergangenheit wählen.
+Past date not allowed,Vergangenes Datum nicht erlaubt
+{0} {1} is before the business date ({2}). Only Finance or Hotel Admin can use a past date.,{0} {1} liegt vor dem Geschäftstag ({2}). Nur die Finanzabteilung oder Hotel-Admin kann ein vergangenes Datum verwenden.
+The guest pays.,Der Gast zahlt.
+Backfill after check-in,Nachtragen nach dem Check-in
+Assign a room before check-in.,Vor dem Check-in eine Einheit zuweisen.
+This booking has no guest profile.,Diese Buchung hat kein Gästeprofil.
+This booking has no company. Add the company to the booking first.,Diese Buchung hat keine Firma. Zuerst die Firma zur Buchung hinzufügen.
+This booking is not part of a group.,Diese Buchung gehört zu keiner Gruppe.
+The guest is already in house. Use Room move to change rooms.,"Der Gast ist bereits im Haus. „Einheitenwechsel“ verwenden, um die Einheit zu ändern."
+"Have the guest sign on screen, or tick that they signed the printed card.","Den Gast auf dem Bildschirm unterschreiben lassen oder ankreuzen, dass er die gedruckte Karte unterschrieben hat."
+Keys: between 1 and 10.,Schlüssel: zwischen 1 und 10.
+Only a confirmed or in-house stay can change this.,Nur ein bestätigter oder aktueller Aufenthalt kann dies ändern.
+the guest,der Gast
+1 more adult,1 weiterer Erwachsener
+{0} has collected the room. Extras are paid by the guest.,{0} hat die Einheit eingezogen. Extras zahlt der Gast.
+The OTA,Die OTA
+{0} booking. The guest pays the hotel.,{0} Buchung. Der Gast zahlt im Hotel.
+OTA,OTA
+{0} pays as agreed; the rest is paid by the guest.,{0} zahlt wie vereinbart; der Rest geht zulasten des Gastes.
+The company,Die Firma
+The group account {0} pays as agreed.,Das Gruppenkonto {0} zahlt wie vereinbart.
+Check-in not finished,Check-in nicht abgeschlossen
+The lock system did not answer. Make the keys at the encoder.,Das Schließsystem hat nicht geantwortet. Die Schlüssel am Kodiergerät anfertigen.
+{0} is not a check-in step at this property.,{0} ist in diesem Objekt kein Check-in-Schritt.
+This step is not finished yet.,Dieser Schritt ist noch nicht abgeschlossen.
+"That room is another type. Use Upgrade or change type, so the price is shown first.","Diese Einheit hat einen anderen Typ. „Upgrade“ oder „Typ ändern“ verwenden, damit der Preis zuerst angezeigt wird."
+Pick a room first.,Zuerst eine Einheit auswählen.
+Whole place,Gesamte Unterkunft
+That signature image is too large.,Dieses Unterschriftsbild ist zu groß.
+Signed on screen,Am Bildschirm unterschrieben
+Signed on paper,Auf Papier unterschrieben
+Nothing needed,Nichts erforderlich
+Only a confirmed or in-house stay has check-in steps (this one is {0}).,Nur ein bestätigter Aufenthalt oder einer im Haus hat Check-in-Schritte (dieser ist {0}).
+Use the {0} screen for this step.,Für diesen Schritt den Bildschirm „{0}“ verwenden.
+{0} cannot be skipped — assign a room first.,{0} kann nicht übersprungen werden — zuerst eine Einheit zuweisen.
+Pick who pays: {0}.,"Wählen, wer zahlt: {0}."
+Encode {0} key card(s) for room {1} at the encoder.,{0} Schlüsselkarte(n) für Einheit {1} am Kodiergerät anfertigen.
+{0} key(s),{0} Schlüssel
+Room charges allowed,Einheitenposten erlaubt
+Room charges blocked,Einheitenposten gesperrt
+{0} more adults,{0} weitere Erwachsene
+Room {0},Einheit {0}
+This stay is not leaving before its booked date.,Dieser Aufenthalt endet nicht vor dem gebuchten Datum.
+Give a reason for the early departure.,Einen Grund für die frühe Abreise angeben.
+"Pickup requested, nothing collected yet: there is nothing to bill.","Abholung angefragt, noch nichts abgeholt: Es gibt nichts abzurechnen."
+"Check-out posts the remaining nights first, and that failed: {0}","Der Check-out bucht zuerst die verbleibenden Nächte, und das ist fehlgeschlagen: {0}"
+"The folio was invoiced before every night was posted. Open it and cancel the invoice, then check out.","Das Gästekonto wurde fakturiert, bevor jede Nacht gebucht war. Es öffnen, die Rechnung stornieren und dann auschecken."
+Your role can settle the bill but not check the guest out. Ask Front Desk or a Hotel Admin to press Check out.,"Die Rolle kann die Rechnung begleichen, aber den Gast nicht auschecken. Die Rezeption oder eine Hotel-Admin bitten, „Check-out“ zu drücken."
+"Not on the bill yet. Post it to the room, or the guest pays for it at the outlet.","Noch nicht auf der Rechnung. Auf die Einheit buchen, oder der Gast bezahlt an der Verkaufsstelle."
+Back from the laundry. Hand it to the guest and post it to the room.,Aus der Wäscherei zurück. Dem Gast übergeben und auf die Einheit buchen.
+Your till is closed. Open it here to take or give back money.,"Die Kasse ist geschlossen. Hier öffnen, um Geld anzunehmen oder zurückzugeben."
+The early departure charge must be one of: {0}.,Die Gebühr für frühe Abreise muss eine von diesen sein: {0}.
+Only Finance or a Hotel Admin can change the early departure charge from the property's policy ({0}).,Nur die Finanzabteilung oder Hotel-Admin kann die Gebühr für frühe Abreise gegenüber der Richtlinie des Objekts ändern ({0}).
+Restaurant,Restaurant
+The remaining nights could not be posted.,Die verbleibenden Nächte konnten nicht gebucht werden.
+"This stay is {0}, so there is nothing to check out.","Dieser Aufenthalt ist {0}, daher gibt es nichts auszuchecken."
+"The security deposit of {0}{1:,.2f} still held counts toward the bill; check-out records it as applied.","Die noch gehaltene Kaution von {0}{1:,.2f} wird auf die Rechnung angerechnet; der Check-out erfasst sie als verrechnet."
+Part of a group. This checks out this room only; {0} other room(s) of the group are still in house.,Teil einer Gruppe. Dies checkt nur diese Einheit aus; {0} weitere Einheit(en) der Gruppe sind noch im Haus.
+Company credit is blocked: {0},Firmenkredit gesperrt: {0}
+"Collect {0}{1:,.2f} before departure.","{0}{1:,.2f} vor der Abreise einziehen."
+"Refund {0}{1:,.2f} before departure.","{0}{1:,.2f} vor der Abreise erstatten."
+"Still at the laundry ({0}). It can be billed once it is back: when the bag is at the desk, mark it ready, then post it to the room.","Noch in der Wäscherei ({0}). Sie kann berechnet werden, sobald sie zurück ist: Liegt der Beutel an der Rezeption, als bereit markieren und dann auf die Einheit buchen."
+Leaving {0} night(s) early: shorten the stay before settling the bill.,{0} Nacht/Nächte früher abreisend: den Aufenthalt vor dem Begleichen der Rechnung verkürzen.
+"Taking or giving back money needs an open till, and your role can't open one. Ask {0} to settle the bill.","Das Annehmen oder Zurückgeben von Geld erfordert eine offene Kasse, und die Rolle kann keine öffnen. {0} bitten, die Rechnung zu begleichen."
+Early departure: {0} of {1} unused night(s) at {2}% tax,Frühe Abreise: {0} von {1} ungenutzten Nacht/Nächten bei {2} % Steuer
+"{0}{1:,.2f} is owed back on folio {2}, which is already invoiced ({3}). A refund needs the invoice cancelled first: open the folio.","{0}{1:,.2f} sind auf Gästekonto {2} zurückzuerstatten, das bereits fakturiert ist ({3}). Für eine Erstattung muss zuerst die Rechnung storniert werden: das Gästekonto öffnen."
+"Folio {0} shows {1}{2:,.2f} in the guest's favour but only {1}{3:,.2f} was collected on it, so it can't all be refunded. Open the folio and correct it (move a charge or a payment).","Gästekonto {0} zeigt {1}{2:,.2f} zugunsten des Gastes, aber nur {1}{3:,.2f} wurden darauf eingezogen, daher kann nicht alles erstattet werden. Das Gästekonto öffnen und korrigieren (einen Posten oder eine Zahlung verschieben)."
+Only Finance or a Hotel Admin can override a credit block.,Nur die Finanzabteilung oder Hotel-Admin kann eine Kreditsperre übersteuern.
+{0}: {1},{0}: {1}
+Company credit,Firmenkredit
+The credit limit can't be negative.,Das Kreditlimit darf nicht negativ sein.
+Credit days must be between 0 and 365.,Die Kredittage müssen zwischen 0 und 365 liegen.
+"Over the credit limit by {0}{1:,.2f} (limit {0}{2:,.2f}, owed and billed with this {0}{3:,.2f}).","Kreditlimit um {0}{1:,.2f} überschritten (Limit {0}{2:,.2f}, offen und berechnet mit diesem Vorgang {0}{3:,.2f})."
+The account is restricted{0}.,Das Konto ist eingeschränkt{0}.
+{0}: {1} - {2} Credit control blocks this {3}. Finance or a Hotel Admin can override it with a reason.,{0}: {1} - {2} Die Kreditkontrolle sperrt diesen Vorgang {3}. Die Finanzabteilung oder Hotel-Admin kann ihn mit Begründung übersteuern.
+billing,Abrechnung
+{0}: an AI agent can't override a credit block. {1} Ask Finance or a Hotel Admin.,{0}: Ein KI-Agent kann eine Kreditsperre nicht übersteuern. {1} Die Finanzabteilung oder Hotel-Admin fragen.
+Unknown company {0}.,Unbekannte Firma {0}.
+"{0}{1:,.2f} overdue by more than {2} days (oldest due {3}).","{0}{1:,.2f} seit mehr als {2} Tagen überfällig (ältester fällig am {3})."
+"{0}{1:,.2f} overdue (oldest due {2}).","{0}{1:,.2f} überfällig (ältester fällig am {2})."
+Add at least one stay to the itinerary.,Mindestens einen Aufenthalt zur Reiseroute hinzufügen.
+Itinerary not found.,Reiseroute nicht gefunden.
+Nothing to cancel: no leg of this itinerary is confirmed.,Nichts zu stornieren: Kein Abschnitt dieser Reiseroute ist bestätigt.
+No stay on this trip is waiting for an advance. Take in-house payments on the leg's folio.,Kein Aufenthalt dieser Reise wartet auf eine Anzahlung. Zahlungen im Haus auf dem Gästekonto des Abschnitts annehmen.
+The stays on this trip are in different currencies. Take the advance on each stay instead.,Die Aufenthalte dieser Reise haben unterschiedliche Währungen. Die Anzahlung stattdessen je Aufenthalt erfassen.
+Enter the advance amount.,Den Betrag der Anzahlung eingeben.
+Each stay in an itinerary is at least one night.,Jeder Aufenthalt einer Reiseroute umfasst mindestens eine Nacht.
+The booking system was busy. Nothing was booked; please try again.,Das Buchungssystem war ausgelastet. Es wurde nichts gebucht; bitte erneut versuchen.
+This booking already belongs to another trip.,Diese Buchung gehört bereits zu einer anderen Reise.
+Enter the guest's name.,Den Namen des Gastes eingeben.
+These dates conflict with another stay on this trip.,Diese Daten kollidieren mit einem anderen Aufenthalt dieser Reise.
+Itinerary dates overlap,Daten der Reiseroute überschneiden sich
+Try again,Erneut versuchen
+Already booked,Bereits gebucht
+{0} is more than the trip still owes ({1}).,"{0} ist mehr, als die Reise noch schuldet ({1})."
+Each stay needs {0}.,Jeder Aufenthalt braucht {0}.
+Stays overlap: {0} to {1} and {2} to {3}. A guest can't be in two places on one night.,Aufenthalte überschneiden sich: {0} bis {1} und {2} bis {3}. Ein Gast kann in einer Nacht nicht an zwei Orten sein.
+You cannot edit this report.,Dieser Bericht kann nicht bearbeitet werden.
+From date and to date are required.,Von-Datum und Bis-Datum sind erforderlich.
+To date must be on or after from date.,Das Bis-Datum muss am oder nach dem Von-Datum liegen.
+Your role cannot run this dataset.,Die Rolle kann diesen Datensatz nicht ausführen.
+This dataset's module is disabled for the property.,Das Modul dieses Datensatzes ist für das Objekt deaktiviert.
+Your role cannot run any part of this pack.,Die Rolle kann keinen Teil dieses Pakets ausführen.
+Report does not belong to this property.,Der Bericht gehört nicht zu diesem Objekt.
+Your role cannot open this report.,Die Rolle kann diesen Bericht nicht öffnen.
+This report is private.,Dieser Bericht ist privat.
+Your role cannot save this dataset.,Die Rolle kann diesen Datensatz nicht speichern.
+Invalid schedule frequency.,Ungültige Zeitplanhäufigkeit.
+Only Finance or Hotel Admin can share a report.,Nur die Finanzabteilung oder Hotel-Admin kann einen Bericht teilen.
+Add at least one recipient email for a scheduled report.,Für einen geplanten Bericht mindestens eine Empfänger-E-Mail-Adresse hinzufügen.
+Only Finance or Hotel Admin can schedule email.,Nur die Finanzabteilung oder Hotel-Admin kann E-Mails planen.
+Add at least one recipient email.,Mindestens eine Empfänger-E-Mail-Adresse hinzufügen.
+dataset or name is required.,„dataset“ oder „name“ ist erforderlich.
+Date range cannot exceed {0} days.,Der Zeitraum darf {0} Tage nicht überschreiten.
+Unknown dataset: {0},Unbekannter Datensatz: {0}
+Unknown report pack: {0},Unbekanntes Berichtspaket: {0}
+No security deposit has been taken on this stay.,Für diesen Aufenthalt wurde keine Kaution erhoben.
+Security deposits are not set up on this site.,Kautionen sind auf dieser Website nicht eingerichtet.
+This deposit was waived.,Diese Kaution wurde erlassen.
+This deposit has already been refunded.,Diese Kaution wurde bereits erstattet.
+Waiving a deposit needs a reason.,Das Erlassen einer Kaution braucht einen Grund.
+No security deposit is required for this stay.,Für diesen Aufenthalt ist keine Kaution erforderlich.
+Money has already been taken - refund the deposit instead of waiving it.,"Es wurde bereits Geld eingezogen – die Kaution erstatten, statt sie zu erlassen."
+Enter the amount to withhold.,Den einzubehaltenden Betrag eingeben.
+Withholding a deposit needs a reason.,Das Einbehalten einer Kaution braucht einen Grund.
+The guest folio is closed - withhold before closing it.,Das Gästekonto ist geschlossen – vor dem Schließen einbehalten.
+Nothing is held to refund.,Es wird nichts zur Erstattung gehalten.
+No guest folio for this stay.,Kein Gästekonto für diesen Aufenthalt.
+Applied to the bill at check-out,Beim Check-out auf die Rechnung angerechnet
+A security deposit can't be taken on a {0} booking.,Bei einer {0}-Buchung kann keine Kaution erhoben werden.
+"Only {0:,.2f} of the deposit is still held.","Nur {0:,.2f} der Kaution werden noch gehalten."
+"The guest folio only has {0:,.2f} in credit. Settle the bill or withhold against it before refunding the deposit.","Das Gästekonto hat nur {0:,.2f} Guthaben. Vor der Erstattung der Kaution die Rechnung begleichen oder dagegen einbehalten."
+Separate bills open once the guests are checked in.,"Getrennte Rechnungen werden geöffnet, sobald die Gäste eingecheckt sind."
+Add the other guests' names to the stay first.,Zuerst die Namen der anderen Gäste zum Aufenthalt hinzufügen.
+Pick the other guests' bills to share with.,"Die Rechnungen der anderen Gäste wählen, mit denen geteilt wird."
+Pick the charges to share.,Die zu teilenden Posten wählen.
+Give each other bill a share above 0%; together under 100%.,Jeder anderen Rechnung einen Anteil über 0 % geben; zusammen unter 100 %.
+Only charges above zero can be shared.,Nur Posten über null können geteilt werden.
+Give a reason for acknowledging the blocking checks.,Einen Grund für die Bestätigung der blockierenden Prüfungen angeben.
+"Cannot close the folio: {0}{1:,.2f} is owed back to the guest. Issue the refund first.","Das Gästekonto kann nicht geschlossen werden: {0}{1:,.2f} sind dem Gast zurückzuzahlen. Zuerst die Erstattung vornehmen."
+Night audit can only close the current business date ({0}).,Die Nachtprüfung kann nur den aktuellen Geschäftstag schließen ({0}).
+Business date {0} is already ahead of today ({1}). Night audit for it can run once that day has started.,"Der Geschäftstag {0} liegt bereits vor dem heutigen Datum ({1}). Die Nachtprüfung dafür kann laufen, sobald dieser Tag begonnen hat."
+Night audit pre-checks,Vorprüfungen der Nachtprüfung
+Charge {0} is not on {1}.,Der Posten {0} gehört nicht zu {1}.
+"Cannot close the folio: {0}{1:,.2f} is still owed. Collect payment, or move the company's share to the city ledger, first.","Das Gästekonto kann nicht geschlossen werden: {0}{1:,.2f} sind noch offen. Zuerst die Zahlung einziehen oder den Anteil der Firma auf das City Ledger verschieben."
+"Night audit is blocked: {0}. Resolve them, or acknowledge each with a reason to run anyway.","Die Nachtprüfung ist blockiert: {0}. Beheben oder jede mit Begründung bestätigen, um trotzdem zu laufen."
+The guest folio is already closed.,Das Gästekonto ist bereits geschlossen.
+Set up at least one room type first.,Zuerst mindestens einen Einheitentyp anlegen.
+Unknown template: {0}.,Unbekannte Vorlage: {0}.
+Unknown document.,Unbekanntes Dokument.
+This property does not keep ID images. Verify the ID at check-in instead.,Dieses Objekt bewahrt keine Ausweisbilder auf. Stattdessen den Ausweis beim Check-in prüfen.
+Nothing on file.,Nichts hinterlegt.
+That file is no longer stored.,Diese Datei ist nicht mehr gespeichert.
+Please upload a photo of your ID.,Bitte ein Foto des Ausweises hochladen.
+That photo is too large. Please retake it.,Das Foto ist zu groß. Bitte erneut aufnehmen.
+Please upload a JPG or PNG photo.,Bitte ein JPG- oder PNG-Foto hochladen.
+This booking is no longer active.,Diese Buchung ist nicht mehr aktiv.
+That file didn't upload correctly. Please try again.,Die Datei wurde nicht korrekt hochgeladen. Bitte erneut versuchen.
+That doesn't look like a photo. Please retake it.,Das sieht nicht wie ein Foto aus. Bitte erneut aufnehmen.
+That photo couldn't be processed. Please retake it.,Das Foto konnte nicht verarbeitet werden. Bitte erneut aufnehmen.
+The ID didn't read cleanly. Scan it again.,Der Ausweis wurde nicht sauber gelesen. Erneut scannen.
+Nothing was scanned.,Es wurde nichts gescannt.
+That scan is too long to be an ID.,Dieser Scan ist zu lang für einen Ausweis.
+"Kamra can't read this ID's code. Type the details in, and take a picture of the ID.",Kamra kann den Code dieses Ausweises nicht lesen. Die Angaben eintippen und den Ausweis fotografieren.
+Menu item not found.,Kartenartikel nicht gefunden.
+An ingredient needs a name.,Eine Zutat braucht einen Namen.
+This ingredient has stock history. Deactivate it instead.,Diese Zutat hat einen Bestandsverlauf. Stattdessen deaktivieren.
+Nothing to receive.,Nichts zu empfangen.
+"A stock take needs a note - what did you count, and why does it differ?","Eine Inventur braucht eine Notiz – was wurde gezählt, und warum weicht es ab?"
+Nothing counted.,Nichts gezählt.
+Wasted quantity must be above zero.,Die Schwundmenge muss über null liegen.
+Wastage needs a reason.,Schwund braucht einen Grund.
+Received quantity must be above zero.,Die empfangene Menge muss über null liegen.
+{0} dish(es) use this ingredient. Deactivate it instead.,{0} Gericht(e) verwenden diese Zutat. Stattdessen deaktivieren.
+What was asked for can't change. Reject it and ask again.,Das Angefragte kann nicht geändert werden. Ablehnen und neu anfragen.
+Approve or reject an allowance from Allowances to approve.,Einen Nachlass unter „Freizugebende Nachlässe“ freigeben oder ablehnen.
+A new allowance request is always Pending.,Eine neue Nachlassanfrage ist immer „Ausstehend“.
+"Room type {0} belongs to {1}, not to this connection's property {2}.","Der Einheitentyp {0} gehört zu {1}, nicht zum Objekt {2} dieser Verbindung."
+A closed folio cannot be reopened or renumbered.,Ein geschlossenes Gästekonto kann weder wieder geöffnet noch neu nummeriert werden.
+Payments cannot be removed from a closed folio.,Zahlungen können nicht von einem geschlossenen Gästekonto entfernt werden.
+Invoice {0} is issued — its charges are frozen. Post adjustments on a new folio.,Die Rechnung {0} ist ausgestellt — ihre Posten sind eingefroren. Korrekturen auf einem neuen Gästekonto buchen.
+The ID cannot expire before the day it was issued.,Der Ausweis kann nicht vor dem Ausstellungstag ablaufen.
+Minimum nights is at least 1.,Der Mindestaufenthalt beträgt mindestens 1 Nacht.
+The discount is more than 0% and under 100%.,Der Rabatt liegt über 0 % und unter 100 %.
+{0} is not offered for this property's country. Available: {1}.,{0} wird für das Land dieses Objekts nicht angeboten. Verfügbar: {1}.
+none,keine
+"This bill is not settled. Take payment at the outlet, charge it to an in-house guest's room, or mark it NC with an authorization before closing it.","Diese Rechnung ist nicht beglichen. Vor dem Schließen die Zahlung an der Verkaufsstelle annehmen, auf die Einheit eines Hausgastes buchen oder mit Genehmigung als NC markieren."
+this bill,diese Rechnung
+A paid bill needs its payment mode.,Eine bezahlte Rechnung braucht ihre Zahlungsart.
+An NC (complimentary) bill needs who authorized it before it can close.,Eine NC-Rechnung (Freibestellung) braucht vor dem Schließen die genehmigende Person.
+{0} has no checked-in guest to post to. Take payment at the outlet to close it.,"{0} hat keinen eingecheckten Gast, auf den gebucht werden kann. Die Zahlung an der Verkaufsstelle annehmen, um sie zu schließen."
+Pick a short code for this property.,Ein Kurzcode für dieses Objekt ist zu wählen.
+Short code: 2 to 6 letters (A-Z) or digits.,Kurzcode: 2 bis 6 Buchstaben (A–Z) oder Ziffern.
+Short code {0} is already used by another property.,Der Kurzcode {0} wird bereits von einem anderen Objekt verwendet.
+Villa has no rooms,Die Villa hat keine Einheiten
+Use the Cancel action (or the cancel_reservation API) so the cancellation policy is applied.,"Die Aktion „Stornieren“ (oder die API cancel_reservation) verwenden, damit die Stornierungsrichtlinie greift."
+A stay needs at least one adult.,Ein Aufenthalt braucht mindestens einen Erwachsenen.
+Check-in date is in the past,Das Anreisedatum liegt in der Vergangenheit
+A stay joins or leaves a trip only through the trip itself.,Ein Aufenthalt kommt nur über die Reise selbst zu einer Reise hinzu oder verlässt sie.
+Double Booking Blocked,Doppelbuchung verhindert
+"{0} has no rooms of its own and the property has other villa types, so Kamra can't tell which rooms it takes. Add Room records under {0}, or assign a room before check-in.","{0} hat keine eigenen Einheiten, und das Objekt hat weitere Villentypen, daher kann Kamra nicht erkennen, welche Einheiten es belegt. Einheiten unter {0} anlegen oder vor dem Check-in eine Einheit zuweisen."
+Minimum stay,Mindestaufenthalt
+Room capacity,Einheitenkapazität
+Over room capacity,Einheitenkapazität überschritten
+Day-use stays check out the same day.,Tagesnutzungs-Aufenthalte checken am selben Tag aus.
+Check-out must be after check-in.,Der Check-out muss nach dem Check-in liegen.
+Blacklisted guest,Gast auf der Sperrliste
+Double booking blocked,Doppelbuchung verhindert
+Room still occupied,Einheit noch belegt
+This room cannot be booked for these dates because the Entire Villa is already booked at {0} under Reservation {1}.,"Diese Einheit kann für diese Daten nicht gebucht werden, weil die gesamte Villa bereits um {0} unter Reservierung {1} gebucht ist."
+Overbooking limit,Überbuchungslimit
+This property requires a stay of at least {0} nights.,Dieses Objekt verlangt einen Aufenthalt von mindestens {0} Nächten.
+{0} needs a stay of at least {1} nights.,{0} verlangt einen Aufenthalt von mindestens {1} Nächten.
+These dates,Diese Daten
+{0} sleeps {1}. Up to {2} more can be booked by arrangement - give a reason on the booking to record who agreed it.,"{0} bietet Platz für {1}. Bis zu {2} weitere können nach Vereinbarung gebucht werden – in der Buchung einen Grund angeben, um festzuhalten, wer zugestimmt hat."
+"{0} can't sleep {1}. Reduce the party, pick a bigger room type, or book additional rooms — use a Group Booking for large parties.","{0} bietet nicht Platz für {1}. Die Gruppe verkleinern, einen größeren Einheitentyp wählen oder weitere Einheiten buchen — für große Gruppen eine Gruppenbuchung verwenden."
+Guest {0} is blacklisted{1}. Remove the flag on the guest profile to book.,Der Gast {0} steht auf der Sperrliste{1}. Zum Buchen die Markierung im Gästeprofil entfernen.
+Room {0} is already booked ({1}) for these dates.,Einheit {0} ist für diese Daten bereits gebucht ({1}).
+"Room {0} is still occupied by {1} ({2}). Check them out first, or choose another room.",Einheit {0} ist noch von {1} belegt ({2}). Diese zuerst auschecken oder eine andere Einheit wählen.
+This property cannot be booked as an Entire Villa for these dates because an individual room is already booked at {0} under Reservation {1}.,"Dieses Objekt kann für diese Daten nicht als gesamte Villa gebucht werden, weil bereits eine einzelne Einheit um {0} unter Reservierung {1} gebucht ist."
+Held for a group,Für eine Gruppe gehalten
+{0} is sold out for {1}: {2} of {3} rooms sold and the overbooking allowance ({4}%) is used up.,"{0} ist für {1} ausverkauft: {2} von {3} Einheiten verkauft, und das Überbuchungskontingent ({4} %) ist aufgebraucht."
+{0} extra guests (max {1}),{0} zusätzliche Gäste (max. {1})
+{0} adults (max {1}),{0} Erwachsene (max. {1})
+{0} children (max {1}),{0} Kinder (max. {1})
+{0} guests above what it sleeps (max {1}),{0} Gäste über der Kapazität (max. {1})
+Free {0} rooms for these dates: {1}.,{0} Einheiten für diese Daten frei: {1}.
+No {0} rooms are free for these dates.,Für diese Daten sind keine {0}-Einheiten frei.
+"Room {0} belongs to {1}, not {2}.","Einheit {0} gehört zu {1}, nicht zu {2}."
+{0} is sold out for {1}: {2} of {3} rooms sold and {4} held for group blocks until their cutoff.,{0} ist für {1} ausverkauft: {2} von {3} Einheiten verkauft und {4} bis zu ihrer Frist für Gruppenblöcke gehalten.
+and,und
+The block's 'To' date must be after its 'From' date.,Das Bis-Datum des Blocks muss nach dem Von-Datum liegen.
+Room {0} is not in {1}.,Einheit {0} gehört nicht zu {1}.
+"Room is booked ({0}, {1}, arriving {2}) during this window. Move or cancel that stay before holding the room.","Die Einheit ist in diesem Zeitraum gebucht ({0}, {1}, Anreise {2}). Den Aufenthalt vor dem Halten der Einheit verlegen oder stornieren."
+Advance % at booking is between 25 and 100. Leave it empty to use the property's usual deposit.,"Die Anzahlung % bei Buchung liegt zwischen 25 und 100. Leer lassen, um die übliche Kaution des Objekts zu verwenden."
+Step {0} is listed twice.,Schritt {0} ist doppelt aufgeführt.
+The function can't end before it starts.,"Die Veranstaltung kann nicht enden, bevor sie beginnt."
+A discount can't be negative.,Ein Rabatt darf nicht negativ sein.
+Say why this went away - a cancelled or lost function needs a reason.,"Angeben, warum dies weggefallen ist – eine stornierte oder verlorene Veranstaltung braucht einen Grund."
+Green room for {0} ({1}),Umkleideraum für {0} ({1})
+Custom Hours needs a start and an end time - or pick a session.,„Individuelle Zeiten“ braucht eine Start- und eine Endzeit – oder eine Sitzung wählen.
+{0} seats {1}; this function is {2} pax.,{0} fasst {1}; diese Veranstaltung hat {2} Personen.
+The discount ({0}) is more than the quote itself ({1}).,Der Rabatt ({0}) ist höher als das Angebot selbst ({1}).
+Alcohol ({0}) can't be billed to {1} - it will have to settle separately.,Alkohol ({0}) kann nicht an {1} berechnet werden – er muss gesondert beglichen werden.
+"{0} is already confirmed for {1} on {2}{3}.{4} Move one of them, or use a different hall.",{0} ist bereits für {1} am {2}{3} bestätigt.{4} Eine davon verschieben oder einen anderen Saal verwenden.
+Can't hold {0} as the green room: {1},{0} kann nicht als Umkleideraum gehalten werden: {1}
+It shares part of {0}.,Er teilt sich einen Teil von {0}.
+Rate must be positive.,Der Preis muss positiv sein.
+Item name is required.,Der Artikelname ist erforderlich.
+The CSV needs a header row and at least one rate.,Die CSV braucht eine Kopfzeile und mindestens einen Preis.
+Couldn't find the item / service / rate columns.,Die Spalten für Artikel / Leistung / Preis wurden nicht gefunden.
+Count at least one item.,Mindestens einen Artikel zählen.
+This laundry order is closed.,Dieser Wäscheauftrag ist geschlossen.
+Nothing was collected on this order.,Auf diesem Auftrag wurde nichts eingezogen.
+A cancellation reason is required.,Ein Stornogrund ist erforderlich.
+No checked-in guest in that room.,Kein eingecheckter Gast in dieser Einheit.
+This pickup was already collected.,Diese Abholung wurde bereits eingezogen.
+Service must be one of: {0},Die Leistung muss eine von diesen sein: {0}
+No rate for {0} ({1}) - add it to the rate card first.,Kein Preis für {0} ({1}) – zuerst in die Preisliste eintragen.
+A {0} bag can't move to {1}.,Ein {0}-Beutel kann nicht auf {1} gehen.
+"Still pending: {0}. Return everything, or deliver with a shortage note.",Noch ausstehend: {0}. Alles zurückgeben oder mit Fehlmengenvermerk ausliefern.
+{0}: returned count must be between 0 and {1}.,{0}: Die zurückgegebene Anzahl muss zwischen 0 und {1} liegen.
+"The company has already paid part of this bill (or money it paid ahead was applied), so the checkout can't be undone. Finance can correct it on the account.","Die Firma hat bereits einen Teil dieser Rechnung bezahlt (oder im Voraus gezahltes Geld wurde angerechnet), daher kann der Check-out nicht rückgängig gemacht werden. Die Finanzabteilung kann dies auf dem Konto korrigieren."
+"A credit note or adjustment already changed this bill on the company's account, so the checkout can't be undone. Finance can correct it on the account.","Eine Gutschrift oder Korrektur hat diese Rechnung auf dem Konto der Firma bereits geändert, daher kann der Check-out nicht rückgängig gemacht werden. Die Finanzabteilung kann dies auf dem Konto korrigieren."
+The tax return export,Der Export für die Steuererklärung
+Kamra Verify isn't available yet.,Kamra Verify ist noch nicht verfügbar.
+Tax ID verification,Prüfung der Steuer-ID
+Guest ID verification,Prüfung des Gästeausweises
+{0} is not available for this property's country.,{0} ist für das Land dieses Objekts nicht verfügbar.
+{0} is not a payment mode here. Pick one of: {1}.,{0} ist hier keine Zahlungsart. Eine wählen aus: {1}.
+Unknown ID type {0}. Use one of: {1}.,Unbekannte Ausweisart {0}. Eine verwenden aus: {1}.
+The {0} payment gateway,Das Zahlungsgateway {0}
+This property does not take payments through {0}.,Dieses Objekt nimmt keine Zahlungen über {0} an.
+That address is too long.,Diese Adresse ist zu lang.
+Only a hotel admin can manage AI access.,Nur eine Hotel-Admin kann den KI-Zugriff verwalten.
+"Pick none, read or manage.","„none“, „read“ oder „manage“ wählen."
+That person isn't on the staff list for this property.,Diese Person steht nicht auf der Personalliste dieses Objekts.
+You can't change your own AI access.,Der eigene KI-Zugriff kann nicht geändert werden.
+Only IT can change this person's access.,Nur die IT kann den Zugriff dieser Person ändern.
+Hotel admins and IT always have full AI access.,Hotel-Admins und IT haben immer vollen KI-Zugriff.
+That connection isn't at this property.,Diese Verbindung gehört nicht zu diesem Objekt.
+At most 20 extra addresses.,Höchstens 20 zusätzliche Adressen.
+A hotel admin has blocked {0} for AI clients at {1}.,Eine Hotel-Admin hat {0} für KI-Clients bei {1} gesperrt.
+{0}: use a full https:// address.,{0}: eine vollständige https://-Adresse verwenden.
+(empty),(leer)
+{0}: wildcards are not allowed; enter the exact address.,{0}: Platzhalter sind nicht erlaubt; die genaue Adresse eingeben.
+{0}: an address with # can't be a redirect.,{0}: Eine Adresse mit # kann keine Weiterleitung sein.
+{0}: remove the user name and password.,{0}: Benutzername und Passwort entfernen.
+MCP client,MCP-Client
+"AI access over MCP is turned off for {0}. A hotel admin can turn it on under Settings, AI access (MCP).","Der KI-Zugriff über MCP ist für {0} ausgeschaltet. Eine Hotel-Admin kann ihn unter Einstellungen, KI-Zugriff (MCP) einschalten."
+AI clients are read-only at {0}: a hotel admin has blocked every tool that makes changes.,"KI-Clients haben bei {0} nur Lesezugriff: Eine Hotel-Admin hat jedes Tool gesperrt, das Änderungen vornimmt."
+Unknown tool: {0},Unbekanntes Tool: {0}
+The CSV needs a header row and at least one data row.,Die CSV braucht eine Kopfzeile und mindestens eine Datenzeile.
+Unknown property.,Unbekanntes Objekt.
+No audit pack was saved for this run. Rebuild it to print the night's reports.,"Für diesen Lauf wurde kein Prüfpaket gespeichert. Neu erstellen, um die Berichte der Nacht zu drucken."
+Finish End of Day before printing the audit pack.,Vor dem Drucken des Prüfpakets den Tagesabschluss beenden.
+The business date is not stuck — no completed audit for today's open date.,Der Geschäftstag hängt nicht — keine abgeschlossene Prüfung für das offene Datum von heute.
+Give a reason for acknowledging this check.,Eine Begründung für das Bestätigen dieser Prüfung angeben.
+"Step status must be done, skipped or pending.","Der Schrittstatus muss „erledigt“, „übersprungen“ oder „ausstehend“ sein."
+Night audit run {0} not found.,Nachtprüfungslauf {0} nicht gefunden.
+Unknown check: {0},Unbekannte Prüfung: {0}
+{0} is not blocking the audit - nothing to acknowledge.,{0} blockiert den Abschluss nicht – nichts zu bestätigen.
+Only a Confirmed arrival can be marked no-show (this one is {0}).,Nur eine bestätigte Anreise kann als No-Show markiert werden (diese ist {0}).
+"This arrival is due on {0}, after the business date {1}.","Diese Anreise ist am {0} fällig, nach dem Geschäftstag {1}."
+acknowledge must be a list of check keys.,„acknowledge“ muss eine Liste von Prüfschlüsseln sein.
+({n} late arrival(s) held that night — list not saved on the original pack),({n} späte Anreise(n) in dieser Nacht gehalten — Liste nicht im ursprünglichen Paket gespeichert)
+Unknown End of Day step: {0},Unbekannter Tagesabschluss-Schritt: {0}
+{0} still has open items - resolve them or acknowledge with a reason.,{0} hat noch offene Punkte – lösen oder mit Begründung bestätigen.
+"Region, currency and tax","Region, Währung und Steuer"
+Set from the country you chose.,Aus dem gewählten Land übernommen.
+Room types and rates,Einheitentypen und Preise
+What you sell and the base rate (BAR) for each.,"Was verkauft wird, und der Basispreis (BAR) für jedes."
+Your team,Eigenes Team
+Invite staff and give each the right role.,Personal einladen und jeder Person die passende Rolle geben.
+Tax registration number,Steuerregistrierungsnummer
+Printed on invoices. Add it when you have it.,"Wird auf Rechnungen gedruckt. Hinzufügen, sobald vorhanden."
+The numbered rooms the front desk assigns.,"Die nummerierten Einheiten, die die Rezeption vergibt."
+Online booking page,Online-Buchungsseite
+"Turn it on, add photos and policies.","Einschalten, Fotos und Richtlinien hinzufügen."
+Channel manager,Channel Manager
+Connect your channel manager so OTA bookings arrive and rates and availability go out.,"Den Channel Manager verbinden, damit OTA-Buchungen eingehen und Preise und Verfügbarkeit hinausgehen."
+Restaurant outlets,Restaurant-Verkaufsstellen
+Each place that sells food or drink.,"Jeder Ort, an dem Speisen oder Getränke verkauft werden."
+Menu,Karte
+Dishes and prices per outlet.,Gerichte und Preise je Verkaufsstelle.
+Kitchen printers,Küchendrucker
+"Which station prints which tickets, and where bills print.",Welche Station welche Tickets druckt und wo Rechnungen gedruckt werden.
+Tills,Kassen
+"Name each till, tie it to an outlet. Without any, everyone uses the Default till.",Jede Kasse benennen und einer Verkaufsstelle zuordnen. Ohne Kassen verwenden alle die Standardkasse.
+Give the vendor a name.,Dem Lieferanten einen Namen geben.
+Payment terms can't be negative.,Zahlungsbedingungen dürfen nicht negativ sein.
+The amount must be more than zero.,Der Betrag muss größer als null sein.
+The tax rate must be between 0 and 100.,Der Steuersatz muss zwischen 0 und 100 liegen.
+The bill date can't be in the future.,Das Rechnungsdatum darf nicht in der Zukunft liegen.
+The due date can't be before the bill date.,Das Fälligkeitsdatum darf nicht vor dem Rechnungsdatum liegen.
+The payment date must be between the bill date and today.,Das Zahlungsdatum muss zwischen Rechnungsdatum und heute liegen.
+Say how it was paid.,"Angeben, wie bezahlt wurde."
+Say why the bill is cancelled.,"Angeben, warum die Rechnung storniert wird."
+That vendor belongs to another property.,Dieser Lieferant gehört zu einem anderen Objekt.
+Vendor {0} not found at this property.,Lieferant {0} in diesem Objekt nicht gefunden.
+Pick an expense category: {0}.,Eine Ausgabenkategorie wählen: {0}.
+There is already a vendor called {0} here.,Hier gibt es bereits einen Lieferanten namens {0}.
+{0} is disabled. Turn it back on to enter a bill.,{0} ist deaktiviert. Zum Erfassen einer Rechnung wieder einschalten.
+Bill {0} from {1} is already entered.,Rechnung {0} von {1} ist bereits erfasst.
+Bill {0} is {1}.,Rechnung {0} ist {1}.
+Bill {0} is already approved.,Rechnung {0} ist bereits freigegeben.
+Approve bill {0} before paying it.,Rechnung {0} vor dem Bezahlen freigeben.
+Bill {0} only has {1} left to pay.,Bei Rechnung {0} sind nur noch {1} zu zahlen.
+Bill {0} has payments on it and can't be cancelled.,Rechnung {0} hat Zahlungen und kann nicht storniert werden.
+Wrong payment mode pressed,Falsche Zahlungsart gedrückt
+This order is already closed.,Diese Bestellung ist bereits geschlossen.
+Already paid.,Bereits bezahlt.
+Say why the bill is moving.,"Angeben, warum die Rechnung verschoben wird."
+This bill is not on a room yet. Use Charge to room instead.,Diese Rechnung liegt noch auf keiner Einheit. Stattdessen „Auf Einheit buchen“ verwenden.
+"This bill was settled at the outlet, so it is on no room.",Diese Rechnung wurde an der Verkaufsstelle beglichen und liegt daher auf keiner Einheit.
+Couldn't find this bill on the room's folio. It may have been moved or voided already.,Diese Rechnung wurde auf dem Gästekonto der Einheit nicht gefunden. Möglicherweise wurde sie bereits verschoben oder storniert.
+"This bill was split or changed on the folio, so it can't be moved in one go. Move its lines from the folio instead.",Diese Rechnung wurde auf dem Gästekonto geteilt oder geändert und kann nicht in einem Zug verschoben werden. Stattdessen ihre Zeilen vom Gästekonto aus verschieben.
+"An allowance was posted on this folio after the bill. Reverse the allowance first, then move the bill.","Nach der Rechnung wurde auf diesem Gästekonto ein Nachlass gebucht. Zuerst den Nachlass umkehren, dann die Rechnung verschieben."
+The bill is on a folio that is already closed. Ask Finance to correct it.,Die Rechnung liegt auf einem bereits geschlossenen Gästekonto. Die Finanzabteilung um Korrektur bitten.
+"Only a bill posted today can be moved. For an earlier day, ask Finance to correct both folios.","Nur eine heute gebuchte Rechnung kann verschoben werden. Für einen früheren Tag die Finanzabteilung bitten, beide Gästekonten zu korrigieren."
+The bill is already on this room.,Die Rechnung liegt bereits auf dieser Einheit.
+Add at least one available item.,Mindestens einen verfügbaren Artikel hinzufügen.
+Delivery needs the customer's name or phone.,Die Lieferung braucht Name oder Telefonnummer des Kunden.
+That guest profile was not found.,Dieses Gästeprofil wurde nicht gefunden.
+Whose reservation is it?,Auf wen lautet die Reservierung?
+"Status must be Seated, Cancelled or No Show.","Der Status muss „Platziert“, „Storniert“ oder „No-Show“ sein."
+Pick at least one line to move.,Mindestens eine zu verschiebende Zeile wählen.
+Some lines were not found (or already voided).,Einige Zeilen wurden nicht gefunden (oder sind bereits storniert).
+Every line is moving - rename the table on this bill instead of splitting it.,"Jede Zeile wird verschoben – stattdessen den Tisch auf dieser Rechnung umbenennen, statt sie zu teilen."
+Nothing is held on that course.,Auf diesem Gang wird nichts gehalten.
+Only an item the kitchen is cooking can be marked ready.,"Nur ein Artikel, den die Küche gerade zubereitet, kann als fertig markiert werden."
+This order has already left the kitchen.,Diese Bestellung hat die Küche bereits verlassen.
+This order was cancelled.,Diese Bestellung wurde storniert.
+Nothing is waiting at the pass.,Am Pass wartet nichts.
+This bill is closed. The waiter on it cannot change.,Diese Rechnung ist geschlossen. Die Servicekraft darauf kann nicht geändert werden.
+Type the waiter's name.,Den Namen der Servicekraft eintippen.
+Order line not found.,Bestellzeile nicht gefunden.
+That line is not voided.,Diese Zeile ist nicht storniert.
+Already posted to the room folio - settle it there.,Bereits auf das Gästekonto der Einheit gebucht – dort begleichen.
+"This is an NC (complimentary) bill - close it with Deliver, there is nothing to collect.","Dies ist eine NC-Rechnung (Freibestellung) – mit „Ausliefern“ schließen, es gibt nichts einzuziehen."
+Only a bill that was paid at the outlet can change its payment mode.,Nur eine an der Verkaufsstelle bezahlte Rechnung kann ihre Zahlungsart ändern.
+This bill was posted to a room or made complimentary - there is no payment mode to change.,Diese Rechnung wurde auf eine Einheit gebucht oder als Freibestellung geführt – es gibt keine Zahlungsart zu ändern.
+The kitchen already has items on this bill. An agent cannot void them: a supervisor does that at the till.,Die Küche hat bereits Artikel auf dieser Rechnung. Ein Agent kann sie nicht stornieren: Das erledigt eine Aufsicht an der Kasse.
+SUPERVISOR_REQUIRED: the kitchen already has items on this bill. A supervisor approves voiding them with their PIN.,SUPERVISOR_REQUIRED: Die Küche hat bereits Artikel auf dieser Rechnung. Eine Aufsicht gibt deren Stornierung mit ihrer PIN frei.
+That line is already voided.,Diese Zeile ist bereits storniert.
+That is the last item on the bill. Cancel the bill instead.,Das ist der letzte Artikel auf der Rechnung. Stattdessen die Rechnung stornieren.
+Pick a range of one year or less.,Einen Bereich von höchstens einem Jahr wählen.
+That stay is not checked in here - a bill can only be charged to an in-house guest.,Dieser Aufenthalt ist hier nicht eingecheckt – eine Rechnung kann nur einem Hausgast berechnet werden.
+That guest is not staying in this room.,Dieser Gast wohnt nicht in dieser Einheit.
+"Room {0} cannot take charges to the room (set at check-in). Take payment at the outlet, or ask the front desk.",Einheit {0} kann keine Posten auf die Einheit annehmen (beim Check-in festgelegt). Die Zahlung an der Verkaufsstelle annehmen oder die Rezeption fragen.
+The till this bill was taken on is already closed and counted. Ask a manager to correct it.,"Die Kasse, an der diese Rechnung genommen wurde, ist bereits geschlossen und gezählt. Eine Leitung um Korrektur bitten."
+Payment mode changed from {0} to {1}: {2},Zahlungsart von {0} auf {1} geändert: {2}
+Who authorized the NC? (captain / chef / GM…),Wer hat die Freibestellung (NC) genehmigt? (Servicechef / Küchenchef / GM …)
+Pick a void reason from the list.,Einen Stornogrund aus der Liste wählen.
+That bill belongs to another outlet.,Diese Rechnung gehört zu einer anderen Verkaufsstelle.
+This bill is for the in-house guest of its room.,Diese Rechnung gilt für den Hausgast ihrer Einheit.
+Room {0} has no checked-in guest. Room charges need an in-house stay - take this as a walk-in bill instead.,Einheit {0} hat keinen eingecheckten Gast. Zimmerposten brauchen einen Aufenthalt im Haus – stattdessen als Walk-in-Rechnung nehmen.
+This bill is already marked {0}.,Diese Rechnung ist bereits als {0} markiert.
+The kitchen already has {0}. Void it with a reason instead.,Die Küche hat bereits {0}. Stattdessen mit Begründung stornieren.
+No guest has that phone number yet. Add their name to create one.,"Zu dieser Telefonnummer gibt es noch keinen Gast. Den Namen hinzufügen, um einen anzulegen."
+Look up by room number or by the guest's last name (2+ letters).,Nach Einheitennummer oder Nachname des Gastes suchen (mindestens 2 Buchstaben).
+"ticket_id is required (the POS check number, up to 140 characters).","ticket_id ist erforderlich (die POS-Belegnummer, bis zu 140 Zeichen)."
+Describe the charge (e.g. 'Rooftop bar - check 1042').,Den Posten beschreiben (z. B. „Rooftop-Bar – Beleg 1042“).
+Name the room or the reservation to charge.,Die zu belastende Einheit oder Reservierung benennen.
+charge_type must be one of: {0}.,charge_type muss einer von diesen sein: {0}.
+Room {0} is not a room of this property.,Einheit {0} gehört nicht zu diesem Objekt.
+{0} is over this property's limit for one POS room charge ({1}). Settle it at the outlet or ask the front desk.,{0} überschreitet das Limit dieses Objekts für eine POS-Einheitenbuchung ({1}). An der Verkaufsstelle begleichen oder die Rezeption fragen.
+POS ticket {0} was already posted with a different amount or stay. Use a new ticket number.,POS-Beleg {0} wurde bereits mit anderem Betrag oder Aufenthalt gebucht. Eine neue Belegnummer verwenden.
+Test page,Testseite
+That terminal is not at this property.,Dieses Terminal gehört nicht zu diesem Objekt.
+Unknown printer.,Unbekannter Drucker.
+This printer is not a print station.,Dieser Drucker ist keine Druckstation.
+Give the printer a name.,Dem Drucker einen Namen geben.
+Unknown connection type.,Unbekannte Verbindungsart.
+A Direct IP printer needs its IP address.,Ein Direct-IP-Drucker braucht seine IP-Adresse.
+The fallback printer must be at this property.,Der Ersatzdrucker muss zu diesem Objekt gehören.
+"A printer has to print KOTs, bills, or both.","Ein Drucker muss KOTs, Rechnungen oder beides drucken."
+Unknown order.,Unbekannte Bestellung.
+That printer is not at this property.,Dieser Drucker gehört nicht zu diesem Objekt.
+A printer can't be its own fallback.,Ein Drucker kann nicht sein eigener Ersatz sein.
+"If you can read this, the printer works","Ist dies lesbar, funktioniert der Drucker"
+The print station could not print.,Die Druckstation konnte nicht drucken.
+There's already a printer called {0}.,Es gibt bereits einen Drucker namens {0}.
+Outlet {0} is not at this property.,Verkaufsstelle {0} gehört nicht zu diesem Objekt.
+No property configured for this site.,Für diese Website ist kein Objekt konfiguriert.
+Online booking is not enabled for this property.,Die Online-Buchung ist für dieses Objekt nicht aktiviert.
+Stays longer than 30 nights: please contact the hotel.,Aufenthalte über 30 Nächte: bitte das Hotel kontaktieren.
+This check-in link is not valid anymore.,Dieser Check-in-Link ist nicht mehr gültig.
+"The ID photo must be a JPEG, PNG or WebP image.","Das Ausweisfoto muss ein JPEG-, PNG- oder WebP-Bild sein."
+The ID photo is too large - please retake it.,Das Ausweisfoto ist zu groß – bitte erneut aufnehmen.
+ID type and number are required.,Ausweisart und -nummer sind erforderlich.
+Check-in details were already verified by the desk.,Die Check-in-Angaben wurden von der Rezeption bereits geprüft.
+Please accept the registration declaration to sign.,Zum Unterschreiben bitte die Meldeerklärung akzeptieren.
+The desk has already verified your check-in details.,Die Rezeption hat die Check-in-Angaben bereits geprüft.
+Laundry pickup is available once you're checked in.,Die Wäscheabholung ist nach dem Check-in verfügbar.
+At least one adult is required.,Mindestens ein Erwachsener ist erforderlich.
+Name and phone are required.,Name und Telefon sind erforderlich.
+Name and email are required.,Name und E-Mail-Adresse sind erforderlich.
+Property not found.,Objekt nicht gefunden.
+Child ages must be between 0 and 17.,Das Alter von Kindern muss zwischen 0 und 17 liegen.
+That room type is not at this property.,Dieser Einheitentyp gehört nicht zu diesem Objekt.
+Check-out cannot be before check-in.,Der Check-out darf nicht vor dem Check-in liegen.
+Say why the account is restricted - it shows to whoever tries to bill it.,"Angeben, warum das Konto eingeschränkt ist – es wird allen angezeigt, die darauf buchen wollen."
+Credit limit and credit days can't be negative.,Kreditlimit und Kredittage dürfen nicht negativ sein.
+Add at least one line to the invoice.,Mindestens eine Zeile zur Rechnung hinzufügen.
+Pick a different account to transfer to.,Ein anderes Konto für die Übertragung wählen.
+Both accounts must be at the same property.,Beide Konten müssen zum selben Objekt gehören.
+Nothing is owed on that bill on this account.,Auf diesem Konto ist für diese Rechnung nichts offen.
+An account's property and company can't change.,Objekt und Firma eines Kontos können nicht geändert werden.
+Quantity must be a whole number above zero.,Die Menge muss eine ganze Zahl über null sein.
+Every line needs a description.,Jede Zeile braucht eine Beschreibung.
+The city ledger account of {0} is disabled.,Das City-Ledger-Konto von {0} ist deaktiviert.
+The city ledger account of {0} is restricted{1}. Lift the restriction to bill it.,Das City-Ledger-Konto von {0} ist eingeschränkt{1}. Zum Abrechnen die Einschränkung aufheben.
+Company {0} not found.,Firma {0} nicht gefunden.
+Account number {0} is already used at this property.,Die Kontonummer {0} wird in diesem Objekt bereits verwendet.
+{0} already has an account here ({1}).,{0} hat hier bereits ein Konto ({1}).
+{0} can't be billed on an invoice.,{0} kann nicht auf einer Rechnung berechnet werden.
+Invalid status change,Ungültige Statusänderung
+Cannot move reservation from {0} to {1}.,Die Reservierung kann nicht von {0} auf {1} gesetzt werden.
+{0}: pick one of {1}.,{0}: eines von {1} wählen.
+Unknown settings page: {0},Unbekannte Einstellungsseite: {0}
+Your role can't change {0} settings.,Die Rolle kann die Einstellungen für {0} nicht ändern.
+{0} can't be switched off.,{0} kann nicht ausgeschaltet werden.
+{0} can't be below {1}.,{0} darf nicht unter {1} liegen.
+{0} can't be above {1}.,{0} darf nicht über {1} liegen.
+{0} isn't a setting on this page.,{0} ist keine Einstellung auf dieser Seite.
+{0} must be a number.,{0} muss eine Zahl sein.
+{0} must be a time like 14:00.,{0} muss eine Uhrzeit wie 14:00 sein.
+early check-in,früher Check-in
+late checkout,später Check-out
+"The guest checked in online. Review what they sent, then confirm.","Der Gast hat online eingecheckt. Das Eingesendete prüfen, dann bestätigen."
+Ask for the guest's name and a government ID.,Nach dem Namen des Gastes und einem amtlichen Ausweis fragen.
+No fixed deposit %: take an advance amount the guest agrees.,Kein fester Anzahlungs-%: einen mit dem Gast vereinbarten Anzahlungsbetrag erheben.
+"Review {0} open folio(s). Total charges {1}, paid {2}.","{0} offene(s) Gästekonto/-konten prüfen. Gesamtposten {1}, gezahlt {2}."
+No restaurant or minibar charges on this stay.,Keine Restaurant- oder Minibar-Posten bei diesem Aufenthalt.
+IDs are on file. Check them against the guest at the desk.,Ausweise liegen vor. An der Rezeption mit dem Gast abgleichen.
+Confirm guest name and arrival before cancelling.,Vor dem Stornieren Name und Anreise des Gastes bestätigen.
+Pick a free room for tonight before collecting.,Vor dem Einziehen eine freie Einheit für heute Nacht wählen.
+property and key are required to create an SOP.,Objekt und Schlüssel sind zum Anlegen einer SOP erforderlich.
+Whole place: the guest gets every room as one unit.,Gesamte Unterkunft: Der Gast erhält alle Einheiten als eine Einheit.
+Cancelling {0} · arrival {1}.,Stornierung von {0} · Anreise {1}.
+"Verify ID for {0}, capture on the GRC after check-in if needed.","Ausweis für {0} prüfen, bei Bedarf nach dem Check-in auf der Meldekarte erfassen."
+Confirm tonight's rate and meal plan before collecting.,Vor dem Einziehen den Preis und den Verpflegungsplan für heute Nacht bestätigen.
+Standard {0} · agreed {1} for {2}.,Standard {0} · vereinbart {1} für {2}.
+Confirm {0} in restaurant / minibar charges with the guest.,{0} an Restaurant- / Minibar-Posten mit dem Gast bestätigen.
+No discount or voucher lines on the folio.,Keine Rabatt- oder Gutscheinzeilen auf dem Gästekonto.
+ID still needed for: {0}.,Ausweis noch erforderlich für: {0}.
+{0}. Still to pay: {1}.,{0}. Noch zu zahlen: {1}.
+"Pick a clean, empty room of the booked type.","Eine saubere, leere Einheit des gebuchten Typs wählen."
+Deposit is taken or waived.,Die Kaution ist erhoben oder erlassen.
+Confirm you are cancelling {0}.,"Bestätigen, dass {0} storniert wird."
+{0} day(s) before arrival: inside the fee window. Estimated fee {1} ({2}).,{0} Tag(e) vor der Anreise: innerhalb der Gebührenfrist. Geschätzte Gebühr {1} ({2}).
+{0} day(s) before arrival: outside the fee window (or no fee). Cancellation is free.,{0} Tag(e) vor der Anreise: außerhalb der Gebührenfrist (oder keine Gebühr). Die Stornierung ist kostenlos.
+Tell the guest cancellation is free under the policy.,"Dem Gast mitteilen, dass die Stornierung nach der Richtlinie kostenlos ist."
+Pick a cancellation reason before confirming.,Vor dem Bestätigen einen Stornogrund wählen.
+Confirm only when the guest agrees. They get a cancellation number and a printable letter.,"Nur bestätigen, wenn der Gast zustimmt. Er erhält eine Stornierungsnummer und ein druckbares Schreiben."
+Policy deposit {0} ({1}% of stay). Still due {2}.,Richtlinien-Anzahlung {0} ({1} % des Aufenthalts). Noch fällig {2}.
+Expected deposit {0}. Still due {1}.,Erwartete Anzahlung {0}. Noch fällig {1}.
+Deposit secured ({0} received).,Anzahlung gesichert ({0} eingegangen).
+Deposit not open for collection on this booking.,Die Anzahlung ist für diese Buchung nicht zum Einziehen geöffnet.
+Confirm the payment link reached the guest.,"Bestätigen, dass der Zahlungslink den Gast erreicht hat."
+Property standard is {0}. Pick the agreed time for {1}.,Standard des Objekts ist {0}. Die vereinbarte Zeit für {1} wählen.
+Confirm the agreed time for {0}.,Die vereinbarte Zeit für {0} bestätigen.
+Damage / withhold of {0} is already on the bill: confirm with the guest.,Schaden / Einbehalt von {0} steht bereits auf der Rechnung: mit dem Gast bestätigen.
+Deposit is fully applied or refunded: nothing left to withhold.,Die Kaution ist vollständig angerechnet oder erstattet: nichts mehr einzubehalten.
+No security deposit on this stay. Note any damage as a Misc charge before settling.,Keine Kaution bei diesem Aufenthalt. Schäden vor dem Begleichen als Sonstiger Posten vermerken.
+{0}. Nothing to pay now.,{0}. Jetzt nichts zu zahlen.
+The card is signed.,Die Karte ist unterschrieben.
+Show the card to the guest and have them sign it.,Dem Gast die Karte zeigen und unterschreiben lassen.
+"Fee of {0} will be WAIVED: manager call, logged on the stay. Tell the guest cancellation is free.","Die Gebühr von {0} wird ERLASSEN: Entscheidung der Leitung, auf dem Aufenthalt protokolliert. Dem Gast mitteilen, dass die Stornierung kostenlos ist."
+Room {0} is Dirty: warn the guest before handing keys.,Einheit {0} ist „Schmutzig“: den Gast vor der Schlüsselübergabe warnen.
+Confirm with the guest: {0}.,Mit dem Gast bestätigen: {0}.
+"Enter the amount to collect, then confirm the walk-in.","Den einzuziehenden Betrag eingeben, dann den Walk-in bestätigen."
+Payment link already sent: follow up or record a desk payment of {0}.,Zahlungslink bereits gesendet: nachfassen oder eine Zahlung von {0} an der Rezeption erfassen.
+Confirm the guest has a receipt / link confirmation for {0}.,"Bestätigen, dass der Gast einen Beleg bzw. die Link-Bestätigung für {0} hat."
+"After collecting, give a receipt or confirm the link.",Nach dem Einziehen einen Beleg ausgeben oder den Link bestätigen.
+Deposit is secured: remaining stay balance settles at check-in / check-out.,Die Kaution ist gesichert: Der Restsaldo des Aufenthalts wird beim Check-in / Check-out beglichen.
+"Fee waived (free {0}). Confirm with the guest, then save.","Gebühr erlassen (kostenlos {0}). Mit dem Gast bestätigen, dann speichern."
+Agree a fee amount with the guest (or waive).,Mit dem Gast einen Gebührenbetrag vereinbaren (oder erlassen).
+"Save as waived: no folio charge, stay time still updates.","Als erlassen speichern: keine Gästekonto-Gebühr, die Aufenthaltszeit wird dennoch aktualisiert."
+Security deposit {0} is held ({1} refundable). Check the room; withhold damage or refund.,Die Kaution {0} wird gehalten ({1} erstattungsfähig). Die Einheit prüfen; Schäden einbehalten oder erstatten.
+Confirm discount / voucher / allowance lines totaling {0}.,"Rabatt-, Gutschein- und Nachlasszeilen von insgesamt {0} bestätigen."
+Guest pays the bill (no company on this stay).,Der Gast zahlt die Rechnung (keine Firma bei diesem Aufenthalt).
+Still to take: {0}.,Noch einzuziehen: {0}.
+Explain the {0} cancellation fee ({1}) before they confirm.,"Die Stornogebühr von {0} ({1}) erklären, bevor bestätigt wird."
+Reason on file: {0}.,Hinterlegter Grund: {0}.
+Room {0} is {1}: ready for walk-in.,Einheit {0} ist {1}: bereit für den Walk-in.
+Room {0} selected.,Einheit {0} ausgewählt.
+"Collecting {0} now, then check in and hand keys.","{0} werden jetzt eingezogen, dann einchecken und Schlüssel übergeben."
+Collect {0} at the desk or send a payment link.,{0} an der Rezeption einziehen oder einen Zahlungslink senden.
+Still due {0} before arrival (or at check-in). Tell the guest clearly.,Noch fällig {0} vor der Anreise (oder beim Check-in). Dem Gast klar mitteilen.
+Agreed fee {0} for {1}. Confirm with the guest before posting.,Vereinbarte Gebühr {0} für {1}. Vor dem Buchen mit dem Gast bestätigen.
+{0} existing {1} line(s) totaling {2}: avoid a duplicate unless intentional.,"{0} bestehende(r) {1}-Posten über insgesamt {2}: Duplikate vermeiden, sofern nicht beabsichtigt."
+Bill-to for {0}: {1}. Alcohol always bills the guest.,Rechnungsempfänger für {0}: {1}. Alkohol wird immer dem Gast berechnet.
+Room {0} is not cleaned yet. Pick a clean room or ask housekeeping first.,Einheit {0} ist noch nicht gereinigt. Eine saubere Einheit wählen oder zuerst das Housekeeping fragen.
+Room {0} is ready.,Einheit {0} ist bereit.
+security deposit {0},Kaution {0}
+advance {0},Anzahlung {0}
+Collect {0} (or note company billing) before handing keys.,"{0} einziehen (oder Firmenabrechnung vermerken), bevor Schlüssel übergeben werden."
+Hand over keys for room {0}. {1},Schlüssel für Einheit {0} übergeben. {1}
+"Welcome, please let us know if you need anything.",Willkommen. Bei Wünschen gerne melden.
+Part paid {0}: give a receipt for what was taken.,Teilweise gezahlt {0}: für das Eingezogene einen Beleg ausgeben.
+"Quote free, half night ({0}), or full night ({1}) for {2}.","Kostenlos, halbe Nacht ({0}) oder volle Nacht ({1}) für {2} anbieten."
+"Corporate stay for {0}, confirm which charges the company pays.","Firmenaufenthalt für {0}: bestätigen, welche Posten die Firma zahlt."
+Collect {0} before departure.,{0} vor der Abreise einziehen.
+{0} key(s) issued.,{0} Schlüssel ausgegeben.
+Post {0} as {1} on the folio.,{0} als {1} auf das Gästekonto buchen.
+Refund {0} before departure.,{0} vor der Abreise erstatten.
+Balances are clear: ready to check out.,Salden sind ausgeglichen: bereit zum Check-out.
+OTA prepaid stay with nothing held for extras. Blocking charges to the room is safer.,"OTA-Aufenthalt, vorausbezahlt, ohne Rückhalt für Extras. Das Sperren von Posten auf die Einheit ist sicherer."
+Charges to the room are allowed unless you block them.,"Posten auf die Einheit sind erlaubt, sofern sie nicht gesperrt werden."
+"{0} can move to the city ledger (company has credit). Confirm, then check out.","{0} kann auf das City Ledger verschoben werden (Firma hat Kredit). Bestätigen, dann auschecken."
+Wish farewell and return the remaining deposit of {0}.,Verabschieden und die restliche Kaution von {0} zurückgeben.
+Booking notes: {0},Buchungsnotizen: {0}
+Enter a valid email address.,Eine gültige E-Mail-Adresse eingeben.
+Enter their name.,Den Namen eingeben.
+That account can't be managed here.,Dieses Konto kann hier nicht verwaltet werden.
+Pick at least one role.,Mindestens eine Rolle wählen.
+You can only give access to your own properties.,Zugriff kann nur auf die eigenen Objekte gegeben werden.
+Only IT can change an IT administrator.,Nur die IT kann eine IT-Administration ändern.
+This person has access beyond your properties - ask IT.,Diese Person hat Zugriff über die eigenen Objekte hinaus – die IT fragen.
+You can't change your own access - ask another admin.,Der eigene Zugriff kann nicht geändert werden – eine andere Administration fragen.
+You can't change your own job title - ask another admin.,Die eigene Berufsbezeichnung kann nicht geändert werden – eine andere Administration fragen.
+Only IT can grant or remove the IT administrator role.,Nur die IT kann die Rolle IT-Administration vergeben oder entziehen.
+Unknown role: {0},Unbekannte Rolle: {0}
+You don't have access to {0}.,Kein Zugriff auf {0}.
+Unknown property: {0},Unbekanntes Objekt: {0}
+"{0} is a guest account, not staff.","{0} ist ein Gästekonto, kein Personal."
+"Pick a month as YYYY-MM, like 2026-10.","Einen Monat als JJJJ-MM wählen, z. B. 2026-10."
+Only an open ticket can be started.,Nur ein offenes Ticket kann gestartet werden.
+Write the note first.,Zuerst die Notiz schreiben.
+Say why it is being reopened.,"Angeben, warum es wieder geöffnet wird."
+This ticket is already open.,Dieses Ticket ist bereits offen.
+This ticket is {0}. Reopen it before assigning it.,Dieses Ticket ist {0}. Vor dem Zuweisen wieder öffnen.
+This ticket is already {0}.,Dieses Ticket ist bereits {0}.
+{0} is not an active user.,{0} ist kein aktiver Benutzer.
+{0} cannot be assigned tickets (needs a front desk or housekeeping role).,{0} können keine Tickets zugewiesen werden (erfordert eine Rolle in Rezeption oder Housekeeping).
+Enter the endpoint URL.,Die Endpunkt-URL eingeben.
+The URL is too long.,Die URL ist zu lang.
+Webhook URLs must use https://.,Webhook-URLs müssen https:// verwenden.
+Don't put credentials in the URL - verify the signature instead.,Keine Zugangsdaten in die URL schreiben – stattdessen die Signatur prüfen.
+The URL has no host.,Die URL hat keinen Host.
+Webhooks can't be sent to internal hosts.,Webhooks können nicht an interne Hosts gesendet werden.
+"Webhooks can't be sent to private, loopback or internal addresses.","Webhooks können nicht an private, Loopback- oder interne Adressen gesendet werden."
+Pick at least one event.,Mindestens ein Ereignis wählen.
+That webhook belongs to another property.,Dieser Webhook gehört zu einem anderen Objekt.
+Switch the webhook on first.,Den Webhook zuerst einschalten.
+That is not a valid URL.,Das ist keine gültige URL.
+The host {0} can't be resolved.,Der Host {0} kann nicht aufgelöst werden.
+Unknown event {0}. Use one of: {1}.,Unbekanntes Ereignis {0}. Eines verwenden aus: {1}.
+Kamra front-end is not built. Run <code>cd apps/kamra/frontend && yarn install && yarn build</code> (Frappe Cloud runs this automatically on deploy).,Das Kamra-Frontend ist nicht gebaut. <code>cd apps/kamra/frontend && yarn install && yarn build</code> ausführen (Frappe Cloud führt dies beim Deployment automatisch aus).
+"VAT number (15 digits, starting and ending with 3)","Umsatzsteuernummer (15 Ziffern, beginnend und endend mit 3)"
+Seller name,Name des Verkäufers
+Commercial Registration,Handelsregistereintrag
+Street,Straße
+District,Bezirk
+City,Stadt
+Building number (4 digits),Hausnummer (4 Ziffern)
+Postal code (5 digits),Postleitzahl (5 Ziffern)
+Contact from {0} could not be saved on the guest profile and is kept here: {1},Der Kontakt von {0} konnte nicht im Gästeprofil gespeichert werden und wird hier aufbewahrt: {1}
+No room mappings yet - map your room types to the provider's room and rate ids first.,Noch keine Einheitenzuordnungen – zuerst die Einheitentypen den Zimmer- und Preis-IDs des Anbieters zuordnen.
+No room type matches it.,Kein Einheitentyp passt dazu.
+Provider rate plan {0} is already mapped on this connection.,Der Preisplan {0} des Anbieters ist in dieser Verbindung bereits zugeordnet.
+"Rate plan {0} adds a fixed amount: on the channels it applies every night, on direct bookings once per stay.","Der Preisplan {0} addiert einen festen Betrag: Auf den Kanälen gilt er jede Nacht, bei Direktbuchungen einmal pro Aufenthalt."
+"Rate plan {0} belongs to {1}, not to this connection's property {2}.","Der Preisplan {0} gehört zu {1}, nicht zum Objekt {2} dieser Verbindung."
+Rate plan {0} is priced per person; Kamra sends one price per room.,Der Preisplan {0} ist pro Person bepreist; Kamra sendet einen Preis pro Einheit.
+Several rate plans of this room match no Kamra rate plan: map them by hand.,Mehrere Preispläne dieser Einheit passen zu keinem Kamra-Preisplan: von Hand zuordnen.
+The channel manager has {0} rooms of {1}; Kamra has {2}.,Der Channel Manager hat {0} Einheiten von {1}; Kamra hat {2}.
+The channel manager sells in {0}; this property is in {1}.,Der Channel Manager verkauft in {0}; dieses Objekt ist in {1}.
+The channel manager's property time zone is {0}; this property's is {1}.,Die Zeitzone des Objekts im Channel Manager ist {0}; die dieses Objekts ist {1}.
+{0} does not take ARI changes.,{0} nimmt keine ARI-Änderungen an.
+% of Total,% der Gesamtsumme
+(none),(keine)
+"A charge or payment is on the bill: void it, or check the guest out.",Ein Posten oder eine Zahlung liegt auf der Rechnung: stornieren oder den Gast auschecken.
+A correction can't repost as {0}.,Eine Korrektur kann nicht als {0} neu gebucht werden.
+A new company payment request is always Pending.,Eine neue Firmenzahlungsanfrage ist immer „Ausstehend“.
+"A security deposit is held for this stay: release or refund it first, or check the guest out.",Für diesen Aufenthalt wird eine Kaution gehalten: zuerst freigeben oder erstatten oder den Gast auschecken.
+"A security deposit is refunded from the stay's deposit (refund_deposit), not from the bill.","Eine Kaution wird aus der Kaution des Aufenthalts erstattet (refund_deposit), nicht von der Rechnung."
+A {0} line can't be corrected here. Room nights change through the stay's rate; reverse an allowance or discount with a charge.,Ein {0}-Posten kann hier nicht korrigiert werden. Zimmernächte ändern sich über den Preis des Aufenthalts; einen Nachlass oder Rabatt mit einem Posten umkehren.
+ADR / ARR Target,ADR- / ARR-Ziel
+AI access (MCP),KI-Zugriff (MCP)
+AI access over MCP,KI-Zugriff über MCP
+API Endpoint Override,API-Endpunkt (Übersteuerung)
+API Key,API-Schlüssel
+API Key / Password,API-Schlüssel / Passwort
+API Keys,API-Schlüssel
+API Username,API-Benutzername
+Accepted At,Akzeptiert am
+Access Expires,Zugang läuft ab
+Access Instructions,Zugangsanweisungen
+Access Released,Zugang freigegeben
+Access Released On,Zugang freigegeben am
+Access Token Hash,Zugriffstoken-Hash
+Account,Konto
+Account Number,Kontonummer
+Acknowledgements (JSON),Bestätigungen (JSON)
+Action Type,Aktionstyp
+Active,Aktiv
+Actor (User),Ausführende Person (Benutzer)
+Actual Check In,Tatsächlicher Check-in
+Actual Check Out,Tatsächlicher Check-out
+Actual Pax,Tatsächliche Personenzahl
+Actually Served,Tatsächlich serviert
+Actuals,Ist-Werte
+Add at most 500 rooms at a time.,Höchstens 500 Einheiten auf einmal hinzufügen.
+Add-ons,Zusatzleistungen
+Additional number,Zusätzliche Nummer
+Address,Adresse
+Address Line,Adresszeile
+Address Proof,Adressnachweis
+Adjustment Type,Anpassungstyp
+Adjustment Value,Anpassungswert
+Adults Capacity,Kapazität Erwachsene
+Advance %,Anzahlung %
+Advance Deposit %,Anzahlung %
+Advance Deposit % must be between 0 and 100.,Der Anzahlungs-% muss zwischen 0 und 100 liegen.
+Advance Due,Anzahlung fällig
+Advance Paid,Anzahlung gezahlt
+Advance Received,Anzahlung eingegangen
+After Discount,Nach Rabatt
+After Snapshot,Zustand nachher
+Age,Alter
+Age Stated by Guest,Vom Gast angegebenes Alter
+Agent,Vermittler
+Agent Commission,Agenturprovision
+Agent Name,Name der Agentur
+Agent Type,Agenturtyp
+Agreed Nightly Rate,Vereinbarter Preis pro Nacht
+Agreed Rate,Vereinbarter Preis
+Air Conditioning,Klimaanlage
+Airport / Station Drop,Transfer zum Flughafen / Bahnhof
+Airport / Station Pickup,Abholung vom Flughafen / Bahnhof
+Alcohol,Alkohol
+Alcohol cannot be billed to a company folio.,Alkohol kann nicht auf ein Firmengästekonto berechnet werden.
+Allergens,Allergene
+Allocations,Zuordnungen
+Allowance Serial,Nachlass-Seriennummer
+Allowed Modes,Zulässige Arten
+Allowed Payment Modes,Zulässige Zahlungsarten
+Allowed Shortfall %,Zulässiger Fehlbetrag %
+Amenities,Ausstattung
+Amenities List,Ausstattungsliste
+Amenity,Ausstattung
+Amount After Tax,Betrag nach Steuer
+Amount Before Tax,Betrag vor Steuer
+Amount Posted,Gebuchter Betrag
+Amount before tax,Betrag vor Steuer
+Amounts,Beträge
+An AI agent can't confirm a company payment. Ask Finance.,Ein KI-Agent kann eine Firmenzahlung nicht bestätigen. Die Finanzabteilung fragen.
+An AI agent can't put a bill in dispute. Ask Finance.,Ein KI-Agent kann eine Rechnung nicht in Streit setzen. Die Finanzabteilung fragen.
+An AI agent can't reverse a company payment. Ask Finance.,Ein KI-Agent kann eine Firmenzahlung nicht stornieren. Die Finanzabteilung fragen.
+Answer,Antwort
+App ID,App-ID
+App Secret,App-Geheimnis
+App URL,App-URL
+App address,App-Adresse
+Approval,Freigabe
+Approved on,Freigegeben am
+Area (sq ft),Fläche (sq ft)
+Area Sqft,Fläche (Quadratfuß)
+Arrival & transport,Anreise & Transport
+Arrival Mode,Anreiseart
+Arrival Time,Ankunftszeit
+Arrived At,Angekommen um
+Assigned At,Zugewiesen um
+Assigned By,Zugewiesen von
+Assigned To,Zugewiesen an
+Assignment,Zuweisung
+At,Um
+Attempts,Versuche
+Audit,Prüfung
+Audit Pack,Prüfpaket
+Auth,Auth
+Auto Assignable,Automatisch zuweisbar
+Auto Posted,Automatisch gebucht
+Auto Price,Automatischer Preis
+Auto-send self check-in links to arrivals,Self-Check-in-Links automatisch an Anreisende senden
+Autonomy,Autonomie
+Available,Verfügbar
+Balance After,Saldo danach
+Balance Due,Offener Saldo
+Banquet Menu,Bankettkarte
+Base Occupancy,Basisbelegung
+Base Price,Basispreis
+Base Price (BAR),Basispreis (BAR)
+Base URL,Basis-URL
+Batch,Charge
+Bathroom Type,Badtyp
+Bed Type,Bettentyp
+Before Snapshot,Zustand vorher
+Behaviour,Verhalten
+Beo Generated On,BEO erstellt am
+Bill Printer,Rechnungsdrucker
+Bill To Name,Rechnung an (Name)
+Bill date,Rechnungsdatum
+Billable Hours,Abrechenbare Stunden
+Billing,Abrechnung
+Billing Address,Rechnungsadresse
+Billing Name,Rechnungsname
+Billing Rules,Abrechnungsregeln
+Blacklist Reason,Grund der Sperre
+Blacklisted,Gesperrt
+Block Cutoff Date,Stichtag der Blockierung
+Block Hours,Blockierte Stunden
+Block Rate,Blockpreis
+Block Released On,Block freigegeben am
+Block write tools,Schreibende Tools sperren
+Blocked MCP tools,Gesperrte MCP-Tools
+Blocked Rooms,Blockierte Einheiten
+Blocking Checks Open,Offene blockierende Prüfungen
+Booked By,Gebucht von
+Booked By (if not the guest),Gebucht von (falls nicht der Gast)
+Booked Check Out,Gebuchter Check-out
+Booker Name,Name der buchenden Person
+Booker Phone,Telefon der buchenden Person
+Booking Engine,Buchungsmaschine
+Booking Engine Enabled,Buchungsmaschine aktiviert
+Booking Engine Language,Sprache der Buchungsmaschine
+Booking Mode,Buchungsmodus
+Booking Page Accent,Akzentfarbe der Buchungsseite
+Booking Payment,Buchungszahlung
+Booking Terms & Policies,Buchungsbedingungen & Richtlinien
+Booking Type,Buchungsart
+Buffer After Ready (minutes),Puffer nach „Bereit“ (Minuten)
+Building number,Gebäudenummer
+Business Date,Geschäftstag
+Buy Rate,Einkaufspreis
+By,Nach
+CSID certificate (binarySecurityToken),CSID-Zertifikat (binarySecurityToken)
+CSID secret,CSID-Geheimnis
+Cancel Approved By,Stornierung freigegeben von
+Cancel Reason,Stornogrund
+Cancellation,Stornierung
+Cancellation Fee,Stornogebühr
+Cancellation Note,Stornonotiz
+Cancellation Number,Stornierungsnummer
+Cancellation Policy,Stornierungsrichtlinie
+Cancellation Reason,Stornogrund
+Cancellation Tiers,Storno-Stufen
+Cancelled At,Storniert um
+Cancelled By,Storniert von
+Cancelled On,Storniert am
+Capacity,Kapazität
+Capacity & Attributes,Kapazität & Merkmale
+Captain,Kapitän
+Caption,Bildunterschrift
+Cash Collected,Eingezogenes Bargeld
+Cash Count,Kassenzählung
+Cash Drops,Kasseneinlagen
+Cashier ID,Kassen-ID
+Cashier Terminal,Kassenterminal
+Ceiling Price,Höchstpreis
+Chain,Kette
+Change Note,Änderungsnotiz
+Channel / Notes,Kanal / Notizen
+Channel Manager & OTA Strategy,Channel Manager & OTA-Strategie
+Charge,Posten
+Charge %,Aufschlag %
+Charge Type,Postentyp
+Charge type,Postentyp
+Chargeable,Berechenbar
+Charged,Berechnet
+Charges,Posten
+Charges Total,Posten gesamt
+Charges move only to a stay that is checked in.,Posten gehen nur auf einen eingecheckten Aufenthalt.
+Check In Date,Check-in-Datum
+Check Out Date,Check-out-Datum
+Check-in Link Sent,Check-in-Link gesendet
+Check-in Steps,Check-in-Schritte
+Check-in Time,Check-in-Zeit
+Check-in record,Check-in-Datensatz
+Check-out Business Date,Geschäftstag des Check-outs
+Check-out Time,Check-out-Zeit
+Check-out time must be after check-in.,Die Check-out-Zeit muss nach dem Check-in liegen.
+Checked In At,Eingecheckt um
+Checked In By,Eingecheckt von
+Child Age Limit,Altersgrenze für Kinder
+Child Package Rate,Kinder-Paketpreis
+Child Price,Kinderpreis
+Children Capacity,Kapazität Kinder
+Children Count Towards Base Occupancy,Kinder zählen zur Basisbelegung
+Children Policy,Kinderregelung
+Choose Refund or Keep as forfeited deposit.,„Erstatten“ oder „Als verfallene Kaution behalten“ wählen.
+Claimed at,Beansprucht um
+Clean Duration (minutes),Reinigungsdauer (Minuten)
+Cleaning Fee Taxable,Reinigungsgebühr steuerpflichtig
+Clear message text after (days),Nachrichtentext löschen nach (Tagen)
+Client ID,Client-ID
+Client Name,Client-Name
+Close,Schließen
+Close Notes,Abschlussnotizen
+Closed At,Geschlossen um
+Closed By,Geschlossen von
+Closed On,Geschlossen am
+Closed Out By,Abgeschlossen von
+Closed Out On,Abgeschlossen am
+Closing Cash,Kassenendbestand
+Code,Code
+Code Challenge,Code Challenge
+Code Expires,Code läuft ab
+Code Hash,Code-Hash
+Collected,Kassiert
+Collected Amount,Eingezogener Betrag
+Collected At,Eingezogen um
+Collected By,Eingezogen von
+Column Break A,Spaltenumbruch A
+Column Break At,Spaltenumbruch At
+Column Break B,Spaltenumbruch B
+Column Break C,Spaltenumbruch C
+Column Break Ch,Spaltenumbruch Ch
+Column Break D,Spaltenumbruch D
+Column Break E,Spaltenumbruch E
+Column Break Loc,Spaltenumbruch Loc
+Column Break P,Spaltenumbruch P
+Column Break Snap,Spaltenumbruch Snap
+Columns JSON,Spalten-JSON
+Commercial Registration (CRN),Handelsregisternummer (CRN)
+Commercial Terms,Geschäftsbedingungen
+Commission %,Provision %
+Company Name,Firmenname
+Company emails at {0},Firmen-E-Mails bei {0}
+Competition Group,Wettbewerbsgruppe
+Completed By,Erledigt von
+Completed On,Erledigt am
+Complimentary,Kostenfrei
+Complimentary (no charge),Kostenfrei (keine Berechnung)
+Confirm Channel,Bestätigungskanal
+Confirm or reject it from the company account.,Über das Firmenkonto bestätigen oder ablehnen.
+Confirmed Night Rates,Bestätigte Nachtpreise
+Connect key,Schlüssel verbinden
+Connection,Verbindung
+Consecutive failures,Aufeinanderfolgende Fehler
+Consent changed on,Einwilligung geändert am
+Consent source,Quelle der Einwilligung
+Contact Email,Kontakt-E-Mail
+Contact For This Stay,Kontakt für diesen Aufenthalt
+Contact Name,Kontaktname
+Contact Phone,Kontakttelefon
+Contact name,Name der Kontaktperson
+Content,Inhalt
+Contract Signed On,Vertrag unterschrieben am
+Copies,Kopien
+Corrects Line,Korrigiert Zeile
+Cost & Margin,Kosten & Marge
+Cost / Unit,Kosten / Einheit
+Cost Amount,Kostenbetrag
+Cost Per Portion,Kosten pro Portion
+Cost Rate,Kostensatz
+Couldn't reach {0}.,{0} war nicht erreichbar.
+Count whole notes and coins of a positive value.,Ganze Scheine und Münzen mit positivem Wert zählen.
+Counted By,Gezählt von
+Counted Cash,Gezähltes Bargeld
+Country,Land
+Course,Gang
+Course Type,Gangtyp
+Courses,Gänge
+Credentials,Zugangsdaten
+Credit,Gutschrift
+Credit Allowed,Kredit erlaubt
+Credit Days,Kredittage
+Credit Limit,Kreditlimit
+Credit Note Number,Gutschriftsnummer
+Credits invoice,Schreibt Rechnung gut
+Cuisine,Küche
+Currency,Währung
+Customer Email,E-Mail des Kunden
+Customer Name,Kundenname
+Customer Phone,Telefon des Kunden
+Damage Amount,Schadensbetrag
+Damage Note,Schadensnotiz
+Dataset,Datensatz
+Date & Setup,Datum & Einrichtung
+Date of Birth,Geburtsdatum
+Day Use,Tagesnutzung
+Day-use billing,Abrechnung der Tagesnutzung
+Days Before Arrival,Tage vor der Anreise
+Days of Week,Wochentage
+Days to push,Zu verschiebende Tage
+Debit,Soll
+Decided By,Entschieden von
+Decided On,Entschieden am
+Decision Note,Entscheidungsnotiz
+Default Opening Float,Standard-Anfangsbestand
+Default Tax %,Standardsteuer %
+Default company billing,Standard-Firmenabrechnung
+Default for Property,Standard für das Objekt
+Delivered At,Geliefert um
+Delivered By,Geliefert von
+Delivery Address,Lieferadresse
+Demand Premium %,Nachfrageaufschlag %
+Departure Flight / Train No.,Abflug- / Zugnummer bei Abreise
+Departure Mode,Abreiseart
+Departure Time,Abreisezeit
+Deposit %,Anzahlung %
+Deposit & Close-out,Anzahlung & Abschluss
+Deposit Due,Anzahlung fällig
+Deposit Held,Anzahlung gehalten
+Deposit Refunded,Anzahlung erstattet
+Description (public),Beschreibung (öffentlich)
+Direction,Richtung
+Disabled,Deaktiviert
+Discount %,Rabatt %
+Discount Amount,Rabattbetrag
+Discount Reason,Rabattgrund
+Discount Type,Rabattart
+Dish,Gericht
+Dish Name,Gerichtname
+Dishes,Gerichte
+Dishes Offered,Angebotene Gerichte
+Dispute Note,Streitnotiz
+Disputed,Strittig
+Document,Dokument
+Done By,Erledigt von
+Done On,Erledigt am
+Driving Directions,Anfahrtsbeschreibung
+Drop Note,Einlagenotiz
+Due By,Fällig bis
+Due Date,Fälligkeitsdatum
+Due Days Before Event,Fälligkeit (Tage vor der Veranstaltung)
+Duration,Dauer
+Duration (ms),Dauer (ms)
+EGS private key,Privater EGS-Schlüssel
+EGS serial,EGS-Seriennummer
+Each note count needs a value and a number.,Jede Zählzeile braucht einen Wert und eine Anzahl.
+Early Check-in Requested,Früher Check-in angefragt
+Early Departure Reason,Grund der frühen Abreise
+Email,E-Mail
+Email schedule,E-Mail-Zeitplan
+Enabled,Aktiviert
+End Date,Enddatum
+End Time,Endzeit
+End of Day,Tagesabschluss
+End of Day Progress (JSON),Fortschritt des Tagesabschlusses (JSON)
+End of Day Step,Schritt des Tagesabschlusses
+Endpoint URL,Endpunkt-URL
+Enquiry,Anfrage
+Enquiry Date,Anfragedatum
+Enter the first and last room number as whole numbers.,Die erste und letzte Einheitennummer als ganze Zahlen eingeben.
+Entered by,Erfasst von
+Environment,Umgebung
+Erase guest data after (months),Gästedaten löschen nach (Monaten)
+Error,Fehler
+Escalation Level,Eskalationsstufe
+Event,Veranstaltung
+Event (Venue Booking),Veranstaltung (Raumbuchung)
+Event Date,Veranstaltungsdatum
+Event ID,Veranstaltungs-ID
+Event Name,Veranstaltungsname
+Event Order No.,Event-Order-Nr.
+Event Order Notes,Event-Order-Notizen
+Event Type,Veranstaltungsart
+Events,Veranstaltungen
+Evidence URL / Ref,Nachweis-URL / Referenz
+Exchange Rate,Wechselkurs
+Exclusions,Ausschlüsse
+Executed At,Ausgeführt um
+Expected Cash,Erwartetes Bargeld
+Expected Pax,Erwartete Personenzahl
+Expense category,Ausgabenkategorie
+Experience,Erlebnis
+Experience Name,Name des Erlebnisses
+Explainability,Erklärbarkeit
+Express Rate,Expresspreis
+External Account ID,Externe Konto-ID
+External IDs,Externe IDs
+Extra Adult Package Rate,Paketpreis zusätzlicher Erwachsener
+Extra Adult Price,Preis zusätzlicher Erwachsener
+Extra Bed Policy,Regelung für Zusatzbetten
+Extra Bed Price,Preis Zustellbett
+Extra Beds,Zustellbetten
+Extra Guest Charge / Night,Gebühr zusätzlicher Gast / Nacht
+Extra Guests By Arrangement,Zusätzliche Gäste nach Vereinbarung
+Extra Instructions,Zusätzliche Anweisungen
+Extra Night Fixed Override,Fester Preis Zusatznacht (Übersteuerung)
+Extra Night Fixed Override cannot be negative.,Der feste Preis für Zusatznächte darf nicht negativ sein.
+Extra Night Rate %,Preis Zusatznacht %
+Extra Night Rate % cannot be negative.,Der Preis für Zusatznächte in % darf nicht negativ sein.
+F&B So Far,F&B bisher
+FAQs,FAQs
+FX Amount,Fremdwährungsbetrag
+FX Service Tax %,Servicesteuer Fremdwährung %
+Failed Attempts,Fehlversuche
+Fallback printer,Ersatzdrucker
+Filters JSON,Filter-JSON
+Finished At,Beendet um
+Fired At,Ausgelöst um
+First Name,Vorname
+First Response At,Erste Reaktion um
+Flight / Train No.,Flug- / Zugnummer
+Float & Close,Anfangsbestand & Schließen
+Floating Cashier,Springende Kassenkraft
+Floor Plan,Raumplan
+Floor Price,Mindestpreis
+Floor order,Etagenreihenfolge
+Floor plan,Raumplan
+Floor {0} still has rooms. Move them to another floor before deleting it.,Etage {0} hat noch Einheiten. Diese vor dem Löschen auf eine andere Etage verschieben.
+Floor {0} still has rooms. Move them to another floor before disabling it.,Etage {0} hat noch Einheiten. Diese vor dem Deaktivieren auf eine andere Etage verschieben.
+Flyer / Promo Image,Flyer / Werbebild
+Folio Type,Gästekontotyp
+Folio balance after,Gästekontosaldo danach
+Folios Opened,Eröffnete Gästekonten
+Follow Up Date,Wiedervorlagedatum
+Food Cost,Wareneinsatz
+Food Type,Speisenart
+For,Für
+Found By,Gefunden von
+Found In Room,Gefunden in Einheit
+Found On,Gefunden am
+Free Cancellation (days before arrival),Kostenlose Stornierung (Tage vor der Anreise)
+Free Child Age,Kostenloses Kinderalter
+From,Von
+From Session,Aus Sitzung
+From Terminal,Von Terminal
+Full Name,Vollständiger Name
+Full Payment On Booking,Volle Zahlung bei Buchung
+GL Code,GL-Code
+GST,GST
+GST %,GST %
+GST Rules,GST-Regeln
+GST above threshold,GST über Schwelle
+GST at/below threshold,GST bis zur Schwelle
+GSTIN,GSTIN
+Gateway,Gateway
+Gender,Geschlecht
+Generated By,Erstellt von
+Generated On,Erstellt am
+Give a reason to move charges to another stay.,Zum Verschieben von Posten auf einen anderen Aufenthalt einen Grund angeben.
+"Give one target: to_folio, to_company or to_reservation.","Ein Ziel angeben: to_folio, to_company oder to_reservation."
+Give the amount and the mode to refund.,Betrag und Zahlungsart der Erstattung angeben.
+Give the counted cash or the count by note.,Das gezählte Bargeld oder die Zählung nach Scheinen angeben.
+Give the floor a name.,Der Etage einen Namen geben.
+Google Maps Link,Google-Maps-Link
+Google Reviews URL,URL der Google-Bewertungen
+Grand Total,Gesamtsumme
+Grant Types,Grant-Typen
+Green Room,Umkleideraum
+Green Room / Change Room,Umkleideraum / Wechselraum
+Green Room Block,Umkleideraum-Blockierung
+Green Room Complimentary,Umkleideraum kostenfrei
+Green Room From,Umkleideraum ab
+Green Room To,Umkleideraum bis
+Gross Margin,Bruttomarge
+Group Booking,Gruppenbuchung
+Group By JSON,Gruppierung-JSON
+Group Name,Gruppenname
+Group Type,Gruppentyp
+Gst Amount,GST-Betrag
+Guaranteed Pax,Garantierte Personenzahl
+Guest / Room,Gast / Einheit
+Guest Allergy,Allergie des Gastes
+Guest Category,Gästekategorie
+Guest Confirmed On,Vom Gast bestätigt am
+Guest ETA,Voraussichtliche Ankunft des Gastes
+Guest Name,Gastname
+Guest Notes,Gästenotizen
+Guest Picks,Auswahl des Gastes
+Guest Response,Antwort des Gastes
+Guest Response Notes,Notizen zur Antwort des Gastes
+Guests,Gäste
+Hall Waived,Saalmiete erlassen
+Hall deal,Saalvereinbarung
+Hand-over,Übergabe
+Handed Over To,Übergeben an
+Handover Notes,Übergabenotizen
+Hero Image,Titelbild
+Hold Expires On,Reservierung läuft ab am
+Hold Window (minutes),Haltefenster (Minuten)
+Holiday / Long Weekend,Feiertag / Langes Wochenende
+Hourly Rate,Stundenpreis
+Hourly View End,Ende der Stundenansicht
+Hourly View Start,Beginn der Stundenansicht
+House Item,Hausartikel
+House Rules,Hausregeln
+Housekeeping Status,Housekeeping-Status
+How it bills,Wie abgerechnet wird
+Hub URL,Hub-URL
+Hurdle (Min Sell Rate),Mindestgrenze (Mindestverkaufspreis)
+ID Captured By,Ausweis erfasst von
+ID Captured On,Ausweis erfasst am
+ID Date of Expiry,Ausweis gültig bis
+ID Date of Issue,Ausweis ausgestellt am
+ID Discarded,Ausweis verworfen
+ID Document,Ausweisdokument
+ID Number,Ausweisnummer
+ID Place of Issue,Ausstellungsort des Ausweises
+ID Retention,Aufbewahrung des Ausweises
+ID Type,Ausweisart
+IP address,IP-Adresse
+ITC Claimable,ITC einforderbar
+Icon URL,Symbol-URL
+Id Number,Ausweisnummer
+Id Type,Ausweisart
+Idempotency Key,Idempotenzschlüssel
+Identity,Identität
+Image,Bild
+Image Url,Bild-URL
+Inbound Webhook Secret,Eingehendes Webhook-Geheimnis
+Included,Inklusive
+Inclusions,Inklusivleistungen
+Infants,Kleinkinder
+Ingredient,Zutat
+Input GST %,Vorsteuer GST %
+Input Tax,Vorsteuer
+Input Tax Credit,Vorsteuerabzug
+Inspect Duration (minutes),Prüfdauer (Minuten)
+Instruction,Anweisung
+Instructions,Anleitung
+Interested in,Interessiert an
+Internal Notes,Interne Notizen
+Invoice Date,Rechnungsdatum
+Invoice Footer,Rechnungsfußzeile
+Invoice No,Rechnungsnr.
+Invoice No.,Rechnungsnr.
+Invoice Number,Rechnungsnummer
+Invoice chain,Rechnungskette
+Invoice counter (ICV),Rechnungszähler (ICV)
+Invoice hash,Rechnungs-Hash
+Invoice number,Rechnungsnummer
+Is Alcohol,Ist Alkohol
+Is Default,Ist Standard
+Issue Date,Ausstellungsdatum
+Issued At,Ausgestellt um
+Issued By,Ausgestellt von
+Issued on,Ausgestellt am
+Item Description,Artikelbeschreibung
+Item Name,Artikelname
+Item Type,Artikeltyp
+Itinerary,Reiseroute
+KOT #,KOT-Nr.
+KOT Fired,KOT gestartet
+KOT no,KOT-Nr.
+KOT on send,KOT beim Senden
+Key Card Numbers,Schlüsselkartennummern
+Key ID,Schlüssel-ID
+Key Secret,Schlüsselgeheimnis
+Keys Issued,Schlüssel ausgegeben
+Keys Issued At,Schlüssel ausgegeben um
+Keys Issued By,Schlüssel ausgegeben von
+Kind,Art
+Kitchen,Küche
+Kitchen Access,Küchenzugang
+Label,Bezeichnung
+Language,Sprache
+Last ARI push,Letzter ARI-Push
+Last Counted,Zuletzt gezählt
+Last Name,Nachname
+Last Reject Reason,Letzter Ablehnungsgrund
+Last Used,Zuletzt verwendet
+Last delivery,Letzte Lieferung
+Last delivery on,Letzte Lieferung am
+Last error,Letzter Fehler
+Last invoice counter (ICV),Letzter Rechnungszähler (ICV)
+Last invoice hash (PIH for the next),Letzter Rechnungs-Hash (PIH für den nächsten)
+Last printed,Zuletzt gedruckt
+Last push result,Letztes Push-Ergebnis
+Last seen,Zuletzt gesehen
+Last sent on,Zuletzt gesendet am
+Late Arrival,Späte Anreise
+Late Arrivals Held,Gehaltene späte Anreisen
+Late Cancellation Fee,Gebühr bei später Stornierung
+Late Check-out Requested,Später Check-out angefragt
+Latitude,Breitengrad
+Layout Note,Layout-Notiz
+Ledger,Ledger
+Left At,Abgereist um
+Legacy Charge Type,Alter Postentyp
+Legal Name,Rechtlicher Name
+Line Items,Positionen
+Linked,Verknüpft
+Listing Slug,Inserat-Slug
+Live Counter,Live-Zähler
+Local Amount,Lokaler Betrag
+Locale,Gebietsschema
+Location,Standort
+Location Address,Standortadresse
+Location Name,Standortname
+Locked Until,Gesperrt bis
+Log,Protokoll
+Logo,Logo
+Longitude,Längengrad
+Lost Reason,Verlustgrund
+Main Room,Haupteinheit
+Main Room Pays,Haupteinheit zahlt
+Manifest,Manifest
+Manifest URL,Manifest-URL
+Margin %,Marge %
+Market Mid Rate,Marktmittelpreis
+Market Segment,Marktsegment
+Marketing consent,Werbeeinwilligung
+Max Cash Refund,Max. Bar-Erstattung
+Max Extra Beds,Max. Zustellbetten
+Max Occupants,Max. Personen
+Max Total Occupants,Max. Personen insgesamt
+Max Uses,Max. Verwendungen
+Meal Period,Mahlzeitenzeitraum
+Meal Plan,Verpflegungsplan
+Media Gallery,Mediengalerie
+Media Type,Medientyp
+Menu Chosen,Gewählte Karte
+Menu Code,Kartencode
+Menu Item,Menüartikel
+Menu Name,Kartenname
+Message,Nachricht
+Messages,Nachrichten
+Meta Cloud API (bring your own number),Meta Cloud API (eigene Nummer verwenden)
+Meta Description,Meta-Beschreibung
+Meta Message ID,Meta-Nachrichten-ID
+Meta Title,Meta-Titel
+Method,Methode
+Milestone,Meilenstein
+Min Nights,Min. Nächte
+Minimum F&B spend,Mindestumsatz F&B
+Minimum Hours,Mindeststunden
+Minimum Nights,Mindestnächte
+Minimum Pax,Mindestpersonenzahl
+Minimum Stay Nights,Mindestaufenthalt (Nächte)
+Minutes Saved,Eingesparte Minuten
+Model,Modell
+Modifier Type,Modifikatortyp
+Modifier Value,Modifikatorwert
+Module,Modul
+Modules,Module
+Modules In Use,Verwendete Module
+Money,Geld
+Month (YYYY-MM),Monat (JJJJ-MM)
+Moving charges to another stay needs Finance or Hotel Admin.,Das Verschieben von Posten auf einen anderen Aufenthalt erfordert die Finanzabteilung oder Hotel-Admin.
+Must Reset,Muss zurückgesetzt werden
+NC Authorized By,NC genehmigt von
+NC Reference,NC-Referenz
+Name,Name
+Name the connected app.,Die verbundene App benennen.
+Nationality,Staatsangehörigkeit
+Negotiated Rate / Night,Verhandelter Preis / Nacht
+Negotiated Rate Plan,Verhandelter Preisplan
+Negotiation History,Verhandlungsverlauf
+Net Cost,Nettokosten
+Never send guest contact details to the AI provider,Kontaktdaten von Gästen nie an den KI-Anbieter senden
+Next retry at,Nächster Versuch um
+Night,Nacht
+Night Audit Run,Nachtprüfungslauf
+Night Of,Nacht vom
+No Charge (NC),Kostenfrei (NC)
+No Shows Flagged,Markierte No-Shows
+No Small-group Rate,Kein Kleingruppenpreis
+No-show Charge,No-Show-Gebühr
+No-show Credit Default,Standard für No-Show-Guthaben
+No-show Fees Waived (OTA),No-Show-Gebühren erlassen (OTA)
+No-show Timing,No-Show-Zeitpunkt
+Non-Refundable,Nicht erstattungsfähig
+Non-refundable,Nicht erstattbar
+"Not sent, see the Error Log: {0}","Nicht gesendet, siehe Fehlerprotokoll: {0}"
+Note,Notiz
+Notes,Notizen
+Notes for the Manager,Notizen für die Leitung
+Nothing to correct: the line already has these values.,Nichts zu korrigieren: Die Zeile hat bereits diese Werte.
+Notification,Benachrichtigung
+OAuth Redirect URI,OAuth-Weiterleitungs-URI
+OG Image,OG-Bild
+OTA Booking Ref,OTA-Buchungsreferenz
+OTA Daily Rate,OTA-Tagespreis
+OTA Daily Rate cannot be negative.,Der OTA-Tagespreis darf nicht negativ sein.
+OTA Live Key,OTA-Live-Schlüssel
+OTA Strategy,OTA-Strategie
+Occupancy % Target,Auslastungsziel %
+Occupancy Status,Belegungsstatus
+Occupancy-based Pricing,Belegungsabhängige Preisgestaltung
+Occupants,Personen
+On Hand,Vorhanden
+On Pack List,Auf der Packliste
+Onboarding status,Onboarding-Status
+Only a No Show's credit is settled here (this one is {0}).,Hier wird nur das Guthaben eines No-Shows beglichen (dieser ist {0}).
+Only a checked-in stay can have its check-in reversed.,Nur bei einem eingecheckten Aufenthalt kann der Check-in rückgängig gemacht werden.
+Only {0} of this payment is left to refund.,Von dieser Zahlung sind nur noch {0} zu erstatten.
+Open Items,Offene Posten
+Opened At,Geöffnet um
+Opened On,Geöffnet am
+Opening Cash,Kassenanfangsbestand
+Opening Float,Anfangsbestand
+Operations,Betrieb
+Order Total,Bestellsumme
+Order Type,Bestellart
+Ordered On The Day,Am Tag bestellt
+Original Invoice,Ursprüngliche Rechnung
+Outbound URL,Ausgehende URL
+Outlet Name,Name der Verkaufsstelle
+Outlet Type,Art der Verkaufsstelle
+Outside this service account's scope: {0},Außerhalb des Bereichs dieses Dienstkontos: {0}
+Over-capacity Reason,Grund der Kapazitätsüberschreitung
+Overbooking Allowance %,Überbuchungskontingent %
+Owner,Eigentümer
+PIN,PIN
+PMS Slug,PMS-Slug
+POS Order,POS-Bestellung
+POS Outlet,POS-Verkaufsstelle
+POS ticket,POS-Beleg
+Package Name,Paketname
+Package Nights,Paketnächte
+Package Nights must be at least 1.,Die Paketnächte müssen mindestens 1 betragen.
+Package Rate 1 Pax,Paketpreis 1 Person
+Package Rate 2 Pax (Base),Paketpreis 2 Personen (Basis)
+Package Rate 2 Pax (Base) must be greater than zero.,Der Paketpreis für 2 Personen (Basis) muss größer als null sein.
+Package Rate 3 Pax,Paketpreis 3 Personen
+Package Rate 4 Pax,Paketpreis 4 Personen
+Package Rate 5 Pax,Paketpreis 5 Personen
+Package Rates,Paketpreise
+Page Slug,Seiten-Slug
+Paid Outs,Auszahlungen
+Paid by,Bezahlt von
+Paired On,Gekoppelt am
+Pairing Code Expires,Kopplungscode läuft ab
+Pairing Code Hash,Kopplungscode-Hash
+Paper width,Papierbreite
+Par Level,Mindestbestand (Par)
+Party Size,Gruppengröße
+Pay By,Zahlung per
+Pay at Hotel,Zahlung im Hotel
+Pay within (days),Zahlung innerhalb von (Tagen)
+Payee,Zahlungsempfänger
+Payload,Nutzdaten
+Payment,Zahlung
+Payment Link,Zahlungslink
+Payment Link ID,Zahlungslink-ID
+Payment Mode,Zahlungsart
+Payment Policy,Zahlungsrichtlinie
+Payment Terms,Zahlungsbedingungen
+Payment Terms Note,Notiz zu Zahlungsbedingungen
+Payment link amount,Betrag des Zahlungslinks
+Payments Total,Zahlungen gesamt
+Pays Own Charges,Zahlt eigene Posten
+Per,Pro
+Per-Txn Limit,Limit pro Transaktion
+Pet Charge Basis,Grundlage der Haustiergebühr
+Pets,Haustiere
+Pets Allowed,Haustiere erlaubt
+Pets Policy,Haustierregelung
+Petty Cash,Portokasse
+Petty cash float,Portokasse (Anfangsbestand)
+Phase 2 (integration) - EGS unit,Phase 2 (Integration) – EGS-Einheit
+Phone,Telefon
+Phone Number,Telefonnummer
+Photo,Foto
+Photo Gallery,Fotogalerie
+Physical Rooms,Physische Einheiten
+Pick a different folio to move the charges to.,Ein anderes Gästekonto für die Verschiebung der Posten wählen.
+Pick at least one account.,Mindestens ein Konto wählen.
+Pick at least one property.,Mindestens ein Objekt wählen.
+Pick at least one scope.,Mindestens einen Bereich wählen.
+Pick statement or monthly.,„Kontoauszug“ oder „Monatlich“ wählen.
+Pick the charges to move.,Die zu verschiebenden Posten wählen.
+Pick the company to open an account for.,"Die Firma wählen, für die ein Konto geöffnet wird."
+Picked Up At,Abgeholt um
+Pickup Note,Abholnotiz
+Pincode,Postleitzahl
+Place Of Supply,Ort der Leistung
+Planned Check-in Time,Geplante Check-in-Zeit
+Planned Check-out Time,Geplante Check-out-Zeit
+Port,Port
+Portion Per Pax,Portion je Person
+Postal code,Postleitzahl
+Posted,Gebucht
+Posted At,Gebucht um
+Posted By,Gebucht von
+Posted To Folio,Gebucht auf Gästekonto
+Posted by,Gebucht von
+Posting Date,Buchungsdatum
+Pre-arrival Check-in,Check-in vor der Anreise
+Pre-check-in Signature,Unterschrift beim Pre-Check-in
+Pre-checkin,Pre-Check-in
+Pre-checkin Submitted On,Pre-Check-in eingereicht am
+Pre-checkin Token,Pre-Check-in-Token
+Pre-checks,Vorprüfungen
+Premium %,Aufschlag %
+Prep Station,Zubereitungsstation
+Prepared At,Zubereitet um
+Previous invoice hash (PIH),Hash der vorherigen Rechnung (PIH)
+Price,Preis
+Price Impact,Preiswirkung
+Price Per Adult,Preis je Erwachsener
+Price Per Child,Preis je Kind
+Printed By,Gedruckt von
+Printed On,Gedruckt am
+Printed at,Gedruckt um
+Printer,Drucker
+Printer name,Druckername
+Prints Bills,Druckt Rechnungen
+Prints KOTs,Druckt KOTs
+Prints KOTs for,Druckt KOTs für
+Privacy,Datenschutz
+Privacy contact (Grievance Officer),Datenschutzkontakt (Beschwerdestelle)
+Procedure,Verfahren
+Profile Name,Profilname
+Properties,Objekte
+Property,Objekt
+Property Amenities (public),Ausstattung des Objekts (öffentlich)
+Property Kind,Objektart
+Property Name,Objektname
+Protect Late Arrivals,Späte Anreisen schützen
+Provider,Anbieter
+Provider Credentials,Zugangsdaten des Anbieters
+Provider Rate Plan ID,Preisplan-ID des Anbieters
+Provider Room ID,Zimmer-ID des Anbieters
+Provider's Property ID,Objekt-ID des Anbieters
+Purpose of Visit,Reisezweck
+"QR (TLV, base64)","QR (TLV, base64)"
+Qty Change,Mengenänderung
+Question,Frage
+Quote Emailed On,Angebot per E-Mail gesendet am
+Quote Issued On,Angebot ausgestellt am
+Quote Number,Angebotsnummer
+Quote Snapshot,Angebots-Snapshot
+Quote Valid Till,Angebot gültig bis
+Quote Version,Angebotsversion
+Quoted Amount,Angebotener Betrag
+Rack Rate,Rack Rate
+Rate / Pax,Preis / Person
+Rate Basis,Preisgrundlage
+Rate Date,Preisdatum
+Rate Lock Key,Preissperre-Schlüssel
+Rate Plan,Preisplan
+Rate Plan Name,Name des Preisplans
+Rate plan {0} is a block plan but has no block rate.,"Der Preisplan {0} ist ein Blockplan, hat aber keinen Blockpreis."
+Rate plan {0} is hourly but has no hourly rate.,"Der Preisplan {0} ist stündlich, hat aber keinen Stundenpreis."
+Rates Include Tax,Preise inkl. Steuer
+Rationale,Begründung
+Ready By,Fertig bis
+Ready Marked By,Als bereit markiert von
+Reason Code,Grundcode
+Receipt Date,Belegdatum
+Received At,Eingegangen um
+Received By,Empfangen von
+Received On,Eingegangen am
+Recipe,Rezept
+Recipients,Empfänger
+Recorded by,Erfasst von
+Recorded for Finance to confirm. It does not change the account until a Finance user confirms it with their PIN.,"Für die Bestätigung durch die Finanzabteilung erfasst. Das Konto ändert sich erst, wenn eine Person aus der Finanzabteilung es mit ihrer PIN bestätigt."
+Redirect URI,Weiterleitungs-URI
+Redirect URIs,Weiterleitungs-URIs
+Reference Doctype,Referenz-Doctype
+Reference Name,Referenzname
+Reference Type,Referenztyp
+Refresh Expires,Refresh läuft ab
+Refresh Token Hash,Refresh-Token-Hash
+Refund Of,Erstattung zu
+Refund Reference,Erstattungsreferenz
+Refundable Balance,Erstattungsfähiger Saldo
+Refundable Deposit,Erstattungsfähige Kaution
+Refunded Amount,Erstatteter Betrag
+Registration Consent Given,Meldeeinwilligung erteilt
+Registration Fee,Registrierungsgebühr
+Relation,Beziehung
+Release Non-guaranteed Arrivals At,Nicht garantierte Anreisen freigeben um
+Released By,Freigegeben von
+Released On,Freigegeben am
+Rental GST %,Miet-GST %
+Report Pack (JSON),Berichtspaket (JSON)
+Requested At,Angefragt um
+Requested By,Angefragt von
+Requested On,Angefragt am
+Require Pre-check-in for Access,Pre-Check-in für den Zugang verlangen
+Require cashier PIN on money actions,Kassen-PIN bei Geldaktionen verlangen
+Required,Erforderlich
+Required Amount,Erforderlicher Betrag
+Requirements,Anforderungen
+Requires Inspection,Erfordert Kontrolle
+Requires Supervisor,Erfordert Aufsicht
+Reserved At,Reserviert um
+Resolution Note,Lösungsnotiz
+Resolved By,Gelöst von
+Resolved On,Gelöst am
+Response code,Antwortcode
+Restricted,Eingeschränkt
+Restricted Reason,Grund der Einschränkung
+Return,Rückgabe
+Returned On,Zurückgegeben am
+RevPAR Target,RevPAR-Ziel
+Revenue Group,Umsatzgruppe
+Reversal Of,Storno von
+Reverses,Kehrt um
+Reverses Line,Kehrt Zeile um
+Revised By,Überarbeitet von
+Revised On,Überarbeitet am
+Revision,Revision
+Revisions,Überarbeitungen
+Revoked,Widerrufen
+Revoked By,Widerrufen von
+Revoked On,Widerrufen am
+Room Assigned At,Einheit zugewiesen um
+Room Assigned By,Einheit zugewiesen von
+Room Block,Einheitenkontingent
+Room Category,Einheitenkategorie
+Room Charges Allowed,Zimmerposten erlaubt
+Room Charges Posted,Zimmerposten gebucht
+Room GST Mode,GST-Modus Einheit
+Room Number,Einheitennummer
+Room Rate,Zimmerpreis
+Room Revenue Target,Zimmerumsatzziel
+Room Type,Einheitentyp
+Room Type / Listing,Einheitentyp / Inserat
+Room Type Code,Einheitentyp-Code
+Room Type Name,Einheitentyp-Name
+Room levy %,Einheitenabgabe %
+Room levy name,Name der Einheitenabgabe
+"Room type code must use Latin letters or digits (e.g. DLX, RWBT3).","Der Einheitentyp-Code darf nur lateinische Buchstaben oder Ziffern enthalten (z. B. DLX, RWBT3)."
+Room type {0} does not belong to this property.,Der Einheitentyp {0} gehört nicht zu diesem Objekt.
+Room {0} is part of sellable unit {1} and cannot change room type.,Einheit {0} ist Teil der verkaufbaren Einheit {1} und kann den Einheitentyp nicht ändern.
+Rooms Blocked,Blockierte Einheiten
+Rooms Released,Freigegebene Einheiten
+Rooms per Night,Einheiten pro Nacht
+Route,Route
+Routes,Routen
+Rules,Regeln
+Run By,Ausgeführt von
+Running Cost,Laufende Kosten
+SLA,SLA
+SLA Breached,SLA verletzt
+Sales Owner,Vertriebsverantwortung
+Same-day Turn Allowed,Wechsel am selben Tag erlaubt
+Saved KOT tickets,Gespeicherte KOT-Tickets
+Say what the company disputes - it shows on the bill.,"Angeben, was die Firma beanstandet – es wird auf der Rechnung angezeigt."
+Say why the check-in is being reversed.,"Angeben, warum der Check-in rückgängig gemacht wird."
+Say why the payment is rejected - it goes on the record.,"Angeben, warum die Zahlung abgelehnt wird – es wird aktenkundig."
+Schedule,Zeitplan
+Scope,Bereich
+Scopes,Bereiche
+Season Name,Name der Saison
+Seats (round table),Plätze (runder Tisch)
+Section,Bereich
+Sections,Bereiche
+Security Deposit Amount,Kautionsbetrag
+Selections,Auswahlen
+Sell Message,Verkaufstext
+Sell Rate,Verkaufspreis
+Sellable Unit,Verkaufbare Einheit
+Seller (as registered with ZATCA),Verkäufer (wie bei ZATCA registriert)
+Send at,Senden um
+Sent {0} to {1} companies.,{0} an {1} Firmen gesendet.
+Serial,Seriennummer
+Service Account,Dienstkonto
+Service Charge,Servicegebühr
+Service Charge %,Servicegebühr %
+Service Cost,Leistungskosten
+Service Style,Servicestil
+Service Tax,Servicesteuer
+Session,Sitzung
+Set By,Festgelegt von
+Setting,Einstellung
+Settled By,Beglichen von
+Setup Access From,Einrichtungszugang ab
+Setup Notes,Einrichtungsnotizen
+Setup Style,Bestuhlungsart
+Setup Styles,Bestuhlungsarten
+Setup Wishlist,Einrichtungswunschliste
+Shared with property,Mit dem Objekt geteilt
+Shift Date,Schichtdatum
+Short Code,Kurzcode
+Shortage Note,Fehlmengenvermerk
+Show In App Switcher,Im App-Umschalter anzeigen
+Show On Booking Page,Auf der Buchungsseite anzeigen
+Showcase,Schaufenster
+Showcase Media,Schaufenster-Medien
+Shown To Guest,Dem Gast angezeigt
+Shown To Roles,Rollen angezeigt
+Signed By A Trusted Key,Mit vertrauenswürdigem Schlüssel signiert
+Signing secret,Signaturgeheimnis
+Single Occupancy Price,Einzelbelegungspreis
+Site Slug,Website-Slug
+Slab Threshold (₹/night),Staffelschwelle (₹/Nacht)
+Small-group Days,Kleingruppen-Tage
+Small-group Price Per Adult,Kleingruppenpreis je Erwachsener
+Small-group Rate Needs The Whole Stay,Kleingruppenpreis gilt nur für den gesamten Aufenthalt
+Small-group Threshold (adults),Kleingruppenschwelle (Erwachsene)
+Smoking Allowed,Rauchen erlaubt
+Snapshot JSON,Snapshot-JSON
+Snapshots (undo),Snapshots (Rückgängig)
+"Some accounts are not on this property, or are closed.",Einige Konten gehören nicht zu diesem Objekt oder sind geschlossen.
+Sort JSON,Sortierung-JSON
+Sort Order,Sortierreihenfolge
+Source DocType,Quell-DocType
+Source Name,Quellname
+Source type,Quelltyp
+Special Instructions,Besondere Anweisungen
+Special Requests,Besondere Wünsche
+Special instructions,Besondere Anweisungen
+Start Date,Startdatum
+Start Date cannot be after End Date.,Das Startdatum darf nicht nach dem Enddatum liegen.
+Start Time,Startzeit
+Started At,Gestartet um
+State,Bundesland
+Station,Station
+Stay,Aufenthalt
+Stay details,Aufenthaltsdetails
+Step Key,Schrittschlüssel
+Steps,Schritte
+Still owed,Noch offen
+Stock Posted,Bestand gebucht
+Subgroup,Untergruppe
+Subtotal,Zwischensumme
+Supplement Per Pax,Aufschlag pro Person
+Supplier,Lieferant
+Supplier's bill number,Rechnungsnummer des Lieferanten
+Sync,Sync
+System Card,System Karte
+System Cash,System Bar
+System Other,System Sonstiges
+System UPI,System UPI
+Table,Tisch
+Tables,Tische
+Task Type,Aufgabentyp
+Tax %,Steuer %
+Tax Amount,Steuerbetrag
+Tax Exempt,Steuerfrei
+Tax ID,Steuer-ID
+Tax Rate,Steuersatz
+Tax Total,Steuer gesamt
+Tax rate,Steuersatz
+Taxable Amount,Steuerpflichtiger Betrag
+Teardown By,Abbau durch
+Template,Vorlage
+Template Language Code,Sprachcode der Vorlage
+Template Tasks,Aufgabenvorlagen
+Template: booking confirmation,Vorlage: Buchungsbestätigung
+Template: payment request,Vorlage: Zahlungsaufforderung
+Template: room charge alert,Vorlage: Hinweis auf Zimmerposten
+Template: self check-in link,Vorlage: Self-Check-in-Link
+Tentative Until,Vorläufig bis
+Terminal,Terminal
+Terminal Name,Terminalname
+Test Mode,Testmodus
+That charge line is not on this folio.,Diese Postenzeile gehört nicht zu diesem Gästekonto.
+That is the same stay. Use to_folio.,Das ist derselbe Aufenthalt. to_folio verwenden.
+That payment is not on this folio.,Diese Zahlung gehört nicht zu diesem Gästekonto.
+That stay has no open guest folio.,Dieser Aufenthalt hat kein offenes Gästekonto.
+That stay is not at this property.,Dieser Aufenthalt gehört nicht zu diesem Objekt.
+The app didn't ask for: {0},Die App hat nicht angefragt: {0}
+The app manifest is too large.,Das App-Manifest ist zu groß.
+"The count by note adds up to {0}, not {1}.","Die Zählung nach Scheinen ergibt {0}, nicht {1}."
+The last room number must not be below the first.,Die letzte Einheitennummer darf nicht unter der ersten liegen.
+The lock system did not answer. Cancel the keys at the encoder.,Das Schließsystem hat nicht geantwortet. Die Schlüssel am Kodiergerät sperren.
+The manifest asks for unknown scopes: {0},Das Manifest verlangt unbekannte Bereiche: {0}
+The manifest needs a name.,Das Manifest braucht einen Namen.
+"The manifest needs an id: lowercase letters, digits and dashes.","Das Manifest braucht eine ID: Kleinbuchstaben, Ziffern und Bindestriche."
+The manifest's roles must be a list.,Die Rollen des Manifests müssen eine Liste sein.
+"The night audit has run since this check-in, so it can't be reversed. Check the guest out instead.","Seit diesem Check-in ist die Nachtprüfung gelaufen, daher kann er nicht rückgängig gemacht werden. Stattdessen den Gast auschecken."
+The received date can't be after the business date ({0}).,Das Eingangsdatum darf nicht nach dem Geschäftstag liegen ({0}).
+The start date is after the end date.,Das Startdatum liegt nach dem Enddatum.
+"This app's manifest is not signed by a trusted publisher. IT can allow unsigned, self-hosted apps in Marketplace.","Das Manifest dieser App ist nicht von einem vertrauenswürdigen Herausgeber signiert. Die IT kann nicht signierte, selbst betriebene Apps im Marketplace zulassen."
+This bill changed while it was being moved to the company's account. Try again.,Diese Rechnung hat sich beim Verschieben auf das Konto der Firma geändert. Erneut versuchen.
+This folio has no open balance. Use a refund or credit note instead.,Dieses Gästekonto hat keinen offenen Saldo. Stattdessen eine Erstattung oder Gutschrift verwenden.
+"This folio is settled - issue a credit note, or cancel the invoice first.",Dieses Gästekonto ist beglichen – eine Gutschrift ausstellen oder zuerst die Rechnung stornieren.
+This idempotency_key was already used for another correction.,Dieser idempotency_key wurde bereits für eine andere Korrektur verwendet.
+This key already opened another account ({0}).,Dieser Schlüssel hat bereits ein anderes Konto geöffnet ({0}).
+This line is itself a correction. Correct the reposted line instead.,Diese Zeile ist selbst eine Korrektur. Stattdessen die neu gebuchte Zeile korrigieren.
+This line was already corrected. Correct the reposted line instead.,Diese Zeile wurde bereits korrigiert. Stattdessen die neu gebuchte Zeile korrigieren.
+This no-show has no credit on its folio.,Dieser No-Show hat auf seinem Gästekonto kein Guthaben.
+"This pairing code is wrong, used or expired. Ask IT for a new one.","Dieser Kopplungscode ist falsch, verbraucht oder abgelaufen. Bei der IT einen neuen anfordern."
+This payment is already refunded in full.,Diese Zahlung ist bereits vollständig erstattet.
+This payment was already recorded on {0}.,Diese Zahlung wurde bereits am {0} erfasst.
+This payment was already reversed.,Diese Zahlung wurde bereits storniert.
+This payment was already {0}.,Diese Zahlung war bereits {0}.
+This service account has been revoked.,Dieses Dienstkonto wurde widerrufen.
+This service account has no properties.,Dieses Dienstkonto hat keine Objekte.
+This service account is revoked. Create a new one.,Dieses Dienstkonto ist widerrufen. Ein neues anlegen.
+This service account's scope has no MCP tools.,Der Bereich dieses Dienstkontos enthält keine MCP-Tools.
+This stay bills to no company. Set one with change_stay_company first.,Dieser Aufenthalt wird keiner Firma berechnet. Zuerst mit change_stay_company eine festlegen.
+Times Reopened,Anzahl der Wiedereröffnungen
+Times Used,Anzahl der Verwendungen
+Timezone,Zeitzone
+Timing,Zeitpunkt
+Title,Titel
+To,Bis
+To (exclusive),Bis (exklusiv)
+To Terminal,An Terminal
+Token Auth Method,Token-Auth-Methode
+Total Cost,Gesamtkosten
+Total excl. VAT,Gesamt ohne USt.
+Total incl. VAT,Gesamt inkl. USt.
+Totals,Summen
+Transaction Code,Buchungscode
+Travel Agent,Reisebüro
+Trigger,Auslöser
+TripAdvisor URL,TripAdvisor-URL
+Turnover Buffer (hours),Wechselpuffer (Stunden)
+UBL XML,UBL-XML
+UUID,UUID
+Unit,Einheit
+Unit Kind,Einheitenart
+Unit Name,Einheitenname
+Unknown ledger {0}.,Unbekanntes Ledger {0}.
+Unknown scope: {0},Unbekannter Bereich: {0}
+Url,URL
+Use Property Default Credit Days,Standard-Kredittage des Objekts verwenden
+User,Benutzer
+Usual expense category,Übliche Ausgabenkategorie
+VAT,USt.
+VAT / tax applies to the levy,USt. / Steuer gilt für die Abgabe
+VAT registration number,USt-IdNr.
+VIP,VIP
+Valet Parking,Parkservice
+Valid From,Gültig ab
+Valid To,Gültig bis
+Value,Wert
+Variance Approved By,Abweichung freigegeben von
+Variance Review,Prüfung der Abweichung
+Veg,Vegetarisch
+Vendor,Lieferant
+Vendor name,Lieferantenname
+Venue,Veranstaltungsort
+Venue Agreed Rate,Vereinbarter Saalpreis
+Venue Booking,Raumbuchung
+Venue Code,Saalcode
+Venue Name,Saalname
+Venue Rack Rate,Saal-Rack-Rate
+Venue Type,Saaltyp
+Verified By,Geprüft von
+Verified On,Geprüft am
+Version,Version
+View,Ansehen
+Void Approved By,Storno freigegeben von
+Void Reason,Stornogrund
+Void Seen,Storno gesehen
+Voided,Storniert
+Voided By,Storniert von
+Voucher,Gutschein
+Voucher Code,Gutscheincode
+Waiter,Servicekraft
+Waiters,Servicekräfte
+Waive No-show Fee for OTA Bookings,No-Show-Gebühr bei OTA-Buchungen erlassen
+Webhook,Webhook
+Webhook Secret,Webhook-Geheimnis
+Website,Website
+Weekday,Wochentag
+What it comes with,Was dabei ist
+What to say to the guest,Was dem Gast zu sagen ist
+What was proposed can't change. Reject it and record it again.,Das Vorgeschlagene kann nicht geändert werden. Ablehnen und neu erfassen.
+When Occupancy ≥ %,Wenn Auslastung ≥ %
+Where / Who,Wo / Wer
+Who,Wer
+Why it was cancelled,Warum es storniert wurde
+Withheld Amount,Einbehaltener Betrag
+You recorded this payment; another Finance user confirms it.,Diese Zahlung wurde erfasst; eine andere Person aus der Finanzabteilung bestätigt sie.
+ZATCA response,ZATCA-Antwort
+month-end bills for {0},Monatsendrechnungen für {0}
+statements,Kontoauszüge
+{0} already has a floor called {1}.,{0} hat bereits eine Etage namens {1}.
+"{0} answered {1}, not the app manifest.","{0} hat {1} geantwortet, nicht mit dem App-Manifest."
+{0} is already connected. Disconnect it first.,{0} ist bereits verbunden. Zuerst trennen.
+{0} is not a base64 Ed25519 public key.,{0} ist kein base64-codierter Ed25519-Public-Key.
+{0} is not a company payment.,{0} ist keine Firmenzahlung.
+{0} is not a note or coin here. Count in: {1}.,{0} ist hier kein Schein oder keine Münze. Zählen in: {1}.
+{0} is not a valid app manifest.,{0} ist kein gültiges App-Manifest.
+{0} is not billed on this account.,{0} wird auf diesem Konto nicht berechnet.
+{0} is not waiting to pair.,{0} wartet nicht auf die Kopplung.
+{0} is outside this service account's scope.,{0} liegt außerhalb des Bereichs dieses Dienstkontos.
+{0} is sold out for {1}: {2} of {3} sellable rooms sold ({4} out of order or blocked).,{0} ist für {1} ausverkauft: {2} von {3} verkaufbaren Einheiten verkauft ({4} außer Betrieb oder blockiert).
+"{0} must be on {1}, where the manifest is.","{0} muss auf {1} liegen, wo sich das Manifest befindet."
+{0} needs an admin and can't be in a scope.,{0} braucht eine Administration und kann nicht in einem Bereich sein.
