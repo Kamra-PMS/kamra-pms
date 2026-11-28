@@ -29,6 +29,13 @@ export function amt(n: unknown, money: Money, mixed = false) {
   return `${named ? `${money.code}\u00a0` : money.sym}${fmtAmount(n ?? 0, money.code)}`
 }
 
+/** Search results with the desk's own currency first. The server groups the hotels by
+ *  currency, cheapest first in each: a bare number can't rank two currencies. */
+export function deskFirst<T extends Priced>(rows: T[]): T[] {
+  const desk = locale().currency
+  return [...rows].sort((a, b) => Number(a.currency !== desk) - Number(b.currency !== desk))
+}
+
 export function tripMoney(legs: Leg[]) {
   return {
     /** total, advance required, advance paid, advance due */

@@ -9,7 +9,7 @@ import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Sheet } from "../components/ui/sheet"
 import { useLocale } from "../lib/money"
-import { amt, mixedCurrency, moneyOf, tripMoney } from "../lib/tripMoney"
+import { amt, deskFirst, mixedCurrency, moneyOf, tripMoney } from "../lib/tripMoney"
 import { useT, t as translate } from "../lib/i18n"
 import { useCashierAuth } from "../lib/cashierAuth"
 import { shiftDate } from "../lib/stay"
@@ -374,7 +374,7 @@ export default function CRS() {
               {t("No rooms across the chain for these dates and party.")}
             </CardContent></Card>
           )}
-          {data.properties.map((p) => (
+          {deskFirst(data.properties).map((p) => (
             <Card key={p.property}>
               <CardContent className="p-4">
                 <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">

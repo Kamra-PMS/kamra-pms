@@ -247,6 +247,43 @@ class ItineraryTestCase(_TripBase):
 		self.assertEqual(found[PROP_B]["from_rate"], room["per_night"])
 
 
+	def test_search_ranks_by_price_only_within_one_currency(self):
+		"""A bare number can't compare two currencies: hotels are grouped by
+		currency, cheapest first inside each."""
+		def order():
+			found = crs.crs_search(d(3), d(4))["properties"]
+			return [p["property"] for p in found if p["property"] in (PROP_A, PROP_B)]
+
+		frappe.db.set_value("Room Type", self.rt_b, "base_price", 500)
+		self.assertEqual(order(), [PROP_B, PROP_A], "same currency: cheapest first")
+		frappe.db.set_value("Property", PROP_B, "currency", "USD")
+		frappe.clear_document_cache("Property", PROP_B)
+		self.assertEqual(order(), [PROP_A, PROP_B], "500 dollars or cents are not under 1,000 rupees")
+
+	def totals(self, currency, *amounts):
+		"""A booked two-stay trip with these stay prices, read back."""
+		for prop in (PROP_A, PROP_B):
+			frappe.db.set_value("Property", prop, "currency", currency)
+			frappe.clear_document_cache("Property", prop)
+		itn = self.book()
+		for leg, amount in zip(itn["legs"], amounts):
+			frappe.db.set_value("Reservation", leg["reservation"], "amount_after_tax", amount)
+		return crs.get_itinerary(itn["name"])
+
+	def test_a_trip_total_is_its_stays_added_up_as_printed(self):
+		# each stay prints as 100.13, so the trip is 200.26, not 200.25
+		self.assertEqual(self.totals("INR", 100.125, 100.125)["total"], 200.26)
+
+	def test_a_rupiah_trip_total_adds_up_the_whole_rupiah_stays(self):
+		self.assertEqual(self.totals("IDR", 935000.5, 935000.5)["total"], 1870002)
+
+	def test_the_printed_total_can_be_taken_as_the_advance(self):
+		trip = self.totals("INR", 100.125, 100.125)
+		plan = crs.trip_advance_preview(trip["name"], amount=trip["total"])
+		self.assertEqual((plan["unpaid"], [leg["share"] for leg in plan["legs"]]),
+		                 (200.26, [100.13, 100.13]))
+
+
 class TripAdvanceTestCase(_TripBase):
 	"""One advance for the whole trip, split across the legs' folios, each
 	leg owing the advance % its own dates ask for."""

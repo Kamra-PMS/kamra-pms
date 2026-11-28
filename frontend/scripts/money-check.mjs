@@ -29,7 +29,7 @@ await build({
 // money.ts remembers the locale in localStorage when there is one; there is none here
 Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true })
 const { fmtAmount, fmtMoney, adoptUiLocale } = await import(pathToFileURL(path.join(dir, "money.js")).href)
-const { tripMoney, moneyOf, amt, mixedCurrency } = await import(pathToFileURL(path.join(dir, "tripMoney.js")).href)
+const { tripMoney, moneyOf, amt, mixedCurrency, deskFirst } = await import(pathToFileURL(path.join(dir, "tripMoney.js")).href)
 
 // until the desk's own currency is known, no stay is called foreign
 const early = await import(pathToFileURL(path.join(dir, "tripMoney.js")).href)
@@ -92,6 +92,12 @@ assert.equal(mixedCurrency([idr("Confirmed"), idr("Cancelled")]), false)
 assert.equal(mixedCurrency([idr("Confirmed"), usd("Cancelled")]), true, "a cancelled stay still shows on the trip")
 assert.equal(mixedCurrency([idr("Confirmed"), { status: "Confirmed" }]), false, "a stay without a code adds none")
 assert.equal(mixedCurrency([]), false)
+
+// search results: the desk's own currency first, the rest in the order the server grouped them
+const hotels = [{ property: "A", currency: "IDR" }, { property: "B", currency: "INR" }, { property: "C", currency: "USD" }, { property: "D", currency: "USD" }]
+adoptUiLocale({ currency: "USD", locale: "en", currency_symbol: "$" })
+assert.deepEqual(deskFirst(hotels).map((h) => h.property), ["C", "D", "A", "B"])
+assert.deepEqual(hotels.map((h) => h.property), ["A", "B", "C", "D"], "the server's list is left as it was")
 
 fs.rmSync(dir, { recursive: true, force: true })
 console.log("money-check: ok")
