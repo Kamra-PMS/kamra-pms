@@ -2,12 +2,14 @@
 
 With Rates Include Tax on, the quote took the F&B tax out of the meal price but
 the booking's nights kept the whole price, which the folio then billed with the
-tax on top. For each live booking, a night not yet on a bill is corrected to
-the booking's own saved quote when what it holds is exactly that figure plus
-the tax. The property's current setting is not consulted, so a booking quoted
-before tax is left alone whatever the setting says now. Nights already billed
-are not touched. Every booking changed, and every one that could not be checked
-(no saved quote), is listed in the Error Log. Safe to run again.
+tax on top. For each booking that can still be billed (any status but Checked
+Out, Cancelled and No Show: confirming a waitlisted or quoted stay does not
+price it again), a night not yet on a bill is corrected to the booking's own
+saved quote when what it holds is exactly that figure plus the tax. The
+property's current setting is not consulted, so a booking quoted before tax is
+left alone whatever the setting says now. Nights already billed are not
+touched. Every booking changed, and every one that could not be checked (no
+saved quote), is listed in the Error Log. Safe to run again.
 """
 
 import json
@@ -26,9 +28,9 @@ def execute():
 		   JOIN `tabReservation` r ON r.name = n.parent
 		    AND n.parenttype = 'Reservation'
 		   WHERE n.meal_amount > 0
-		     AND r.status IN ('Confirmed', 'Checked In', 'Held', 'Pending Payment')
+		     AND r.status NOT IN ('Checked Out', 'Cancelled', 'No Show')
 		   ORDER BY r.name, n.stay_date""", as_dict=True)
-	changed, unchecked = {}, set()
+	changed, unchecked, fnb_tax = {}, set(), {}
 	for row in rows:
 		if _charge_posted(row.reservation, "Meal Plan", str(row.stay_date)):
 			continue
@@ -36,7 +38,9 @@ def execute():
 		if quoted is None:
 			unchecked.add(row.reservation)
 			continue
-		tax = flt(_fnb_gst(row.property))
+		if row.property not in fnb_tax:
+			fnb_tax[row.property] = flt(_fnb_gst(row.property))
+		tax = fnb_tax[row.property]
 		held = flt(row.meal_amount)
 		if not tax or abs(held - quoted * (1 + tax / 100)) > max(held * 1e-6, 1e-5):
 			continue

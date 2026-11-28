@@ -6,7 +6,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, nowdate
 
-from kamra.api import create_booking, get_quote
+from kamra.api import create_booking, get_quote, promote_waitlist
 from kamra.folio import post_room_night
 from kamra.patches.v48 import take_tax_out_of_meal_nights as patch
 from kamra.pricing import quote
@@ -110,6 +110,33 @@ class TestMealPlanTax(IntegrationTestCase):
 				self.assertAlmostEqual(second, quoted, places=5)
 				patch.execute()
 				self.assertAlmostEqual(self.meals(res)[1], quoted, places=5)
+
+	def test_patch_corrects_every_booking_that_can_still_be_billed(self):
+		finished = ("Checked Out", "Cancelled", "No Show")
+		unfinished = ("Waitlist", "Inquiry", "Quoted", "Requested", "Held",
+		              "Pending Payment", "Confirmed", "Checked In")
+		bookings = {}
+		for status in unfinished + finished:
+			prop, rt, mp = self.hotel()
+			res, raw = self.old_booking(prop, rt, mp)
+			frappe.db.set_value("Reservation", res.name, "status", status)
+			bookings[status] = (res, raw)
+		patch.execute()
+		for status, (res, raw) in bookings.items():
+			with self.subTest(status=status):
+				quoted = frappe.parse_json(res.quote_snapshot)["meal_total"] / 2
+				self.assertAlmostEqual(self.meals(res)[0],
+				                       raw if status in finished else quoted, places=5)
+
+	def test_a_waitlisted_stay_bills_its_quote_once_confirmed(self):
+		prop, rt, mp = self.hotel()
+		res, _ = self.old_booking(prop, rt, mp)
+		frappe.db.set_value("Reservation", res.name, "status", "Waitlist")
+		patch.execute()
+		promote_waitlist(res.name)  # confirming does not price the stay again
+		total, _ = self.bill(res)
+		self.assertAlmostEqual(
+			total, frappe.parse_json(res.quote_snapshot)["amount_after_tax"], places=3)
 
 	def test_patch_leaves_a_booking_quoted_before_tax(self):
 		# booked while prices were before tax, the setting switched on afterwards
