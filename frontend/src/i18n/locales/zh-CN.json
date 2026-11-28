@@ -6155,7 +6155,7 @@
   "Trip {ref}": "行程 {ref}",
   "Trip {ref} booked: {n} stays.": "行程 {ref} 已预订：{n} 段住宿。",
   "TRIP CONFIRMATION": "行程确认单",
-  "Trip total, taxes in": "行程合计，含税",
+  "Trip total (taxes included)": "行程合计（含税）",
   "TripAdvisor": "TripAdvisor",
   "TripAdvisor URL": "TripAdvisor 链接",
   "Trips": "行程",

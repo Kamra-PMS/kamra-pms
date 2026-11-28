@@ -2433,7 +2433,25 @@ def _money(value) -> Decimal:
 
 def round_cents(value) -> float:
 	"""Half up to the cent, in Decimal (float round(2.345, 2) gives 2.34)."""
-	return float(_money(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+	return round_to(value, 2)
+
+
+def round_to(value, digits: int) -> float:
+	"""Half up to `digits` decimals, in Decimal."""
+	return float(_money(value).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
+
+
+# Where Babel's copy of the CLDR currency data differs from the browser's, which
+# the screens print with: a till showing whole rupiah must not record sen.
+_DIGITS_AS_SHOWN = {"COP": 0, "HUF": 0, "IDR": 0, "PKR": 0, "RSD": 2}
+
+
+def currency_digits(currency: str | None) -> int:
+	"""How many decimals an amount in this currency has, as the screens show it."""
+	from babel.numbers import get_currency_precision
+
+	code = (currency or "").upper()
+	return _DIGITS_AS_SHOWN.get(code, get_currency_precision(code))
 
 
 def fx_to_home(fx_amount, rate) -> float:

@@ -4,22 +4,20 @@ import { Link, useParams } from "react-router-dom"
 import { call } from "../lib/api"
 import { serverError } from "../lib/resource"
 import { Button } from "../components/ui/button"
-import { fmtAmount } from "../lib/money"
-import { tripMoney } from "../lib/tripMoney"
+import { useLocale } from "../lib/money"
+import { amt, mixedCurrency, moneyOf, tripMoney } from "../lib/tripMoney"
 import { useT } from "../lib/i18n"
 import type { Itinerary } from "./CRS"
 
 /** Printable confirmation for a whole trip: one reference, every stay in
  * date order with its own hotel, booking number and price. */
 
-const amt = (sym: string, n: number, currency?: string | null) =>
-  `${sym}${fmtAmount(n, currency)}`
-
 export default function TripConfirmation() {
   const { t } = useT()
   const { name } = useParams()
   const [d, setD] = useState<Itinerary | null>(null)
   const [error, setError] = useState<string | null>(null)
+  useLocale() // which currency is the desk's own: other stays are printed with their code
 
   useEffect(() => {
     if (name)
@@ -29,7 +27,8 @@ export default function TripConfirmation() {
 
   if (error) return <p className="py-10 text-center text-rose-600">{t(error)}</p>
   if (!d) return <p className="py-10 text-center text-zinc-400">{t("Loading…")}</p>
-  const { sym, code } = tripMoney(d.legs).live
+  const { live } = tripMoney(d.legs)
+  const mixed = mixedCurrency(d.legs)
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -62,7 +61,7 @@ export default function TripConfirmation() {
                 <div className="flex justify-between gap-2">
                   <span className="font-semibold">{l.property_name}{l.city ? `, ${l.city}` : ""}</span>
                   <span className={l.status === "Cancelled" ? "text-zinc-400 line-through" : ""}>
-                    {amt(l.currency_symbol, l.amount_after_tax, l.currency)}
+                    {amt(l.amount_after_tax, moneyOf(l), mixed)}
                   </span>
                 </div>
                 <p className="text-zinc-600">
@@ -80,19 +79,19 @@ export default function TripConfirmation() {
           {d.total != null ? (
             <>
               <div className="flex justify-between font-medium">
-                <span>{t("Trip total, taxes in")}</span><span>{amt(sym, d.total, code)}</span>
+                <span>{t("Trip total (taxes included)")}</span><span>{amt(d.total, live, mixed)}</span>
               </div>
               {(d.advance_required ?? 0) > 0 && (
                 <div className="flex justify-between text-zinc-500">
-                  <span>{t("Advance required")}</span><span>{amt(sym, d.advance_required ?? 0, code)}</span>
+                  <span>{t("Advance required")}</span><span>{amt(d.advance_required, live, mixed)}</span>
                 </div>
               )}
               <div className="flex justify-between text-zinc-500">
-                <span>{t("Advance paid")}</span><span>{amt(sym, d.advance_paid ?? 0, code)}</span>
+                <span>{t("Advance paid")}</span><span>{amt(d.advance_paid, live, mixed)}</span>
               </div>
               {(d.advance_due ?? 0) > 0 && (
                 <div className="flex justify-between font-medium">
-                  <span>{t("Advance still due")}</span><span>{amt(sym, d.advance_due ?? 0, code)}</span>
+                  <span>{t("Advance still due")}</span><span>{amt(d.advance_due, live, mixed)}</span>
                 </div>
               )}
             </>
