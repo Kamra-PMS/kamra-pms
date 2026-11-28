@@ -475,6 +475,17 @@ def meal_night_net(property: str, plan, adults, children) -> Decimal:
 	return price
 
 
+def over_capacity_net(property: str, charge, gst,
+                      tax_included: bool | None = None) -> Decimal:
+	"""One night of the agreed extra-guest charge before tax - what the quote
+	adds up and the folio bills. The desk types it as it types room prices:
+	with the tax inside when the property's rates include tax. `tax_included`
+	overrides the setting for a booking already quoted under it."""
+	taxed = rates_include_tax(property) if tax_included is None else tax_included
+	charge = _dec(charge)
+	return charge / (Decimal(1) + _dec(gst) / Decimal(100)) if taxed else charge
+
+
 def levy_digits(property: str) -> int:
 	"""Decimals a posted levy line keeps: 6 only when the levy sits inside the
 	displayed price, where it has to add back to that price exactly. Otherwise
@@ -1001,8 +1012,7 @@ def quote(
 
 				rate, gst = room_net_rate(property, rt, rate, night_over_cap)
 				if night_over_cap:
-					net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
-					       if inclusive else night_over_cap)
+					net = over_capacity_net(property, night_over_cap, gst)
 					over_cap += net
 					over_cap_tax += net * gst / Decimal(100)
 
@@ -1062,8 +1072,7 @@ def quote(
 
 				rate, gst = room_net_rate(property, rt, rate, night_over_cap)
 				if night_over_cap:
-					net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
-					       if inclusive else night_over_cap)
+					net = over_capacity_net(property, night_over_cap, gst)
 					over_cap += net
 					over_cap_tax += net * gst / Decimal(100)
 
@@ -1130,8 +1139,7 @@ def quote(
 			# and / or the tax out of it to get the taxable room rate
 			rate, gst = room_net_rate(property, rt, rate, night_over_cap)
 			if night_over_cap:
-				net = (night_over_cap / (Decimal(1) + gst / Decimal(100))
-				       if inclusive else night_over_cap)
+				net = over_capacity_net(property, night_over_cap, gst)
 				over_cap += net
 				over_cap_tax += net * gst / Decimal(100)
 			nightly.append({"date": str(date), "rate": float(rate),

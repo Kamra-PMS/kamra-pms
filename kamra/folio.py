@@ -494,6 +494,17 @@ def _over_cap_night(reservation) -> Decimal:
 	return Decimal(str(reservation.get("over_capacity_charge") or 0))
 
 
+def _over_cap_tax_included(reservation) -> bool | None:
+	"""Whether the booking's own quote read its extra-guest charge with the tax
+	inside, so a later change of the setting bills what was quoted. None when no
+	quote says (an imported booking): the setting decides."""
+	snapshot = frappe.parse_json(reservation.get("quote_snapshot") or "{}")
+	for item in snapshot.get("line_items") or []:
+		if item.get("component") == "over_capacity":
+			return item.get("is_tax_inclusive")
+	return None
+
+
 def _nightly_gst(reservation, date) -> float:
 	locked = locked_night(reservation, date)
 	if locked is not None:
@@ -570,6 +581,11 @@ def post_room_night(reservation, date, folios=None) -> bool:
 	if over_cap > 0 and not _charge_posted(
 			reservation.name, "Extra Guests", date):
 		guests = int(reservation.get("over_capacity_guests") or 0)
+		gst_rate = _nightly_gst(reservation, date)
+		from kamra.pricing import over_capacity_net
+		net = round(float(over_capacity_net(
+			reservation.property, over_cap, gst_rate,
+			_over_cap_tax_included(reservation))), 6)
 		_append_charge(folios, reservation, "Extra Guests", {
 			"posting_date": date,
 			"charge_type": "Extra Guests",
@@ -577,9 +593,9 @@ def post_room_night(reservation, date, folios=None) -> bool:
 			"description": (f"{guests} extra guests by arrangement"
 			                if guests else "Extra guests by arrangement"),
 			"qty": 1,
-			"rate": over_cap,
-			"amount": over_cap,
-			"gst_rate": _nightly_gst(reservation, date),
+			"rate": net,
+			"amount": net,
+			"gst_rate": gst_rate,
 			"auto_posted": 1,
 		})
 		posted = True

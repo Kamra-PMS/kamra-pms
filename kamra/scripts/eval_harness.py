@@ -6454,6 +6454,24 @@ def t_meal_plan_tax_inside():
 		frappe.db.set_value("Property", P, "rates_include_tax", saved)
 		frappe.clear_document_cache("Property", P)
 
+@check("extra guests: with tax inside the price, the bill adds no second tax")
+def t_extra_guest_tax_inside():
+	from kamra.folio import post_room_night
+	saved = frappe.db.get_value("Property", P, "rates_include_tax")
+	frappe.db.set_value("Property", P, "rates_include_tax", 1)
+	frappe.clear_document_cache("Property", P)
+	try:
+		res, folio = _in_house("Eval Extra Tax", "+91 70000 00758", "2036-06-06",
+		                       "2036-06-07", _ledger_room("L758"))
+		frappe.db.set_value("Reservation", res.name, "over_capacity_charge", 700)
+		post_room_night(frappe.get_doc("Reservation", res.name), "2036-06-06")
+		billed = sum(c.total for c in frappe.get_doc("Folio", folio).charges
+		             if c.charge_type == "Extra Guests")
+		assert abs(billed - 700) < 0.001, billed
+	finally:
+		frappe.db.set_value("Property", P, "rates_include_tax", saved)
+		frappe.clear_document_cache("Property", P)
+
 @check("ledger: night audit room nights and the no-show fee land on the ledger")
 def t132():
 	from kamra.folio import run_night_audit
@@ -12878,6 +12896,7 @@ def execute():
 		           t_blacklisted_number_books_typed_name,
 		           t_change_guest_online_companions,
 		           t_night_prices_refused, t_folio_no_close_in_house,
+		           t_extra_guest_tax_inside,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,
 		           t_ota_contact_never_drops_booking, t_card_network, t_card_network_agent_paths,
