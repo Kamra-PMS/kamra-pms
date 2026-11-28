@@ -1158,6 +1158,29 @@ def t_crs_trip_total():
 	assert crs._sum([], "amount") == 0, crs._sum([], "amount")
 
 
+@check("trip advance: a stay's sen never get it refused, and three decimals are kept")
+def t_trip_advance_rounding():
+	from unittest.mock import patch
+
+	from kamra import crs
+
+	def trip(currency, *amounts):
+		return {"name": "EVAL-TRIP", "advance_required": 0, "advance_paid": 0, "legs": [{
+			"reservation": f"EVAL-{i}", "property": P, "property_name": P,
+			"check_in_date": "2036-02-03", "check_out_date": "2036-02-05",
+			"status": "Confirmed", "currency": currency, "currency_symbol": "",
+			"amount_after_tax": a, "advance_percent": 100, "advance_required": a,
+			"advance_paid": 0, "deposit_due": a} for i, a in enumerate(amounts)]}
+
+	with patch("kamra.crs.get_itinerary", return_value=trip("IDR", 935000.4, 715000.0)):
+		plan = crs._trip_advance("EVAL-TRIP")
+		assert plan["amount"] == 1650000.4, plan["amount"]
+	with patch("kamra.crs.get_itinerary", return_value=trip("KWD", 100.125, 100.125)):
+		plan = crs._trip_advance("EVAL-TRIP", 200.25)
+		shares = [leg["share"] for leg in plan["legs"]]
+		assert shares == [100.125, 100.125], shares
+
+
 @check("CRS access guard: a property-restricted user is blocked from others")
 def t24():
 	from kamra.crs import assert_property_access, permitted_properties
@@ -12838,7 +12861,7 @@ def execute():
 		RT, ROOM = setup()
 		for fn in (t1, t2, t3, t3b, t3c, t3d, t3f, t3g, t3h, t530, t3i, t3j, t4,
 		           t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16,
-		           t17, t18, t19, t20, t21, t22, t23, t24, t_crs_search_currency, t_crs_trip_total, t25, t26, t27, t28,
+		           t17, t18, t19, t20, t21, t22, t23, t24, t_crs_search_currency, t_crs_trip_total, t_trip_advance_rounding, t25, t26, t27, t28,
 		           t29, t30, t31, t32, t33, t34, t35, t36, t37, t38, t39, t39b, t39c, t39d,
 		           t40, t41, t42, t43, t44, t45, t46, t47, t47b, t47c, t47d, t48,
 		           t49, t50, t51, t53, t54, t55, t56, t57, t58, t59, t60, t61,

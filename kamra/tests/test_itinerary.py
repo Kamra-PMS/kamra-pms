@@ -8,7 +8,8 @@ from unittest.mock import patch
 
 import frappe
 
-from kamra import api, crs
+from kamra import api, crs, guest_booking, public_api
+from kamra.ledger import round_to
 from kamra.tests.audit_fixtures import (PROP_A, PROP_B, AuditTestCase, d,
                                         ensure_user, make_property, make_room,
                                         make_room_type)
@@ -408,3 +409,112 @@ class TripAdvanceTestCase(_TripBase):
 			                "season_name": "UT Bad Advance", "start_date": d(20),
 			                "end_date": d(22), "adjustment_type": "Percent",
 			                "adjustment_value": 0, "advance_percent": 150}).insert()
+
+
+class AdvanceRoundingTestCase(_TripBase):
+	"""Advances keep the currency's own decimals, and never fewer than the two
+	a bill can carry."""
+
+	def setUp(self):
+		super().setUp()
+		for prop in (PROP_A, PROP_B):
+			make_property(prop, free_cancel_days=0, cancellation_fee="None",
+			              deposit_pct=100)
+
+	def currency(self, code):
+		for prop in (PROP_A, PROP_B):
+			frappe.db.set_value("Property", prop, "currency", code)
+			frappe.clear_document_cache("Property", prop)
+
+	def trip(self, code, *amounts):
+		"""A booked two-stay trip, each stay asking its whole price up front."""
+		self.currency(code)
+		itn = self.book()
+		for leg, amount in zip(itn["legs"], amounts):
+			frappe.db.set_value("Reservation", leg["reservation"], "amount_after_tax", amount)
+		return crs.get_itinerary(itn["name"])
+
+	def paid_on_folios(self, trip):
+		return [float(frappe.get_doc("Folio", {"reservation": leg["reservation"],
+		                                       "folio_type": "Guest"}).payments[0].amount)
+		        for leg in trip["legs"]]
+
+	def test_rupiah_stays_with_sen_can_take_the_advance_they_ask_for(self):
+		# the trip prints as 1,650,000; the stays ask 1,650,000.40 between them
+		trip = self.trip("IDR", 935000.4, 715000.0)
+		plan = crs.trip_advance_preview(trip["name"])
+		self.assertEqual((plan["amount"], [leg["share"] for leg in plan["legs"]]),
+		                 (1650000.4, [935000.4, 715000.0]))
+		out = crs.record_trip_advance(trip["name"], plan["amount"], mode="Cash")
+		self.assertEqual(out["advance_due"], 0)
+		self.assertEqual(self.paid_on_folios(out), [935000.4, 715000.0])
+
+	def test_a_rupiah_trips_printed_total_can_still_be_typed(self):
+		down = self.trip("IDR", 935000.4, 715000.0)
+		plan = crs.trip_advance_preview(down["name"], amount=down["total"])
+		self.assertEqual([leg["share"] for leg in plan["legs"]], [935000.4, 714999.6])
+		for leg, amount in zip(down["legs"], (935000.6, 715000.0)):
+			frappe.db.set_value("Reservation", leg["reservation"], "amount_after_tax", amount)
+		up = crs.get_itinerary(down["name"])
+		plan = crs.trip_advance_preview(up["name"], amount=up["total"])
+		self.assertEqual((up["total"], [leg["share"] for leg in plan["legs"]]),
+		                 (1650001, [935001.0, 715000.0]))
+
+	def test_a_dinar_advance_keeps_its_third_decimal(self):
+		trip = self.trip("KWD", 100.125, 100.125)
+		self.assertEqual([leg["deposit_due"] for leg in trip["legs"]], [100.125, 100.125])
+		self.assertEqual((trip["total"], trip["advance_due"]), (200.25, 200.25))
+		plan = crs.trip_advance_preview(trip["name"], amount=trip["total"])
+		self.assertEqual((plan["amount"], [leg["share"] for leg in plan["legs"]]),
+		                 (200.25, [100.125, 100.125]))
+		out = crs.record_trip_advance(trip["name"], 200.25, mode="Cash")
+		self.assertEqual(out["advance_due"], 0)
+		self.assertEqual(self.paid_on_folios(out), [100.125, 100.125])
+
+	def test_one_fils_more_than_the_trip_owes_is_refused(self):
+		trip = self.trip("KWD", 100.125, 100.125)
+		with self.assertRaises(frappe.ValidationError) as refused:
+			crs.trip_advance_preview(trip["name"], amount=200.251)
+		self.assertIn("200.251", str(refused.exception))
+
+	def test_two_decimal_advances_round_as_before(self):
+		"""A bill ending in half a cent can't be settled in cents whichever way
+		its advance rounds, so that figure waits for rounded bills (#753)."""
+		trip = self.trip("USD", 252.945, 100.0)
+		self.assertEqual(trip["legs"][0]["advance_required"], 252.94)
+		self.assertEqual((trip["total"], trip["advance_due"]), (352.95, 352.94))
+		for amount in (None, trip["total"]):
+			plan = crs.trip_advance_preview(trip["name"], amount=amount)
+			self.assertEqual(plan["amount"], amount or 352.94)
+		# a percentage that lands on half a cent rounds as it always has
+		for total, pct in ((33.3, 15.0), (0.14, 75.0), (16.9, 15.0)):
+			policy = frappe._dict(name=PROP_A, booking_payment_mode="Advance percent",
+			                      advance_percent=pct)
+			self.assertEqual(public_api._advance_terms(policy, total)[0],
+			                 round(total * pct / 100, 2), (total, pct))
+
+	def test_the_quote_asks_the_advance_in_the_currencys_decimals(self):
+		self.currency("KWD")
+		frappe.db.set_value("Room Type", self.rt_a, "base_price", 100.125)
+		q = api.get_quote(property=PROP_A, room_type=self.rt_a,
+		                  check_in_date=d(1), check_out_date=d(2))
+		total = q["amount_after_tax"]
+		self.assertNotEqual(round(total, 3), round(total, 2), "needs a third decimal")
+		self.assertEqual(q["advance"]["amount"],
+		                 round_to(total, 3))
+
+	def test_the_booking_page_asks_the_same_figure_as_the_desk(self):
+		make_property(PROP_A, booking_payment_mode="Advance percent",
+		              advance_percent=50)
+		self.currency("KWD")
+		split = public_api._payment_split(
+			frappe.get_cached_doc("Property", PROP_A), 100.125)
+		self.assertEqual((split["advance_due"], split["balance_at_hotel"]),
+		                 (50.063, 50.062))
+
+	def test_a_guest_booking_is_not_paid_up_while_fils_are_owing(self):
+		self.currency("KWD")
+		state = guest_booking._status(frappe._dict(
+			name="UT", property=PROP_A, status="Held", advance_due=100.125,
+			advance_paid=100.12, amount_after_tax=100.125))
+		self.assertEqual(state["still_due_now"], 0.005)

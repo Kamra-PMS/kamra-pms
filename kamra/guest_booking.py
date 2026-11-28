@@ -54,7 +54,9 @@ def _own_booking(reservation: str):
 
 def _status(res) -> dict:
 	"""Only the guest's own booking: dates, room type, money, state."""
-	due = round(max(0.0, float(res.advance_due or 0) - float(res.advance_paid or 0)), 2)
+	from kamra.pricing import advance_amount
+	due = advance_amount(res.property, max(
+		0.0, float(res.advance_due or 0) - float(res.advance_paid or 0)))
 	return {
 		"reservation": res.name, "status": res.status,
 		"confirmed": res.status == "Confirmed",
@@ -141,7 +143,7 @@ def confirm(reservation: str):
 		return _status(res)
 	if res.status not in ("Pending Payment", "Held"):
 		frappe.throw(_("This booking is {0}.").format(_(res.status).lower()))
-	if _status(res)["still_due_now"] > 0.005:
+	if _status(res)["still_due_now"] > 0:
 		frappe.throw(_("The advance isn't paid yet - send the payment link."))
 	from kamra.api import _confirm_status
 	_confirm_status(res)

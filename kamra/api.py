@@ -818,16 +818,17 @@ def _deposit_state(res) -> dict:
 	"""What the booking should have secured it with (its advance %, the
 	figure the quote promised), what has come in before arrival, and any
 	link already out with the guest."""
+	from kamra.pricing import advance_amount
 	total = float(res.amount_after_tax or 0)
 	pct = booking_advance_percent(res)
-	expected = round(total * pct / 100, 2)
+	expected = advance_amount(res.property, total, pct)
 	paid = float(res.advance_paid or 0)
 	link = frappe.db.get_value(
 		"Folio", {"reservation": res.name, "folio_type": "Guest"},
 		["payment_link_url", "payment_link_amount"], as_dict=True) or {}
 	return {
 		"pct": pct, "expected": expected, "paid": paid,
-		"due": max(0.0, round(expected - paid, 2)),
+		"due": max(0.0, advance_amount(res.property, expected - paid)),
 		"link_url": link.get("payment_link_url"),
 		"link_amount": float(link.get("payment_link_amount") or 0) or None,
 		"can_take": res.status in _DEPOSIT_STATUSES,
@@ -936,15 +937,18 @@ def deposit_payment_link(reservation: str, amount: float | None = None):
 	if amount <= 0:
 		frappe.throw(_("No deposit is due - enter the amount to request."))
 	from kamra.folio import open_folio
+	from kamra.ledger import home_currency
 	from kamra.payments import create_payment_link
+	from kamra.pricing import advance_digits
 	link = create_payment_link(open_folio(res), amount=amount,
 	                           purpose="Booking deposit")
+	digits = advance_digits(home_currency(res.property))
 	prop = frappe.get_cached_value("Property", res.property, "property_name")
 	link["message"] = _(
 		"Hello {guest}, please pay the deposit of {cur} {amount} to secure "
 		"your booking {ref} at {property} ({checkin} → {checkout}): {url}"
 	).format(guest=res.guest_name, cur=link["currency"],
-	         amount=f"{amount:,.2f}", ref=res.name, property=prop,
+	         amount=f"{amount:,.{digits}f}", ref=res.name, property=prop,
 	         checkin=res.check_in_date, checkout=res.check_out_date,
 	         url=link["url"])
 	link["deposit"] = _deposit_state(res)
