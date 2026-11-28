@@ -1448,7 +1448,7 @@ def hk_post_consumable(room: str, charge_type: str, description: str,
 		gst_rate = services_tax_rate(pack_for(res.property), res.property)
 	with act_as(AGENT_EMAIL):
 		out = post_stay_charge(res.name, charge_type, description, float(amount),
-		                       gst_rate=gst_rate)
+		                       gst_rate=gst_rate, levy=1)
 	from kamra.savings import log_action
 	from kamra.localization import money_text
 	log_action("hk_charge", "Folio", out.get("folio"), res.property,
@@ -1552,13 +1552,15 @@ def get_folio(reservation: str):
 def add_folio_charge(folio: str, charge_type: str, description: str,
                      amount: float, gst_rate: float = 0,
                      posting_date: str | None = None, is_alcohol: int = 0,
-                     reservation: str | None = None):
+                     reservation: str | None = None,
+                     levy: int | None = None):
 	_refuse_opening_balance(charge_type)
 	# check what the caller sent, before the hotel's own rules pick a rate
 	_check_charge_amount_and_tax(
 		frappe.db.get_value("Folio", folio, "property"), amount, gst_rate)
 	return _post_folio_charge(folio, charge_type, description, amount,
-	                          gst_rate, posting_date, is_alcohol, reservation)
+	                          gst_rate, posting_date, is_alcohol, reservation,
+	                          levy=None if levy is None else cint(levy))
 
 
 def _refuse_opening_balance(charge_type: str):
@@ -1575,12 +1577,17 @@ def _refuse_opening_balance(charge_type: str):
 def _post_folio_charge(folio: str, charge_type: str, description: str,
                        amount: float, gst_rate: float = 0,
                        posting_date: str | None = None, is_alcohol: int = 0,
-                       reservation: str | None = None):
+                       reservation: str | None = None, levy: int | None = None):
 	"""Put one charge on a bill. Not whitelisted and does no amount or rate
 	check: a caller that takes an amount or rate from outside calls
 	_check_charge_amount_and_tax on it first. Code that posts rates the
 	hotel itself decided (the agent's post_stay_charge, banquet billing)
-	calls this directly."""
+	calls this directly.
+
+	`levy` matters where extras carry the levy (see pricing.extra_net): 1
+	reads the amount as an extra's price and adds its levy line, 0 reads it
+	the same way without a levy, None posts the amount as it is (charges with
+	their own service charge, deposits, penalties)."""
 	_refuse_opening_balance(charge_type)
 	doc = frappe.get_doc("Folio", folio)
 	if doc.status == "Closed":
@@ -1596,7 +1603,7 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 	from kamra.ledger import code_for_charge_type, record_charge_ledger
 	bd = assert_transaction_date(doc.property, posting_date, label="Posting date")
 	code = code_for_charge_type(charge_type)
-	doc.append("charges", {
+	line = {
 		"posting_date": bd,
 		"charge_type": charge_type,
 		"transaction_code": code,
@@ -1607,24 +1614,31 @@ def _post_folio_charge(folio: str, charge_type: str, description: str,
 		"amount": float(amount),
 		"gst_rate": float(gst_rate),
 		"is_alcohol": 1 if int(is_alcohol or 0) else 0,
-	})
-	from kamra.folio import _recalculate
+	}
+	from kamra.folio import _recalculate, add_extra_lines
+	new_lines = add_extra_lines(doc, line, levy)
 	_recalculate(doc)
 	doc.save()
-	charge = doc.charges[-1]
-	try:
-		record_charge_ledger(doc, charge.as_dict())
-	except Exception:
-		frappe.log_error(title="ledger charge write failed")
+	charge = doc.charges[-new_lines]
+	for row in doc.charges[-new_lines:]:
+		try:
+			record_charge_ledger(doc, row.as_dict())
+		except Exception:
+			frappe.log_error(title="ledger charge write failed")
 	from kamra.localization import money_text
 	from kamra.savings import log_action
 	log_action("post_charge", "Folio", doc.name, doc.property,
 	           rationale=f"{charge_type}: {description} "
 	                     f"{money_text(doc.property, amount)}")
 	from kamra.webhooks import emit_folio_posted
-	emit_folio_posted(doc, charge)
+	rows = doc.charges[-new_lines:]
+	for row in rows:
+		emit_folio_posted(doc, row)
 	from kamra.whatsapp import queue_room_charge_alert
-	queue_room_charge_alert(doc, charge)
+	# the guest is told the whole charge, levy included
+	alert = charge.as_dict()
+	alert["total"] = sum(flt(row.total) for row in rows)
+	queue_room_charge_alert(doc, alert)
 	return doc.as_dict()
 
 
@@ -2176,8 +2190,18 @@ def correct_folio_charge(folio: str, charge_row: str, reason: str = "",
 			orig.charge_type, orig.description, round(float(orig.amount), 2),
 			float(orig.gst_rate or 0)):
 		frappe.throw(_("Nothing to correct: the line already has these values."))
+	# an extra's levy follows a changed amount, tax or type, not a rewording
+	levies = []
+	if (new_type, round(new_amount, 6), new_rate) != (
+			orig.charge_type, round(float(orig.amount), 6), float(orig.gst_rate or 0)):
+		from kamra.folio import levy_partners
+		levies = levy_partners(doc, orig)
 	from kamra.business_date import get_business_date
 	bd = get_business_date(doc.property)
+	# the key moves to the replacement: the replaced line and its reversal
+	# bill nothing, so they must not take a levy with them any more
+	link = orig.get("levy_link")
+	orig.levy_link = None
 	common = {"posting_date": bd, "stay_date": orig.stay_date,
 	          "reservation": orig.reservation, "is_alcohol": is_alcohol,
 	          "corrects_row": orig.name, "idempotency_key": key, "qty": 1}
@@ -2192,6 +2216,7 @@ def correct_folio_charge(folio: str, charge_row: str, reason: str = "",
 	doc.append("charges", {
 		**common, "charge_type": new_type, "description": new_desc,
 		"rate": new_amount, "amount": new_amount, "gst_rate": new_rate,
+		"levy_link": link,
 	})
 	from kamra.folio import _recalculate
 	_recalculate(doc)
@@ -2200,6 +2225,12 @@ def correct_folio_charge(folio: str, charge_row: str, reason: str = "",
 	first = _original_charge_entry(doc.name, orig.name)
 	record_charge_ledger(doc, rev.as_dict(), reversal_of=first.name if first else None)
 	record_charge_ledger(doc, rep.as_dict())
+	if levies:
+		from kamra.folio import repost_levy, void_charge
+		for levy in levies:
+			void_charge(doc.name, levy.name, reason_text[:100], record=False)
+			repost_levy(doc.name, levy, orig, rep)
+		doc.reload()
 	from kamra.webhooks import emit_folio_posted
 	emit_folio_posted(doc, rev)
 	emit_folio_posted(doc, rep)
@@ -2220,7 +2251,8 @@ def correct_folio_charge(folio: str, charge_row: str, reason: str = "",
 @frappe.whitelist()
 @require_perm("Folio", "bill")
 def post_stay_charge(reservation: str, charge_type: str, description: str,
-                     amount: float, gst_rate: float = 0, is_alcohol: int = 0):
+                     amount: float, gst_rate: float = 0, is_alcohol: int = 0,
+                     levy: int | None = None):
 	"""Post a charge to a stay letting the billing rules pick the folio -
 	corporate room/meals land on the Company folio, alcohol and anything
 	unruled lands on the guest. The agent-facing way to post charges."""
@@ -2238,7 +2270,8 @@ def post_stay_charge(reservation: str, charge_type: str, description: str,
 	folio_name = target_folio(res, charge_type, is_alcohol)
 	out = _post_folio_charge(folio_name, charge_type, description, amount,
 	                         gst_rate, is_alcohol=is_alcohol,
-	                         reservation=res.name)
+	                         reservation=res.name,
+	                         levy=None if levy is None else cint(levy))
 	return {"folio": folio_name, "folio_type": out.get("folio_type"),
 	        "balance": out.get("balance")}
 
@@ -2637,7 +2670,8 @@ def change_stay_company(reservation: str, reason: str,
 	control runs for the new company. The rate stays as booked; who and
 	why go on the record."""
 	from kamra.credit import credit_applies, enforce_company_credit
-	from kamra.folio import _company_pays, open_company_folio, transfer_charges
+	from kamra.folio import (_company_pays, open_company_folio, transfer_charges,
+	                         with_levy_partners)
 	res = frappe.get_doc("Reservation", reservation)
 	if res.status in ("Checked Out", "Cancelled", "No Show"):
 		frappe.throw(_("This stay is {0}; its company can't change now.").format(
@@ -2684,9 +2718,12 @@ def change_stay_company(reservation: str, reason: str,
 	for f in company_folios:
 		doc = frappe.get_doc("Folio", f.name)
 		# rules: an allowance stays with the bill it wrote down
-		back = [c.name for c in doc.charges
-		        if move == "guest" or not company
-		        or (c.charge_type != "Allowance" and not company_pays(c))]
+		# an extra's levy goes wherever its charge goes, not by its own rule
+		back = with_levy_partners(doc, [
+			c.name for c in doc.charges
+			if not (c.charge_type == "Room Levy" and c.levy_link)
+			and (move == "guest" or not company
+			     or (c.charge_type != "Allowance" and not company_pays(c)))])
 		# an allowance wrote down the charges on this bill and has no link to
 		# one line: it follows the charges that leave, in proportion
 		allowances = [c for c in doc.charges
@@ -2714,7 +2751,8 @@ def change_stay_company(reservation: str, reason: str,
 	if move == "rules" and company and guest and not res.get("group_booking"):
 		gdoc = frappe.get_doc("Folio", guest)
 		inbound = [c.name for c in gdoc.charges
-		           if c.charge_type != "Allowance" and company_pays(c)]
+		           if c.charge_type != "Allowance" and company_pays(c)
+		           and not (c.charge_type == "Room Levy" and c.levy_link)]
 		if inbound:
 			transfer_charges(guest, inbound, open_company_folio(res))
 			moved += len(inbound)
@@ -3489,6 +3527,7 @@ def folio_invoice(folio: str):
 	"""
 	from kamra import localization as loc
 
+	from kamra.pricing import levy_for_screen
 	doc = frappe.get_doc("Folio", folio)
 	prop = frappe.get_doc("Property", doc.property)
 	# an Account folio (raised on a company's AR account) has no stay
@@ -3628,6 +3667,8 @@ def folio_invoice(folio: str):
 			"booked_by_phone": res.get("booked_by_phone"),
 			"contact_preference": res.get("contact_preference"),
 		},
+		# where staff choose the levy on a charge they post
+		"levy": levy_for_screen(doc.property),
 		"summary_by_head": sorted(by_head.values(), key=lambda h: -h["total"]),
 		"tax_summary": [
 			{"rate": rate, "taxable": v["taxable"], "total_tax": v["tax"],
@@ -7253,6 +7294,7 @@ def set_late_arrival(reservation: str, late_arrival: int = 1,
 def booking_options(property: str):
 	"""Everything the booking form needs to render its dropdowns."""
 	from kamra.channel_manager import channel_commission_pcts
+	from kamra.pricing import offered_extras
 	return {
 		"room_types": frappe.get_all(
 			"Room Type", filters={"property": property, "disabled": 0},
@@ -7280,12 +7322,12 @@ def booking_options(property: str):
 			fields=["name", "agent_name", "commission_pct"],
 			order_by="agent_name asc",
 		),
-		"experiences": frappe.get_all(
+		"experiences": offered_extras(property, frappe.get_all(
 			"Experience", filters={"property": property, "disabled": 0},
 			fields=["name", "experience_name", "category", "price",
 			        "gst_rate"],
 			order_by="price asc",
-		),
+		)),
 		"property": _booking_property_policy(property),
 		"ota_channels": _ota_channels(property),
 		"ota_commission": channel_commission_pcts(),
@@ -8031,6 +8073,8 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 	# folio the moment it opens
 	if isinstance(addons, str):
 		addons = frappe.parse_json(addons)
+	from kamra.pricing import extra_net, extra_reading
+	reading = extra_reading(property)
 	for a in addons or []:
 		exp = frappe.db.get_value(
 			"Experience", a.get("experience"),
@@ -8038,13 +8082,19 @@ def create_booking(property: str, room_type: str, check_in_date: str,
 		if not exp:
 			continue
 		qty = float(a.get("qty") or 1)
+		rate, levy_percent = float(exp.price or 0), 0
+		if reading["levy_on_extras"]:
+			# the add-on carries the levy: kept on it, as it was sold
+			rate = round(float(extra_net(property, rate, exp.gst_rate or 0, reading)), 6)
+			levy_percent = frappe.get_cached_value("Property", property, "room_levy_percent")
 		doc.append("addons", {
 			"experience": a["experience"],
 			"description": exp.experience_name,
 			"qty": qty,
-			"rate": float(exp.price or 0),
-			"amount": qty * float(exp.price or 0),
+			"rate": rate,
+			"amount": qty * rate,
 			"gst_rate": float(exp.gst_rate or 0),
+			"levy_percent": levy_percent,
 		})
 
 	# Arrival, transport, purpose and service flags - the details a real
@@ -9036,8 +9086,13 @@ def _group_money(gb, prices: dict, rooming: list) -> dict:
 		fields=["name", "payments_total", "balance"])
 	folios = [f.name for f in group_folios + member_folios]
 	posted = flt(frappe.db.sql(
-		"""SELECT COALESCE(SUM(total), 0) FROM `tabFolio Charge`
-		   WHERE parent IN %(f)s AND charge_type IN ('Room', 'Meal Plan', 'Room Levy', 'Extra Guests')""",
+		"""SELECT COALESCE(SUM(fc.total), 0) FROM `tabFolio Charge` fc
+		   WHERE fc.parent IN %(f)s
+		     AND (fc.charge_type IN ('Room', 'Meal Plan', 'Extra Guests')
+		          OR (fc.charge_type = 'Room Levy' AND (IFNULL(fc.levy_link, '') = ''
+		              OR EXISTS (SELECT 1 FROM `tabFolio Charge` c
+		                         WHERE c.levy_link = fc.levy_link
+		                           AND c.charge_type IN ('Meal Plan', 'Extra Guests')))))""",
 		{"f": folios or [""]})[0][0])
 	open_balances = sum(flt(f.balance) for f in group_folios + member_folios)
 	# the advance alone: a settlement on the same bill is not a deposit
@@ -9728,6 +9783,7 @@ def property_locale(property: str):
 	so no screen hardcodes ₹ or GST %. `integrations` says which country
 	integrations (gateways, tax return, ID checks) this property has."""
 	from kamra.localization import front_desk_vocabulary, integrations, pack_for
+	from kamra.pricing import levy_for_screen
 	from kamra.settings import get_setting
 	prop = frappe.get_cached_doc("Property", property)
 	pack = pack_for(property)
@@ -9740,7 +9796,9 @@ def property_locale(property: str):
 	        "fnb_tax_rate": float(pack.fnb_tax_rate(property)),
 	        "fnb_charge_words": list(_FNB_WORDS),
 	        # a dry property hides every alcohol field and label
-	        "sells_alcohol": bool(int(get_setting(property, "sells_alcohol") or 0))}
+	        "sells_alcohol": bool(int(get_setting(property, "sells_alcohol") or 0)),
+	        # the levy's name where staff choose it on an extra (else null)
+	        "levy_choice": levy_for_screen(property)}
 
 
 @frappe.whitelist(methods=["POST"])

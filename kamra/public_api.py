@@ -332,14 +332,15 @@ def showcase(property: str, listing_slug: str | None = None,
 
 	locations = _build_locations(prop, room_types)
 
-	experiences = frappe.get_all(
+	from kamra.pricing import offered_extras
+	experiences = offered_extras(property, frappe.get_all(
 		"Experience",
 		filters={"property": property, "disabled": 0,
 		         "show_on_booking_page": 1},
 		fields=["name", "experience_name", "category", "price", "duration",
 		        "description", "image_url", "gst_rate"],
 		order_by="category asc",
-	)
+	))
 
 	meal_plans = frappe.get_all(
 		"Meal Plan", filters={"property": property, "disabled": 0},

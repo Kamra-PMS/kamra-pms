@@ -253,7 +253,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
     description: "",
     amount: "",
     gst_rate: "0",
-    is_alcohol: false,
+    is_alcohol: false, levy: true,
   })
   const [pay, setPay] = useState({ folio: "", mode: locale().payment_modes[0] ?? "Cash", amount: "", reference: "", network: "", last4: "" })
   // one key per Collect press: a retry after a lost response replays (#550)
@@ -416,7 +416,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
             </select>
           </label>
           <label className="block text-sm text-zinc-600">
-            {t("Amount (before tax)")}
+            {loc.levy_choice ? t("Amount") : t("Amount (before tax)")}
             <input
               inputMode="decimal"
               value={charge.amount}
@@ -461,6 +461,16 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
           />
           {t("Alcohol")}
         </label>)}
+        {loc.levy_choice && charge.charge_type !== "Stolen / Damaged Items" && (
+        <label className="flex min-h-11 items-center gap-2 text-sm text-zinc-600">
+          <input
+            type="checkbox"
+            className="size-5 accent-brand-600"
+            checked={charge.levy}
+            onChange={(e) => setCharge({ ...charge, levy: e.target.checked })}
+          />
+          {t("Add {levy}", { levy: loc.levy_choice })}
+        </label>)}
         <p className="text-xs text-zinc-400">
           {t("The hotel's billing rules pick the folio, and food and drink take the hotel's food tax rate.")}
         </p>
@@ -476,6 +486,7 @@ export function StayBilling({ d, onChanged }: { d: RoomDetail; onChanged: () => 
                 amount: Number(charge.amount),
                 gst_rate: Number(charge.gst_rate),
                 is_alcohol: charge.is_alcohol ? 1 : 0,
+                levy: charge.levy ? 1 : 0,
               })
               setCharge({ ...charge, description: "", amount: "", is_alcohol: false })
             }, t("Charge posted."))

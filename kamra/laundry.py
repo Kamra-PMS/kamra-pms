@@ -347,7 +347,7 @@ def deliver_laundry(order: str, shortage_note: str | None = None):
 				doc.reservation, "Laundry",
 				f"Laundry{' (express)' if doc.express else ''}: "
 				f"{detail} ({doc.name})",
-				float(doc.total), gst_rate=rate)
+				float(doc.total), gst_rate=rate, levy=1)
 			posted = True
 	doc.posted_to_folio = 1 if posted else 0
 	doc.save()

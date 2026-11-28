@@ -175,8 +175,10 @@ def pos_post_room_charge(property: str, ticket_id: str, amount: float,
 	from kamra.api import post_stay_charge
 	text = f"{description} (POS {ticket_id})"[:140]
 	with act_as(AGENT_EMAIL):
+		# the outside POS sends its own final amounts, service charge included
 		out = post_stay_charge(reservation, charge_type, text, amount,
-		                       gst_rate=flt(tax_rate), is_alcohol=is_alcohol)
+		                       gst_rate=flt(tax_rate), is_alcohol=is_alcohol,
+		                       levy=None)
 	rec.db_set({"folio": out.get("folio"), "balance_after": flt(out.get("balance"))},
 	           update_modified=False)
 

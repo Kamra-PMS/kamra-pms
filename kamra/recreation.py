@@ -402,7 +402,8 @@ def _enter(facility, reservation=None, customer=None, complimentary=0,
 		label = (frappe.db.get_value("Recreation Treatment", treatment, "treatment_name")
 		         if treatment else f"{fac.facility_name} access")
 		_post_folio_charge(
-			folio, _charge_type(fac.category), label, amount, reservation=res_doc.name)
+			folio, _charge_type(fac.category), label, amount, reservation=res_doc.name,
+			levy=1)
 	if membership:
 		used = cint(frappe.db.get_value("Recreation Membership", membership, "visits_used"))
 		frappe.db.set_value("Recreation Membership", membership, "visits_used", used + 1,

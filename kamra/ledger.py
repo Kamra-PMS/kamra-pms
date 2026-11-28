@@ -12,7 +12,7 @@ from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
 from typing import Any
 
 import frappe
-from frappe.utils import getdate, now_datetime, nowdate
+from frappe.utils import cint, getdate, now_datetime, nowdate
 
 from kamra.authz import require_perm, require_roles
 from kamra.business_date import get_business_date
@@ -2010,7 +2010,8 @@ def folio_history(property: str, query: str | None = None,
 @frappe.whitelist(methods=["POST"])
 @require_perm("Folio", "bill")
 def batch_post_charge(folios: str | list, charge_type: str, amount: float,
-                      description: str | None = None, pin: str | None = None):
+                      description: str | None = None, pin: str | None = None,
+                      levy: int | None = None):
 	"""Post the same charge to many folios (group / event)."""
 	import json as _json
 	if isinstance(folios, str):
@@ -2039,18 +2040,17 @@ def batch_post_charge(folios: str | list, charge_type: str, amount: float,
 			"amount": float(amount),
 			"gst_rate": 0,
 		}
-		doc.append("charges", row)
-		from kamra.folio import _recalculate
+		from kamra.folio import _recalculate, add_extra_lines
+		new_lines = add_extra_lines(doc, row, None if levy is None else cint(levy))
 		_recalculate(doc)
 		doc.save(ignore_permissions=True)
-		# last charge row
-		charge = doc.charges[-1]
 		try:
 			from kamra.cashier import require_open_session
 			sess = require_open_session(prop)
 		except Exception:
 			sess = None
-		record_charge_ledger(doc, charge.as_dict(), session=sess)
+		for charge in doc.charges[-new_lines:]:
+			record_charge_ledger(doc, charge.as_dict(), session=sess)
 		posted.append(fn)
 	return {"posted": posted, "count": len(posted)}
 

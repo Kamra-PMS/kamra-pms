@@ -863,7 +863,7 @@ def log_checkin_requests(reservation: str, requests=None, note: str | None = Non
 			amount = flt((prices or {}).get(key))
 			if charge_type and amount > 0 and key not in billed:
 				post_stay_charge(res.name, charge_type, subject, amount,
-				                 _request_tax_rate(res, charge_type))
+				                 _request_tax_rate(res, charge_type), levy=1)
 				billed.append(key)
 			tickets.append(create_ticket(
 				res.property, f"{subject} ({res.guest_name})", category,

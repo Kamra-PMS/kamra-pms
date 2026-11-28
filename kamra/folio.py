@@ -143,8 +143,14 @@ def _post_stay_fee(reservation, folio_name: str, component: str,
 					break
 		except Exception:
 			pass  # snapshot unreadable; fall back to the property's current fee
-	if amount <= 0:
+	reading = booking_reading(reservation)
+	if amount <= 0 and fallback > 0:
 		amount = fallback
+		if reading["levy_on_extras"]:
+			# the property's fee is the shown price: take the levy out of it
+			from kamra.pricing import extra_net
+			amount = round(float(extra_net(reservation.property, fallback, 0,
+			                               reading)), 6)
 	if amount <= 0:
 		return
 	if frappe.db.exists(
@@ -155,19 +161,21 @@ def _post_stay_fee(reservation, folio_name: str, component: str,
 	doc = frappe.get_doc("Folio", folio_name)
 	if doc.status == "Closed":
 		return
-	doc.append(
-		"charges",
-		{
-			"posting_date": nowdate(),
-			"charge_type": charge_type,
-			"description": description,
-			"qty": 1,
-			"rate": amount,
-			"amount": amount,
-			"gst_rate": tax_rate,
-			"auto_posted": 1,
-		},
-	)
+	line = {
+		"posting_date": nowdate(),
+		"charge_type": charge_type,
+		"description": description,
+		"qty": 1,
+		"rate": amount,
+		"amount": amount,
+		"gst_rate": tax_rate,
+		"auto_posted": 1,
+	}
+	levy = levy_line(reservation.property, line, reading["levy_included"]) \
+		if reading["levy_on_extras"] else None
+	doc.append("charges", line)
+	if levy:
+		doc.append("charges", levy)
 	_recalculate(doc)
 	from kamra.ledger import save_folio
 	save_folio(doc)
@@ -183,7 +191,7 @@ def _post_addons(reservation, folio_name: str):
 	if doc.status == "Closed":
 		return
 	for a in pending:
-		doc.append("charges", {
+		line = {
 			"posting_date": nowdate(),
 			"charge_type": "Misc",
 			"reservation": reservation.name,
@@ -193,7 +201,12 @@ def _post_addons(reservation, folio_name: str):
 			"amount": a.amount,
 			"gst_rate": a.gst_rate,
 			"auto_posted": 1,
-		})
+		}
+		levy = levy_line(reservation.property, line, True, a.levy_percent) \
+			if a.get("levy_percent") else None
+		doc.append("charges", line)
+		if levy:
+			doc.append("charges", levy)
 		frappe.db.set_value("Stay Addon", a.name, "posted", 1,
 		                    update_modified=False)
 		a.posted = 1
@@ -343,12 +356,14 @@ def _charge_posted(reservation_name: str, charge_type: str, date: str) -> bool:
 	lines predating the provenance field. Only automated lines count: a
 	charge the desk posted by hand (an extra bed asked for at check-in) is
 	not the night's own posting and must not suppress it."""
+	# a levy on an extra (it carries a levy_link) is not the room's levy
+	own = " AND IFNULL(fc.levy_link, '') = ''" if charge_type == "Room Levy" else ""
 	return bool(frappe.db.sql(
 		"""
 		SELECT 1 FROM `tabFolio Charge` fc
 		JOIN `tabFolio` f ON fc.parent = f.name
 		WHERE fc.charge_type = %(ct)s AND fc.posting_date = %(date)s
-		  AND fc.auto_posted = 1 AND """ + NOT_VOIDED + """
+		  AND fc.auto_posted = 1""" + own + """ AND """ + NOT_VOIDED + """
 		  AND (fc.reservation = %(res)s
 		       OR (IFNULL(fc.reservation, '') = '' AND f.reservation = %(res)s))
 		LIMIT 1
@@ -433,7 +448,8 @@ def _day_use_room_charge(reservation, date) -> tuple[float, float, str] | None:
 	gross = Decimal(str(units["amount"]))
 	rt = frappe.get_doc("Room Type", reservation.room_type)
 	net, gst_rate = room_net_rate(reservation.property, rt, gross,
-	                              _over_cap_night(reservation))
+	                              _over_cap_night(reservation),
+	                              bed_holds_levy=booking_reading(reservation)["levy_on_extras"])
 	gst, amount = float(gst_rate), float(net)
 	if plan["billing_basis"] == "Hourly":
 		label = f"day use · {units['hours']:g} h"
@@ -483,7 +499,8 @@ def _plan_free_night_rate(reservation, date) -> Decimal:
 	rate = season_adjust(reservation.property, date, base,
 	                     reservation.room_type)
 	rate, _gst = room_net_rate(reservation.property, rt, rate,
-	                           _over_cap_night(reservation))
+	                           _over_cap_night(reservation),
+	                           bed_holds_levy=booking_reading(reservation)["levy_on_extras"])
 	return rate
 
 
@@ -492,6 +509,59 @@ def _over_cap_night(reservation) -> Decimal:
 	slab reads the whole night's tariff, so it has to be in hand wherever the
 	room's tax rate is worked out - matching pricing.quote."""
 	return Decimal(str(reservation.get("over_capacity_charge") or 0))
+
+
+def booking_reading(reservation, component: str | None = None) -> dict:
+	"""How the booking's own quote read its extras (`pricing.extra_reading`), so
+	changing a setting later bills what was quoted. A quote from before extras
+	could carry the levy bills them without it, its extra beds
+	(`component="over_capacity"`) as that quote read them and the rest as the
+	settings do; a booking with no readable quote follows the settings."""
+	from kamra.pricing import extra_reading
+	now = extra_reading(reservation.property)
+	try:
+		snapshot = frappe.parse_json(reservation.get("quote_snapshot") or "{}")
+	except ValueError:
+		return now
+	if not isinstance(snapshot, dict) or not snapshot:
+		return now
+	if "levy_on_extras" in snapshot:
+		return {key: bool(snapshot.get(key))
+		        for key in ("levy_on_extras", "tax_included", "levy_included")}
+	taxed = now["tax_included"]
+	if component:
+		taxed = next((item["is_tax_inclusive"] for item in snapshot.get("line_items") or []
+		              if item.get("component") == component and "is_tax_inclusive" in item),
+		             taxed)
+	return {"levy_on_extras": False, "tax_included": bool(taxed),
+	        "levy_included": False}
+
+
+def levy_line(property: str, line: dict, six_decimals: bool,
+              percent: float | None = None) -> dict | None:
+	"""The levy line that goes with an extra's charge line, or None when there
+	is no levy to add. Gives both the key that keeps them together. Whole cents,
+	unless the levy sat inside the price and has to add back to it exactly."""
+	from kamra.pricing import levy_is_taxed
+	prop = frappe.get_cached_doc("Property", property)
+	pct = float((prop.get("room_levy_percent") if percent is None else percent) or 0)
+	amount = round(float(line["amount"]) * pct / 100, 6 if six_decimals else 2)
+	if not amount:
+		return None
+	line["levy_link"] = frappe.generate_hash(length=12)
+	label = f"{prop.get('room_levy_label') or 'Levy'} {pct:g}%"
+	return {
+		"posting_date": line["posting_date"],
+		"charge_type": "Room Levy",
+		"reservation": line.get("reservation"),
+		"description": f"{label} · {line['description']}"[:140],
+		"qty": 1,
+		"rate": amount,
+		"amount": amount,
+		"gst_rate": line["gst_rate"] if levy_is_taxed(property) else 0,
+		"auto_posted": line.get("auto_posted", 0),
+		"levy_link": line["levy_link"],
+	}
 
 
 def _nightly_gst(reservation, date) -> float:
@@ -513,7 +583,8 @@ def _nightly_gst(reservation, date) -> float:
 	gross = season_adjust(reservation.property, date, base,
 	                      reservation.room_type)
 	_net, gst = room_net_rate(reservation.property, rt, gross,
-	                          _over_cap_night(reservation))
+	                          _over_cap_night(reservation),
+	                          bed_holds_levy=booking_reading(reservation)["levy_on_extras"])
 	return float(gst)
 
 
@@ -524,6 +595,123 @@ def _append_charge(folios, reservation, charge_type, line, is_alcohol=0):
 	if name not in folios:
 		folios[name] = frappe.get_doc("Folio", name)
 	folios[name].append("charges", line)
+	return name
+
+
+# lines that never carry a levy of their own
+_NO_LEVY = ("Room Levy", "Discount", "Allowance", "Opening Balance", "Rate Adjustment")
+# recovering a stolen or broken item is not a service: read like any extra, no levy
+_LEVY_FREE = ("Stolen / Damaged Items",)
+
+
+def add_extra_lines(folio, line: dict, levy: int | None) -> int:
+	"""Append a charge priced by hand or by a price list to a loaded folio, with
+	its levy line where it carries one (`levy` as in api._post_folio_charge).
+	Returns how many lines were added."""
+	from kamra.pricing import extra_net, extra_reading
+	if levy is not None and line["charge_type"] in _LEVY_FREE:
+		levy = 0
+	# a negative amount is a correction of money, not an extra: as it is
+	reading = None if levy is None or line["charge_type"] in _NO_LEVY \
+		or float(line["amount"]) <= 0 \
+		else extra_reading(folio.property)
+	extra = None
+	if reading and reading["levy_on_extras"]:
+		net = round(float(extra_net(folio.property, line["amount"], line["gst_rate"],
+		                            reading, levy=bool(levy))), 6)
+		line["rate"] = line["amount"] = net
+		if levy:
+			extra = levy_line(folio.property, line, reading["levy_included"])
+	folio.append("charges", line)
+	if extra:
+		folio.append("charges", extra)
+	return 2 if extra else 1
+
+
+def _live_lines(folio) -> list:
+	"""The lines of a loaded folio that still bill something: positive, not
+	voided, not a void's or a correction's reversal, not replaced by a
+	correction."""
+	voided = voided_rows(folio)
+	replaced = {c.get("corrects_row") for c in folio.charges if c.get("corrects_row")}
+	return [c for c in folio.charges
+	        if float(c.amount or 0) > 0 and not c.get("reversal_of")
+	        and not voided.get(c.name) and c.name not in replaced]
+
+
+def levy_partners(folio, row) -> list:
+	"""The levy lines on this bill that go with an extra's charge line (none
+	for a line that no longer bills anything)."""
+	if row.charge_type == "Room Levy" or not row.get("levy_link"):
+		return []
+	live = _live_lines(folio)
+	if row.name not in {c.name for c in live}:
+		return []
+	return [c for c in live
+	        if c.charge_type == "Room Levy" and c.get("levy_link") == row.levy_link]
+
+
+def _charge_of(folio, row):
+	"""The charge an extra's levy line goes with; the line itself otherwise."""
+	if row.charge_type != "Room Levy" or not row.get("levy_link"):
+		return row
+	return next((c for c in _live_lines(folio) if c.charge_type != "Room Levy"
+	             and c.get("levy_link") == row.levy_link), row)
+
+
+def with_levy_partners(folio, charge_rows: list) -> list:
+	"""`charge_rows` of a loaded folio plus whatever belongs with them: a charge
+	brings its levy and a levy its charge, each once."""
+	by_name = {c.name: c for c in _live_lines(folio)}
+	out: list = []
+	for name in charge_rows:
+		row = by_name.get(name)
+		if row is None:
+			out.append(name)  # the move itself reports it
+			continue
+		charge = _charge_of(folio, row)
+		for line in [charge, *levy_partners(folio, charge), row]:
+			if line.name not in out:
+				out.append(line.name)
+	return out
+
+
+def repost_levy(folio_name: str, levy, old, new) -> None:
+	"""After an extra's charge `old` was corrected to `new` and its levy line
+	voided: the levy again, in proportion to the new amount and from what was
+	posted, whatever the settings are now."""
+	from kamra.business_date import get_business_date
+	folio = frappe.get_doc("Folio", folio_name)
+	amount = round(float(levy.amount) * float(new.amount) / float(old.amount), 6)
+	# taxed like its charge: it follows a corrected tax rate, untaxed stays so
+	taxed_alike = float(levy.gst_rate or 0) == float(old.gst_rate or 0)
+	if new.charge_type in _NO_LEVY or new.charge_type in _LEVY_FREE:
+		return
+	folio.append("charges", {
+		"posting_date": get_business_date(folio.property),
+		"charge_type": "Room Levy",
+		"reservation": levy.reservation,
+		"description": f"{(levy.description or '').split(' · ')[0]} · {new.description}"[:140],
+		"qty": 1,
+		"rate": amount,
+		"amount": amount,
+		"gst_rate": new.gst_rate if taxed_alike else levy.gst_rate,
+		"levy_link": levy.levy_link,
+		"auto_posted": 0,
+	})
+	save_folios({folio.name: folio})
+	from kamra.webhooks import emit_folio_posted
+	emit_folio_posted(folio, folio.charges[-1])
+
+
+def _append_extra(folios, reservation, charge_type, line, reading):
+	"""An extra's line and, where the booking carries the levy on extras, its
+	levy line on the same bill."""
+	levy = levy_line(reservation.property, line, reading["levy_included"]) \
+		if reading["levy_on_extras"] else None
+	name = _append_charge(folios, reservation, charge_type, line)
+	if levy:
+		folios[name].append("charges", levy)
 
 
 def post_room_night(reservation, date, folios=None) -> bool:
@@ -570,33 +758,39 @@ def post_room_night(reservation, date, folios=None) -> bool:
 	if over_cap > 0 and not _charge_posted(
 			reservation.name, "Extra Guests", date):
 		guests = int(reservation.get("over_capacity_guests") or 0)
-		_append_charge(folios, reservation, "Extra Guests", {
+		gst_rate = _nightly_gst(reservation, date)
+		from kamra.pricing import extra_net
+		reading = booking_reading(reservation, "over_capacity")
+		net = round(float(extra_net(
+			reservation.property, over_cap, gst_rate, reading)), 6)
+		_append_extra(folios, reservation, "Extra Guests", {
 			"posting_date": date,
 			"charge_type": "Extra Guests",
 			"reservation": reservation.name,
 			"description": (f"{guests} extra guests by arrangement"
 			                if guests else "Extra guests by arrangement"),
 			"qty": 1,
-			"rate": over_cap,
-			"amount": over_cap,
-			"gst_rate": _nightly_gst(reservation, date),
+			"rate": net,
+			"amount": net,
+			"gst_rate": gst_rate,
 			"auto_posted": 1,
-		})
+		}, reading)
 		posted = True
 
 	if reservation.meal_plan and not _charge_posted(
 			reservation.name, "Meal Plan", date):
 		mp = frappe.get_doc("Meal Plan", reservation.meal_plan)
 		locked = locked_night(reservation, date)
+		reading = booking_reading(reservation)
 		if locked is not None:
 			meal_amount = float(locked.meal_amount or 0)
 		else:
 			from kamra.pricing import meal_night_net
 			meal_amount = round(float(meal_night_net(
 				reservation.property, mp, reservation.adults or 1,
-				reservation.children)), 6)
+				reservation.children, reading)), 6)
 		if meal_amount:
-			_append_charge(folios, reservation, "Meal Plan", {
+			_append_extra(folios, reservation, "Meal Plan", {
 				"posting_date": date,
 				"charge_type": "Meal Plan",
 				"reservation": reservation.name,
@@ -606,7 +800,7 @@ def post_room_night(reservation, date, folios=None) -> bool:
 				"amount": meal_amount,
 				"gst_rate": _fnb_gst(reservation.property),
 				"auto_posted": 1,
-			})
+			}, reading)
 
 	if own_batch:
 		save_folios(folios)
@@ -661,7 +855,8 @@ def charged_nights(reservation_name: str, digits: int = 2) -> dict:
 		WHERE (fc.reservation = %(res)s
 		       OR (IFNULL(fc.reservation, '') = '' AND f.reservation = %(res)s))
 		  AND """ + NOT_VOIDED + """
-		  AND (fc.charge_type IN ('Room', 'Room Levy')
+		  AND (fc.charge_type = 'Room'
+		       OR (fc.charge_type = 'Room Levy' AND IFNULL(fc.levy_link, '') = '')
 		       OR (fc.charge_type = %(adj)s AND fc.stay_date IS NOT NULL))
 		ORDER BY fc.charge_type = 'Room' DESC, fc.amount DESC
 		""", {"res": reservation_name, "adj": RATE_ADJUSTMENT}, as_dict=True)
@@ -828,6 +1023,8 @@ def move_charges(src, dst, charge_rows: list, reservation: str | None = None,
 	from kamra.ledger import ledger_charges, reverse_ledger_for_charge
 	moved = []
 	voided = voided_rows(src)
+	# an extra and its levy stay on one bill
+	charge_rows = with_levy_partners(src, charge_rows)
 	for charge_row in charge_rows:
 		row = next((c for c in src.charges if c.name == charge_row), None)
 		if not row:
@@ -852,6 +1049,7 @@ def move_charges(src, dst, charge_rows: list, reservation: str | None = None,
 			"transaction_code": row.get("transaction_code"),
 			"gl_code": row.get("gl_code"),
 			"idempotency_key": key,
+			"levy_link": row.get("levy_link"),
 		})
 		moved.append(dst.charges[-1])
 		src.charges.remove(row)
@@ -872,10 +1070,35 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	"""Split one charge line between two open folios of the same stay -
 	the 70/30 corporate deal, the shared room, the disputed minibar.
 	Give either a percent (of the line) or an absolute amount to move.
+	An extra and its levy line are split together in the same proportion.
 	Conservation is exact: source keeps base − part, target gets part.
 	credit=True splits an allowance line instead (both parts stay
 	negative); only the server does that, following the charges it wrote
 	down."""
+	doc = frappe.get_doc("Folio", from_folio)
+	row = next((c for c in doc.charges if c.name == charge_row), None)
+	if row and _charge_of(doc, row).name != row.name:
+		frappe.throw(frappe._("Split the charge this levy belongs to: its levy "
+		                      "goes with it."))
+	levies = levy_partners(doc, row) if row else []
+	if not levies:
+		return _split_line(from_folio, charge_row, to_folio, percent, amount, credit)
+	# the part that leaves is a pair of its own
+	link = frappe.generate_hash(length=12)
+	out = _split_line(from_folio, row.name, to_folio, percent, amount, credit, link)
+	moved, kept = Decimal(str(out["moved"])), Decimal(str(out["kept"]))
+	for levy in levies:
+		part = Decimal(str(levy.amount)) * moved / (moved + kept)
+		_split_line(from_folio, levy.name, to_folio, None, float(part), False, link,
+		            places=Decimal("0.000001"))
+	return out
+
+
+def _split_line(from_folio: str, charge_row: str, to_folio: str,
+                percent=None, amount=None, credit: bool = False,
+                link: str | None = None,
+                places: Decimal = Decimal("0.01")) -> dict:
+	"""Cut one line (see split_charge); `link` keys the part that leaves."""
 	src = frappe.get_doc("Folio", from_folio)
 	dst = frappe.get_doc("Folio", to_folio)
 	if from_folio == to_folio:
@@ -894,9 +1117,9 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 	if base <= 0 or (credit and row.charge_type != "Allowance"):
 		frappe.throw("Only positive charge lines can be split.")
 	if percent:
-		part = (base * Decimal(str(percent)) / 100).quantize(Decimal("0.01"))
+		part = (base * Decimal(str(percent)) / 100).quantize(places)
 	elif amount:
-		part = abs(Decimal(str(amount))).quantize(Decimal("0.01"))
+		part = abs(Decimal(str(amount))).quantize(places)
 	else:
 		frappe.throw("Give a percent or an amount to split off.")
 	if part <= 0 or part >= base:
@@ -925,6 +1148,7 @@ def split_charge(from_folio: str, charge_row: str, to_folio: str,
 		"is_alcohol": row.get("is_alcohol"),
 		"transaction_code": row.get("transaction_code"),
 		"gl_code": row.get("gl_code"),
+		"levy_link": link or row.get("levy_link"),
 	})
 	part_row = dst.charges[-1]
 	_recalculate(src)
@@ -1002,6 +1226,10 @@ def share_charges(from_folio: str, charge_rows: list, to_folios: list,
 	else:
 		shares = [Decimal(100) / (len(to_folios) + 1)] * len(to_folios)
 	src = frappe.get_doc("Folio", from_folio)
+	# an extra and its levy are shared as one: splitting the charge cuts both
+	by_name = {c.name: c for c in src.charges}
+	charge_rows = list(dict.fromkeys(
+		_charge_of(src, by_name[r]).name if r in by_name else r for r in charge_rows))
 	bases = {c.name: Decimal(str(c.amount or 0)) for c in src.charges}
 	moved = Decimal(0)
 	for row in charge_rows:
@@ -1189,7 +1417,8 @@ def post_allowance(folio_name: str, amount: float, reason: str,
 	return folio.name
 
 
-def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
+def void_charge(folio_name: str, charge_row: str, reason: str = "",
+                record: bool = True) -> dict:
 	"""Void a wrong charge line on an OPEN folio - the correction path for
 	a mis-posted bill (wrong amount, duplicate, wrong guest). The line stays
 	on the folio and a line of the opposite sign follows it (same charge
@@ -1211,6 +1440,7 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 		             "charge again if it was right.")
 	if voided_rows(folio).get(row.name):
 		frappe.throw("This line is already voided.")
+	levies = [levy.name for levy in levy_partners(folio, row)]
 	removed = {"charge_type": row.charge_type, "description": row.description,
 	           "amount": row.amount}
 	line = {**removed, "row": row.name, "posting_date": row.posting_date,
@@ -1235,6 +1465,7 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 		"reversal_of": row.name,
 		"void_reason": reason.strip(),
 		"voided_by": frappe.session.user,
+		"levy_link": row.get("levy_link"),
 	})
 	_recalculate(folio)
 	folio.save(ignore_permissions=True)
@@ -1244,16 +1475,22 @@ def void_charge(folio_name: str, charge_row: str, reason: str = "") -> dict:
 	first = _original_charge_entry(folio.name, row.name)
 	if first:
 		record_charge_ledger(folio, folio.charges[-1].as_dict(), reversal_of=first.name)
+	reversal = folio.charges[-1].name
+	for levy in levies:  # an extra's levy goes with it, as one action
+		void_charge(folio.name, levy, reason, record=False)
+	if levies:
+		folio.reload()
 	from kamra.webhooks import emit_charge_voided
 	emit_charge_voided(folio, line, reason or "")
 	from kamra.localization import money_text
 	from kamra.savings import log_action
-	log_action("void_charge", "Folio", folio.name, folio.property,
-	           rationale=f"Voided {removed['charge_type']} "
-	                     f"{removed['description']} "
-	                     f"{money_text(folio.property, removed['amount'])}"
-	                     + (f" - {reason}" if reason else ""))
-	return {"folio": folio.name, "removed": removed, "reversal": folio.charges[-1].name,
+	if record:
+		log_action("void_charge", "Folio", folio.name, folio.property,
+		           rationale=f"Voided {removed['charge_type']} "
+		                     f"{removed['description']} "
+		                     f"{money_text(folio.property, removed['amount'])}"
+		                     + (f" - {reason}" if reason else ""))
+	return {"folio": folio.name, "removed": removed, "reversal": reversal,
 	        "balance": folio.balance}
 
 

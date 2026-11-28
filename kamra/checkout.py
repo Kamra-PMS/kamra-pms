@@ -322,7 +322,9 @@ def _late_checkout(res, prop, folio_rows) -> dict | None:
 		fields=["gst_rate"], order_by="posting_date desc", limit=1)
 	guest = next((f["folio"] for f in folio_rows
 	              if f["folio_type"] == "Guest" and f["status"] == "Open"), None)
+	from kamra.pricing import levy_for_screen
 	return {"checkout_time": cutoff_s, "now": now.strftime("%H:%M"),
+	        "levy": levy_for_screen(res.property),
 	        "late": late, "requested": bool(res.get("late_checkout")),
 	        "already_charged": charged, "folio": guest,
 	        "tax_rate": flt(room_rate[0].gst_rate) if room_rate else 0.0}

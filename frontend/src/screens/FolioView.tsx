@@ -29,6 +29,8 @@ const inr = (n: unknown) =>
   fmtAmount(n ?? 0)
 
 interface InvoiceData {
+  /** the levy's name where it can be chosen per charge, else null */
+  levy?: string | null
   folio: {
     name: string
     property?: string
@@ -40,6 +42,8 @@ interface InvoiceData {
       name: string
       posting_date: string
       charge_type: string
+      /** shared by an extra's charge and its levy line */
+      levy_link?: string | null
       description: string
       allowance_serial?: string | null
       /** on a void's reversal line: the line it reverses (both stay on the bill) */
@@ -282,7 +286,7 @@ export default function FolioView() {
 
   const [charge, setCharge] = useState({
     charge_type: "Food & Beverage", description: "", amount: "", gst_rate: "5",
-    is_alcohol: false,
+    is_alcohol: false, levy: true,
   })
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [voidFor, setVoidFor] = useState<string | null>(null)
@@ -735,7 +739,9 @@ export default function FolioView() {
         const bills = siblings.filter((s) => s.bill_to_name && s.status === "Open" && s.name !== folio.name)
         const rows = selected.size
           ? folio.charges.filter((c) => selected.has(c.name))
-          : folio.charges.filter((c) => ["Room", "Meal Plan", "Room Levy"].includes(c.charge_type) && c.amount > 0)
+          : folio.charges.filter((c) => ["Room", "Meal Plan", "Room Levy"].includes(c.charge_type) && c.amount > 0
+              // an extra's levy is shared with its charge, not on its own
+              && !(c.charge_type === "Room Levy" && c.levy_link))
         const even = (100 / (bills.length + 1)).toFixed(2)
         const pct = (f: string) => shares[f] ?? even
         const total = bills.reduce((n, b) => n + Number(pct(b.name) || 0), 0)
@@ -1533,6 +1539,18 @@ export default function FolioView() {
                 />
                 {t("Alcohol")}
               </label>)}
+              {data.levy && charge.charge_type !== "Stolen / Damaged Items" && (
+              <label className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-brand-600"
+                  checked={charge.levy}
+                  onChange={(e) =>
+                    setCharge({ ...charge, levy: e.target.checked })
+                  }
+                />
+                {t("Add {levy}", { levy: data.levy })}
+              </label>)}
               <Button
                 disabled={busy || !charge.amount}
                 onClick={() =>
@@ -1545,6 +1563,7 @@ export default function FolioView() {
                         ? fixedRate
                         : Number(charge.gst_rate),
                       is_alcohol: charge.is_alcohol ? 1 : 0,
+                      levy: charge.levy ? 1 : 0,
                     }),
                   )
                 }

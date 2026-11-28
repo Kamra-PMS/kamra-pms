@@ -200,6 +200,8 @@ export interface CheckoutContext {
     requested: boolean
     already_charged: boolean
     folio: string | null
+    /** the levy's name where it can be chosen per charge */
+    levy?: string | null
     tax_rate: number
   } | null
   /** Leaving before the booked date: the plan, or what was done */
@@ -308,6 +310,7 @@ export default function CheckOutDialog(props: {
   const [lateAmt, setLateAmt] = useState("")
   const [lateDesc, setLateDesc] = useState("")
   const [lateRate, setLateRate] = useState("")
+  const [lateLevy, setLateLevy] = useState(true)
   const [outletModes, setOutletModes] = useState<Record<string, string>>({})
   const [outletCards, setOutletCards] = useState<Record<string, { network?: string; last4?: string }>>({})
   const [companyOk, setCompanyOk] = useState(false)
@@ -568,6 +571,7 @@ export default function CheckOutDialog(props: {
         folio: lc.folio, charge_type: "Late Checkout",
         description: lateDesc.trim() || t("Late check-out"),
         amount: Number(lateAmt), gst_rate: Number(lateRate || 0),
+        levy: lateLevy ? 1 : 0,
       })
       setLateAmt("")
     }, false)
@@ -1152,6 +1156,13 @@ export default function CheckOutDialog(props: {
                       <span className="mb-1 block text-zinc-500">{t("Description")}</span>
                       <input className={inputCls} value={lateDesc} onChange={(e) => setLateDesc(e.target.value)} />
                     </label>
+                    {ctx.late_checkout.levy && (
+                      <label className="flex items-center gap-1.5 text-xs text-zinc-600 sm:col-span-3">
+                        <input type="checkbox" className="size-4 accent-brand-600"
+                          checked={lateLevy} onChange={(e) => setLateLevy(e.target.checked)} />
+                        {t("Add {levy}", { levy: ctx.late_checkout.levy })}
+                      </label>
+                    )}
                     <div className="sm:col-span-3">
                       <Button disabled={busy || !(Number(lateAmt) > 0)} onClick={() => void addLateFee()}>
                         {t("Add late check-out fee")}
