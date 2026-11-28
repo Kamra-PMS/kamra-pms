@@ -65,12 +65,13 @@ const inputCls =
 
 type Shot = { who: "main" } | { who: number; kind: "id" | "photo" }
 
-export default function CheckInGuests({ reservation, guest, guestName, guestPhone, guestHasPhoto,
+export default function CheckInGuests({ reservation, guest, guestName, guestPhone, onlineCheckIn, guestHasPhoto,
   adults, children, occupants, idTypes, onChanged, onMainRead: fillMain }: {
   reservation: string
   guest: string | null
   guestName: string
   guestPhone?: string | null
+  onlineCheckIn?: boolean
   guestHasPhoto: boolean
   adults: number
   children: number
@@ -296,6 +297,7 @@ export default function CheckInGuests({ reservation, guest, guestName, guestPhon
           reservation={reservation}
           guestName={guestName}
           guestPhone={guestPhone}
+          onlineCheckIn={onlineCheckIn}
           onClose={() => setChangingGuest(false)}
           onDone={() => {
             setChangingGuest(false)

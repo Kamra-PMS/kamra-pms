@@ -3653,6 +3653,7 @@
   "Permanent Cloud API token - stored encrypted": "Token permanente de Cloud API; se almacena cifrado",
   "Person": "Persona",
   "Pet Charge": "Cargo por mascota",
+  "Stolen / Damaged Items": "Artículos robados / dañados",
   "Pet charge": "Cargo por mascota",
   "Pet charge applies": "Aplicación del cargo por mascota",
   "Pet charge: {amount} {basis}": "Cargo por mascota: {amount} {basis}",

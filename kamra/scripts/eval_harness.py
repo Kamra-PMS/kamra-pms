@@ -2377,8 +2377,13 @@ def t_stock_cost_average():
 		P, "Average Cups", "pc", cost_per_unit=2000, buy_uom="box", buy_size=24)["name"]
 	settings.save_settings(P, "fnb", {"stock_cost_method": "Average of purchases"})
 	try:
+		# the edit form shows the unit read-only once the record says it is locked
+		assert frappe.get_doc("Ingredient", cups).as_dict().get("unit_locked") == 0, \
+			"an unused ingredient reports a locked unit"
 		inventory.adjust_stock(P, outlet, [{"ingredient": cups, "counted_qty": 12}],
 		                       note="eval opening")
+		assert frappe.get_doc("Ingredient", cups).as_dict().get("unit_locked") == 1, \
+			"an ingredient with stock history does not report its unit as locked"
 		inventory.receive_stock(P, outlet, [{
 			"ingredient": cups, "qty": 2, "in_buying_unit": 1, "buy_uom": "box",
 			"cost_per_unit": 60000}])
@@ -12027,6 +12032,21 @@ def t_change_booking_guest():
 		frappe.db.set_value("Reservation", res.name, "status", "Confirmed")
 
 
+@check("a guest change removes the people the old guest listed in online check-in, not the desk's own")
+def t_change_guest_online_companions():
+	from kamra import api
+	from kamra.public_api import _merge_precheckin_occupants
+	out = api.create_booking(P, RT, "2033-12-10", "2033-12-12", "Eval Online Party",
+	                         phone="+91 70000 00641")
+	res = frappe.get_doc("Reservation", out["reservation"])
+	api.add_occupant_names(res.name, ["Eval Desk Row"])
+	_merge_precheckin_occupants(res, [{"full_name": "Eval Desk Row"}, {"full_name": "Eval Online Row"}])
+	swap = api.change_booking_guest(res.name, guest_name="Eval Other Party", phone="+91 70000 00642")
+	res.reload()
+	assert swap["removed_occupants"] == 1, swap
+	assert [o.full_name for o in res.occupants] == ["Eval Desk Row"], res.occupants
+
+
 @check("a blacklisted phone number still stops a booking; a Hotel Admin's override books the name typed")
 def t_blacklisted_number_books_typed_name():
 	from kamra import api
@@ -12809,6 +12829,7 @@ def execute():
 		           t_capacity_rooms_out_of_sale, t_night_prices_book, t_night_prices_total,
 		           t_night_prices_saved_stay, t_change_booking_guest,
 		           t_blacklisted_number_books_typed_name,
+		           t_change_guest_online_companions,
 		           t_night_prices_refused, t_folio_no_close_in_house,
 		           t_rates_include_levy, t_pos_outlet_levy, t_pos_outlet_receipt,
 		           t_audit_anomalies, t_early_arrival_check_in,

@@ -36,7 +36,7 @@ await build({
 })
 // money.ts remembers the locale in localStorage when there is one; there is none here
 Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true })
-const { adoptUiLocale, fmtUnitCost, formPayload, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost, postedAt, enteredLater, stockNotice, periodRange, batchUse } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
+const { adoptUiLocale, fmtUnitCost, formPayload, isLocked, defaultEntry, receiveLine, receiveRow, recipeTotals, fmtCost, postedAt, enteredLater, stockNotice, periodRange, batchUse } = await import(pathToFileURL(path.join(dir, "stock.mjs")).href)
 
 // a cost per unit keeps up to 4 decimals, whatever the currency
 adoptUiLocale({ currency: "INR", locale: "en-IN", currency_symbol: "₹" })
@@ -60,6 +60,14 @@ assert.deepEqual(formPayload(fields, { ...loaded, cost_per_unit: null }, loaded)
   { ingredient_name: "Milk", cost_per_unit: null }, "clearing the cost is a change")
 assert.deepEqual(formPayload(fields, { ingredient_name: "Oat", cost_per_unit: 30 }, null),
   { ingredient_name: "Oat", cost_per_unit: 30 })
+
+// a field the saved record says is fixed is read-only; a new record never is
+const unit = { field: "uom", type: "data", lockedBy: "unit_locked" }
+assert.equal(isLocked(unit, { unit_locked: 1 }), true)
+assert.equal(isLocked(unit, { unit_locked: 0 }), false)
+assert.equal(isLocked(unit, { uom: "g" }), false, "the full record has not arrived yet")
+assert.equal(isLocked(unit, null), false, "a new record")
+assert.equal(isLocked({ field: "category", type: "data" }, { unit_locked: 1 }), false)
 
 // a Receive row: what goes into stock, what it costs, and what is sent
 const cups = { ingredient: "ING-1", uom: "pc", buy_uom: "box", buy_size: 24, cost_per_unit: 2000 }
