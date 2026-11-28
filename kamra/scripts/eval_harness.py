@@ -6428,6 +6428,32 @@ def t131():
 		frappe.db.set_value("Property", P, "room_levy_percent", saved.room_levy_percent)
 		frappe.clear_document_cache("Property", P)
 
+@check("meal plan: with tax inside the price, the bill's meal lines equal the quote")
+def t_meal_plan_tax_inside():
+	from kamra.folio import post_room_night
+	saved = frappe.db.get_value("Property", P, "rates_include_tax")
+	frappe.db.set_value("Property", P, "rates_include_tax", 1)
+	frappe.clear_document_cache("Property", P)
+	try:
+		mp = frappe.db.get_value("Meal Plan", {"property": P, "code": "CP"}) or \
+			frappe.get_doc({"doctype": "Meal Plan", "property": P, "code": "CP",
+			                "label": "Eval Breakfast", "price_per_adult": 300,
+			                }).insert(ignore_permissions=True).name
+		price = float(frappe.db.get_value("Meal Plan", mp, "price_per_adult"))
+		res, folio = _in_house("Eval Meal Tax", "+91 70000 00757", "2036-06-03",
+		                       "2036-06-04", _ledger_room("L757"))
+		res.meal_plan = mp
+		res.save(ignore_permissions=True)
+		post_room_night(frappe.get_doc("Reservation", res.name), "2036-06-03")
+		lines = [c for c in frappe.get_doc("Folio", folio).charges
+		         if c.charge_type == "Meal Plan"]
+		shown = price * (res.adults or 1)
+		billed = sum(c.total for c in lines)
+		assert abs(billed - shown) < 0.001, (billed, shown)
+	finally:
+		frappe.db.set_value("Property", P, "rates_include_tax", saved)
+		frappe.clear_document_cache("Property", P)
+
 @check("ledger: night audit room nights and the no-show fee land on the ledger")
 def t132():
 	from kamra.folio import run_night_audit
@@ -12858,7 +12884,8 @@ def execute():
 		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent,
 		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
 		           t_stock_cost_average, t_stock_backdate_and_cancel,
-		           t_unsent_lines_take_stock, t_pos_refunds):
+		           t_unsent_lines_take_stock, t_pos_refunds,
+		           t_meal_plan_tax_inside):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
