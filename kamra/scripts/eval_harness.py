@@ -12821,6 +12821,48 @@ def t_pos_refunds():
 		st.save_settings(P, "finance", {"use_cashier_tills": tills})
 
 
+@check("kitchen stock: an entry dated further back than the hotel allows is refused")
+def t_stock_backdate_limit():
+	from frappe.utils import add_days, nowdate
+
+	from kamra import inventory, settings
+
+	outlet, _dish = _eval_bill_outlet("Eval Backdate Limit")
+	cups = inventory.save_ingredient(P, "Eval Limit Cups", "pc", cost_per_unit=10)["name"]
+	day = lambda back: f"{add_days(nowdate(), -back)} 12:00:00"
+	line = [{"ingredient": cups, "qty": 1}]
+	settings.save_settings(P, "finance", {"stock_backdate_days": 2})
+	try:
+		try:
+			inventory.receive_stock(P, outlet, line, posted_at=day(3))
+			raise AssertionError("a delivery dated three days back was accepted with a two day limit")
+		except frappe.ValidationError as e:
+			assert "cannot be dated before" in str(e), e
+		inventory.receive_stock(P, outlet, line, posted_at=day(2))
+		assert inventory.entry_limit(P) == {"earliest": str(add_days(nowdate(), -2))}
+	finally:
+		settings.save_settings(P, "finance", {"stock_backdate_days": 0})
+	inventory.receive_stock(P, outlet, line, posted_at=day(30))
+	held = frappe.db.get_value("Ingredient Stock", f"{outlet}::{cups}", "qty_on_hand")
+	assert held == 2, held
+
+
+@check("restaurant orders export: typed text cannot run as a spreadsheet formula")
+def t_orders_export_formulas():
+	import csv
+	import io
+
+	from kamra import pos
+
+	outlet, dish = _eval_bill_outlet("Eval Export Cells")
+	order = pos.create_order(outlet, [{"menu_item": dish, "qty": 1}], table_no="=1+1")["order"]
+	frappe.db.set_value("POS Order", order, "customer_name", "@SUM(A1)")
+	rows = list(csv.reader(io.StringIO(pos.orders_export(outlet)["csv"].lstrip("\ufeff"))))
+	mine = next(r for r in rows if r[0] == order)
+	assert (mine[6], mine[8]) == ("'=1+1", "'@SUM(A1)"), (mine[6], mine[8])
+	assert float(mine[14]) > 0, mine[14]
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12885,7 +12927,8 @@ def execute():
 		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
 		           t_stock_cost_average, t_stock_backdate_and_cancel,
 		           t_unsent_lines_take_stock, t_pos_refunds,
-		           t_meal_plan_tax_inside):
+		           t_meal_plan_tax_inside, t_stock_backdate_limit,
+		           t_orders_export_formulas):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False

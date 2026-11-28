@@ -7249,5 +7249,12 @@
   "Repeat new PIN": "再次输入新 PIN",
   "Set my cashier PIN": "设置我的收银 PIN",
   "Set your cashier PIN to approve this refund.": "设置收银 PIN 后才能批准这笔退款。",
-  "The two PINs don't match.": "两次输入的 PIN 不一致。"
+  "The two PINs don't match.": "两次输入的 PIN 不一致。",
+  "Kitchen stock entries": "厨房库存记录",
+  "How far back a stock entry can be dated.": "库存记录的日期最早可以往前填多久。",
+  "Back-date stock entries up to": "库存记录最多可补录",
+  "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0：不限制。1：最早只能填昨天。适用于收货、盘点、损耗和自制批次。取消记录不受影响。",
+  "Earliest: {date}": "最早日期：{date}",
+  "Give back {amount} by {mode}?": "确认以{mode}退还 {amount}？",
+  "Yes, refund {amount}": "是，退款 {amount}"
 }

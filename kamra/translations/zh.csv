@@ -2171,3 +2171,4 @@ The recipe of {0} just changed. Try again.,{0} 的配方刚刚发生变化。请
 {0} is made here itself. Take it out of the recipe of {1}.,{0} 本身是自制品。请将其从 {1} 的配方中移除。
 That is too little to take anything from stock.,数量太小，无法从库存中扣减任何原料。
 "Only deliveries, stock takes, wastage and production batches can be cancelled.",只能取消收货、盘点、损耗和生产批次记录。
+A stock entry cannot be dated before {0}.,库存记录的日期不能早于 {0}。

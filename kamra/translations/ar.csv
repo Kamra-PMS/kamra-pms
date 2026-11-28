@@ -335,3 +335,4 @@ That is too little to take anything from stock.,الكمية أقل من أن ي
 Every recipe line needs a quantity above zero.,يحتاج كل سطر في الوصفة إلى كمية أكبر من الصفر.
 {0} belongs to another property.,{0} يتبع منشأة أخرى.
 "Only deliveries, stock takes, wastage and production batches can be cancelled.",يمكن إلغاء عمليات الاستلام والجرد والهدر ودفعات الإنتاج فقط.
+A stock entry cannot be dated before {0}.,لا يمكن تأريخ قيد المخزون قبل {0}.

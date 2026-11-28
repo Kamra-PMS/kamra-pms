@@ -117,3 +117,4 @@ That is too little to take anything from stock.,Kiasi hicho ni kidogo mno kutoa 
 Every recipe line needs a quantity above zero.,Kila mstari wa mapishi unahitaji kiasi kilicho juu ya sifuri.
 {0} belongs to another property.,{0} ni ya jengo jingine.
 "Only deliveries, stock takes, wastage and production batches can be cancelled.","Ni upokeaji, hesabu za hifadhi, upotevu na mafungu ya uzalishaji pekee vinavyoweza kughairiwa."
+A stock entry cannot be dated before {0}.,Ingizo la stoo haliwezi kuwekewa tarehe ya kabla ya {0}.

@@ -3,6 +3,8 @@ count on the day the money went back, under the way it went back."""
 
 from __future__ import annotations
 
+import csv
+import io
 from unittest.mock import patch
 
 import frappe
@@ -59,6 +61,36 @@ class TestBillHistory(AfterOneRefund):
 		self.assertEqual(d["refunds"][0]["approved_by_name"], "UT Budi")
 		self.assertTrue(d["refunds"][0]["refunded_by_name"])
 		self.assertEqual((d["refunded_amount"], d["paid_amount"], len(d["refunds"])), (30250, 72600, 1))
+
+
+class TestExportCells(AfterOneRefund):
+	"""Text typed by people must not run as a formula in a spreadsheet."""
+
+	def test_text_that_would_run_gets_a_leading_quote(self):
+		from kamra.csv_cells import safe_cell
+		for text in ("=1+1", "+cmd", "-2+3", "@SUM(A1)", "\uff1d1+1", "\uff0b1", "\uff0d1+1",
+		             "\uff20x", "  =1", "\t=1", "\tplain", "\r=1", "\nplain", "\ufeff=1",
+		             "+62 812 0000 111"):
+			with self.subTest(text=text):
+				self.assertEqual(safe_cell(text), "'" + text)
+
+	def test_numbers_and_ordinary_text_are_left_alone(self):
+		from kamra.csv_cells import safe_cell
+		for value in ("-12.5", "12", " -7 ", "Budi", "a=b", "", None, -50.0, 0, 3):
+			with self.subTest(value=value):
+				self.assertEqual(safe_cell(value), value)
+
+	def test_the_export_escapes_the_bill_and_its_refund(self):
+		frappe.db.set_value("POS Order", self.order,
+		                    {"customer_name": "=HYPERLINK(1)", "table_no": "@t1"})
+		out = pos.orders_export(self.outlet)
+		rows = list(csv.reader(io.StringIO(out["csv"].lstrip("\ufeff"))))  # Excel's UTF-8 mark
+		self.assertEqual(tuple(rows[0]), pos.EXPORT_COLUMNS)
+		mine = [r for r in rows[1:] if r[0] == self.order]
+		self.assertEqual(len(mine), 2, "the bill and its refund")
+		for row in mine:
+			self.assertEqual((row[6], row[8]), ("'@t1", "'=HYPERLINK(1)"))
+		self.assertEqual(sorted(float(r[14]) for r in mine)[0], -27500)
 
 
 class TestDashboards(AfterOneRefund):

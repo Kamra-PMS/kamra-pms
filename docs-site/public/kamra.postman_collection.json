@@ -13422,6 +13422,43 @@
      }
     },
     {
+     "name": "entry_limit",
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "token {{api_key}}:{{api_secret}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/method/kamra.inventory.entry_limit",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "method",
+        "kamra.inventory.entry_limit"
+       ]
+      },
+      "description": "What the date fields of the stock screens allow: `earliest` is the first\nday an entry may be dated, or null when there is no limit.",
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"property\": \"Your Property\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      }
+     }
+    },
+    {
      "name": "receive_stock",
      "request": {
       "method": "POST",

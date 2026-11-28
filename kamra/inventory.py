@@ -881,14 +881,33 @@ def _moment(value):
 	return when
 
 
-def _when(posted_at) -> str | None:
+def earliest_entry_date(property: str) -> str | None:
+	"""The first day a manual stock entry may be dated, or None for no limit
+	(Settings -> Finance -> Kitchen stock entries)."""
+	from kamra.settings import get_setting
+	days = int(flt(get_setting(property, "stock_backdate_days")))
+	return str(add_days(nowdate(), -days)) if days > 0 else None
+
+
+def _when(posted_at, property: str) -> str | None:
 	"""The moment a manual stock entry is dated, or None for "now"."""
 	if posted_at in (None, ""):
 		return None
 	when = _moment(posted_at)
 	if when > frappe.utils.now_datetime():
 		frappe.throw(_("A stock entry cannot be dated in the future."))
+	earliest = earliest_entry_date(property)
+	if earliest and when.date() < getdate(earliest):
+		frappe.throw(_("A stock entry cannot be dated before {0}.").format(earliest))
 	return str(when)
+
+
+@frappe.whitelist()
+@require_perm("Ingredient", "manage_stock")
+def entry_limit(property: str) -> dict:
+	"""What the date fields of the stock screens allow: `earliest` is the first
+	day an entry may be dated, or null when there is no limit."""
+	return {"earliest": earliest_entry_date(property)}
 
 
 def _lock_for_writing(property: str, names: list) -> dict:
@@ -940,7 +959,7 @@ def receive_stock(property: str, outlet: str, rows, supplier: str | None = None,
 	if not rows:
 		frappe.throw(_("Nothing to receive."))
 	check_outlet(property, outlet)
-	posted_at = _when(posted_at)
+	posted_at = _when(posted_at, property)
 	held = _lock_for_writing(property, sorted({r["ingredient"] for r in rows}))
 	# every row is checked before any of them moves
 	lines = [_delivery_line(r, held[r["ingredient"]]) for r in rows]
@@ -1011,7 +1030,7 @@ def adjust_stock(property: str, outlet: str, rows, note: str,
 	if not rows:
 		frappe.throw(_("Nothing counted."))
 	check_outlet(property, outlet)
-	posted_at = _when(posted_at)
+	posted_at = _when(posted_at, property)
 	_lock_for_writing(property, sorted({r["ingredient"] for r in rows}))
 	batch = uuid.uuid4().hex[:12]
 	out = []
@@ -1060,7 +1079,7 @@ def record_wastage(property: str, outlet: str, ingredient: str, qty: float,
 	if not (reason_note or "").strip():
 		frappe.throw(_("Wastage needs a reason."))
 	check_outlet(property, outlet)
-	posted_at = _when(posted_at)
+	posted_at = _when(posted_at, property)
 	_lock_for_writing(property, [ingredient])
 	after = _apply_move(property, outlet, ingredient, -qty, "Wastage",
 	                    note=reason_note.strip()[:500], batch_id=uuid.uuid4().hex[:12],
@@ -1088,7 +1107,7 @@ def produce(property: str, outlet: str, ingredient: str, qty: float,
 	made_qty = _number(qty or 0)
 	if not made_qty > 0:
 		frappe.throw(_("Say how much was made, above zero."))
-	posted_at = _when(posted_at)
+	posted_at = _when(posted_at, property)
 	note = (note or "").strip()[:500] or None
 	check_outlet(property, outlet)
 	# read the recipe to know what to lock, then read it again under the locks

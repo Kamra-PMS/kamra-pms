@@ -118,3 +118,4 @@ The recipe of {0} just changed. Try again.,{0} की रेसिपी अभ�
 {0} is made here itself. Take it out of the recipe of {1}.,{0} खुद यहीं बनता है। इसे {1} की रेसिपी से निकालें।
 That is too little to take anything from stock.,यह इतना कम है कि स्टॉक से कुछ नहीं घटेगा।
 "Only deliveries, stock takes, wastage and production batches can be cancelled.","सिर्फ़ डिलीवरी, स्टॉक गिनती, वेस्टेज और उत्पादन बैच रद्द हो सकते हैं।"
+A stock entry cannot be dated before {0}.,स्टॉक प्रविष्टि {0} से पहले की तारीख़ की नहीं हो सकती।

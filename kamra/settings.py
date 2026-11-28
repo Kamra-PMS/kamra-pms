@@ -544,6 +544,12 @@ MODULES: tuple[Module, ...] = (
 				  hint="Each business date, rates missing for these currencies are fetched online. "
 				       "Off: Finance fetches or types them on the Currency Desk."),
 			)),
+			Section("stock_entries", "Kitchen stock entries", "How far back a stock entry can be dated.", (
+				S("stock_backdate_days", "Back-date stock entries up to", "number", 0, min=0, max=3650,
+				  unit="days",
+				  hint="0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, "
+				       "wastage and made batches. Cancelling an entry is not affected."),
+			)),
 		),
 	),
 	Module(

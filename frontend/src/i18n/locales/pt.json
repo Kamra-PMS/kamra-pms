@@ -7287,5 +7287,12 @@
   "Repeat new PIN": "Repita o novo PIN",
   "Set my cashier PIN": "Definir meu PIN de caixa",
   "Set your cashier PIN to approve this refund.": "Defina seu PIN de caixa para aprovar este reembolso.",
-  "The two PINs don't match.": "Os dois PINs não coincidem."
+  "The two PINs don't match.": "Os dois PINs não coincidem.",
+  "Kitchen stock entries": "Lançamentos do estoque da cozinha",
+  "How far back a stock entry can be dated.": "Até que data anterior um lançamento de estoque pode ser datado.",
+  "Back-date stock entries up to": "Retroatividade máxima dos lançamentos de estoque",
+  "0: no limit. 1: yesterday at the earliest. Covers deliveries, stock takes, wastage and made batches. Cancelling an entry is not affected.": "0: sem limite. 1: a data mais antiga é ontem. Vale para entregas, contagens, perdas e lotes produzidos. Não afeta o cancelamento de lançamentos.",
+  "Earliest: {date}": "Data mais antiga: {date}",
+  "Give back {amount} by {mode}?": "Devolver {amount} como {mode}?",
+  "Yes, refund {amount}": "Sim, reembolsar {amount}"
 }

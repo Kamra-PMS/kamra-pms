@@ -11,7 +11,7 @@ import { cur, fmtAmount } from "../../lib/money"
 import { useT, t as translate } from "../../lib/i18n"
 import { cn } from "../../lib/utils"
 import { Button } from "../../components/ui/button"
-import { newAttemptKey, refundApproval, refundRequest, type RefundKind } from "../../lib/refunds"
+import { newAttemptKey, refundApproval, refundClick, refundRequest, type RefundKind } from "../../lib/refunds"
 import { useCashierAuth } from "../../lib/cashierAuth"
 import CashierPinDialog from "../../components/CashierPinDialog"
 
@@ -55,6 +55,8 @@ export default function RefundDialog({ order, onClose, onDone }: {
   const [refused, setRefused] = useState<{ ask: string; why: string } | null>(null)
   const [round, setRound] = useState(0)
   const [busy, setBusy] = useState(false)
+  // the confirmation a one-tap refund waits for
+  const [asked, setAsked] = useState<{ what: string; at: number } | null>(null)
   // one key for this attempt: a retried click can't pay twice
   const [key] = useState(newAttemptKey)
 
@@ -86,6 +88,23 @@ export default function RefundDialog({ order, onClose, onDone }: {
   const approval = opts ? refundApproval(opts, supervisor, pin) : null
   const ready = !!current && !!reason && !needsNote && !!mode && !!approval?.ready
 
+  const what = JSON.stringify([ask, mode, reason, current?.amount])
+  const confirming = approval?.ask === "nothing" && asked?.what === what
+  // a change drops the question: changing back must not bring it up unasked
+  useEffect(() => { setAsked(null) }, [what])
+  function takeBack() {
+    // the second tap of a double tap can land here: it must not undo the question
+    if (asked && refundClick("nothing", asked, what, Date.now()) === "ignore") return
+    setAsked(null)
+  }
+  function press() {
+    if (!approval) return
+    const at = Date.now()
+    const step = refundClick(approval.ask, asked, what, at)
+    if (step === "ask") setAsked({ what, at })
+    else if (step === "pay") void give()
+  }
+
   async function give() {
     if (!request) return
     if (!current || !approval) return
@@ -100,7 +119,7 @@ export default function RefundDialog({ order, onClose, onDone }: {
       onDone()
     } catch (e) {
       // the bill may have moved on: read it and the figure again
-      setRefused({ ask, why: serverError(e) }); setPin(""); setBusy(false)
+      setRefused({ ask, why: serverError(e) }); setPin(""); setBusy(false); setAsked(null)
       setQuote(null); setRound((n) => n + 1)
     }
   }
@@ -240,16 +259,30 @@ export default function RefundDialog({ order, onClose, onDone }: {
           )}
           {problem && <div role="alert" className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-rose-700">{translate(problem)}</div>}
         </div>
-        {opts?.eligible && (
+        {opts?.eligible && (confirming && current ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-amber-200 bg-amber-50 p-4">
+            <span role="alert" className="text-sm font-semibold text-amber-900">
+              {t("Give back {amount} by {mode}?", { amount: money(current.amount), mode: translate(mode) })}
+            </span>
+            <div className="ml-auto flex gap-2">
+              <Button className="h-11 px-6" disabled={busy || !ready} onClick={press}>
+                {t("Yes, refund {amount}", { amount: money(current.amount) })}
+              </Button>
+              <Button variant="outline" className="h-11 px-6" disabled={busy} onClick={takeBack}>
+                {t("Back")}
+              </Button>
+            </div>
+          </div>
+        ) : (
           <div className="flex items-center justify-between gap-3 border-t border-zinc-200 p-4">
             <span className="text-sm text-zinc-600">
               {t("Total back")} <b className="tabular-nums text-zinc-900">{current ? money(current.amount) : "-"}</b>
             </span>
-            <Button className="h-11 px-6" disabled={busy || !ready} onClick={give}>
+            <Button className="h-11 px-6" disabled={busy || !ready} onClick={press}>
               {current ? t("Refund {amount}", { amount: money(current.amount) }) : t("Refund")}
             </Button>
           </div>
-        )}
+        ))}
       </div>
       {settingPin && (
         <CashierPinDialog onClose={() => setSettingPin(false)}
