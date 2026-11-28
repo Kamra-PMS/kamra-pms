@@ -307,6 +307,108 @@ class TestTheMoney(Refunding):
 			(30250, [(1, 30250)]))
 
 
+class TestCurrencyDigits(Refunding):
+	"""A refund is worked out in the currency's own decimals, as the till shows
+	it. The rupiah bills keep their menu prices before tax at six decimals, so
+	that the price with 10% tax is the round figure on the menu."""
+
+	def currency(self, code):
+		frappe.db.set_value("Property", PROP_A, "currency", code)
+		frappe.clear_document_cache("Property", PROP_A)
+
+	def counter(self, levy_percent=0, **prices):
+		self.currency("IDR")
+		outlet = frappe.get_doc("POS Outlet", self.outlet)
+		outlet.levy_percent = levy_percent
+		outlet.save(ignore_permissions=True)
+		return [self.dish(f"UT {name}", price) for name, price in prices.items()]
+
+	def discounted_bill(self):
+		"""80,000 + 30,000 + 32,000 on the menu, 10,000 off: 131,000 paid."""
+		dishes = self.counter(Ribs=72727.272727, Shake=27272.727273, Cookies=29090.909091)
+		order = self.bill(*((dish, 1) for dish in dishes))
+		pos.apply_discount(order, 10000, "regular")
+		pos.pay_order(order, "Cash")
+		self.assertEqual(self.field(order, "paid_amount"), 131000)
+		return order, dishes
+
+	def service_bill(self):
+		"""A tea and a fried rice with 5% service: the bill itself ends in sen."""
+		dishes = self.counter(levy_percent=5, Tea=10890, Rice=54545.454545)
+		order = self.bill(*((dish, 1) for dish in dishes))
+		pos.pay_order(order, "Cash")
+		self.assertEqual(self.field(order, "paid_amount"), 75577.94)
+		return order, dishes
+
+	def test_each_currency_has_the_decimals_the_screen_shows(self):
+		from kamra.ledger import currency_digits
+
+		shown = {"IDR": 0, "JPY": 0, "VND": 0, "HUF": 0, "COP": 0, "PKR": 0, "INR": 2,
+		         "USD": 2, "SAR": 2, "RSD": 2, "KWD": 3, "BHD": 3, "OMR": 3, "": 2, None: 2}
+		self.assertEqual({code: currency_digits(code) for code in shown}, shown)
+
+	def test_rupiah_items_go_back_in_whole_rupiah(self):
+		order, (ribs, shake, cookies) = self.discounted_bill()
+		line = self.pick(order, ribs)
+		quoted = pos_refunds.refund_quote(order, "items", lines=[line])
+		self.assertEqual((quoted["amount"], quoted["lines"][0]["amount"]), (73803, 73803))
+		self.assertEqual(
+			self.refund(order, "items", lines=[line], expected_amount=quoted["amount"])["amount"],
+			73803)
+		self.assertEqual(self.items(order, self.pick(order, shake))["amount"], 27676)
+		last = self.items(order, self.pick(order, cookies))
+		self.assertEqual((last["amount"], last["remaining"]), (29521, 0))
+		self.assertEqual(self.field(order, "refunded_amount"), 131000)
+		# the bill's tax ends in sen: whole rupiah until the last, which takes the rest
+		self.assertEqual([r.tax_amount for r in self.refunds(order)], [6709, 2516, 2684.09])
+
+	def test_the_last_items_still_give_back_the_sen_that_were_paid(self):
+		order, (tea, rice) = self.service_bill()
+		self.assertEqual(self.items(order, self.pick(order, tea))["amount"], 12578)
+		last = self.items(order, self.pick(order, rice))
+		self.assertEqual((last["amount"], last["remaining"]), (62999.94, 0))
+		self.assertEqual(self.field(order, "refunded_amount"), 75577.94)
+
+	def test_a_whole_rupiah_bill_refund_gives_back_what_was_paid(self):
+		order, _dishes = self.service_bill()
+		self.assertEqual(self.refund(order)["amount"], 75577.94)
+		self.assertEqual(
+			[line.amount for line in frappe.get_doc("POS Refund", self.refunds(order)[0].name).lines],
+			[12578, 62999.94])
+
+	def test_a_typed_rupiah_amount_is_whole(self):
+		order, _dishes = self.service_bill()
+		self.assertEqual(self.refund(order, "amount", amount=1000.4)["amount"], 1000)
+		with self.assertRaisesRegex(frappe.ValidationError, "above zero"):
+			self.refund(order, "amount", amount=0.3)
+		with self.assertRaisesRegex(frappe.ValidationError, "up to"):
+			self.refund(order, "amount", amount=74579)
+
+	def test_typing_what_the_window_shows_as_left_gives_back_all_of_it(self):
+		order, _dishes = self.service_bill()
+		# the window shows Rp 75,578 for 75,577.94
+		got = self.refund(order, "amount", amount=75578)
+		self.assertEqual((got["amount"], got["remaining"]), (75577.94, 0))
+
+	def test_rupiah_tax_and_levy_parts_never_go_below_zero(self):
+		self.currency("IDR")
+		order = self.paid_bill()
+		for amount in (22006, 22006, 28587, 1):
+			self.refund(order, "amount", amount=amount)
+		for field, paid in (("tax_amount", 6600), ("levy_amount", 6000)):
+			parts = [r[field] for r in self.refunds(order)]
+			with self.subTest(field=field):
+				self.assertEqual((sum(parts), min(parts) >= 0), (paid, True), parts)
+
+	def test_a_three_decimal_currency_keeps_its_third_decimal(self):
+		self.currency("KWD")
+		order = self.paid_bill()
+		self.assertEqual(self.refund(order, "amount", amount=0.125)["amount"], 0.125)
+		rest = self.refund(order)
+		self.assertEqual((rest["amount"], rest["remaining"]), (72599.875, 0))
+		self.assertEqual(self.field(order, "refunded_amount"), 72600)
+
+
 class TestWhoAndWhy(Refunding):
 	def refused(self, order, words, **kw):
 		with self.assertRaisesRegex((frappe.ValidationError, frappe.PermissionError), words):

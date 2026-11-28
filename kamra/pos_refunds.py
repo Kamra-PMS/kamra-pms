@@ -16,11 +16,15 @@ from frappe import _
 from frappe.utils import flt
 
 from kamra.authz import require_perm
+from kamra.ledger import currency_digits, home_currency, round_to
 from kamra.localization import money_text
 
 APPROVE_REFUNDS = ("POS Order", "approve_refunds")
 REASON_CATEGORY = "POS Refund"
 OTHER_REASON = "POS-REF-OTHER"
+# refund sums are kept to three decimals, the most any currency here has; two
+# figures closer than SAME differ only by float noise
+SAME = 0.0005
 
 
 def lock_bill(order: str) -> None:
@@ -38,32 +42,34 @@ def refunds_of(order: str) -> list:
 
 # ------------------------------------------------------------ the money rule
 
-def line_amounts(paid: float, remaining: float, items: dict, picks: list) -> list:
+def line_amounts(paid: float, remaining: float, items: dict, picks: list,
+                 digits: int = 2) -> list:
 	"""Each picked line's part of a refund: its share, by line value, of what
 	was actually paid (discount, levy and tax included).
 
 	`items` is bill row -> (line amount, quantity sold, quantity already
-	refunded) for the live lines; `picks` is [(row, quantity)]. The refund that
-	takes the last priced units takes all that is left, so refunding every
-	item gives back exactly what was paid; no refund takes more than that."""
+	refunded) for the live lines; `picks` is [(row, quantity)]. A share is
+	rounded to the currency's `digits`. The refund that takes the last priced
+	units takes all that is left, so refunding every item gives back exactly
+	what was paid (a rupiah bill can end in sen); no refund takes more."""
 	subtotal = sum(amount for amount, _sold, _done in items.values())
 	taken = {}
 	for row, qty in picks:
 		taken[row] = taken.get(row, 0) + qty
 	shares = [
-		round(paid * items[row][0] * qty / items[row][1] / subtotal, 2) if subtotal else 0.0
+		round_to(paid * items[row][0] * qty / items[row][1] / subtotal, digits) if subtotal else 0.0
 		for row, qty in picks]
 	last = all(done + taken.get(row, 0) >= sold - 1e-9
 	           for row, (amount, sold, done) in items.items() if amount > 0)
-	total = remaining if last else min(round(sum(shares), 2), remaining)
+	total = remaining if last else min(round(sum(shares), 3), remaining)
 	# put any difference (rounding, or the cap) on the last lines picked
-	diff = round(total - sum(shares), 2)
+	diff = round(total - sum(shares), 3)
 	for i in range(len(shares) - 1, -1, -1):
 		if not diff:
 			break
 		step = diff if diff > 0 else max(diff, -shares[i])
-		shares[i] = round(shares[i] + step, 2)
-		diff = round(diff - step, 2)
+		shares[i] = round(shares[i] + step, 3)
+		diff = round(diff - step, 3)
 	return shares
 
 
@@ -104,16 +110,25 @@ def _live_lines(doc) -> dict:
 	        for it in doc.items if not it.voided}
 
 
+def _digits(property: str) -> int:
+	"""The decimals of the property's currency."""
+	return currency_digits(home_currency(property))
+
+
 def _work_out(doc, refunded: float, kind: str, lines, amount) -> tuple:
 	"""(total, [{row, qty, amount, back_to_stock}]) for what was asked."""
 	if isinstance(lines, str):
 		lines = frappe.parse_json(lines)
 	paid = flt(doc.paid_amount)
-	remaining = round(paid - refunded, 2)
+	remaining = round(paid - refunded, 3)
 	if remaining <= 0:
 		frappe.throw(_("Nothing is left to refund on this bill."))
+	digits = _digits(doc.property)
 	if kind == "amount":
-		value = round(flt(amount), 2)
+		value = round_to(flt(amount), digits)
+		# typing the figure the window shows as left asks for all of it
+		if flt(amount) > 0 and value == round_to(remaining, digits):
+			value = remaining
 		if value <= 0:
 			frappe.throw(_("The amount must be above zero."))
 		if value > remaining:
@@ -150,8 +165,8 @@ def _work_out(doc, refunded: float, kind: str, lines, amount) -> tuple:
 	if not picks:
 		return remaining, []
 	order = list(picks.items())
-	shares = line_amounts(paid, remaining, items, order)
-	total = round(sum(shares), 2)
+	shares = line_amounts(paid, remaining, items, order, digits)
+	total = round(sum(shares), 3)
 	if total <= 0:
 		frappe.throw(_("Nothing is left to refund on this bill."))
 	return total, [
@@ -287,14 +302,14 @@ def refund_options(order: str):
 	doc = frappe.get_doc("POS Order", order)
 	problem = why_not(doc)
 	made = history(order)
-	refunded = round(sum(flt(r.amount) for r in made), 2)
+	refunded = round(sum(flt(r.amount) for r in made), 3)
 	done = _refunded_qty(order)
 	ensure_default_reason_codes()
 	return {
 		"order": order, "eligible": not problem, "why_not": problem,
 		"paid": flt(doc.paid_amount), "paid_by": doc.payment_mode,
 		"refunded": refunded,
-		"remaining": round(max(flt(doc.paid_amount) - refunded, 0), 2),
+		"remaining": round(max(flt(doc.paid_amount) - refunded, 0), 3),
 		"lines": [
 			{"row": it.name, "item_name": it.item_name, "qty": flt(it.qty),
 			 # tells two lines of one dish apart (oat milk and plain)
@@ -332,7 +347,7 @@ def refund_quote(order: str, kind: str, lines=None, amount: float | None = None)
 
 def _not_as_shown(expected, amount: float) -> bool:
 	"""True when the screen showed another amount (none sent: nothing to compare)."""
-	return expected not in (None, "") and abs(flt(expected) - amount) >= 0.005
+	return expected not in (None, "") and abs(flt(expected) - amount) >= SAME
 
 
 def _has_seen(seen, name: str, refunds: list) -> bool:
@@ -346,13 +361,13 @@ def _has_seen(seen, name: str, refunds: list) -> bool:
 		if r.name == name:
 			break
 		before += flt(r.amount)
-	return flt(seen) - before >= 0.005
+	return flt(seen) - before >= SAME
 
 
 def _answer(name: str, order: str) -> dict:
 	paid, refunded = frappe.db.get_value("POS Order", order, ["paid_amount", "refunded_amount"])
 	return {"refund": name, "amount": flt(frappe.db.get_value("POS Refund", name, "amount")),
-	        "refunded": flt(refunded), "remaining": round(flt(paid) - flt(refunded), 2)}
+	        "refunded": flt(refunded), "remaining": round(flt(paid) - flt(refunded), 3)}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -402,7 +417,7 @@ def refund_bill(order: str, kind: str, mode: str, reason_code: str,
 	modes = refund_modes(doc)
 	if mode not in modes:
 		frappe.throw(_("Money goes back as {0}.").format(", ".join(modes)))
-	refunded = round(sum(flt(r.amount) for r in prior), 2)
+	refunded = round(sum(flt(r.amount) for r in prior), 3)
 	total, picks = _work_out(doc, refunded, kind, lines, amount)
 	# the cashier counts out what the screen said: never record another figure
 	if _not_as_shown(expected_amount, total):
@@ -411,12 +426,15 @@ def refund_bill(order: str, kind: str, mode: str, reason_code: str,
 	session = _own_till(doc.property, doc.outlet)
 
 	paid = flt(doc.paid_amount)
-	last = abs(paid - refunded - total) < 0.005
+	last = abs(paid - refunded - total) < SAME
+	digits = _digits(doc.property)
 
 	def part(whole, field):
+		left = round(flt(whole) - sum(flt(r.get(field)) for r in prior), 3)
 		if last:
-			return round(flt(whole) - sum(flt(r.get(field)) for r in prior), 2)
-		return round(flt(whole) * total / paid, 2)
+			return left
+		# whole-unit parts can add up to more than there is: never below zero
+		return min(round_to(flt(whole) * total / paid, digits), left)
 
 	rows = {it.name: it for it in doc.items}
 	menu = [rows[p["row"]].menu_item for p in picks]
@@ -452,7 +470,7 @@ def refund_bill(order: str, kind: str, mode: str, reason_code: str,
 		from kamra.inventory import _apply_move
 		_apply_move(doc.property, doc.outlet, line.stock_item, line.qty, "Return",
 		            ref_dt="POS Refund", ref_dn=refund.name, note=f"Refunded {doc.name}")
-	frappe.db.set_value("POS Order", doc.name, "refunded_amount", round(refunded + total, 2))
+	frappe.db.set_value("POS Order", doc.name, "refunded_amount", round(refunded + total, 3))
 
 	from kamra.savings import log_action
 	log_action("pos_refund", "POS Order", doc.name, doc.property,

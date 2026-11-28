@@ -12821,6 +12821,38 @@ def t_pos_refunds():
 		st.save_settings(P, "finance", {"use_cashier_tills": tills})
 
 
+@check("POS refunds on a rupiah hotel go back in whole rupiah and still add up to what was paid")
+def t_pos_refunds_whole_units():
+	from kamra import pos, pos_refunds
+	from kamra import settings as st
+	outlet, dish = _eval_bill_outlet("Eval Rupiah Refunds")
+	tills = st.get_setting(P, "use_cashier_tills")
+	was = frappe.db.get_value("Property", P, ["currency", "require_cashier_pin"], as_dict=True)
+	st.save_settings(P, "finance", {"use_cashier_tills": 0})
+	frappe.db.set_value("Property", P, {"currency": "IDR", "require_cashier_pin": 0})
+	frappe.clear_document_cache("Property", P)
+	try:
+		order = pos.create_order(outlet, [{"menu_item": dish, "qty": 3}], table_no="R2")["order"]
+		pos.apply_discount(order, 50, "regular")
+		pos.pay_order(order, "Cash")
+		paid = frappe.db.get_value("POS Order", order, "paid_amount")
+		assert paid == 892.5, paid
+		row = frappe.get_doc("POS Order", order).items[0].name
+
+		def give():
+			return pos_refunds.refund_bill(
+				order, "items", "Cash", "POS-REF-WRONG", lines=[{"row": row, "qty": 1}],
+				idempotency_key=frappe.generate_hash(length=16))["amount"]
+
+		given = [give(), give(), give()]
+		assert given == [298, 298, 296.5], ("a third of 892.50 each time", given)
+	finally:
+		frappe.db.set_value("Property", P, {
+			"currency": was.currency, "require_cashier_pin": was.require_cashier_pin or 0})
+		frappe.clear_document_cache("Property", P)
+		st.save_settings(P, "finance", {"use_cashier_tills": tills})
+
+
 def execute():
 	global RT, ROOM
 	# frappe.locale.get_locale_value crashes (UnboundLocalError) when no
@@ -12885,6 +12917,7 @@ def execute():
 		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
 		           t_stock_cost_average, t_stock_backdate_and_cancel,
 		           t_unsent_lines_take_stock, t_pos_refunds,
+		           t_pos_refunds_whole_units,
 		           t_meal_plan_tax_inside):
 			fn()
 	finally:
