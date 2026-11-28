@@ -336,7 +336,7 @@ export default function GroupControl({
     )
   const openSettle = () => {
     setTab("bill")
-    setSettle({ mode: loc.payment_modes[0] ?? "Cash", amount: String(Math.round(groupBillDue) || ""), cityLedger: !!g.company })
+    setSettle({ mode: loc.payment_modes[0] ?? "Cash", amount: groupBillDue > 0 ? String(groupBillDue) : "", cityLedger: !!g.company })
   }
   const openDeposit = () => {
     setTab("bill")
