@@ -5865,6 +5865,7 @@ meal plan and what is due now under the property's payment policy.
 | `children` | no | `0` |
 | `child_ages` | no | `None` |
 | `voucher_code` | no | `None` |
+| `rooms` | no | `None` |
 
 ### `kamra.guest_booking.hold`
 
@@ -8319,6 +8320,7 @@ what it sleeps but within the extra guests it allows by arrangement.
 | `pets` | no | `0` |
 | `child_ages` | no | `None` |
 | `voucher_code` | no | `None` |
+| `rooms` | no | `None` |
 
 ### `kamra.public_api.precheckin_info` <Badge type='tip' text='public' />
 
@@ -8442,6 +8444,7 @@ the sleeping arrangement and agrees the price for them.
 | `child_ages` | no | `None` |
 | `marketing_consent` | no | `0` |
 | `source_tag` | no | `''` |
+| `rooms` | no | `None` |
 
 ### `kamra.public_api.access_info` <Badge type='tip' text='public' />
 

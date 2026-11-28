@@ -52,3 +52,14 @@ export function sleeps(
 ) {
   return Number(rt?.[`${kind}_capacity`] || 0)
 }
+
+/** The max total occupants any single room type in the property can accommodate. */
+export function singleRoomMaxCapacity(roomTypes: RoomCapacity[] | undefined): number {
+  if (!roomTypes || roomTypes.length === 0) return 0
+  const totals = roomTypes.map((rt) => {
+    const total = Number(rt.max_total_occupants) || (Number(rt.adults_capacity) || 0) + (Number(rt.children_capacity) || 0)
+    const extra = Number(rt.max_extra_beds) || 0
+    return total + extra
+  })
+  return totals.length ? Math.max(...totals) : 0
+}

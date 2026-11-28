@@ -52,6 +52,7 @@ export function stayFromParams(p: {
   checkout?: string
   adults?: string
   children?: string
+  rooms?: string
 }) {
   const today = todayPlus(0)
   let check_in_date = parseDate(p.checkin) ? p.checkin! : todayPlus(1)
@@ -69,6 +70,7 @@ export function stayFromParams(p: {
     check_out_date,
     adults: whole(p.adults, 1, 2),
     children: whole(p.children, 0, 0),
+    rooms: whole(p.rooms, 1, 1),
     pets: 0,
   }
 }

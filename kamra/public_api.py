@@ -8,8 +8,9 @@ behind auth. Money still comes only from the pricing engine.
 import re
 
 import frappe
+from frappe import _
 from frappe.rate_limiter import rate_limit
-from frappe.utils import cint, date_diff
+from frappe.utils import cint, date_diff, flt
 
 from kamra.authz import act_as
 from kamra.booking_slugs import resolve_public_slug, slugify
@@ -362,11 +363,13 @@ def showcase(property: str, listing_slug: str | None = None,
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=3600)
 def search_stay(property: str, check_in_date: str, check_out_date: str,
                 adults: int = 2, children: int = 0,
                 listing_slug: str | None = None,
                 location_slug: str | None = None, pets: int = 0,
-                child_ages=None, voucher_code: str | None = None):
+                child_ages=None, voucher_code: str | None = None,
+                rooms=None):
 	"""Availability + real quoted price per room type for the stay.
 
 	Each available row also carries `plans`: the stay quoted room only
@@ -379,7 +382,8 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 	is free, a child or an adult; without it `children` are all children.
 	Each row says whether the room type can take the party: `available`, a
 	`reason` when it cannot, and `needs_confirmation` when the party is above
-	what it sleeps but within the extra guests it allows by arrangement."""
+	what it sleeps but within the extra guests it allows by arrangement.
+	`rooms` ([{adults, children, child_ages}, ...]) evaluates multi-room availability."""
 	# available_rooms is staff-only (@require_roles) since it's also an
 	# MCP / Kamra Agent tool; guests need the same availability math without
 	# role gate, so this calls the same underlying helpers directly.
@@ -405,7 +409,41 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 		order_by="price_per_adult asc")
 	free = [m.name for m in mps if not (m.price_per_adult or m.price_per_child)]
 	meal_plans = [free[0] if free else ""] + [m.name for m in mps if m.name not in free]
-	results = []
+
+	parsed_rooms = None
+	if rooms:
+		if isinstance(rooms, str):
+			try:
+				parsed_rooms = frappe.parse_json(rooms)
+			except Exception:
+				frappe.throw(_("Invalid rooms format."))
+		elif isinstance(rooms, list):
+			parsed_rooms = rooms
+		else:
+			frappe.throw(_("Rooms must be a list of room configurations."))
+
+		if not parsed_rooms:
+			frappe.throw(_("At least 1 room is required."))
+		if len(parsed_rooms) > 10:
+			frappe.throw(_("Cannot search more than 10 rooms."))
+
+		for idx, r in enumerate(parsed_rooms):
+			if not isinstance(r, dict):
+				_throw_for_room(idx, _("Each room must be an object."))
+			r_a = cint(r.get("adults", 0))
+			r_c = cint(r.get("children", 0))
+			if r_a < 1:
+				_throw_for_room(idx, _("Each room must have at least 1 adult."))
+			if r_c < 0:
+				_throw_for_room(idx, _("Children count cannot be negative."))
+
+		if len(parsed_rooms) == 1:
+			adults = cint(parsed_rooms[0].get("adults", 1))
+			children = cint(parsed_rooms[0].get("children", 0))
+			ages = _child_ages(parsed_rooms[0].get("child_ages"))
+			parsed_rooms = None
+
+	available_map = {}
 	for rt in frappe.get_all(
 		"Room Type",
 		filters=_room_type_filters(property, listing_slug, location_slug),
@@ -423,54 +461,75 @@ def search_stay(property: str, check_in_date: str, check_out_date: str,
 			left = len(free)
 		# stays with no room number leave the physical rooms free
 		left = cap_to_unsold(property, rt, check_in_date, check_out_date, left)
-		rtd = frappe.get_cached_doc("Room Type", rt)
-		a, c, infants = _party(rtd, adults, children, ages)
-		above, beds = capacity_overflow(rtd, a, c)
-		row = {"room_type": rt, "rooms_left": left, "quote": None,
-		       "available": bool(left), "adults": a, "children": c,
-		       "infants": infants}
-		if above > beds:
-			row.update(available=False, reason=TOO_MANY_GUESTS)
-			results.append(row)
-			continue
-		if above:
-			row.update(needs_confirmation=True,
-			           confirmation_reason=_over_capacity_note(above))
-		blocked = left and stay_restriction_error(
-			property, rt, None, check_in_date, check_out_date)
-		if blocked:
-			row.update(available=False, reason=blocked)
-		elif left:
-			try:
-				plans = []
-				for mp in meal_plans:
-					pq = quote(property, rt, check_in_date, check_out_date,
-					           a, c, mp or None, voucher_code=voucher,
-					           pets=int(pets or 0))
-					plan = {"meal_plan": mp, "amount_after_tax": pq["amount_after_tax"],
-					        **_payment_split(prop, pq["amount_after_tax"],
-					                         pq.get("stay_rules"))}
-					if voucher:
-						plan["list_amount"] = quote(
-							property, rt, check_in_date, check_out_date, a, c,
-							mp or None, pets=int(pets or 0))["amount_after_tax"]
-					if not plans:
-						q = pq
-					plans.append(plan)
-				rules = q.get("stay_rules") or {}
-				q.update(_payment_split(prop, q.get("amount_after_tax"), rules))
-				row["quote"] = q
-				row["plans"] = plans
-				need = max(int(rules.get("minimum_nights") or 0),
-				           int(prop.get("minimum_nights") or 1))
-				if nights < need:
-					row.update(available=False, reason=(
-						f"These dates need a stay of at least {need} nights"
-						+ (f" ({rules['season']})." if rules.get("season") else ".")))
-			except Exception:
-				pass  # still list the room type even if this date range cannot be quoted
-		results.append(row)
-	return results
+		available_map[rt] = left
+
+	def _eval_party(p_adults, p_children, p_ages):
+		res = []
+		for rt, left in available_map.items():
+			rtd = frappe.get_cached_doc("Room Type", rt)
+			a, c, infants = _party(rtd, p_adults, p_children, p_ages)
+			above, beds = capacity_overflow(rtd, a, c)
+			row = {"room_type": rt, "rooms_left": left, "quote": None,
+			       "available": bool(left), "adults": a, "children": c,
+			       "infants": infants}
+			if above > beds:
+				row.update(available=False, reason=TOO_MANY_GUESTS)
+				res.append(row)
+				continue
+			if above:
+				row.update(needs_confirmation=True,
+				           confirmation_reason=_over_capacity_note(above))
+			blocked = left and stay_restriction_error(
+				property, rt, None, check_in_date, check_out_date)
+			if blocked:
+				row.update(available=False, reason=blocked)
+			elif left:
+				try:
+					plans = []
+					for mp in meal_plans:
+						pq = quote(property, rt, check_in_date, check_out_date,
+						           a, c, mp or None, voucher_code=voucher,
+						           pets=int(pets or 0))
+						plan = {"meal_plan": mp, "amount_after_tax": pq["amount_after_tax"],
+						        **_payment_split(prop, pq["amount_after_tax"],
+						                         pq.get("stay_rules"))}
+						if voucher:
+							plan["list_amount"] = quote(
+								property, rt, check_in_date, check_out_date, a, c,
+								mp or None, pets=int(pets or 0))["amount_after_tax"]
+						if not plans:
+							q = pq
+						plans.append(plan)
+					rules = q.get("stay_rules") or {}
+					q.update(_payment_split(prop, q.get("amount_after_tax"), rules))
+					row["quote"] = q
+					row["plans"] = plans
+					need = max(int(rules.get("minimum_nights") or 0),
+					           int(prop.get("minimum_nights") or 1))
+					if nights < need:
+						row.update(available=False, reason=(
+							f"These dates need a stay of at least {need} nights"
+							+ (f" ({rules['season']})." if rules.get("season") else ".")))
+				except Exception:
+					pass  # still list the room type even if this date range cannot be quoted
+			res.append(row)
+		return res
+
+	if parsed_rooms and len(parsed_rooms) > 1:
+		return {
+			"multi_room": True,
+			"rooms": [
+				_eval_party(
+					cint(r.get("adults", 1)),
+					cint(r.get("children", 0)),
+					_child_ages(r.get("child_ages")),
+				)
+				for r in parsed_rooms
+			],
+			"inventory": available_map,
+		}
+
+	return _eval_party(adults, children, ages)
 
 
 def _usable_voucher(property: str, code: str | None, nights: int) -> str | None:
@@ -846,6 +905,46 @@ def request_guest_laundry(token: str, notes: str = "", express: int = 0):
 TOO_MANY_GUESTS = "The property cannot accommodate the number of people requested."
 
 
+def _throw_for_room(room_index: int, msg: str):
+	"""Refuse a multi-room request naming which room failed.
+
+	`room_index` is 0-based (matches the `rooms[]` payload / frontend tabs).
+	The human message is prefixed with a 1-based "Room N:" for text matchers;
+	`room_index` is also attached on the last `_server_messages` entry so the
+	client can mark the right room without scraping the string.
+	"""
+	labeled = _("Room {0}: {1}").format(room_index + 1, msg)
+	try:
+		frappe.throw(labeled)
+	except Exception:
+		_annotate_last_message(room_index=room_index)
+		raise
+
+
+def _annotate_last_message(room_index: int | None = None, **extra):
+	"""Merge keys onto the most recent frappe message_log entry, if any.
+
+	When `room_index` is set, also prefix the message with a 1-based
+	"Room N:" so text-based UI matchers keep working.
+	"""
+	log = getattr(frappe.local, "message_log", None) or []
+	if not log:
+		return
+	try:
+		entry = log[-1]
+		data = frappe.parse_json(entry) if isinstance(entry, str) else dict(entry)
+		if room_index is not None:
+			extra = {**extra, "room_index": room_index}
+			msg = str(data.get("message") or "")
+			prefix = _("Room {0}:").format(room_index + 1)
+			if msg and prefix not in msg and f"Room {room_index + 1}:" not in msg:
+				data["message"] = f"{prefix} {msg}"
+		data.update(extra)
+		log[-1] = frappe.as_json(data) if isinstance(entry, str) else data
+	except Exception:
+		pass
+
+
 def _child_ages(child_ages) -> list[int] | None:
 	"""Ages from the request - a list, a JSON list or "3,8,13". None when the
 	caller sent only a children count."""
@@ -934,54 +1033,22 @@ def clean_source_tag(property: str, tag: str | None) -> str | None:
 	return tag
 
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])
-@rate_limit(limit=10, seconds=3600)
-def book(property: str, room_type: str, check_in_date: str,
-         check_out_date: str, guest_name: str, phone: str,
-         email: str = "", adults: int = 2, children: int = 0,
-         meal_plan: str = "", special_requests: str = "", addons=None,
-         voucher_code: str = "", idempotency_key: str = "", pets: int = 0,
-         child_ages=None, marketing_consent: int = 0, source_tag: str = ""):
-	"""Create a Website booking. `source_tag` is the src / utm_source tag of
-	the booking link the guest came in on, kept on the reservation when the
-	property has booking links on (#560). An existing guest profile is reused when
-	both the phone and the full name match; staff verify at check-in.
-	The advance owed is computed from the property's
-	current payment policy and snapshotted onto the booking.
-
-	Instant mode (default): Confirmed when nothing is due now, else
-	Pending Payment with a hold window. Request to Book: Requested (no
-	inventory) until the host approves. A party above what the room sleeps,
-	within the extra guests it allows, is also Requested: the host confirms
-	the sleeping arrangement and agrees the price for them.
-	"""
-	if not guest_name.strip() or not phone.strip():
-		frappe.throw("Name and phone are required.")
-
+def _book_single_stay(property: str, room_type: str, check_in_date: str,
+                      check_out_date: str, guest_name: str, phone: str,
+                      email: str = "", adults: int = 2, children: int = 0,
+                      meal_plan: str = "", special_requests: str = "",
+                      safe_addons=None, voucher_code: str = "",
+                      idempotency_key: str = "", pets: int = 0,
+                      child_ages=None, marketing_consent: int = 0,
+                      source_tag: str = "", prop=None, commit: bool = True):
 	from kamra.pricing import capacity_overflow
-
-	prop = frappe.get_cached_doc("Property", property)
+	if not prop:
+		prop = frappe.get_cached_doc("Property", property)
 	rtd = frappe.get_cached_doc("Room Type", room_type)
 	adults, children, infants = _party(rtd, adults, children, _child_ages(child_ages))
 	above, beds = capacity_overflow(rtd, adults, children)
 	if above > beds:
 		frappe.throw(TOO_MANY_GUESTS)
-
-	# a guest may only add experiences the hotel actually publishes for this
-	# property - never a private, disabled or another property's experience,
-	# and always at the hotel's own price (qty is all the guest controls)
-	if isinstance(addons, str):
-		addons = frappe.parse_json(addons)
-	public_ids = set(frappe.get_all(
-		"Experience",
-		filters={"property": property, "disabled": 0, "show_on_booking_page": 1},
-		pluck="name",
-	))
-	safe_addons = [
-		{"experience": a["experience"], "qty": max(1, int(a.get("qty") or 1))}
-		for a in (addons or [])
-		if a.get("experience") in public_ids
-	]
 
 	from kamra.api import create_booking
 	from kamra.pricing import quote as price_quote
@@ -1074,7 +1141,8 @@ def book(property: str, room_type: str, check_in_date: str,
 			# the guest ticked the (unticked by default) offers box
 			from kamra.privacy import set_marketing_consent
 			set_marketing_consent(result["guest"], 1, "Booking Page", property)
-		frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
+		if commit:
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
 
 	final_status = frappe.db.get_value(
 		"Reservation", result["reservation"], "status")
@@ -1098,6 +1166,313 @@ def book(property: str, room_type: str, check_in_date: str,
 			frappe.db.get_value("Property", property, "security_deposit_amount") or 0
 		),
 	}
+
+
+def _check_booking_room_rate_limit(num_rooms: int = 1):
+	"""Abuse limit: count total rooms held per IP per hour, rejecting > 10."""
+	ip = getattr(frappe.local, "request_ip", None) or "127.0.0.1"
+	key = f"kamra:rate_limit:book_rooms:{ip}"
+	cache = frappe.cache()
+	val = cache.get_value(key)
+	current = cint(val) if val is not None else 0
+	if current + num_rooms > 10:
+		frappe.throw(
+			_("Booking limit exceeded (maximum 10 rooms per hour). Please try again later."),
+			frappe.TooManyRequestsError,
+		)
+	cache.set_value(key, current + num_rooms, expires_in_sec=3600)
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def book(property: str, room_type: str = "", check_in_date: str = "",
+         check_out_date: str = "", guest_name: str = "", phone: str = "",
+         email: str = "", adults: int = 2, children: int = 0,
+         meal_plan: str = "", special_requests: str = "", addons=None,
+         voucher_code: str = "", idempotency_key: str = "", pets: int = 0,
+         child_ages=None, marketing_consent: int = 0, source_tag: str = "",
+         rooms=None):
+	"""Create a Website booking. `source_tag` is the src / utm_source tag of
+	the booking link the guest came in on, kept on the reservation when the
+	property has booking links on (#560). An existing guest profile is reused when
+	both the phone and the full name match; staff verify at check-in.
+	The advance owed is computed from the property's
+	current payment policy and snapshotted onto the booking.
+
+	Instant mode (default): Confirmed when nothing is due now, else
+	Pending Payment with a hold window. Request to Book: Requested (no
+	inventory) until the host approves. A party above what the room sleeps,
+	within the extra guests it allows, is also Requested: the host confirms
+	the sleeping arrangement and agrees the price for them.
+
+	`rooms` ([{room_type, adults, children, meal_plan, child_ages}, ...])
+	supports booking multiple rooms in a single checkout transaction."""
+	if not guest_name.strip() or not phone.strip():
+		frappe.throw("Name and phone are required.")
+
+	prop = frappe.get_cached_doc("Property", property)
+	if isinstance(addons, str):
+		addons = frappe.parse_json(addons)
+	public_ids = set(frappe.get_all(
+		"Experience",
+		filters={"property": property, "disabled": 0, "show_on_booking_page": 1},
+		pluck="name",
+	))
+	safe_addons = [
+		{"experience": a["experience"], "qty": max(1, int(a.get("qty") or 1))}
+		for a in (addons or [])
+		if a.get("experience") in public_ids
+	]
+
+	from kamra.pricing import capacity_overflow
+	parsed_rooms = None
+	if rooms:
+		if isinstance(rooms, str):
+			try:
+				parsed_rooms = frappe.parse_json(rooms)
+			except Exception:
+				frappe.throw(_("Invalid rooms format."))
+		elif isinstance(rooms, list):
+			parsed_rooms = rooms
+		else:
+			frappe.throw(_("Rooms must be a list of room configurations."))
+
+		if not parsed_rooms:
+			frappe.throw(_("At least 1 room is required."))
+		if len(parsed_rooms) > 10:
+			frappe.throw(_("Cannot book more than 10 rooms in a single transaction."))
+
+		for idx, rm in enumerate(parsed_rooms):
+			if not isinstance(rm, dict):
+				_throw_for_room(idx, _("Each room must be an object."))
+			rt = rm.get("room_type")
+			if not rt:
+				_throw_for_room(idx, _("Each room must specify a room_type."))
+			r_a = cint(rm.get("adults", 0))
+			r_c = cint(rm.get("children", 0))
+			if r_a < 1:
+				_throw_for_room(idx, _("Each room must have at least 1 adult."))
+			if r_c < 0:
+				_throw_for_room(idx, _("Children count cannot be negative."))
+			rtd = frappe.get_cached_doc("Room Type", rt)
+			a, c, infants = _party(rtd, r_a, r_c, _child_ages(rm.get("child_ages")))
+			above, beds = capacity_overflow(rtd, a, c)
+			if above > beds:
+				_throw_for_room(idx, TOO_MANY_GUESTS)
+
+		if len(parsed_rooms) == 1:
+			room_type = parsed_rooms[0]["room_type"]
+			adults = cint(parsed_rooms[0].get("adults", 1))
+			children = cint(parsed_rooms[0].get("children", 0))
+			meal_plan = parsed_rooms[0].get("meal_plan") or meal_plan
+			child_ages = parsed_rooms[0].get("child_ages")
+			parsed_rooms = None
+
+	if parsed_rooms and len(parsed_rooms) > 1:
+		if idempotency_key:
+			first_key = f"{idempotency_key}-0"
+			existing_res = frappe.db.get_value(
+				"Reservation",
+				{"idempotency_key": first_key, "property": property},
+				["name", "group_booking", "payment_policy", "status", "amount_after_tax", "advance_due"],
+				as_dict=True,
+			)
+			if existing_res:
+				gb_name = existing_res.group_booking
+				all_res = frappe.get_all(
+					"Reservation",
+					filters={"group_booking": gb_name} if gb_name else {"name": existing_res.name},
+					fields=[
+						"name", "amount_after_tax", "advance_due", "status",
+						"over_capacity_guests", "room_type",
+						"check_in_date", "check_out_date",
+					],
+					order_by="creation asc",
+				)
+				res_names = [r.name for r in all_res]
+				total_amount = sum(flt(r.amount_after_tax or 0) for r in all_res)
+				total_advance = sum(flt(r.advance_due or 0) for r in all_res)
+				if gb_name:
+					gb_deposit = frappe.db.get_value("Group Booking", gb_name, "deposit_due")
+					if gb_deposit is not None:
+						total_advance = flt(gb_deposit)
+				any_needs_confirmation = False
+				confirmation_reason = None
+				any_holiday = False
+				from kamra.pricing import stay_season_rules
+				for r in all_res:
+					above = cint(r.over_capacity_guests)
+					if above > 0:
+						any_needs_confirmation = True
+						if not confirmation_reason:
+							confirmation_reason = _over_capacity_note(above)
+					rules = stay_season_rules(
+						property, r.check_in_date, r.check_out_date, r.room_type)
+					if rules.get("is_holiday"):
+						any_holiday = True
+				return {
+					"reservation": existing_res.name,
+					"reservations": res_names,
+					"group_booking": gb_name,
+					"amount_after_tax": round(total_amount, 2),
+					"advance_due": round(total_advance, 2),
+					"balance_at_hotel": round(max(0.0, total_amount - total_advance), 2),
+					"payment_policy": existing_res.payment_policy,
+					"pay_at_hotel": total_advance <= 0,
+					"status": existing_res.status,
+					"needs_confirmation": any_needs_confirmation,
+					"confirmation_reason": confirmation_reason,
+					"is_holiday": any_holiday,
+					"idempotent_replay": 1,
+					"cleaning_fee": float(
+						frappe.db.get_value("Property", property, "cleaning_fee") or 0
+					),
+					"security_deposit_amount": float(
+						frappe.db.get_value("Property", property, "security_deposit_amount") or 0
+					),
+				}
+
+		_check_booking_room_rate_limit(len(parsed_rooms))
+
+		from kamra.api import _available_rooms_raw, _block_hold
+		from kamra.siu.availability import has_active_sius, sellable_count
+
+		req_by_rt = {}
+		for rm in parsed_rooms:
+			rt = rm["room_type"]
+			req_by_rt[rt] = req_by_rt.get(rt, 0) + 1
+
+		for rt, count in req_by_rt.items():
+			hold = _block_hold(property, rt, check_in_date, check_out_date)
+			if has_active_sius(property, rt):
+				left = max(0, sellable_count(property, rt, check_in_date, check_out_date) - (hold or 0))
+			else:
+				free = _available_rooms_raw(property, rt, check_in_date, check_out_date)
+				if hold:
+					free = free[:max(0, len(free) - hold)]
+				left = len(free)
+			if count > left:
+				frappe.throw(_("Not enough rooms available for {0} (requested {1}, only {2} left).").format(rt, count, left))
+
+		created_list = []
+		total_advance_due = 0.0
+		total_amount = 0.0
+		overall_status = "Confirmed"
+		policy = None
+		any_needs_confirmation = False
+		confirmation_reasons = []
+		any_holiday = False
+
+		frappe.flags.kamra_skip_voucher_consume = True
+		try:
+			for idx, rm in enumerate(parsed_rooms):
+				rt = rm["room_type"]
+				rm_adults = cint(rm.get("adults", 1))
+				rm_children = cint(rm.get("children", 0))
+				rm_meal_plan = rm.get("meal_plan") or ""
+				rm_ages = rm.get("child_ages")
+				rm_key = f"{idempotency_key}-{idx}" if idempotency_key else ""
+
+				try:
+					res = _book_single_stay(
+						property=property, room_type=rt, check_in_date=check_in_date,
+						check_out_date=check_out_date, guest_name=guest_name, phone=phone,
+						email=email, adults=rm_adults, children=rm_children,
+						meal_plan=rm_meal_plan, special_requests=special_requests if idx == 0 else "",
+						safe_addons=safe_addons if idx == 0 else None,
+						voucher_code=voucher_code,
+						idempotency_key=rm_key, pets=pets if idx == 0 else 0,
+						child_ages=rm_ages, marketing_consent=marketing_consent if idx == 0 else 0,
+						source_tag=source_tag, prop=prop, commit=False,
+					)
+				except frappe.ValidationError:
+					_annotate_last_message(room_index=idx)
+					raise
+				created_list.append(res)
+				total_advance_due += float(res.get("advance_due") or 0)
+				total_amount += float(res.get("amount_after_tax") or 0)
+				policy = res.get("payment_policy") or policy
+				if res.get("status") != "Confirmed":
+					overall_status = res.get("status")
+				if res.get("needs_confirmation"):
+					any_needs_confirmation = True
+					if res.get("confirmation_reason"):
+						confirmation_reasons.append(res["confirmation_reason"])
+				if res.get("is_holiday"):
+					any_holiday = True
+
+			res_names = [r["reservation"] for r in created_list]
+			gb_status = "Confirmed" if overall_status == "Confirmed" else "Open"
+			gb = frappe.get_doc({
+				"doctype": "Group Booking",
+				"property": property,
+				"group_name": f"{guest_name} ({len(res_names)} rooms)",
+				"check_in_date": check_in_date,
+				"check_out_date": check_out_date,
+				"status": gb_status,
+				"deposit_due": round(total_advance_due, 2),
+				"master_reservation": res_names[0],
+				"master_pays": "Room only",
+				"notes": f"Website multi-room booking ({len(res_names)} rooms): {', '.join(res_names)}" + (f"\n{special_requests}" if special_requests else ""),
+			}).insert(ignore_permissions=True)
+
+			for r in res_names:
+				frappe.db.set_value("Reservation", r, "group_booking", gb.name)
+
+			# Discount is applied on every room above; consume the voucher once
+			# under the lock below. Keep the voucher link on every Reservation
+			# so amendments and night pricing still see it.
+
+			if voucher_code:
+				v_name = frappe.db.get_value(
+					"Discount Voucher",
+					{"voucher_code": voucher_code.strip().upper(),
+					 "property": property})
+				if v_name:
+					from kamra.pricing import consume_voucher_use
+					consume_voucher_use(v_name)
+
+			frappe.db.commit()  # nosemgrep: frappe-manual-commit -- persists the completed operation before returning to an external/public caller; reviewed as intentional
+
+			return {
+				"reservation": res_names[0],
+				"reservations": res_names,
+				"group_booking": gb.name,
+				"amount_after_tax": round(total_amount, 2),
+				"advance_due": round(total_advance_due, 2),
+				"balance_at_hotel": round(max(0.0, total_amount - total_advance_due), 2),
+				"payment_policy": policy,
+				"pay_at_hotel": total_advance_due <= 0,
+				"status": overall_status,
+				"needs_confirmation": any_needs_confirmation,
+				"confirmation_reason": confirmation_reasons[0] if confirmation_reasons else None,
+				"is_holiday": any_holiday,
+				"idempotent_replay": 0,
+				"cleaning_fee": float(
+					frappe.db.get_value("Property", property, "cleaning_fee") or 0
+				),
+				"security_deposit_amount": float(
+					frappe.db.get_value("Property", property, "security_deposit_amount") or 0
+				),
+			}
+		except Exception:
+			frappe.db.rollback()
+			raise
+		finally:
+			frappe.flags.kamra_skip_voucher_consume = False
+
+	if not (idempotency_key and frappe.db.exists("Reservation", {"idempotency_key": idempotency_key, "property": property})):
+		_check_booking_room_rate_limit(1)
+
+	return _book_single_stay(
+		property=property, room_type=room_type, check_in_date=check_in_date,
+		check_out_date=check_out_date, guest_name=guest_name, phone=phone,
+		email=email, adults=adults, children=children,
+		meal_plan=meal_plan, special_requests=special_requests,
+		safe_addons=safe_addons, voucher_code=voucher_code,
+		idempotency_key=idempotency_key, pets=pets,
+		child_ages=child_ages, marketing_consent=marketing_consent,
+		source_tag=source_tag, prop=prop,
+	)
 
 
 @frappe.whitelist(allow_guest=True)

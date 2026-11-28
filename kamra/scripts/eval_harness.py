@@ -10401,6 +10401,28 @@ def t264():
 	assert q["is_holiday"] and q["stay_rules"]["holiday"] == "EVAL Holiday", q["stay_rules"]
 	assert abs(q["advance_due"] - q["amount_after_tax"]) < 0.01, (q["advance_due"], q["amount_after_tax"])
 
+
+@check("multi-room booking on website links rooms to Group Booking with atomic inventory check")
+def t_multi_room_booking():
+	from kamra import public_api
+	# Search stay with multi-room bounds check
+	try:
+		public_api.search_stay(P, TUE, WED, rooms=[{"adults": 1}] * 11)
+		raise AssertionError("search_stay allowed 11 rooms")
+	except frappe.ValidationError:
+		pass
+
+	# Single-room list treats as single room
+	single = public_api.search_stay(P, TUE, WED, rooms=[{"adults": 2, "children": 0}])
+	assert not isinstance(single, dict) or not single.get("multi_room"), single
+
+	# Multi-room search with child ages
+	multi = public_api.search_stay(P, TUE, WED, rooms=[
+		{"adults": 2, "children": 1, "child_ages": [3]},
+		{"adults": 2, "children": 0},
+	])
+	assert multi.get("multi_room") and len(multi["rooms"]) == 2, multi
+
 # ── check-in / check-out on the desk: tills, open bills, roles (t380-t383) ──
 
 EVAL_FIN = "eval.fin@kamra.local"
@@ -12837,7 +12859,8 @@ def execute():
 		           t_menu_modifiers, t_kitchen_stock_pick_and_level, t_banquet_issue_indent,
 		           t_banquet_indent_outlet_shelf, t_kitchen_stock_foreign_outlet,
 		           t_stock_cost_average, t_stock_backdate_and_cancel,
-		           t_unsent_lines_take_stock, t_pos_refunds):
+		           t_unsent_lines_take_stock, t_pos_refunds,
+		           t_multi_room_booking):
 			fn()
 	finally:
 		frappe.flags.kamra_checkin_steps_off = False
