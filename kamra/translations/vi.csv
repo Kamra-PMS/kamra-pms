@@ -1,4 +1,5 @@
 "Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","Sự đồng ý nhận tin tiếp thị được thay đổi từ hồ sơ khách, trang đặt phòng hoặc khi khách trả lời STOP / START."
+Stolen / Damaged Items,Đồ bị mất cắp / hư hỏng
 This guest has no phone number on file.,Khách này chưa có số điện thoại trong hồ sơ.
 This guest has not agreed to marketing messages.,Khách này chưa đồng ý nhận tin nhắn tiếp thị.
 You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,Bạn sẽ nhận ưu đãi từ {0} qua WhatsApp. Trả lời STOP bất cứ lúc nào để hủy đăng ký.
@@ -64,3 +65,55 @@ The buying unit of {0} changed. Close the window and open it again.,Đơn vị m
 The unit of {0} changed. Close the window and open it again.,Đơn vị của {0} đã thay đổi. Hãy đóng cửa sổ và mở lại.
 Give a buying unit both a name and how many {0} it holds.,Nhập cả tên đơn vị mua và số {0} mà nó chứa.
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} đã có lịch sử kho hoặc có trong công thức, nên đơn vị vẫn là {1}."
+Pick a date and time.,Chọn ngày và giờ.
+A stock entry cannot be dated in the future.,Không thể ghi kho với ngày trong tương lai.
+A reason is required to cancel.,Cần có lý do để hủy.
+Stock entry not found.,Không tìm thấy bản ghi kho.
+This entry is already cancelled.,Bản ghi này đã bị hủy.
+"Only deliveries, stock takes and wastage can be cancelled.","Chỉ có thể hủy phiếu nhập, kiểm kê và hao hụt."
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} theo dõi tồn kho riêng: công thức chỉ gồm mặt hàng đó. Ngừng theo dõi để thay đổi.
+{0} has a recipe. Delete the recipe first.,{0} đã có công thức. Hãy xóa công thức trước.
+{0} already tracks its own stock.,{0} đã theo dõi tồn kho riêng.
+An ingredient called {0} already exists. Pick it instead.,Đã có nguyên liệu tên {0}. Hãy chọn nguyên liệu đó.
+Tracking stock also needs the right to manage stock.,Theo dõi tồn kho còn cần quyền quản lý kho.
+Given back as,Hoàn bằng
+POS refunds,Hoàn tiền POS
+Refunded by,Người hoàn tiền
+"Payment details are set by the till, not by editing the bill.","Thông tin thanh toán do quầy thu ghi, không sửa trên hóa đơn."
+"Refunds are made at the till, and are never edited or deleted.",Hoàn tiền thực hiện tại quầy và không bao giờ sửa hay xóa.
+"This bill has a refund, so its payment mode can't change.",Hóa đơn này đã hoàn tiền nên không đổi được hình thức thanh toán.
+Correct this on the room's bill at the desk.,Hãy sửa trên hóa đơn phòng tại quầy lễ tân.
+Only a bill paid at the outlet can be refunded.,Chỉ hoàn được hóa đơn đã thanh toán tại điểm bán.
+"This bill has no payment record, so it can't be refunded here.",Hóa đơn này không có bản ghi thanh toán nên không hoàn được ở đây.
+Nothing is left to refund on this bill.,Hóa đơn này không còn gì để hoàn.
+The amount must be above zero.,Số tiền phải lớn hơn 0.
+You can refund up to {0}.,Bạn có thể hoàn tối đa {0}.
+That line is not on this bill.,Dòng đó không có trên hóa đơn này.
+Pick at least one item.,Chọn ít nhất một món.
+Only {0} of {1} left to refund.,Chỉ còn {0} {1} để hoàn.
+"Refund the whole bill, chosen items, or an amount.","Hoàn cả hóa đơn, món đã chọn hoặc một số tiền."
+{0} can't go back to stock.,{0} không thể nhập lại kho.
+Pick a refund reason.,Chọn lý do hoàn tiền.
+Say why in the note.,Ghi lý do vào ghi chú.
+An AI agent can never refund.,Tác nhân AI không bao giờ được hoàn tiền.
+Try again from the refund window.,Hãy thử lại từ cửa sổ hoàn tiền.
+Money goes back as {0}.,Tiền được hoàn bằng {0}.
+The amount to give back has changed: it is now {0}. Check it and refund again.,Số tiền hoàn đã thay đổi: hiện là {0}. Hãy kiểm tra rồi hoàn tiền lại.
+This attempt already refunded {0}. Close the window to see it.,Lần thử này đã hoàn {0}. Đóng cửa sổ để xem.
+"{0} already has stock history, so ""Made here"" stays as it is.","{0} đã có lịch sử tồn kho nên mục ""Làm tại chỗ"" được giữ nguyên."
+"Say how much one batch makes, above zero.","Hãy nhập một mẻ làm được bao nhiêu, lớn hơn 0."
+Something made here needs at least one ingredient in its recipe.,Món làm tại chỗ cần ít nhất một nguyên liệu trong công thức.
+"{0} is used to make {1}, so it cannot be made here itself.",{0} được dùng để làm {1} nên bản thân nó không thể là món làm tại chỗ.
+{0} cannot be made from itself.,{0} không thể được làm từ chính nó.
+{0} is made here too. Use only bought ingredients.,{0} cũng là món làm tại chỗ. Chỉ dùng nguyên liệu mua vào.
+{0} recipe(s) use this ingredient. Deactivate it instead.,{0} công thức đang dùng nguyên liệu này. Hãy tắt nó thay vì xóa.
+{0} (in {1}),{0} (trong {1})
+"{0} is made here. Record it with Produce, not as a delivery.","{0} là món làm tại chỗ. Hãy ghi bằng Sản xuất, không ghi như hàng giao đến."
+"Say how much was made, above zero.","Hãy nhập lượng đã làm, lớn hơn 0."
+{0} is not made here.,{0} không phải món làm tại chỗ.
+The recipe of {0} just changed. Try again.,Công thức của {0} vừa thay đổi. Hãy thử lại.
+{0} is made here itself. Take it out of the recipe of {1}.,{0} cũng là món làm tại chỗ. Hãy bỏ nó khỏi công thức của {1}.
+That is too little to take anything from stock.,"Lượng này quá nhỏ, không trừ được gì khỏi kho."
+Every recipe line needs a quantity above zero.,Mỗi dòng công thức cần số lượng lớn hơn 0.
+{0} belongs to another property.,{0} thuộc cơ sở khác.
+"Only deliveries, stock takes, wastage and production batches can be cancelled.","Chỉ có thể hủy phiếu nhập, kiểm kê, hao hụt và mẻ sản xuất."

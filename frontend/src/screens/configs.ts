@@ -806,6 +806,8 @@ export const outletsConfig: ScreenConfig = {
   extra: OutletExtras,
 }
 
+const isMadeHere = (d: Record<string, unknown>) => Number(d.is_made ?? 0) === 1
+
 export const ingredientsConfig: ScreenConfig = {
   doctype: "Ingredient",
   title: "Ingredients",
@@ -829,18 +831,25 @@ export const ingredientsConfig: ScreenConfig = {
     { field: "ingredient_name", label: "Ingredient", type: "data", required: true },
     { field: "category", label: "Category", type: "data",
       hint: "Produce, Dairy, Dry Goods, Bar - free text" },
-    { field: "uom", label: "Unit", type: "data", required: true,
+    { field: "uom", label: "Unit", type: "data", required: true, lockedBy: "unit_locked",
       options: ["kg", "g", "L", "ml", "pc", "bottle", "packet"],
       hint: "The one unit stock and recipes use, such as g, ml, pc or shot. It locks once stock or a recipe uses it." },
     { field: "buy_uom", label: "Buying unit", type: "data",
       hint: "Optional, e.g. box or sack." },
     { field: "buy_size", label: "Stock units per buying unit", type: "float" },
     { field: "cost_per_unit", label: "Cost / unit", type: "currency", onlyIfChanged: true,
+      dependsOn: (d) => !isMadeHere(d),
       hint: "Updated when stock is received (Settings, F&B: last price or average). Change it here to set it yourself." },
     { field: "gst_rate", label: "Input GST %", type: "float",
       hint: "Tax paid when buying this." },
     { field: "is_active", label: "Active", type: "check", defaultValue: 1,
       hint: "Turn off instead of deleting when a recipe or stock history uses it." },
+    { field: "is_made", label: "Made here (semi-finished)", type: "check",
+      hint: "Made in your kitchen in batches, such as a syrup or a sauce. Its cost comes from the recipe and it cannot be received as a delivery." },
+    { field: "batch_qty", label: "One batch makes", type: "float", dependsOn: isMadeHere,
+      ownRow: true, hint: "In the stock unit." },
+    { field: "recipe", label: "Made from", type: "recipe", dependsOn: isMadeHere, onlyIfChanged: true,
+      hint: "What one batch uses, from bought ingredients." },
   ],
 }
 
@@ -1060,7 +1069,7 @@ export const transactionCodesConfig: ScreenConfig = {
       options: [
         "Room", "Meal Plan", "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
         "Early Check-in", "Late Checkout", "Early Departure", "Cleaning Fee", "Extra Guests",
-        "Pet Charge", "Room Levy", "Discount", "Misc", "Allowance", "Opening Balance",
+        "Pet Charge", "Room Levy", "Discount", "Stolen / Damaged Items", "Misc", "Allowance", "Opening Balance",
       ],
       hint: "Maps to Folio Charge.charge_type for display on older lines." },
     { field: "disabled", label: "Disabled", type: "check",

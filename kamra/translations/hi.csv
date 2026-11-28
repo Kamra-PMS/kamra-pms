@@ -1,4 +1,5 @@
 "Marketing consent is changed from the guest profile, the booking page or a STOP / START reply.","मार्केटिंग सहमति गेस्ट प्रोफ़ाइल, बुकिंग पेज या STOP / START जवाब से बदली जाती है।"
+Stolen / Damaged Items,चोरी / क्षतिग्रस्त सामान
 This guest has no phone number on file.,इस गेस्ट का कोई फ़ोन नंबर दर्ज नहीं है।
 This guest has not agreed to marketing messages.,इस गेस्ट ने मार्केटिंग संदेशों के लिए सहमति नहीं दी है।
 You will get offers from {0} on WhatsApp. Reply STOP at any time to opt out.,आपको WhatsApp पर {0} से ऑफ़र मिलेंगे। बाहर निकलने के लिए कभी भी STOP लिखकर भेजें।
@@ -64,3 +65,56 @@ The buying unit of {0} changed. Close the window and open it again.,{0} की �
 The unit of {0} changed. Close the window and open it again.,{0} की यूनिट बदल गई है। विंडो बंद करके फिर खोलें।
 Give a buying unit both a name and how many {0} it holds.,"खरीद यूनिट का नाम और उसमें कितने {0} हैं, दोनों दें।"
 "{0} already has stock history or is on a recipe, so its unit stays {1}.","{0} का स्टॉक इतिहास है या वह किसी रेसिपी में है, इसलिए उसकी यूनिट {1} ही रहेगी।"
+Pick a date and time.,तारीख़ और समय चुनें।
+A stock entry cannot be dated in the future.,स्टॉक प्रविष्टि भविष्य की तारीख़ की नहीं हो सकती।
+A reason is required to cancel.,रद्द करने के लिए कारण ज़रूरी है।
+Stock entry not found.,स्टॉक प्रविष्टि नहीं मिली।
+This entry is already cancelled.,यह प्रविष्टि पहले ही रद्द है।
+"Only deliveries, stock takes and wastage can be cancelled.","सिर्फ़ डिलीवरी, स्टॉक गिनती और वेस्टेज रद्द हो सकते हैं।"
+{0} tracks its own stock: its recipe is that one item. Stop tracking to change it.,{0} अपना स्टॉक ट्रैक करता है: उसकी रेसिपी वही एक आइटम है। बदलने के लिए ट्रैक करना बंद करें।
+{0} has a recipe. Delete the recipe first.,{0} की रेसिपी है। पहले रेसिपी हटाएँ।
+{0} already tracks its own stock.,{0} पहले से अपना स्टॉक ट्रैक करता है।
+An ingredient called {0} already exists. Pick it instead.,{0} नाम की सामग्री पहले से है। उसे चुनें।
+Tracking stock also needs the right to manage stock.,स्टॉक ट्रैक करने के लिए स्टॉक प्रबंधन का अधिकार भी चाहिए।
+Approved by,मंज़ूरी देने वाला
+Given back as,वापसी का तरीका
+POS refunds,POS रिफ़ंड
+Refund,रिफ़ंड
+Refunded,रिफ़ंड हुआ
+Refunded by,रिफ़ंड करने वाला
+"Payment details are set by the till, not by editing the bill.","भुगतान की जानकारी टिल तय करता है, बिल बदलकर नहीं।"
+"Refunds are made at the till, and are never edited or deleted.",रिफ़ंड टिल पर होते हैं और कभी बदले या हटाए नहीं जाते।
+"This bill has a refund, so its payment mode can't change.","इस बिल पर रिफ़ंड है, इसलिए भुगतान का तरीका नहीं बदल सकता।"
+Correct this on the room's bill at the desk.,इसे डेस्क पर कमरे के बिल में ठीक करें।
+Only a bill paid at the outlet can be refunded.,सिर्फ़ आउटलेट पर चुकाया गया बिल रिफ़ंड हो सकता है।
+"This bill has no payment record, so it can't be refunded here.","इस बिल का भुगतान रिकॉर्ड नहीं है, इसलिए यहाँ रिफ़ंड नहीं हो सकता।"
+Nothing is left to refund on this bill.,इस बिल पर रिफ़ंड के लिए कुछ नहीं बचा।
+The amount must be above zero.,राशि शून्य से ज़्यादा होनी चाहिए।
+You can refund up to {0}.,आप {0} तक रिफ़ंड कर सकते हैं।
+That line is not on this bill.,वह लाइन इस बिल पर नहीं है।
+Pick at least one item.,कम से कम एक आइटम चुनें।
+Only {0} of {1} left to refund.,रिफ़ंड के लिए {1} में से सिर्फ़ {0} बचे हैं।
+"Refund the whole bill, chosen items, or an amount.","पूरा बिल, चुनी हुई चीज़ें या कोई राशि रिफ़ंड करें।"
+{0} can't go back to stock.,{0} स्टॉक में वापस नहीं जा सकता।
+Pick a refund reason.,रिफ़ंड का कारण चुनें।
+Say why in the note.,नोट में कारण लिखें।
+An AI agent can never refund.,AI एजेंट कभी रिफ़ंड नहीं कर सकता।
+Try again from the refund window.,रिफ़ंड विंडो से दोबारा कोशिश करें।
+Money goes back as {0}.,पैसे {0} से वापस जाते हैं।
+The amount to give back has changed: it is now {0}. Check it and refund again.,लौटाने की राशि बदल गई है: अब {0} है। जाँचकर दोबारा रिफ़ंड करें।
+This attempt already refunded {0}. Close the window to see it.,इस कोशिश में {0} पहले ही रिफ़ंड हो चुका है। देखने के लिए विंडो बंद करें।
+"{0} already has stock history, so ""Made here"" stays as it is.","{0} का स्टॉक इतिहास पहले से है, इसलिए ""यहीं बनाया"" वैसा ही रहेगा।"
+"Say how much one batch makes, above zero.","बताएँ कि एक बैच से कितना बनता है, शून्य से ज़्यादा।"
+Something made here needs at least one ingredient in its recipe.,यहाँ बनने वाली चीज़ की रेसिपी में कम से कम एक सामग्री चाहिए।
+"{0} is used to make {1}, so it cannot be made here itself.","{0} से {1} बनता है, इसलिए वह खुद यहाँ बना हुआ नहीं हो सकता।"
+{0} cannot be made from itself.,{0} खुद से नहीं बन सकता।
+{0} is made here too. Use only bought ingredients.,{0} भी यहीं बनता है। सिर्फ़ खरीदी हुई सामग्री लें।
+{0} recipe(s) use this ingredient. Deactivate it instead.,{0} रेसिपी इस सामग्री का उपयोग करती हैं। इसे निष्क्रिय करें।
+{0} (in {1}),{0} ({1} में)
+"{0} is made here. Record it with Produce, not as a delivery.","{0} यहीं बनता है। इसे डिलीवरी नहीं, ""बनाएँ (उत्पादन)"" से दर्ज करें।"
+"Say how much was made, above zero.","बताएँ कि कितना बना, शून्य से ज़्यादा।"
+{0} is not made here.,{0} यहाँ नहीं बनता।
+The recipe of {0} just changed. Try again.,{0} की रेसिपी अभी बदली है। दोबारा कोशिश करें।
+{0} is made here itself. Take it out of the recipe of {1}.,{0} खुद यहीं बनता है। इसे {1} की रेसिपी से निकालें।
+That is too little to take anything from stock.,यह इतना कम है कि स्टॉक से कुछ नहीं घटेगा।
+"Only deliveries, stock takes, wastage and production batches can be cancelled.","सिर्फ़ डिलीवरी, स्टॉक गिनती, वेस्टेज और उत्पादन बैच रद्द हो सकते हैं।"

@@ -29,7 +29,7 @@ const CATEGORIES = [
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"]
 const CHARGE_TYPES = [
   "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
-  "Early Check-in", "Late Checkout", "Pet Charge", "Misc",
+  "Early Check-in", "Late Checkout", "Pet Charge", "Stolen / Damaged Items", "Misc",
 ]
 
 function Note({ tone, children }: { tone: "error" | "ok"; children: React.ReactNode }) {

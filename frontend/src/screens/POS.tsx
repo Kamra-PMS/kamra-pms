@@ -25,6 +25,7 @@ import { Button } from "../components/ui/button"
 import { cn } from "../lib/utils"
 import { cur, fmtAmount, moneyDigits, useLocale } from "../lib/money"
 import { addUp } from "../lib/addUp"
+import { stockNotice } from "../lib/stockNotice"
 import { useT, t as translate } from "../lib/i18n"
 import { docsUrl } from "../components/InfoTip"
 import { cardArgs } from "../lib/cardNetwork"
@@ -39,6 +40,8 @@ interface MenuItem {
   image: string | null
   /** the choice groups this dish asks about (milk, ice, extras), by id, in till order */
   group_ids?: string[]
+  /** only for an item with its own stock: what this outlet has left of it */
+  stock_left?: number
 }
 interface Outlet {
   name: string
@@ -341,6 +344,13 @@ export default function POS() {
       .catch((e) => setError(serverError(e)))
   }, [outlet])
   useEffect(loadMenu, [loadMenu])
+  const [stockNote, setStockNote] = useState<string | null>(null)
+  /** What items with their own stock have left, after a bill moved some. */
+  function refreshStock() {
+    if (!cats.some((c) => c.items.some((i) => i.stock_left !== undefined))) return
+    call<{ categories: { category: string; items: MenuItem[] }[] }>("kamra.pos.pos_menu", { outlet })
+      .then((m) => setCats(m.categories)).catch(() => {})
+  }
   const loadWaiters = useCallback(() => {
     if (!outlet) return
     call<string[]>("kamra.pos.waiters", { outlet }).then(setWaiterNames).catch(() => {})
@@ -377,7 +387,7 @@ export default function POS() {
   }, [loadOpen, outlet])
 
   function resetPanel() {
-    setCart([]); setDiscount(""); setDiscOpen(false); setSettling(false); setSheetNc(false)
+    setCart([]); setDiscount(""); setDiscOpen(false); setSettling(false); setSheetNc(false); setStockNote(null)
     setVoiding(null); setCancelling(false)
     setSplitMode(false); setSplitSel(new Set()); setChooser(null)
     setNcOpen(false); setNcBy("Captain"); setNcNote("")
@@ -461,6 +471,8 @@ export default function POS() {
 
   const lineSeq = useRef(0)
   const addToCart = (it: MenuItem, options: string[] = []) => {
+    const short = stockNotice(it)
+    setStockNote(short ? t("{name}: {qty} left. You can still sell it.", short) : null)
     const key = `line-${++lineSeq.current}`
     setCart((c) => {
       // the same dish with the same choices adds to its line; one without a note is preferred,
@@ -495,7 +507,8 @@ export default function POS() {
     const p = picking
     setPicking(null)
     if (!p.key) {
-      addToCart({ name: p.menu_item, item_name: p.item_name, price: p.price, category: "", is_veg: 0, image: null, group_ids: p.group_ids }, options)
+      addToCart({ name: p.menu_item, item_name: p.item_name, price: p.price, category: "", is_veg: 0, image: null, group_ids: p.group_ids,
+        stock_left: cats.flatMap((c) => c.items).find((i) => i.name === p.menu_item)?.stock_left }, options)
       return
     }
     // changing a line's choices: it merges into another line only when that one is now the same
@@ -520,7 +533,7 @@ export default function POS() {
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true); setError(null)
-    try { await fn(); loadOpen() }
+    try { await fn(); loadOpen(); refreshStock() }
     catch (e) { setError(serverError(e)) }
     finally { setBusy(false) }
   }
@@ -1351,6 +1364,7 @@ export default function POS() {
       </div>
 
       {error && <div className="shrink-0 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{translate(error)}</div>}
+      {stockNote && <div role="status" className="shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{stockNote}</div>}
       {printTip && (
         <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <span>

@@ -214,22 +214,31 @@ def on_pos_order_update(doc, method=None):
 
 
 def on_ingredient_ledger_insert(doc, method=None):
+	"""A new ledger line: tell the kitchen if it took today's stock to its
+	minimum. A back-dated line says how much it changed today's figure, which
+	a later stock take may have made nothing."""
+	flags = getattr(doc, "flags", None) or {}
+	low_stock_crossed(
+		doc.property, doc.get("outlet"), doc.get("ingredient"),
+		flags.get("stock_effect", doc.get("qty_change")) or 0,
+		flags.get("on_hand", doc.get("balance_after")) or 0)
+
+
+def low_stock_crossed(property: str, outlet: str, ingredient: str,
+                      change: float, on_hand: float) -> None:
 	"""Stock just fell to or below its minimum (par level). Only the move that
 	crosses the line tells; the sales after it stay quiet."""
-	if (doc.get("qty_change") or 0) >= 0 or not doc.get("outlet"):
+	if change >= 0 or not outlet:
 		return
-	par = frappe.db.get_value("Ingredient Stock", f"{doc.outlet}::{doc.ingredient}", "par_level")
-	if not par:
+	par = frappe.db.get_value("Ingredient Stock", f"{outlet}::{ingredient}", "par_level")
+	if not par or on_hand > par or on_hand - change <= par:
 		return
-	after = doc.balance_after or 0
-	if after > par or after - doc.qty_change <= par:
-		return
-	name, uom = frappe.db.get_value("Ingredient", doc.ingredient,
-	                                ["ingredient_name", "uom"]) or (doc.ingredient, "")
-	left = f"{after:g} {uom or ''}".strip()
-	record(doc.property, "fnb",
-	       f"Low stock - {name or doc.ingredient}: {left} left (minimum {par:g})",
-	       doctype="Ingredient", name=doc.ingredient, route="/inventory")
+	name, uom = frappe.db.get_value("Ingredient", ingredient,
+	                                ["ingredient_name", "uom"]) or (ingredient, "")
+	left = f"{on_hand:g} {uom or ''}".strip()
+	record(property, "fnb",
+	       f"Low stock - {name or ingredient}: {left} left (minimum {par:g})",
+	       doctype="Ingredient", name=ingredient, route="/inventory")
 
 
 # rates: a revenue manager should hear when a price moves

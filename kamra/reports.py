@@ -124,7 +124,7 @@ def void_allowance_report(
 			"action_type",
 			"in",
 			["void_charge", "post_allowance", "allowance_rejected",
-			 "cancel_invoice", "pos_void_item", "pos_cancel_order"],
+			 "cancel_invoice", "pos_void_item", "pos_cancel_order", "pos_refund"],
 		],
 	]
 	if from_date:
@@ -148,8 +148,9 @@ def void_allowance_report(
 		# restaurant bills: a voided line, or a whole bill cancelled
 		"pos_void_item": "POS void",
 		"pos_cancel_order": "POS bill cancelled",
+		"pos_refund": "POS refund",
 	}
-	pos = {"pos_void_item", "pos_cancel_order"}
+	pos = {"pos_void_item", "pos_cancel_order", "pos_refund"}
 
 	def serial(r):
 		# the allowance voucher number (kamra.api.allowance_voucher)

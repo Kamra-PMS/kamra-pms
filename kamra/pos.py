@@ -81,12 +81,23 @@ def pos_menu(outlet: str):
 		"Menu Item",
 		filters={"outlet": outlet, "available": 1},
 		fields=["name", "item_name", "category", "price", "is_veg",
-		        "is_alcohol", "image", "description", "prep_station"],
+		        "is_alcohol", "image", "description", "prep_station",
+		        "stock_ingredient"],
 		order_by="category, item_name")
 	# the choice groups a dish asks about (milk, size, extras): each group once,
 	# and per dish only the ids of the groups it offers
 	from kamra.menu_modifiers import menu_payload
 	groups, offered = menu_payload([it.name for it in items])
+	# items with their own stock say what this outlet has left of them, so the
+	# till can warn at zero (it never refuses a sale)
+	own = [i.stock_ingredient for i in items if i.stock_ingredient]
+	held = dict(frappe.get_all(
+		"Ingredient Stock", filters={"outlet": outlet, "ingredient": ["in", own]},
+		fields=["ingredient", "qty_on_hand"], as_list=True)) if own else {}
+	for it in items:
+		stock = it.pop("stock_ingredient")
+		if stock:
+			it["stock_left"] = float(held.get(stock) or 0)
 	cats: dict[str, list] = {}
 	for it in items:
 		if offered.get(it.name):
@@ -702,6 +713,7 @@ def split_order(order: str, item_rows, table_no: str | None = None):
 			# a split moves food that is already cooked and already deducted;
 			# carrying the flag is what stops the new bill deducting it twice
 			"stock_posted": it.stock_posted,
+			"stock_item": it.stock_item,
 		} for it in move],
 	})
 	new.insert(ignore_permissions=True)
@@ -720,8 +732,12 @@ def order_detail(order: str):
 	the live lines the kitchen already has: while it is zero the captain can
 	cancel the bill alone; after that a supervisor approves."""
 	from kamra.authz import POS_APPROVE, is_supervisor
+	from kamra.pos_refunds import history
 	doc = frappe.get_doc("POS Order", order)
 	return {
+		"refunded_amount": float(doc.refunded_amount or 0),
+		"paid_amount": float(doc.paid_amount or 0),
+		"refunds": history(doc.name),
 		"state": _order_list_state(doc),
 		"creation": str(doc.creation), "guest": doc.guest,
 		"reservation": doc.reservation, "allergy_note": doc.allergy_note,
@@ -1312,9 +1328,13 @@ def pay_order(order: str, mode: str, pin: str | None = None,
 	doc.status = "Delivered"
 	doc.save(ignore_permissions=True)
 	_flag_cleaning_if_freed(doc)
-	# the till takes what the guest paid: the bill with its tax
+	# the till takes what the guest paid: the bill with its tax. Kept on the
+	# bill too: it is the most a refund can give back, whatever rates change
+	tax = _bill_tax(doc)[1]
+	paid = round(float(doc.order_total or 0) + tax, 2)
+	doc.db_set({"paid_amount": paid, "paid_tax": tax})
 	record_cashier_txn(
-		prop, "Payment", mode, round(float(doc.order_total or 0) + _bill_tax(doc)[1], 2),
+		prop, "Payment", mode, paid,
 		pos_order=doc.name, reference=f"POS {doc.name}", session=sess,
 		card_network=card_network, card_last4=card_last4)
 	# a paid outlet bill is a (simplified) tax invoice where the pack says so
@@ -1339,6 +1359,13 @@ def change_payment_mode(order: str, mode: str, reason: str = "",
 	counted and closed, the day's cash is final and a manager must correct it
 	from the till screens. Changing to Card can carry the card network (and
 	last 4) from the slip; the old mode's card details always go with it."""
+	from kamra.pos_refunds import lock_bill, refunds_of
+	# one money correction at a time on a bill (a refund takes the same lock),
+	# read after it: end the transaction this request has been reading in
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- nothing written yet; the reads after the lock need a fresh snapshot
+	lock_bill(order)
+	if refunds_of(order):
+		frappe.throw(_("This bill has a refund, so its payment mode can't change."))
 	doc = frappe.get_doc("POS Order", order)
 	_assert_outlet_mode(doc.property, mode)
 	from kamra.card_network import clean as clean_card
@@ -1642,6 +1669,26 @@ def _order_list_state(o) -> str:
 	return "sent" if o.get("kot_fired") else "open"
 
 
+def _before_tax(refund) -> float:
+	from kamra.pos_refunds import before_tax
+	return before_tax(refund)
+
+
+def _refunds_of_bills(outlet: str, start, end, mode: str | None = None,
+                      order_type: str | None = None) -> list:
+	"""(refund, its bill's order type) for the outlet's refunds in a period,
+	kept to one way of giving money back and one kind of order when asked."""
+	from kamra.pos_refunds import refunds_between
+
+	rows = [r for r in refunds_between(start, end, outlet=outlet)
+	        if not mode or r.mode == mode]
+	kinds = dict(frappe.get_all(
+		"POS Order", filters={"name": ["in", [r.pos_order for r in rows] or [""]]},
+		fields=["name", "order_type"], as_list=True))
+	return [(r, kinds.get(r.pos_order) or "Other") for r in rows
+	        if not order_type or kinds.get(r.pos_order) == order_type]
+
+
 # most bills one history query looks at; a year at a busy outlet fits easily
 ORDERS_LIST_MAX = 5000
 
@@ -1680,7 +1727,8 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 	fields = ["name", "status", "order_type", "room", "reservation", "table_no",
 	          "customer_name", "guest", "order_total", "paid", "payment_mode",
 	          "nc", "posted_to_folio", "kot_fired", "kot_no", "guests",
-	          "creation", "cancel_reason", "captain", "waiter", "settled_by"]
+	          "creation", "cancel_reason", "captain", "waiter", "settled_by",
+	          "refunded_amount", "paid_amount"]
 	or_filters = None
 	qq = (q or "").strip()[:60]
 	if qq:
@@ -1733,6 +1781,18 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 			totals["by_type"][key] = totals["by_type"].get(key, 0.0) + amt
 		elif st == "cancelled":
 			totals["cancelled"] += amt
+	# money given back counts on its own day, under the way it went back; a
+	# search or a state filter picks bills, so it shows no refund figures
+	totals["refunds"] = totals["net"] = None
+	if not qq and not state:
+		totals["refunds"] = 0.0
+		for r, bill_type in _refunds_of_bills(outlet, start, end, mode, order_type):
+			back = _before_tax(r)
+			totals["refunds"] += back
+			totals["by_mode"][r.mode] = totals["by_mode"].get(r.mode, 0.0) - back
+			totals["by_type"][bill_type] = totals["by_type"].get(bill_type, 0.0) - back
+		totals["refunds"] = round(totals["refunds"], 2)
+		totals["net"] = round(totals["sales"] - totals["refunds"], 2)
 	totals["sales"] = round(totals["sales"], 2)
 	totals["cancelled"] = round(totals["cancelled"], 2)
 	totals["by_mode"] = {k: round(v, 2) for k, v in totals["by_mode"].items()}
@@ -1777,6 +1837,8 @@ def orders_list(outlet: str, date: str | None = None, to_date: str | None = None
 			"stale": 1 if st == "open" and age >= stale_after else 0,
 			"carried": r.get("carried", 0), "cancel_reason": r.cancel_reason,
 			"served_by": _served_by(r), "cashier": _full_name(r.settled_by),
+			"refunded": float(r.get("refunded_amount") or 0),
+			"paid_amount": float(r.get("paid_amount") or 0),
 		})
 	return {"from": str(start), "to": str(end), "rows": out, "counts": counts,
 	        "total": len(shown), "has_more": skip + page < len(shown),
@@ -1870,6 +1932,26 @@ def orders_export(outlet: str, date: str | None = None, to_date: str | None = No
 			float(r.order_total or 0), r.nc_authorized_by or "", r.captain or "",
 			r.cancel_reason or "", r.cancelled_by or "",
 			_served_by(r) or "", _full_name(r.settled_by) or ""])
+	# each refund of the period is its own row, taking money off its own day
+	if not qq and not state:
+		made = _refunds_of_bills(outlet, start, end, mode, order_type)
+		bills = {b.name: b for b in frappe.get_all(
+			"POS Order", filters={"name": ["in", [x.pos_order for x, _t in made] or [""]]},
+			fields=["name", "kot_no", "table_no", "room", "reservation", "customer_name",
+			        "customer_phone"])}
+		for x, bill_type in made:
+			b = bills[x.pos_order]
+			when = frappe.utils.get_datetime(x.creation)
+			n += 1
+			w.writerow([
+				x.pos_order, b.kot_no or "", when.date().isoformat(), when.strftime("%H:%M"),
+				outlet_name, bill_type, b.table_no or "",
+				(b.room or "").split("-")[-1] if b.room else "",
+				b.customer_name or stays.get(b.reservation) or "",
+				_shown_phone(b.customer_phone) or "", "refund", x.mode,
+				frappe.db.count("POS Refund Line", {"parent": x.name}), 0.0,
+				-round(_before_tax(x), 2), "", "", "", "", "",
+				_full_name(x.refunded_by) or ""])
 	return {"filename": f"orders-{outlet_name}-{start}_{end}.csv".replace(" ", "-"),
 	        "csv": "\ufeff" + buf.getvalue(), "rows": n}
 
@@ -2101,8 +2183,11 @@ def _outlet_history(outlet: str, order: str | None, g, stay) -> dict:
 				fields=["parent", "item_name", "qty"], order_by="idx asc"):
 			what.setdefault(it.parent, []).append(
 				f"{it.item_name} x{float(it.qty or 0):g}")
-	spend = sum(float(r.order_total or 0) for r in rows
-	            if r.status == "Delivered" and not r.nc)
+	sold = [r for r in rows if r.status == "Delivered" and not r.nc]
+	spend = sum(float(r.order_total or 0) for r in sold)
+	spend -= sum(_before_tax(x) for x in frappe.get_all(
+		"POS Refund", filters={"pos_order": ["in", [r.name for r in sold] or [""]]},
+		fields=["amount", "tax_amount"]))
 	return {
 		"visits": len({str(r.creation)[:10] for r in rows}),
 		"bills": len(rows),
@@ -2230,6 +2315,10 @@ def outlet_dashboard(outlet: str, date: str | None = None,
 
 	gross = sum(float(o.order_total or 0) for o in sold)
 	covers = sum(int(o.guests or 0) for o in closed)
+	# money given back in the period, whichever day its bill was sold
+	back = _refunds_of_bills(outlet, day, end[:10])
+	given_back = [r for r, _t in back]
+	refunded = sum(_before_tax(r) for r in given_back)
 
 	def bucket(rows, key):
 		out: dict[str, dict] = {}
@@ -2255,8 +2344,30 @@ def outlet_dashboard(outlet: str, date: str | None = None,
 		t = top.setdefault(it.item_name, {"qty": 0.0, "amount": 0.0})
 		t["qty"] += float(it.qty or 0)
 		t["amount"] += float(it.qty or 0) * float(it.rate or 0)
+	returned = frappe.get_all(
+		"POS Refund Line", filters={"parent": ["in", [r.name for r in given_back] or [""]],
+		                            "parenttype": "POS Refund"},
+		fields=["order_item", "item_name", "qty"])
+	rates = dict(frappe.get_all(
+		"POS Order Item", filters={"name": ["in", [x.order_item for x in returned] or [""]]},
+		fields=["name", "rate"], as_list=True))
+	for x in returned:
+		if x.item_name in top:
+			top[x.item_name]["qty"] -= float(x.qty or 0)
+			top[x.item_name]["amount"] -= float(x.qty or 0) * float(rates.get(x.order_item) or 0)
 	top_items = [{"item_name": k, **v} for k, v in
-	             sorted(top.items(), key=lambda kv: -kv[1]["qty"])][:10]
+	             sorted(top.items(), key=lambda kv: -kv[1]["qty"]) if v["qty"] > 0][:10]
+
+	def less_refunds(rows, refunds):
+		"""Buckets net of the money given back, each refund under its label."""
+		out = {b["label"]: b for b in rows}
+		for label, r in refunds:
+			b = out.setdefault(label, {"label": label, "bills": 0, "total": 0.0})
+			b["total"] -= _before_tax(r)
+		return sorted(out.values(), key=lambda b: -b["total"])
+
+	by_tender = less_refunds(bucket(sold, tender), [(r.mode, r) for r in given_back])
+	by_order_type = less_refunds(bucket(sold, lambda o: o.order_type), [(t, r) for r, t in back])
 
 	# a cancelled bill voids every line; those show once, as the cancellation
 	cancelled_names = {o.name for o in cancelled}
@@ -2297,8 +2408,10 @@ def outlet_dashboard(outlet: str, date: str | None = None,
 		"bills": len(sold),
 		"covers": covers,
 		"avg_bill": round(gross / len(sold), 2) if sold else 0,
-		"by_order_type": bucket(sold, lambda o: o.order_type),
-		"by_tender": bucket(sold, tender),
+		"by_order_type": by_order_type,
+		"by_tender": by_tender,
+		"refunds": {"count": len(given_back), "amount": round(refunded, 2)},
+		"net_sales": round(gross - refunded, 2),
 		"open_bills": [{
 			"name": o.name, "label": _label(o), "status": o.status,
 			"order_type": o.order_type, "order_total": o.order_total,

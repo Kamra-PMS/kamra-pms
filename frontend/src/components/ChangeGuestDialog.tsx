@@ -23,10 +23,12 @@ export default function ChangeGuestDialog(props: {
   /** who the booking names now */
   guestName: string
   guestPhone?: string | null
+  /** the guest named now has completed online check-in */
+  onlineCheckIn?: boolean
   onClose: () => void
   onDone: () => void
 }) {
-  const { t } = useT()
+  const { t, tn } = useT()
   const [mode, setMode] = useState<Mode>("new")
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
@@ -37,7 +39,7 @@ export default function ChangeGuestDialog(props: {
   const [alert, setAlert] = useState<GuestAlert | null>(null)
   const [blReason, setBlReason] = useState("")
   const [confirming, setConfirming] = useState(false)
-  const [done, setDone] = useState<string | null>(null)
+  const [done, setDone] = useState<{ name: string; removed: number } | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -95,13 +97,13 @@ export default function ChangeGuestDialog(props: {
     setBusy(true)
     setError(null)
     try {
-      const out = await call<{ guest_name: string }>("kamra.api.change_booking_guest", {
+      const out = await call<{ guest_name: string; removed_occupants: number }>("kamra.api.change_booking_guest", {
         reservation: props.reservation,
         ...(mode === "new" ? { guest_name: name.trim(), phone: phone.trim() } : { guest: picked!.name }),
         reason: reason.trim() || undefined,
         blacklist_override_reason: blacklisted ? blReason.trim() : undefined,
       })
-      setDone(out.guest_name)
+      setDone({ name: out.guest_name, removed: out.removed_occupants })
     } catch (e) {
       setError(serverError(e))
       setConfirming(false)
@@ -147,7 +149,11 @@ export default function ChangeGuestDialog(props: {
             <div className="px-5 py-4 text-sm">
               <p role="status" className="flex items-start gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-emerald-800">
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden />
-                <span>{t("Guest changed. {name} is now on the booking, and its bill and deposit moved with it.", { name: done })}</span>
+                <span>
+                  {t("Guest changed. {name} is now on the booking, and its bill and deposit moved with it.", { name: done.name })}
+                  {done.removed > 0 &&
+                    ` ${tn(done.removed, "{n} person listed in online check-in was removed.", "{n} people listed in online check-in were removed.")}`}
+                </span>
               </p>
             </div>
             <footer className="flex justify-end gap-2 border-t border-zinc-100 px-5 py-3">
@@ -264,6 +270,8 @@ export default function ChangeGuestDialog(props: {
                     from: who(props.guestName, props.guestPhone),
                     to: who(to.name, to.phone),
                   })}
+                  {props.onlineCheckIn &&
+                    ` ${t("People they listed in online check-in that the desk has not confirmed are removed.")}`}
                 </p>
               )}
               {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-rose-700">{error}</p>}

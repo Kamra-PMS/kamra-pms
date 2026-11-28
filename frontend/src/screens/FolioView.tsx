@@ -178,7 +178,7 @@ interface InvoiceData {
 
 const CHARGE_TYPES = [
   "Food & Beverage", "Minibar", "Laundry", "Spa", "Taxi",
-  "Early Check-in", "Late Checkout", "Pet Charge", "Discount", "Misc",
+  "Early Check-in", "Late Checkout", "Pet Charge", "Discount", "Stolen / Damaged Items", "Misc",
 ]
 
 const inputCls =

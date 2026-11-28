@@ -37,6 +37,8 @@ interface Dash {
   avg_bill: number
   by_order_type: Bucket[]
   by_tender: Bucket[]
+  refunds: { count: number; amount: number }
+  net_sales: number
   open_bills: OpenBill[]
   nc: {
     count: number
@@ -172,6 +174,13 @@ export default function PosDashboard() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <Kpi icon={Wallet} label={translate("Gross sales")} value={`${cur()}${inr(data.gross_sales)}`}
               sub={tn(data.bills, "{n} bill settled", "{n} bills settled")} />
+            {data.refunds?.count > 0 && (
+              <>
+                <Kpi icon={Receipt} label={translate("Refunds")} value={`-${cur()}${inr(data.refunds.amount)}`} tone="amber"
+                  sub={tn(data.refunds.count, "{n} refund", "{n} refunds")} />
+                <Kpi icon={Wallet} label={translate("Net sales")} value={`${cur()}${inr(data.net_sales)}`} />
+              </>
+            )}
             <Kpi icon={Receipt} label={translate("Avg bill")} value={`${cur()}${inr(data.avg_bill)}`} />
             <Kpi icon={Users} label={translate("Covers")} value={inr(data.covers)} />
             <Kpi icon={Clock} label={translate("Open bills")} value={String(data.open_bills.length)}

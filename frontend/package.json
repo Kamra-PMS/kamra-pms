@@ -26,7 +26,8 @@
     "offline:check": "node scripts/offline-check.mjs",
     "bill:check": "node scripts/bill-check.mjs",
     "money:check": "node scripts/money-check.mjs",
-    "screen-defaults:check": "node scripts/screen-defaults-check.mjs"
+    "screen-defaults:check": "node scripts/screen-defaults-check.mjs",
+    "refund:check": "node scripts/refund-check.mjs"
   },
   "dependencies": {
     "libphonenumber-js": "^1.13.15",
